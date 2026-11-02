@@ -208,6 +208,9 @@ if (cdp_spBeaconWanted()) : ?>
 <script src="<?= cdp_asset('dataJs/pickup_code.js') ?>"></script>
 <?php endif; ?>
 
+<?php /* Customer Service: the chat button for customers (it decides for itself whether to show) */ ?>
+<?php include __DIR__ . '/../support/widget.php'; ?>
+
 <?php /* The design system is linked again here, after every page-level stylesheet and inline
          <style> block (about 80 views add their own after head_scripts.php), so its rules
          are last in the cascade on every page. The browser does not fetch the file twice. */ ?>

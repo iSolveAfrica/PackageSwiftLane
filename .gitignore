@@ -51,3 +51,5 @@ dev_preview/
 
 # Push notification attachments (helpers/push_compose.php)
 assets/uploads/push_media/
+support_files/*
+!support_files/.htaccess

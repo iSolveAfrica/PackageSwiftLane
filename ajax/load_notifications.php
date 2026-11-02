@@ -89,6 +89,9 @@ $bg = $rowCount > 0 ? 'bg-primary' : 'bg-danger';
                         case '5':
                             $href = 'consolidate_package_view.php?id=' . $key->order_id . '&id_notification=' . $key->notification_id;
                             break;
+                        case '9': // Customer Service ticket (support.php sends staff on to the ticket view)
+                            $href = 'support.php?t=' . (int) $key->order_id;
+                            break;
                         default:
                             $href = 'customers_edit.php?user=' . $key->order_id;
                             break;
