@@ -510,6 +510,13 @@ if (!function_exists('cdp_aiModules')) {
     function cdp_aiRunTool($name, $args, $ctx)
     {
         $args = is_array($args) ? $args : [];
+        // Another feature (Customer Service / King) can bring its own tools: it passes
+        // a runner in the context and may hand read-only lookups back here.
+        if (isset($ctx['tool_runner']) && is_callable($ctx['tool_runner'])) {
+            $runner = $ctx['tool_runner'];
+            unset($ctx['tool_runner']);
+            return $runner($name, $args, $ctx);
+        }
         try {
             switch ($name) {
                 case 'system_overview': return cdp_aiToolOverview($args, $ctx);
