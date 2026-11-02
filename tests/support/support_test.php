@@ -271,6 +271,15 @@ cdp_csMessageAdd($c4, $tk4->id, 'customer', $custA, 'hello?', 'public');
 $r = cdp_csKingRespond($c4, $userA, $udA);
 check(empty($r['answered']), 'King stays quiet once the chat is with the team');
 
+$c6 = cdp_csConvCreate($custA, 'web');
+cdp_csMessageAdd($c6, null, 'customer', $custA, 'LATE-ACCEPT I need someone', 'public');
+$r = cdp_csKingRespond($c6, $userA, $udA);
+$m = cdp_csMessages($c6, null, 'customer');
+check(empty($r['answered']) && end($m)['author_type'] !== 'king' && cdp_csConv($c6)->owner_state === 'human_active', 'King handed over, a person accepted before King finished: the late answer is dropped');
+
+$before = q("SELECT COUNT(*) AS n FROM cdb_cs_settings WHERE setting_key = 'schema_version'")[0]->n;
+check($before == 1, 'schema version recorded, so later requests skip the table DDL');
+
 cdp_aiSettingSet('key_claude', 'wrong-key');
 $c5 = cdp_csConvCreate($custA, 'web');
 cdp_csMessageAdd($c5, null, 'customer', $custA, 'hello', 'public');

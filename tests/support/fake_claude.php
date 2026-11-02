@@ -36,13 +36,18 @@ if (empty($req['tools'])) {
     }
     reply([['type' => 'text', 'text' => 'COPILOT: ' . substr($sys, 0, 40)]], 'end_turn');
 }
+if ($toolResults && strpos($firstUser, 'LATE-ACCEPT') !== false) {
+    // King handed over, then an agent accepts before King's closing words come back.
+    $pdo = new PDO('mysql:host=127.0.0.1;dbname=' . getenv('CS_TEST_DB'), getenv('CS_TEST_USER'), getenv('CS_TEST_PASS'));
+    $pdo->exec("UPDATE cdb_cs_conversations SET owner_state = 'human_active', owner_seq = owner_seq + 1 ORDER BY id DESC LIMIT 1");
+}
 if ($toolResults) {
     reply([['type' => 'text', 'text' => 'RESULT ' . $toolResults[0]['content']]], 'end_turn');
 }
 if (strpos($firstUser, 'HELP-ARTICLE') !== false) {
     toolUse('search_help', ['query' => 'storage fees']);
 }
-if (strpos($firstUser, 'PERSON-PLEASE') !== false) {
+if (strpos($firstUser, 'PERSON-PLEASE') !== false || strpos($firstUser, 'LATE-ACCEPT') !== false) {
     toolUse('talk_to_person', ['reason' => 'Wants a person', 'summary' => 'Customer asked for a human', 'priority' => 'high', 'category' => 'shipment']);
 }
 if (preg_match('/OTHER-RECORD (\S+)/', $firstUser, $m)) {

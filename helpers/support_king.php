@@ -321,7 +321,8 @@ if (!function_exists('cdp_csKingSystemPrompt')) {
             $st = $pdo->prepare("SELECT owner_state, owner_seq FROM cdb_cs_conversations WHERE id = ? FOR UPDATE");
             $st->execute([(int) $convId]);
             $now = $st->fetch(PDO::FETCH_OBJ);
-            $mayWrite = $now && ($state['handover'] || ($now->owner_state === 'ai_active' && (int) $now->owner_seq === $seq));
+            // After King's own handover the chat must still be waiting in the queue: once a person accepts, the late answer is dropped.
+            $mayWrite = $now && ($state['handover'] ? $now->owner_state === 'handoff_queued' : ($now->owner_state === 'ai_active' && (int) $now->owner_seq === $seq));
             if ($mayWrite) {
                 $ins = $pdo->prepare("INSERT INTO cdb_cs_messages (conversation_id, ticket_id, author_type, visibility, channel, body, meta, delivery_state, created_at)
                     VALUES (?, ?, 'king', 'public', 'web', ?, ?, 'sent', ?)");

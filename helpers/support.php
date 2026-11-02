@@ -38,6 +38,11 @@
 
 require_once __DIR__ . '/rbac.php';
 
+/** Bump when a CREATE TABLE below changes, so the DDL runs once more. */
+if (!defined('CDP_CS_SCHEMA')) {
+    define('CDP_CS_SCHEMA', '1');
+}
+
 // ---------------------------------------------------------------------------
 // Small database helpers
 // ---------------------------------------------------------------------------
@@ -128,6 +133,13 @@ if (!function_exists('cdp_csEnsureTables')) {
         static $ready = null;
         if ($ready !== null) {
             return $ready;
+        }
+        // Fast path: one indexed read once the tables exist at this schema
+        // version, so polling requests never re-run the DDL below.
+        $v = cdp_csOne("SELECT setting_value AS v FROM cdb_cs_settings WHERE setting_key = 'schema_version'");
+        if ($v && (string) $v->v === CDP_CS_SCHEMA) {
+            cdp_csTablesExist(true);
+            return $ready = true;
         }
         $t = ' ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci';
         $ddl = [
@@ -281,6 +293,7 @@ if (!function_exists('cdp_csEnsureTables')) {
             $ready = true;
             cdp_csTablesExist(true);
             cdp_csSeed();
+            cdp_csSettingSet('schema_version', CDP_CS_SCHEMA);
         } catch (Throwable $e) {
             $ready = false;
         }
