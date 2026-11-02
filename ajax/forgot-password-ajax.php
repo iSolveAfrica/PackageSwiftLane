@@ -2,17 +2,23 @@
     ini_set('display_errors', 0);
 
     require_once("../loader.php");
+    require_once __DIR__ . '/../helpers/csrf.php';
+    header('Content-Type: application/json; charset=utf-8');
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !cdp_csrf_validate_request()) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'errors' => 'Your form session expired. Refresh this page and try again.']);
+        exit;
+    }
     require_once("../lib/OtpService.php");
 
     $user = new User;
     $db = new Conexion;
-    $otp = new OtpService;
     $errors = array();
 
-    $email = isset($_POST['email']) ? trim($_POST['email']) : '';
+    $email = is_string($_POST['email'] ?? null) ? trim($_POST['email']) : '';
     if (empty($email)) $errors['email'] = 'Enter a valid email address';
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors['email'] = 'The email address you entered is invalid.';
-    if (!$user->cdp_emailExists($email)) $errors['email'] = 'The email address you entered does not exist.';
+    if (empty($errors) && !$user->cdp_emailExists($email)) $errors['email'] = 'The email address you entered does not exist.';
 
     if (!empty($errors)) {
         echo json_encode(['success' => false, 'errors' => implode(' ', $errors)]);
@@ -27,6 +33,7 @@
         exit;
     }
 
+    $otp = new OtpService;
     $challenge = $otp->createChallenge((int)$u->id, 'forgot', ['email' => $u->email]);
 
     if (!empty($challenge['blocked'])) {

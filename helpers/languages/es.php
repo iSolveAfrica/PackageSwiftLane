@@ -406,7 +406,7 @@ $lang = array(
 	"message_title_login2" 		=> "Bienvenido a",
 
 	"message_title_register1" 		=> "Hola En esta demo elige el país que corresponde a la lista de precios configurada, así puedes llenar el formulario de envío y Recoger.",
-	"message_title_forgot1" 		=> "Por favor, introduzca su dirección de correo electrónico. Recibirá un enlace para crear una nueva contraseña por correo electrónico.",
+	"message_title_forgot1" 		=> "Introduce tu dirección de correo electrónico. Recibirás un código de verificación por correo electrónico para restablecer tu contraseña.",
 	"message_title_tracking1" 		=> "envíos",
 	"message_title_tracking2" 		=> "paquetes de casillero",
 

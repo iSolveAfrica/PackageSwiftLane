@@ -3157,7 +3157,10 @@ function cdp_deleteCourier($datos)
 
 
     $db->bind(':id', $datos['id']);
-    $db->bind(':reason_cancel', $datos['message']);
+    // The shipment-list action has no reason field; the pickup cancellation
+    // form supplies one. Keep the existing NULL value for the first case
+    // without emitting an undefined-key warning into the AJAX response.
+    $db->bind(':reason_cancel', $datos['message'] ?? null);
 
     return $db->cdp_execute();
 }

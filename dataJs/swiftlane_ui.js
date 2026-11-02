@@ -19,6 +19,63 @@
 
     var SEARCH_SELECTOR = 'input#search, input#search_shipment, input#search_package, input#search_pickup, input[name="search"]';
     var SEARCH_ICON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>';
+    var nextFieldId = 0;
+
+    function upgradeContent(root) {
+        var content = root.querySelector('.page-wrapper');
+        if (!content) return;
+        if (!content.id) content.id = 'swl-main-content';
+        if (content.tagName !== 'MAIN' && !content.hasAttribute('role') && !content.querySelector('main, [role="main"]')) {
+            content.setAttribute('role', 'main');
+        }
+        if (!content.hasAttribute('tabindex')) content.tabIndex = -1;
+        var skips = document.querySelectorAll('.swl-skip-link');
+        for (var i = 0; i < skips.length; i++) skips[i].setAttribute('href', '#' + content.id);
+    }
+
+    function upgradeNavigationNames(root) {
+        var links = root.querySelectorAll('.left-sidebar .sidebar-link, .left-sidebar .create-btn');
+        for (var i = 0; i < links.length; i++) {
+            var link = links[i];
+            if (link.hasAttribute('aria-label') || link.hasAttribute('aria-labelledby')) continue;
+            var label = link.querySelector('.hide-menu');
+            var name = label && (label.textContent || '').trim().replace(/\s+/g, ' ');
+            if (!name) continue;
+            // In the collapsed rail the visible label uses display:none. Its
+            // localized text still needs to name the icon link before focus,
+            // including in a screen reader's navigation/link list.
+            link.setAttribute('aria-label', name);
+            var icons = link.querySelectorAll('iconify-icon, i, svg');
+            for (var j = 0; j < icons.length; j++) icons[j].setAttribute('aria-hidden', 'true');
+        }
+    }
+
+    function upgradeFormLabels(root) {
+        var groups = root.querySelectorAll('.form-group');
+        for (var i = 0; i < groups.length; i++) {
+            var group = groups[i];
+            var fields = Array.prototype.filter.call(group.querySelectorAll('input, select, textarea'), function (field) {
+                return field.closest('.form-group') === group &&
+                    !/^(hidden|submit|reset|button|image)$/i.test(field.type || '');
+            });
+            // Link an existing visible label only when the relationship is
+            // unambiguous. Compound groups keep their explicit page markup.
+            if (fields.length !== 1) continue;
+            var field = fields[0];
+            if ((field.labels && field.labels.length) || field.hasAttribute('aria-label') || field.hasAttribute('aria-labelledby')) continue;
+            var labels = Array.prototype.filter.call(group.querySelectorAll('label:not([for])'), function (label) {
+                return label.closest('.form-group') === group && (label.textContent || '').trim();
+            });
+            if (labels.length !== 1) continue;
+            if (!field.id) {
+                var id;
+                do { id = 'swl-field-' + (++nextFieldId); } while (document.getElementById(id));
+                field.id = id;
+            }
+            if (document.getElementById(field.id) !== field) continue;
+            labels[0].htmlFor = field.id;
+        }
+    }
 
     function upgradeStatusLabels(root) {
         var labels = root.querySelectorAll('.label[style]');
@@ -40,6 +97,41 @@
         for (var i = 0; i < inputs.length; i++) {
             var input = inputs[i];
             if (input.type !== 'text' && input.type !== 'search') continue;
+            // A placeholder disappears as soon as the user types and is not a
+            // persistent accessible name. Keep a page's explicit label intact.
+            if (!input.hasAttribute('aria-label') && !input.hasAttribute('aria-labelledby') &&
+                    !(input.labels && input.labels.length)) {
+                input.setAttribute('aria-label', input.getAttribute('placeholder') || 'Search records');
+            }
+            var group = input.closest('.input-group');
+            var buttons = group ? group.querySelectorAll('.input-group-append button.btn') : [];
+            for (var j = 0; j < buttons.length; j++) {
+                var button = buttons[j];
+                if ((button.textContent || '').trim() !== '') continue;
+                if (!button.hasAttribute('aria-label') && !button.hasAttribute('aria-labelledby')) {
+                    var labelledBy = (input.getAttribute('aria-labelledby') || '').split(/\s+/).map(function (id) {
+                        var label = document.getElementById(id);
+                        return label ? (label.textContent || '').trim() : '';
+                    }).join(' ').trim();
+                    button.setAttribute('aria-label', input.getAttribute('aria-label') || labelledBy ||
+                        (input.labels && input.labels.length && input.labels[0].textContent.trim()) || input.getAttribute('placeholder') || 'Search records');
+                    var icons = button.querySelectorAll('i, svg, iconify-icon');
+                    for (var k = 0; k < icons.length; k++) icons[k].setAttribute('aria-hidden', 'true');
+                }
+                // Legacy list search icons have type=submit but sit outside a
+                // form; only their neighboring input calls cdp_load(1). Wire
+                // that exact pattern without intercepting real form submits
+                // or explicit page-owned click behavior.
+                if (button.type === 'submit' && !button.form && !button.onclick && !button.hasAttribute('onclick') &&
+                        /^\s*cdp_load\s*\(\s*1\s*\)\s*;?\s*$/.test(input.getAttribute('onkeyup') || '') &&
+                        typeof window.cdp_load === 'function' && button.dataset.swlSearchAction !== '1') {
+                    button.dataset.swlSearchAction = '1';
+                    button.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        if (typeof window.cdp_load === 'function') window.cdp_load(1);
+                    });
+                }
+            }
             if (input.closest('.swl-search')) continue;
             var wrap = document.createElement('div');
             wrap.className = 'swl-search';
@@ -56,7 +148,11 @@
         var toggles = root.querySelectorAll('.table .btn-group .btn.dropdown-toggle');
         for (var i = 0; i < toggles.length; i++) {
             var t = toggles[i];
-            t.classList.toggle('swl-icon-only', (t.textContent || '').trim() === '');
+            var iconOnly = (t.textContent || '').trim() === '';
+            t.classList.toggle('swl-icon-only', iconOnly);
+            if (iconOnly && !t.hasAttribute('aria-label') && !t.hasAttribute('aria-labelledby')) {
+                t.setAttribute('aria-label', t.getAttribute('title') || 'Row actions');
+            }
         }
     }
 
@@ -92,6 +188,22 @@
         var more = box.scrollWidth - box.clientWidth;
         box.classList.toggle('swl-scroll-right', more > 2 && box.scrollLeft < more - 2);
         box.classList.toggle('swl-scroll-left', more > 2 && box.scrollLeft > 2);
+        // Overflow regions need a keyboard stop in browsers that do not make
+        // scroll containers focusable automatically. Remove only our own
+        // attributes once the table fits again.
+        if (more > 2) {
+            if (!box.hasAttribute('tabindex')) { box.tabIndex = 0; box.dataset.swlTabindex = '1'; }
+            if (!box.hasAttribute('role')) { box.setAttribute('role', 'region'); box.dataset.swlRegion = '1'; }
+            if (!box.hasAttribute('aria-label') && !box.hasAttribute('aria-labelledby')) {
+                var caption = box.querySelector('caption');
+                box.setAttribute('aria-label', caption && caption.textContent.trim() || 'Scrollable table');
+                box.dataset.swlScrollLabel = '1';
+            }
+        } else {
+            if (box.dataset.swlTabindex === '1') { box.removeAttribute('tabindex'); delete box.dataset.swlTabindex; }
+            if (box.dataset.swlRegion === '1') { box.removeAttribute('role'); delete box.dataset.swlRegion; }
+            if (box.dataset.swlScrollLabel === '1') { box.removeAttribute('aria-label'); delete box.dataset.swlScrollLabel; }
+        }
     }
     function upgradeScrollers(root) {
         var boxes = root.querySelectorAll('.table-responsive');
@@ -151,12 +263,22 @@
     if (window.jQuery) pinMenus(window.jQuery);
 
     function run(root) {
+        upgradeContent(root);
+        upgradeNavigationNames(root);
+        upgradeFormLabels(root);
         upgradeStatusLabels(root);
         upgradeSearchFields(root);
         upgradeRowActions(root);
         upgradeIconButtons(root);
         upgradeTableCells(root);
         upgradeScrollers(root);
+        var feedback = root.querySelectorAll('#resultados_ajax');
+        for (var i = 0; i < feedback.length; i++) {
+            if (!feedback[i].hasAttribute('aria-live')) {
+                feedback[i].setAttribute('aria-live', 'polite');
+                feedback[i].setAttribute('aria-atomic', 'true');
+            }
+        }
     }
 
     var pending = null;
@@ -211,17 +333,19 @@
     function shell() {
         var wrap = document.getElementById('main-wrapper');
         if (!wrap || !wrap.querySelector('.left-sidebar')) return;
+        var tabletExpanded = false, lastWidth = window.innerWidth;
 
         function isMini() { return wrap.getAttribute('data-sidebartype') === 'mini-sidebar'; }
 
         function enforce() {
             if (window.innerWidth < MIN_WIDTH) return;
             var pref = readPref();
-            if (pref !== 'mini' && pref !== 'full') return;
-            // Below 1170px the full menu is a passing overlay, never the state a
-            // page should open in: a remembered "full" is left to the rail there.
-            if (pref === 'full' && window.innerWidth < 1170) return;
-            var mini = pref === 'mini', type = mini ? 'mini-sidebar' : 'full';
+            if (window.innerWidth >= 1170 && pref !== 'mini' && pref !== 'full') return;
+            // A tablet's expanded menu is temporary. Its current state must be
+            // separate from the saved desktop choice, or a saved "mini" makes
+            // the observer immediately close it after every attempt to open.
+            var mini = window.innerWidth < 1170 ? !tabletExpanded : pref === 'mini';
+            var type = mini ? 'mini-sidebar' : 'full';
             if (wrap.classList.contains('mini-sidebar') !== mini) wrap.classList.toggle('mini-sidebar', mini);
             if (wrap.getAttribute('data-sidebartype') !== type) wrap.setAttribute('data-sidebartype', type);
         }
@@ -236,6 +360,7 @@
             if (!t || window.innerWidth < MIN_WIDTH) return;
             wrap.classList.toggle('mini-sidebar', isMini());
             var next = isMini() ? 'full' : 'mini';
+            if (window.innerWidth < 1170) tabletExpanded = next === 'full';
             // On a tablet the opened menu is an overlay for this page only.
             if (next === 'mini' || window.innerWidth >= 1170) savePref(next);
             t.setAttribute('aria-expanded', next === 'full' ? 'true' : 'false');
@@ -245,6 +370,67 @@
         }, true);
 
         var aside = wrap.querySelector('.left-sidebar');
+        if (!aside.id) aside.id = 'swl-primary-navigation';
+        var toggles = wrap.querySelectorAll('.nav-toggler, .sidebartoggler');
+        var focusableSelector = 'a[href], button, input, select, textarea, [tabindex]';
+        var opener = null, overlayWasOpen = false, backgroundState = [];
+        var originalRole = aside.getAttribute('role');
+        var originalLabel = aside.getAttribute('aria-label');
+
+        function visibleControls(root) {
+            return Array.prototype.filter.call(root.querySelectorAll(focusableSelector), function (el) {
+                return !el.disabled && el.tabIndex >= 0 && !el.closest('[inert]') && el.getClientRects().length > 0 &&
+                    window.getComputedStyle(el).visibility !== 'hidden';
+            });
+        }
+
+        // The template slides the mobile drawer off-screen without hiding it
+        // from keyboard or screen-reader navigation. While it is open, focus
+        // belongs to the drawer; closing returns to the control that opened it.
+        function syncNavigation() {
+            var open = menuOpen(), mobileHidden = window.innerWidth < MIN_WIDTH && !open;
+            if (!mobileHidden) { aside.inert = false; aside.removeAttribute('aria-hidden'); }
+            for (var i = 0; i < toggles.length; i++) {
+                var toggle = toggles[i];
+                var expanded = window.innerWidth < MIN_WIDTH ? open : !isMini();
+                toggle.setAttribute('aria-controls', aside.id);
+                toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+                toggle.setAttribute('aria-label', expanded ? 'Close navigation' : 'Open navigation');
+                if (toggle.tagName === 'A') toggle.setAttribute('role', 'button');
+            }
+            var changed = open !== overlayWasOpen;
+            overlayWasOpen = open;
+            if (changed && open) {
+                if (!opener || !opener.isConnected) opener = document.activeElement;
+                aside.setAttribute('role', 'dialog');
+                aside.setAttribute('aria-label', originalLabel || 'Main navigation');
+                aside.setAttribute('aria-modal', 'true');
+                backgroundState = Array.prototype.map.call(wrap.querySelectorAll('.page-wrapper, .topbar'), function (el) {
+                    var state = { element: el, inert: el.inert };
+                    el.inert = true;
+                    return state;
+                });
+                var controls = visibleControls(aside);
+                if (controls.length) controls[0].focus();
+            } else if (changed) {
+                backgroundState.forEach(function (state) { state.element.inert = state.inert; });
+                backgroundState = [];
+                aside.removeAttribute('aria-modal');
+                if (originalRole === null) aside.removeAttribute('role');
+                else aside.setAttribute('role', originalRole);
+                if (originalLabel === null) aside.removeAttribute('aria-label');
+                else aside.setAttribute('aria-label', originalLabel);
+                if (opener && opener.isConnected && !opener.closest('[inert]')) opener.focus();
+                opener = null;
+            }
+            // Return focus before hiding the drawer from assistive technology.
+            if (mobileHidden) { aside.inert = true; aside.setAttribute('aria-hidden', 'true'); }
+        }
+
+        document.addEventListener('click', function (e) {
+            var toggle = e.target && e.target.closest ? e.target.closest('.nav-toggler, .sidebartoggler') : null;
+            if (toggle && !menuOpen()) opener = toggle;
+        }, true);
 
         // Closing the opened menu on small screens. Phones: the menu slides over
         // the page (show-sidebar); tablets (< 1170px): a "full" sidebar lays over
@@ -255,10 +441,14 @@
             return window.innerWidth < 1170 && !isMini();
         }
         function closeMenu() {
-            if (window.innerWidth < MIN_WIDTH) { wrap.classList.remove('show-sidebar'); return; }
-            savePref('mini');
-            wrap.classList.add('mini-sidebar');
-            wrap.setAttribute('data-sidebartype', 'mini-sidebar');
+            if (window.innerWidth < MIN_WIDTH) wrap.classList.remove('show-sidebar');
+            else {
+                tabletExpanded = false;
+                savePref('mini');
+                wrap.classList.add('mini-sidebar');
+                wrap.setAttribute('data-sidebartype', 'mini-sidebar');
+            }
+            syncNavigation();
         }
         document.addEventListener('click', function (e) {
             if (!menuOpen()) return;
@@ -271,19 +461,44 @@
             if (aside.contains(t)) return;
             e.preventDefault(); e.stopPropagation(); closeMenu();
         }, true);
-        document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && menuOpen()) closeMenu(); });
+        document.addEventListener('keydown', function (e) {
+            var toggle = e.target && e.target.closest ? e.target.closest('.nav-toggler, .sidebartoggler') : null;
+            if (e.key === ' ' && toggle && toggle.tagName === 'A') {
+                e.preventDefault(); toggle.click(); return;
+            }
+            if (!menuOpen()) return;
+            if (e.key === 'Escape') { e.preventDefault(); closeMenu(); return; }
+            if (e.key !== 'Tab') return;
+            var controls = visibleControls(aside);
+            if (!controls.length) { e.preventDefault(); return; }
+            var first = controls[0], last = controls[controls.length - 1];
+            if (!aside.contains(document.activeElement) || (e.shiftKey && document.activeElement === first)) {
+                e.preventDefault(); (e.shiftKey ? last : first).focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+                e.preventDefault(); first.focus();
+            }
+        });
 
         function settled() { wrap.classList.remove('swl-nav-settling'); }
         aside.addEventListener('mouseleave', settled);
+        aside.addEventListener('focusin', function (e) {
+            // A keyboard user leaving the collapse toggle needs the same
+            // expanded labels/submenus as a pointer entering the rail.
+            if (!e.target.closest('.sidebartoggler')) settled();
+        });
         document.addEventListener('pointermove', function (e) {
             if (wrap.classList.contains('swl-nav-settling') && !aside.contains(e.target)) settled();
         }, { passive: true });
 
         if ('MutationObserver' in window) {
-            new MutationObserver(enforce).observe(wrap, { attributes: true, attributeFilter: ['class', 'data-sidebartype'] });
+            new MutationObserver(function () { enforce(); syncNavigation(); }).observe(wrap, { attributes: true, attributeFilter: ['class', 'data-sidebartype'] });
         }
-        window.addEventListener('resize', enforce);
+        window.addEventListener('resize', function () {
+            if (window.innerWidth !== lastWidth) { tabletExpanded = false; lastWidth = window.innerWidth; }
+            enforce(); syncNavigation();
+        });
         enforce();
+        syncNavigation();
 
         // Every page opens with its title row, written on the server by
         // cdp_pageHeader() (views/inc/page_header.php); the row shares this

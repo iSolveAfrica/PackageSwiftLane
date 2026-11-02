@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../helpers/csrf.php';
 if (!function_exists('cdp_asset')) { $d = __DIR__; while ($d !== dirname($d) && !is_file($d . '/helpers/asset.php')) { $d = dirname($d); } if (is_file($d . '/helpers/asset.php')) require_once $d . '/helpers/asset.php'; }
 
 ?>
@@ -74,12 +75,12 @@ if (!function_exists('cdp_asset')) { $d = __DIR__; while ($d !== dirname($d) && 
                 <a class="logo" href="index.php">
                     <?php echo ($core->logo_web) ? '<img src="assets/' . $core->logo_web . '" alt="' . $core->site_name . '" width="' . $core->thumb_web . '" height="' . $core->thumb_hweb . '"/>' : $core->site_name; ?>
                 </a>
-                <h4 class="auth-heading mb-2"><?php echo $lang['left136'] ?></h4>
+                <h1 class="auth-heading mb-2"><?php echo $lang['left136'] ?></h1>
                 <p class="auth-subtitle">Create your account and complete the onboarding flow.</p>
             </div>
 
             <div class="card-body">
-                <div id="resultados_ajax"></div>
+                <div id="resultados_ajax" role="status" aria-live="polite" aria-atomic="true"></div>
 
                 <?php if (!$core->reg_allowed) : ?>
                     <div class="alert alert-warning" id="success-alert">
@@ -87,42 +88,43 @@ if (!function_exists('cdp_asset')) { $d = __DIR__; while ($d !== dirname($d) && 
                     </div>
                 <?php else : ?>
                     <form class="login-form mt-3" id="new_register" name="new_register" method="post" enctype="multipart/form-data">
+                        <input type="hidden" name="<?php echo cdp_csrf_param(); ?>" value="<?php echo cdp_csrf_token(); ?>">
                         <div class="auth-form-section">
                             <div class="auth-section-title">Identity</div>
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label class="form-label"><?php echo $lang['left139'] ?> <span class="text-danger">*</span></label>
+                                        <label for="fname" class="form-label"><?php echo $lang['left139'] ?> <span class="text-danger">*</span></label>
                                         <div class="form-icon position-relative">
                                             <i data-feather="user" class="fea icon-sm icons"></i>
-                                            <input type="text" class="form-control ps-5" placeholder="<?php echo $lang['left139'] ?>" name="fname" id="fname">
+                                            <input type="text" class="form-control ps-5" placeholder="<?php echo $lang['left139'] ?>" name="fname" id="fname" required autocomplete="given-name">
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label class="form-label"><?php echo $lang['left140'] ?> <span class="text-danger">*</span></label>
+                                        <label for="lname" class="form-label"><?php echo $lang['left140'] ?> <span class="text-danger">*</span></label>
                                         <div class="form-icon position-relative">
                                             <i data-feather="user" class="fea icon-sm icons"></i>
-                                            <input type="text" class="form-control ps-5" placeholder="<?php echo $lang['left141'] ?>" name="lname" id="lname">
+                                            <input type="text" class="form-control ps-5" placeholder="<?php echo $lang['left141'] ?>" name="lname" id="lname" required autocomplete="family-name">
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-6">
+                                <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label class="form-label"><?php echo $lang['left144'] ?> <span class="text-danger">*</span></label>
+                                        <label for="username" class="form-label"><?php echo $lang['left144'] ?> <span class="text-danger">*</span></label>
                                         <div class="form-icon position-relative">
                                             <i data-feather="users" class="fea icon-sm icons"></i>
-                                            <input type="text" class="form-control ps-5" placeholder="<?php echo $lang['left145'] ?>" name="username" id="username">
+                                            <input type="text" class="form-control ps-5" placeholder="<?php echo $lang['left145'] ?>" name="username" id="username" required autocomplete="username" autocapitalize="none" spellcheck="false">
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-6">
+                                <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label class="form-label"><?php echo 'Company' ?></label>
+                                        <label for="company" class="form-label"><?php echo 'Company' ?></label>
                                         <div class="form-icon position-relative">
                                             <i data-feather="briefcase" class="fea icon-sm icons"></i>
-                                            <input type="text" class="form-control ps-5" placeholder="<?php echo 'Company Name' ?>" name="company" id="company">
+                                            <input type="text" class="form-control ps-5" placeholder="<?php echo 'Company Name' ?>" name="company" id="company" autocomplete="organization">
                                         </div>
                                     </div>
                                 </div>
@@ -134,10 +136,10 @@ if (!function_exists('cdp_asset')) { $d = __DIR__; while ($d !== dirname($d) && 
                             <div class="row">
                                 <div class="col-md-8">
                                     <div class="mb-3">
-                                        <label class="form-label"><?php echo $lang['left142'] ?> <span class="text-danger">*</span></label>
+                                        <label for="email" class="form-label"><?php echo $lang['left142'] ?> <span class="text-danger">*</span></label>
                                         <div class="form-icon position-relative">
                                             <i data-feather="mail" class="fea icon-sm icons"></i>
-                                            <input type="email" class="form-control ps-5" placeholder="<?php echo $lang['left143'] ?>" name="email" id="email">
+                                            <input type="email" class="form-control ps-5" placeholder="<?php echo $lang['left143'] ?>" name="email" id="email" required autocomplete="email">
                                         </div>
                                     </div>
                                 </div>
@@ -145,28 +147,28 @@ if (!function_exists('cdp_asset')) { $d = __DIR__; while ($d !== dirname($d) && 
                                     <div class="mb-3">
                                         <label for="phone_custom" class="form-label"><?php echo $lang['user_manage9'] ?> <span class="text-danger">*</span></label>
                                         <div class="position-relative">
-                                            <input type="tel" class="form-control iti__tel-input ps-5" name="phone_custom" id="phone_custom" autocomplete="off" data-intl-tel-input-id="0" placeholder="<?php echo $lang['user_manage9'] ?>">
+                                            <input type="tel" class="form-control iti__tel-input ps-5" name="phone_custom" id="phone_custom" required autocomplete="tel" aria-describedby="error-msg" data-intl-tel-input-id="0" placeholder="<?php echo $lang['user_manage9'] ?>">
                                         </div>
                                     </div>
                                     <span id="valid-msg" class="hide"></span>
-                                    <div id="error-msg" class="hide text-danger"></div>
+                                    <div id="error-msg" class="hide text-danger" aria-live="polite"></div>
                                 </div>
                                 <input type="hidden" name="phone" id="phone" />
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label class="form-label"><?php echo $lang['user_manage14'] ?> <span class="text-danger">*</span></label>
+                                        <label for="postal" class="form-label"><?php echo $lang['user_manage14'] ?> <span class="text-danger">*</span></label>
                                         <div class="form-icon position-relative">
                                             <i data-feather="flag" class="fea icon-sm icons"></i>
-                                            <input type="text" class="form-control ps-5" placeholder="<?php echo $lang['user_manage14'] ?>" name="postal" id="postal">
+                                            <input type="text" class="form-control ps-5" placeholder="<?php echo $lang['user_manage14'] ?>" name="postal" id="postal" required autocomplete="postal-code">
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label class="form-label"><?php echo $lang['user_manage10'] ?> <span class="text-danger">*</span></label>
+                                        <label for="address" class="form-label"><?php echo $lang['user_manage10'] ?> <span class="text-danger">*</span></label>
                                         <div class="form-icon position-relative">
                                             <i data-feather="map-pin" class="fea icon-sm icons"></i>
-                                            <input type="text" class="form-control ps-5" placeholder="<?php echo $lang['user_manage10'] ?>" name="address" id="address">
+                                            <input type="text" class="form-control ps-5" placeholder="<?php echo $lang['user_manage10'] ?>" name="address" id="address" required autocomplete="street-address">
                                         </div>
                                     </div>
                                 </div>
@@ -178,7 +180,7 @@ if (!function_exists('cdp_asset')) { $d = __DIR__; while ($d !== dirname($d) && 
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label class="form-label"><?php echo $lang['leftorder164'] ?></label>
+                                        <label for="document_type" class="form-label"><?php echo $lang['leftorder164'] ?></label>
                                         <div class="form-icon position-relative">
                                             <i data-feather="list" class="fea icon-sm icons"></i>
                                             <select class="custom-select form-control ps-5" id="document_type" name="document_type">
@@ -191,40 +193,40 @@ if (!function_exists('cdp_asset')) { $d = __DIR__; while ($d !== dirname($d) && 
                                 </div>
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label class="form-label"><?php echo $lang['leftorder175'] ?></label>
+                                        <label for="document_number" class="form-label"><?php echo $lang['leftorder175'] ?> <span class="text-danger" aria-hidden="true">*</span></label>
                                         <div class="form-icon position-relative">
                                             <i data-feather="more-horizontal" class="fea icon-sm icons"></i>
-                                            <input type="text" class="form-control ps-5" id="document_number" name="document_number" placeholder="<?php echo $lang['leftorder175'] ?>">
+                                            <input type="text" class="form-control ps-5" id="document_number" required name="document_number" placeholder="<?php echo $lang['leftorder175'] ?>">
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label class="form-label"><?php echo $lang['translate_search_address_country'] ?> <span class="text-danger">*</span></label>
+                                        <label id="country-label" for="country" class="form-label"><?php echo $lang['translate_search_address_country'] ?> <span class="text-danger" aria-hidden="true">*</span></label>
                                         <div class="form-group">
-                                            <select style="height: 45px !important;" class="select2 form-control ps-5" name="country" id="country"></select>
+                                            <select style="height: 45px !important;" class="select2 form-control ps-5" name="country" id="country" aria-required="true"></select>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label class="form-label"><?php echo $lang['translate_search_address_state'] ?> <span class="text-danger">*</span></label>
+                                        <label id="state-label" for="state" class="form-label"><?php echo $lang['translate_search_address_state'] ?> <span class="text-danger" aria-hidden="true">*</span></label>
                                         <div class="form-group">
-                                            <select style="width: 100% !important;" disabled class="select2 form-control ps-5" id="state" name="state"></select>
+                                            <select style="width: 100% !important;" disabled class="select2 form-control ps-5" id="state" aria-required="true" name="state"></select>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label class="form-label"><?php echo $lang['translate_search_address_city'] ?> <span class="text-danger">*</span></label>
+                                        <label id="city-label" for="city" class="form-label"><?php echo $lang['translate_search_address_city'] ?> <span class="text-danger" aria-hidden="true">*</span></label>
                                         <div class="form-group">
-                                            <select style="width: 100% !important;" disabled class="select2 form-control ps-5" id="city" name="city"></select>
+                                            <select style="width: 100% !important;" disabled class="select2 form-control ps-5" id="city" aria-required="true" name="city"></select>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label class="form-label"><?php echo $lang['leftorder332'] ?></label>
+                                        <label for="avatar" class="form-label"><?php echo $lang['leftorder332'] ?></label>
                                         <div class="form-icon position-relative">
                                             <i data-feather="image" class="fea icon-sm icons"></i>
                                             <input type="file" class="form-control ps-5" name="avatar" id="avatar" accept="image/*">
@@ -233,7 +235,7 @@ if (!function_exists('cdp_asset')) { $d = __DIR__; while ($d !== dirname($d) && 
                                 </div>
                                 <div class="col-12">
                                     <div class="mb-3">
-                                        <label class="form-label"><?php echo $lang['leftorder333'] ?></label>
+                                        <label for="document_photo" class="form-label"><?php echo $lang['leftorder333'] ?></label>
                                         <div class="form-icon position-relative">
                                             <i data-feather="image" class="fea icon-sm icons"></i>
                                             <input type="file" class="form-control ps-5" name="document_photo" id="document_photo" accept="image/*">
@@ -248,27 +250,27 @@ if (!function_exists('cdp_asset')) { $d = __DIR__; while ($d !== dirname($d) && 
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label class="form-label"><?php echo $lang['left146'] ?> <span class="text-danger">*</span></label>
+                                        <label for="pass" class="form-label"><?php echo $lang['left146'] ?> <span class="text-danger">*</span></label>
                                         <div class="form-icon position-relative">
                                             <i data-feather="key" class="fea icon-sm icons"></i>
-                                            <input type="password" class="form-control ps-5" placeholder="<?php echo $lang['left147'] ?>" name="pass" id="pass">
+                                            <input type="password" class="form-control ps-5" placeholder="<?php echo $lang['left147'] ?>" name="pass" id="pass" required autocomplete="new-password" minlength="8">
                                         </div>
-                                        <div id="password-strength-meter"></div>
+                                        <div id="password-strength-meter" aria-live="polite"></div>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label class="form-label"><?php echo $lang['left148'] ?> <span class="text-danger">*</span></label>
+                                        <label for="pass2" class="form-label"><?php echo $lang['left148'] ?> <span class="text-danger">*</span></label>
                                         <div class="form-icon position-relative">
                                             <i data-feather="key" class="fea icon-sm icons"></i>
-                                            <input type="password" class="form-control ps-5" name="pass2" id="pass2" placeholder="<?php echo $lang['left149'] ?>">
+                                            <input type="password" class="form-control ps-5" name="pass2" id="pass2" required autocomplete="new-password" minlength="8" placeholder="<?php echo $lang['left149'] ?>">
                                         </div>
-                                        <div id="passwordMatch" class="text-danger"></div>
+                                        <div id="passwordMatch" class="text-danger" aria-live="polite"></div>
                                     </div>
                                 </div>
                                 <div class="col-12">
                                     <div class="mb-3 form-check">
-                                        <input type="checkbox" class="form-check-input" id="terms" name="terms" value="yes">
+                                        <input type="checkbox" class="form-check-input" id="terms" required name="terms" value="yes">
                                         <label class="form-check-label" for="terms"><?php echo $lang['left164'] ?> <a href="terms.php" class="text-primary"><?php echo $lang['left165'] ?></a></label>
                                     </div>
                                 </div>

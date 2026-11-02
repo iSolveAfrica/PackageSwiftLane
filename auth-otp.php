@@ -421,14 +421,14 @@ if ($challengeId > 0) {
 
             <div class="card-body">
                 <div class="text-center">
-                    <h4 class="auth-heading mb-2">OTP Verification</h4>
-                    <p class="auth-subtitle">Enter the code sent to your email or WhatsApp.</p>
+                    <h1 class="auth-heading mb-2">OTP Verification</h1>
+                    <p class="auth-subtitle" id="otp-help">Enter the six-digit code sent to your email or WhatsApp. You can paste the complete code.</p>
                 </div>
 
-                <div id="msgholder2" class="mt-4">
+                <div id="msgholder2" class="mt-4" aria-live="polite" aria-atomic="true">
                     <?php if ($message): ?>
                         <div class="alert alert-success">
-                            <p class="mb-0"><?php echo $message; ?></p>
+                            <p class="mb-0"><?php echo cdp_authFrameEsc($message); ?></p>
                         </div>
                     <?php endif; ?>
                     <?php if ($error): ?>
@@ -436,7 +436,7 @@ if ($challengeId > 0) {
                             <p class="mb-0">
                                 <span class="icon-minus-sign"></span>
                                 <i class="close icon-remove-circle"></i>
-                                <span>Error!</span> <?php echo $error; ?>
+                                <span>Error!</span> <?php echo cdp_authFrameEsc($error); ?>
                             </p>
                         </div>
                     <?php endif; ?>
@@ -448,13 +448,13 @@ if ($challengeId > 0) {
                     <div class="row">
                         <div class="col-12">
                             <div class="mb-3">
-                                <div class="d-flex justify-content-center gap-2 flex-nowrap" id="otp_boxes">
-                                    <input type="text" maxlength="1" class="otp-box form-control fw-bold fs-4" inputmode="numeric" pattern="[0-9]" autocomplete="one-time-code">
-                                    <input type="text" maxlength="1" class="otp-box form-control fw-bold fs-4" inputmode="numeric" pattern="[0-9]" autocomplete="one-time-code">
-                                    <input type="text" maxlength="1" class="otp-box form-control fw-bold fs-4" inputmode="numeric" pattern="[0-9]" autocomplete="one-time-code">
-                                    <input type="text" maxlength="1" class="otp-box form-control fw-bold fs-4" inputmode="numeric" pattern="[0-9]" autocomplete="one-time-code">
-                                    <input type="text" maxlength="1" class="otp-box form-control fw-bold fs-4" inputmode="numeric" pattern="[0-9]" autocomplete="one-time-code">
-                                    <input type="text" maxlength="1" class="otp-box form-control fw-bold fs-4" inputmode="numeric" pattern="[0-9]" autocomplete="one-time-code">
+                                <div class="d-flex justify-content-center gap-2 flex-nowrap" id="otp_boxes" role="group" aria-label="Verification code" aria-describedby="otp-help">
+                                    <input type="text" maxlength="1" class="otp-box form-control fw-bold fs-4" inputmode="numeric" pattern="[0-9]" autocomplete="one-time-code" aria-label="Digit 1 of 6">
+                                    <input type="text" maxlength="1" class="otp-box form-control fw-bold fs-4" inputmode="numeric" pattern="[0-9]" autocomplete="one-time-code" aria-label="Digit 2 of 6">
+                                    <input type="text" maxlength="1" class="otp-box form-control fw-bold fs-4" inputmode="numeric" pattern="[0-9]" autocomplete="one-time-code" aria-label="Digit 3 of 6">
+                                    <input type="text" maxlength="1" class="otp-box form-control fw-bold fs-4" inputmode="numeric" pattern="[0-9]" autocomplete="one-time-code" aria-label="Digit 4 of 6">
+                                    <input type="text" maxlength="1" class="otp-box form-control fw-bold fs-4" inputmode="numeric" pattern="[0-9]" autocomplete="one-time-code" aria-label="Digit 5 of 6">
+                                    <input type="text" maxlength="1" class="otp-box form-control fw-bold fs-4" inputmode="numeric" pattern="[0-9]" autocomplete="one-time-code" aria-label="Digit 6 of 6">
                                 </div>
                                 <input type="hidden" name="otp_code" id="otp_code_hidden">
                             </div>

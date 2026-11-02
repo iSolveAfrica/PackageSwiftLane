@@ -1,0 +1,136 @@
+[
+  {
+    "route": "/offices_list.php",
+    "width": 360,
+    "passes": 26,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "count": 2
+      }
+    ]
+  },
+  {
+    "route": "/offices_list.php",
+    "width": 390,
+    "passes": 26,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "count": 2
+      }
+    ]
+  },
+  {
+    "route": "/offices_list.php",
+    "width": 768,
+    "passes": 28,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-prohibited-attr",
+        "count": 1
+      },
+      {
+        "id": "color-contrast",
+        "count": 2
+      }
+    ]
+  },
+  {
+    "route": "/offices_list.php",
+    "width": 1024,
+    "passes": 28,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-prohibited-attr",
+        "count": 1
+      },
+      {
+        "id": "color-contrast",
+        "count": 2
+      }
+    ]
+  },
+  {
+    "route": "/offices_list.php",
+    "width": 1440,
+    "passes": 29,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-prohibited-attr",
+        "count": 1
+      },
+      {
+        "id": "color-contrast",
+        "count": 2
+      }
+    ]
+  },
+  {
+    "route": "/offices_add.php",
+    "width": 360,
+    "passes": 25,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "route": "/offices_add.php",
+    "width": 390,
+    "passes": 25,
+    "violations": [],
+    "incomplete": []
+  },
+  {
+    "route": "/offices_add.php",
+    "width": 768,
+    "passes": 27,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-prohibited-attr",
+        "count": 1
+      },
+      {
+        "id": "color-contrast",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "route": "/offices_add.php",
+    "width": 1024,
+    "passes": 27,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-prohibited-attr",
+        "count": 1
+      },
+      {
+        "id": "color-contrast",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "route": "/offices_add.php",
+    "width": 1440,
+    "passes": 28,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-prohibited-attr",
+        "count": 1
+      },
+      {
+        "id": "color-contrast",
+        "count": 1
+      }
+    ]
+  }
+]

@@ -3,6 +3,13 @@
 ini_set('display_errors', 0);
 
 require_once("../loader.php");
+require_once __DIR__ . '/../helpers/csrf.php';
+header('Content-Type: application/json; charset=utf-8');
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !cdp_csrf_validate_request()) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'errors' => 'Your form session expired. Refresh this page and try again.']);
+    exit;
+}
 require_once("../helpers/querys.php");
 
 $user = new User;
@@ -29,9 +36,9 @@ function cdp_signupBlockingExists($db, $field, $value)
     return $db->cdp_registro() ? true : false;
 }
 
-$requiredFields = array('terms', 'country', 'state', 'city', 'address', 'postal', 'username', 'email', 'phone', 'fname', 'lname', 'document_number', 'document_type');
+$requiredFields = array('terms', 'country', 'state', 'city', 'address', 'postal', 'username', 'email', 'phone', 'fname', 'lname', 'document_number', 'document_type', 'pass', 'pass2');
 foreach ($requiredFields as $field) {
-    if (empty($_POST[$field])) {
+    if (empty($_POST[$field]) || !is_string($_POST[$field])) {
         $error = 'Please enter ' . str_replace('_', ' ', $field);
     }
 }

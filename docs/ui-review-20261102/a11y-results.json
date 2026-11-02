@@ -1,0 +1,1194 @@
+[
+  {
+    "version": "before",
+    "route": "/",
+    "width": 390,
+    "passes": 32,
+    "violations": [
+      {
+        "id": "button-name",
+        "impact": "critical",
+        "description": "Ensure buttons have discernible text",
+        "nodes": [
+          {
+            "html": "<button type=\"button\" class=\"btn btn-secondary dropdown-toggle swl-icon-only\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\" data-swl-icon=\"1\"><i class=\"fa fa-ellipsis-h\" aria-hidden=\"true\"></i></button>",
+            "target": [
+              "tr:nth-child(1) > td:nth-child(5) > .btn-group > .btn-secondary.swl-icon-only.dropdown-toggle"
+            ],
+            "summary": "Fix any of the following:\n  Element does not have inner text that is visible to screen readers\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+          },
+          {
+            "html": "<button type=\"button\" class=\"btn btn-secondary dropdown-toggle swl-icon-only\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\" data-swl-icon=\"1\"><i class=\"fa fa-ellipsis-h\" aria-hidden=\"true\"></i></button>",
+            "target": [
+              "tr:nth-child(2) > td:nth-child(5) > .btn-group > .btn-secondary.swl-icon-only.dropdown-toggle"
+            ],
+            "summary": "Fix any of the following:\n  Element does not have inner text that is visible to screen readers\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+          },
+          {
+            "html": "<button type=\"button\" class=\"btn btn-secondary dropdown-toggle swl-icon-only\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\" data-swl-icon=\"1\"><i class=\"fa fa-ellipsis-h\" aria-hidden=\"true\"></i></button>",
+            "target": [
+              "tr:nth-child(3) > td:nth-child(5) > .btn-group > .btn-secondary.swl-icon-only.dropdown-toggle"
+            ],
+            "summary": "Fix any of the following:\n  Element does not have inner text that is visible to screen readers\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+          }
+        ]
+      },
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "nodes": [
+          {
+            "html": "<small>Temporary preview · isolated test content</small>",
+            "target": [
+              ".page-title > small"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.22 (foreground color: #9ba9bb, background color: #f6f7f9, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<div class=\"alert alert-info\" role=\"status\">Temporary UI preview. Sample content below checks shared components; application data and external services are disabled.</div>",
+            "target": [
+              ".alert"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.92 (foreground color: #2e7fbd, background color: #ecf6fe, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<p class=\"text-muted\">Review the same shared controls used by shipment, customer, and warehouse screens.</p>",
+            "target": [
+              ".card-body > .text-muted"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label for=\"search\">Search records</label>",
+            "target": [
+              "label[for=\"search\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 9.0pt (12px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label for=\"status\">Status</label>",
+            "target": [
+              "label[for=\"status\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 9.0pt (12px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<th scope=\"col\" data-swl-cell=\"1\" class=\"swl-nowrap\">Reference</th>",
+            "target": [
+              "th:nth-child(1)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.22 (foreground color: #9ba9bb, background color: #f6f7f9, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<th scope=\"col\" data-swl-cell=\"1\" class=\"swl-nowrap\">Description</th>",
+            "target": [
+              "th:nth-child(2)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.22 (foreground color: #9ba9bb, background color: #f6f7f9, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<th scope=\"col\" data-swl-cell=\"1\" class=\"swl-nowrap\">Destination</th>",
+            "target": [
+              "th:nth-child(3)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.22 (foreground color: #9ba9bb, background color: #f6f7f9, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<th scope=\"col\" data-swl-cell=\"1\" class=\"swl-nowrap\">Status</th>",
+            "target": [
+              "th:nth-child(4)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.22 (foreground color: #9ba9bb, background color: #f6f7f9, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<th scope=\"col\" data-swl-cell=\"1\" class=\"swl-nowrap\">Actions</th>",
+            "target": [
+              "th:nth-child(5)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.22 (foreground color: #9ba9bb, background color: #f6f7f9, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<span class=\"label swl-status\" style=\"--swl-status: rgb(55, 164, 243);\" data-swl=\"1\">In Transit</span>",
+            "target": [
+              "tr:nth-child(1) > td:nth-child(4) > .label.swl-status[data-swl=\"1\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.16 (foreground color: #328ed2, background color: #e7f4fe, font size: 9.0pt (12px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<span class=\"label swl-status\" style=\"--swl-status: rgb(134, 226, 62);\" data-swl=\"1\">Delivered</span>",
+            "target": [
+              "tr:nth-child(2) > td:nth-child(4) > .label.swl-status[data-swl=\"1\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.1 (foreground color: #72c13e, background color: #f0fce8, font size: 9.0pt (12px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<span class=\"label swl-status\" style=\"--swl-status: rgb(251, 59, 82);\" data-swl=\"1\">Pending</span>",
+            "target": [
+              "tr:nth-child(3) > td:nth-child(4) > .label.swl-status[data-swl=\"1\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.04 (foreground color: #d2384e, background color: #ffe7ea, font size: 9.0pt (12px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<p class=\"form-text mt-3\">These sample rows exist only in this preview.</p>",
+            "target": [
+              ".form-text.mt-3"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label for=\"name\">Contact name</label>",
+            "target": [
+              "label[for=\"name\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 9.0pt (12px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<small class=\"form-text\">Labels remain visible while typing.</small>",
+            "target": [
+              ".form-group:nth-child(2) > .form-text"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label for=\"notes\">Notes</label>",
+            "target": [
+              "label[for=\"notes\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 9.0pt (12px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<footer class=\"footer text-center py-3\">\n    © 2026 Swiftlane - All rights reserved</footer>",
+            "target": [
+              "footer"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.22 (foreground color: #9ba9bb, background color: #f6f7f9, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      },
+      {
+        "id": "image-alt",
+        "impact": "critical",
+        "description": "Ensure <img> elements have alternative text or a role of none or presentation",
+        "nodes": [
+          {
+            "html": "<img src=\"/assets/uploads/blank.png\" class=\"rounded-circle\" width=\"50\">",
+            "target": [
+              "img[width=\"50\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element does not have an alt attribute\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+          }
+        ]
+      },
+      {
+        "id": "link-name",
+        "impact": "serious",
+        "description": "Ensure links have discernible text",
+        "nodes": [
+          {
+            "html": "<a class=\"nav-toggler waves-effect waves-light d-block d-md-none\" href=\"javascript:void(0)\"><iconify-icon icon=\"solar:hamburger-menu-linear\"></iconify-icon></a>",
+            "target": [
+              ".nav-toggler"
+            ],
+            "summary": "Fix all of the following:\n  Element is in tab order and does not have accessible text\n\nFix any of the following:\n  Element does not have text that is visible to screen readers\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "version": "before",
+    "route": "/",
+    "width": 1440,
+    "passes": 32,
+    "violations": [
+      {
+        "id": "button-name",
+        "impact": "critical",
+        "description": "Ensure buttons have discernible text",
+        "nodes": [
+          {
+            "html": "<button type=\"button\" class=\"btn btn-secondary dropdown-toggle swl-icon-only\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\" data-swl-icon=\"1\"><i class=\"fa fa-ellipsis-h\" aria-hidden=\"true\"></i></button>",
+            "target": [
+              "tr:nth-child(1) > td:nth-child(5) > .btn-group > .btn-secondary.swl-icon-only.dropdown-toggle"
+            ],
+            "summary": "Fix any of the following:\n  Element does not have inner text that is visible to screen readers\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+          },
+          {
+            "html": "<button type=\"button\" class=\"btn btn-secondary dropdown-toggle swl-icon-only\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\" data-swl-icon=\"1\"><i class=\"fa fa-ellipsis-h\" aria-hidden=\"true\"></i></button>",
+            "target": [
+              "tr:nth-child(2) > td:nth-child(5) > .btn-group > .btn-secondary.swl-icon-only.dropdown-toggle"
+            ],
+            "summary": "Fix any of the following:\n  Element does not have inner text that is visible to screen readers\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+          },
+          {
+            "html": "<button type=\"button\" class=\"btn btn-secondary dropdown-toggle swl-icon-only\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\" data-swl-icon=\"1\"><i class=\"fa fa-ellipsis-h\" aria-hidden=\"true\"></i></button>",
+            "target": [
+              "tr:nth-child(3) > td:nth-child(5) > .btn-group > .btn-secondary.swl-icon-only.dropdown-toggle"
+            ],
+            "summary": "Fix any of the following:\n  Element does not have inner text that is visible to screen readers\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+          }
+        ]
+      },
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "nodes": [
+          {
+            "html": "<small>Temporary preview · isolated test content</small>",
+            "target": [
+              ".page-title > small"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.22 (foreground color: #9ba9bb, background color: #f6f7f9, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<div class=\"alert alert-info\" role=\"status\">Temporary UI preview. Sample content below checks shared components; application data and external services are disabled.</div>",
+            "target": [
+              ".alert"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.92 (foreground color: #2e7fbd, background color: #ecf6fe, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<p class=\"text-muted\">Review the same shared controls used by shipment, customer, and warehouse screens.</p>",
+            "target": [
+              ".card-body > .text-muted"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label for=\"search\">Search records</label>",
+            "target": [
+              "label[for=\"search\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 9.0pt (12px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label for=\"status\">Status</label>",
+            "target": [
+              "label[for=\"status\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 9.0pt (12px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<th scope=\"col\" data-swl-cell=\"1\" class=\"swl-nowrap\">Reference</th>",
+            "target": [
+              "th:nth-child(1)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.22 (foreground color: #9ba9bb, background color: #f6f7f9, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<th scope=\"col\" data-swl-cell=\"1\" class=\"swl-nowrap\">Description</th>",
+            "target": [
+              "th:nth-child(2)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.22 (foreground color: #9ba9bb, background color: #f6f7f9, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<th scope=\"col\" data-swl-cell=\"1\" class=\"swl-nowrap\">Destination</th>",
+            "target": [
+              "th:nth-child(3)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.22 (foreground color: #9ba9bb, background color: #f6f7f9, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<th scope=\"col\" data-swl-cell=\"1\" class=\"swl-nowrap\">Status</th>",
+            "target": [
+              "th:nth-child(4)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.22 (foreground color: #9ba9bb, background color: #f6f7f9, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<th scope=\"col\" data-swl-cell=\"1\" class=\"swl-nowrap\">Actions</th>",
+            "target": [
+              "th:nth-child(5)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.22 (foreground color: #9ba9bb, background color: #f6f7f9, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<span class=\"label swl-status\" style=\"--swl-status: rgb(55, 164, 243);\" data-swl=\"1\">In Transit</span>",
+            "target": [
+              "tr:nth-child(1) > td:nth-child(4) > .label.swl-status[data-swl=\"1\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.16 (foreground color: #328ed2, background color: #e7f4fe, font size: 9.0pt (12px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<span class=\"label swl-status\" style=\"--swl-status: rgb(134, 226, 62);\" data-swl=\"1\">Delivered</span>",
+            "target": [
+              "tr:nth-child(2) > td:nth-child(4) > .label.swl-status[data-swl=\"1\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.1 (foreground color: #72c13e, background color: #f0fce8, font size: 9.0pt (12px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<span class=\"label swl-status\" style=\"--swl-status: rgb(251, 59, 82);\" data-swl=\"1\">Pending</span>",
+            "target": [
+              "tr:nth-child(3) > td:nth-child(4) > .label.swl-status[data-swl=\"1\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.04 (foreground color: #d2384e, background color: #ffe7ea, font size: 9.0pt (12px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<p class=\"form-text mt-3\">These sample rows exist only in this preview.</p>",
+            "target": [
+              ".form-text.mt-3"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label for=\"name\">Contact name</label>",
+            "target": [
+              "label[for=\"name\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 9.0pt (12px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<small class=\"form-text\">Labels remain visible while typing.</small>",
+            "target": [
+              ".form-group:nth-child(2) > .form-text"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label for=\"notes\">Notes</label>",
+            "target": [
+              "label[for=\"notes\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 9.0pt (12px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<footer class=\"footer text-center py-3\">\n    © 2026 Swiftlane - All rights reserved</footer>",
+            "target": [
+              "footer"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.22 (foreground color: #9ba9bb, background color: #f6f7f9, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      },
+      {
+        "id": "image-alt",
+        "impact": "critical",
+        "description": "Ensure <img> elements have alternative text or a role of none or presentation",
+        "nodes": [
+          {
+            "html": "<img src=\"/assets/uploads/blank.png\" class=\"rounded-circle\" width=\"50\">",
+            "target": [
+              "img[width=\"50\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element does not have an alt attribute\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "aria-prohibited-attr",
+        "count": 1
+      },
+      {
+        "id": "color-contrast",
+        "count": 2
+      }
+    ]
+  },
+  {
+    "version": "before",
+    "route": "/login.php",
+    "width": 390,
+    "passes": 22,
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "nodes": [
+          {
+            "html": "<p class=\"auth-subtitle\">Use your account to continue.</p>",
+            "target": [
+              ".auth-subtitle"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-label\">Swift User / Email <span class=\"text-danger\">*</span></label>",
+            "target": [
+              ".col-12:nth-child(1) > .mb-3 > .form-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-label\">Password <span class=\"text-danger\">*</span></label>",
+            "target": [
+              ".col-12:nth-child(2) > .mb-3 > .form-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-check-label\" for=\"flexCheckDefault\">Remember Me</label>",
+            "target": [
+              ".form-check-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<a href=\"forgot-password.php\" class=\"text-dark fw-bold\">Forgotten your password?</a>",
+            "target": [
+              ".text-dark"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 9.8pt (13px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<div class=\"auth-divider\">or</div>",
+            "target": [
+              ".auth-divider"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "count": 4
+      }
+    ]
+  },
+  {
+    "version": "before",
+    "route": "/login.php",
+    "width": 1440,
+    "passes": 22,
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "nodes": [
+          {
+            "html": "<p class=\"auth-subtitle\">Use your account to continue.</p>",
+            "target": [
+              ".auth-subtitle"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-label\">Swift User / Email <span class=\"text-danger\">*</span></label>",
+            "target": [
+              ".col-12:nth-child(1) > .mb-3 > .form-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-label\">Password <span class=\"text-danger\">*</span></label>",
+            "target": [
+              ".col-12:nth-child(2) > .mb-3 > .form-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-check-label\" for=\"flexCheckDefault\">Remember Me</label>",
+            "target": [
+              ".form-check-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<a href=\"forgot-password.php\" class=\"text-dark fw-bold\">Forgotten your password?</a>",
+            "target": [
+              ".text-dark"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 9.8pt (13px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<div class=\"auth-divider\">or</div>",
+            "target": [
+              ".auth-divider"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "count": 6
+      }
+    ]
+  },
+  {
+    "version": "before",
+    "route": "/forgot-password.php",
+    "width": 390,
+    "passes": 21,
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "nodes": [
+          {
+            "html": "<p class=\"text-muted\">Please enter your email address. You will receive a link to create a new password by email.</p>",
+            "target": [
+              ".col-12:nth-child(1) > p"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.16 (foreground color: #8492a6, background color: #ffffff, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-label\">Email <span class=\"text-danger\">*</span></label>",
+            "target": [
+              "label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "count": 4
+      }
+    ]
+  },
+  {
+    "version": "before",
+    "route": "/forgot-password.php",
+    "width": 1440,
+    "passes": 21,
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "nodes": [
+          {
+            "html": "<p class=\"text-muted\">Please enter your email address. You will receive a link to create a new password by email.</p>",
+            "target": [
+              ".col-12:nth-child(1) > p"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.16 (foreground color: #8492a6, background color: #ffffff, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-label\">Email <span class=\"text-danger\">*</span></label>",
+            "target": [
+              "label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "count": 6
+      }
+    ]
+  },
+  {
+    "version": "before",
+    "route": "/sign-up.php",
+    "width": 390,
+    "passes": 27,
+    "violations": [
+      {
+        "id": "aria-input-field-name",
+        "impact": "serious",
+        "description": "Ensure every ARIA input field has an accessible name",
+        "nodes": [
+          {
+            "html": "<span class=\"select2-selection__rendered\" id=\"select2-country-container\" role=\"textbox\" aria-readonly=\"true\"><span class=\"select2-selection__placeholder\">Search Country</span></span>",
+            "target": [
+              "#select2-country-container"
+            ],
+            "summary": "Fix any of the following:\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute"
+          },
+          {
+            "html": "<span class=\"select2-selection__rendered\" id=\"select2-state-container\" role=\"textbox\" aria-readonly=\"true\"><span class=\"select2-selection__placeholder\">Search State</span></span>",
+            "target": [
+              "#select2-state-container"
+            ],
+            "summary": "Fix any of the following:\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute"
+          },
+          {
+            "html": "<span class=\"select2-selection__rendered\" id=\"select2-city-container\" role=\"textbox\" aria-readonly=\"true\"><span class=\"select2-selection__placeholder\">Search City</span></span>",
+            "target": [
+              "#select2-city-container"
+            ],
+            "summary": "Fix any of the following:\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute"
+          }
+        ]
+      },
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "nodes": [
+          {
+            "html": "<p class=\"auth-subtitle\">Create your account and complete the onboarding flow.</p>",
+            "target": [
+              ".auth-subtitle"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-label\">First Name <span class=\"text-danger\">*</span></label>",
+            "target": [
+              ".auth-form-section:nth-child(1) > .row > .col-md-6:nth-child(1) > .mb-3 > .form-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-label\">Last Name <span class=\"text-danger\">*</span></label>",
+            "target": [
+              ".auth-form-section:nth-child(1) > .row > .col-md-6:nth-child(2) > .mb-3 > .form-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-label\">Username <span class=\"text-danger\">*</span></label>",
+            "target": [
+              ".col-6:nth-child(3) > .mb-3 > .form-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-label\">Company</label>",
+            "target": [
+              ".col-6:nth-child(4) > .mb-3 > .form-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-label\">Email <span class=\"text-danger\">*</span></label>",
+            "target": [
+              ".col-md-8 > .mb-3 > .form-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label for=\"phone_custom\" class=\"form-label\">Phone <span class=\"text-danger\">*</span></label>",
+            "target": [
+              "label[for=\"phone_custom\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-label\">Zip Code <span class=\"text-danger\">*</span></label>",
+            "target": [
+              ".auth-form-section:nth-child(2) > .row > .col-md-6:nth-child(4) > .mb-3 > .form-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-label\">Address <span class=\"text-danger\">*</span></label>",
+            "target": [
+              ".auth-form-section:nth-child(2) > .row > .col-md-6:nth-child(5) > .mb-3 > .form-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-label\">Document Type</label>",
+            "target": [
+              ".auth-form-section:nth-child(3) > .row > .col-md-6:nth-child(1) > .mb-3 > .form-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-label\">Document Number</label>",
+            "target": [
+              ".auth-form-section:nth-child(3) > .row > .col-md-6:nth-child(2) > .mb-3 > .form-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-label\">Country <span class=\"text-danger\">*</span></label>",
+            "target": [
+              ".col-md-6:nth-child(3) > .mb-3 > .form-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<span class=\"select2-selection__placeholder\">Search Country</span>",
+            "target": [
+              "#select2-country-container > .select2-selection__placeholder"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #999999, background color: #ffffff, font size: 10.1pt (13.5px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-label\">State <span class=\"text-danger\">*</span></label>",
+            "target": [
+              ".auth-form-section:nth-child(3) > .row > .col-md-6:nth-child(4) > .mb-3 > .form-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<span class=\"select2-selection__placeholder\">Search State</span>",
+            "target": [
+              "#select2-state-container > .select2-selection__placeholder"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #999999, background color: #ffffff, font size: 10.1pt (13.5px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-label\">City <span class=\"text-danger\">*</span></label>",
+            "target": [
+              ".auth-form-section:nth-child(3) > .row > .col-md-6:nth-child(5) > .mb-3 > .form-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<span class=\"select2-selection__placeholder\">Search City</span>",
+            "target": [
+              "#select2-city-container > .select2-selection__placeholder"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #999999, background color: #ffffff, font size: 10.1pt (13.5px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-label\">Upload Profile Photo</label>",
+            "target": [
+              ".col-md-6:nth-child(6) > .mb-3 > .form-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-label\">Upload Document Photo</label>",
+            "target": [
+              ".col-12 > .mb-3 > .form-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-label\">Password <span class=\"text-danger\">*</span></label>",
+            "target": [
+              ".auth-form-section:nth-child(4) > .row > .col-md-6:nth-child(1) > .mb-3 > .form-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-label\">Confirm Password <span class=\"text-danger\">*</span></label>",
+            "target": [
+              ".auth-form-section:nth-child(4) > .row > .col-md-6:nth-child(2) > .mb-3 > .form-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-check-label\" for=\"terms\">You Agree <a href=\"terms.php\" class=\"text-primary\">terms and conditions</a></label>",
+            "target": [
+              ".form-check-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      },
+      {
+        "id": "label",
+        "impact": "critical",
+        "description": "Ensure every form element has a label",
+        "nodes": [
+          {
+            "html": "<input type=\"file\" class=\"form-control ps-5\" name=\"avatar\" id=\"avatar\" accept=\"image/*\">",
+            "target": [
+              "#avatar"
+            ],
+            "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element has no placeholder attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+          },
+          {
+            "html": "<input type=\"file\" class=\"form-control ps-5\" name=\"document_photo\" id=\"document_photo\" accept=\"image/*\">",
+            "target": [
+              "#document_photo"
+            ],
+            "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element has no placeholder attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+          }
+        ]
+      },
+      {
+        "id": "select-name",
+        "impact": "critical",
+        "description": "Ensure select element has an accessible name",
+        "nodes": [
+          {
+            "html": "<select class=\"custom-select form-control ps-5\" id=\"document_type\" name=\"document_type\">",
+            "target": [
+              "#document_type"
+            ],
+            "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "aria-valid-attr-value",
+        "count": 1
+      },
+      {
+        "id": "color-contrast",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "version": "before",
+    "route": "/sign-up.php",
+    "width": 1440,
+    "passes": 27,
+    "violations": [
+      {
+        "id": "aria-input-field-name",
+        "impact": "serious",
+        "description": "Ensure every ARIA input field has an accessible name",
+        "nodes": [
+          {
+            "html": "<span class=\"select2-selection__rendered\" id=\"select2-country-container\" role=\"textbox\" aria-readonly=\"true\"><span class=\"select2-selection__placeholder\">Search Country</span></span>",
+            "target": [
+              "#select2-country-container"
+            ],
+            "summary": "Fix any of the following:\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute"
+          },
+          {
+            "html": "<span class=\"select2-selection__rendered\" id=\"select2-state-container\" role=\"textbox\" aria-readonly=\"true\"><span class=\"select2-selection__placeholder\">Search State</span></span>",
+            "target": [
+              "#select2-state-container"
+            ],
+            "summary": "Fix any of the following:\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute"
+          },
+          {
+            "html": "<span class=\"select2-selection__rendered\" id=\"select2-city-container\" role=\"textbox\" aria-readonly=\"true\"><span class=\"select2-selection__placeholder\">Search City</span></span>",
+            "target": [
+              "#select2-city-container"
+            ],
+            "summary": "Fix any of the following:\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute"
+          }
+        ]
+      },
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "nodes": [
+          {
+            "html": "<p class=\"auth-subtitle\">Create your account and complete the onboarding flow.</p>",
+            "target": [
+              ".auth-subtitle"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-label\">First Name <span class=\"text-danger\">*</span></label>",
+            "target": [
+              ".auth-form-section:nth-child(1) > .row > .col-md-6:nth-child(1) > .mb-3 > .form-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-label\">Last Name <span class=\"text-danger\">*</span></label>",
+            "target": [
+              ".auth-form-section:nth-child(1) > .row > .col-md-6:nth-child(2) > .mb-3 > .form-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-label\">Username <span class=\"text-danger\">*</span></label>",
+            "target": [
+              ".col-6:nth-child(3) > .mb-3 > .form-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-label\">Company</label>",
+            "target": [
+              ".col-6:nth-child(4) > .mb-3 > .form-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-label\">Email <span class=\"text-danger\">*</span></label>",
+            "target": [
+              ".col-md-8 > .mb-3 > .form-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label for=\"phone_custom\" class=\"form-label\">Phone <span class=\"text-danger\">*</span></label>",
+            "target": [
+              "label[for=\"phone_custom\"]"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-label\">Zip Code <span class=\"text-danger\">*</span></label>",
+            "target": [
+              ".auth-form-section:nth-child(2) > .row > .col-md-6:nth-child(4) > .mb-3 > .form-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-label\">Address <span class=\"text-danger\">*</span></label>",
+            "target": [
+              ".auth-form-section:nth-child(2) > .row > .col-md-6:nth-child(5) > .mb-3 > .form-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-label\">Document Type</label>",
+            "target": [
+              ".auth-form-section:nth-child(3) > .row > .col-md-6:nth-child(1) > .mb-3 > .form-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-label\">Document Number</label>",
+            "target": [
+              ".auth-form-section:nth-child(3) > .row > .col-md-6:nth-child(2) > .mb-3 > .form-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-label\">Country <span class=\"text-danger\">*</span></label>",
+            "target": [
+              ".col-md-6:nth-child(3) > .mb-3 > .form-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<span class=\"select2-selection__placeholder\">Search Country</span>",
+            "target": [
+              "#select2-country-container > .select2-selection__placeholder"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #999999, background color: #ffffff, font size: 10.1pt (13.5px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-label\">State <span class=\"text-danger\">*</span></label>",
+            "target": [
+              ".auth-form-section:nth-child(3) > .row > .col-md-6:nth-child(4) > .mb-3 > .form-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<span class=\"select2-selection__placeholder\">Search State</span>",
+            "target": [
+              "#select2-state-container > .select2-selection__placeholder"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #999999, background color: #ffffff, font size: 10.1pt (13.5px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-label\">City <span class=\"text-danger\">*</span></label>",
+            "target": [
+              ".auth-form-section:nth-child(3) > .row > .col-md-6:nth-child(5) > .mb-3 > .form-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<span class=\"select2-selection__placeholder\">Search City</span>",
+            "target": [
+              "#select2-city-container > .select2-selection__placeholder"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.84 (foreground color: #999999, background color: #ffffff, font size: 10.1pt (13.5px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-label\">Upload Profile Photo</label>",
+            "target": [
+              ".col-md-6:nth-child(6) > .mb-3 > .form-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-label\">Upload Document Photo</label>",
+            "target": [
+              ".col-12 > .mb-3 > .form-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-label\">Password <span class=\"text-danger\">*</span></label>",
+            "target": [
+              ".auth-form-section:nth-child(4) > .row > .col-md-6:nth-child(1) > .mb-3 > .form-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-label\">Confirm Password <span class=\"text-danger\">*</span></label>",
+            "target": [
+              ".auth-form-section:nth-child(4) > .row > .col-md-6:nth-child(2) > .mb-3 > .form-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "html": "<label class=\"form-check-label\" for=\"terms\">You Agree <a href=\"terms.php\" class=\"text-primary\">terms and conditions</a></label>",
+            "target": [
+              ".form-check-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.39 (foreground color: #9ba9bb, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      },
+      {
+        "id": "label",
+        "impact": "critical",
+        "description": "Ensure every form element has a label",
+        "nodes": [
+          {
+            "html": "<input type=\"file\" class=\"form-control ps-5\" name=\"avatar\" id=\"avatar\" accept=\"image/*\">",
+            "target": [
+              "#avatar"
+            ],
+            "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element has no placeholder attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+          },
+          {
+            "html": "<input type=\"file\" class=\"form-control ps-5\" name=\"document_photo\" id=\"document_photo\" accept=\"image/*\">",
+            "target": [
+              "#document_photo"
+            ],
+            "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element has no placeholder attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+          }
+        ]
+      },
+      {
+        "id": "select-name",
+        "impact": "critical",
+        "description": "Ensure select element has an accessible name",
+        "nodes": [
+          {
+            "html": "<select class=\"custom-select form-control ps-5\" id=\"document_type\" name=\"document_type\">",
+            "target": [
+              "#document_type"
+            ],
+            "summary": "Fix any of the following:\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element's default semantics were not overridden with role=\"none\" or role=\"presentation\""
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "aria-valid-attr-value",
+        "count": 1
+      },
+      {
+        "id": "color-contrast",
+        "count": 2
+      }
+    ]
+  },
+  {
+    "version": "after",
+    "route": "/",
+    "width": 390,
+    "passes": 30,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "version": "after",
+    "route": "/",
+    "width": 1440,
+    "passes": 32,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-prohibited-attr",
+        "count": 1
+      },
+      {
+        "id": "color-contrast",
+        "count": 2
+      }
+    ]
+  },
+  {
+    "version": "after",
+    "route": "/login.php",
+    "width": 390,
+    "passes": 22,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "count": 4
+      }
+    ]
+  },
+  {
+    "version": "after",
+    "route": "/login.php",
+    "width": 1440,
+    "passes": 22,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "count": 6
+      }
+    ]
+  },
+  {
+    "version": "after",
+    "route": "/forgot-password.php",
+    "width": 390,
+    "passes": 26,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "count": 4
+      }
+    ]
+  },
+  {
+    "version": "after",
+    "route": "/forgot-password.php",
+    "width": 1440,
+    "passes": 26,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "count": 6
+      }
+    ]
+  },
+  {
+    "version": "after",
+    "route": "/sign-up.php",
+    "width": 390,
+    "passes": 28,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-valid-attr-value",
+        "count": 1
+      },
+      {
+        "id": "color-contrast",
+        "count": 1
+      }
+    ]
+  },
+  {
+    "version": "after",
+    "route": "/sign-up.php",
+    "width": 1440,
+    "passes": 28,
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-valid-attr-value",
+        "count": 1
+      },
+      {
+        "id": "color-contrast",
+        "count": 2
+      }
+    ]
+  }
+]

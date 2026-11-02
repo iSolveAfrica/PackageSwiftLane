@@ -198,7 +198,7 @@ body.auth-page .auth-subtitle {
   font-weight: 500;
   font-size: 13px;
   line-height: 18px;
-  color: var(--slate-400);
+  color: var(--text-muted);
   text-align: center;
   margin: 0;
 }
@@ -260,7 +260,7 @@ body.auth-page label {
   font-size: 11px;
   line-height: 14px;
   letter-spacing: var(--track-normal);
-  color: var(--slate-400);
+  color: var(--text-muted);
   margin-bottom: 5px;
 }
 body.auth-page .text-danger { color: var(--swift-red) !important; }
@@ -272,7 +272,7 @@ body.auth-page .form-icon .icons {
   transform: translateY(-50%);
   width: 18px;
   height: 18px;
-  color: var(--slate-400);
+  color: var(--text-muted);
   z-index: 2;
   pointer-events: none;
 }
@@ -283,7 +283,7 @@ body.auth-page .form-select {
   border: 0 !important;
   border-radius: 12px !important;
   background: var(--white) !important;
-  box-shadow: var(--ring-default) !important;
+  box-shadow: var(--ring-control) !important;
   font-family: var(--font-ui);
   font-weight: 500;
   font-size: 13.5px;
@@ -295,7 +295,7 @@ body.auth-page .form-select {
 body.auth-page .form-icon .form-control.ps-5 { padding-left: 44px !important; }
 body.auth-page .form-control:focus,
 body.auth-page .form-select:focus { box-shadow: 0 0 0 2px var(--focus-ring) !important; outline: 0; }
-body.auth-page .form-control::placeholder { color: var(--slate-400); opacity: 1; }
+body.auth-page .form-control::placeholder { color: var(--text-muted); opacity: 1; }
 body.auth-page textarea.form-control { height: auto; min-height: 96px; padding: 12px 14px !important; }
 body.auth-page .form-control[type="file"] { padding: 9px 14px !important; line-height: 28px; }
 body.auth-page .select2-container { width: 100% !important; font-family: var(--font-ui); }
@@ -335,7 +335,7 @@ body.auth-page .form-check-label {
   font-weight: 500;
   font-size: 12px;
   line-height: 16px;
-  color: var(--slate-400);
+  color: var(--text-muted);
   margin: 0;
   cursor: pointer;
 }
@@ -357,7 +357,7 @@ body.auth-page .auth-quick-links a {
   border: 0;
   padding: 0;
 }
-body.auth-page .forgot-pass a { color: var(--slate-400) !important; }
+body.auth-page .forgot-pass a { color: var(--text-muted) !important; }
 body.auth-page .forgot-pass a:hover,
 body.auth-page .auth-link-btn:hover { color: var(--ink-800) !important; text-decoration: underline; }
 
@@ -430,7 +430,7 @@ body.auth-page .auth-divider {
   font-weight: 500;
   font-size: 12px;
   line-height: 16px;
-  color: var(--slate-400);
+  color: var(--text-muted);
   text-transform: none;
 }
 body.auth-page .auth-divider::before,
@@ -455,10 +455,10 @@ body.auth-page .alert {
   box-shadow: var(--ring-status);
 }
 body.auth-page .alert p { margin: 0; }
-body.auth-page .alert-success { background: var(--green-surface) !important; color: color-mix(in srgb, var(--green-500) 70%, var(--ink-800)) !important; }
-body.auth-page .alert-danger { background: var(--red-surface) !important; color: color-mix(in srgb, var(--red-500) 75%, var(--ink-800)) !important; }
-body.auth-page .alert-warning { background: var(--amber-surface) !important; color: color-mix(in srgb, var(--amber-500) 70%, var(--ink-800)) !important; }
-body.auth-page .alert-info { background: var(--sky-surface) !important; color: color-mix(in srgb, var(--sky-500) 70%, var(--ink-800)) !important; }
+body.auth-page .alert-success { background: var(--green-surface) !important; color: var(--status-success-ink) !important; }
+body.auth-page .alert-danger { background: var(--red-surface) !important; color: var(--status-danger-ink) !important; }
+body.auth-page .alert-warning { background: var(--amber-surface) !important; color: var(--status-warning-ink) !important; }
+body.auth-page .alert-info { background: var(--sky-surface) !important; color: var(--status-info-ink) !important; }
 
 /* OTP boxes */
 body.auth-page .otp-box,
@@ -538,3 +538,21 @@ body.auth-page select.select2-hidden-accessible {
 body.auth-page .iti input.form-control { padding-left: 62px !important; }
 body.auth-page .iti--separate-dial-code input.form-control { padding-left: 92px !important; }
 body.auth-page .iti__selected-flag { padding: 0 8px 0 14px; }
+
+/* Native focus and text sizing stay visible above the legacy template resets. */
+body.auth-page a:focus-visible,
+body.auth-page button:focus-visible,
+body.auth-page input:focus-visible,
+body.auth-page select:focus-visible {
+  outline: 2px solid var(--focus-ring) !important;
+  outline-offset: 3px;
+}
+@media (max-width: 767.98px) {
+  body.auth-page .form-control,
+  body.auth-page .form-select { font-size: 16px; }
+}
+
+body.auth-page .text-muted,
+body.auth-page .select2-container--default .select2-selection--single .select2-selection__placeholder {
+  color: var(--text-muted) !important;
+}

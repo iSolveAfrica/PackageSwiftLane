@@ -23,17 +23,25 @@
 require_once("loader.php");
 require_once("lib/OtpService.php");
 require_once("helpers/activity_log.php");
+require_once("helpers/csrf.php");
 
 $login = new User;
 $core = new Core;
 
 if ($login->cdp_loginCheck() == true) {
     header("location: index.php");
+    exit;
 }
 
-if (isset($_POST['login'])) {
+$authFormError = '';
+$submittedUsername = isset($_POST['username']) && is_string($_POST['username']) ? trim($_POST['username']) : '';
+if (isset($_POST['login']) && !cdp_csrf_validate_request()) {
+    $authFormError = 'Your sign-in session expired. Please try again.';
+} elseif (isset($_POST['login']) && (!is_string($_POST['password'] ?? null) || $submittedUsername === '')) {
+    $authFormError = 'Enter your username or email and password.';
+} elseif (isset($_POST['login'])) {
     $otpService = new OtpService();
-    $result = $login->cdp_login($_POST['username'], $_POST['password'], [
+    $result = $login->cdp_login($submittedUsername, $_POST['password'], [
         'otp_service' => $otpService,
         'remember_me' => !empty($_POST['remember_me']),
     ]);
@@ -117,11 +125,14 @@ if (isset($_POST['login'])) {
 
             <div class="card-body">
                 <div class="text-center">
-                    <h4 class="auth-heading mb-2"><?php echo $lang['message_title_login0'] ?></h4>
+                    <h1 class="auth-heading mb-2"><?php echo $lang['message_title_login0'] ?></h1>
                     <p class="auth-subtitle">Use your account to continue.</p>
                 </div>
 
-                <div id="msgholder2" class="mt-4">
+                <div id="msgholder2" class="mt-4" aria-live="polite" aria-atomic="true">
+                    <?php if ($authFormError !== '') { ?>
+                        <div class="alert alert-danger" role="alert"><?php echo cdp_authFrameEsc($authFormError); ?></div>
+                    <?php } ?>
                     <?php
                     if (isset($_GET['notice']) && $_GET['notice'] === 'otp_expired') {
                     ?>
@@ -139,13 +150,13 @@ if (isset($_POST['login'])) {
                     <?php
                     if (isset($login) && $login->errors) {
                     ?>
-                        <div class="alert alert-danger" id="success-alert">
+                        <div class="alert alert-danger" id="success-alert" role="alert">
                             <p class="mb-0"><span class="icon-minus-sign"></span>
                                 <i class="close icon-remove-circle"></i>
                                 <span>Error!</span>
                                 <?php
                                 foreach ($login->errors as $error) {
-                                    echo $error;
+                                    echo cdp_authFrameEsc($error) . ' ';
                                 }
                                 ?>
                             </p>
@@ -156,20 +167,21 @@ if (isset($_POST['login'])) {
                 <div id="loader" style="display:none"></div>
 
                 <form class="login-form mt-4" method="post" name="login_form" id="login-form">
+                    <input type="hidden" name="<?php echo cdp_csrf_param(); ?>" value="<?php echo cdp_csrf_token(); ?>">
                     <div class="row">
                         <div class="col-12">
                             <div class="mb-3">
-                                <label class="form-label"><?php echo 'Swift ' . $lang['left115'] . ' / Email' ?> <span class="text-danger">*</span></label>
+                                <label for="username" class="form-label"><?php echo 'Swift ' . $lang['left115'] . ' / Email' ?> <span class="text-danger" aria-hidden="true">*</span></label>
                                 <div class="form-icon position-relative">
                                     <i data-feather="mail" class="fea icon-sm icons"></i>
-                                    <input type="text" class="form-control ps-5" placeholder="<?php echo $lang['left116'] . ' / Email' ?>" name="username" id="username" required="" autocomplete="username">
+                                    <input type="text" class="form-control ps-5" placeholder="<?php echo $lang['left116'] . ' / Email' ?>" name="username" id="username" required="" autocomplete="username" autocapitalize="none" spellcheck="false" value="<?php echo cdp_authFrameEsc($submittedUsername); ?>">
                                 </div>
                             </div>
                         </div>
 
                         <div class="col-12">
                             <div class="mb-3">
-                                <label class="form-label"><?php echo $lang['left117'] ?> <span class="text-danger">*</span></label>
+                                <label for="password" class="form-label"><?php echo $lang['left117'] ?> <span class="text-danger" aria-hidden="true">*</span></label>
                                 <div class="form-icon position-relative">
                                     <i data-feather="shield" class="fea icon-sm icons"></i>
                                     <input type="password" class="form-control ps-5" placeholder="<?php echo $lang['left118'] ?>" name="password" id="password" required="" autocomplete="current-password">
@@ -180,7 +192,7 @@ if (isset($_POST['login'])) {
                         <div class="col-12">
                             <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
                                 <div class="form-check mb-0">
-                                    <input class="form-check-input" type="checkbox" name="remember_me" value="1" id="flexCheckDefault">
+                                    <input class="form-check-input" type="checkbox" name="remember_me" value="1" id="flexCheckDefault"<?php echo !empty($_POST['remember_me']) ? ' checked' : ''; ?>>
                                     <label class="form-check-label" for="flexCheckDefault"><?php echo $lang['left120'] ?></label>
                                 </div>
                                 <p class="forgot-pass mb-0"><a href="forgot-password.php" class="text-dark fw-bold"><?php echo $lang['left119'] ?></a></p>

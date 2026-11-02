@@ -45,11 +45,11 @@ if (!function_exists('cdp_pageHeader')) {
         echo '<div class="page-breadcrumb">'
            . '<div class="row">'
            . '<div class="col-12 align-self-center">'
-           . '<h4 class="page-title">'
+           . '<h1 class="page-title">'
            . ($icon !== '' ? '<iconify-icon icon="' . $e($icon) . '"></iconify-icon> ' : '')
            . $e($title)
            . ($sub !== '' ? ' <small>' . $e($sub) . '</small>' : '')
-           . '</h4>'
+           . '</h1>'
            . '</div>'
            . (trim($acts) !== '' ? '<div class="col-auto">' . $acts . '</div>' : '')
            . '</div>'

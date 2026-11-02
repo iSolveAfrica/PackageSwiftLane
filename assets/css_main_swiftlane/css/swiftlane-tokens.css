@@ -19,6 +19,7 @@
   --ink-800: #192A3E;
   --ink-700: #253E5B;
   --slate-400: #9BA9BB;
+  --slate-600: #59697D;
   --line-200: #E1E5EA;
   --fill-100: #EDF0F3;
   --page-050: #F6F7F9;
@@ -70,12 +71,13 @@
   --surface-avatar: var(--page-050);
 
   --text-primary: var(--ink-800);
-  --text-muted: var(--slate-400);
+  --text-muted: var(--slate-600);
   --text-inverse: var(--white);
   --text-accent: var(--ink-800);
   --text-link: var(--violet-600);
 
   --border-default: var(--line-200);
+  --border-control: #8290A1;
   --border-inverse: rgba(225, 229, 234, .25);
 
   --accent: var(--swift-amber);
@@ -83,22 +85,29 @@
   --accent-secondary: var(--swift-red);
   --accent-pattern: var(--warm-300);
   --focus-ring: var(--violet-600);
+  --focus-on-dark: var(--swift-amber);
 
-  --status-transit-fg: var(--sky-500);
+  /* Text on light semantic surfaces needs a deeper tone than chart colours. */
+  --status-success-ink: #17633B;
+  --status-danger-ink: #B81F35;
+  --status-warning-ink: #8A4B00;
+  --status-info-ink: #00618F;
+
+  --status-transit-fg: var(--status-info-ink);
   --status-transit-bg: var(--sky-surface);
-  --status-onway-fg: var(--amber-500);
+  --status-onway-fg: var(--status-warning-ink);
   --status-onway-bg: var(--amber-surface);
   --status-sorting-fg: var(--purple-500);
   --status-sorting-bg: var(--purple-surface);
-  --status-delivered-fg: var(--leaf-500);
+  --status-delivered-fg: var(--status-success-ink);
   --status-delivered-bg: var(--leaf-surface);
-  --status-pending-fg: var(--red-500);
+  --status-pending-fg: var(--status-danger-ink);
   --status-pending-bg: var(--red-surface);
 
-  --delta-up-fg: var(--green-500);
+  --delta-up-fg: var(--status-success-ink);
   --delta-up-bg: var(--green-surface);
   --delta-up-line: var(--green-line);
-  --delta-down-fg: var(--red-500);
+  --delta-down-fg: var(--status-danger-ink);
   --delta-down-bg: var(--red-surface);
   --delta-solid-bg: var(--green-500);
 
@@ -157,6 +166,7 @@
   /* ── Elevation & motion ────────────────────────────────────────────────── */
   --shadow-control: 0px 16px 40px 0px rgba(0, 0, 0, .015);
   --ring-default: inset 0 0 0 1px var(--border-default);
+  --ring-control: inset 0 0 0 1px var(--border-control);
   --ring-inverse: inset 0 0 0 1px rgba(225, 229, 234, .25);
   --ring-status: inset 0 0 0 1.5px currentColor;
   --ring-hair: inset 0 0 0 .5px var(--border-default);
@@ -178,3 +188,12 @@
 .ds-body       { font-family: var(--font-ui); font-weight: 500; font-size: var(--text-md-size); line-height: var(--text-md-line); letter-spacing: var(--track-normal); color: var(--text-primary); }
 .ds-caption    { font-family: var(--font-ui); font-weight: 500; font-size: var(--text-sm-size); line-height: var(--text-sm-line); letter-spacing: var(--track-normal); color: var(--text-muted); }
 .ds-column-head{ font-family: var(--font-ui); font-weight: 700; font-size: var(--text-xs-size); line-height: 100%; letter-spacing: var(--track-normal); color: var(--text-muted); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

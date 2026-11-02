@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="" tests="59" assertions="97" errors="3" warnings="0" failures="0" skipped="0" time="0.007255">
+    <testsuite name="Unit" tests="59" assertions="97" errors="3" warnings="0" failures="0" skipped="0" time="0.007255">
+      <testsuite name="ApiResponseTest" file="/workspace/PackageSwiftLane/tests/api/ApiResponseTest.php" tests="12" assertions="21" errors="0" warnings="0" failures="0" skipped="0" time="0.005121">
+        <testcase name="testSuccessEnvelopeShape" class="ApiResponseTest" classname="ApiResponseTest" file="/workspace/PackageSwiftLane/tests/api/ApiResponseTest.php" line="54" assertions="3" time="0.004701"/>
+        <testcase name="testErrorEnvelopeShape" class="ApiResponseTest" classname="ApiResponseTest" file="/workspace/PackageSwiftLane/tests/api/ApiResponseTest.php" line="65" assertions="3" time="0.000147"/>
+        <testcase name="testValidationErrorEnvelopeHasErrors" class="ApiResponseTest" classname="ApiResponseTest" file="/workspace/PackageSwiftLane/tests/api/ApiResponseTest.php" line="78" assertions="3" time="0.000023"/>
+        <testcase name="testPaginationMetaCalculation" class="ApiResponseTest" classname="ApiResponseTest" file="/workspace/PackageSwiftLane/tests/api/ApiResponseTest.php" line="94" assertions="3" time="0.000022"/>
+        <testcase name="testPaginationMetaForEmptyResult" class="ApiResponseTest" classname="ApiResponseTest" file="/workspace/PackageSwiftLane/tests/api/ApiResponseTest.php" line="118" assertions="1" time="0.000015"/>
+        <testcase name="testPaginationLastPageRoundsUp" class="ApiResponseTest" classname="ApiResponseTest" file="/workspace/PackageSwiftLane/tests/api/ApiResponseTest.php" line="128" assertions="1" time="0.000013"/>
+        <testcase name="testJsonEncodingFlagsPreserveUnicode" class="ApiResponseTest" classname="ApiResponseTest" file="/workspace/PackageSwiftLane/tests/api/ApiResponseTest.php" line="137" assertions="1" time="0.000122"/>
+        <testcase name="testJsonEncodingFlagsPreserveSlashes" class="ApiResponseTest" classname="ApiResponseTest" file="/workspace/PackageSwiftLane/tests/api/ApiResponseTest.php" line="144" assertions="1" time="0.000019"/>
+        <testcase name="testParseJsonBodyEmptyStreamReturnsEmpty" class="ApiResponseTest" classname="ApiResponseTest" file="/workspace/PackageSwiftLane/tests/api/ApiResponseTest.php" line="154" assertions="1" time="0.000015"/>
+        <testcase name="testParseJsonBodyInvalidJsonReturnsEmpty" class="ApiResponseTest" classname="ApiResponseTest" file="/workspace/PackageSwiftLane/tests/api/ApiResponseTest.php" line="163" assertions="1" time="0.000015"/>
+        <testcase name="testParseJsonBodyValidJsonReturnsArray" class="ApiResponseTest" classname="ApiResponseTest" file="/workspace/PackageSwiftLane/tests/api/ApiResponseTest.php" line="171" assertions="1" time="0.000015"/>
+        <testcase name="testGetRequestDataJsonOverridesPost" class="ApiResponseTest" classname="ApiResponseTest" file="/workspace/PackageSwiftLane/tests/api/ApiResponseTest.php" line="181" assertions="2" time="0.000013"/>
+      </testsuite>
+      <testsuite name="ReferencesHandlerTest" file="/workspace/PackageSwiftLane/tests/api/ReferencesHandlerTest.php" tests="5" assertions="21" errors="0" warnings="0" failures="0" skipped="0" time="0.000479">
+        <testcase name="testToArrayReturnsEmptyForNull" class="ReferencesHandlerTest" classname="ReferencesHandlerTest" file="/workspace/PackageSwiftLane/tests/api/ReferencesHandlerTest.php" line="24" assertions="1" time="0.000019"/>
+        <testcase name="testToArrayReturnsEmptyForEmptyArray" class="ReferencesHandlerTest" classname="ReferencesHandlerTest" file="/workspace/PackageSwiftLane/tests/api/ReferencesHandlerTest.php" line="29" assertions="1" time="0.000014"/>
+        <testcase name="testToArrayConvertsObjects" class="ReferencesHandlerTest" classname="ReferencesHandlerTest" file="/workspace/PackageSwiftLane/tests/api/ReferencesHandlerTest.php" line="34" assertions="4" time="0.000241"/>
+        <testcase name="testToArrayPreservesAllFields" class="ReferencesHandlerTest" classname="ReferencesHandlerTest" file="/workspace/PackageSwiftLane/tests/api/ReferencesHandlerTest.php" line="51" assertions="3" time="0.000021"/>
+        <testcase name="testReferencesHandlerHasExpectedMethods" class="ReferencesHandlerTest" classname="ReferencesHandlerTest" file="/workspace/PackageSwiftLane/tests/api/ReferencesHandlerTest.php" line="69" assertions="12" time="0.000183"/>
+      </testsuite>
+      <testsuite name="ShipmentsHandlerTest" file="/workspace/PackageSwiftLane/tests/api/ShipmentsHandlerTest.php" tests="4" assertions="1" errors="3" warnings="0" failures="0" skipped="0" time="0.000360">
+        <testcase name="testFormatRowReturnsEmptyArrayForNull" class="ShipmentsHandlerTest" classname="ShipmentsHandlerTest" file="/workspace/PackageSwiftLane/tests/api/ShipmentsHandlerTest.php" line="20" assertions="1" time="0.000025"/>
+        <testcase name="testFormatRowMapsBasicFields" class="ShipmentsHandlerTest" classname="ShipmentsHandlerTest" file="/workspace/PackageSwiftLane/tests/api/ShipmentsHandlerTest.php" line="26" assertions="0" time="0.000263">
+          <error type="Error">ShipmentsHandlerTest::testFormatRowMapsBasicFields
+Error: Call to undefined function cdp_getEffectiveStatus()
+
+/workspace/PackageSwiftLane/api/v1/handlers/ShipmentsHandler.php:386
+/workspace/PackageSwiftLane/tests/api/ShipmentsHandlerTest.php:63</error>
+        </testcase>
+        <testcase name="testFormatRowComputesTrackingNumber" class="ShipmentsHandlerTest" classname="ShipmentsHandlerTest" file="/workspace/PackageSwiftLane/tests/api/ShipmentsHandlerTest.php" line="73" assertions="0" time="0.000042">
+          <error type="Error">ShipmentsHandlerTest::testFormatRowComputesTrackingNumber
+Error: Call to undefined function cdp_getEffectiveStatus()
+
+/workspace/PackageSwiftLane/api/v1/handlers/ShipmentsHandler.php:386
+/workspace/PackageSwiftLane/tests/api/ShipmentsHandlerTest.php:106</error>
+        </testcase>
+        <testcase name="testFormatRowCastsNumericFields" class="ShipmentsHandlerTest" classname="ShipmentsHandlerTest" file="/workspace/PackageSwiftLane/tests/api/ShipmentsHandlerTest.php" line="110" assertions="0" time="0.000029">
+          <error type="Error">ShipmentsHandlerTest::testFormatRowCastsNumericFields
+Error: Call to undefined function cdp_getEffectiveStatus()
+
+/workspace/PackageSwiftLane/api/v1/handlers/ShipmentsHandler.php:386
+/workspace/PackageSwiftLane/tests/api/ShipmentsHandlerTest.php:147</error>
+        </testcase>
+      </testsuite>
+      <testsuite name="TrackingHandlerTest" file="/workspace/PackageSwiftLane/tests/api/TrackingHandlerTest.php" tests="6" assertions="21" errors="0" warnings="0" failures="0" skipped="0" time="0.000113">
+        <testcase name="testTrackingHandlerHasShowMethod" class="TrackingHandlerTest" classname="TrackingHandlerTest" file="/workspace/PackageSwiftLane/tests/api/TrackingHandlerTest.php" line="19" assertions="1" time="0.000025"/>
+        <testcase name="testTrackingNumberIsUppercased" class="TrackingHandlerTest" classname="TrackingHandlerTest" file="/workspace/PackageSwiftLane/tests/api/TrackingHandlerTest.php" line="27" assertions="1" time="0.000024"/>
+        <testcase name="testTrackingNumberTrimmed" class="TrackingHandlerTest" classname="TrackingHandlerTest" file="/workspace/PackageSwiftLane/tests/api/TrackingHandlerTest.php" line="33" assertions="1" time="0.000017"/>
+        <testcase name="testEmptyTrackingNumberIsEmpty" class="TrackingHandlerTest" classname="TrackingHandlerTest" file="/workspace/PackageSwiftLane/tests/api/TrackingHandlerTest.php" line="39" assertions="1" time="0.000013"/>
+        <testcase name="testFindShipmentFormatMatchesExpectedKeys" class="TrackingHandlerTest" classname="TrackingHandlerTest" file="/workspace/PackageSwiftLane/tests/api/TrackingHandlerTest.php" line="47" assertions="9" time="0.000019"/>
+        <testcase name="testFindPackageFormatMatchesExpectedKeys" class="TrackingHandlerTest" classname="TrackingHandlerTest" file="/workspace/PackageSwiftLane/tests/api/TrackingHandlerTest.php" line="72" assertions="8" time="0.000015"/>
+      </testsuite>
+      <testsuite name="ValidatorTest" file="/workspace/PackageSwiftLane/tests/api/ValidatorTest.php" tests="32" assertions="33" errors="0" warnings="0" failures="0" skipped="0" time="0.001182">
+        <testcase name="testRequiredPassesWhenPresent" class="ValidatorTest" classname="ValidatorTest" file="/workspace/PackageSwiftLane/tests/api/ValidatorTest.php" line="14" assertions="1" time="0.000020"/>
+        <testcase name="testRequiredFailsWhenAbsent" class="ValidatorTest" classname="ValidatorTest" file="/workspace/PackageSwiftLane/tests/api/ValidatorTest.php" line="20" assertions="1" time="0.000018"/>
+        <testcase name="testRequiredFailsOnEmptyString" class="ValidatorTest" classname="ValidatorTest" file="/workspace/PackageSwiftLane/tests/api/ValidatorTest.php" line="26" assertions="1" time="0.000015"/>
+        <testcase name="testNullableSkipsRulesWhenAbsent" class="ValidatorTest" classname="ValidatorTest" file="/workspace/PackageSwiftLane/tests/api/ValidatorTest.php" line="34" assertions="1" time="0.000015"/>
+        <testcase name="testNullableSkipsRulesOnEmptyString" class="ValidatorTest" classname="ValidatorTest" file="/workspace/PackageSwiftLane/tests/api/ValidatorTest.php" line="40" assertions="1" time="0.000013"/>
+        <testcase name="testNullableAppliesRulesWhenPresent" class="ValidatorTest" classname="ValidatorTest" file="/workspace/PackageSwiftLane/tests/api/ValidatorTest.php" line="46" assertions="1" time="0.000023"/>
+        <testcase name="testEmailPassesValid" class="ValidatorTest" classname="ValidatorTest" file="/workspace/PackageSwiftLane/tests/api/ValidatorTest.php" line="54" assertions="1" time="0.000538"/>
+        <testcase name="testEmailFailsInvalid" class="ValidatorTest" classname="ValidatorTest" file="/workspace/PackageSwiftLane/tests/api/ValidatorTest.php" line="60" assertions="1" time="0.000046"/>
+        <testcase name="testIntegerPassesNumericString" class="ValidatorTest" classname="ValidatorTest" file="/workspace/PackageSwiftLane/tests/api/ValidatorTest.php" line="68" assertions="1" time="0.000020"/>
+        <testcase name="testIntegerFailsFloat" class="ValidatorTest" classname="ValidatorTest" file="/workspace/PackageSwiftLane/tests/api/ValidatorTest.php" line="74" assertions="1" time="0.000016"/>
+        <testcase name="testIntegerFailsAlpha" class="ValidatorTest" classname="ValidatorTest" file="/workspace/PackageSwiftLane/tests/api/ValidatorTest.php" line="80" assertions="1" time="0.000016"/>
+        <testcase name="testNumericPassesFloat" class="ValidatorTest" classname="ValidatorTest" file="/workspace/PackageSwiftLane/tests/api/ValidatorTest.php" line="88" assertions="1" time="0.000015"/>
+        <testcase name="testNumericFailsAlpha" class="ValidatorTest" classname="ValidatorTest" file="/workspace/PackageSwiftLane/tests/api/ValidatorTest.php" line="94" assertions="1" time="0.000014"/>
+        <testcase name="testMinPassesOnSufficientLength" class="ValidatorTest" classname="ValidatorTest" file="/workspace/PackageSwiftLane/tests/api/ValidatorTest.php" line="102" assertions="1" time="0.000016"/>
+        <testcase name="testMinFailsOnShortString" class="ValidatorTest" classname="ValidatorTest" file="/workspace/PackageSwiftLane/tests/api/ValidatorTest.php" line="108" assertions="1" time="0.000015"/>
+        <testcase name="testMaxPassesOnShortString" class="ValidatorTest" classname="ValidatorTest" file="/workspace/PackageSwiftLane/tests/api/ValidatorTest.php" line="114" assertions="1" time="0.000014"/>
+        <testcase name="testMaxFailsOnLongString" class="ValidatorTest" classname="ValidatorTest" file="/workspace/PackageSwiftLane/tests/api/ValidatorTest.php" line="120" assertions="1" time="0.000014"/>
+        <testcase name="testMinPassesOnNumericValue" class="ValidatorTest" classname="ValidatorTest" file="/workspace/PackageSwiftLane/tests/api/ValidatorTest.php" line="128" assertions="1" time="0.000014"/>
+        <testcase name="testMinFailsOnLowNumericValue" class="ValidatorTest" classname="ValidatorTest" file="/workspace/PackageSwiftLane/tests/api/ValidatorTest.php" line="134" assertions="1" time="0.000015"/>
+        <testcase name="testMaxPassesOnNumericValue" class="ValidatorTest" classname="ValidatorTest" file="/workspace/PackageSwiftLane/tests/api/ValidatorTest.php" line="140" assertions="1" time="0.000014"/>
+        <testcase name="testMaxFailsOnHighNumericValue" class="ValidatorTest" classname="ValidatorTest" file="/workspace/PackageSwiftLane/tests/api/ValidatorTest.php" line="146" assertions="1" time="0.000014"/>
+        <testcase name="testInPassesAllowedValue" class="ValidatorTest" classname="ValidatorTest" file="/workspace/PackageSwiftLane/tests/api/ValidatorTest.php" line="154" assertions="1" time="0.000014"/>
+        <testcase name="testInFailsDisallowedValue" class="ValidatorTest" classname="ValidatorTest" file="/workspace/PackageSwiftLane/tests/api/ValidatorTest.php" line="160" assertions="1" time="0.000022"/>
+        <testcase name="testDatePassesValidDate" class="ValidatorTest" classname="ValidatorTest" file="/workspace/PackageSwiftLane/tests/api/ValidatorTest.php" line="168" assertions="1" time="0.000069"/>
+        <testcase name="testDateFailsInvalidDate" class="ValidatorTest" classname="ValidatorTest" file="/workspace/PackageSwiftLane/tests/api/ValidatorTest.php" line="174" assertions="1" time="0.000050"/>
+        <testcase name="testRegexPassesMatchingValue" class="ValidatorTest" classname="ValidatorTest" file="/workspace/PackageSwiftLane/tests/api/ValidatorTest.php" line="182" assertions="1" time="0.000034"/>
+        <testcase name="testRegexFailsNonMatchingValue" class="ValidatorTest" classname="ValidatorTest" file="/workspace/PackageSwiftLane/tests/api/ValidatorTest.php" line="188" assertions="1" time="0.000017"/>
+        <testcase name="testMultipleFieldsAllValid" class="ValidatorTest" classname="ValidatorTest" file="/workspace/PackageSwiftLane/tests/api/ValidatorTest.php" line="196" assertions="1" time="0.000022"/>
+        <testcase name="testMultipleFieldsMultipleErrors" class="ValidatorTest" classname="ValidatorTest" file="/workspace/PackageSwiftLane/tests/api/ValidatorTest.php" line="207" assertions="1" time="0.000021"/>
+        <testcase name="testFirstRuleWinsForField" class="ValidatorTest" classname="ValidatorTest" file="/workspace/PackageSwiftLane/tests/api/ValidatorTest.php" line="221" assertions="2" time="0.000016"/>
+        <testcase name="testUrlPassesValidUrl" class="ValidatorTest" classname="ValidatorTest" file="/workspace/PackageSwiftLane/tests/api/ValidatorTest.php" line="231" assertions="1" time="0.000016"/>
+        <testcase name="testUrlFailsInvalidUrl" class="ValidatorTest" classname="ValidatorTest" file="/workspace/PackageSwiftLane/tests/api/ValidatorTest.php" line="237" assertions="1" time="0.000014"/>
+      </testsuite>
+    </testsuite>
+  </testsuite>
+</testsuites>

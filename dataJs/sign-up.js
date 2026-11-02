@@ -6,6 +6,15 @@ $(function () {
   cdp_load_cities();
 });
 
+function cdp_labelSignupSelect(id) {
+  var $selection = $('#' + id).next('.select2-container').find('.select2-selection');
+  var $rendered = $selection.find('.select2-selection__rendered');
+  // The rendered value is plain text within the combobox, not a second textbox.
+  $rendered.removeAttr('role aria-readonly');
+  $selection.attr('aria-labelledby', id + '-label ' + $rendered.attr('id'));
+  $selection.attr('aria-required', 'true');
+}
+
 function cdp_load_countries() {
   $("#country")
     .select2({
@@ -29,15 +38,18 @@ function cdp_load_countries() {
       placeholder: translate_search_country,
       allowClear: true,
     })
-    .on("change", function (e) {
+    .off("change.swlCountry")
+    .on("change.swlCountry", function (e) {
       var country = $("#country").val();
       $("#state").attr("disabled", true);
-      $("#state").val(null);
+      $("#state").val(null).trigger('change.select2');
+      $("#city").val(null).prop('disabled', true).trigger('change.select2');
       if (country != null) {
         $("#state").attr("disabled", false);
       }
       cdp_load_states();
     });
+  cdp_labelSignupSelect('country');
 }
 
 function cdp_load_states() {
@@ -65,11 +77,12 @@ function cdp_load_states() {
       placeholder: translate_search_state,
       allowClear: true,
     })
-    .on("change", function (e) {
+    .off("change.swlState")
+    .on("change.swlState", function (e) {
       var state = $("#state").val();
 
       $("#city").attr("disabled", true);
-      $("#city").val(null);
+      $("#city").val(null).trigger('change.select2');
 
       if (state != null) {
         $("#city").attr("disabled", false);
@@ -77,6 +90,7 @@ function cdp_load_states() {
 
       cdp_load_cities();
     });
+  cdp_labelSignupSelect('state');
 }
 
 function cdp_load_cities() {
@@ -102,6 +116,7 @@ function cdp_load_cities() {
     placeholder: translate_search_city,
     allowClear: true,
   });
+  cdp_labelSignupSelect('city');
 }
 
 function cdp_showError(errors) {
@@ -149,7 +164,7 @@ var errorMap = [
 var input = document.querySelector("#phone_custom");
 var iti = window.intlTelInput(input, {
   geoIpLookup: function (callback) {
-    $.get("http://ipinfo.io", function () {}, "jsonp").always(function (resp) {
+    $.get("https://ipinfo.io", function () {}, "jsonp").always(function (resp) {
       var countryCode = resp && resp.country ? resp.country : "";
       callback(countryCode);
     });
@@ -162,6 +177,8 @@ var iti = window.intlTelInput(input, {
 
 var reset = function () {
   input.classList.remove("is-invalid");
+  input.removeAttribute('aria-invalid');
+  $("#phone").val('');
   errorMsg.innerHTML = "";
   errorMsg.classList.add("hide");
   validMsg.classList.add("hide");
@@ -176,8 +193,9 @@ input.addEventListener("blur", function () {
       validMsg.classList.remove("hide");
     } else {
       input.classList.add("is-invalid");
+      input.setAttribute('aria-invalid', 'true');
       var errorCode = iti.getValidationError();
-      errorMsg.innerHTML = errorMap[errorCode];
+      errorMsg.textContent = errorMap[errorCode] || 'Enter a valid phone number.';
       errorMsg.classList.remove("hide");
     }
   }
@@ -252,6 +270,8 @@ input.addEventListener("keyup", reset);
 
 $("#new_register").on("submit", function (event) {
   event.preventDefault();
+  var $form = $(this);
+  if ($form.data('submitting')) return;
 
   // Validación de la contraseña
   var password = $("#pass").val();
@@ -270,13 +290,18 @@ $("#new_register").on("submit", function (event) {
 
   // Use FormData to support file uploads (avatar, document_photo)
   if (iti.isValidNumber()) {
+    // Autofill and Enter can submit without blur; always serialize the current number.
+    $("#phone").val(iti.getNumber());
     var formData = new FormData(this);
+    $form.data('submitting', true).attr('aria-busy', 'true');
+    $form.find(':submit').prop('disabled', true);
 
     $.ajax({
       type: "POST",
       url: "./ajax/sign_up_ajax.php",
       data: formData,
       dataType: "json",
+      timeout: 30000,
       // Required for FormData — let the browser set the correct multipart boundary
       processData: false,
       contentType: false,
@@ -297,11 +322,20 @@ $("#new_register").on("submit", function (event) {
           cdp_showError(data.errors);
         }
       },
+      error: function (xhr) {
+        var message = xhr.responseJSON && xhr.responseJSON.errors;
+        cdp_showError(typeof message === 'string' ? message : 'We could not confirm your registration. Check your connection and try again. Your entered details are still here.');
+      },
+      complete: function () {
+        $form.data('submitting', false).removeAttr('aria-busy');
+        $form.find(':submit').prop('disabled', false);
+      },
     });
   } else {
     input.classList.add("is-invalid");
+    input.setAttribute('aria-invalid', 'true');
     var errorCode = iti.getValidationError();
-    errorMsg.innerHTML = errorMap[errorCode];
+    errorMsg.textContent = errorMap[errorCode] || 'Enter a valid phone number.';
     errorMsg.classList.remove("hide");
     $("#phone_custom").focus();
   }

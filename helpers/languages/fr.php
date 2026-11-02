@@ -395,7 +395,7 @@ $lang = array(
 	"message_title_login2" => "Bienvenue sur",
 
 	"message_title_register1" => "Bonjour. Dans cette démo, choisissez le pays qui correspond à la liste de prix configurée, afin de remplir le formulaire d'expédition et de retrait.",
-	"message_title_forgot1" => "Veuillez saisir votre adresse e-mail. Vous recevrez un lien pour créer un nouveau mot de passe par e-mail.",
+	"message_title_forgot1" => "Saisissez votre adresse e-mail. Vous recevrez un code de vérification par e-mail pour réinitialiser votre mot de passe.",
 	"message_title_tracking1" => "Expéditions",
 	"message_title_tracking2" => "forfaits de casier",
 

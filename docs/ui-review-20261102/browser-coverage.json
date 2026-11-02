@@ -1,0 +1,3739 @@
+{
+  "environment": "Local read-only UI fixtures; stand-in app configuration; application English translations; external resources blocked consistently.",
+  "pages": [
+    {
+      "version": "before",
+      "label": "shell",
+      "width": 360,
+      "status": 200,
+      "documentWidth": 360,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "search",
+          "named": true
+        },
+        {
+          "id": "status",
+          "named": true
+        },
+        {
+          "id": "name",
+          "named": true
+        },
+        {
+          "id": "notes",
+          "named": true
+        },
+        {
+          "id": "check",
+          "named": true
+        },
+        {
+          "id": "force_country_address",
+          "named": false
+        },
+        {
+          "id": "force_state_address",
+          "named": false
+        },
+        {
+          "id": "force_city_address",
+          "named": false
+        },
+        {
+          "id": "force_zip_address",
+          "named": false
+        },
+        {
+          "id": "force_full_address",
+          "named": false
+        },
+        {
+          "id": "force_phone_custom",
+          "named": true
+        },
+        {
+          "id": "force_phone_otp_code",
+          "named": true
+        },
+        {
+          "id": "force_document_type",
+          "named": false
+        },
+        {
+          "id": "force_document_number",
+          "named": false
+        },
+        {
+          "id": "force_document_photo",
+          "named": false
+        }
+      ],
+      "primaryHeading": 0,
+      "sampleLabel": {
+        "color": "rgb(25, 42, 62)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 584,
+      "transferredBytes": 1975868,
+      "fcpMs": 520,
+      "consoleErrors": [],
+      "failedLocalRequests": [
+        [
+          503,
+          "/ajax/courier/warehouse_delivery_ajax.php"
+        ],
+        [
+          503,
+          "/ajax/load_notifications.php"
+        ]
+      ]
+    },
+    {
+      "version": "before",
+      "label": "shell",
+      "width": 390,
+      "status": 200,
+      "documentWidth": 390,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "search",
+          "named": true
+        },
+        {
+          "id": "status",
+          "named": true
+        },
+        {
+          "id": "name",
+          "named": true
+        },
+        {
+          "id": "notes",
+          "named": true
+        },
+        {
+          "id": "check",
+          "named": true
+        },
+        {
+          "id": "force_country_address",
+          "named": false
+        },
+        {
+          "id": "force_state_address",
+          "named": false
+        },
+        {
+          "id": "force_city_address",
+          "named": false
+        },
+        {
+          "id": "force_zip_address",
+          "named": false
+        },
+        {
+          "id": "force_full_address",
+          "named": false
+        },
+        {
+          "id": "force_phone_custom",
+          "named": true
+        },
+        {
+          "id": "force_phone_otp_code",
+          "named": true
+        },
+        {
+          "id": "force_document_type",
+          "named": false
+        },
+        {
+          "id": "force_document_number",
+          "named": false
+        },
+        {
+          "id": "force_document_photo",
+          "named": false
+        }
+      ],
+      "primaryHeading": 0,
+      "sampleLabel": {
+        "color": "rgb(25, 42, 62)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 408,
+      "transferredBytes": 1975868,
+      "fcpMs": 352,
+      "consoleErrors": [],
+      "failedLocalRequests": [
+        [
+          503,
+          "/ajax/load_notifications.php"
+        ],
+        [
+          503,
+          "/ajax/courier/warehouse_delivery_ajax.php"
+        ]
+      ]
+    },
+    {
+      "version": "before",
+      "label": "shell",
+      "width": 768,
+      "status": 200,
+      "documentWidth": 768,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "search",
+          "named": true
+        },
+        {
+          "id": "status",
+          "named": true
+        },
+        {
+          "id": "name",
+          "named": true
+        },
+        {
+          "id": "notes",
+          "named": true
+        },
+        {
+          "id": "check",
+          "named": true
+        },
+        {
+          "id": "force_country_address",
+          "named": false
+        },
+        {
+          "id": "force_state_address",
+          "named": false
+        },
+        {
+          "id": "force_city_address",
+          "named": false
+        },
+        {
+          "id": "force_zip_address",
+          "named": false
+        },
+        {
+          "id": "force_full_address",
+          "named": false
+        },
+        {
+          "id": "force_phone_custom",
+          "named": true
+        },
+        {
+          "id": "force_phone_otp_code",
+          "named": true
+        },
+        {
+          "id": "force_document_type",
+          "named": false
+        },
+        {
+          "id": "force_document_number",
+          "named": false
+        },
+        {
+          "id": "force_document_photo",
+          "named": false
+        }
+      ],
+      "primaryHeading": 0,
+      "sampleLabel": {
+        "color": "rgb(25, 42, 62)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 494,
+      "transferredBytes": 1975868,
+      "fcpMs": 436,
+      "consoleErrors": [],
+      "failedLocalRequests": [
+        [
+          503,
+          "/ajax/load_notifications.php"
+        ],
+        [
+          503,
+          "/ajax/courier/warehouse_delivery_ajax.php"
+        ]
+      ]
+    },
+    {
+      "version": "before",
+      "label": "shell",
+      "width": 1024,
+      "status": 200,
+      "documentWidth": 1024,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "search",
+          "named": true
+        },
+        {
+          "id": "status",
+          "named": true
+        },
+        {
+          "id": "name",
+          "named": true
+        },
+        {
+          "id": "notes",
+          "named": true
+        },
+        {
+          "id": "check",
+          "named": true
+        },
+        {
+          "id": "force_country_address",
+          "named": false
+        },
+        {
+          "id": "force_state_address",
+          "named": false
+        },
+        {
+          "id": "force_city_address",
+          "named": false
+        },
+        {
+          "id": "force_zip_address",
+          "named": false
+        },
+        {
+          "id": "force_full_address",
+          "named": false
+        },
+        {
+          "id": "force_phone_custom",
+          "named": true
+        },
+        {
+          "id": "force_phone_otp_code",
+          "named": true
+        },
+        {
+          "id": "force_document_type",
+          "named": false
+        },
+        {
+          "id": "force_document_number",
+          "named": false
+        },
+        {
+          "id": "force_document_photo",
+          "named": false
+        }
+      ],
+      "primaryHeading": 0,
+      "sampleLabel": {
+        "color": "rgb(25, 42, 62)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 494,
+      "transferredBytes": 1975868,
+      "fcpMs": 444,
+      "consoleErrors": [],
+      "failedLocalRequests": [
+        [
+          503,
+          "/ajax/courier/warehouse_delivery_ajax.php"
+        ],
+        [
+          503,
+          "/ajax/load_notifications.php"
+        ]
+      ]
+    },
+    {
+      "version": "before",
+      "label": "shell",
+      "width": 1440,
+      "status": 200,
+      "documentWidth": 1440,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "search",
+          "named": true
+        },
+        {
+          "id": "status",
+          "named": true
+        },
+        {
+          "id": "name",
+          "named": true
+        },
+        {
+          "id": "notes",
+          "named": true
+        },
+        {
+          "id": "check",
+          "named": true
+        },
+        {
+          "id": "force_country_address",
+          "named": false
+        },
+        {
+          "id": "force_state_address",
+          "named": false
+        },
+        {
+          "id": "force_city_address",
+          "named": false
+        },
+        {
+          "id": "force_zip_address",
+          "named": false
+        },
+        {
+          "id": "force_full_address",
+          "named": false
+        },
+        {
+          "id": "force_phone_custom",
+          "named": true
+        },
+        {
+          "id": "force_phone_otp_code",
+          "named": true
+        },
+        {
+          "id": "force_document_type",
+          "named": false
+        },
+        {
+          "id": "force_document_number",
+          "named": false
+        },
+        {
+          "id": "force_document_photo",
+          "named": false
+        }
+      ],
+      "primaryHeading": 0,
+      "sampleLabel": {
+        "color": "rgb(25, 42, 62)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 464,
+      "transferredBytes": 1975868,
+      "fcpMs": 436,
+      "consoleErrors": [],
+      "failedLocalRequests": [
+        [
+          503,
+          "/ajax/load_notifications.php"
+        ],
+        [
+          503,
+          "/ajax/courier/warehouse_delivery_ajax.php"
+        ]
+      ]
+    },
+    {
+      "version": "before",
+      "label": "forgot",
+      "width": 360,
+      "status": 200,
+      "documentWidth": 360,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "email",
+          "named": false
+        }
+      ],
+      "primaryHeading": 0,
+      "sampleLabel": {
+        "color": "rgb(132, 146, 166)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 415,
+      "transferredBytes": 1549181,
+      "fcpMs": 416,
+      "consoleErrors": [],
+      "failedLocalRequests": []
+    },
+    {
+      "version": "before",
+      "label": "forgot",
+      "width": 390,
+      "status": 200,
+      "documentWidth": 390,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "email",
+          "named": false
+        }
+      ],
+      "primaryHeading": 0,
+      "sampleLabel": {
+        "color": "rgb(132, 146, 166)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 369,
+      "transferredBytes": 1549181,
+      "fcpMs": 380,
+      "consoleErrors": [],
+      "failedLocalRequests": []
+    },
+    {
+      "version": "before",
+      "label": "forgot",
+      "width": 768,
+      "status": 200,
+      "documentWidth": 768,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "email",
+          "named": false
+        }
+      ],
+      "primaryHeading": 0,
+      "sampleLabel": {
+        "color": "rgb(132, 146, 166)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 340,
+      "transferredBytes": 1549181,
+      "fcpMs": 396,
+      "consoleErrors": [],
+      "failedLocalRequests": []
+    },
+    {
+      "version": "before",
+      "label": "forgot",
+      "width": 1024,
+      "status": 200,
+      "documentWidth": 1024,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "email",
+          "named": false
+        }
+      ],
+      "primaryHeading": 0,
+      "sampleLabel": {
+        "color": "rgb(132, 146, 166)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 354,
+      "transferredBytes": 1681257,
+      "fcpMs": 416,
+      "consoleErrors": [],
+      "failedLocalRequests": []
+    },
+    {
+      "version": "before",
+      "label": "forgot",
+      "width": 1440,
+      "status": 200,
+      "documentWidth": 1440,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "email",
+          "named": false
+        }
+      ],
+      "primaryHeading": 0,
+      "sampleLabel": {
+        "color": "rgb(132, 146, 166)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 412,
+      "transferredBytes": 1681257,
+      "fcpMs": 428,
+      "consoleErrors": [],
+      "failedLocalRequests": []
+    },
+    {
+      "version": "before",
+      "label": "login",
+      "width": 360,
+      "status": 200,
+      "documentWidth": 360,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "username",
+          "named": false
+        },
+        {
+          "id": "password",
+          "named": false
+        },
+        {
+          "id": "flexCheckDefault",
+          "named": true
+        }
+      ],
+      "primaryHeading": 0,
+      "sampleLabel": {
+        "color": "rgb(155, 169, 187)",
+        "fontSize": "11px"
+      },
+      "domContentLoadedMs": 375,
+      "transferredBytes": 1037723,
+      "fcpMs": 352,
+      "consoleErrors": [],
+      "failedLocalRequests": []
+    },
+    {
+      "version": "before",
+      "label": "login",
+      "width": 390,
+      "status": 200,
+      "documentWidth": 390,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "username",
+          "named": false
+        },
+        {
+          "id": "password",
+          "named": false
+        },
+        {
+          "id": "flexCheckDefault",
+          "named": true
+        }
+      ],
+      "primaryHeading": 0,
+      "sampleLabel": {
+        "color": "rgb(155, 169, 187)",
+        "fontSize": "11px"
+      },
+      "domContentLoadedMs": 377,
+      "transferredBytes": 1037723,
+      "fcpMs": 368,
+      "consoleErrors": [],
+      "failedLocalRequests": []
+    },
+    {
+      "version": "before",
+      "label": "login",
+      "width": 768,
+      "status": 200,
+      "documentWidth": 768,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "username",
+          "named": false
+        },
+        {
+          "id": "password",
+          "named": false
+        },
+        {
+          "id": "flexCheckDefault",
+          "named": true
+        }
+      ],
+      "primaryHeading": 0,
+      "sampleLabel": {
+        "color": "rgb(155, 169, 187)",
+        "fontSize": "11px"
+      },
+      "domContentLoadedMs": 406,
+      "transferredBytes": 1037723,
+      "fcpMs": 396,
+      "consoleErrors": [],
+      "failedLocalRequests": []
+    },
+    {
+      "version": "before",
+      "label": "login",
+      "width": 1024,
+      "status": 200,
+      "documentWidth": 1024,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "username",
+          "named": false
+        },
+        {
+          "id": "password",
+          "named": false
+        },
+        {
+          "id": "flexCheckDefault",
+          "named": true
+        }
+      ],
+      "primaryHeading": 0,
+      "sampleLabel": {
+        "color": "rgb(155, 169, 187)",
+        "fontSize": "11px"
+      },
+      "domContentLoadedMs": 501,
+      "transferredBytes": 1139565,
+      "fcpMs": 580,
+      "consoleErrors": [],
+      "failedLocalRequests": []
+    },
+    {
+      "version": "before",
+      "label": "login",
+      "width": 1440,
+      "status": 200,
+      "documentWidth": 1440,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "username",
+          "named": false
+        },
+        {
+          "id": "password",
+          "named": false
+        },
+        {
+          "id": "flexCheckDefault",
+          "named": true
+        }
+      ],
+      "primaryHeading": 0,
+      "sampleLabel": {
+        "color": "rgb(155, 169, 187)",
+        "fontSize": "11px"
+      },
+      "domContentLoadedMs": 732,
+      "transferredBytes": 1139565,
+      "fcpMs": 820,
+      "consoleErrors": [],
+      "failedLocalRequests": []
+    },
+    {
+      "version": "before",
+      "label": "signup",
+      "width": 360,
+      "status": 200,
+      "documentWidth": 360,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "fname",
+          "named": false
+        },
+        {
+          "id": "lname",
+          "named": false
+        },
+        {
+          "id": "username",
+          "named": false
+        },
+        {
+          "id": "company",
+          "named": false
+        },
+        {
+          "id": "email",
+          "named": false
+        },
+        {
+          "id": "phone_custom",
+          "named": true
+        },
+        {
+          "id": "postal",
+          "named": false
+        },
+        {
+          "id": "address",
+          "named": false
+        },
+        {
+          "id": "document_type",
+          "named": false
+        },
+        {
+          "id": "document_number",
+          "named": false
+        },
+        {
+          "id": "country",
+          "named": false
+        },
+        {
+          "id": "state",
+          "named": false
+        },
+        {
+          "id": "city",
+          "named": false
+        },
+        {
+          "id": "avatar",
+          "named": false
+        },
+        {
+          "id": "document_photo",
+          "named": false
+        },
+        {
+          "id": "pass",
+          "named": false
+        },
+        {
+          "id": "pass2",
+          "named": false
+        },
+        {
+          "id": "terms",
+          "named": true
+        }
+      ],
+      "primaryHeading": 0,
+      "sampleLabel": {
+        "color": "rgb(155, 169, 187)",
+        "fontSize": "11px"
+      },
+      "domContentLoadedMs": 1135,
+      "transferredBytes": 2177778,
+      "fcpMs": 1068,
+      "consoleErrors": [],
+      "failedLocalRequests": []
+    },
+    {
+      "version": "before",
+      "label": "signup",
+      "width": 390,
+      "status": 200,
+      "documentWidth": 390,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "fname",
+          "named": false
+        },
+        {
+          "id": "lname",
+          "named": false
+        },
+        {
+          "id": "username",
+          "named": false
+        },
+        {
+          "id": "company",
+          "named": false
+        },
+        {
+          "id": "email",
+          "named": false
+        },
+        {
+          "id": "phone_custom",
+          "named": true
+        },
+        {
+          "id": "postal",
+          "named": false
+        },
+        {
+          "id": "address",
+          "named": false
+        },
+        {
+          "id": "document_type",
+          "named": false
+        },
+        {
+          "id": "document_number",
+          "named": false
+        },
+        {
+          "id": "country",
+          "named": false
+        },
+        {
+          "id": "state",
+          "named": false
+        },
+        {
+          "id": "city",
+          "named": false
+        },
+        {
+          "id": "avatar",
+          "named": false
+        },
+        {
+          "id": "document_photo",
+          "named": false
+        },
+        {
+          "id": "pass",
+          "named": false
+        },
+        {
+          "id": "pass2",
+          "named": false
+        },
+        {
+          "id": "terms",
+          "named": true
+        }
+      ],
+      "primaryHeading": 0,
+      "sampleLabel": {
+        "color": "rgb(155, 169, 187)",
+        "fontSize": "11px"
+      },
+      "domContentLoadedMs": 909,
+      "transferredBytes": 2177778,
+      "fcpMs": 824,
+      "consoleErrors": [],
+      "failedLocalRequests": []
+    },
+    {
+      "version": "before",
+      "label": "signup",
+      "width": 768,
+      "status": 200,
+      "documentWidth": 768,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "fname",
+          "named": false
+        },
+        {
+          "id": "lname",
+          "named": false
+        },
+        {
+          "id": "username",
+          "named": false
+        },
+        {
+          "id": "company",
+          "named": false
+        },
+        {
+          "id": "email",
+          "named": false
+        },
+        {
+          "id": "",
+          "named": false
+        },
+        {
+          "id": "phone_custom",
+          "named": true
+        },
+        {
+          "id": "postal",
+          "named": false
+        },
+        {
+          "id": "address",
+          "named": false
+        },
+        {
+          "id": "document_type",
+          "named": false
+        },
+        {
+          "id": "document_number",
+          "named": false
+        },
+        {
+          "id": "country",
+          "named": false
+        },
+        {
+          "id": "state",
+          "named": false
+        },
+        {
+          "id": "city",
+          "named": false
+        },
+        {
+          "id": "avatar",
+          "named": false
+        },
+        {
+          "id": "document_photo",
+          "named": false
+        },
+        {
+          "id": "pass",
+          "named": false
+        },
+        {
+          "id": "pass2",
+          "named": false
+        },
+        {
+          "id": "terms",
+          "named": true
+        }
+      ],
+      "primaryHeading": 0,
+      "sampleLabel": {
+        "color": "rgb(155, 169, 187)",
+        "fontSize": "11px"
+      },
+      "domContentLoadedMs": 989,
+      "transferredBytes": 2177778,
+      "fcpMs": 900,
+      "consoleErrors": [],
+      "failedLocalRequests": []
+    },
+    {
+      "version": "before",
+      "label": "signup",
+      "width": 1024,
+      "status": 200,
+      "documentWidth": 1024,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "fname",
+          "named": false
+        },
+        {
+          "id": "lname",
+          "named": false
+        },
+        {
+          "id": "username",
+          "named": false
+        },
+        {
+          "id": "company",
+          "named": false
+        },
+        {
+          "id": "email",
+          "named": false
+        },
+        {
+          "id": "",
+          "named": false
+        },
+        {
+          "id": "phone_custom",
+          "named": true
+        },
+        {
+          "id": "postal",
+          "named": false
+        },
+        {
+          "id": "address",
+          "named": false
+        },
+        {
+          "id": "document_type",
+          "named": false
+        },
+        {
+          "id": "document_number",
+          "named": false
+        },
+        {
+          "id": "country",
+          "named": false
+        },
+        {
+          "id": "state",
+          "named": false
+        },
+        {
+          "id": "city",
+          "named": false
+        },
+        {
+          "id": "avatar",
+          "named": false
+        },
+        {
+          "id": "document_photo",
+          "named": false
+        },
+        {
+          "id": "pass",
+          "named": false
+        },
+        {
+          "id": "pass2",
+          "named": false
+        },
+        {
+          "id": "terms",
+          "named": true
+        }
+      ],
+      "primaryHeading": 0,
+      "sampleLabel": {
+        "color": "rgb(155, 169, 187)",
+        "fontSize": "11px"
+      },
+      "domContentLoadedMs": 1000,
+      "transferredBytes": 2296052,
+      "fcpMs": 1004,
+      "consoleErrors": [],
+      "failedLocalRequests": []
+    },
+    {
+      "version": "before",
+      "label": "signup",
+      "width": 1440,
+      "status": 200,
+      "documentWidth": 1440,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "fname",
+          "named": false
+        },
+        {
+          "id": "lname",
+          "named": false
+        },
+        {
+          "id": "username",
+          "named": false
+        },
+        {
+          "id": "company",
+          "named": false
+        },
+        {
+          "id": "email",
+          "named": false
+        },
+        {
+          "id": "",
+          "named": false
+        },
+        {
+          "id": "phone_custom",
+          "named": true
+        },
+        {
+          "id": "postal",
+          "named": false
+        },
+        {
+          "id": "address",
+          "named": false
+        },
+        {
+          "id": "document_type",
+          "named": false
+        },
+        {
+          "id": "document_number",
+          "named": false
+        },
+        {
+          "id": "country",
+          "named": false
+        },
+        {
+          "id": "state",
+          "named": false
+        },
+        {
+          "id": "city",
+          "named": false
+        },
+        {
+          "id": "avatar",
+          "named": false
+        },
+        {
+          "id": "document_photo",
+          "named": false
+        },
+        {
+          "id": "pass",
+          "named": false
+        },
+        {
+          "id": "pass2",
+          "named": false
+        },
+        {
+          "id": "terms",
+          "named": true
+        }
+      ],
+      "primaryHeading": 0,
+      "sampleLabel": {
+        "color": "rgb(155, 169, 187)",
+        "fontSize": "11px"
+      },
+      "domContentLoadedMs": 1024,
+      "transferredBytes": 2296052,
+      "fcpMs": 932,
+      "consoleErrors": [],
+      "failedLocalRequests": []
+    },
+    {
+      "version": "before",
+      "label": "office-list",
+      "width": 360,
+      "status": 200,
+      "documentWidth": 360,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "search",
+          "named": false
+        },
+        {
+          "id": "per_page",
+          "named": false
+        }
+      ],
+      "primaryHeading": 0,
+      "sampleLabel": {
+        "color": "rgb(25, 42, 62)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 759,
+      "transferredBytes": 2043597,
+      "fcpMs": 580,
+      "consoleErrors": [],
+      "failedLocalRequests": [
+        [
+          503,
+          "/ajax/load_notifications.php"
+        ],
+        [
+          503,
+          "/ajax/courier/warehouse_delivery_ajax.php"
+        ],
+        [
+          503,
+          "/ajax/tools/offices/offices_list_ajax.php"
+        ]
+      ]
+    },
+    {
+      "version": "before",
+      "label": "office-list",
+      "width": 390,
+      "status": 200,
+      "documentWidth": 390,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "search",
+          "named": false
+        },
+        {
+          "id": "per_page",
+          "named": false
+        }
+      ],
+      "primaryHeading": 0,
+      "sampleLabel": {
+        "color": "rgb(25, 42, 62)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 618,
+      "transferredBytes": 2043597,
+      "fcpMs": 580,
+      "consoleErrors": [],
+      "failedLocalRequests": [
+        [
+          503,
+          "/ajax/load_notifications.php"
+        ],
+        [
+          503,
+          "/ajax/courier/warehouse_delivery_ajax.php"
+        ],
+        [
+          503,
+          "/ajax/tools/offices/offices_list_ajax.php"
+        ]
+      ]
+    },
+    {
+      "version": "before",
+      "label": "office-list",
+      "width": 768,
+      "status": 200,
+      "documentWidth": 768,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "search",
+          "named": false
+        },
+        {
+          "id": "per_page",
+          "named": false
+        }
+      ],
+      "primaryHeading": 0,
+      "sampleLabel": {
+        "color": "rgb(25, 42, 62)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 679,
+      "transferredBytes": 2043597,
+      "fcpMs": 644,
+      "consoleErrors": [],
+      "failedLocalRequests": [
+        [
+          503,
+          "/ajax/load_notifications.php"
+        ],
+        [
+          503,
+          "/ajax/courier/warehouse_delivery_ajax.php"
+        ],
+        [
+          503,
+          "/ajax/tools/offices/offices_list_ajax.php"
+        ]
+      ]
+    },
+    {
+      "version": "before",
+      "label": "office-list",
+      "width": 1024,
+      "status": 200,
+      "documentWidth": 1024,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "search",
+          "named": false
+        },
+        {
+          "id": "per_page",
+          "named": false
+        }
+      ],
+      "primaryHeading": 0,
+      "sampleLabel": {
+        "color": "rgb(25, 42, 62)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 1025,
+      "transferredBytes": 2043597,
+      "fcpMs": 932,
+      "consoleErrors": [],
+      "failedLocalRequests": [
+        [
+          503,
+          "/ajax/load_notifications.php"
+        ],
+        [
+          503,
+          "/ajax/courier/warehouse_delivery_ajax.php"
+        ],
+        [
+          503,
+          "/ajax/tools/offices/offices_list_ajax.php"
+        ]
+      ]
+    },
+    {
+      "version": "before",
+      "label": "office-list",
+      "width": 1440,
+      "status": 200,
+      "documentWidth": 1440,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "search",
+          "named": false
+        },
+        {
+          "id": "per_page",
+          "named": false
+        }
+      ],
+      "primaryHeading": 0,
+      "sampleLabel": {
+        "color": "rgb(25, 42, 62)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 764,
+      "transferredBytes": 2043597,
+      "fcpMs": 656,
+      "consoleErrors": [],
+      "failedLocalRequests": [
+        [
+          503,
+          "/ajax/load_notifications.php"
+        ],
+        [
+          503,
+          "/ajax/courier/warehouse_delivery_ajax.php"
+        ],
+        [
+          503,
+          "/ajax/tools/offices/offices_list_ajax.php"
+        ]
+      ]
+    },
+    {
+      "version": "before",
+      "label": "office-add",
+      "width": 360,
+      "status": 200,
+      "documentWidth": 360,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "name_off",
+          "named": false
+        },
+        {
+          "id": "code_off",
+          "named": false
+        },
+        {
+          "id": "address",
+          "named": false
+        },
+        {
+          "id": "city",
+          "named": false
+        },
+        {
+          "id": "phone_off",
+          "named": false
+        }
+      ],
+      "primaryHeading": 0,
+      "sampleLabel": {
+        "color": "rgb(25, 42, 62)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 606,
+      "transferredBytes": 1999293,
+      "fcpMs": 580,
+      "consoleErrors": [],
+      "failedLocalRequests": [
+        [
+          503,
+          "/ajax/load_notifications.php"
+        ],
+        [
+          503,
+          "/ajax/courier/warehouse_delivery_ajax.php"
+        ],
+        [
+          503,
+          "/ajax/tools/offices/offices_list_ajax.php"
+        ]
+      ]
+    },
+    {
+      "version": "before",
+      "label": "office-add",
+      "width": 390,
+      "status": 200,
+      "documentWidth": 390,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "name_off",
+          "named": false
+        },
+        {
+          "id": "code_off",
+          "named": false
+        },
+        {
+          "id": "address",
+          "named": false
+        },
+        {
+          "id": "city",
+          "named": false
+        },
+        {
+          "id": "phone_off",
+          "named": false
+        }
+      ],
+      "primaryHeading": 0,
+      "sampleLabel": {
+        "color": "rgb(25, 42, 62)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 945,
+      "transferredBytes": 1999293,
+      "fcpMs": 724,
+      "consoleErrors": [],
+      "failedLocalRequests": [
+        [
+          503,
+          "/ajax/load_notifications.php"
+        ],
+        [
+          503,
+          "/ajax/courier/warehouse_delivery_ajax.php"
+        ],
+        [
+          503,
+          "/ajax/tools/offices/offices_list_ajax.php"
+        ]
+      ]
+    },
+    {
+      "version": "before",
+      "label": "office-add",
+      "width": 768,
+      "status": 200,
+      "documentWidth": 768,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "name_off",
+          "named": false
+        },
+        {
+          "id": "code_off",
+          "named": false
+        },
+        {
+          "id": "address",
+          "named": false
+        },
+        {
+          "id": "city",
+          "named": false
+        },
+        {
+          "id": "phone_off",
+          "named": false
+        }
+      ],
+      "primaryHeading": 0,
+      "sampleLabel": {
+        "color": "rgb(25, 42, 62)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 583,
+      "transferredBytes": 1999293,
+      "fcpMs": 484,
+      "consoleErrors": [],
+      "failedLocalRequests": [
+        [
+          503,
+          "/ajax/load_notifications.php"
+        ],
+        [
+          503,
+          "/ajax/courier/warehouse_delivery_ajax.php"
+        ],
+        [
+          503,
+          "/ajax/tools/offices/offices_list_ajax.php"
+        ]
+      ]
+    },
+    {
+      "version": "before",
+      "label": "office-add",
+      "width": 1024,
+      "status": 200,
+      "documentWidth": 1024,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "name_off",
+          "named": false
+        },
+        {
+          "id": "code_off",
+          "named": false
+        },
+        {
+          "id": "address",
+          "named": false
+        },
+        {
+          "id": "city",
+          "named": false
+        },
+        {
+          "id": "phone_off",
+          "named": false
+        }
+      ],
+      "primaryHeading": 0,
+      "sampleLabel": {
+        "color": "rgb(25, 42, 62)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 549,
+      "transferredBytes": 1999293,
+      "fcpMs": 504,
+      "consoleErrors": [],
+      "failedLocalRequests": [
+        [
+          503,
+          "/ajax/load_notifications.php"
+        ],
+        [
+          503,
+          "/ajax/courier/warehouse_delivery_ajax.php"
+        ],
+        [
+          503,
+          "/ajax/tools/offices/offices_list_ajax.php"
+        ]
+      ]
+    },
+    {
+      "version": "before",
+      "label": "office-add",
+      "width": 1440,
+      "status": 200,
+      "documentWidth": 1440,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "name_off",
+          "named": false
+        },
+        {
+          "id": "code_off",
+          "named": false
+        },
+        {
+          "id": "address",
+          "named": false
+        },
+        {
+          "id": "city",
+          "named": false
+        },
+        {
+          "id": "phone_off",
+          "named": false
+        }
+      ],
+      "primaryHeading": 0,
+      "sampleLabel": {
+        "color": "rgb(25, 42, 62)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 553,
+      "transferredBytes": 1999293,
+      "fcpMs": 452,
+      "consoleErrors": [],
+      "failedLocalRequests": [
+        [
+          503,
+          "/ajax/load_notifications.php"
+        ],
+        [
+          503,
+          "/ajax/courier/warehouse_delivery_ajax.php"
+        ],
+        [
+          503,
+          "/ajax/tools/offices/offices_list_ajax.php"
+        ]
+      ]
+    },
+    {
+      "version": "after",
+      "label": "shell",
+      "width": 360,
+      "status": 200,
+      "documentWidth": 360,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "search",
+          "named": true
+        },
+        {
+          "id": "status",
+          "named": true
+        },
+        {
+          "id": "name",
+          "named": true
+        },
+        {
+          "id": "notes",
+          "named": true
+        },
+        {
+          "id": "check",
+          "named": true
+        },
+        {
+          "id": "force_country_address",
+          "named": true
+        },
+        {
+          "id": "force_state_address",
+          "named": true
+        },
+        {
+          "id": "force_city_address",
+          "named": true
+        },
+        {
+          "id": "force_zip_address",
+          "named": true
+        },
+        {
+          "id": "force_full_address",
+          "named": true
+        },
+        {
+          "id": "force_phone_custom",
+          "named": true
+        },
+        {
+          "id": "force_phone_otp_code",
+          "named": true
+        },
+        {
+          "id": "force_document_type",
+          "named": false
+        },
+        {
+          "id": "force_document_number",
+          "named": false
+        },
+        {
+          "id": "force_document_photo",
+          "named": false
+        }
+      ],
+      "primaryHeading": 1,
+      "sampleLabel": {
+        "color": "rgb(25, 42, 62)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 500,
+      "transferredBytes": 1989936,
+      "fcpMs": 452,
+      "consoleErrors": [],
+      "failedLocalRequests": [
+        [
+          503,
+          "/ajax/courier/warehouse_delivery_ajax.php"
+        ],
+        [
+          503,
+          "/ajax/load_notifications.php"
+        ]
+      ]
+    },
+    {
+      "version": "after",
+      "label": "shell",
+      "width": 390,
+      "status": 200,
+      "documentWidth": 390,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "search",
+          "named": true
+        },
+        {
+          "id": "status",
+          "named": true
+        },
+        {
+          "id": "name",
+          "named": true
+        },
+        {
+          "id": "notes",
+          "named": true
+        },
+        {
+          "id": "check",
+          "named": true
+        },
+        {
+          "id": "force_country_address",
+          "named": true
+        },
+        {
+          "id": "force_state_address",
+          "named": true
+        },
+        {
+          "id": "force_city_address",
+          "named": true
+        },
+        {
+          "id": "force_zip_address",
+          "named": true
+        },
+        {
+          "id": "force_full_address",
+          "named": true
+        },
+        {
+          "id": "force_phone_custom",
+          "named": true
+        },
+        {
+          "id": "force_phone_otp_code",
+          "named": true
+        },
+        {
+          "id": "force_document_type",
+          "named": false
+        },
+        {
+          "id": "force_document_number",
+          "named": false
+        },
+        {
+          "id": "force_document_photo",
+          "named": false
+        }
+      ],
+      "primaryHeading": 1,
+      "sampleLabel": {
+        "color": "rgb(25, 42, 62)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 445,
+      "transferredBytes": 1989936,
+      "fcpMs": 380,
+      "consoleErrors": [],
+      "failedLocalRequests": [
+        [
+          503,
+          "/ajax/load_notifications.php"
+        ],
+        [
+          503,
+          "/ajax/courier/warehouse_delivery_ajax.php"
+        ]
+      ]
+    },
+    {
+      "version": "after",
+      "label": "shell",
+      "width": 768,
+      "status": 200,
+      "documentWidth": 768,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "search",
+          "named": true
+        },
+        {
+          "id": "status",
+          "named": true
+        },
+        {
+          "id": "name",
+          "named": true
+        },
+        {
+          "id": "notes",
+          "named": true
+        },
+        {
+          "id": "check",
+          "named": true
+        },
+        {
+          "id": "force_country_address",
+          "named": true
+        },
+        {
+          "id": "force_state_address",
+          "named": true
+        },
+        {
+          "id": "force_city_address",
+          "named": true
+        },
+        {
+          "id": "force_zip_address",
+          "named": true
+        },
+        {
+          "id": "force_full_address",
+          "named": true
+        },
+        {
+          "id": "force_phone_custom",
+          "named": true
+        },
+        {
+          "id": "force_phone_otp_code",
+          "named": true
+        },
+        {
+          "id": "force_document_type",
+          "named": false
+        },
+        {
+          "id": "force_document_number",
+          "named": false
+        },
+        {
+          "id": "force_document_photo",
+          "named": false
+        }
+      ],
+      "primaryHeading": 1,
+      "sampleLabel": {
+        "color": "rgb(25, 42, 62)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 574,
+      "transferredBytes": 1989936,
+      "fcpMs": 476,
+      "consoleErrors": [],
+      "failedLocalRequests": [
+        [
+          503,
+          "/ajax/load_notifications.php"
+        ],
+        [
+          503,
+          "/ajax/courier/warehouse_delivery_ajax.php"
+        ]
+      ]
+    },
+    {
+      "version": "after",
+      "label": "shell",
+      "width": 1024,
+      "status": 200,
+      "documentWidth": 1024,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "search",
+          "named": true
+        },
+        {
+          "id": "status",
+          "named": true
+        },
+        {
+          "id": "name",
+          "named": true
+        },
+        {
+          "id": "notes",
+          "named": true
+        },
+        {
+          "id": "check",
+          "named": true
+        },
+        {
+          "id": "force_country_address",
+          "named": true
+        },
+        {
+          "id": "force_state_address",
+          "named": true
+        },
+        {
+          "id": "force_city_address",
+          "named": true
+        },
+        {
+          "id": "force_zip_address",
+          "named": true
+        },
+        {
+          "id": "force_full_address",
+          "named": true
+        },
+        {
+          "id": "force_phone_custom",
+          "named": true
+        },
+        {
+          "id": "force_phone_otp_code",
+          "named": true
+        },
+        {
+          "id": "force_document_type",
+          "named": false
+        },
+        {
+          "id": "force_document_number",
+          "named": false
+        },
+        {
+          "id": "force_document_photo",
+          "named": false
+        }
+      ],
+      "primaryHeading": 1,
+      "sampleLabel": {
+        "color": "rgb(25, 42, 62)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 855,
+      "transferredBytes": 1989936,
+      "fcpMs": 796,
+      "consoleErrors": [],
+      "failedLocalRequests": [
+        [
+          503,
+          "/ajax/load_notifications.php"
+        ],
+        [
+          503,
+          "/ajax/courier/warehouse_delivery_ajax.php"
+        ]
+      ]
+    },
+    {
+      "version": "after",
+      "label": "shell",
+      "width": 1440,
+      "status": 200,
+      "documentWidth": 1440,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "search",
+          "named": true
+        },
+        {
+          "id": "status",
+          "named": true
+        },
+        {
+          "id": "name",
+          "named": true
+        },
+        {
+          "id": "notes",
+          "named": true
+        },
+        {
+          "id": "check",
+          "named": true
+        },
+        {
+          "id": "force_country_address",
+          "named": true
+        },
+        {
+          "id": "force_state_address",
+          "named": true
+        },
+        {
+          "id": "force_city_address",
+          "named": true
+        },
+        {
+          "id": "force_zip_address",
+          "named": true
+        },
+        {
+          "id": "force_full_address",
+          "named": true
+        },
+        {
+          "id": "force_phone_custom",
+          "named": true
+        },
+        {
+          "id": "force_phone_otp_code",
+          "named": true
+        },
+        {
+          "id": "force_document_type",
+          "named": false
+        },
+        {
+          "id": "force_document_number",
+          "named": false
+        },
+        {
+          "id": "force_document_photo",
+          "named": false
+        }
+      ],
+      "primaryHeading": 1,
+      "sampleLabel": {
+        "color": "rgb(25, 42, 62)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 488,
+      "transferredBytes": 1989936,
+      "fcpMs": 452,
+      "consoleErrors": [],
+      "failedLocalRequests": [
+        [
+          503,
+          "/ajax/load_notifications.php"
+        ],
+        [
+          503,
+          "/ajax/courier/warehouse_delivery_ajax.php"
+        ]
+      ]
+    },
+    {
+      "version": "after",
+      "label": "forgot",
+      "width": 360,
+      "status": 200,
+      "documentWidth": 360,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "email",
+          "named": true
+        }
+      ],
+      "primaryHeading": 1,
+      "sampleLabel": {
+        "color": "rgb(89, 105, 125)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 397,
+      "transferredBytes": 1049772,
+      "fcpMs": 388,
+      "consoleErrors": [],
+      "failedLocalRequests": []
+    },
+    {
+      "version": "after",
+      "label": "forgot",
+      "width": 390,
+      "status": 200,
+      "documentWidth": 390,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "email",
+          "named": true
+        }
+      ],
+      "primaryHeading": 1,
+      "sampleLabel": {
+        "color": "rgb(89, 105, 125)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 335,
+      "transferredBytes": 1049772,
+      "fcpMs": 328,
+      "consoleErrors": [],
+      "failedLocalRequests": []
+    },
+    {
+      "version": "after",
+      "label": "forgot",
+      "width": 768,
+      "status": 200,
+      "documentWidth": 768,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "email",
+          "named": true
+        }
+      ],
+      "primaryHeading": 1,
+      "sampleLabel": {
+        "color": "rgb(89, 105, 125)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 350,
+      "transferredBytes": 1049772,
+      "fcpMs": 292,
+      "consoleErrors": [],
+      "failedLocalRequests": []
+    },
+    {
+      "version": "after",
+      "label": "forgot",
+      "width": 1024,
+      "status": 200,
+      "documentWidth": 1024,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "email",
+          "named": true
+        }
+      ],
+      "primaryHeading": 1,
+      "sampleLabel": {
+        "color": "rgb(89, 105, 125)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 332,
+      "transferredBytes": 1181848,
+      "fcpMs": 380,
+      "consoleErrors": [],
+      "failedLocalRequests": []
+    },
+    {
+      "version": "after",
+      "label": "forgot",
+      "width": 1440,
+      "status": 200,
+      "documentWidth": 1440,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "email",
+          "named": true
+        }
+      ],
+      "primaryHeading": 1,
+      "sampleLabel": {
+        "color": "rgb(89, 105, 125)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 427,
+      "transferredBytes": 1181848,
+      "fcpMs": 464,
+      "consoleErrors": [],
+      "failedLocalRequests": []
+    },
+    {
+      "version": "after",
+      "label": "login",
+      "width": 360,
+      "status": 200,
+      "documentWidth": 360,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "username",
+          "named": true
+        },
+        {
+          "id": "password",
+          "named": true
+        },
+        {
+          "id": "flexCheckDefault",
+          "named": true
+        }
+      ],
+      "primaryHeading": 1,
+      "sampleLabel": {
+        "color": "rgb(89, 105, 125)",
+        "fontSize": "11px"
+      },
+      "domContentLoadedMs": 384,
+      "transferredBytes": 1038856,
+      "fcpMs": 376,
+      "consoleErrors": [],
+      "failedLocalRequests": []
+    },
+    {
+      "version": "after",
+      "label": "login",
+      "width": 390,
+      "status": 200,
+      "documentWidth": 390,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "username",
+          "named": true
+        },
+        {
+          "id": "password",
+          "named": true
+        },
+        {
+          "id": "flexCheckDefault",
+          "named": true
+        }
+      ],
+      "primaryHeading": 1,
+      "sampleLabel": {
+        "color": "rgb(89, 105, 125)",
+        "fontSize": "11px"
+      },
+      "domContentLoadedMs": 315,
+      "transferredBytes": 1038856,
+      "fcpMs": 312,
+      "consoleErrors": [],
+      "failedLocalRequests": []
+    },
+    {
+      "version": "after",
+      "label": "login",
+      "width": 768,
+      "status": 200,
+      "documentWidth": 768,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "username",
+          "named": true
+        },
+        {
+          "id": "password",
+          "named": true
+        },
+        {
+          "id": "flexCheckDefault",
+          "named": true
+        }
+      ],
+      "primaryHeading": 1,
+      "sampleLabel": {
+        "color": "rgb(89, 105, 125)",
+        "fontSize": "11px"
+      },
+      "domContentLoadedMs": 333,
+      "transferredBytes": 1038856,
+      "fcpMs": 328,
+      "consoleErrors": [],
+      "failedLocalRequests": []
+    },
+    {
+      "version": "after",
+      "label": "login",
+      "width": 1024,
+      "status": 200,
+      "documentWidth": 1024,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "username",
+          "named": true
+        },
+        {
+          "id": "password",
+          "named": true
+        },
+        {
+          "id": "flexCheckDefault",
+          "named": true
+        }
+      ],
+      "primaryHeading": 1,
+      "sampleLabel": {
+        "color": "rgb(89, 105, 125)",
+        "fontSize": "11px"
+      },
+      "domContentLoadedMs": 393,
+      "transferredBytes": 1140698,
+      "fcpMs": 460,
+      "consoleErrors": [],
+      "failedLocalRequests": []
+    },
+    {
+      "version": "after",
+      "label": "login",
+      "width": 1440,
+      "status": 200,
+      "documentWidth": 1440,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "username",
+          "named": true
+        },
+        {
+          "id": "password",
+          "named": true
+        },
+        {
+          "id": "flexCheckDefault",
+          "named": true
+        }
+      ],
+      "primaryHeading": 1,
+      "sampleLabel": {
+        "color": "rgb(89, 105, 125)",
+        "fontSize": "11px"
+      },
+      "domContentLoadedMs": 412,
+      "transferredBytes": 1140698,
+      "fcpMs": 444,
+      "consoleErrors": [],
+      "failedLocalRequests": []
+    },
+    {
+      "version": "after",
+      "label": "signup",
+      "width": 360,
+      "status": 200,
+      "documentWidth": 360,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "fname",
+          "named": true
+        },
+        {
+          "id": "lname",
+          "named": true
+        },
+        {
+          "id": "username",
+          "named": true
+        },
+        {
+          "id": "company",
+          "named": true
+        },
+        {
+          "id": "email",
+          "named": true
+        },
+        {
+          "id": "phone_custom",
+          "named": true
+        },
+        {
+          "id": "postal",
+          "named": true
+        },
+        {
+          "id": "address",
+          "named": true
+        },
+        {
+          "id": "document_type",
+          "named": true
+        },
+        {
+          "id": "document_number",
+          "named": true
+        },
+        {
+          "id": "country",
+          "named": true
+        },
+        {
+          "id": "state",
+          "named": true
+        },
+        {
+          "id": "city",
+          "named": true
+        },
+        {
+          "id": "avatar",
+          "named": true
+        },
+        {
+          "id": "document_photo",
+          "named": true
+        },
+        {
+          "id": "pass",
+          "named": true
+        },
+        {
+          "id": "pass2",
+          "named": true
+        },
+        {
+          "id": "terms",
+          "named": true
+        }
+      ],
+      "primaryHeading": 1,
+      "sampleLabel": {
+        "color": "rgb(89, 105, 125)",
+        "fontSize": "11px"
+      },
+      "domContentLoadedMs": 464,
+      "transferredBytes": 2180664,
+      "fcpMs": 428,
+      "consoleErrors": [],
+      "failedLocalRequests": []
+    },
+    {
+      "version": "after",
+      "label": "signup",
+      "width": 390,
+      "status": 200,
+      "documentWidth": 390,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "fname",
+          "named": true
+        },
+        {
+          "id": "lname",
+          "named": true
+        },
+        {
+          "id": "username",
+          "named": true
+        },
+        {
+          "id": "company",
+          "named": true
+        },
+        {
+          "id": "email",
+          "named": true
+        },
+        {
+          "id": "phone_custom",
+          "named": true
+        },
+        {
+          "id": "postal",
+          "named": true
+        },
+        {
+          "id": "address",
+          "named": true
+        },
+        {
+          "id": "document_type",
+          "named": true
+        },
+        {
+          "id": "document_number",
+          "named": true
+        },
+        {
+          "id": "country",
+          "named": true
+        },
+        {
+          "id": "state",
+          "named": true
+        },
+        {
+          "id": "city",
+          "named": true
+        },
+        {
+          "id": "avatar",
+          "named": true
+        },
+        {
+          "id": "document_photo",
+          "named": true
+        },
+        {
+          "id": "pass",
+          "named": true
+        },
+        {
+          "id": "pass2",
+          "named": true
+        },
+        {
+          "id": "terms",
+          "named": true
+        }
+      ],
+      "primaryHeading": 1,
+      "sampleLabel": {
+        "color": "rgb(89, 105, 125)",
+        "fontSize": "11px"
+      },
+      "domContentLoadedMs": 488,
+      "transferredBytes": 2180664,
+      "fcpMs": 444,
+      "consoleErrors": [],
+      "failedLocalRequests": []
+    },
+    {
+      "version": "after",
+      "label": "signup",
+      "width": 768,
+      "status": 200,
+      "documentWidth": 768,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "fname",
+          "named": true
+        },
+        {
+          "id": "lname",
+          "named": true
+        },
+        {
+          "id": "username",
+          "named": true
+        },
+        {
+          "id": "company",
+          "named": true
+        },
+        {
+          "id": "email",
+          "named": true
+        },
+        {
+          "id": "",
+          "named": false
+        },
+        {
+          "id": "phone_custom",
+          "named": true
+        },
+        {
+          "id": "postal",
+          "named": true
+        },
+        {
+          "id": "address",
+          "named": true
+        },
+        {
+          "id": "document_type",
+          "named": true
+        },
+        {
+          "id": "document_number",
+          "named": true
+        },
+        {
+          "id": "country",
+          "named": true
+        },
+        {
+          "id": "state",
+          "named": true
+        },
+        {
+          "id": "city",
+          "named": true
+        },
+        {
+          "id": "avatar",
+          "named": true
+        },
+        {
+          "id": "document_photo",
+          "named": true
+        },
+        {
+          "id": "pass",
+          "named": true
+        },
+        {
+          "id": "pass2",
+          "named": true
+        },
+        {
+          "id": "terms",
+          "named": true
+        }
+      ],
+      "primaryHeading": 1,
+      "sampleLabel": {
+        "color": "rgb(89, 105, 125)",
+        "fontSize": "11px"
+      },
+      "domContentLoadedMs": 545,
+      "transferredBytes": 2180664,
+      "fcpMs": 540,
+      "consoleErrors": [],
+      "failedLocalRequests": []
+    },
+    {
+      "version": "after",
+      "label": "signup",
+      "width": 1024,
+      "status": 200,
+      "documentWidth": 1024,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "fname",
+          "named": true
+        },
+        {
+          "id": "lname",
+          "named": true
+        },
+        {
+          "id": "username",
+          "named": true
+        },
+        {
+          "id": "company",
+          "named": true
+        },
+        {
+          "id": "email",
+          "named": true
+        },
+        {
+          "id": "",
+          "named": false
+        },
+        {
+          "id": "phone_custom",
+          "named": true
+        },
+        {
+          "id": "postal",
+          "named": true
+        },
+        {
+          "id": "address",
+          "named": true
+        },
+        {
+          "id": "document_type",
+          "named": true
+        },
+        {
+          "id": "document_number",
+          "named": true
+        },
+        {
+          "id": "country",
+          "named": true
+        },
+        {
+          "id": "state",
+          "named": true
+        },
+        {
+          "id": "city",
+          "named": true
+        },
+        {
+          "id": "avatar",
+          "named": true
+        },
+        {
+          "id": "document_photo",
+          "named": true
+        },
+        {
+          "id": "pass",
+          "named": true
+        },
+        {
+          "id": "pass2",
+          "named": true
+        },
+        {
+          "id": "terms",
+          "named": true
+        }
+      ],
+      "primaryHeading": 1,
+      "sampleLabel": {
+        "color": "rgb(89, 105, 125)",
+        "fontSize": "11px"
+      },
+      "domContentLoadedMs": 491,
+      "transferredBytes": 2298938,
+      "fcpMs": 520,
+      "consoleErrors": [],
+      "failedLocalRequests": []
+    },
+    {
+      "version": "after",
+      "label": "signup",
+      "width": 1440,
+      "status": 200,
+      "documentWidth": 1440,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "fname",
+          "named": true
+        },
+        {
+          "id": "lname",
+          "named": true
+        },
+        {
+          "id": "username",
+          "named": true
+        },
+        {
+          "id": "company",
+          "named": true
+        },
+        {
+          "id": "email",
+          "named": true
+        },
+        {
+          "id": "",
+          "named": false
+        },
+        {
+          "id": "phone_custom",
+          "named": true
+        },
+        {
+          "id": "postal",
+          "named": true
+        },
+        {
+          "id": "address",
+          "named": true
+        },
+        {
+          "id": "document_type",
+          "named": true
+        },
+        {
+          "id": "document_number",
+          "named": true
+        },
+        {
+          "id": "country",
+          "named": true
+        },
+        {
+          "id": "state",
+          "named": true
+        },
+        {
+          "id": "city",
+          "named": true
+        },
+        {
+          "id": "avatar",
+          "named": true
+        },
+        {
+          "id": "document_photo",
+          "named": true
+        },
+        {
+          "id": "pass",
+          "named": true
+        },
+        {
+          "id": "pass2",
+          "named": true
+        },
+        {
+          "id": "terms",
+          "named": true
+        }
+      ],
+      "primaryHeading": 1,
+      "sampleLabel": {
+        "color": "rgb(89, 105, 125)",
+        "fontSize": "11px"
+      },
+      "domContentLoadedMs": 426,
+      "transferredBytes": 2298938,
+      "fcpMs": 408,
+      "consoleErrors": [],
+      "failedLocalRequests": []
+    },
+    {
+      "version": "after",
+      "label": "office-list",
+      "width": 360,
+      "status": 200,
+      "documentWidth": 360,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "search",
+          "named": true
+        },
+        {
+          "id": "per_page",
+          "named": true
+        },
+        {
+          "id": "force_country_address",
+          "named": true
+        },
+        {
+          "id": "force_state_address",
+          "named": true
+        },
+        {
+          "id": "force_city_address",
+          "named": true
+        },
+        {
+          "id": "force_zip_address",
+          "named": true
+        },
+        {
+          "id": "force_full_address",
+          "named": true
+        },
+        {
+          "id": "force_phone_custom",
+          "named": true
+        },
+        {
+          "id": "force_phone_otp_code",
+          "named": true
+        },
+        {
+          "id": "force_document_type",
+          "named": false
+        },
+        {
+          "id": "force_document_number",
+          "named": false
+        },
+        {
+          "id": "force_document_photo",
+          "named": false
+        }
+      ],
+      "primaryHeading": 1,
+      "sampleLabel": {
+        "color": "rgb(25, 42, 62)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 480,
+      "transferredBytes": 2057665,
+      "fcpMs": 428,
+      "consoleErrors": [],
+      "failedLocalRequests": [
+        [
+          503,
+          "/ajax/load_notifications.php"
+        ],
+        [
+          503,
+          "/ajax/courier/warehouse_delivery_ajax.php"
+        ],
+        [
+          503,
+          "/ajax/tools/offices/offices_list_ajax.php"
+        ]
+      ]
+    },
+    {
+      "version": "after",
+      "label": "office-list",
+      "width": 390,
+      "status": 200,
+      "documentWidth": 390,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "search",
+          "named": true
+        },
+        {
+          "id": "per_page",
+          "named": true
+        },
+        {
+          "id": "force_country_address",
+          "named": true
+        },
+        {
+          "id": "force_state_address",
+          "named": true
+        },
+        {
+          "id": "force_city_address",
+          "named": true
+        },
+        {
+          "id": "force_zip_address",
+          "named": true
+        },
+        {
+          "id": "force_full_address",
+          "named": true
+        },
+        {
+          "id": "force_phone_custom",
+          "named": true
+        },
+        {
+          "id": "force_phone_otp_code",
+          "named": true
+        },
+        {
+          "id": "force_document_type",
+          "named": false
+        },
+        {
+          "id": "force_document_number",
+          "named": false
+        },
+        {
+          "id": "force_document_photo",
+          "named": false
+        }
+      ],
+      "primaryHeading": 1,
+      "sampleLabel": {
+        "color": "rgb(25, 42, 62)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 494,
+      "transferredBytes": 2057665,
+      "fcpMs": 452,
+      "consoleErrors": [],
+      "failedLocalRequests": [
+        [
+          503,
+          "/ajax/load_notifications.php"
+        ],
+        [
+          503,
+          "/ajax/courier/warehouse_delivery_ajax.php"
+        ],
+        [
+          503,
+          "/ajax/tools/offices/offices_list_ajax.php"
+        ]
+      ]
+    },
+    {
+      "version": "after",
+      "label": "office-list",
+      "width": 768,
+      "status": 200,
+      "documentWidth": 768,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "search",
+          "named": true
+        },
+        {
+          "id": "per_page",
+          "named": true
+        },
+        {
+          "id": "force_country_address",
+          "named": true
+        },
+        {
+          "id": "force_state_address",
+          "named": true
+        },
+        {
+          "id": "force_city_address",
+          "named": true
+        },
+        {
+          "id": "force_zip_address",
+          "named": true
+        },
+        {
+          "id": "force_full_address",
+          "named": true
+        },
+        {
+          "id": "force_phone_custom",
+          "named": true
+        },
+        {
+          "id": "force_phone_otp_code",
+          "named": true
+        },
+        {
+          "id": "force_document_type",
+          "named": false
+        },
+        {
+          "id": "force_document_number",
+          "named": false
+        },
+        {
+          "id": "force_document_photo",
+          "named": false
+        }
+      ],
+      "primaryHeading": 1,
+      "sampleLabel": {
+        "color": "rgb(25, 42, 62)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 535,
+      "transferredBytes": 2057665,
+      "fcpMs": 492,
+      "consoleErrors": [],
+      "failedLocalRequests": [
+        [
+          503,
+          "/ajax/load_notifications.php"
+        ],
+        [
+          503,
+          "/ajax/courier/warehouse_delivery_ajax.php"
+        ],
+        [
+          503,
+          "/ajax/tools/offices/offices_list_ajax.php"
+        ]
+      ]
+    },
+    {
+      "version": "after",
+      "label": "office-list",
+      "width": 1024,
+      "status": 200,
+      "documentWidth": 1024,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "search",
+          "named": true
+        },
+        {
+          "id": "per_page",
+          "named": true
+        },
+        {
+          "id": "force_country_address",
+          "named": true
+        },
+        {
+          "id": "force_state_address",
+          "named": true
+        },
+        {
+          "id": "force_city_address",
+          "named": true
+        },
+        {
+          "id": "force_zip_address",
+          "named": true
+        },
+        {
+          "id": "force_full_address",
+          "named": true
+        },
+        {
+          "id": "force_phone_custom",
+          "named": true
+        },
+        {
+          "id": "force_phone_otp_code",
+          "named": true
+        },
+        {
+          "id": "force_document_type",
+          "named": false
+        },
+        {
+          "id": "force_document_number",
+          "named": false
+        },
+        {
+          "id": "force_document_photo",
+          "named": false
+        }
+      ],
+      "primaryHeading": 1,
+      "sampleLabel": {
+        "color": "rgb(25, 42, 62)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 479,
+      "transferredBytes": 2057665,
+      "fcpMs": 436,
+      "consoleErrors": [],
+      "failedLocalRequests": [
+        [
+          503,
+          "/ajax/load_notifications.php"
+        ],
+        [
+          503,
+          "/ajax/courier/warehouse_delivery_ajax.php"
+        ],
+        [
+          503,
+          "/ajax/tools/offices/offices_list_ajax.php"
+        ]
+      ]
+    },
+    {
+      "version": "after",
+      "label": "office-list",
+      "width": 1440,
+      "status": 200,
+      "documentWidth": 1440,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "search",
+          "named": true
+        },
+        {
+          "id": "per_page",
+          "named": true
+        },
+        {
+          "id": "force_country_address",
+          "named": true
+        },
+        {
+          "id": "force_state_address",
+          "named": true
+        },
+        {
+          "id": "force_city_address",
+          "named": true
+        },
+        {
+          "id": "force_zip_address",
+          "named": true
+        },
+        {
+          "id": "force_full_address",
+          "named": true
+        },
+        {
+          "id": "force_phone_custom",
+          "named": true
+        },
+        {
+          "id": "force_phone_otp_code",
+          "named": true
+        },
+        {
+          "id": "force_document_type",
+          "named": false
+        },
+        {
+          "id": "force_document_number",
+          "named": false
+        },
+        {
+          "id": "force_document_photo",
+          "named": false
+        }
+      ],
+      "primaryHeading": 1,
+      "sampleLabel": {
+        "color": "rgb(25, 42, 62)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 481,
+      "transferredBytes": 2057665,
+      "fcpMs": 432,
+      "consoleErrors": [],
+      "failedLocalRequests": [
+        [
+          503,
+          "/ajax/load_notifications.php"
+        ],
+        [
+          503,
+          "/ajax/courier/warehouse_delivery_ajax.php"
+        ],
+        [
+          503,
+          "/ajax/tools/offices/offices_list_ajax.php"
+        ]
+      ]
+    },
+    {
+      "version": "after",
+      "label": "office-add",
+      "width": 360,
+      "status": 200,
+      "documentWidth": 360,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "name_off",
+          "named": false
+        },
+        {
+          "id": "code_off",
+          "named": false
+        },
+        {
+          "id": "address",
+          "named": false
+        },
+        {
+          "id": "city",
+          "named": false
+        },
+        {
+          "id": "phone_off",
+          "named": false
+        },
+        {
+          "id": "force_country_address",
+          "named": true
+        },
+        {
+          "id": "force_state_address",
+          "named": true
+        },
+        {
+          "id": "force_city_address",
+          "named": true
+        },
+        {
+          "id": "force_zip_address",
+          "named": true
+        },
+        {
+          "id": "force_full_address",
+          "named": true
+        },
+        {
+          "id": "force_phone_custom",
+          "named": true
+        },
+        {
+          "id": "force_phone_otp_code",
+          "named": true
+        },
+        {
+          "id": "force_document_type",
+          "named": false
+        },
+        {
+          "id": "force_document_number",
+          "named": false
+        },
+        {
+          "id": "force_document_photo",
+          "named": false
+        }
+      ],
+      "primaryHeading": 1,
+      "sampleLabel": {
+        "color": "rgb(25, 42, 62)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 471,
+      "transferredBytes": 2013361,
+      "fcpMs": 412,
+      "consoleErrors": [],
+      "failedLocalRequests": [
+        [
+          503,
+          "/ajax/load_notifications.php"
+        ],
+        [
+          503,
+          "/ajax/courier/warehouse_delivery_ajax.php"
+        ],
+        [
+          503,
+          "/ajax/tools/offices/offices_list_ajax.php"
+        ]
+      ]
+    },
+    {
+      "version": "after",
+      "label": "office-add",
+      "width": 390,
+      "status": 200,
+      "documentWidth": 390,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "name_off",
+          "named": false
+        },
+        {
+          "id": "code_off",
+          "named": false
+        },
+        {
+          "id": "address",
+          "named": false
+        },
+        {
+          "id": "city",
+          "named": false
+        },
+        {
+          "id": "phone_off",
+          "named": false
+        },
+        {
+          "id": "force_country_address",
+          "named": true
+        },
+        {
+          "id": "force_state_address",
+          "named": true
+        },
+        {
+          "id": "force_city_address",
+          "named": true
+        },
+        {
+          "id": "force_zip_address",
+          "named": true
+        },
+        {
+          "id": "force_full_address",
+          "named": true
+        },
+        {
+          "id": "force_phone_custom",
+          "named": true
+        },
+        {
+          "id": "force_phone_otp_code",
+          "named": true
+        },
+        {
+          "id": "force_document_type",
+          "named": false
+        },
+        {
+          "id": "force_document_number",
+          "named": false
+        },
+        {
+          "id": "force_document_photo",
+          "named": false
+        }
+      ],
+      "primaryHeading": 1,
+      "sampleLabel": {
+        "color": "rgb(25, 42, 62)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 505,
+      "transferredBytes": 2013361,
+      "fcpMs": 448,
+      "consoleErrors": [],
+      "failedLocalRequests": [
+        [
+          503,
+          "/ajax/load_notifications.php"
+        ],
+        [
+          503,
+          "/ajax/courier/warehouse_delivery_ajax.php"
+        ],
+        [
+          503,
+          "/ajax/tools/offices/offices_list_ajax.php"
+        ]
+      ]
+    },
+    {
+      "version": "after",
+      "label": "office-add",
+      "width": 768,
+      "status": 200,
+      "documentWidth": 768,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "name_off",
+          "named": false
+        },
+        {
+          "id": "code_off",
+          "named": false
+        },
+        {
+          "id": "address",
+          "named": false
+        },
+        {
+          "id": "city",
+          "named": false
+        },
+        {
+          "id": "phone_off",
+          "named": false
+        },
+        {
+          "id": "force_country_address",
+          "named": true
+        },
+        {
+          "id": "force_state_address",
+          "named": true
+        },
+        {
+          "id": "force_city_address",
+          "named": true
+        },
+        {
+          "id": "force_zip_address",
+          "named": true
+        },
+        {
+          "id": "force_full_address",
+          "named": true
+        },
+        {
+          "id": "force_phone_custom",
+          "named": true
+        },
+        {
+          "id": "force_phone_otp_code",
+          "named": true
+        },
+        {
+          "id": "force_document_type",
+          "named": false
+        },
+        {
+          "id": "force_document_number",
+          "named": false
+        },
+        {
+          "id": "force_document_photo",
+          "named": false
+        }
+      ],
+      "primaryHeading": 1,
+      "sampleLabel": {
+        "color": "rgb(25, 42, 62)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 463,
+      "transferredBytes": 2013361,
+      "fcpMs": 424,
+      "consoleErrors": [],
+      "failedLocalRequests": [
+        [
+          503,
+          "/ajax/load_notifications.php"
+        ],
+        [
+          503,
+          "/ajax/courier/warehouse_delivery_ajax.php"
+        ],
+        [
+          503,
+          "/ajax/tools/offices/offices_list_ajax.php"
+        ]
+      ]
+    },
+    {
+      "version": "after",
+      "label": "office-add",
+      "width": 1024,
+      "status": 200,
+      "documentWidth": 1024,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "name_off",
+          "named": false
+        },
+        {
+          "id": "code_off",
+          "named": false
+        },
+        {
+          "id": "address",
+          "named": false
+        },
+        {
+          "id": "city",
+          "named": false
+        },
+        {
+          "id": "phone_off",
+          "named": false
+        },
+        {
+          "id": "force_country_address",
+          "named": true
+        },
+        {
+          "id": "force_state_address",
+          "named": true
+        },
+        {
+          "id": "force_city_address",
+          "named": true
+        },
+        {
+          "id": "force_zip_address",
+          "named": true
+        },
+        {
+          "id": "force_full_address",
+          "named": true
+        },
+        {
+          "id": "force_phone_custom",
+          "named": true
+        },
+        {
+          "id": "force_phone_otp_code",
+          "named": true
+        },
+        {
+          "id": "force_document_type",
+          "named": false
+        },
+        {
+          "id": "force_document_number",
+          "named": false
+        },
+        {
+          "id": "force_document_photo",
+          "named": false
+        }
+      ],
+      "primaryHeading": 1,
+      "sampleLabel": {
+        "color": "rgb(25, 42, 62)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 550,
+      "transferredBytes": 2013361,
+      "fcpMs": 484,
+      "consoleErrors": [],
+      "failedLocalRequests": [
+        [
+          503,
+          "/ajax/courier/warehouse_delivery_ajax.php"
+        ],
+        [
+          503,
+          "/ajax/load_notifications.php"
+        ],
+        [
+          503,
+          "/ajax/tools/offices/offices_list_ajax.php"
+        ]
+      ]
+    },
+    {
+      "version": "after",
+      "label": "office-add",
+      "width": 1440,
+      "status": 200,
+      "documentWidth": 1440,
+      "horizontalOverflow": false,
+      "labels": [
+        {
+          "id": "name_off",
+          "named": false
+        },
+        {
+          "id": "code_off",
+          "named": false
+        },
+        {
+          "id": "address",
+          "named": false
+        },
+        {
+          "id": "city",
+          "named": false
+        },
+        {
+          "id": "phone_off",
+          "named": false
+        },
+        {
+          "id": "force_country_address",
+          "named": true
+        },
+        {
+          "id": "force_state_address",
+          "named": true
+        },
+        {
+          "id": "force_city_address",
+          "named": true
+        },
+        {
+          "id": "force_zip_address",
+          "named": true
+        },
+        {
+          "id": "force_full_address",
+          "named": true
+        },
+        {
+          "id": "force_phone_custom",
+          "named": true
+        },
+        {
+          "id": "force_phone_otp_code",
+          "named": true
+        },
+        {
+          "id": "force_document_type",
+          "named": false
+        },
+        {
+          "id": "force_document_number",
+          "named": false
+        },
+        {
+          "id": "force_document_photo",
+          "named": false
+        }
+      ],
+      "primaryHeading": 1,
+      "sampleLabel": {
+        "color": "rgb(25, 42, 62)",
+        "fontSize": "14px"
+      },
+      "domContentLoadedMs": 488,
+      "transferredBytes": 2013361,
+      "fcpMs": 428,
+      "consoleErrors": [],
+      "failedLocalRequests": [
+        [
+          503,
+          "/ajax/load_notifications.php"
+        ],
+        [
+          503,
+          "/ajax/courier/warehouse_delivery_ajax.php"
+        ],
+        [
+          503,
+          "/ajax/tools/offices/offices_list_ajax.php"
+        ]
+      ]
+    }
+  ]
+}

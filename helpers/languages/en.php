@@ -400,7 +400,7 @@ $lang = array(
 	"message_title_login2" => "Welcome to",
 
 	"message_title_register1" => "Hello In this demo choose the country that corresponds to the configured price list, so you can fill out the shipping and Pick up form.",
-	"message_title_forgot1" => "Please enter your email address. You will receive a link to create a new password by email.",
+	"message_title_forgot1" => "Enter your email address. You will receive a verification code by email to reset your password.",
 	"message_title_tracking1" => "Sea Shipments",
 	"message_title_tracking2" => "Air Shipments",
 

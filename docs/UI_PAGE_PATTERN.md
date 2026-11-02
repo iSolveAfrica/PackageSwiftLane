@@ -42,7 +42,7 @@ never added to the baseline: it follows the pattern.
 </div>
 ```
 
-1. **Title row first.** `cdp_pageHeader('Title')` is the first thing inside
+1. **Title row first.** `cdp_pageHeader('Title')` renders the page's `h1` and is the first thing inside
    `.page-wrapper` (views/inc/page_header.php). The shell has no separate top
    bar: that row is pulled up beside the icon tray. Titles are Title Case; a
    record name or reference goes in `sub`; page-level buttons go in `actions`.
@@ -119,3 +119,29 @@ control heights, overlapping siblings, tables that overflow without a scroll
 box, tap targets under 30px on phones, template fonts leaking, hard-coded
 colours, and every modal on the page opened and measured. A clean page has
 only `table-scroll` entries (a wide table scrolling inside its box).
+
+## Accessibility contracts
+
+- Use `--text-muted` for secondary text and `--border-control` / `--ring-control`
+  for input boundaries. Palette colours such as `--slate-400` are for decoration.
+  Status surfaces keep their hue; use the deeper semantic `--status-*-ink` tokens
+  for text. The shared tokens respect reduced-motion preferences.
+- Give every form field an explicit `label for` and unique input ID. The runtime
+  associates legacy labels only when a form group has exactly one field; it
+  deliberately leaves compound groups alone. Name generated Select2 comboboxes
+  with the visible label and selected value.
+- The shared topbar supplies a skip link. The runtime names its main-content
+  target and manages navigation focus, drawer dismissal, collapsed-link names
+  and keyboard scrolling of overflowing tables. Preserve explicit accessible
+  names when adding controls.
+- Public registration, recovery, login and password-reset forms send the
+  existing session CSRF token. Mutations validate it before business operations.
+- Shared list feedback handles paginated requests only on pages with a list
+  target. Failed requests must not be presented as an empty or current list.
+
+Regression checks: `node scripts/check_ui_runtime.cjs`,
+`node scripts/check_list_feedback.cjs`, `php scripts/check_auth_forms.php`,
+`php scripts/check_courier_cancellation.php`, and
+`node scripts/check_auth_requests.cjs <preview-base-url>`. Browser checks require
+Playwright and Chromium (`CHROMIUM_PATH` can select a different executable).
+Auth browser tests intercept mutation requests; use a local test environment.

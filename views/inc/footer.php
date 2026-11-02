@@ -59,30 +59,75 @@ if (cdp_spBeaconWanted()) : ?>
 <!-- Global table-load indicator: a spinner shown while any paginated list table
      is being (re)populated via AJAX. Scoped to list-load requests (those that
      send a `page` param) so it doesn't fire for select2/OTP/other AJAX. -->
-<div id="cdp-table-loader" aria-live="polite" aria-busy="true"
+<div id="cdp-table-loader" role="status" aria-live="polite" aria-busy="false"
      style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:90000;pointer-events:none;">
     <div style="position:absolute;top:42%;left:50%;transform:translate(-50%,-50%);background:rgba(255,255,255,.94);border:1px solid #e6e6e6;border-radius:10px;padding:13px 20px;box-shadow:0 6px 22px rgba(0,0,0,.14);font-family:Roboto,Arial,Helvetica,sans-serif;">
-        <span style="display:inline-block;width:16px;height:16px;border:2px solid #cfd8ec;border-top-color:#336aea;border-radius:50%;animation:cdpTableSpin .7s linear infinite;vertical-align:middle;"></span>
+        <span aria-hidden="true" style="display:inline-block;width:16px;height:16px;border:2px solid #cfd8ec;border-top-color:#336aea;border-radius:50%;animation:cdpTableSpin .7s linear infinite;vertical-align:middle;"></span>
         <span style="margin-left:9px;font-size:13px;color:#333;vertical-align:middle;">Loading…</span>
     </div>
 </div>
 <style>@keyframes cdpTableSpin { to { transform: rotate(360deg); } }</style>
 <script>
     (function ($) {
-        if (!$) return;
-        function isListLoad(settings) {
-            var d = (settings && typeof settings.data === 'string') ? settings.data : '';
-            return /(?:^|&)page=/.test(d);
+        if (!$ || !$.ajaxPrefilter) return;
+        function listTargets() {
+            return $('.outer_div, [data-cdp-list]');
         }
-        var active = 0;
+        // GET data is moved into the URL before ajaxSend runs. Remember the
+        // request's purpose while its original parameters are still available.
+        // Some CRUD scripts also call cdp_load on their form pages. A page
+        // parameter alone does not establish that this page displays a list.
+        $.ajaxPrefilter(function (options, originalOptions) {
+            var data = originalOptions && originalOptions.data;
+            var hasPage = !!(data && typeof data === 'object' && 'page' in data) ||
+                (typeof data === 'string' && /(?:^|&)page=/.test(data)) ||
+                /[?&]page=/.test(options.url || '');
+            options.cdpListLoad = hasPage && listTargets().length > 0;
+        });
+        var active = 0, latest = 0;
+        function feedback() {
+            var $message = $('#cdp-list-feedback');
+            if ($message.length) return $message;
+            var $anchor = listTargets().first();
+            if (!$anchor.length) return $();
+            $message = $('<div>', {
+                id: 'cdp-list-feedback',
+                'class': 'alert alert-danger cdp-list-feedback',
+                role: 'alert',
+                'aria-atomic': 'true'
+            }).hide();
+            $message.insertBefore($anchor);
+            return $message;
+        }
         $(document).ajaxSend(function (e, xhr, settings) {
-            if (!isListLoad(settings)) return;
+            if (!settings.cdpListLoad) return;
+            xhr.cdpListSequence = ++latest;
             active++;
-            $('#cdp-table-loader').stop(true, true).fadeIn(120);
+            feedback().hide().empty();
+            listTargets().attr('aria-busy', 'true');
+            $('#cdp-table-loader').attr('aria-busy', 'true').stop(true, true).fadeIn(120);
+        }).ajaxSuccess(function (e, xhr, settings) {
+            if (settings.cdpListLoad && xhr.cdpListSequence === latest) feedback().hide().empty();
+        }).ajaxError(function (e, xhr, settings, error) {
+            if (!settings.cdpListLoad || xhr.cdpListSequence !== latest || error === 'abort' || xhr.statusText === 'abort') return;
+            var $message = feedback().empty();
+            if (xhr.status === 401 || xhr.status === 419) {
+                $message.text('Your session expired. ')
+                    .append($('<a>', { href: 'login.php', text: 'Sign in again' }))
+                    .append(document.createTextNode(' to load these records.'));
+            } else if (xhr.status === 403) {
+                $message.text('You do not have permission to load these records. Contact your administrator if you need access.');
+            } else {
+                $message.text('We could not refresh these records. The list may be out of date. Try your search or filters again.');
+            }
+            $message.show();
         }).ajaxComplete(function (e, xhr, settings) {
-            if (!isListLoad(settings)) return;
+            if (!settings.cdpListLoad) return;
             active = Math.max(0, active - 1);
-            if (active === 0) $('#cdp-table-loader').fadeOut(120);
+            if (active === 0) {
+                listTargets().attr('aria-busy', 'false');
+                $('#cdp-table-loader').attr('aria-busy', 'false').stop(true, true).fadeOut(120);
+            }
         });
     })(window.jQuery);
 </script>
@@ -124,7 +169,7 @@ if (cdp_spBeaconWanted()) : ?>
             if (!$anchor.length) return;
             $anchor.after(
                 '<div class="col-sm-12 col-md-2 mb-2"><div class="input-group">' +
-                '<select onchange="cdp_load(1);" class="form-control custom-select" id="per_page" name="per_page">' +
+                '<select onchange="cdp_load(1);" class="form-control custom-select" id="per_page" name="per_page" aria-label="Rows per page">' +
                 '<option value="25">25 rows</option>' +
                 '<option value="50">50 rows</option>' +
                 '<option value="100">100 rows</option>' +

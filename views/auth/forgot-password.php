@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../helpers/csrf.php';
 if (!function_exists('cdp_asset')) { $d = __DIR__; while ($d !== dirname($d) && !is_file($d . '/helpers/asset.php')) { $d = dirname($d); } if (is_file($d . '/helpers/asset.php')) require_once $d . '/helpers/asset.php'; } ?><!DOCTYPE html>
 <html dir="<?php echo $direction_layout; ?>" lang="en">
 
@@ -20,12 +21,6 @@ if (!function_exists('cdp_asset')) { $d = __DIR__; while ($d !== dirname($d) && 
     <link href="<?= cdp_asset('assets/css_main_swiftlane/css/colors/default.css') ?>" rel="stylesheet" id="color-opt">
     <?php $cdpAuthPhoto = 'forgot'; include 'views/inc/auth_head.php'; ?>
 
-    <script type="text/javascript" src="<?= cdp_asset('assets/js/jquery.js') ?>"></script>
-    <script type="text/javascript" src="<?= cdp_asset('assets/js/jquery-ui.js') ?>"></script>
-    <script src="<?= cdp_asset('assets/js/jquery.ui.touch-punch.js') ?>"></script>
-    <script src="<?= cdp_asset('assets/js/jquery.wysiwyg.js') ?>"></script>
-    <script src="<?= cdp_asset('assets/js/global.js') ?>"></script>
-    <script src="<?= cdp_asset('assets/js/checkbox.js') ?>"></script>
 
 </head>
 
@@ -56,18 +51,19 @@ if (!function_exists('cdp_asset')) { $d = __DIR__; while ($d !== dirname($d) && 
                 </a>
             </div>
             <div class="card-body">
-                <h4 class="card-title text-center"><?php echo $lang['left172'] ?></h4>
-                <div id="resultados_ajax"></div>
+                <h1 class="auth-heading text-center"><?php echo $lang['left172'] ?></h1>
+                <div id="resultados_ajax" role="status" aria-live="polite" aria-atomic="true" tabindex="-1"></div>
                 <div id="loader" style="display:none"></div>
                 <form class="login-form mt-4" name="forgotPassword" id="forgotPassword" method="post">
+                    <input type="hidden" name="<?php echo cdp_csrf_param(); ?>" value="<?php echo cdp_csrf_token(); ?>">
                     <div class="row">
                         <div class="col-12">
                             <p class="text-muted"><?php echo $lang['message_title_forgot1'] ?></p>
                             <div class="mb-3">
-                                <label class="form-label"><?php echo $lang['lemailad'] ?> <span class="text-danger">*</span></label>
+                                <label for="email" class="form-label"><?php echo $lang['lemailad'] ?> <span class="text-danger" aria-hidden="true">*</span></label>
                                 <div class="form-icon position-relative">
                                     <i data-feather="mail" class="fea icon-sm icons"></i>
-                                    <input type="email" class="form-control ps-5" placeholder="<?php echo $lang['left176'] ?>" id="email" name="email" required="">
+                                    <input type="email" class="form-control ps-5" placeholder="<?php echo $lang['left176'] ?>" id="email" name="email" required="" autocomplete="email" autocapitalize="none" spellcheck="false">
                                 </div>
                             </div>
                         </div>

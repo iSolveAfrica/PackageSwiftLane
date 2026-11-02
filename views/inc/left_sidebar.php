@@ -7,7 +7,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
     $userData = $user->cdp_getUserData();
 }
 ?>
-<aside class="left-sidebar">
+<aside class="left-sidebar" id="swl-primary-navigation" aria-label="Main navigation">
 	<!-- Brand + collapse toggle. The logo lives here (not in the topbar) so the
 	     content column has no header bar, matching the Swift Lane Ops design.
 	     The toggle carries .sidebartoggler, which app.min.js binds on load. -->
@@ -24,7 +24,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 	<!-- Sidebar scroll-->
 	<div class="scroll-sidebar">
 		<!-- Sidebar navigation-->
-		<nav class="sidebar-nav">
+		<nav class="sidebar-nav" aria-label="Primary">
 
 			<?php require_once('helpers/rbac.php'); ?>
 			<?php // One permission-gated menu for superadmin + staff + agency: every item
@@ -39,7 +39,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 						<!-- User Profile-->
 						<div class="user-profile d-flex no-block dropdown m-t-20">
 							<div class="user-pic">
-								<img src="<?php echo cdp_avatarUrl($userData->avatar); ?>" class="rounded-circle" width="50" />
+								<img src="<?php echo cdp_avatarUrl($userData->avatar); ?>" class="rounded-circle" width="50" height="50" alt="" />
 							</div>
 							<?php
 							date_default_timezone_set("" . $core->timezone . "");
@@ -57,7 +57,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 							<div class="user-content hide-menu m-l-10">
 								<div class="swl-side-greeting">
 									<h5 class="m-b-0 user-name font-medium"><?php echo $mensaje; ?>,&nbsp;&nbsp;</h5>
-									<span class="op-5 user-email"><?php echo $userData->fname; ?></span>
+									<span class="op-5 user-email"><?php echo htmlspecialchars((string) ($userData->fname ?? ''), ENT_QUOTES, 'UTF-8'); ?></span>
 								</div>
 							</div>
 						</div>
@@ -1090,7 +1090,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 						<!-- User Profile-->
 						<div class="user-profile d-flex no-block dropdown m-t-20">
 							<div class="user-pic">
-								<img src="<?php echo cdp_avatarUrl($userData->avatar); ?>" class="rounded-circle" width="50" />
+								<img src="<?php echo cdp_avatarUrl($userData->avatar); ?>" class="rounded-circle" width="50" height="50" alt="" />
 							</div>
 							<?php
 							date_default_timezone_set("" . $core->timezone . "");
@@ -1108,7 +1108,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 							<div class="user-content hide-menu m-l-10">
 								<div class="swl-side-greeting">
 									<h5 class="m-b-0 user-name font-medium"><?php echo $mensaje; ?>,&nbsp;&nbsp;</h5>
-									<span class="op-5 user-email"><?php echo $userData->fname; ?></span>
+									<span class="op-5 user-email"><?php echo htmlspecialchars((string) ($userData->fname ?? ''), ENT_QUOTES, 'UTF-8'); ?></span>
 									<br><?php echo $lang['left-menu-sidebar-00'] ?> <b><?php echo $userData->locker; ?></b>
 								</div>
 							</div>
@@ -1426,7 +1426,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 						<!-- User Profile-->
 						<div class="user-profile d-flex no-block dropdown m-t-20">
 							<div class="user-pic">
-								<img src="<?php echo cdp_avatarUrl($userData->avatar); ?>" class="rounded-circle" width="50" />
+								<img src="<?php echo cdp_avatarUrl($userData->avatar); ?>" class="rounded-circle" width="50" height="50" alt="" />
 							</div>
 							<?php
 							date_default_timezone_set("" . $core->timezone . "");
@@ -1445,7 +1445,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 
 								<div class="swl-side-greeting">
 									<h5 class="m-b-0 user-name font-medium"><?php echo $mensaje; ?>,&nbsp;&nbsp;</h5>
-									<span class="op-5 user-email"><?php echo $userData->fname; ?></span>
+									<span class="op-5 user-email"><?php echo htmlspecialchars((string) ($userData->fname ?? ''), ENT_QUOTES, 'UTF-8'); ?></span>
 								</div>
 							</div>
 						</div>

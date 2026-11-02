@@ -1,6 +1,7 @@
 <?php
-session_start();
+if (session_status() !== PHP_SESSION_ACTIVE) { session_start(); }
 require_once("lib/OtpService.php");
+require_once("helpers/csrf.php");
 
 $core = new Core();
 $db = new Conexion();
@@ -14,10 +15,12 @@ if (empty($_SESSION['forgot_reset_token'])) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $pass  = isset($_POST['password'])         ? $_POST['password']         : '';
-    $pass2 = isset($_POST['password_confirm']) ? $_POST['password_confirm'] : '';
+    $pass  = is_string($_POST['password'] ?? null) ? $_POST['password'] : '';
+    $pass2 = is_string($_POST['password_confirm'] ?? null) ? $_POST['password_confirm'] : '';
 
-    if (strlen($pass) < 8) {
+    if (!cdp_csrf_validate_request()) {
+        $error = 'Your form session expired. Please try again.';
+    } elseif (strlen($pass) < 8) {
         $error = 'Password must be at least 8 characters.';
     } elseif ($pass !== $pass2) {
         $error = 'Passwords do not match.';
@@ -90,17 +93,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </a>
             </div>
             <div class="card-body">
-                <h4 class="card-title text-center">Set New Password</h4>
+                <h1 class="auth-heading text-center">Set New Password</h1>
                 <p class="text-center auth-subtitle">Choose a strong password for your account.</p>
 
-                <div id="msgholder2">
+                <div id="msgholder2" aria-live="polite" aria-atomic="true">
                     <?php if ($message): ?>
-                        <div class="alert alert-success" id="success-alert">
+                        <div class="alert alert-success" id="success-alert" role="status">
                             <p class="mb-0"><?php echo $message; ?> <a href="login.php" class="fw-bold">Sign in</a></p>
                         </div>
                     <?php endif; ?>
                     <?php if ($error): ?>
-                        <div class="alert alert-danger" id="success-alert">
+                        <div class="alert alert-danger" id="success-alert" role="alert">
                             <p class="mb-0"><span class="icon-minus-sign"></span>
                                 <i class="close icon-remove-circle"></i>
                                 <span>Error!</span> <?php echo $error; ?>
@@ -113,23 +116,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <?php if (!$message): ?>
                 <form class="login-form mt-4" method="post">
+                    <input type="hidden" name="<?php echo cdp_csrf_param(); ?>" value="<?php echo cdp_csrf_token(); ?>">
                     <div class="row">
                         <div class="col-12">
                             <div class="mb-3">
-                                <label class="form-label">New Password <span class="text-danger">*</span></label>
+                                <label for="new-password" class="form-label">New Password <span class="text-danger" aria-hidden="true">*</span></label>
                                 <div class="form-icon position-relative">
                                     <i data-feather="lock" class="fea icon-sm icons"></i>
-                                    <input type="password" name="password" class="form-control ps-5" placeholder="Enter new password" required>
+                                    <input type="password" name="password" id="new-password" class="form-control ps-5" placeholder="Enter new password" required minlength="8" autocomplete="new-password" aria-describedby="password-help">
                                 </div>
+                                <p id="password-help" class="form-text">Use at least 8 characters.</p>
                             </div>
                         </div>
 
                         <div class="col-12">
                             <div class="mb-3">
-                                <label class="form-label">Confirm Password <span class="text-danger">*</span></label>
+                                <label for="password-confirm" class="form-label">Confirm Password <span class="text-danger" aria-hidden="true">*</span></label>
                                 <div class="form-icon position-relative">
                                     <i data-feather="lock" class="fea icon-sm icons"></i>
-                                    <input type="password" name="password_confirm" class="form-control ps-5" placeholder="Confirm new password" required>
+                                    <input type="password" name="password_confirm" id="password-confirm" class="form-control ps-5" placeholder="Confirm new password" required minlength="8" autocomplete="new-password">
                                 </div>
                             </div>
                         </div>

@@ -7,6 +7,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
     $userData = $user->cdp_getUserData();
 }
 ?>
+<a class="swl-skip-link" href="#swl-main-content">Skip to main content</a>
 <?php if (!empty($_SESSION['imp_original_username'])): ?>
 	<?php
 		$imp_viewing = trim((string) ($_SESSION['name'] ?? '')) !== '' ? $_SESSION['name'] : ($_SESSION['username'] ?? 'user');
@@ -146,11 +147,11 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 							<span class="with-arrow"><span class="bg-primary"></span></span>
 							<div class="d-flex no-block align-items-center p-15 bg-primary text-white m-b-10">
 								<div class="">
-									<img src="<?php echo cdp_avatarUrl($userData->avatar); ?>" class="rounded-circle" width="80" />
+									<img src="<?php echo cdp_avatarUrl($userData->avatar); ?>" class="rounded-circle" width="80" height="80" alt="" />
 								</div>
 								<div class="m-l-10">
-									<h4 class="m-b-0"><?php echo $userData->username; ?></h4>
-									<p class=" m-b-0"><?php echo $userData->email; ?></p>
+									<h4 class="m-b-0"><?php echo htmlspecialchars((string) ($userData->username ?? ''), ENT_QUOTES, 'UTF-8'); ?></h4>
+									<p class=" m-b-0"><?php echo htmlspecialchars((string) ($userData->email ?? ''), ENT_QUOTES, 'UTF-8'); ?></p>
 								</div>
 							</div>
 
