@@ -82,6 +82,15 @@
 						</a>
 					</li>
 					<?php } ?>
+					<?php require_once __DIR__ . '/../../helpers/support.php'; ?>
+					<?php if (cdp_csIsAdmin($user)) { ?>
+					<li class="list-group-item  sidebar-item">
+						<a href="support_settings.php" class="list-group-item-action">
+							<iconify-icon icon="solar:inbox-linear" class="tools-menu-icon"></iconify-icon>
+							Customer Service
+						</a>
+					</li>
+					<?php } ?>
 					<?php require_once __DIR__ . '/../../helpers/hubtel_sms.php'; ?>
 					<?php if (cdp_smsCanManage($user)) { ?>
 					<li class="list-group-item  sidebar-item">

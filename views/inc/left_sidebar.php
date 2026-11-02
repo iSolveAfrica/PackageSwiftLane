@@ -89,6 +89,15 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 						</a>
 					</li>
 					<?php } ?>
+					<?php require_once __DIR__ . '/../../helpers/support.php'; ?>
+					<?php if (cdp_csIsAgent($user)) { ?>
+					<li class="sidebar-item">
+						<a class="sidebar-link waves-effect waves-dark" href="support_inbox.php" aria-expanded="false">
+							<iconify-icon icon="solar:inbox-linear" class="fs-5"></iconify-icon>
+							<span class="hide-menu"> Customer Service </span>
+						</a>
+					</li>
+					<?php } ?>
 					<?php if ($user->cdp_hasPermission('view_shipment_list')) { ?>
 					<li class="sidebar-item nav-divider"></li>
                     <li class="sidebar-item">
@@ -1129,6 +1138,15 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 						<a class="sidebar-link waves-effect waves-dark" href="ai_assistant.php" aria-expanded="false">
 							<iconify-icon icon="solar:magic-stick-3-linear" class="fs-5"></iconify-icon>
 							<span class="hide-menu"> AI Assistant </span>
+						</a>
+					</li>
+					<?php } ?>
+					<?php require_once __DIR__ . '/../../helpers/support.php'; ?>
+					<?php if (cdp_csIsCustomer($user)) { ?>
+					<li class="sidebar-item">
+						<a class="sidebar-link waves-effect waves-dark" href="support.php" aria-expanded="false">
+							<iconify-icon icon="solar:chat-round-dots-linear" class="fs-5"></iconify-icon>
+							<span class="hide-menu"> Help &amp; Support </span>
 						</a>
 					</li>
 					<?php } ?>

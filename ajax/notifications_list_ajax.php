@@ -104,6 +104,10 @@ if ($numrows > 0) { ?>
 
 
 					switch ($row->shipping_type) {
+						case '9': // Customer Service ticket (support.php sends staff on to the ticket view)
+							$href = 'support.php?t=' . (int) $row->order_id;
+							break;
+
 						case '1':
 							# code...
 							$href = 'courier_view.php?id=' . $row->order_id . '&id_notification=' . $row->notification_id;

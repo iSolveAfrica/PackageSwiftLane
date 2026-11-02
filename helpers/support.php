@@ -258,6 +258,11 @@ if (!function_exists('cdp_csEnsureTables')) {
                 expires_at DATETIME NOT NULL, created_at DATETIME NOT NULL,
                 PRIMARY KEY (id), KEY idx_ticket (ticket_id, status))$t",
 
+            "CREATE TABLE IF NOT EXISTS cdb_cs_files (
+                id INT NOT NULL AUTO_INCREMENT, token CHAR(32) NOT NULL, uploaded_by INT NOT NULL, stored_name VARCHAR(80) NOT NULL,
+                original_name VARCHAR(190) NOT NULL, mime VARCHAR(80) NOT NULL, size_bytes INT NOT NULL, created_at DATETIME NOT NULL,
+                PRIMARY KEY (id), UNIQUE KEY uq_token (token), KEY idx_user (uploaded_by))$t",
+
             "CREATE TABLE IF NOT EXISTS cdb_cs_outbox (
                 id BIGINT NOT NULL AUTO_INCREMENT, ticket_id INT NULL, user_id INT NOT NULL, kind VARCHAR(20) NOT NULL,
                 channel VARCHAR(12) NOT NULL, subject VARCHAR(190) NULL, body TEXT NOT NULL, dedupe_key VARCHAR(160) NOT NULL,
@@ -501,6 +506,14 @@ if (!function_exists('cdp_csStatuses')) {
     function cdp_csDispositions()
     {
         return ['none' => '', 'archived' => 'Archived', 'spam' => 'Spam', 'trash' => 'Trash'];
+    }
+
+    /** How a case ended, for reporting (chosen when resolving). */
+    function cdp_csResolutionCodes()
+    {
+        return ['answered' => 'Question answered', 'fixed' => 'Problem fixed', 'located' => 'Package located / delivered', 'refunded' => 'Refund or credit given',
+            'claim' => 'Claim opened', 'customer_error' => 'No fault found / customer error', 'duplicate' => 'Duplicate', 'no_reply' => 'Customer did not reply',
+            'not_possible' => 'Could not be done', 'other' => 'Other'];
     }
 
     function cdp_csLanguages()
@@ -805,6 +818,7 @@ if (!function_exists('cdp_csOwnerTransitions')) {
             : cdp_csOwnerMove($convId, 'handoff_queued', $actorType, $actorId, $reason);
 
         $ticketId = (int) $conv->ticket_id;
+        $newTicket = !$ticketId;
         if (!$ticketId) {
             $first = cdp_csOne("SELECT body FROM cdb_cs_messages WHERE conversation_id = :c AND author_type = 'customer' ORDER BY id ASC LIMIT 1", [':c' => (int) $convId]);
             $subject = trim((string) ($packet['subject'] ?? '')) ?: cdp_csClip($first ? $first->body : ($conv->subject ?: 'Chat with support'), 120);
@@ -819,7 +833,7 @@ if (!function_exists('cdp_csOwnerTransitions')) {
                 'language'        => (string) ($conv->language ?: 'en'),
             ], $actorType, $actorId, ['skip_ack' => true]);
         }
-        if ($moved && $ticketId) {
+        if (($moved || $newTicket) && $ticketId) {
             // The handover packet: what the person picking this up needs, so the customer never repeats themselves.
             $lines = ["**Handover from " . cdp_csSetting('king_name', 'King') . "**", '', '- Reason: ' . ($reason ?: 'Customer asked for a person')];
             foreach (['summary' => 'Summary', 'facts' => 'Verified facts', 'attempted' => 'Already tried', 'outstanding' => 'Still needed', 'entities' => 'Records'] as $k => $label) {
@@ -2324,6 +2338,9 @@ if (!function_exists('cdp_csStaffSend')) {
         if (!$isNote && ($tk->is_internal || !$tk->customer_id)) {
             return ['ok' => false, 'error' => 'This ticket has no customer to reply to. Use an internal note.'];
         }
+        if (!$isNote) {
+            $body = cdp_csFillVars($body, $tk, $agentId); // {first_name} etc. from saved replies typed by hand
+        }
         $lastSeen = (int) ($opt['last_seen_id'] ?? 0);
         if (!$isNote && empty($opt['force']) && $lastSeen > 0) {
             $newer = cdp_csOne("SELECT m.author_id, m.author_type FROM cdb_cs_messages m WHERE (m.ticket_id = :t" . ($tk->conversation_id ? ' OR m.conversation_id = :c' : '') . ")
@@ -2819,5 +2836,99 @@ if (!function_exists('cdp_csReport')) {
             $v = "'" . $v;
         }
         return '"' . str_replace('"', '""', $v) . '"';
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Attachments
+// ---------------------------------------------------------------------------
+
+if (!function_exists('cdp_csFileStore')) {
+
+    function cdp_csFileDir()
+    {
+        return dirname(__DIR__) . '/support_files';
+    }
+
+    /** Images, PDF and plain text only, checked by content, 8 MB max. */
+    function cdp_csFileTypes()
+    {
+        return ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/gif' => 'gif', 'image/webp' => 'webp', 'application/pdf' => 'pdf', 'text/plain' => 'txt'];
+    }
+
+    /** Stores one uploaded file ($_FILES entry). Returns ['ok', 'file' => [id,token,name,size,mime]] or an error. */
+    function cdp_csFileStore(array $f, $uid)
+    {
+        if (($f['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || !is_uploaded_file($f['tmp_name'] ?? '')) {
+            return ['ok' => false, 'error' => 'The upload did not arrive. Try again.'];
+        }
+        if ((int) $f['size'] <= 0 || (int) $f['size'] > 8 * 1024 * 1024) {
+            return ['ok' => false, 'error' => 'Files can be up to 8 MB.'];
+        }
+        $mime = function_exists('finfo_open') ? (string) finfo_file(finfo_open(FILEINFO_MIME_TYPE), $f['tmp_name']) : '';
+        $types = cdp_csFileTypes();
+        if (!isset($types[$mime])) {
+            return ['ok' => false, 'error' => 'Only photos (JPG, PNG, GIF, WebP), PDF and text files can be attached.'];
+        }
+        $dir = cdp_csFileDir();
+        if (!is_dir($dir) && !@mkdir($dir, 0750, true)) {
+            return ['ok' => false, 'error' => 'The server cannot store attachments (support_files is not writable).'];
+        }
+        if (!file_exists($dir . '/.htaccess')) {
+            @file_put_contents($dir . '/.htaccess', "Require all denied\nDeny from all\n");
+        }
+        $token = bin2hex(random_bytes(16));
+        $stored = date('Ym') . '_' . $token . '.' . $types[$mime];
+        if (!move_uploaded_file($f['tmp_name'], $dir . '/' . $stored)) {
+            return ['ok' => false, 'error' => 'The file could not be saved.'];
+        }
+        $name = preg_replace('/[^\p{L}\p{N} ._()-]+/u', '_', basename((string) $f['name']));
+        $name = mb_substr($name !== '' ? $name : 'file.' . $types[$mime], 0, 190);
+        $r = cdp_csX("INSERT INTO cdb_cs_files (token, uploaded_by, stored_name, original_name, mime, size_bytes, created_at) VALUES (:t, :u, :s, :n, :m, :z, :c)",
+            [':t' => $token, ':u' => (int) $uid, ':s' => $stored, ':n' => $name, ':m' => $mime, ':z' => (int) $f['size'], ':c' => cdp_csNow()]);
+        if (!$r['ok']) {
+            @unlink($dir . '/' . $stored);
+            return ['ok' => false, 'error' => 'The file could not be saved.'];
+        }
+        return ['ok' => true, 'file' => ['token' => $token, 'name' => $name, 'size' => (int) $f['size'], 'mime' => $mime]];
+    }
+
+    /** Attachment list from tokens the same user uploaded (a token from someone else is ignored). */
+    function cdp_csFilesFromTokens($tokens, $uid)
+    {
+        $out = [];
+        foreach (array_slice((array) $tokens, 0, 5) as $t) {
+            $t = preg_replace('/[^a-f0-9]/', '', (string) $t);
+            if (strlen($t) !== 32) {
+                continue;
+            }
+            $r = cdp_csOne("SELECT token, original_name, size_bytes, mime FROM cdb_cs_files WHERE token = :t AND uploaded_by = :u", [':t' => $t, ':u' => (int) $uid]);
+            if ($r) {
+                $out[] = ['token' => $r->token, 'name' => $r->original_name, 'size' => (int) $r->size_bytes, 'mime' => $r->mime];
+            }
+        }
+        return $out;
+    }
+
+    /**
+     * May this user download the file? Staff: any attachment of the desk.
+     * Customer: their own upload, or a public message in their own chat or ticket.
+     */
+    function cdp_csFileCanRead($token, $user)
+    {
+        $f = cdp_csOne("SELECT * FROM cdb_cs_files WHERE token = :t", [':t' => (string) $token]);
+        if (!$f) {
+            return null;
+        }
+        if (cdp_csIsAgent($user) || (int) $f->uploaded_by === cdp_csUid()) {
+            return $f;
+        }
+        $uid = cdp_csUid();
+        $m = cdp_csOne("SELECT m.id FROM cdb_cs_messages m
+                LEFT JOIN cdb_cs_conversations c ON c.id = m.conversation_id
+                LEFT JOIN cdb_cs_tickets t ON t.id = m.ticket_id
+            WHERE m.visibility = 'public' AND m.attachments LIKE :tk AND (c.customer_id = :u OR (t.customer_id = :u2 AND t.is_internal = 0)) LIMIT 1",
+            [':tk' => '%' . $f->token . '%', ':u' => $uid, ':u2' => $uid]);
+        return $m ? $f : null;
     }
 }
