@@ -83,15 +83,16 @@ UPDATE cdb_styles SET mod_style = 'Delivered', detail = 'Delivered to the custom
 --      2nd -> Sea address
 --    and the Beijing air express address is added after them.
 --    "(LOCKER ID)" is replaced by each customer's locker when shown.
---    Postcodes are cleared: the old ones belonged to the old addresses.
+--    As on the existing China rows, city stays 'China' and the postcode
+--    field carries the warehouse phone number.
 -- ----------------------------------------------------------------------------
 SET @cn1 := (SELECT v.id FROM cdb_virtual_mailbox_addresses v
              LEFT JOIN cdb_countries c ON c.id = v.cdb_countries_id
-             WHERE c.iso2 = 'CN' OR v.country LIKE '%China%'
+             WHERE c.iso2 = 'CN' OR c.name LIKE '%China%'
              ORDER BY v.id LIMIT 1);
 SET @cn2 := (SELECT v.id FROM cdb_virtual_mailbox_addresses v
              LEFT JOIN cdb_countries c ON c.id = v.cdb_countries_id
-             WHERE (c.iso2 = 'CN' OR v.country LIKE '%China%') AND v.id <> IFNULL(@cn1, 0)
+             WHERE (c.iso2 = 'CN' OR c.name LIKE '%China%') AND v.id <> IFNULL(@cn1, 0)
              ORDER BY v.id LIMIT 1);
 
 UPDATE cdb_virtual_mailbox_addresses
@@ -101,8 +102,8 @@ SET address = '广州空运普快地址：GUANGZHOU AIR WAREHOUSE ADDRESS (NORMA
 SFSWIFT(LOCKER ID)
 收件人：SFSWIFT(LOCKER ID)
 电话：18122021422',
-    city = 'Foshan, Guangdong',
-    postcode = ''
+    city = 'China',
+    postcode = '18122021422'
 WHERE id = @cn1;
 
 UPDATE cdb_virtual_mailbox_addresses
@@ -112,8 +113,8 @@ SET address = 'Sea Address
 (泽贤汽车检测站内) ACCSWIFT(LOCKER ID)
 联系人：ACCSWIFT (LOCKER ID  )
 仓库电话：19924601872',
-    city = 'Guangzhou, Guangdong',
-    postcode = ''
+    city = 'China',
+    postcode = '19924601872'
 WHERE id = @cn2;
 
 -- Beijing: a copy of the first China row (same country and any other columns),
@@ -133,14 +134,15 @@ SET id = @new_id,
 SFSWIFT(LOCKER ID )
 收件人：SFSWIFT(LOCKER ID )
 电话： 17611390952',
-    city = 'Beijing',
-    postcode = '';
+    city = 'China',
+    postcode = '17611390952',
+    default_address = 0;
 INSERT INTO cdb_virtual_mailbox_addresses SELECT * FROM tmp_mailbox_bj;
 DROP TEMPORARY TABLE IF EXISTS tmp_mailbox_bj;
 
 -- Check: the China addresses as they now stand.
-SELECT v.id, v.country, v.city, v.address
+SELECT v.id, c.name AS country, v.city, v.postcode, v.address
 FROM cdb_virtual_mailbox_addresses v
 LEFT JOIN cdb_countries c ON c.id = v.cdb_countries_id
-WHERE c.iso2 = 'CN' OR v.country LIKE '%China%'
+WHERE c.iso2 = 'CN' OR c.name LIKE '%China%'
 ORDER BY v.id;
