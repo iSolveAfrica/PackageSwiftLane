@@ -560,8 +560,14 @@ if (!function_exists('cdp_pickupCodeEnsureTables')) {
             }
         }
         if (!$match) {
-            $msg = '';
+            // A wrong entry counts only against codes still waiting to be
+            // checked. A code already verified was proven by the customer and
+            // is never voided by a later typo on another code.
+            $msg = 'Wrong code. Check it with the customer and try again.';
             foreach ($codes as $r) {
+                if ((string) $r->status !== 'active') {
+                    continue;
+                }
                 $attempts = (int) $r->attempts + 1;
                 $void     = $attempts >= CDP_PICKUP_MAX_ATTEMPTS;
                 $db->cdp_query("UPDATE cdb_pickup_codes SET attempts = :a" . ($void ? ", status = 'void'" : '') . " WHERE id = :id");
