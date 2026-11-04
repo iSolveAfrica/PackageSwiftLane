@@ -3,6 +3,7 @@ if (!function_exists('cdp_asset')) { $d = __DIR__; while ($d !== dirname($d) && 
 
 require_once("../loader.php");
 require_once(__DIR__ . '/../helpers/ajax_guard.php');
+require_once(__DIR__ . '/../helpers/handover.php');
 require_login();
 require_permission('view_shipment_list');
 require_once(__DIR__ . '/../helpers/pickup_code.php');
@@ -104,7 +105,7 @@ $data = $db->cdp_registros();
                     <tr class="card-hovera">
                         <?php if ($userData->userlevel == 9) { ?>
                             <td class="chb">
-                                <?php if ($row->status_courier != 8 && $row->status_courier != 21) { ?>
+                                <?php if (!cdp_isHandedOver($row->status_courier) && $row->status_courier != 21) { ?>
                                     <div class="custom-control custom-checkbox">
                                         <input type="checkbox" class="custom-control-input" value="<?php echo $row->order_no; ?>" name="checkbox[]" id="cst_<?php echo $count; ?>">
                                         <label class="custom-control-label" for="cst_<?php echo $count; ?>">&nbsp;</label>

@@ -226,6 +226,15 @@ if (empty($errors)) {
 
         $newbody = cdp_cleanOutx($body);
 
+        // Ready for pickup / delivery: every message of this update carries the
+        // owner's pickup code (helpers/pickup_code.php). Ready and picked up /
+        // delivered are SMS automations (helpers/hubtel_sms.php).
+        $cdp_sms_event = cdp_statusSmsEvent($status, $add_status);
+        $cdp_code_line = cdp_pickupCodeReadyLine('air', [$shipment_id], $status, $add_status);
+        if ($cdp_code_line !== '') {
+            $newbody .= cdp_pickupCodeReadyLine('air', [$shipment_id], $status, $add_status, true);
+        }
+
         //SENDMAIL PHP
 
         if ($check_mail == 'PHP') {
@@ -302,6 +311,7 @@ if (empty($errors)) {
                         "- *Status:* *{$wa_new_status}*\n" .
                         "- *Location:* {$wa_location}\n" .
                         (!empty($wa_comment) ? "- *Note:* {$wa_comment}\n" : '') .
+                        ($cdp_code_line !== '' ? "\n" . $cdp_code_line . "\n" : '') .
                         "\nTrack your shipment at any time:\n" .
                         $app_url . "\n\n" .
                         "Thank you, *{$msnames}* Team";
@@ -314,16 +324,19 @@ if (empty($errors)) {
         }
 
         // Obtener el estado de las casillas de verificación
-        // A package marked Delivered (8) or Picked Up (15) here always texts the
+        // Ready for pickup / delivery, Picked up and Delivered always text the
         // customer (SMS switch and opt-out still apply); other status updates
         // only when the operator ticks "notify by SMS".
         $notify_sms_sender = (isset($_POST['notify_sms_sender']) && $_POST['notify_sms_sender'] == 1)
-            || in_array((int) $status, [8, 15], true);
+            || $cdp_sms_event !== '';
         $notify_sms_receiver = isset($_POST['notify_sms_receiver']) && $_POST['notify_sms_receiver'] == 1;
 
         // Generar cuerpo del SMS para el remitente
         try {
             $newbodyS_sender = generateSMSBody($sender_data, $fullshipment, $add_status, $app_url, $templatessender);
+            if ($cdp_code_line !== '') {
+                $newbodyS_sender .= "\n" . $cdp_code_line;
+            }
             // Llamar a la función para enviar la notificación SMS al remitente
             sendNotificationSMS($sender_data, $newbodyS_sender, $notify_sms_sender);
         } catch (Exception $e) {

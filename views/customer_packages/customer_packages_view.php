@@ -256,7 +256,7 @@ if ($row_order->status_invoice == 1) {
 
                                                     <!-- EDIT PACKAGE PERMISSION  -->
                                                     <?php if ($user->cdp_hasPermission('edit_package')) { ?>
-                                                        <?php if ($row_order->status_courier != 8) { ?>
+                                                        <?php if (!cdp_isHandedOver($row_order->status_courier)) { ?>
                                                            
                                                             <?php if ($row_order->status_invoice != 1) { ?>
                                                                 <a class="dropdown-item" href="customer_package_edit.php?id=<?php echo $_GET['id']; ?>">
@@ -272,7 +272,7 @@ if ($row_order->status_invoice == 1) {
                                                             <!-- ASSINGN DRIVER PERMISSION  -->
                                                             <?php if ($user->cdp_hasPermission('assign_driver_package')) { ?>
                                                                 <?php if ($userData->userlevel != 1) { ?>
-                                                                    <?php if ($row_order->status_courier != 8) { ?>
+                                                                    <?php if (!cdp_isHandedOver($row_order->status_courier)) { ?>
                                                                         <a class="dropdown-item" data-toggle="modal" data-target="#modalDriver" data-id_shipment="<?php echo $row_order->order_id; ?>">
                                                                             <i class="fas fa-car"></i>&nbsp; <?php echo $lang['left208'] ?></a>
                                                                     <?php } ?>
@@ -294,7 +294,7 @@ if ($row_order->status_invoice == 1) {
                                                             <?php if ($row_order->status_invoice == 1) { ?>
 
                                                                 <?php if ($userData->userlevel != 1) { ?>
-                                                                    <?php if ($row_order->status_courier != 8) { ?>
+                                                                    <?php if (!cdp_isHandedOver($row_order->status_courier)) { ?>
                                                                         <?php if ($row_order->status_courier != 21) { ?>
                                                                             <?php if ($row_order->status_courier != 12) { ?>
                                                                                 <!-- PACKAGE TRACKING PERMISSION  -->
@@ -608,7 +608,7 @@ if ($row_order->status_invoice == 1) {
                 </div>
                 <!-- Row -->
                 <?php
-                if ($row_order->status_courier == 8) {
+                if (cdp_isHandedOver($row_order->status_courier)) {
 
 
                     $db->cdp_query("SELECT * FROM cdb_courier_track where order_track='" . $row_order->order_prefix . $row_order->order_no . "'");
@@ -630,7 +630,7 @@ if ($row_order->status_invoice == 1) {
                                 <div class="card-body">
                                     <div class="d-md-flex align-items-center">
                                         <div>
-                                            <h3 class="card-title"><span>1<?php echo $lang['left533020029'] ?></span></h3>
+                                            <h3 class="card-title"><span><?php echo cdp_handoverLabel($row_order->status_courier) . ' Details'; ?></span></h3>
                                         </div>
                                     </div>
                                     <div>
@@ -639,7 +639,7 @@ if ($row_order->status_invoice == 1) {
                                     <div class="row">
                                         <div class=" col-sm-12 col-md-4 mb-2">
                                             <div class="">
-                                                <h5> &nbsp;<b> <?php echo $lang['leftorder51'] ?></b></h5>
+                                                <h5> &nbsp;<b> <?php echo cdp_handoverLabel($row_order->status_courier) . ' On'; ?></b></h5>
                                                 <p class="text-muted  m-l-5"><?php echo $meses_[$mes_delivered] . ' ' . $dia_delivered . ', ' . $anio_delivered . ' ' . $time_delivered; ?></p>
                                             </div>
 
@@ -647,7 +647,7 @@ if ($row_order->status_invoice == 1) {
 
                                         <div class=" col-sm-12 col-md-4 mb-2">
                                             <div class="">
-                                                <h5> &nbsp;<b> <?php echo $lang['leftorder52'] ?></b></h5>
+                                                <h5> &nbsp;<b> <?php echo 'Handed Over By'; ?></b></h5>
                                                 <p class="text-muted  m-l-5"><?php echo $user_delivered->fname . ' ' . $user_delivered->lname; ?></p>
                                             </div>
 

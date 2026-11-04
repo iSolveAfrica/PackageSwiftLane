@@ -41,10 +41,16 @@
  * created on demand so an environment that has not run sql/hubtel_sms.sql
  * keeps working: with no table there are simply no credentials.
  *
- * When SMS goes out:
- *   - the per-shipment "notify by SMS" toggles (sendNotificationSMS);
- *   - a copy of every WhatsApp notification while the SMS switch
- *     (cdb_settings.active_sms) is on and the customer has not opted out;
+ * When SMS goes out — only when someone means it to:
+ *   - staff send one: the per-shipment "notify by SMS" toggles
+ *     (sendNotificationSMS), the message composer, "Send Pickup Code";
+ *   - three automations, while the SMS switch (cdb_settings.active_sms) is
+ *     on and the customer has not opted out (cdp_smsAutomationEvents):
+ *       registered   a package is registered,
+ *       ready        a package is ready for pickup / ready for delivery,
+ *       handed_over  a package is picked up / delivered;
+ *     a WhatsApp message about one of these carries ['sms_event' => ...]
+ *     and gets an SMS copy. Every other WhatsApp message goes without one;
  *   - one-time sign-in and reset codes always, as soon as the credentials
  *     are complete — the switch does not hold them back.
  *
@@ -562,13 +568,22 @@ if (!function_exists('cdp_smsSendNotification')) {
 
 if (!function_exists('cdp_smsCopyOwed')) {
 
+    /** The only package events that text the customer on their own. */
+    function cdp_smsAutomationEvents()
+    {
+        return ['registered', 'ready', 'handed_over'];
+    }
+
     /**
      * Does a WhatsApp notification owe an SMS copy?
-     *   force_sms => true   one-time codes: always, once credentials exist;
-     *   allow_sms => false  the caller texts this event itself (its own SMS
-     *                       toggle) — no copy, or the customer gets two;
-     *   otherwise           only while the SMS switch is on and the
-     *                       recipient has not opted out (notify_sms = 0).
+     *   force_sms => true          one-time codes: always, once credentials exist;
+     *   allow_sms => false         the caller texts this event itself (its own
+     *                              SMS) — no copy, or the customer gets two;
+     *   sms_event => registered | ready | handed_over
+     *                              one of the three automations: only while the
+     *                              SMS switch is on and the recipient has not
+     *                              opted out (notify_sms = 0);
+     *   anything else              no SMS. A WhatsApp message is not an SMS.
      */
     function cdp_smsCopyOwed($recipient, array $opts, $settings = null)
     {
@@ -579,6 +594,9 @@ if (!function_exists('cdp_smsCopyOwed')) {
             return true;
         }
         if (array_key_exists('allow_sms', $opts) && !$opts['allow_sms']) {
+            return false;
+        }
+        if (!in_array((string) ($opts['sms_event'] ?? ''), cdp_smsAutomationEvents(), true)) {
             return false;
         }
         $settings = $settings ?: cdp_getSettingsCourier();
@@ -593,11 +611,12 @@ if (!function_exists('cdp_smsEventNotify')) {
 
     /**
      * Text a customer about a package event that has no WhatsApp message of
-     * its own (e.g. the Warehouse View bulk deliver). Same rules as the
-     * WhatsApp copy: an SMS provider ready, the SMS switch on, and the
-     * customer not opted out. Returns null when no SMS was owed.
+     * its own (e.g. the Warehouse View bulk handover). $event must be one of
+     * cdp_smsAutomationEvents(); same rules as the WhatsApp copy: an SMS
+     * provider ready, the SMS switch on, and the customer not opted out.
+     * Returns null when no SMS was owed.
      */
-    function cdp_smsEventNotify($recipient, $text)
+    function cdp_smsEventNotify($recipient, $text, $event = '')
     {
         if (is_array($recipient)) {
             $recipient = (object) $recipient;
@@ -605,7 +624,7 @@ if (!function_exists('cdp_smsEventNotify')) {
         if (!is_object($recipient) || trim((string) ($recipient->phone ?? '')) === '') {
             return null;
         }
-        if (!cdp_smsCopyOwed($recipient, [])) {
+        if (!cdp_smsCopyOwed($recipient, ['sms_event' => (string) $event])) {
             return null;
         }
         return cdp_smsToRecipient($recipient, $text);

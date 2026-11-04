@@ -737,14 +737,25 @@ if (empty($errors)) {
             $receiver_data ? ($receiver_data->fname . ' ' . $receiver_data->lname) : ''
         );
 
+        // A status changed here into ready for pickup / delivery carries the
+        // owner's pickup code; ready and picked up / delivered always text
+        // (the SMS automations, helpers/hubtel_sms.php).
+        $cdp_new_status    = (int) ($_POST['status_courier'] ?? 0);
+        $cdp_status_moved  = isset($changed_fields['Shipment Status']);
+        $cdp_sms_event     = $cdp_status_moved ? cdp_statusSmsEvent($cdp_new_status, $add_status) : '';
+        $cdp_code_line     = $cdp_status_moved ? cdp_pickupCodeReadyLine('air', [(int) $shipment_id], $cdp_new_status, $add_status) : '';
+
         // =======================
         // SMS
         // =======================
-        $notify_sms_sender   = isset($_POST['notify_sms_sender'])   && $_POST['notify_sms_sender']   == 1;
+        $notify_sms_sender   = (isset($_POST['notify_sms_sender']) && $_POST['notify_sms_sender'] == 1) || $cdp_sms_event !== '';
         $notify_sms_receiver = isset($_POST['notify_sms_receiver']) && $_POST['notify_sms_receiver'] == 1;
 
         try {
             $newbodyS_sender = generateSMSBody($sender_data, $fullshipment, $add_status, $app_url, $templatessender);
+            if ($cdp_code_line !== '') {
+                $newbodyS_sender .= "\n" . $cdp_code_line;
+            }
             sendNotificationSMS($sender_data, $newbodyS_sender, $notify_sms_sender);
         } catch (Exception $e) { error_log('SMS sender error: ' . $e->getMessage()); }
 
@@ -798,6 +809,9 @@ if (empty($errors)) {
                             [cdp_nameWithLocker($sender_data), $fullshipment, $old_status_label ?: $current_status_name, $current_status_name, implode("\n", $wa_changes_lines), $order_date_fmt, $recipient_name, $origin, $destination, $app_url, $settings->site_name],
                             $tpl->body
                         );
+                        if ($cdp_code_line !== '') {
+                            $whatsapp_body .= "\n\n" . $cdp_code_line;
+                        }
                         sendNotificationWhatsApp_v2($sender_data, $whatsapp_body, null, ['allow_sms' => false]);
                     }
                 }

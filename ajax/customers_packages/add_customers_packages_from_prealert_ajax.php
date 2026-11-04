@@ -541,8 +541,9 @@ if (empty($errors)) {
                         $tpl->body
                     );
 
-                    // Send via v2 API
-                    sendNotificationWhatsApp_v2($sender_data, $whatsapp_body);
+                    // Send via v2 API. Registration is one of the SMS automations
+                    // and this form texts nothing itself, so an SMS copy goes too.
+                    sendNotificationWhatsApp_v2($sender_data, $whatsapp_body, null, ['sms_event' => 'registered']);
                 }
             } catch (Exception $e) {
                 error_log('Error sending WhatsApp v2 notification to sender: ' . $e->getMessage());

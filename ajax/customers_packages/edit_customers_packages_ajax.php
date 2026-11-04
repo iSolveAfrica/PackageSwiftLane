@@ -620,6 +620,15 @@ if (empty($errors)) {
             }
         }
 
+        // A status changed here into ready for pickup / delivery carries the
+        // owner's pickup code; ready and picked up / delivered always text
+        // (the SMS automations, helpers/hubtel_sms.php).
+        $cdp_new_status   = (int) ($_POST['status_courier'] ?? 0);
+        $cdp_new_label    = (string) (cdp_getCourierstatusApi($cdp_new_status)->mod_style ?? '');
+        $cdp_status_moved = isset($changed_fields['Shipment Status']);
+        $cdp_sms_event    = $cdp_status_moved ? cdp_statusSmsEvent($cdp_new_status, $cdp_new_label) : '';
+        $cdp_code_line    = $cdp_status_moved ? cdp_pickupCodeReadyLine('sea', [(int) $shipment_id], $cdp_new_status, $cdp_new_label) : '';
+
         // =====================
         // WHATSAPP NOTIFICATION
         // =====================
@@ -665,6 +674,7 @@ if (empty($errors)) {
                         "*What Changed:*\n{$wa_changes}" .
                         $wa_status_line .
                         ($wa_details !== '' ? "\n*Updated Details*\n" . $wa_details : '') .
+                        ($cdp_code_line !== '' ? "\n" . $cdp_code_line . "\n" : '') .
                         "\nTrack your shipment at any time:\n" .
                         $app_url . "\n\n" .
                         "Thank you, *{$msnames}* Team";
@@ -683,10 +693,13 @@ if (empty($errors)) {
         $name_status  = cdp_getCourierstatusApi((int)$_POST["status_courier"]);
         $add_status   = $name_status->mod_style;
 
-        $notify_sms_sender = isset($_POST['notify_sms_sender']) && $_POST['notify_sms_sender'] == 1;
+        $notify_sms_sender = (isset($_POST['notify_sms_sender']) && $_POST['notify_sms_sender'] == 1) || $cdp_sms_event !== '';
 
         try {
             $newbodyS_sender = generateSMSBody($sender_data, $fullshipment, $add_status, $app_url, $templatessender);
+            if ($cdp_code_line !== '') {
+                $newbodyS_sender .= "\n" . $cdp_code_line;
+            }
             sendNotificationSMS($sender_data, $newbodyS_sender, $notify_sms_sender);
         } catch (Exception $e) {
             error_log('Error generating or sending SMS for sender: ' . $e->getMessage());

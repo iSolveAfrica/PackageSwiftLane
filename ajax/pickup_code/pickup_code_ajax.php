@@ -8,10 +8,10 @@
 
 // Pickup codes (helpers/pickup_code.php) for the staff modal
 // (dataJs/pickup_code.js):
-//   state     module, order_ids[]            verified? live code?
-//   generate  module, order_ids[], context   send a new code to the owner
-//   verify    code_id, code                  staff enter what the owner read out
-//   list                                     codes alive right now (the modal)
+//   state     module, order_ids[]            verified? does the customer hold a code?
+//   generate  module, order_ids[], context   send the owner their code (a new one if they have none)
+//   verify    module, order_ids[], code      staff enter the code the owner showed
+//   list                                     codes customers hold right now (the modal)
 // Staff only — a customer account is refused.
 
 require_once(__DIR__ . '/../../loader.php');
@@ -51,7 +51,6 @@ if ($action === 'state') {
     $respond(true, '', cdp_pickupCodeState($module, $orderIds) + [
         'owner'     => $owner ? cdp_nameWithLocker($owner) : '',
         'trackings' => array_map(function ($p) { return $p->order_prefix . $p->order_no; }, $pkgs),
-        'ttl'       => CDP_PICKUP_CODE_TTL,
     ]);
 }
 
@@ -64,14 +63,19 @@ if ($action === 'generate') {
 }
 
 if ($action === 'verify') {
-    $res = cdp_pickupCodeVerify((int) ($_POST['code_id'] ?? 0), (string) ($_POST['code'] ?? ''), $uid);
+    if (!$orderIds) {
+        $respond(false, 'No package specified.');
+    }
+    $res = cdp_pickupCodeVerify($module, $orderIds, (string) ($_POST['code'] ?? ''), $uid);
     $respond(!empty($res['success']), $res['message']);
 }
 
 if ($action === 'list') {
     $now  = time();
     $rows = array_map(function ($r) use ($now) {
-        $verified = $r->status === 'verified';
+        $verified = $r->status === 'verified'
+            && strtotime((string) $r->verified_at) + CDP_PICKUP_VERIFIED_TTL > $now;
+        $sent = $r->last_sent_at ?: $r->created_at;
         return [
             'id'         => (int) $r->id,
             'code'       => (string) $r->code,
@@ -80,12 +84,9 @@ if ($action === 'list') {
             'trackings'  => (string) $r->trackings,
             'status'     => $verified ? 'Verified' : 'Waiting',
             'channels'   => (string) $r->channels,
+            'source'     => strpos((string) $r->context, 'ready') === 0 ? 'Ready message' : 'Sent by staff',
             'sent_by'    => trim((string) $r->staff_fname . ' ' . (string) $r->staff_lname),
-            'created_at' => (string) $r->created_at,
-            // Waiting: time left to enter it. Verified: time left to hand over.
-            'seconds'    => $verified
-                ? max(0, strtotime($r->verified_at) + CDP_PICKUP_VERIFIED_TTL - $now)
-                : max(0, strtotime($r->expires_at) - $now),
+            'sent_at'    => $sent ? date('j M Y, H:i', strtotime($sent)) : '',
         ];
     }, cdp_pickupCodeActiveList());
     $respond(true, '', ['codes' => $rows]);

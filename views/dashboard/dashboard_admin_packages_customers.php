@@ -27,6 +27,7 @@ if ($user->cdp_hasPermission('main_dashboard_package_locker')) {
     $ct_prealerted = cdp_dashCount('cdb_customers_packages', "AND is_prealert = 1 AND status_courier != 21" . $agency_where);
     $ct_warehouse = cdp_dashCount('cdb_customers_packages', "AND status_courier = 4" . $agency_where);
     $ct_delivered = cdp_dashCount('cdb_customers_packages', "AND status_courier = 8" . $agency_where);
+    $ct_picked_up = cdp_dashCount('cdb_customers_packages', "AND status_courier = 15" . $agency_where);
     $ct_cancel    = cdp_dashCount('cdb_customers_packages', "AND status_courier = 21" . $agency_where);
     $ct_month     = cdp_dashCount('cdb_customers_packages', "AND status_courier != 21 AND order_date >= '" . date('Y-m-01') . "'" . $agency_where);
 
@@ -83,7 +84,7 @@ if ($user->cdp_hasPermission('main_dashboard_package_locker')) {
                     <?php cdp_dashKpi(['icon' => 'solar:cart-large-2-linear', 'label' => 'Registered Packages', 'value' => number_format($ct_total), 'href' => 'customer_packages_list.php', 'accent' => '#00B4D8', 'sub' => 'Non-Cancelled']); ?>
                     <?php cdp_dashKpi(['icon' => 'solar:bell-linear', 'label' => 'From Pre-Alerts', 'value' => number_format($ct_prealerted), 'href' => 'prealert_list.php', 'accent' => '#7C3EE2']); ?>
                     <?php cdp_dashKpi(['icon' => 'solar:home-2-linear', 'label' => 'In Warehouse', 'value' => number_format($ct_warehouse), 'href' => 'warehouse.php', 'accent' => '#e0ce07']); ?>
-                    <?php cdp_dashKpi(['icon' => 'solar:check-circle-linear', 'label' => 'Delivered', 'value' => number_format($ct_delivered), 'accent' => '#1b8a5a']); ?>
+                    <?php cdp_dashKpi(['icon' => 'solar:check-circle-linear', 'label' => 'Delivered', 'value' => number_format($ct_delivered), 'sub' => number_format($ct_picked_up) . ' picked up', 'accent' => '#1b8a5a']); ?>
                     <?php cdp_dashKpi(['icon' => 'solar:calendar-linear', 'label' => 'New This Month', 'value' => number_format($ct_month), 'accent' => '#FFCB01', 'sub' => $monthName]); ?>
                     <?php cdp_dashKpi(['icon' => 'solar:close-circle-linear', 'label' => 'Cancelled', 'value' => number_format($ct_cancel), 'accent' => '#f62d51']); ?>
                 </div>

@@ -529,7 +529,7 @@ function fs_render_customer($cid, array $g, array $stats, $billing, $bodyHtml = 
         $inOids = implode(',', array_map('intval', $g['oids']));
         $sdb = new Conexion;
         $sdb->cdp_query("SELECT COALESCE(SUM(fs_cleared_for_delivery = 1), 0) c,
-                                COALESCE(SUM(status_courier = 8), 0) d
+                                COALESCE(SUM(status_courier IN (8, 15)), 0) d
                          FROM cdb_add_order WHERE order_id IN ($inOids)");
         $sdb->cdp_execute();
         $sr = $sdb->cdp_registro();
@@ -739,10 +739,10 @@ function fs_render_package($p, $stat = null, $cleared = false)
             $__st->bind(':oid', $oid);
             $__st->cdp_execute();
             $__strow = $__st->cdp_registro();
-            $isDelivered = $__strow && (int) $__strow->status_courier === 8;
+            $isDelivered = $__strow && cdp_isHandedOver($__strow->status_courier);
             ?>
             <?php if ($isDelivered): ?>
-                <span class="fs-pkg-paid fs-chip-settled ml-2" title="Delivered — no longer in our custody"><i class="mdi mdi-truck-check-outline"></i> Delivered</span>
+                <span class="fs-pkg-paid fs-chip-settled ml-2" title="<?php echo cdp_handoverLabel($__strow->status_courier); ?> — no longer in our custody"><i class="mdi mdi-truck-check-outline"></i> <?php echo cdp_handoverLabel($__strow->status_courier); ?></span>
             <?php elseif ($cleared): ?>
                 <span class="fs-pkg-paid fs-chip-settled ml-2" title="Paid for &amp; cleared for delivery"><i class="mdi mdi-check-decagram"></i> Paid</span>
             <?php else: ?>
@@ -1262,12 +1262,23 @@ if ($action === 'bill_customer') {
         . ($locker !== '' ? ' — kindly have your locker ID (' . $locker . ') ready.' : '.');
     $outro2 = 'Thank you for shipping with us. We look forward to seeing you soon!';
 
+    // The ready-for-pickup message carries the customer's pickup code
+    // (helpers/pickup_code.php): one code for the packages it lists. A re-bill
+    // of the same packages repeats the code they already have.
+    require_once(__DIR__ . '/../../helpers/pickup_code.php');
+    $pkgOids      = array_map(function ($p) { return (int) $p->oid; }, $pkgs);
+    $pickupCodes  = cdp_pickupCodeForReady('air', $pkgOids, 'ready_pickup');
+    $pickupCode   = $pickupCodes ? (string) reset($pickupCodes) : '';
+    $codeLineWa   = cdp_pickupCodeLine($pickupCode, $plural);
+    $codeLineHtml = cdp_pickupCodeLine($pickupCode, $plural, true);
+
     $msgWa = $intro . "\n\n"
         . "*Pickup Details*\n"
         . 'Consolidation: ' . $consolRef . "\n"
         . 'Package' . ($plural ? 's' : '') . ' (' . $pkgCount . "):\n"
         . '• ' . implode("\n• ", $pkgLines) . "\n"
         . ($amountLine !== '' ? "\n" . $amountLine . "\n" : '')
+        . ($codeLineWa !== '' ? "\n" . $codeLineWa . "\n" : '')
         . "\n" . $outro1 . "\n\n" . $outro2;
 
     $msgEmail = '<p>' . htmlspecialchars($intro) . '</p>'
@@ -1276,6 +1287,7 @@ if ($action === 'bill_customer') {
         . 'Package' . ($plural ? 's' : '') . ' (' . $pkgCount . '):</p>'
         . '<ul><li>' . implode('</li><li>', array_map('htmlspecialchars', $pkgLines)) . '</li></ul>'
         . ($amountLine !== '' ? '<p><b>' . nl2br(htmlspecialchars($amountLine)) . '</b></p>' : '')
+        . $codeLineHtml
         . '<p>' . htmlspecialchars($outro1) . '</p>'
         . '<p>' . htmlspecialchars($outro2) . '</p>';
 
@@ -1293,7 +1305,8 @@ if ($action === 'bill_customer') {
                 }
             }
             // 'GH' hint: most stored phones are national 0-prefix Ghanaian numbers.
-            $wa = sendNotificationWhatsApp_v2($sender, $waBody, 'GH');
+            // Ready for pickup is an SMS automation: an SMS copy goes too.
+            $wa = sendNotificationWhatsApp_v2($sender, $waBody, 'GH', ['sms_event' => 'ready']);
             if (!empty($wa['success'])) {
                 $sentWa = true;
             } else {
@@ -1412,7 +1425,7 @@ if ($action === 'payment_form') {
         $db->cdp_execute();
         foreach ((array) $db->cdp_registros() as $r) {
             $clearedNow[(int) $r->order_id]   = (int) $r->fs_cleared_for_delivery;
-            $deliveredNow[(int) $r->order_id] = ((int) $r->status_courier === 8);
+            $deliveredNow[(int) $r->order_id] = cdp_isHandedOver($r->status_courier);
         }
     }
 

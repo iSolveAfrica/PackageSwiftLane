@@ -244,7 +244,7 @@ $total_amount_payable_ghs = $payable_ghs_subtotal + $payable_handling_total;
                     <tr class="card-hovera">
                         <?php if ($userData->userlevel == 9) { ?>
                             <td class="chb">
-                                <?php if ($row->status_courier != 8 && $row->status_courier != 21) { ?>
+                                <?php if (!cdp_isHandedOver($row->status_courier) && $row->status_courier != 21) { ?>
                                     <div class="custom-control custom-checkbox">
                                         <input type="checkbox" class="custom-control-input" value="<?php echo $row->order_no; ?>" name="checkbox[]" id="cst_<?php echo $count; ?>">
                                         <label class="custom-control-label" for="cst_<?php echo $count; ?>">&nbsp;</label>
@@ -336,7 +336,7 @@ $total_amount_payable_ghs = $payable_ghs_subtotal + $payable_handling_total;
                                         </a>
                                     <?php } ?>
                                     <?php if ($row->order_incomplete == 1 && $userData->userlevel != 1 && $row->is_consolidate == 0) { ?>
-                                        <?php if (($userData->userlevel == 9 || $userData->userlevel == 2) && $row->status_courier != 8) { ?>
+                                        <?php if (($userData->userlevel == 9 || $userData->userlevel == 2) && !cdp_isHandedOver($row->status_courier)) { ?>
                                             <a class="dropdown-item" href="courier_edit.php?id=<?php echo $row->order_id; ?>&tracking_number=<?php echo $row->tracking_number; ?>&eta=<?php echo $row->estimated_eta; ?>" title="<?php echo $lang['tooledit']; ?>">
                                                 <i style="color:#343a40" class="ti-pencil"></i>&nbsp;<?php echo $lang['tooledit']; ?>
                                             </a>
@@ -351,7 +351,7 @@ $total_amount_payable_ghs = $payable_ghs_subtotal + $payable_handling_total;
                                             <?php } ?>
                                         <?php } ?>
                                         <?php if ($userData->userlevel == 9 || $userData->userlevel == 2) { ?>
-                                            <?php if ($row->status_courier != 8 && $row->status_courier != 21 && $row->status_courier != 12) { ?>
+                                            <?php if (!cdp_isHandedOver($row->status_courier) && $row->status_courier != 21 && $row->status_courier != 12) { ?>
                                                 <a class="dropdown-item" data-toggle="modal" data-target="#modalDriver" data-id_shipment="<?php echo $row->order_id; ?>">
                                                     <i style="color:#ff0000" class="fas fa-car"></i>&nbsp;<?php echo $lang['left208']; ?>
                                                 </a>
@@ -365,7 +365,7 @@ $total_amount_payable_ghs = $payable_ghs_subtotal + $payable_handling_total;
                                                 <i style="color:#343a40" class="ti-printer"></i>&nbsp;<?php echo $lang['toollabel']; ?>
                                             </a>
                                             <?php if ($userData->userlevel == 9 || $userData->userlevel == 3 || $userData->userlevel == 2) { ?>
-                                                <?php if ($row->is_consolidate == 0 && $row->status_courier != 8 && $row->status_courier != 21 && $row->status_courier != 12) { ?>
+                                                <?php if ($row->is_consolidate == 0 && !cdp_isHandedOver($row->status_courier) && $row->status_courier != 21 && $row->status_courier != 12) { ?>
                                                     <a class="dropdown-item" href="courier_shipment_tracking.php?id=<?php echo $row->order_id; ?>" title="<?php echo $lang['toolupdate']; ?>">
                                                         <i style="color:#20c997" class="ti-reload"></i>&nbsp;<?php echo $lang['toolupdate']; ?>
                                                     </a>
@@ -375,7 +375,7 @@ $total_amount_payable_ghs = $payable_ghs_subtotal + $payable_handling_total;
                                                 <?php } ?>
                                             <?php } ?>
                                             <?php if ($userData->userlevel == 9 || $userData->userlevel == 2) { ?>
-                                                <?php if ($row->is_consolidate == 0 && $row->status_courier != 8 && $row->status_courier != 21 && $row->status_courier != 12) { ?>
+                                                <?php if ($row->is_consolidate == 0 && !cdp_isHandedOver($row->status_courier) && $row->status_courier != 21 && $row->status_courier != 12) { ?>
                                                     <a class="dropdown-item" data-id="<?php echo $row->order_id; ?>" href="#" data-toggle="modal" data-target="#myModalCancel">
                                                         <i style="color:#f62d51" class="fas fa-times-circle"></i>&nbsp;<?php echo $lang['leftorder34444']; ?>
                                                     </a>
@@ -389,7 +389,7 @@ $total_amount_payable_ghs = $payable_ghs_subtotal + $payable_handling_total;
                                                     <i class="fas fa-envelope"></i>&nbsp;<?php echo $lang['leftorder36']; ?>
                                                 </a>
                                             <?php } ?>
-                                            <?php if ($row->status_courier != 8 || $row->status_courier != 32) { ?>
+                                            <?php if (!cdp_isHandedOver($row->status_courier) || $row->status_courier != 32) { ?>
                                                 <a class="dropdown-item" href="courier_deliver_shipment.php?id=<?php echo $row->order_id; ?>">
                                                     <i class="fas fa-envelope"></i>&nbsp;<?php echo $lang['tooldeliver']; ?>
                                                 </a>

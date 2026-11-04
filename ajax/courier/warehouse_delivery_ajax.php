@@ -3,21 +3,22 @@
 // Warehouse Delivery — tiered (FS-style) delivery workspace.
 //
 // Mirrors the Financial Sheet's accordion — consolidation -> customer ->
-// package -> item — but with DELIVERY actions instead of finance actions.
-// Delivery is BY PACKAGE only. "Deliver All" delivers just a customer's
-// cleared, not-yet-delivered packages. When every package in a consolidation
-// is Delivered, the consolidation's own status_courier flips to Delivered (8);
-// undoing a package reopens it (and reopens the consolidation if it was
-// closed). Only finance-cleared packages (fs_cleared_for_delivery = 1) can be
+// package -> item — but with HANDOVER actions instead of finance actions.
+// Handover is BY PACKAGE only, as Picked up (15, the default) or Delivered (8),
+// as staff choose (helpers/handover.php). "Hand Over All" hands over just a
+// customer's cleared packages not yet handed over. When every package in a
+// consolidation is handed over, the consolidation's own status_courier flips
+// to Picked up (all picked up) or Delivered; undoing a package reopens it (and
+// reopens the consolidation if it was closed). Only finance-cleared packages (fs_cleared_for_delivery = 1) can be
 // delivered — enforced server-side, never trust the client.
 //
 // Actions (all require view_warehouse_delivery; writes require their own perm):
 //   list            -> consolidation cards (level 1)
 //   customers       -> ?consolidate_id            customer cards (level 2)
 //   packages        -> ?consolidate_id&sender_id  package + item cards (3/4)
-//   deliver_package -> POST order_no              deliver one package
-//   deliver_user    -> POST consolidate_id&sender_id  deliver a customer's cleared pkgs
-//   undo_package    -> POST order_no              reopen a delivered package
+//   deliver_package -> POST order_no, handover_type   hand over one package
+//   deliver_user    -> POST consolidate_id&sender_id, handover_type  a customer's cleared pkgs
+//   undo_package    -> POST order_no              reopen a handed-over package
 // ============================================================================
 
 if (!function_exists('cdp_asset')) { $d = __DIR__; while ($d !== dirname($d) && !is_file($d . '/helpers/asset.php')) { $d = dirname($d); } if (is_file($d . '/helpers/asset.php')) require_once $d . '/helpers/asset.php'; }
@@ -33,7 +34,7 @@ require_once(__DIR__ . '/../../helpers/phpmailer/class.phpmailer.php');
 require_once(__DIR__ . '/../../helpers/phpmailer/class.smtp.php');
 require_once(__DIR__ . '/../notify_whatsapp/api_whatsapp_service_v2.php');
 require_login();
-require_once(__DIR__ . '/../../helpers/pickup_code.php');
+require_once(__DIR__ . '/../../helpers/pickup_code.php');   // also loads helpers/handover.php
 notify_after_response(); // email + WhatsApp go out after the response (helpers/after_response.php)
 require_permission('view_warehouse_delivery');
 require_once(__DIR__ . '/../../helpers/video_files.php');
@@ -43,11 +44,11 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     session_write_close();
 }
 
-if (!defined('CDP_WD_DELIVERED'))  { define('CDP_WD_DELIVERED', 8); }  // Delivered
 if (!defined('CDP_WD_REOPEN'))     { define('CDP_WD_REOPEN', 4); }     // In_Warehouse (undo target)
 
-// Terminal / exited statuses a package can't be "delivered" out of here.
-$WD_TERMINAL = [15, 16, 21, 27, 35]; // Picked up, Not Picked Up, Cancelled, Returned, Auction
+// Terminal / exited statuses a package can't be handed over out of here
+// (Picked up / Delivered are the 'delivered' state itself).
+$WD_TERMINAL = [16, 21, 27, 35]; // Not Picked Up, Cancelled, Returned, Auction
 
 $db       = new Conexion;
 $user     = new User;
@@ -107,17 +108,18 @@ function wd_consolidation_packages(Conexion $db, $cid, $ownOnly)
     return $db->cdp_registros() ?: [];
 }
 
-/** Delivery state for one package row: 'delivered' | 'ready' | 'awaiting' | 'other'. */
+/** Handover state for one package row: 'delivered' (picked up or delivered) | 'ready' | 'awaiting' | 'other'. */
 function wd_pkg_state($p, array $terminal)
 {
-    if ((int) $p->status_courier === CDP_WD_DELIVERED) { return 'delivered'; }
+    if (cdp_isHandedOver($p->status_courier)) { return 'delivered'; }
     if (in_array((int) $p->status_courier, $terminal, true)) { return 'other'; }
     return cdp_fsIsCleared($p->fs_cleared_for_delivery) ? 'ready' : 'awaiting';
 }
 
-/** After a delivery/undo, recompute a consolidation's status_courier.
- *  Delivered (8) only when EVERY package in it is delivered; otherwise, if it
- *  was previously closed as Delivered, reopen it to In_Warehouse. */
+/** After a handover/undo, recompute a consolidation's status_courier.
+ *  Closed only when EVERY package in it is handed over: Picked up (15) when
+ *  every one was picked up, otherwise Delivered (8). If it was closed and a
+ *  package reopens, it goes back to In_Warehouse. */
 function wd_sync_consolidation_status(Conexion $db, $cid)
 {
     $db->cdp_query("SELECT a.status_courier
@@ -130,9 +132,12 @@ function wd_sync_consolidation_status(Conexion $db, $cid)
     if (!$rows) { return; }
 
     $allDelivered = true;
+    $allPickedUp  = true;
     foreach ($rows as $r) {
-        if ((int) $r->status_courier !== CDP_WD_DELIVERED) { $allDelivered = false; break; }
+        if (!cdp_isHandedOver($r->status_courier)) { $allDelivered = false; break; }
+        if ((int) $r->status_courier !== CDP_STATUS_PICKED_UP) { $allPickedUp = false; }
     }
+    $closeAs = $allPickedUp ? CDP_STATUS_PICKED_UP : CDP_STATUS_DELIVERED;
 
     $db->cdp_query("SELECT status_courier FROM cdb_consolidate WHERE consolidate_id = :cid LIMIT 1");
     $db->bind(':cid', (int) $cid);
@@ -140,12 +145,12 @@ function wd_sync_consolidation_status(Conexion $db, $cid)
     $cur = $db->cdp_registro();
     $curStatus = $cur ? (int) $cur->status_courier : 0;
 
-    if ($allDelivered && $curStatus !== CDP_WD_DELIVERED) {
+    if ($allDelivered && $curStatus !== $closeAs) {
         $db->cdp_query("UPDATE cdb_consolidate SET status_courier = :st WHERE consolidate_id = :cid");
-        $db->bind(':st', CDP_WD_DELIVERED);
+        $db->bind(':st', $closeAs);
         $db->bind(':cid', (int) $cid);
         $db->cdp_execute();
-    } elseif (!$allDelivered && $curStatus === CDP_WD_DELIVERED) {
+    } elseif (!$allDelivered && cdp_isHandedOver($curStatus)) {
         $db->cdp_query("UPDATE cdb_consolidate SET status_courier = :st WHERE consolidate_id = :cid");
         $db->bind(':st', CDP_WD_REOPEN);
         $db->bind(':cid', (int) $cid);
@@ -168,15 +173,16 @@ function wd_consol_summary(Conexion $db, $cid, array $terminal, $ownOnly)
             case 'awaiting':  $awaiting++;  break;
         }
     }
-    // The consolidation only ever shows a "Delivered" chip (once every package
-    // is delivered). Progress otherwise is conveyed by the n/n Delivered badge.
+    // The consolidation only ever shows a "Handed Over" chip (once every
+    // package is picked up or delivered). Progress otherwise is conveyed by
+    // the n/n Handed Over badge.
     $stateHtml = ($total > 0 && $delivered >= $total)
-        ? '<span class="wd-chip-done"><i class="mdi mdi-check-all"></i> Delivered</span>'
+        ? '<span class="wd-chip-done"><i class="mdi mdi-check-all"></i> Handed Over</span>'
         : '';
     $progCls = ($delivered >= $total && $total > 0) ? 'badge-success' : 'badge-light';
 
-    $progHtml = '<span class="badge ' . $progCls . ' ml-2" title="Packages delivered">'
-        . $delivered . '/' . $total . ' Delivered</span>';
+    $progHtml = '<span class="badge ' . $progCls . ' ml-2" title="Packages picked up or delivered">'
+        . $delivered . '/' . $total . ' Handed Over</span>';
     $rightHtml = ($awaiting > 0
         ? '<span class="wd-chip-wait mr-1" title="Not yet cleared by Accounts"><i class="mdi mdi-lock"></i> ' . $awaiting . ' Awaiting</span>'
         : '') . $stateHtml;
@@ -225,7 +231,7 @@ function wd_render_customers($cid, array $pkgs, $canDeliverUser, array $terminal
             <div class="card-header wd-cust-header p-2" onclick="wdToggle(this, event, 'cust')">
                 <span class="wd-avatar"><?php echo htmlspecialchars($initials); ?></span>
                 <b><?php echo htmlspecialchars($g['label']); ?></b>
-                <span class="badge <?php echo $badgeCls; ?> ml-2"><?php echo $delivered; ?>/<?php echo $total; ?> Delivered</span>
+                <span class="badge <?php echo $badgeCls; ?> ml-2" title="Packages picked up or delivered"><?php echo $delivered; ?>/<?php echo $total; ?> Handed Over</span>
                 <?php if ($awaiting > 0): ?><span class="wd-chip-wait ml-1"><i class="mdi mdi-lock"></i> <?php echo $awaiting; ?> Awaiting</span><?php endif; ?>
                 <span class="wd-spacer"></span>
                 <?php if ($canDeliverUser && $ready > 0): ?>
@@ -235,7 +241,7 @@ function wd_render_customers($cid, array $pkgs, $canDeliverUser, array $terminal
                             data-ready="<?php echo $ready; ?>"
                             data-oids="<?php echo implode(',', $readyIds); ?>"
                             onclick="event.stopPropagation(); wdDeliverUser(this);">
-                        <i class="mdi mdi-truck-check"></i> Deliver All (<?php echo $ready; ?>)
+                        <i class="mdi mdi-truck-check"></i> Hand Over All (<?php echo $ready; ?>)
                     </button>
                 <?php endif; ?>
                 <i class="mdi mdi-chevron-down wd-caret wd-caret-toggle ml-2"></i>
@@ -309,10 +315,10 @@ if ($action === 'list') {
         }
         $custCount = count($customers);
 
-        // The consolidation only shows a "Delivered" chip once every package is
-        // delivered; the n/n Delivered badge conveys progress otherwise.
+        // The consolidation only shows a "Handed Over" chip once every package
+        // is picked up or delivered; the n/n badge conveys progress otherwise.
         $stateChip = ($total > 0 && $delivered >= $total)
-            ? '<span class="wd-chip-done"><i class="mdi mdi-check-all"></i> Delivered</span>'
+            ? '<span class="wd-chip-done"><i class="mdi mdi-check-all"></i> Handed Over</span>'
             : '';
         $progCls = ($delivered >= $total && $total > 0) ? 'badge-success' : 'badge-light';
         ?>
@@ -324,7 +330,7 @@ if ($action === 'list') {
                 <b class="wd-mono"><?php echo $no; ?></b>
                 <span class="wd-dim ml-2"><i class="mdi mdi-calendar-blank"></i> <?php echo htmlspecialchars((string) $c->c_date); ?></span>
                 <span class="wd-dim ml-2" title="Sum of package weights"><i class="mdi mdi-weight"></i> <?php echo round($weight, 2); ?> lb</span>
-                <span class="badge <?php echo $progCls; ?> ml-2" title="Packages delivered"><?php echo $delivered; ?>/<?php echo $total; ?> Delivered</span>
+                <span class="badge <?php echo $progCls; ?> ml-2" title="Packages picked up or delivered"><?php echo $delivered; ?>/<?php echo $total; ?> Handed Over</span>
                 <span class="wd-dim ml-1"><i class="mdi mdi-account-multiple"></i> <?php echo $custCount; ?></span>
                 <span class="wd-spacer"></span>
                 <?php if ($awaiting > 0): ?><span class="wd-chip-wait mr-1" title="Not yet cleared by Accounts"><i class="mdi mdi-lock"></i> <?php echo $awaiting; ?> Awaiting</span><?php endif; ?>
@@ -384,13 +390,13 @@ if ($action === 'packages') {
                 if ($__carrier !== ''): ?>
                     <span class="wd-dim ml-2" title="Carrier / postal tracking"><i class="mdi mdi-barcode"></i> <?php echo htmlspecialchars($__carrier); ?></span>
                 <?php endif; ?>
-                <?php // Once delivered, the double-tick "Delivered" chip is enough — the
-                      // raw status badge would just repeat it, so hide it. ?>
+                <?php // Once handed over, the double-tick "Picked up" / "Delivered" chip is
+                      // enough — the raw status badge would just repeat it, so hide it. ?>
                 <?php if ($state !== 'delivered'): ?>
                 <span class="badge ml-2" style="background:<?php echo htmlspecialchars($stColor); ?>;color:#fff;"><?php echo $stName; ?></span>
                 <?php endif; ?>
                 <?php
-                if ($state === 'delivered') { echo '<span class="wd-chip-done ml-1"><i class="mdi mdi-check-all"></i> Delivered</span>'; }
+                if ($state === 'delivered') { echo '<span class="wd-chip-done ml-1"><i class="mdi mdi-check-all"></i> ' . cdp_handoverLabel($p->status_courier) . '</span>'; }
                 elseif ($state === 'ready')  { echo '<span class="wd-chip-ready ml-1"><i class="mdi mdi-truck-check"></i> Cleared — Ready</span>'; }
                 elseif ($state === 'awaiting') { echo '<span class="wd-chip-wait ml-1"><i class="mdi mdi-lock"></i> Awaiting Clearance</span>'; }
                 ?>
@@ -403,7 +409,7 @@ if ($action === 'packages') {
                             data-track="<?php echo $track; ?>"
                             data-cid="<?php echo $cid; ?>" data-sid="<?php echo $sid; ?>"
                             onclick="event.stopPropagation(); wdDeliverOne(this);">
-                        <i class="mdi mdi-truck-check"></i> Deliver
+                        <i class="mdi mdi-truck-check"></i> Hand Over
                     </button>
                 <?php } elseif ($state === 'delivered' && $canUndo) { ?>
                     <button type="button" class="btn btn-sm btn-outline-danger wd-actions"
@@ -590,25 +596,26 @@ function wd_set_status(Conexion $db, $orderId, $status)
     return $db->cdp_execute();
 }
 
-/** Deliver one package row (from wd_find_package / wd_consolidation_packages), enforcing clearance. */
-function wd_do_deliver(Conexion $db, $row, $uid, array $terminal)
+/** Hand over one package row (from wd_find_package / wd_consolidation_packages)
+ *  as Picked up or Delivered ($status), enforcing clearance. */
+function wd_do_deliver(Conexion $db, $row, $uid, array $terminal, $status)
 {
     if (!$row) { return ['ok' => false, 'reason' => 'not_found']; }
-    if ((int) $row->status_courier === CDP_WD_DELIVERED) { return ['ok' => false, 'reason' => 'already']; }
+    if (cdp_isHandedOver($row->status_courier)) { return ['ok' => false, 'reason' => 'already']; }
     if (!cdp_fsIsCleared($row->fs_cleared_for_delivery ?? 0)) { return ['ok' => false, 'reason' => 'uncleared']; }
     if (in_array((int) $row->status_courier, $terminal, true)) { return ['ok' => false, 'reason' => 'terminal']; }
     // The owner's verified pickup code (helpers/pickup_code.php).
-    $gate = cdp_pickupCodeGate('air', [(int) $row->order_id], CDP_WD_DELIVERED);
+    $gate = cdp_pickupCodeGate('air', [(int) $row->order_id], $status);
     if (!$gate['ok']) { return ['ok' => false, 'reason' => 'pickup_code', 'message' => $gate['message'], 'order_ids' => $gate['missing']]; }
 
-    wd_set_status($db, (int) $row->order_id, CDP_WD_DELIVERED);
+    wd_set_status($db, (int) $row->order_id, $status);
     cdp_pickupCodeConsume('air', [(int) $row->order_id], $uid);
     cdp_freeConsolidatedItem((int) $row->order_id);
     $tracking = ($row->order_prefix ?? '') . $row->order_no;
     if (function_exists('cdp_updateShipTrackingMultiple')) {
-        cdp_updateShipTrackingMultiple($tracking, CDP_WD_DELIVERED, 'Delivered via Warehouse Delivery', $row->origin_off ?? 0, $uid);
+        cdp_updateShipTrackingMultiple($tracking, $status, cdp_handoverLabel($status) . ' via Warehouse Delivery', $row->origin_off ?? 0, $uid);
     }
-    wd_log($uid, (int) $row->order_id, $tracking, 'package delivered');
+    wd_log($uid, (int) $row->order_id, $tracking, 'package ' . strtolower(cdp_handoverLabel($status)));
     return ['ok' => true, 'order_id' => (int) $row->order_id,
             'tracking' => $tracking, 'sender_id' => (int) $row->sender_id];
 }
@@ -627,9 +634,10 @@ function wd_log($uid, $order_id, $track, $what)
     ]);
 }
 
-/** Best-effort "your package was delivered" message to the customer (WhatsApp +
- *  email), thanking them by the business name ($core->site_name). Never throws. */
-function wd_notifyDelivered(Conexion $db, $core, $senderId, array $trackings)
+/** Best-effort "your package was picked up / delivered" message to the customer
+ *  (WhatsApp + email, and the handed-over SMS automation), thanking them by the
+ *  business name ($core->site_name). Never throws. */
+function wd_notifyDelivered(Conexion $db, $core, $senderId, array $trackings, $status = CDP_STATUS_PICKED_UP)
 {
     $trackings = array_values(array_filter(array_map('strval', $trackings), function ($v) { return $v !== ''; }));
     if (!$senderId || !$trackings) { return; }
@@ -643,15 +651,16 @@ function wd_notifyDelivered(Conexion $db, $core, $senderId, array $trackings)
     $custName = trim((string) ($sender->fname ?? '')) ?: 'there';
     $plural   = count($trackings) > 1;
     $siteName = (string) ($core->site_name ?? '');
-    $subject  = 'Your Package' . ($plural ? 's Have' : ' Has') . ' Been Delivered';
+    $label    = cdp_handoverLabel($status);
+    $subject  = 'Your Package' . ($plural ? 's ' : ' ') . ucwords(cdp_handoverPhrase($status, $plural));
 
-    $intro = 'Good news! Your package' . ($plural ? 's have' : ' has')
-        . ' been delivered. Thank you for shipping with ' . $siteName . '.';
+    $intro = 'Good news! Your package' . ($plural ? 's ' : ' ')
+        . cdp_handoverPhrase($status, $plural) . '. Thank you for shipping with ' . $siteName . '.';
     $outro = 'We appreciate your business and look forward to serving you again!';
 
-    $msgWa = $intro . "\n\n*Delivered*\n• " . implode("\n• ", $trackings) . "\n\n" . $outro;
+    $msgWa = $intro . "\n\n*" . $label . "*\n• " . implode("\n• ", $trackings) . "\n\n" . $outro;
     $msgEmail = '<p>' . htmlspecialchars($intro) . '</p>'
-        . '<p><b>Delivered</b></p><ul><li>' . implode('</li><li>', array_map('htmlspecialchars', $trackings)) . '</li></ul>'
+        . '<p><b>' . htmlspecialchars($label) . '</b></p><ul><li>' . implode('</li><li>', array_map('htmlspecialchars', $trackings)) . '</li></ul>'
         . '<p>' . htmlspecialchars($outro) . '</p>';
 
     // WhatsApp (best-effort; wrapped in template 12 for site branding).
@@ -668,7 +677,7 @@ function wd_notifyDelivered(Conexion $db, $core, $senderId, array $trackings)
                     );
                 }
             }
-            sendNotificationWhatsApp_v2($sender, $waBody, 'GH');
+            sendNotificationWhatsApp_v2($sender, $waBody, 'GH', ['sms_event' => 'handed_over']);
         } catch (Throwable $e) { /* best-effort */ }
     }
 
@@ -685,35 +694,37 @@ function wd_notifyDelivered(Conexion $db, $core, $senderId, array $trackings)
 }
 
 if ($action === 'deliver_package') {
-    if (!$canDeliverPkg) { echo json_encode(['ok' => false, 'message' => 'You do not have permission to deliver packages.']); exit; }
+    if (!$canDeliverPkg) { echo json_encode(['ok' => false, 'message' => 'You do not have permission to hand over packages.']); exit; }
     $no = trim((string) ($_POST['order_no'] ?? ''));
     if ($no === '') { echo json_encode(['ok' => false, 'message' => 'No package specified.']); exit; }
 
-    $res = wd_do_deliver($db, wd_find_package($db, (int) ($_POST['consolidate_id'] ?? 0), $no), $uid, $WD_TERMINAL);
+    $status = cdp_handoverStatusFromInput($_POST['handover_type'] ?? '');
+    $res = wd_do_deliver($db, wd_find_package($db, (int) ($_POST['consolidate_id'] ?? 0), $no), $uid, $WD_TERMINAL, $status);
     if (!$res['ok']) {
         if ($res['reason'] === 'pickup_code') {
             echo json_encode(['ok' => false, 'message' => $res['message'], 'pickup_code' => ['module' => 'air', 'order_ids' => $res['order_ids']]]);
             exit;
         }
-        $msg = ['already' => 'That package is already delivered.',
-                'uncleared' => 'That package is not cleared for delivery.',
-                'terminal' => 'That package can no longer be delivered.',
-                'not_found' => 'Package not found.'][$res['reason']] ?? 'Could not deliver.';
+        $msg = ['already' => 'That package is already picked up or delivered.',
+                'uncleared' => 'That package is not cleared for handover.',
+                'terminal' => 'That package can no longer be handed over.',
+                'not_found' => 'Package not found.'][$res['reason']] ?? 'Could not save the handover.';
         echo json_encode(['ok' => false, 'message' => $msg]);
         exit;
     }
     $cid = (int) ($_POST['consolidate_id'] ?? 0);
     if ($cid) { wd_sync_consolidation_status($db, $cid); }
-    wd_notifyDelivered($db, $core, (int) ($res['sender_id'] ?? 0), [(string) ($res['tracking'] ?? $no)]);
-    echo json_encode(['ok' => true, 'delivered' => 1,
+    wd_notifyDelivered($db, $core, (int) ($res['sender_id'] ?? 0), [(string) ($res['tracking'] ?? $no)], $status);
+    echo json_encode(['ok' => true, 'delivered' => 1, 'label' => cdp_handoverLabel($status),
                       'summary' => $cid ? wd_consol_summary($db, $cid, $WD_TERMINAL, $ownOnly) : null]);
     exit;
 }
 
 if ($action === 'deliver_user') {
-    if (!$canDeliverUser) { echo json_encode(['ok' => false, 'message' => 'You do not have permission to deliver all packages for a customer.']); exit; }
+    if (!$canDeliverUser) { echo json_encode(['ok' => false, 'message' => 'You do not have permission to hand over all packages for a customer.']); exit; }
     $cid = (int) ($_POST['consolidate_id'] ?? 0);
     $sid = (int) ($_POST['sender_id'] ?? 0);
+    $status = cdp_handoverStatusFromInput($_POST['handover_type'] ?? '');
     if (!$cid || !$sid) { echo json_encode(['ok' => false, 'message' => 'Missing consolidation or customer.']); exit; }
 
     $all  = wd_consolidation_packages($db, $cid, $ownOnly);
@@ -723,7 +734,7 @@ if ($action === 'deliver_user') {
     foreach ($all as $p) {
         if ((int) $p->sender_id === $sid && wd_pkg_state($p, $WD_TERMINAL) === 'ready') { $readyIds[] = (int) $p->order_id; }
     }
-    $gate = cdp_pickupCodeGate('air', $readyIds, CDP_WD_DELIVERED);
+    $gate = cdp_pickupCodeGate('air', $readyIds, $status);
     if (!$gate['ok']) {
         echo json_encode(['ok' => false, 'message' => $gate['message'], 'pickup_code' => ['module' => 'air', 'order_ids' => $readyIds]]);
         exit;
@@ -732,34 +743,34 @@ if ($action === 'deliver_user') {
     foreach ($all as $p) {
         if ((int) $p->sender_id !== $sid) { continue; }
         if (wd_pkg_state($p, $WD_TERMINAL) !== 'ready') { continue; } // only cleared, undelivered
-        $r = wd_do_deliver($db, $p, $uid, $WD_TERMINAL);
+        $r = wd_do_deliver($db, $p, $uid, $WD_TERMINAL, $status);
         if ($r['ok']) { $delivered++; $notifyTracks[] = (string) ($r['tracking'] ?? ''); } else { $skipped++; }
     }
     wd_sync_consolidation_status($db, $cid);
-    if ($notifyTracks) { wd_notifyDelivered($db, $core, $sid, $notifyTracks); }
-    echo json_encode(['ok' => true, 'delivered' => $delivered, 'skipped' => $skipped,
+    if ($notifyTracks) { wd_notifyDelivered($db, $core, $sid, $notifyTracks, $status); }
+    echo json_encode(['ok' => true, 'delivered' => $delivered, 'skipped' => $skipped, 'label' => cdp_handoverLabel($status),
                       'summary' => wd_consol_summary($db, $cid, $WD_TERMINAL, $ownOnly)]);
     exit;
 }
 
 if ($action === 'undo_package') {
-    if (!$canUndo) { echo json_encode(['ok' => false, 'message' => 'You do not have permission to undo deliveries.']); exit; }
+    if (!$canUndo) { echo json_encode(['ok' => false, 'message' => 'You do not have permission to undo handovers.']); exit; }
     $no = trim((string) ($_POST['order_no'] ?? ''));
     if ($no === '') { echo json_encode(['ok' => false, 'message' => 'No package specified.']); exit; }
 
     $row = wd_find_package($db, (int) ($_POST['consolidate_id'] ?? 0), $no);
     if (!$row) { echo json_encode(['ok' => false, 'message' => 'Package not found.']); exit; }
-    if ((int) $row->status_courier !== CDP_WD_DELIVERED) {
-        echo json_encode(['ok' => false, 'message' => 'That package is not marked delivered.']);
+    if (!cdp_isHandedOver($row->status_courier)) {
+        echo json_encode(['ok' => false, 'message' => 'That package is not marked picked up or delivered.']);
         exit;
     }
 
     wd_set_status($db, (int) $row->order_id, CDP_WD_REOPEN);
     $tracking = ($row->order_prefix ?? '') . $row->order_no;
     if (function_exists('cdp_updateShipTrackingMultiple')) {
-        cdp_updateShipTrackingMultiple($tracking, CDP_WD_REOPEN, 'Delivery reversed via Warehouse Delivery', $row->origin_off ?? 0, $uid);
+        cdp_updateShipTrackingMultiple($tracking, CDP_WD_REOPEN, cdp_handoverLabel($row->status_courier) . ' reversed via Warehouse Delivery', $row->origin_off ?? 0, $uid);
     }
-    wd_log($uid, (int) $row->order_id, $tracking, 'delivery reversed (reopened)');
+    wd_log($uid, (int) $row->order_id, $tracking, strtolower(cdp_handoverLabel($row->status_courier)) . ' reversed (reopened)');
     $cid = (int) ($_POST['consolidate_id'] ?? 0);
     if ($cid) { wd_sync_consolidation_status($db, $cid); }
     echo json_encode(['ok' => true, 'reopened' => 1,

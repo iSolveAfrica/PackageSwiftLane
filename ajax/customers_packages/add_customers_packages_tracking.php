@@ -219,6 +219,16 @@ if (empty($errors)) {
 
         $newbody = cdp_cleanOut($body);
 
+        // Ready for pickup / delivery: every message of this update carries the
+        // owner's pickup code (helpers/pickup_code.php). Ready and picked up /
+        // delivered are SMS automations: the customer is texted even when the
+        // SMS box was left unticked (helpers/hubtel_sms.php).
+        $cdp_sms_event = cdp_statusSmsEvent($status, $add_status);
+        $cdp_code_line = cdp_pickupCodeReadyLine('sea', [$shipment_id], $status, $add_status);
+        if ($cdp_code_line !== '') {
+            $newbody .= cdp_pickupCodeReadyLine('sea', [$shipment_id], $status, $add_status, true);
+        }
+
         //SENDMAIL PHP
 
         if ($check_mail == 'PHP') {
@@ -284,16 +294,21 @@ if (empty($errors)) {
         //NOTIFY WHATSAPP API
 
         if (isset($_POST['notify_whatsapp']) && intval($_POST['notify_whatsapp']) == 1) {
-            $notification_result = cdp_sendStatusUpdateWhatsApp($sender_data, $fullshipment, $add_status, $app_url);
+            // No SMS copy: the SMS below is this update's one text.
+            $notification_result = cdp_sendStatusUpdateWhatsApp($sender_data, $fullshipment, $add_status, $app_url,
+                ['status_id' => $status, 'module' => 'sea', 'order_id' => $shipment_id, 'sms' => false]);
         }
 
 
         // Obtener el estado de las casillas de verificación
-        $notify_sms_sender = isset($_POST['notify_sms_sender']) && $_POST['notify_sms_sender'] == 1;
+        $notify_sms_sender = (isset($_POST['notify_sms_sender']) && $_POST['notify_sms_sender'] == 1) || $cdp_sms_event !== '';
 
         // Generar cuerpo del SMS para el remitente
         try {
             $newbodyS_sender = generateSMSBody($sender_data, $fullshipment, $add_status, $app_url, $templatessender);
+            if ($cdp_code_line !== '') {
+                $newbodyS_sender .= "\n" . $cdp_code_line;
+            }
             // Llamar a la función para enviar la notificación SMS al remitente
             sendNotificationSMS($sender_data, $newbodyS_sender, $notify_sms_sender);
         } catch (Exception $e) {

@@ -78,7 +78,9 @@ if (!empty($_FILES['miarchivo']['name'])) {
 // Delivered / Picked up only with the owner's verified pickup code
 // (helpers/pickup_code.php).
 require_once(__DIR__ . '/../../helpers/pickup_code.php');
-$cdpPickupGate = cdp_pickupCodeGate('sea', [intval($_POST['package_id'] ?? 0)], 8);
+// Picked up (collected from us, the default) or Delivered (taken to the customer).
+$status = cdp_handoverStatusFromInput($_POST['handover_type'] ?? '');
+$cdpPickupGate = cdp_pickupCodeGate('sea', [intval($_POST['package_id'] ?? 0)], $status);
 if (!$cdpPickupGate['ok']) {
     $errors['pickup_code'] = $cdpPickupGate['message'];
 }
@@ -108,8 +110,8 @@ if (empty($errors)) {
     $time = date("H:i:s");
     $date = $date . ' ' . $time;
 
-    $status = 8;
     $shipment_id = intval($_POST['package_id']);
+    $handover_done = cdp_handoverTrackComment($status);
 
     $shipment = cdp_getCustomerPackage($shipment_id);
 
@@ -145,7 +147,7 @@ if (empty($errors)) {
 
 
         $update = updateCustomerPackagesStatusDelivered($dataUpdate);
-        if (cdp_pickupCodeGatedStatus(8)) {
+        if (cdp_pickupCodeGatedStatus($status)) {
             cdp_pickupCodeConsume('sea', [$shipment_id], (int) ($_SESSION['userid'] ?? 0));
         }
 
@@ -156,7 +158,7 @@ if (empty($errors)) {
             'order_track' =>  $order_track,
             't_date' => $date,
             'status_courier' =>  cdp_sanitize(intval($status)),
-            'comments' =>   $lang['notification_shipment14'],
+            'comments' =>   $handover_done,
             'office' => null
         );
 
@@ -168,7 +170,7 @@ if (empty($errors)) {
         $date_ship   = date("Y-m-d H:i:s a");
 
         $app_url = rtrim((string) $settings->site_url, '/') . '/track.php?order_track=' . $fullshipment;
-        $subject = $lang['notification_shipment14'] . $lang['notification_shipment3'] . $fullshipment;
+        $subject = cdp_handoverSubject($status, $fullshipment);
 
         // Obtener el ID del estado del envio desde el POST SMS
         $name_status = cdp_getCourierstatusApi(intval($status));
@@ -247,7 +249,7 @@ if (empty($errors)) {
             //Recipients
             $mail->setFrom($site_email, $names_info);
             $mail->addAddress($destinatario);     // Add a recipient
-            $mail->addCC($site_email,  $lang['notification_shipment14']);
+            $mail->addCC($site_email,  $handover_done);
 
             //Content
             $mail->isHTML(true);                                  // Set email format to HTML
@@ -281,7 +283,7 @@ if (empty($errors)) {
             'user_id' =>  $_SESSION['userid'],
             'order_id' =>  $shipment_id,
             'order_track' =>  $order_track,
-            'notification_description' => $lang['notification_shipment13'],
+            'notification_description' => $handover_done . ', please check it',
             'shipping_type' => '4',
             'notification_date' =>  cdp_sanitize(date("Y-m-d H:i:s")),
         );
@@ -326,12 +328,13 @@ if (empty($errors)) {
                     $wa_record .= "- Carrier Tracking #: *" . $wa_ph['[POSTAL_TRACKING]'] . "*\n";
                 }
 
+                $wa_picked = ($status === CDP_STATUS_PICKED_UP);
                 $whatsapp_body = "Hello " . cdp_nameWithLocker($sender_data) . " 👋\n\n" .
-                    "✅ *Your package has been successfully delivered!*\n\n" .
+                    ($wa_picked ? "✅ *Your package has been picked up!*\n\n" : "✅ *Your package has been successfully delivered!*\n\n") .
                     "📦 *Shipment Details:*\n" .
                     "- Shipment No: *{$fullshipment}*\n" .
-                    "- Delivered To: " . cdp_sanitize($_POST['person_receives']) . "\n" .
-                    "- Delivered On: {$date_ship}\n" .
+                    ($wa_picked ? "- Collected By: " : "- Delivered To: ") . cdp_sanitize($_POST['person_receives']) . "\n" .
+                    ($wa_picked ? "- Picked Up On: " : "- Delivered On: ") . "{$date_ship}\n" .
                     $wa_record . "\n" .
                     "You can view your full delivery record using the link below:\n" .
                     "🔗 {$app_url}\n\n" .
@@ -349,14 +352,16 @@ if (empty($errors)) {
 
 
         // Obtener el estado de las casillas de verificación
-        // The customer is always texted when a package is delivered (the SMS switch
+        // The customer is always texted when a package is picked up or delivered (the SMS switch
         // on Tools > SMS and the customer's own opt-out still apply). The
         // WhatsApp send here skips its SMS copy, so this is the only text.
         $notify_sms_sender = true;
 
         // Generar cuerpo del SMS para el remitente
         try {
-            $newbodyS_sender = generateSMSBody($sender_data, $fullshipment, $add_status, $app_url, $templatessender);
+            $newbodyS_sender = ($status === CDP_STATUS_PICKED_UP)
+                ? cdp_handoverPickedUpText(cdp_nameWithLocker($sender_data), [$fullshipment], $msnames)
+                : generateSMSBody($sender_data, $fullshipment, $add_status, $app_url, $templatessender);
             // Llamar a la función para enviar la notificación SMS al remitente
             sendNotificationSMS($sender_data, $newbodyS_sender, $notify_sms_sender);
         } catch (Exception $e) {
@@ -365,7 +370,7 @@ if (empty($errors)) {
         }
 
 
-        $messages[] = $lang['notification_shipment14'];
+        $messages[] = $handover_done;
     } else {
         $errors['critical_error'] = "Error";
     }

@@ -27,6 +27,7 @@ if ($user->cdp_hasPermission('view_dashboard_shipments')) {
     $ct_open      = cdp_dashCount('cdb_consolidate', "AND status_courier NOT IN (8,21)" . $agency_where);
     $ct_transit   = cdp_dashCount('cdb_consolidate', "AND status_courier = 3" . $agency_where);
     $ct_delivered = cdp_dashCount('cdb_consolidate', "AND status_courier = 8" . $agency_where);
+    $ct_picked_up = cdp_dashCount('cdb_consolidate', "AND status_courier = 15" . $agency_where);
     $ct_cancel    = cdp_dashCount('cdb_consolidate', "AND status_courier = 21" . $agency_where);
     $ct_month     = cdp_dashCount('cdb_consolidate', "AND status_courier != 21 AND c_date >= '" . date('Y-m-01') . "'" . $agency_where);
 
@@ -91,7 +92,7 @@ if ($user->cdp_hasPermission('view_dashboard_shipments')) {
                     <?php cdp_dashKpi(['icon' => 'solar:layers-minimalistic-linear', 'label' => 'Consolidations', 'value' => number_format($ct_total), 'href' => 'consolidate_list.php', 'accent' => '#D80613', 'sub' => 'Non-Cancelled']); ?>
                     <?php cdp_dashKpi(['icon' => 'solar:routing-2-linear', 'label' => 'Open / In Progress', 'value' => number_format($ct_open), 'href' => 'consolidate_list.php', 'accent' => '#0077B6']); ?>
                     <?php cdp_dashKpi(['icon' => 'solar:ship-linear', 'label' => 'In Transit', 'value' => number_format($ct_transit), 'accent' => '#00b3a4']); ?>
-                    <?php cdp_dashKpi(['icon' => 'solar:check-circle-linear', 'label' => 'Delivered', 'value' => number_format($ct_delivered), 'accent' => '#1b8a5a']); ?>
+                    <?php cdp_dashKpi(['icon' => 'solar:check-circle-linear', 'label' => 'Delivered', 'value' => number_format($ct_delivered), 'sub' => number_format($ct_picked_up) . ' picked up', 'accent' => '#1b8a5a']); ?>
                     <?php cdp_dashKpi(['icon' => 'solar:calendar-linear', 'label' => 'New This Month', 'value' => number_format($ct_month), 'accent' => '#FFCB01', 'sub' => $monthName]); ?>
                     <?php cdp_dashKpi(['icon' => 'solar:close-circle-linear', 'label' => 'Cancelled', 'value' => number_format($ct_cancel), 'accent' => '#f62d51']); ?>
                 </div>

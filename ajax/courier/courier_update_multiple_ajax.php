@@ -134,10 +134,14 @@ foreach ($data as $key) {
             $sender_data = cdp_getSenderCourier(intval($courier->sender_id));
 
             if (!empty($sender_data->phone)) {
+                // Ready for pickup / delivery carries the pickup code; ready and
+                // picked up / delivered also text an SMS copy (the automations).
                 cdp_sendStatusUpdateWhatsApp(
                     $sender_data,
                     $tracking,
-                    cdp_wa_lookupName('cdb_styles', 'mod_style', (int) $status)
+                    cdp_wa_lookupName('cdb_styles', 'mod_style', (int) $status),
+                    null,
+                    ['status_id' => (int) $status, 'module' => 'air', 'order_id' => (int) $courier->order_id]
                 );
             }
         } catch (Exception $e) {

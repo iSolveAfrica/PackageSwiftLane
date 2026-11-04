@@ -324,8 +324,12 @@ if (!function_exists('cdp_sendShipmentRegisteredWhatsApp')) {
      *                           Service/category fall back to cdb_info_ship_default when 0.
      * @param array  $extraLines pre-rendered "• ..." detail lines (pieces, weight,
      *                           carrier tracking, ETA — never money)
+     * @param bool   $smsCopy    true when the caller sends no registration SMS of its
+     *                           own: the registration automation then texts a copy
+     *                           (helpers/hubtel_sms.php). Callers that text the
+     *                           customer themselves leave it false, or they get two.
      */
-    function cdp_sendShipmentRegisteredWhatsApp($sender, $tracking, array $ids = [], array $extraLines = [])
+    function cdp_sendShipmentRegisteredWhatsApp($sender, $tracking, array $ids = [], array $extraLines = [], $smsCopy = false)
     {
         cdp_wa_requireV2();
         $settings = cdp_getSettingsCourier();
@@ -356,7 +360,7 @@ if (!function_exists('cdp_sendShipmentRegisteredWhatsApp')) {
             return ['success' => false, 'skipped' => true, 'message' => 'WhatsApp template 4 not found.'];
         }
         cdp_msgSetContext(['template_id' => 4, 'entity_type' => 'shipment', 'entity_label' => (string) $tracking, 'subject' => 'Shipment registered ' . $tracking]);
-        $res = sendNotificationWhatsApp_v2($sender, $body);
+        $res = sendNotificationWhatsApp_v2($sender, $body, null, $smsCopy ? ['sms_event' => 'registered'] : ['allow_sms' => false]);
         cdp_msgClearContext(['template_id', 'entity_type', 'entity_label', 'subject']);
         return $res;
     }
@@ -454,18 +458,27 @@ if (!function_exists('cdp_sendStatusUpdateWhatsApp')) {
     /**
      * "Your shipment status changed" message (template 11) for a single package.
      *
+     * A ready-for-pickup / ready-for-delivery status carries the owner's pickup
+     * code (helpers/pickup_code.php), and the three SMS automations — ready,
+     * picked up / delivered — get their SMS copy (helpers/hubtel_sms.php).
+     *
      * @param object      $sender      cdb_users row
      * @param string      $tracking    full tracking number
      * @param string      $statusLabel current status name (cdb_styles.mod_style)
      * @param string|null $appUrl      tracking link; defaults to site track page
+     * @param array       $opts        status_id (int), module ('air'|'sea') and order_id
+     *                                 (int) for the pickup code; sms => false when the
+     *                                 caller texts the customer itself.
      */
-    function cdp_sendStatusUpdateWhatsApp($sender, $tracking, $statusLabel, $appUrl = null)
+    function cdp_sendStatusUpdateWhatsApp($sender, $tracking, $statusLabel, $appUrl = null, array $opts = [])
     {
         cdp_wa_requireV2();
+        require_once __DIR__ . '/handover.php';
         $settings = cdp_getSettingsCourier();
         if ($appUrl === null) {
             $appUrl = rtrim((string) ($settings->site_url ?? ''), '/') . '/track.php?order_track=' . rawurlencode($tracking);
         }
+        $statusId = (int) ($opts['status_id'] ?? 0);
 
         $body = cdp_renderWhatsAppTemplate(11, [
             '[CUSTOMER_FULLNAME]' => cdp_nameWithLocker($sender),
@@ -477,10 +490,42 @@ if (!function_exists('cdp_sendStatusUpdateWhatsApp')) {
         if ($body === null) {
             return ['success' => false, 'skipped' => true, 'message' => 'WhatsApp template 11 not found.'];
         }
+        if (!empty($opts['order_id'])) {
+            require_once __DIR__ . '/pickup_code.php';
+            $line = cdp_pickupCodeReadyLine((string) ($opts['module'] ?? 'air'), [(int) $opts['order_id']], $statusId, $statusLabel);
+            if ($line !== '') {
+                $body .= "\n\n" . $line;
+            }
+        }
+        $event  = cdp_statusSmsEvent($statusId, $statusLabel);
+        $waOpts = (array_key_exists('sms', $opts) && !$opts['sms']) || $event === ''
+            ? ['allow_sms' => false]
+            : ['sms_event' => $event];
         cdp_msgSetContext(['template_id' => 11, 'entity_type' => 'shipment', 'entity_label' => (string) $tracking, 'subject' => 'Status update: ' . $statusLabel]);
-        $res = sendNotificationWhatsApp_v2($sender, $body);
+        $res = sendNotificationWhatsApp_v2($sender, $body, null, $waOpts);
         cdp_msgClearContext(['template_id', 'entity_type', 'entity_label', 'subject']);
         return $res;
+    }
+}
+
+if (!function_exists('cdp_wa_styleIdByName')) {
+    /** cdb_styles.id of a status name (mod_style), 0 when unknown. */
+    function cdp_wa_styleIdByName($name)
+    {
+        static $cache = [];
+        $key = strtolower(trim((string) $name));
+        if ($key === '') {
+            return 0;
+        }
+        if (!array_key_exists($key, $cache)) {
+            $db = new Conexion;
+            $db->cdp_query("SELECT id FROM cdb_styles WHERE LOWER(mod_style) = :n OR LOWER(REPLACE(mod_style, '_', ' ')) = :n2 ORDER BY id LIMIT 1");
+            $db->bind(':n', $key);
+            $db->bind(':n2', str_replace('_', ' ', $key));
+            $row = $db->cdp_registro();
+            $cache[$key] = $row ? (int) $row->id : 0;
+        }
+        return $cache[$key];
     }
 }
 
@@ -680,6 +725,9 @@ if (!function_exists('cdp_notifyOwnerOfConsolidationUpdate')) {
         $siteName   = !empty($settings->site_name) ? (string) $settings->site_name : 'Our Company';
         $statusText = str_replace('_', ' ', (string) $statusLabel);
         $subject    = cdp_consolidationUpdateSubject($statusLabel);
+        require_once __DIR__ . '/handover.php';
+        $statusId   = cdp_wa_styleIdByName($statusLabel);
+        $smsEvent   = cdp_statusSmsEvent($statusId, $statusLabel);
 
         $trackings = array();
         $orderIds  = array();
@@ -727,6 +775,11 @@ if (!function_exists('cdp_notifyOwnerOfConsolidationUpdate')) {
         $trackingList = implode(', ', $trackings);
         $trackUrl     = $siteUrl . '/track.php?order_track=' . rawurlencode($trackings[0]);
 
+        // Ready for pickup / delivery: the message carries the owner's pickup code.
+        require_once __DIR__ . '/pickup_code.php';
+        $codeLine     = cdp_pickupCodeReadyLine($phModule, $orderIds, $statusId, $statusLabel);
+        $codeLineHtml = $codeLine !== '' ? cdp_pickupCodeReadyLine($phModule, $orderIds, $statusId, $statusLabel, true) : '';
+
         $ctx = array(
             'source'            => 'consolidation_update',
             // Staff-only: lets Message Logs show which consolidation caused the send.
@@ -759,7 +812,11 @@ if (!function_exists('cdp_notifyOwnerOfConsolidationUpdate')) {
                 if ($waBlocks) {
                     $body .= "\n\n" . implode("\n\n", $waBlocks);
                 }
-                $res = sendNotificationWhatsApp_v2($owner, $body);   // logs sent / failed / skipped itself
+                if ($codeLine !== '') {
+                    $body .= "\n\n" . $codeLine;
+                }
+                // SMS copy only for the ready / handed-over automations.
+                $res = sendNotificationWhatsApp_v2($owner, $body, null, $smsEvent !== '' ? ['sms_event' => $smsEvent] : ['allow_sms' => false]);   // logs sent / failed / skipped itself
                 if (empty($res['success'])) {
                     cdp_wa_log("fan-out skip/fail for {$trackingList}: " . ($res['message'] ?? ''));
                 }
@@ -785,7 +842,7 @@ if (!function_exists('cdp_notifyOwnerOfConsolidationUpdate')) {
                     '[NAME]'             => htmlspecialchars($ctx['recipient_name'], ENT_QUOTES, 'UTF-8'),
                     '[TRACKING]'         => htmlspecialchars($trackingList, ENT_QUOTES, 'UTF-8'),
                     '[CHANGED_FIELDS]'   => $statusRow,
-                    '[PACKAGES_SECTION]' => $htmlBlocks,
+                    '[PACKAGES_SECTION]' => $codeLineHtml . $htmlBlocks,
                     '[TOTAL_AMOUNT]'     => '',   // no monetary values in customer notifications
                     '[URL_SHIP]'         => $trackUrl,
                 ), $subject);

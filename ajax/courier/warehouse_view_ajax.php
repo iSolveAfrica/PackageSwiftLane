@@ -201,7 +201,7 @@ if ($numrows > 0) { ?>
 
                             <?php if ($canBulkAny) { ?>
                                 <td>
-                                    <?php if ($row->status_courier != 8) { ?>
+                                    <?php if (!cdp_isHandedOver($row->status_courier)) { ?>
                                         <div class="custom-control custom-checkbox">
                                             <input type="checkbox" class="custom-control-input" value="<?php echo $row->order_no; ?>" name="checkbox[]" id="cst_<?php echo $count; ?>">
                                             <label class="custom-control-label" for="cst_<?php echo $count; ?>">&nbsp;</label>
@@ -257,7 +257,7 @@ if ($numrows > 0) { ?>
                                 <span class="label label-large <?php echo $label_class; ?>"><?php echo $text_status; ?></span>
                             </td>
 
-                            <?php if ($row->status_courier != 8) { ?>
+                            <?php if (!cdp_isHandedOver($row->status_courier)) { ?>
                             <td align='center'>
 							    <div class="btn-group">
 							        <button class="btn btn-block btn-outline-dark btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

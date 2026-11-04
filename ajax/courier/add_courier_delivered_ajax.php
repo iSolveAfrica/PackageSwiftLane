@@ -78,7 +78,9 @@ if (!empty($_FILES['miarchivo']['name'])) {
 // Delivered / Picked up only with the owner's verified pickup code
 // (helpers/pickup_code.php).
 require_once(__DIR__ . '/../../helpers/pickup_code.php');
-$cdpPickupGate = cdp_pickupCodeGate('air', [intval($_POST['shipment_id'] ?? 0)], 8);
+// Picked up (collected from us, the default) or Delivered (taken to the customer).
+$status = cdp_handoverStatusFromInput($_POST['handover_type'] ?? '');
+$cdpPickupGate = cdp_pickupCodeGate('air', [intval($_POST['shipment_id'] ?? 0)], $status);
 if (!$cdpPickupGate['ok']) {
     $errors['pickup_code'] = $cdpPickupGate['message'];
 }
@@ -109,8 +111,8 @@ if (empty($errors)) {
     $time = date("H:i:s");
     $date = $date . ' ' . $time;
 
-    $status = 8;
     $shipment_id = intval($_POST['shipment_id']);
+    $handover_done = cdp_handoverTrackComment($status);
 
     $shipment = cdp_getCourier($shipment_id);
 
@@ -146,7 +148,7 @@ if (empty($errors)) {
 
 
         $update = updateCourierStatusDelivered($dataUpdate);
-        if (cdp_pickupCodeGatedStatus(8)) {
+        if (cdp_pickupCodeGatedStatus($status)) {
             cdp_pickupCodeConsume('air', [$shipment_id], (int) ($_SESSION['userid'] ?? 0));
         }
 
@@ -157,7 +159,7 @@ if (empty($errors)) {
             'order_track' =>  $order_track,
             't_date' => $date,
             'status_courier' =>  cdp_sanitize(intval($status)),
-            'comments' =>   $lang['notification_shipment14'],
+            'comments' =>   $handover_done,
             'office' => null
         );
 
@@ -173,7 +175,7 @@ if (empty($errors)) {
         $date_ship   = date("Y-m-d H:i:s a");
 
         $app_url = rtrim((string) $settings->site_url, '/') . '/track.php?order_track=' . $fullshipment;
-        $subject = $lang['notification_shipment14'] . $lang['notification_shipment3'] . $fullshipment;
+        $subject = cdp_handoverSubject($status, $fullshipment);
 
         // Obtener el ID del estado del envio desde el POST SMS
         $name_status = cdp_getCourierstatusApi(intval($status));
@@ -286,7 +288,7 @@ if (empty($errors)) {
             'user_id' =>  $_SESSION['userid'],
             'order_id' =>  $shipment_id,
             'order_track' =>  $order_track,
-            'notification_description' => $lang['notification_shipment13'],
+            'notification_description' => $handover_done . ', please check it',
             'shipping_type' => '1',
             'notification_date' =>  cdp_sanitize(date("Y-m-d H:i:s")),
         );
@@ -312,7 +314,11 @@ if (empty($errors)) {
                 // Get template 3 for package delivery
                 $tpl = getTemplateWhatsApp(3);
 
-                if ($tpl) {
+                if ($status === CDP_STATUS_PICKED_UP) {
+                    // Template 3 speaks of a delivery; a pickup says so plainly.
+                    $whatsapp_body = cdp_handoverPickedUpText(cdp_nameWithLocker($sender_data), [$fullshipment], $msnames);
+                    sendNotificationWhatsApp_v2($sender_data, $whatsapp_body, null, ['allow_sms' => false]);
+                } elseif ($tpl) {
                     // Personalise the delivery message (name + tracking + company).
                     $settings_wa = cdp_getSettingsCourier();
                     $whatsapp_body = str_replace(
@@ -355,7 +361,7 @@ if (empty($errors)) {
         }
 
         // Obtener el estado de las casillas de verificación
-        // The customer is always texted when a package is delivered (the SMS switch
+        // The customer is always texted when a package is picked up or delivered (the SMS switch
         // on Tools > SMS and the customer's own opt-out still apply). The
         // WhatsApp send here skips its SMS copy, so this is the only text.
         $notify_sms_sender = true;
@@ -363,7 +369,9 @@ if (empty($errors)) {
 
         // Generar cuerpo del SMS para el remitente
         try {
-            $newbodyS_sender = generateSMSBody($sender_data, $fullshipment, $add_status, $app_url, $templatessender);
+            $newbodyS_sender = ($status === CDP_STATUS_PICKED_UP)
+                ? cdp_handoverPickedUpText(cdp_nameWithLocker($sender_data), [$fullshipment], $msnames)
+                : generateSMSBody($sender_data, $fullshipment, $add_status, $app_url, $templatessender);
             // Llamar a la función para enviar la notificación SMS al remitente
             sendNotificationSMS($sender_data, $newbodyS_sender, $notify_sms_sender);
         } catch (Exception $e) {
@@ -382,7 +390,7 @@ if (empty($errors)) {
         }
 
 
-        $messages[] = $lang['notification_shipment14'];
+        $messages[] = $handover_done;
     } else {
         $errors['critical_error'] = "Error";
     }

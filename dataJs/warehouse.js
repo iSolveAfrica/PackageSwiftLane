@@ -146,7 +146,7 @@ function cdpWarehouseDeliver(orderNos) {
 
             var rows = r.packages.map(function (p) {
                 var warn = "";
-                if (p.already_delivered) { warn = ' <span style="color:#dc3545;">(already delivered)</span>'; }
+                if (p.already_delivered) { warn = ' <span style="color:#dc3545;">(already ' + $("<div>").text((p.handed_over_as || "handed over").toLowerCase()).html() + ')</span>'; }
                 else if (!p.cleared) { warn = ' <span style="color:#b26a00;">(Awaiting Clearance — will be skipped)</span>'; }
                 return '<div style="text-align:left;border-bottom:1px solid #eee;padding:6px 2px;">' +
                     "<b>" + $("<div>").text(p.tracking).html() + "</b>" + warn + "<br>" +
@@ -176,25 +176,27 @@ function cdpWarehouseDeliver(orderNos) {
             }
 
             chain.then(function () {
+            var handover = window.cdpHandover;
             Swal.fire({
-                title: "Confirm Delivery",
+                title: "Confirm Handover",
                 html: '<div style="max-height:260px;overflow-y:auto;">' + rows + "</div>" +
-                      "<p class='mt-2 mb-0'>Mark " + (deliverable.length === 1 ? "the 1 package" : "the " + deliverable.length + " packages") + " as delivered?</p>",
+                      "<p class='mt-2 mb-0'>Hand over " + (deliverable.length === 1 ? "the 1 package" : "the " + deliverable.length + " packages") + "?</p>" +
+                      (handover ? handover.html() : ""),
                 icon: "question",
                 showCancelButton: true,
-                confirmButtonText: "Yes, deliver",
+                confirmButtonText: "Yes, save",
                 cancelButtonText: "Cancel",
                 reverseButtons: true,
                 preConfirm: function () {
                     return $.ajax({
                         url: "./ajax/courier/warehouse_deliver_ajax.php",
                         method: "POST",
-                        data: { action: "deliver", order_nos: JSON.stringify(deliverNos) },
+                        data: { action: "deliver", order_nos: JSON.stringify(deliverNos), handover_type: handover ? handover.value() : "picked_up" },
                         dataType: "json"
                     }).then(
                         function (dr) {
                             if (!dr || !dr.ok) {
-                                Swal.showValidationMessage((dr && dr.message) || "Could not mark as delivered.");
+                                Swal.showValidationMessage((dr && dr.message) || "Could not save the handover.");
                                 return false;
                             }
                             return dr;
@@ -209,8 +211,8 @@ function cdpWarehouseDeliver(orderNos) {
                 if (!result.isConfirmed) return;
                 var n = (result.value && result.value.delivered) || 0;
                 var skipped = r.packages.length - deliverable.length;
-                var msg = n + " package(s) marked as delivered.";
-                if (skipped > 0) { msg += " " + skipped + " skipped (not cleared / already delivered)."; }
+                var msg = n + " package(s) marked as " + String((result.value && result.value.label) || "picked up").toLowerCase() + ".";
+                if (skipped > 0) { msg += " " + skipped + " skipped (not cleared / already handed over)."; }
                 Swal.fire({ icon: "success", text: msg, confirmButtonText: "OK" }).then(function () {
                     cdp_load(1);
                     if (typeof cdpSelClear === "function") cdpSelClear();

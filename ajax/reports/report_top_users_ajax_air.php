@@ -2,6 +2,7 @@
 
 require_once("../../loader.php");
 require_once(__DIR__ . '/../../helpers/ajax_guard.php');
+require_once(__DIR__ . '/../../helpers/handover.php');
 // This endpoint had no login check: it served customer names, packages and
 // amounts to anyone who called it. Same permission as its page (report_top_users_air.php).
 require_login();
@@ -305,7 +306,7 @@ function renderShipmentDetails($table_page, $total_pages, $adjacents, $shipments
                                         <!-- “Edit Shipment” (if allowed and userlevel 9 or 2) -->
                                         <?php if ( ($userData->userlevel == 9 || $userData->userlevel == 2)
                                                  && $row->is_consolidate != 1
-                                                 && $row->status_courier != 8
+                                                 && !cdp_isHandedOver($row->status_courier)
                                                  && $row->status_invoice != 1 ): ?>
                                             <a class="dropdown-item"
                                                href="customer_package_edit.php?id=<?php echo $row->order_id; ?>">
@@ -317,7 +318,7 @@ function renderShipmentDetails($table_page, $total_pages, $adjacents, $shipments
                                         <!-- “Delete Shipment” (if same conditions as “Edit”) -->
                                         <?php if ( ($userData->userlevel == 9 || $userData->userlevel == 2)
                                                  && $row->is_consolidate != 1
-                                                 && $row->status_courier != 8
+                                                 && !cdp_isHandedOver($row->status_courier)
                                                  && $row->status_invoice != 1 ): ?>
                                             <a class="dropdown-item"
                                                data-id="<?php echo $row->order_id; ?>"
@@ -335,7 +336,7 @@ function renderShipmentDetails($table_page, $total_pages, $adjacents, $shipments
                                                && ($userData->userlevel == 9 || $userData->userlevel == 2)
                                                && $userData->userlevel != 1
                                                && $row->is_consolidate != 1
-                                               && $row->status_courier != 8 ): ?>
+                                               && !cdp_isHandedOver($row->status_courier) ): ?>
                                             <a class="dropdown-item"
                                                data-toggle="modal"
                                                data-target="#modalDriver"
@@ -365,7 +366,7 @@ function renderShipmentDetails($table_page, $total_pages, $adjacents, $shipments
                                         <?php if ($row->status_invoice == 1
                                                && $userData->userlevel != 1
                                                && $row->is_consolidate != 1
-                                               && $row->status_courier != 8
+                                               && !cdp_isHandedOver($row->status_courier)
                                                && $row->status_courier != 21
                                                && $row->status_courier != 12): ?>
 

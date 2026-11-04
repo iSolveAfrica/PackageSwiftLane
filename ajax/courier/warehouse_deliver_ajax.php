@@ -1,14 +1,15 @@
 <?php
 // ============================================================================
-// Warehouse — new delivery confirmation flow (single or multi-select).
+// Warehouse — handover confirmation flow (single or multi-select).
 // Deliberately separate from the existing courier_deliver_shipment.php page,
 // which is left untouched and unlinked from the warehouse list. This is a
 // lightweight flow: preview the selected package(s) (customer, locker,
 // system + carrier tracking), confirm via SweetAlert, then flip
-// status_courier straight to Delivered — no photo/signature capture, no
-// notifications (none were asked for here).
+// status_courier straight to Picked up (15) or Delivered (8), as staff chose
+// (helpers/handover.php) — no photo/signature capture; the customer gets the
+// picked up / delivered SMS automation only.
 //   action=preview : POST order_nos (JSON array) -> package details for the confirm dialog.
-//   action=deliver  : POST order_nos (JSON array) -> marks them Delivered.
+//   action=deliver  : POST order_nos (JSON array), handover_type -> marks them Picked up / Delivered.
 // ============================================================================
 
 require_once("../../loader.php");
@@ -23,9 +24,7 @@ require_permission('deliver_shipment');
 
 header('Content-Type: application/json; charset=UTF-8');
 
-if (!defined('CDP_WH_DELIVERED_STATUS')) {
-    define('CDP_WH_DELIVERED_STATUS', 8); // Delivered, confirmed in cdb_styles
-}
+require_once(__DIR__ . '/../../helpers/handover.php');
 
 $action   = $_REQUEST['action'] ?? '';
 $rawNos   = $_REQUEST['order_nos'] ?? '';
@@ -85,7 +84,8 @@ if ($action === 'preview') {
             'tracking'          => ($row->order_prefix ?? '') . $row->order_no,
             'carrier'           => $carrier->tracking_number ?: 'N/A',
             'name'              => $sender && function_exists('cdp_nameWithLocker') ? cdp_nameWithLocker($sender) : 'N/A',
-            'already_delivered' => ((int) $row->status_courier === CDP_WH_DELIVERED_STATUS),
+            'already_delivered' => cdp_isHandedOver($row->status_courier),
+            'handed_over_as'    => cdp_isHandedOver($row->status_courier) ? cdp_handoverLabel($row->status_courier) : '',
             'cleared'           => cdp_fsIsCleared($row->fs_cleared_for_delivery ?? 0),
         ];
     }
@@ -103,9 +103,11 @@ if ($action === 'deliver') {
     $user     = new User;
     $userData = $user->cdp_getUserData();
     $uid      = (int) ($userData->id ?? ($_SESSION['userid'] ?? 0));
+    $status   = cdp_handoverStatusFromInput($_POST['handover_type'] ?? '');
+    $label    = cdp_handoverLabel($status);
 
     // Every package needs its owner's verified pickup code.
-    $gate = cdp_pickupCodeGate('air', $resolved['ids'], CDP_WH_DELIVERED_STATUS);
+    $gate = cdp_pickupCodeGate('air', $resolved['ids'], $status);
     if (!$gate['ok']) {
         echo json_encode(['ok' => false, 'message' => $gate['message'], 'pickup_code' => $gate]);
         exit;
@@ -118,7 +120,7 @@ if ($action === 'deliver') {
             continue; // already handed over
         }
         $row = cdp_getCourier($idByNo[(string) $no]);
-        if (!$row || (int) $row->status_courier === CDP_WH_DELIVERED_STATUS) {
+        if (!$row || cdp_isHandedOver($row->status_courier)) {
             continue;
         }
         // Finance must have cleared the package first — never deliver an
@@ -131,7 +133,7 @@ if ($action === 'deliver') {
         // By order_id: a number update would also move another customer's package.
         $dbu = new Conexion;
         $dbu->cdp_query("UPDATE cdb_add_order SET status_courier = :s WHERE order_id = :id");
-        $dbu->bind(':s', CDP_WH_DELIVERED_STATUS);
+        $dbu->bind(':s', $status);
         $dbu->bind(':id', (int) $row->order_id);
         $dbu->cdp_execute();
         cdp_pickupCodeConsume('air', [(int) $row->order_id], $uid);
@@ -139,7 +141,7 @@ if ($action === 'deliver') {
 
         $tracking = ($row->order_prefix ?? '') . $no;
         if (function_exists('cdp_updateShipTrackingMultiple')) {
-            cdp_updateShipTrackingMultiple($tracking, CDP_WH_DELIVERED_STATUS, 'Delivered via Warehouse', $row->origin_off ?? 0, $uid);
+            cdp_updateShipTrackingMultiple($tracking, $status, $label . ' via Warehouse', $row->origin_off ?? 0, $uid);
         }
         // Audit: who delivered this package, when (Warehouse View).
         if (function_exists('cdp_insertCourierShipmentUserHistory')) {
@@ -147,25 +149,26 @@ if ($action === 'deliver') {
                 'user_id'      => $uid,
                 'order_id'     => (int) $row->order_id,
                 'order_track'  => $tracking,
-                'action'       => 'Warehouse — package delivered (Warehouse View)',
+                'action'       => 'Warehouse — package ' . strtolower($label) . ' (Warehouse View)',
                 'date_history' => date('Y-m-d H:i:s'),
             ]);
         }
-        // The customer is texted that the package was delivered (SMS switch
-        // and opt-out apply; this screen sends no WhatsApp or e-mail).
+        // The customer is texted that the package was picked up / delivered
+        // (the handed-over SMS automation: SMS switch and opt-out apply; this
+        // screen sends no WhatsApp or e-mail).
         try {
             $smsSender = cdp_getSenderCourier((int) ($row->sender_id ?? 0));
             if ($smsSender) {
                 $siteName = trim((string) ((new Core)->site_name ?? ''));
                 cdp_smsEventNotify($smsSender, ($siteName !== '' ? $siteName . ': ' : '')
-                    . 'Package ' . $tracking . ' has been delivered. Thank you for shipping with us.');
+                    . 'Package ' . $tracking . ' ' . cdp_handoverPhrase($status) . '. Thank you for shipping with us.', 'handed_over');
             }
         } catch (Throwable $e) { /* best-effort: the delivery itself is already recorded */ }
 
         $delivered++;
     }
 
-    echo json_encode(['ok' => true, 'delivered' => $delivered, 'skipped_uncleared' => $skippedUncleared]);
+    echo json_encode(['ok' => true, 'delivered' => $delivered, 'label' => $label, 'skipped_uncleared' => $skippedUncleared]);
     exit;
 }
 
