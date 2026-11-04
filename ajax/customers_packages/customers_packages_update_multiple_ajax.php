@@ -147,6 +147,11 @@ foreach ($data as $key) {
         $sender_data = cdp_getSenderCourier((int)$courier->sender_id);
         $app_url     = rtrim((string) $msite_url, '/') . '/track_online_shopping.php?order_track=' . $tracking;
 
+        // Ready for pickup / delivery: this update's messages carry the owner's
+        // pickup code; ready and picked up / delivered text an SMS copy too.
+        $cdp_sms_event = cdp_statusSmsEvent($status, $new_status_label);
+        $cdp_code_line = cdp_pickupCodeReadyLine('sea', [(int) $courier->order_id], $status, $new_status_label);
+
         // =====================
         // EMAIL NOTIFICATION
         // =====================
@@ -179,6 +184,9 @@ foreach ($data as $key) {
             );
 
             $newbody = cdp_cleanOutx($body);
+            if ($cdp_code_line !== '') {
+                $newbody .= cdp_pickupCodeReadyLine('sea', [(int) $courier->order_id], $status, $new_status_label, true);
+            }
             $subject = 'Shipment Status Update - ' . $tracking;
 
             if ($check_mail == 'PHP') {
@@ -234,11 +242,13 @@ foreach ($data as $key) {
                     "There is an update on your shipment *{$tracking}*.\n\n" .
                     "*Shipment Status:*\n" .
                     "_{$old_status_label}_ -> *{$new_status_label}*\n\n" .
+                    ($cdp_code_line !== '' ? $cdp_code_line . "\n\n" : '') .
                     "Track your shipment at any time:\n" .
                     $app_url . "\n\n" .
                     "Thank you, *{$msnames}* Team";
 
-                sendNotificationWhatsApp_v2($sender_data, $whatsapp_body);
+                sendNotificationWhatsApp_v2($sender_data, $whatsapp_body, null,
+                    $cdp_sms_event !== '' ? ['sms_event' => $cdp_sms_event] : ['allow_sms' => false]);
 
             } catch (Exception $e) {
                 error_log('Error sending WhatsApp status notification for ' . $tracking . ': ' . $e->getMessage());

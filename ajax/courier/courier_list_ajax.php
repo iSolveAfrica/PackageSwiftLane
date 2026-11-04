@@ -266,7 +266,7 @@ if ($numrows > 0) { ?>
 						<tr class="card-hovera">
 							<?php if ($user->cdp_hasPermission('select_multiple_courier')) { ?>
 								<td class="chb">
-									<?php if ($row->status_courier != 8) { ?>
+									<?php if (!cdp_isHandedOver($row->status_courier)) { ?>
 										<?php if ($row->status_courier != 21) { ?>
 
 											<div class="custom-control custom-checkbox">
@@ -429,7 +429,7 @@ if ($numrows > 0) { ?>
 							            <!-- EDITAR ENVÍO PERMISO -->
 							            <?php if ($row->order_incomplete == 1 && $user->cdp_hasPermission('edit_shipment')) { ?>
 							                <?php //if ($row->is_consolidate == 0 ) { ?>
-							                    <?php if ($row->status_courier != 8) { ?>
+							                    <?php if (!cdp_isHandedOver($row->status_courier)) { ?>
 							                        <a class="dropdown-item" href="courier_edit.php?id=<?php echo $row->order_id; ?>" title="<?php echo $lang['tooledit'] ?>">
 							                            <i style="color:#343a40" class="ti-pencil"></i>
 							                            &nbsp;<?php echo $lang['tooledit'] ?>
@@ -450,7 +450,7 @@ if ($numrows > 0) { ?>
 
 							            <!-- ELIMINAR ENVÍO PERMISO -->
 							            <?php if ($user->cdp_hasPermission('delete_shipment')) { ?>
-						                    <?php if ($row->is_consolidate == 0 && $row->status_courier != 8) { ?>
+						                    <?php if ($row->is_consolidate == 0 && !cdp_isHandedOver($row->status_courier)) { ?>
 						                        <a class="dropdown-item" data-id="<?php echo $row->order_id; ?>" href="#" data-toggle="modal" data-target="#myModalDeletes">
 						                            <i style="color:#f62d51" class="ti-trash"></i>
 						                            &nbsp;<?php echo $lang['leftorder34445']; ?>
@@ -460,7 +460,7 @@ if ($numrows > 0) { ?>
 
 							            <!-- ASIGNAR CONDUCTOR A ENVÍO PERMISO -->
 							            <?php if ($user->cdp_hasPermission('assign_drivers')) { ?>
-							                <?php if ($row->status_courier != 21 && $row->status_courier != 12 && $row->status_courier != 8) { ?>
+							                <?php if ($row->status_courier != 21 && $row->status_courier != 12 && !cdp_isHandedOver($row->status_courier)) { ?>
 							                    <a class="dropdown-item" data-toggle="modal" data-target="#modalDriver" data-id_shipment="<?php echo $row->order_id; ?>">
 							                        <i style="color:#ff0000" class="fas fa-car"></i>
 							                        &nbsp;<?php echo $lang['left208']; ?>

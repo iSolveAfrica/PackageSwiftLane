@@ -25,9 +25,11 @@ require_once $projectRoot . '/helpers/hubtel_sms.php';
  * @param object     $sender                 Record with at least a `phone` property.
  * @param string     $template_whatsapp_body The fully-rendered message body to send.
  * @param mixed|null $countryHint            Optional recipient country (id/iso/name/code).
- * @param array      $opts                   SMS copy: ['force_sms' => true] for one-time
- *                                           codes, ['allow_sms' => false] when the caller
- *                                           texts the event itself (helpers/hubtel_sms.php).
+ * @param array      $opts                   SMS copy (helpers/hubtel_sms.php, cdp_smsCopyOwed):
+ *                                           none unless asked. ['sms_event' => 'registered' |
+ *                                           'ready' | 'handed_over'] for the three automations,
+ *                                           ['force_sms' => true] for one-time codes,
+ *                                           ['allow_sms' => false] when the caller texts itself.
  *                                           Media: ['media' => ['kind' => image|video|document,
  *                                           'url' => public URL, 'filename' => name]] sends the
  *                                           file with the body as its caption.

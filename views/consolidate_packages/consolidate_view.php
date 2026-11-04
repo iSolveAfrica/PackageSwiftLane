@@ -238,7 +238,7 @@ if ($row_order->status_invoice == 1) {
                                                     <?php } ?>
 
                                                     <?php if ($userData->userlevel == 9 || $userData->userlevel == 2) { ?>
-                                                        <?php if ($row_order->status_courier != 8) { ?>
+                                                        <?php if (!cdp_isHandedOver($row_order->status_courier)) { ?>
                                                             <a class="dropdown-item" href="consolidate_package_edit.php?id=<?php echo $_GET['id']; ?>" title="<?php echo $lang['langs_01029'] ?>"><i class="ti-pencil"></i>&nbsp;<?php echo $lang['langs_01029'] ?></a>
                                                         <?php } ?>
                                                     <?php } ?>
@@ -253,7 +253,7 @@ if ($row_order->status_invoice == 1) {
                                                         <a class="dropdown-item" href="print_label_consolidate_package.php?id=<?php echo $_GET['id']; ?>" target="_blank"> <i class="ti-printer"></i>&nbsp;<?php echo $lang['toollabel'] ?> </a>
 
 
-                                                        <?php if ($row_order->status_courier != 8) { ?>
+                                                        <?php if (!cdp_isHandedOver($row_order->status_courier)) { ?>
                                                             <?php if ($userData->userlevel == 9 || $userData->userlevel == 3) { ?>
                                                                 <a class="dropdown-item" href="consolidate_package_shipment_tracking.php?id=<?php echo $_GET['id']; ?>" title="<?php echo $lang['toolupdate'] ?>"><i class="ti-reload">&nbsp;</i><?php echo $lang['toolupdate'] ?></a>
                                                                 <a class="dropdown-item" href="consolidate_package_deliver_shipment.php?id=<?php echo $row_order->consolidate_id; ?>" title="<?php echo $lang['tooldeliver'] ?>"><i class="ti-package"></i>&nbsp;<?php echo $lang['tooldeliver'] ?></a>
@@ -626,9 +626,9 @@ if ($row_order->status_invoice == 1) {
 
                 <!-- Row -->
                 <?php
-                if ($row_order->status_courier == 8) {
+                if (cdp_isHandedOver($row_order->status_courier)) {
 
-                    $db->cdp_query("SELECT * FROM cdb_courier_track where order_track='" . $row_order->c_prefix . $row_order->c_no . "' and status_courier=8");
+                    $db->cdp_query("SELECT * FROM cdb_courier_track where order_track='" . $row_order->c_prefix . $row_order->c_no . "' and status_courier IN (8, 15) ORDER BY id DESC");
                     $courier_track = $db->cdp_registro();
 
                     $fecha_delivered = strtotime($courier_track->t_date);
@@ -654,7 +654,7 @@ if ($row_order->status_invoice == 1) {
                                     <div class="row">
                                         <div class="col-sm-12 col-md-4 mb-2">
                                             <div class="">
-                                                <h5> &nbsp;<b> <?php echo $lang['leftorder51'] ?></b></h5>
+                                                <h5> &nbsp;<b> <?php echo cdp_handoverLabel($row_order->status_courier) . ' On'; ?></b></h5>
                                                 <p class="text-muted  m-l-5"><?php echo $meses_[$mes_delivered] . ' ' . $dia_delivered . ', ' . $anio_delivered . ' ' . $time_delivered; ?></p>
 
                                             </div>
@@ -662,7 +662,7 @@ if ($row_order->status_invoice == 1) {
 
                                         <div class="col-sm-12 col-md-4 mb-2">
                                             <div class="">
-                                                <h5> &nbsp;<b> <?php echo $lang['leftorder52'] ?></b></h5>
+                                                <h5> &nbsp;<b> <?php echo 'Handed Over By'; ?></b></h5>
                                                 <p class="text-muted  m-l-5"><?php echo $user_delivered->fname . ' ' . $user_delivered->lname; ?></p>
                                             </div>
                                         </div>

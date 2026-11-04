@@ -199,7 +199,7 @@ if ($numrows > 0) { ?>
 						<tr class="card-hovera">
 							<?php if ($user->cdp_hasPermission('select_multiple_conso_courier')) { ?>
 								<td class="chb">
-									<?php if ($row->status_courier != 8) { ?>
+									<?php if (!cdp_isHandedOver($row->status_courier)) { ?>
 
 										<div class="custom-control custom-checkbox">
 											<input type="checkbox" class="custom-control-input" value="<?php echo $row->c_no; ?>" name="checkbox[]" id="cst_<?php echo $count; ?>">
@@ -284,7 +284,7 @@ if ($numrows > 0) { ?>
 							                <?php } ?>
 							            <?php } ?>
 
-							            <?php if ($user->cdp_hasPermission('edit_consolidate') && $user->userlevel != 1 && $row->status_courier != 8) { ?>
+							            <?php if ($user->cdp_hasPermission('edit_consolidate') && $user->userlevel != 1 && !cdp_isHandedOver($row->status_courier)) { ?>
 							                <a class="dropdown-item" href="consolidate_edit.php?id=<?php echo $row->consolidate_id; ?>" title="<?php echo $lang['langs_01029'] ?>">
 							                    <i style="color:#343a40" class="ti-pencil"></i>&nbsp;<?php echo $lang['langs_01029'] ?>
 							                </a>
@@ -296,7 +296,7 @@ if ($numrows > 0) { ?>
 							                </a>
 							            <?php } ?>
 
-							            <?php if ($user->cdp_hasPermission('print_consolidate') && $row->status_courier != 8) { ?>
+							            <?php if ($user->cdp_hasPermission('print_consolidate') && !cdp_isHandedOver($row->status_courier)) { ?>
 							                <a class="dropdown-item" target="blank" href="print_consolidate.php?id=<?php echo $row->consolidate_id; ?>">
 							                    <i style="color:#343a40" class="ti-printer"></i>&nbsp;<?php echo $lang['messagesform37'] ?>
 							                </a>
@@ -314,19 +314,19 @@ if ($numrows > 0) { ?>
 							                </a>
 							            <?php } ?>
 
-							            <?php if ($user->cdp_hasPermission('track_consolidate') && $row->status_courier != 8) { ?>
+							            <?php if ($user->cdp_hasPermission('track_consolidate') && !cdp_isHandedOver($row->status_courier)) { ?>
 							                <a class="dropdown-item" href="consolidate_shipment_tracking.php?id=<?php echo $row->consolidate_id; ?>" title="<?php echo $lang['toolupdate'] ?>">
 							                    <i style="color:#20c997" class="ti-reload">&nbsp;</i><?php echo $lang['toolupdate'] ?>
 							                </a>
 							            <?php } ?>
 
-							            <?php if ($user->cdp_hasPermission('deliver_consolidate') && $row->status_courier != 8) { ?>
+							            <?php if ($user->cdp_hasPermission('deliver_consolidate') && !cdp_isHandedOver($row->status_courier)) { ?>
 							                <a class="dropdown-item" href="consolidate_deliver_shipment.php?id=<?php echo $row->consolidate_id; ?>" title="<?php echo $lang['tooldeliver'] ?>">
 							                    <i style="color:#2962FF" class="ti-package"></i>&nbsp;<?php echo $lang['tooldeliver'] ?>
 							                </a>
 							            <?php } ?>
 
-							            <?php if ($user->cdp_hasPermission('delete_consolidate') && $user->userlevel != 3 && $row->status_courier != 8) { ?>
+							            <?php if ($user->cdp_hasPermission('delete_consolidate') && $user->userlevel != 3 && !cdp_isHandedOver($row->status_courier)) { ?>
 							                <a class="dropdown-item" onclick="cdp_eliminar('<?php echo $row->consolidate_id; ?>');" target="_blank">
 							                    <i style="color:#f62d51" class="fas fa-times-circle"></i>&nbsp;<?php echo $lang['leftorder267']; ?>
 							                </a>

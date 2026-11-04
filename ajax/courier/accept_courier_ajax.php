@@ -345,7 +345,7 @@ if (empty($errors)) {
                 'service'  => intval($_POST['order_service_options'] ?? 0),
                 'delitime' => intval($_POST['order_deli_time'] ?? 0),
                 'office'   => intval($_POST['origin_off'] ?? 0),
-            ), $wa_extra_lines);
+            ), $wa_extra_lines, true);   // no SMS of its own here: the registration automation texts a copy
         }
 
         // WhatsApp notifications are sender-only by design; receivers are not messaged.

@@ -178,7 +178,7 @@ if ($numrows > 0) { ?>
 								<?php } ?>
 
 								<?php
-								if ($row->status_courier == 12 || $row->status_courier == 21 || $row->status_courier == 8) { ?>
+								if ($row->status_courier == 12 || $row->status_courier == 21 || cdp_isHandedOver($row->status_courier)) { ?>
 
 									<?php // Status to display: the consolidation's while the shipment is in one.
 									$eff = cdp_getEffectiveStatus($row->order_no, $row->status_courier, $row->is_consolidate ?? null); ?>

@@ -126,7 +126,7 @@ $driverrow = $user->cdp_userAllDriver();
         <!-- Page wrapper  -->
         <!-- ============================================================== -->
         <div class="page-wrapper">
-            <?php cdp_pageHeader('Deliver Package'); ?>
+            <?php cdp_pageHeader('Pick Up / Deliver Package'); ?>
             <div class="container-fluid">
 
 
@@ -204,8 +204,14 @@ $driverrow = $user->cdp_userAllDriver();
                                     </div>
                                     <div class="row">
                                         <div class="col-sm-12 col-md-12">
+                                            <?php require_once('helpers/handover.php'); echo cdp_handoverChoiceHtml(); ?>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-sm-12 col-md-12">
                                             <label for="message-text" class="control-label"><?php echo $lang['deliver-ship6'] ?></label>
-                                            <input type="text" name="person_receives" id="person_receives" class="form-control" placeholder="Name who receives the package" required="">
+                                            <input type="text" name="person_receives" id="person_receives" class="form-control" placeholder="Name of the person who collected or received it" required="">
                                         </div>
                                     </div>
 

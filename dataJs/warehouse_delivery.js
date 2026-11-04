@@ -157,16 +157,17 @@ function wdDeliverOne(btn) {
         return;
     }
     $b.removeData("pickupOk");
+    var ho = window.cdpHandover;
     Swal.fire({
-        title: "Deliver Package?",
-        html: "Mark <b>" + wdEsc(track) + "</b> as delivered?",
+        title: "Hand Over Package?",
+        html: "Hand over <b>" + wdEsc(track) + "</b>?" + (ho ? ho.html() : ""),
         icon: "question", showCancelButton: true, reverseButtons: true,
-        confirmButtonText: "Yes, Deliver", confirmButtonColor: "#1b8a5a",
+        confirmButtonText: "Yes, Save", confirmButtonColor: "#1b8a5a",
         showLoaderOnConfirm: true, allowOutsideClick: function () { return !Swal.isLoading(); },
-        preConfirm: function () { return wdPost({ action: "deliver_package", order_no: no, consolidate_id: cid }); }
+        preConfirm: function () { return wdPost({ action: "deliver_package", order_no: no, consolidate_id: cid, handover_type: ho ? ho.value() : "picked_up" }); }
     }).then(function (r) {
         if (!r.isConfirmed) { return; }
-        wdAfterAction(cid, sid, "Package delivered.", r.value && r.value.summary);
+        wdAfterAction(cid, sid, "Package " + String((r.value && r.value.label) || "picked up").toLowerCase() + ".", r.value && r.value.summary);
     });
 }
 
@@ -181,18 +182,20 @@ function wdDeliverUser(btn) {
         return;
     }
     $b.removeData("pickupOk");
+    var ho = window.cdpHandover;
     Swal.fire({
-        title: "Deliver All Cleared Packages?",
-        html: "Deliver <b>" + ready + "</b> cleared package(s) for <b>" + wdEsc(name) + "</b>?<br>" +
-              "<span class='text-muted' style='font-size:12px;'>Only cleared, undelivered packages are delivered.</span>",
+        title: "Hand Over All Cleared Packages?",
+        html: "Hand over <b>" + ready + "</b> cleared package(s) for <b>" + wdEsc(name) + "</b>?<br>" +
+              "<span class='text-muted' style='font-size:12px;'>Only cleared packages not yet picked up or delivered are handed over.</span>" +
+              (ho ? ho.html() : ""),
         icon: "question", showCancelButton: true, reverseButtons: true,
-        confirmButtonText: "Yes, Deliver All", confirmButtonColor: "#1b8a5a",
+        confirmButtonText: "Yes, Save All", confirmButtonColor: "#1b8a5a",
         showLoaderOnConfirm: true, allowOutsideClick: function () { return !Swal.isLoading(); },
-        preConfirm: function () { return wdPost({ action: "deliver_user", consolidate_id: cid, sender_id: sid }); }
+        preConfirm: function () { return wdPost({ action: "deliver_user", consolidate_id: cid, sender_id: sid, handover_type: ho ? ho.value() : "picked_up" }); }
     }).then(function (r) {
         if (!r.isConfirmed) { return; }
         var v = r.value || {};
-        var msg = (v.delivered || 0) + " package(s) delivered" + ((v.skipped > 0) ? ", " + v.skipped + " skipped" : "") + ".";
+        var msg = (v.delivered || 0) + " package(s) " + String(v.label || "picked up").toLowerCase() + ((v.skipped > 0) ? ", " + v.skipped + " skipped" : "") + ".";
         wdAfterAction(cid, sid, msg, v.summary);
     });
 }
@@ -201,7 +204,7 @@ function wdUndoOne(btn) {
     var $b = $(btn);
     var no = String($b.data("no")), track = $b.data("track"), cid = $b.data("cid"), sid = $b.data("sid");
     Swal.fire({
-        title: "Undo Delivery?",
+        title: "Undo Handover?",
         html: "Reopen <b>" + wdEsc(track) + "</b>?<br>" +
               "<span class='text-muted' style='font-size:12px;'>Reverts it to In-Warehouse and reopens the consolidation if it was closed as Delivered.</span>",
         icon: "warning", showCancelButton: true, reverseButtons: true,
@@ -210,6 +213,6 @@ function wdUndoOne(btn) {
         preConfirm: function () { return wdPost({ action: "undo_package", order_no: no, consolidate_id: cid }); }
     }).then(function (r) {
         if (!r.isConfirmed) { return; }
-        wdAfterAction(cid, sid, "Delivery reversed.", r.value && r.value.summary);
+        wdAfterAction(cid, sid, "Handover reversed.", r.value && r.value.summary);
     });
 }

@@ -182,7 +182,7 @@ if ($numrows > 0) { ?>
 							<?php
 							if ($userData->userlevel == 9) { ?>
 								<td class="chb">
-									<?php if ($row->status_courier != 8) { ?>
+									<?php if (!cdp_isHandedOver($row->status_courier)) { ?>
 
 										<div class="custom-control custom-checkbox">
 											<input type="checkbox" class="custom-control-input" value="<?php echo $row->c_no; ?>" name="checkbox[]" id="cst_<?php echo $count; ?>">
@@ -270,7 +270,7 @@ if ($numrows > 0) { ?>
 										<?php if ($userData->userlevel != 1) { ?>
 
 											<?php if ($userData->userlevel == 9 || $userData->userlevel == 2) { ?>
-												<?php if ($row->status_courier != 8) { ?>
+												<?php if (!cdp_isHandedOver($row->status_courier)) { ?>
 
 													<a class="dropdown-item" href="consolidate_package_edit.php?id=<?php echo $row->consolidate_id; ?>" title="<?php echo $lang['langs_01029'] ?>">
 														<i style="color:#343a40" class="ti-pencil"></i>&nbsp;<?php echo $lang['langs_01029'] ?></a>
@@ -288,7 +288,7 @@ if ($numrows > 0) { ?>
 											<a class="dropdown-item" href="print_label_consolidate_package.php?id=<?php echo $row->consolidate_id; ?>" target="_blank"> <i style="color:#343a40" class="ti-printer"></i>&nbsp;<?php echo $lang['toollabel'] ?> </a>
 											<?php if ($userData->userlevel != 1) { ?>
 
-												<?php if ($row->status_courier != 8) { ?>
+												<?php if (!cdp_isHandedOver($row->status_courier)) { ?>
 
 													<a class="dropdown-item" href="consolidate_package_shipment_tracking.php?id=<?php echo $row->consolidate_id; ?>" title="<?php echo $lang['toolupdate'] ?>"><i style="color:#20c997" class="ti-reload">&nbsp;</i><?php echo $lang['toolupdate'] ?></a>
 

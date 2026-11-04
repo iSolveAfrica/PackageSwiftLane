@@ -89,7 +89,9 @@ if (isset($_POST['person_receives'])) {
 
         $errors['driver_id'] =  $lang['validate_field_ajax163'];
 
-    $status_courier = 8;
+    // Picked up (collected from us, the default) or Delivered (taken to the customer).
+    require_once('helpers/handover.php');
+    $status_courier = cdp_handoverStatusFromInput($_POST['handover_type'] ?? '');
     //signature update  
     if (isset($_POST['sig-dataUrl'])) {
 
@@ -205,7 +207,7 @@ if (isset($_POST['person_receives'])) {
         $db->bind(':order_track',  $order_track);
         $db->bind(':is_consolidate', '1');
         $db->bind(':user_id',  $_SESSION['userid']);
-        $db->bind(':action',  $lang['notification_shipment12']);
+        $db->bind(':action',  ($status_courier === CDP_STATUS_PICKED_UP) ? 'You marked the shipment picked up' : $lang['notification_shipment12']);
         $db->bind(':date_history',  trim($date));
         $db->cdp_execute();
 
@@ -235,7 +237,7 @@ if (isset($_POST['person_receives'])) {
 
         $db->bind(':user_id',  $_SESSION['userid']);
         $db->bind(':order_id',  $_GET['id']);
-        $db->bind(':notification_description',  $lang['notification_shipment13']);
+        $db->bind(':notification_description',  cdp_handoverTrackComment($status_courier) . ', please check it');
         $db->bind(':shipping_type', '5');
         $db->bind(':notification_date',  date("Y-m-d H:i:s"));
 
@@ -261,9 +263,9 @@ if (isset($_POST['person_receives'])) {
         // Only the owners of the packages inside are told — each about their
         // own packages, without the consolidation number. Nothing goes to the
         // consolidation's own sender or recipient.
-        if ($old_status_courier_wa !== 8) {
+        if ($old_status_courier_wa !== $status_courier) {
             $fullshipment = $row->c_prefix . $row->c_no;
-            cdp_notifyConsolidationPackageSenders('consolidate_packages', (int) $id, $fullshipment, cdp_wa_lookupName('cdb_styles', 'mod_style', 8));
+            cdp_notifyConsolidationPackageSenders('consolidate_packages', (int) $id, $fullshipment, cdp_wa_lookupName('cdb_styles', 'mod_style', $status_courier));
         }
 
         header("location:consolidate_package_view.php?id=$id");
@@ -342,7 +344,7 @@ if (isset($_POST['person_receives'])) {
         <!-- Page wrapper  -->
         <!-- ============================================================== -->
         <div class="page-wrapper">
-            <?php cdp_pageHeader('Deliver Consolidation'); ?>
+            <?php cdp_pageHeader('Pick Up / Deliver Consolidation'); ?>
             <div class="container-fluid">
 
 
@@ -414,6 +416,12 @@ if (isset($_POST['person_receives'])) {
                                                     <?php endforeach; ?>
                                                 </select>
                                             </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-sm-12 col-md-12">
+                                            <?php require_once('helpers/handover.php'); echo cdp_handoverChoiceHtml(); ?>
                                         </div>
                                     </div>
 

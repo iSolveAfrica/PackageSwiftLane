@@ -124,7 +124,7 @@ $driverrow = $user->cdp_userAllDriver();
         <!-- Page wrapper  -->
         <!-- ============================================================== -->
         <div class="page-wrapper">
-            <?php cdp_pageHeader('Deliver Shipment'); ?>
+            <?php cdp_pageHeader('Pick Up / Deliver Shipment'); ?>
             <div class="container-fluid mb-4">
 
 
@@ -200,6 +200,12 @@ $driverrow = $user->cdp_userAllDriver();
                                                     <?php endforeach; ?>
                                                 </select>
                                             </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-sm-12 col-md-12">
+                                            <?php require_once('helpers/handover.php'); echo cdp_handoverChoiceHtml(); ?>
                                         </div>
                                     </div>
 

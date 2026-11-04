@@ -36,7 +36,7 @@ $userData = $user->cdp_getUserData();
                     <i class="mdi mdi-truck-delivery wd-banner-ico"></i>
                     <div>
                         <h4>Warehouse Delivery</h4>
-                        <small><?php echo cdp_financeEnabled() ? 'Deliver packages Accounts has cleared for delivery.' : 'Deliver packages that have arrived in Ghana.'; ?></small>
+                        <small><?php echo cdp_financeEnabled() ? 'Hand over packages Accounts has cleared: picked up by the customer or delivered to them.' : 'Hand over packages that have arrived in Ghana: picked up by the customer or delivered to them.'; ?></small>
                     </div>
                 </div>
 

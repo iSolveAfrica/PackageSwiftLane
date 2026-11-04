@@ -293,7 +293,7 @@ if ($row_order->status_invoice == 1) {
                                                         <!-- EDITAR ENVÍO PERMISO -->
                                                         <?php if ($row_order->order_incomplete == 1 && $user->cdp_hasPermission('edit_shipment')) { ?>
                                                             <?php if (/*$row_order->is_consolidate == 0 &&*/$userData->userlevel == 9 || $userData->userlevel == 2) { ?>
-                                                                <?php if ($row_order->status_courier != 8) { ?>
+                                                                <?php if (!cdp_isHandedOver($row_order->status_courier)) { ?>
                                                                     <a class="dropdown-item" href="courier_edit.php?id=<?php echo $_GET['id']; ?>">
                                                                         <i class="ti-pencil"></i>&nbsp;<?php echo $lang['tooledit'] ?>
                                                                     </a>
@@ -312,7 +312,7 @@ if ($row_order->status_invoice == 1) {
 
                                                         <!-- ASIGNAR CONDUCTOR A ENVÍO PERMISO -->
                                                         <?php if ($user->cdp_hasPermission('assign_drivers')) { ?>
-                                                            <?php if ($row_order->status_courier != 21 && $row_order->status_courier != 12 && $row_order->status_courier != 8) { ?>
+                                                            <?php if ($row_order->status_courier != 21 && $row_order->status_courier != 12 && !cdp_isHandedOver($row_order->status_courier)) { ?>
                                                                 <a class="dropdown-item" data-toggle="modal" data-target="#modalDriver" data-id_shipment="<?php echo $row_order->order_id; ?>">
                                                                     <i class="fas fa-car"></i>&nbsp;<?php echo $lang['left208']; ?>
                                                                 </a>
@@ -625,7 +625,7 @@ if ($row_order->status_invoice == 1) {
                 </div>
                 <!-- Row -->
                 <?php
-                if ($row_order->status_courier == 8) {
+                if (cdp_isHandedOver($row_order->status_courier)) {
 
 
                     $db->cdp_query("SELECT * FROM cdb_courier_track where order_track='" . $row_order->order_prefix . $row_order->order_no . "'");
@@ -648,14 +648,14 @@ if ($row_order->status_invoice == 1) {
                                 <div class="card-body">
                                     <div class="d-md-flex align-items-center">
                                         <div>
-                                            <h3 class="card-title"><span><?php echo $lang['left533020029'] ?></span></h3>
+                                            <h3 class="card-title"><span><?php echo cdp_handoverLabel($row_order->status_courier) . ' Details'; ?></span></h3>
                                         </div>
                                     </div>
                                     <div><hr></div>
                                     <div class="row">
                                         <div class=" col-sm-12 col-md-4 mb-2">
                                             <div class="">
-                                                <h5> &nbsp;<b> <?php echo $lang['leftorder51'] ?></b></h5>
+                                                <h5> &nbsp;<b> <?php echo cdp_handoverLabel($row_order->status_courier) . ' On'; ?></b></h5>
                                                 <p class="text-muted  m-l-5"><?php echo $meses_[$mes_delivered] . ' ' . $dia_delivered . ', ' . $anio_delivered . ' ' . $time_delivered; ?></p>
 
                                             </div>

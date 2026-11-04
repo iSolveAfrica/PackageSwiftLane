@@ -40,16 +40,16 @@ $wd_total = count($wd_rows);
 $wd_delivered = 0; $wd_ready = 0; $wd_awaiting = 0; $wd_weight = 0.0;
 foreach ($wd_rows as $r) {
     $wd_weight += (float) $r->total_weight;
-    if ((int) $r->status_courier === 8) { $wd_delivered++; }
+    if (cdp_isHandedOver($r->status_courier)) { $wd_delivered++; }
     elseif (in_array((int) $r->status_courier, $WD_TERMINAL, true)) { /* terminal */ }
     elseif (cdp_fsIsCleared($r->fs_cleared_for_delivery)) { $wd_ready++; }
     else { $wd_awaiting++; }
 }
 
-// The consolidation only shows a "Delivered" chip once every package is
-// delivered; the n/n Delivered badge conveys progress otherwise.
+// The consolidation only shows a "Handed Over" chip once every package is
+// picked up or delivered; the n/n badge conveys progress otherwise.
 $wd_stateChip = ($wd_total > 0 && $wd_delivered >= $wd_total)
-    ? '<span class="wd-chip-done"><i class="mdi mdi-check-all"></i> Delivered</span>'
+    ? '<span class="wd-chip-done"><i class="mdi mdi-check-all"></i> Handed Over</span>'
     : '';
 $wd_progCls = ($wd_delivered >= $wd_total && $wd_total > 0) ? 'badge-success' : 'badge-light';
 ?>
@@ -98,7 +98,7 @@ $wd_progCls = ($wd_delivered >= $wd_total && $wd_total > 0) ? 'badge-success' : 
                             <b class="wd-mono"><?php echo cdp_consolidationRefHtml($wd_consol); ?></b>
                             <span class="wd-dim ml-2"><i class="mdi mdi-calendar-blank"></i> <?php echo htmlspecialchars((string) $wd_consol->c_date); ?></span>
                             <span class="wd-dim ml-2" title="Sum of package weights"><i class="mdi mdi-weight"></i> <?php echo round($wd_weight, 2); ?> lb</span>
-                            <span id="wd-hdr-prog"><span class="badge <?php echo $wd_progCls; ?> ml-2" title="Packages delivered"><?php echo $wd_delivered; ?>/<?php echo $wd_total; ?> Delivered</span></span>
+                            <span id="wd-hdr-prog"><span class="badge <?php echo $wd_progCls; ?> ml-2" title="Packages picked up or delivered"><?php echo $wd_delivered; ?>/<?php echo $wd_total; ?> Handed Over</span></span>
                             <span class="wd-spacer"></span>
                             <span id="wd-hdr-right"><?php if ($wd_awaiting > 0): ?><span class="wd-chip-wait mr-1" title="Not yet cleared by Accounts"><i class="mdi mdi-lock"></i> <?php echo $wd_awaiting; ?> Awaiting</span><?php endif; ?><?php echo $wd_stateChip; ?></span>
                         </div>

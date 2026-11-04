@@ -26,11 +26,6 @@
             return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
         });
     }
-    function mmss(sec) {
-        sec = Math.max(0, Math.floor(sec));
-        var m = Math.floor(sec / 60), s = sec % 60;
-        return m + ":" + (s < 10 ? "0" : "") + s;
-    }
     function post(data) {
         return $.ajax({ url: URL, method: "POST", data: data, dataType: "json" })
             .then(null, function (xhr) {
@@ -111,31 +106,20 @@
                 return;
             }
             if (s.live) {
-                var left = s.live.expires_in;
                 $body.html(header(s) +
-                    '<p class="mb-1 small text-muted">Sent to: ' + esc((s.live.channels || []).join(", ") || "the customer") + '</p>' +
-                    '<p class="mb-3">Code expires in <b class="cdp-pc-left">' + mmss(left) + '</b></p>' +
-                    '<div class="form-group mb-1"><label for="cdp_pc_input">Code The Customer Received</label>' +
+                    '<p class="mb-3 small text-muted">The customer received their code' + (s.live.sent_at ? " on " + esc(s.live.sent_at) : "") +
+                    ' (' + esc((s.live.channels || []).join(", ") || "message") + '). Ask them to show it.</p>' +
+                    '<div class="form-group mb-1"><label for="cdp_pc_input">Customer\'s Pickup Code</label>' +
                     '<input type="text" inputmode="numeric" maxlength="6" autocomplete="off" class="form-control form-control-lg text-center" id="cdp_pc_input" style="letter-spacing:6px;font-weight:700;"></div>' +
                     '<div class="cdp-pc-msg small text-danger"></div>');
-                $foot.html('<button type="button" class="btn btn-outline-secondary" data-act="resend" disabled>Send New Code</button>' +
+                $foot.html('<button type="button" class="btn btn-outline-secondary mr-auto" data-act="resend">Resend Code To Customer</button>' +
                            '<button type="button" class="btn btn-dark" data-act="verify">Verify Code</button>');
                 setTimeout(function () { $("#cdp_pc_input").trigger("focus"); }, 300);
-                var t0 = Date.now();
-                timers.push(setInterval(function () {
-                    var now = left - (Date.now() - t0) / 1000;
-                    $body.find(".cdp-pc-left").text(mmss(now));
-                    if (now <= 0) {
-                        clearTimers();
-                        $body.find(".cdp-pc-left").text("0:00");
-                        $body.find(".cdp-pc-msg").text("This code has expired. A new one can be sent now.");
-                        $foot.find("[data-act=verify]").prop("disabled", true);
-                        $foot.find("[data-act=resend]").prop("disabled", false);
-                    }
-                }, 500));
                 return;
             }
-            $body.html(header(s) + '<p class="mb-0 text-muted">No code has been sent for this collection yet. The code goes to the customer by SMS, WhatsApp and e-mail and is valid for ' + Math.round((s.ttl || 180) / 60) + ' minutes.</p>' +
+            $body.html(header(s) + '<p class="mb-0 text-muted">The customer has no pickup code for ' +
+                (s.trackings && s.trackings.length > 1 ? "these packages" : "this package") +
+                ' yet. Codes normally arrive with the ready for pickup message. Send one now by SMS, WhatsApp and e-mail.</p>' +
                 '<div class="cdp-pc-msg small text-danger mt-2"></div>');
             $foot.html('<button type="button" class="btn btn-dark" data-act="send">Send Pickup Code</button>');
         }
@@ -152,14 +136,16 @@
         }
 
         function send($btn) {
+            var label = $btn.text();
             $btn.prop("disabled", true).text("Sending...");
             post({ action: "generate", module: module, order_ids: orderIds, context: context }).then(function (r) {
-                if (!r.success && !r.live) {
-                    $btn.prop("disabled", false).text("Send Pickup Code");
+                $btn.prop("disabled", false).text(label);
+                if (!r.success) {
                     $body.find(".cdp-pc-msg").text(r.message);
                     return;
                 }
                 load();
+                setTimeout(function () { $body.find(".cdp-pc-msg").removeClass("text-danger").addClass("text-success").text(r.message); }, 400);
             });
         }
 
@@ -171,7 +157,7 @@
                 var code = $.trim($("#cdp_pc_input").val());
                 if (!/^\d{6}$/.test(code)) { $body.find(".cdp-pc-msg").text("Enter the 6-digit code."); return; }
                 $btn.prop("disabled", true).text("Checking...");
-                post({ action: "verify", code_id: s.live ? s.live.code_id : 0, code: code }).then(function (r) {
+                post({ action: "verify", module: module, order_ids: orderIds, code: code }).then(function (r) {
                     $btn.prop("disabled", false).text("Verify Code");
                     if (!r.success) { $body.find(".cdp-pc-msg").text(r.message); return; }
                     load();
@@ -207,7 +193,7 @@
     function list() {
         var $m = shell("cdpPickupCodeListModal", "Pickup Codes", true);
         var $body = $m.find(".modal-body");
-        $m.find(".modal-footer").html('<small class="text-muted mr-auto">Waiting: time left to enter the code. Verified: time left to hand the package over.</small>' +
+        $m.find(".modal-footer").html('<small class="text-muted mr-auto">Waiting: the customer has the code. Verified: staff entered it in the last 30 minutes.</small>' +
             '<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button>');
         clearTimers();
         show($m);
@@ -215,29 +201,20 @@
         function load() {
             post({ action: "list" }).then(function (r) {
                 if (!r.success) { $body.html('<div class="alert alert-danger mb-0">' + esc(r.message) + '</div>'); return; }
-                if (!r.codes.length) { $body.html('<div class="text-center text-muted py-4">No pickup code is active right now.</div>'); return; }
-                var t0 = Date.now();
-                clearTimers();
+                if (!r.codes.length) { $body.html('<div class="text-center text-muted py-4">No customer is holding a pickup code right now.</div>'); return; }
                 var rows = $.map(r.codes, function (c) {
                     return '<tr>' +
                         '<td>' + esc(c.owner) + '</td>' +
                         '<td class="small">' + esc(c.trackings) + '</td>' +
                         '<td><b style="letter-spacing:3px;">' + esc(c.code) + '</b></td>' +
                         '<td><span class="badge ' + (c.status === "Verified" ? "badge-success" : "badge-warning") + '">' + esc(c.status) + '</span></td>' +
-                        '<td class="cdp-pc-count" data-left="' + c.seconds + '">' + mmss(c.seconds) + '</td>' +
+                        '<td class="small">' + esc(c.sent_at) + '<br><span class="text-muted">' + esc(c.source) + '</span></td>' +
                         '<td class="small">' + esc(c.sent_by) + '</td>' +
                     '</tr>';
                 }).join("");
                 $body.html('<div class="table-responsive"><table class="table table-sm table-hover mb-0">' +
-                    '<thead><tr><th>Customer</th><th>Packages</th><th>Code</th><th>Status</th><th>Time Left</th><th>Sent By</th></tr></thead>' +
+                    '<thead><tr><th>Customer</th><th>Packages</th><th>Code</th><th>Status</th><th>Sent</th><th>By</th></tr></thead>' +
                     '<tbody>' + rows + '</tbody></table></div>');
-                timers.push(setInterval(function () {
-                    $body.find(".cdp-pc-count").each(function () {
-                        var left = parseFloat($(this).data("left")) - (Date.now() - t0) / 1000;
-                        $(this).text(mmss(left));
-                        if (left <= 0) { $(this).closest("tr").addClass("text-muted"); }
-                    });
-                }, 1000));
             });
         }
         load();
@@ -249,6 +226,24 @@
     }
 
     window.cdpPickupCode = { open: open, ensure: ensure, list: list };
+
+    // ── Picked up / Delivered choice for dialog-based handovers ─────────────
+    // (forms use cdp_handoverChoiceHtml() in helpers/handover.php)
+    window.cdpHandover = {
+        html: function () {
+            return '<div class="text-left mt-3" style="font-size:14px;">' +
+                '<div class="mb-1"><b>How Was It Handed Over?</b></div>' +
+                '<label class="d-block mb-1" style="cursor:pointer;"><input type="radio" name="cdp_handover_type" value="picked_up" checked> ' +
+                '<b>Picked up</b> <span class="text-muted">(collected from us)</span></label>' +
+                '<label class="d-block mb-0" style="cursor:pointer;"><input type="radio" name="cdp_handover_type" value="delivered"> ' +
+                '<b>Delivered</b> <span class="text-muted">(taken to the customer)</span></label></div>';
+        },
+        value: function () {
+            var el = document.querySelector("input[name=cdp_handover_type]:checked");
+            return el && el.value === "delivered" ? "delivered" : "picked_up";
+        },
+        label: function (v) { return v === "delivered" ? "delivered" : "picked up"; }
+    };
 
     // Row actions (delegated: list responses re-render their rows).
     $(document).on("click", ".cdp-pickup-code", function (e) {

@@ -5,6 +5,7 @@ require_once __DIR__ . '/message_log.php';
 // Consolidation reference (waybill first, code after) — same reason: the code
 // is printed from ~70 files, all of which already load this file.
 require_once __DIR__ . '/consolidation_ref.php';
+require_once __DIR__ . '/handover.php';   // Picked up / Delivered (cdp_isHandedOver)
 // *************************************************************************
 // *                                                                       *
 // * Swiftlane - Integrated Web Shipping System                            *
