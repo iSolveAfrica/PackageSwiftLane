@@ -12,11 +12,14 @@
     var URL_ = 'ajax/support/desk_ajax.php';
     var FILTERS = ['status', 'priority', 'category', 'channel', 'team_id', 'assignee_id', 'language', 'tag', 'from', 'to'];
     var GROUPS = [
-        ['Queues', ['all', 'mine', 'unassigned', 'queued', 'ai', 'followed', 'internal']],
-        ['By status', ['new', 'open', 'pending_customer', 'pending_internal', 'on_hold', 'resolved', 'closed']],
-        ['Deadlines', ['sla_risk', 'overdue']],
+        ['Needs attention', ['queued', 'sla_risk', 'overdue'], true],
+        ['Tickets', ['all', 'mine', 'unassigned', 'ai', 'followed', 'internal']],
+        ['Status', ['new', 'open', 'pending_customer', 'pending_internal', 'on_hold', 'resolved', 'closed']],
         ['Elsewhere', ['archived', 'spam', 'trash']]
     ];
+    // Collapsed groups are remembered per browser.
+    var folded = {};
+    try { folded = JSON.parse(localStorage.getItem('cs-folded') || '{}') || {}; } catch (e) { folded = {}; }
     var st = { view: 'all', q: '', sort: 'activity', pg: 1, f: {} };
     var selected = {}, lastRows = [], timer = null, xhr = null;
 
@@ -29,6 +32,7 @@
         shortcuts();
         loadTrend();
         setInterval(loadTrend, 120000);
+        $(document).on('swl:theme', loadTrend);
     });
 
 
@@ -40,7 +44,7 @@
         if (charts[key]) { charts[key].destroy(); }
         opts.chart = $.extend({ height: 220, toolbar: { show: false }, fontFamily: 'inherit', background: 'transparent' }, opts.chart || {});
         opts.grid = $.extend({ borderColor: '#e5e7eb', strokeDashArray: 3 }, opts.grid || {});
-        charts[key] = new window.ApexCharts(box, opts);
+        charts[key] = new window.ApexCharts(box, CS.chartTheme(opts));
         charts[key].render();
     }
 
@@ -83,6 +87,12 @@
 
     // Keyboard first: J/K move between tickets (Enter opens the focused one), / jumps to search. Ignored while typing.
     function shortcuts() {
+        $('#cs_views').on('click', '[data-fold]', function () {
+            var g = $(this).data('fold');
+            folded[g] = !folded[g];
+            try { localStorage.setItem('cs-folded', JSON.stringify(folded)); } catch (e) { /* not remembered */ }
+            drawViews();
+        });
         $(document).on('keydown', function (e) {
             if (e.ctrlKey || e.metaKey || e.altKey) { return; }
             var t = e.target, typing = t && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable);
@@ -255,7 +265,7 @@
         if (!quiet) { $('#cs_rows').css('opacity', 0.55); }
         var data = $.extend({ action: 'inbox', view: st.view, q: st.q, sort: st.sort, pg: st.pg }, st.f);
         xhr = CS.get(URL_, data).done(function (r) {
-            if (!r || !r.ok) { $('#cs_rows').html('<tr><td colspan="8"><div class="swl-cs-empty">' + CS.esc(r && r.error ? r.error : 'Could not load.') + '</div></td></tr>'); return; }
+            if (!r || !r.ok) { $('#cs_rows').html('<tr><td colspan="9"><div class="swl-cs-empty">' + CS.esc(r && r.error ? r.error : 'Could not load.') + '</div></td></tr>'); return; }
             counts = r.counts; viewNames = r.views; savedViews = r.saved_views;
             drawViews();
             summary();
@@ -266,12 +276,18 @@
     function drawViews() {
         var h = '';
         GROUPS.forEach(function (g) {
-            h += '<div class="swl-cs-view-group">' + CS.esc(g[0]) + '</div>';
-            g[1].forEach(function (k) {
-                if (!viewNames[k]) { return; }
+            var keys = g[1].filter(function (k) { return viewNames[k]; });
+            if (!keys.length) { return; }
+            var closed = !!folded[g[0]] && !g[2];
+            h += g[2] ? '<div class="swl-cs-view-group">' + CS.esc(g[0]) + '</div>'
+                : '<button type="button" class="swl-cs-view-group" data-fold="' + CS.esc(g[0]) + '" aria-expanded="' + (closed ? 'false' : 'true') + '">' + CS.esc(g[0]) + '<iconify-icon icon="solar:alt-arrow-down-linear" aria-hidden="true"></iconify-icon></button>';
+            if (closed) { return; }
+            keys.forEach(function (k) {
                 var n = counts[k];
+                // Needs attention lights up while something is waiting; red for missed deadlines.
+                var hot = g[2] && n ? ' is-hot' + (k === 'queued' ? '' : ' is-red') : '';
                 h += '<button type="button" class="swl-cs-view' + (st.view === k ? ' is-on' : '') + '" data-view="' + k + '"' + (st.view === k ? ' aria-current="true"' : '') + '>'
-                    + CS.ico('view', k) + CS.esc(viewNames[k]) + (n ? '<span class="n">' + n + '</span>' : '') + '</button>';
+                    + CS.ico('view', k) + CS.esc(viewNames[k]) + (n ? '<span class="n' + hot + '">' + n + '</span>' : '') + '</button>';
             });
         });
         if (savedViews.length) {
@@ -297,25 +313,51 @@
             + '<span class="swl-cs-slabar is-' + st2 + '" aria-hidden="true"><span style="width:' + fill.toFixed(0) + '%"></span></span></span>';
     }
 
+    // Initial on a tinted circle; the tint is picked from the name so a person keeps one colour.
+    function avatar(name, cls) {
+        var s = String(name || '?'), h = 0;
+        for (var i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) % 997; }
+        var ini = s.split(/\s+/).filter(Boolean).slice(0, 2).map(function (p) { return p.charAt(0); }).join('').toUpperCase() || '?';
+        return '<span class="swl-cs-av t' + (h % 6) + (cls ? ' ' + cls : '') + '" aria-hidden="true">' + CS.esc(ini) + '</span>';
+    }
+
+    // Who has the ticket: King, a person, a chat waiting for a person, or nobody.
+    function owner(t) {
+        var open = ['resolved', 'closed'].indexOf(t.status) === -1;
+        if (open && t.owner_state === 'ai_active') {
+            return '<span class="swl-cs-own"><span class="swl-cs-av is-sm is-king" aria-hidden="true"><iconify-icon icon="solar:magic-stick-3-linear"></iconify-icon></span>' + CS.esc(V.king) + ' (AI)</span>';
+        }
+        if (open && t.owner_state === 'handoff_queued' && !t.assignee) {
+            return '<span class="swl-cs-own"><span class="swl-cs-av is-sm is-wait" aria-hidden="true"><iconify-icon icon="solar:bell-ringing-linear"></iconify-icon></span>Waiting for a person</span>';
+        }
+        if (!t.assignee) {
+            return '<span class="swl-cs-own swl-cs-muted"><span class="swl-cs-av is-sm is-none" aria-hidden="true"></span>Unassigned</span>';
+        }
+        return '<span class="swl-cs-own">' + avatar(t.assignee, 'is-sm') + '<span>' + CS.esc(t.assignee) + (t.team ? '<span class="d-block swl-cs-small swl-cs-muted">' + CS.esc(t.team) + '</span>' : '') + '</span></span>';
+    }
+
     function drawRows(l) {
         lastRows = l.rows;
         $('#cs_all').prop('checked', false);
         if (!l.rows.length) {
             var msg = st.q || Object.keys(st.f).length ? 'No tickets match the search and filters.' : (st.view === 'mine' ? 'Nothing assigned to you. Nice.' : 'No tickets here.');
-            $('#cs_rows').html('<tr><td colspan="8"><div class="swl-cs-empty"><iconify-icon icon="solar:inbox-linear"></iconify-icon>' + CS.esc(msg) + '</div></td></tr>');
+            $('#cs_rows').html('<tr><td colspan="9"><div class="swl-cs-empty"><iconify-icon icon="solar:inbox-linear"></iconify-icon>' + CS.esc(msg) + '</div></td></tr>');
         } else {
             $('#cs_rows').html(l.rows.map(function (t) {
-                var owner = t.owner_state && t.owner_state !== 'resolved' && ['ai_active', 'handoff_queued'].indexOf(t.owner_state) > -1 ? ' ' + CS.pill('owner', t.owner_state) : '';
-                return '<tr data-id="' + t.id + '" tabindex="0" class="' + (t.awaiting_us && ['resolved', 'closed'].indexOf(t.status) === -1 ? 'is-unread' : '') + '">'
+                var who = t.is_internal ? 'Staff request' : t.customer;
+                var open = ['resolved', 'closed'].indexOf(t.status) === -1;
+                return '<tr data-id="' + t.id + '" tabindex="0" class="' + (t.awaiting_us && open ? 'is-unread' : '') + '">'
                     + '<td><input type="checkbox" data-sel="' + t.id + '" aria-label="Select ' + CS.esc(t.ref) + '"' + (selected[t.id] ? ' checked' : '') + '></td>'
-                    + '<td class="swl-cs-subj"><b>' + CS.esc(t.subject) + '</b><small>' + CS.esc(t.ref) + (t.link_ref ? ' · ' + CS.esc(t.link_ref) : '') + ' · ' + CS.ico('category', t.category) + CS.esc(V.categories[t.category] || t.category)
+                    + '<td><div class="swl-cs-who-cell">' + avatar(who) + '<div><b>' + CS.esc(who) + '</b><small>' + CS.esc(t.customer_email || t.locker || t.ref) + '</small></div></div></td>'
+                    + '<td class="swl-cs-subj"><b>' + (t.awaiting_us && open ? '<iconify-icon icon="solar:reply-linear" class="swl-cs-ico" role="img" aria-label="Customer replied"></iconify-icon>' : '') + CS.esc(t.subject) + '</b>'
+                    + '<small>' + CS.esc(t.ref) + (t.link_ref ? ' · ' + CS.esc(t.link_ref) : '') + ' · ' + CS.ico('category', t.category) + CS.esc(V.categories[t.category] || t.category)
                     + (t.tags.length ? ' · ' + t.tags.map(function (g) { return '#' + CS.esc(g); }).join(' ') : '') + '</small>'
-                    + (t.preview ? '<small>' + (t.awaiting_us ? '● ' : '') + CS.esc(CS.plain(t.preview)) + '</small>' : '') + '</td>'
-                    + '<td>' + CS.esc(t.is_internal ? 'Staff request' : t.customer) + (t.locker ? '<div class="swl-cs-small swl-cs-muted">' + CS.esc(t.locker) + '</div>' : '') + '</td>'
-                    + '<td>' + CS.pill('status', t.status) + owner + '</td>'
-                    + '<td>' + CS.pill('priority', t.priority) + '</td>'
-                    + '<td>' + (t.assignee ? CS.esc(t.assignee) : '<span class="swl-cs-muted">Unassigned</span>') + (t.team ? '<div class="swl-cs-small swl-cs-muted">' + CS.esc(t.team) + '</div>' : '') + '</td>'
-                    + '<td>' + (['resolved', 'closed'].indexOf(t.status) > -1 ? CS.pill('sla', t.sla_resolve.state) : slaCell(t.sla)) + '</td>'
+                    + (t.preview ? '<small>' + CS.esc(CS.plain(t.preview)) + '</small>' : '') + '</td>'
+                    + '<td><span class="swl-cs-ch is-' + CS.esc(t.channel) + '">' + CS.ico('channel', t.channel) + CS.esc(V.channels[t.channel] || t.channel) + '</span></td>'
+                    + '<td><span class="swl-cs-pri is-' + CS.esc(t.priority) + '">' + CS.ico('priority', t.priority) + CS.esc(V.priorities[t.priority] || t.priority) + '</span></td>'
+                    + '<td>' + owner(t) + '</td>'
+                    + '<td>' + CS.pill('status', t.status) + '</td>'
+                    + '<td>' + (open ? slaCell(t.sla) : CS.pill('sla', t.sla_resolve.state)) + '</td>'
                     + '<td><span title="' + CS.esc(CS.full(t.last_activity_at)) + '">' + CS.esc(CS.when(t.last_activity_at)) + '</span></td></tr>';
             }).join(''));
         }

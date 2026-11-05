@@ -8,11 +8,12 @@
 // * Data comes from ajax/support/customer_ajax.php (dataJs/support_hub.js).*
 // *************************************************************************
 
+require_once __DIR__ . '/../../helpers/theme.php';
 $userData = $user->cdp_getUserData();
 $e = function ($v) { return htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8'); };
 $ready = cdp_csEnsureTables();
 $king = ['on' => $ready && cdp_csKingOn(), 'name' => cdp_csSetting('king_name', 'King'), 'greeting' => cdp_csSetting('king_greeting')];
-$actions = '<button type="button" class="btn btn-primary btn-sm" id="cs_new_req"><iconify-icon icon="solar:document-add-linear"></iconify-icon> New request</button>';
+$actions = '<button type="button" class="btn btn-primary btn-sm" id="cs_new_req"><iconify-icon icon="solar:document-add-linear"></iconify-icon> New request</button>' . ' ' . cdp_themeToggle();
 ?>
 <!DOCTYPE html>
 <html dir="<?php echo $direction_layout; ?>" lang="en">
@@ -23,6 +24,7 @@ $actions = '<button type="button" class="btn btn-primary btn-sm" id="cs_new_req"
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" type="image/png" sizes="16x16" href="assets/<?php echo $core->favicon ?>">
     <title>Help &amp; Support | <?php echo $core->site_name ?></title>
+    <?php cdp_themeBoot('light'); ?>
     <?php include 'views/inc/head_scripts.php'; ?>
 </head>
 
@@ -159,6 +161,7 @@ $actions = '<button type="button" class="btn btn-primary btn-sm" id="cs_new_req"
         };
     </script>
     <script src="<?= cdp_asset('assets/css_main_swiftlane/js/apexcharts.min.js') ?>"></script>
+    <script src="<?= cdp_asset('dataJs/swl_theme.js') ?>"></script>
     <script src="<?= cdp_asset('dataJs/support_common.js') ?>"></script>
     <script src="<?= cdp_asset('dataJs/support_chat.js') ?>"></script>
     <script src="<?= cdp_asset('dataJs/support_hub.js') ?>"></script>

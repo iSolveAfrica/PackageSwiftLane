@@ -6,11 +6,12 @@
 // * (dataJs/support_inbox.js).                                            *
 // *************************************************************************
 
+require_once __DIR__ . '/../../helpers/theme.php';
 $userData = $user->cdp_getUserData();
 $ready = cdp_csEnsureTables();
 $actions = '<a class="btn btn-secondary btn-sm" href="support_reports.php"><iconify-icon icon="solar:chart-2-linear"></iconify-icon> Reports</a> '
     . '<a class="btn btn-secondary btn-sm" href="support_settings.php"><iconify-icon icon="solar:settings-linear"></iconify-icon> Settings</a> '
-    . '<button type="button" class="btn btn-primary btn-sm" id="cs_new"><iconify-icon icon="solar:add-circle-linear"></iconify-icon> New ticket</button>';
+    . '<button type="button" class="btn btn-primary btn-sm" id="cs_new"><iconify-icon icon="solar:add-circle-linear"></iconify-icon> New ticket</button>' . ' ' . cdp_themeToggle();
 ?>
 <!DOCTYPE html>
 <html dir="<?php echo $direction_layout; ?>" lang="en">
@@ -21,6 +22,7 @@ $actions = '<a class="btn btn-secondary btn-sm" href="support_reports.php"><icon
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" type="image/png" sizes="16x16" href="assets/<?php echo $core->favicon ?>">
     <title>Customer Service | <?php echo $core->site_name ?></title>
+    <?php cdp_themeBoot('light'); ?>
     <?php include 'views/inc/head_scripts.php'; ?>
 </head>
 
@@ -102,13 +104,14 @@ $actions = '<a class="btn btn-secondary btn-sm" href="support_reports.php"><icon
                                     <thead>
                                         <tr>
                                             <th style="width: 32px;"><input type="checkbox" id="cs_all" aria-label="Select all on this page"></th>
-                                            <th>Ticket</th>
                                             <th>Customer</th>
-                                            <th>Status</th>
+                                            <th>Subject</th>
+                                            <th>Channel</th>
                                             <th>Priority</th>
-                                            <th>Assignee</th>
+                                            <th>Handled by</th>
+                                            <th>Status</th>
                                             <th>SLA</th>
-                                            <th>Updated</th>
+                                            <th>Last message</th>
                                         </tr>
                                     </thead>
                                     <tbody id="cs_rows"><tr><td colspan="8"><div class="swl-cs-empty">Loading…</div></td></tr></tbody>
@@ -196,6 +199,7 @@ $actions = '<a class="btn btn-secondary btn-sm" href="support_reports.php"><icon
 
     <?php include 'views/support/_vocab.php'; ?>
     <script src="<?= cdp_asset('assets/css_main_swiftlane/js/apexcharts.min.js') ?>"></script>
+    <script src="<?= cdp_asset('dataJs/swl_theme.js') ?>"></script>
     <script src="<?= cdp_asset('dataJs/support_common.js') ?>"></script>
     <script src="<?= cdp_asset('dataJs/support_inbox.js') ?>"></script>
 </body>

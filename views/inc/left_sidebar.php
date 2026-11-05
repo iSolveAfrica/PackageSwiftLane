@@ -98,6 +98,15 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 						</a>
 					</li>
 					<?php } ?>
+					<?php require_once __DIR__ . '/../../helpers/devops.php'; ?>
+					<?php if (cdp_devMenuVisible($user)) { ?>
+					<li class="sidebar-item">
+						<a class="sidebar-link waves-effect waves-dark" href="developer.php" aria-expanded="false">
+							<iconify-icon icon="solar:code-square-linear" class="fs-5"></iconify-icon>
+							<span class="hide-menu"> Developer </span>
+						</a>
+					</li>
+					<?php } ?>
 					<?php if ($user->cdp_hasPermission('view_shipment_list')) { ?>
 					<li class="sidebar-item nav-divider"></li>
                     <li class="sidebar-item">

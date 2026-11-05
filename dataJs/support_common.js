@@ -181,6 +181,18 @@
         return text ? '<span class="swl-cs-pill is-' + CS.esc(key) + '">' + CS.ico(kind, key) + CS.esc(text) + '</span>' : '';
     };
 
+    // Chart options that follow the light/dark theme (helpers/theme.php).
+    CS.chartTheme = function (opts) {
+        var root = getComputedStyle(document.documentElement), dark = document.documentElement.getAttribute('data-swl-theme') === 'dark';
+        var v = function (n, d) { return (root.getPropertyValue(n) || '').trim() || d; };
+        opts.chart = $.extend({}, opts.chart || {}, { foreColor: v('--slate-600', '#59697D'), background: 'transparent' });
+        opts.theme = { mode: dark ? 'dark' : 'light' };
+        opts.grid = $.extend({}, opts.grid || {}, { borderColor: v('--line-200', '#e5e7eb') });
+        opts.tooltip = $.extend({}, opts.tooltip || {}, { theme: dark ? 'dark' : 'light' });
+        if (opts.stroke && opts.stroke.colors && opts.stroke.colors[0] === '#fff') { opts.stroke.colors = [v('--white', '#fff')]; }
+        return opts;
+    };
+
     CS.grow = function (el) {
         el.style.height = 'auto';
         el.style.height = Math.min(el.scrollHeight, 160) + 'px';

@@ -83,3 +83,24 @@ The look follows Swift Lane's own design system (`swiftlane-ds.css` §25, tokens
 - **Times use the server time zone.** SLA clocks run in calendar time; business-hours calendars and holidays are not modelled.
 - **Delegated business-account access (A26) is not modelled.** Each customer sees only their own account.
 - **Logged-out visitors cannot chat.** The chat and the request form are for signed-in customers.
+
+## Look and theme (November 2026)
+
+The inbox, ticket, reports, settings and Help & Support pages have a light and a dark theme. The toggle is in the page header, and the choice is kept per browser (`helpers/theme.php`, `dataJs/swl_theme.js`, swiftlane-ds.css §26). Charts follow the theme.
+
+**Inbox**
+- **Needs attention** (waiting for a person, SLA at risk, overdue) is always at the top. Its counts light up amber or red while something is waiting.
+- The other groups (Tickets, Status, Elsewhere) collapse, and the browser remembers which are collapsed.
+- Each row shows:
+  - the customer's avatar and e-mail
+  - the subject, with a mark when the customer replied
+  - a channel icon and a priority arrow
+  - who handles it: King, a person, "waiting for a person" or unassigned
+  - a status pill with an icon
+  - an SLA bar
+- The summary tiles and the 14-day chart sit above the list.
+- Keyboard: J and K move between tickets, Enter opens one, and / jumps to search.
+
+**Ticket**
+- The Details tab starts with King's summary.
+- Below it are **Actions on this account**. Refund, fee waiver, address change and damage claim open the approval request with the right kind already chosen. Draft with King, internal note, create task and follow are also there.

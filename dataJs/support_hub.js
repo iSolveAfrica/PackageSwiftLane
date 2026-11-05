@@ -68,8 +68,10 @@
     }
 
     // Requests by status, as a donut: the customer sees where each request stands.
-    var reqChart = null;
+    var reqChart = null, lastReqs = null;
+    $(document).on('swl:theme', function () { if (lastReqs) { drawReqChart(lastReqs); } });
     function drawReqChart(list) {
+        lastReqs = list;
         var box = document.getElementById('cs_req_chart');
         if (!box) { return; }
         if (!list.length || typeof window.ApexCharts === 'undefined') { box.hidden = true; return; }
@@ -81,7 +83,7 @@
         });
         box.hidden = false;
         if (reqChart) { reqChart.destroy(); }
-        reqChart = new window.ApexCharts(box, {
+        reqChart = new window.ApexCharts(box, CS.chartTheme({
             chart: { type: 'donut', height: 200, fontFamily: 'inherit', background: 'transparent' },
             series: Object.keys(groups).map(function (k) { return groups[k]; }),
             labels: Object.keys(groups),
@@ -90,7 +92,7 @@
             dataLabels: { enabled: false },
             stroke: { width: 2, colors: ['#fff'] },
             plotOptions: { pie: { donut: { size: '66%', labels: { show: true, total: { show: true, label: 'Requests', formatter: function (w) { return w.globals.seriesTotals.reduce(function (a, b) { return a + b; }, 0); } } } } } }
-        });
+        }));
         reqChart.render();
     }
 

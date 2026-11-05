@@ -7,10 +7,11 @@
 // * Data: ajax/support/reports_ajax.php (dataJs/support_reports.js).      *
 // *************************************************************************
 
+require_once __DIR__ . '/../../helpers/theme.php';
 $userData = $user->cdp_getUserData();
 $ready = cdp_csEnsureTables();
 $actions = '<a class="btn btn-secondary btn-sm" href="support_inbox.php"><iconify-icon icon="solar:inbox-linear"></iconify-icon> Inbox</a> '
-    . '<button type="button" class="btn btn-primary btn-sm" id="cs_export"><iconify-icon icon="solar:download-linear"></iconify-icon> Export CSV</button>';
+    . '<button type="button" class="btn btn-primary btn-sm" id="cs_export"><iconify-icon icon="solar:download-linear"></iconify-icon> Export CSV</button>' . ' ' . cdp_themeToggle();
 ?>
 <!DOCTYPE html>
 <html dir="<?php echo $direction_layout; ?>" lang="en">
@@ -21,6 +22,7 @@ $actions = '<a class="btn btn-secondary btn-sm" href="support_inbox.php"><iconif
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" type="image/png" sizes="16x16" href="assets/<?php echo $core->favicon ?>">
     <title>Customer Service reports | <?php echo $core->site_name ?></title>
+    <?php cdp_themeBoot('light'); ?>
     <?php include 'views/inc/head_scripts.php'; ?>
 </head>
 
@@ -136,6 +138,7 @@ $actions = '<a class="btn btn-secondary btn-sm" href="support_inbox.php"><iconif
 
     <?php include 'views/support/_vocab.php'; ?>
     <script src="<?= cdp_asset('assets/css_main_swiftlane/js/apexcharts.min.js') ?>"></script>
+    <script src="<?= cdp_asset('dataJs/swl_theme.js') ?>"></script>
     <script src="<?= cdp_asset('dataJs/support_common.js') ?>"></script>
     <script src="<?= cdp_asset('dataJs/support_reports.js') ?>"></script>
 </body>

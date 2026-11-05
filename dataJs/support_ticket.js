@@ -340,9 +340,29 @@
     function group(label, html, id) { return '<div class="form-group"><label' + (id ? ' for="' + id + '"' : '') + '>' + CS.esc(label) + '</label>' + html + '</div>'; }
     function section(title, html) { return '<div class="swl-cs-section">' + CS.esc(title) + '</div><div>' + html + '</div>'; }
 
+    function actBtn(act, label, icon, kind) {
+        return '<button type="button" data-act="' + act + '"' + (kind ? ' data-kind="' + kind + '" class="is-approval"' : '') + '>'
+            + '<iconify-icon icon="' + icon + '" aria-hidden="true"></iconify-icon><span>' + CS.esc(label) + '</span>'
+            + (kind ? '<iconify-icon icon="solar:shield-check-linear" class="a2" role="img" aria-label="Needs approval"></iconify-icon>' : '') + '</button>';
+    }
+
     function drawDetails() {
         if (!D) { return; }
         var t = D.ticket, s = D.sla, h = '';
+        // What King knows, then the actions that change the customer's account.
+        if (t.summary) {
+            h += '<div class="swl-cs-summary-card"><div class="h"><iconify-icon icon="solar:magic-stick-3-linear" aria-hidden="true"></iconify-icon>' + CS.esc(V.king) + '\'s summary</div><div class="swl-cs-md">' + CS.md(t.summary) + '</div></div>';
+        }
+        h += section('Actions on this account', '<div class="swl-cs-actions">'
+            + actBtn('ask_approval', 'Request refund', 'solar:wallet-money-linear', 'refund')
+            + actBtn('ask_approval', 'Waive a fee', 'solar:sale-linear', 'discount')
+            + actBtn('ask_approval', 'Change address', 'solar:map-point-linear', 'address_change')
+            + actBtn('ask_approval', 'Damage / loss claim', 'solar:box-linear', 'claim')
+            + (V.copilot ? actBtn('ai_draft_btn', 'Draft with ' + V.king, 'solar:magic-stick-3-linear') : '')
+            + actBtn('note_mode', 'Internal note', 'solar:notes-linear')
+            + actBtn('task_focus', 'Create task', 'solar:checklist-minimalistic-linear')
+            + actBtn('follow', D.following ? 'Stop following' : 'Follow', D.following ? 'solar:bell-off-linear' : 'solar:bell-linear')
+            + '</div><p class="swl-cs-small swl-cs-muted mt-2 mb-0"><iconify-icon icon="solar:shield-check-linear" aria-hidden="true"></iconify-icon> Money and ownership changes go to an administrator for approval.</p>');
         h += '<div class="row">'
             + '<div class="col-12">' + group('Status', sel('status', V.statuses, t.status), 'cs_f_status') + '</div>'
             + (t.status.indexOf('pending') === 0 || t.status === 'on_hold' ? '<div class="col-12">' + group('Waiting for', '<input type="text" class="form-control form-control-sm" data-field="pending_reason" id="cs_f_pending_reason" value="' + CS.esc(t.pending_reason) + '" placeholder="e.g. receipt from the customer">', 'cs_f_pending_reason') + '</div>' : '')
@@ -533,7 +553,10 @@
                     var n = (r.result || []).filter(function (e) { return e.outcome === 'ok' || e.outcome === 'partial'; }).length;
                     CS.toast(n ? 'Automation ran.' : 'The automation\'s conditions did not match this ticket, so nothing changed.', n ? 'success' : 'info');
                 }); break;
-                case 'ask_approval': askApproval(); break;
+                case 'ask_approval': askApproval($(this).data('kind')); break;
+                case 'ai_draft_btn': $('#cs_ai_draft').trigger('click'); break;
+                case 'note_mode': setMode('note'); $('#cs_body').trigger('focus'); break;
+                case 'task_focus': $('[data-form="task"] input').not('[type="datetime-local"]').first().trigger('focus'); break;
                 case 'summary': aiSummary(); break;
                 case 'classify': aiClassify(); break;
                 case 'kb_draft':
@@ -597,12 +620,12 @@
         });
     }
 
-    function askApproval() {
+    function askApproval(kind) {
         if (!window.Swal) { return; }
         var kinds = T.proposal_kinds || { other: 'Other' };
         Swal.fire({
             title: 'Ask an administrator to approve',
-            html: '<select id="cs_pk" class="custom-select mb-2">' + Object.keys(kinds).map(function (k) { return '<option value="' + k + '">' + CS.esc(kinds[k]) + '</option>'; }).join('') + '</select>'
+            html: '<select id="cs_pk" class="custom-select mb-2">' + Object.keys(kinds).map(function (k) { return '<option value="' + k + '"' + (k === kind ? ' selected' : '') + '>' + CS.esc(kinds[k]) + '</option>'; }).join('') + '</select>'
                 + '<textarea id="cs_ps" class="form-control mb-2" rows="3" placeholder="What should be approved, and why"></textarea>'
                 + '<input id="cs_pa" class="form-control" placeholder="Amount, if any (e.g. GHS 120)">',
             showCancelButton: true, confirmButtonText: 'Send for approval', focusConfirm: false,

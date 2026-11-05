@@ -60,7 +60,11 @@
         return '<div class="swl-cs-kpi"><div class="swl-cs-kpi-l"><iconify-icon icon="' + icon + '" aria-hidden="true"></iconify-icon> ' + CS.esc(label) + '</div><div class="swl-cs-kpi-n">' + value + '</div><div class="swl-cs-kpi-s">' + sub + '</div>' + (d || '') + '</div>';
     }
 
+    var last = null;
+    $(document).on('swl:theme', function () { if (last) { drawCharts(last[0], last[1]); } });
+
     function draw(r, p) {
+        last = [r, p];
         $('#cs_rep_period').text(CS.full(r.period.from + ' 00:00').split(',')[0] + ' to ' + CS.full(r.period.to + ' 00:00').split(',')[0] + ' · compared with ' + p.from + ' to ' + p.to);
         $('#cs_basis').text(r.period.basis + '.');
         var slaR = pct(r.sla_resolve.met, r.sla_resolve.eligible), slaRp = pct(p.sla_resolve.met, p.sla_resolve.eligible);
@@ -126,9 +130,9 @@
         }
         if (charts[key]) { charts[key].destroy(); }
         opts.chart = $.extend({ type: 'area', height: 300, toolbar: { show: false }, fontFamily: 'inherit', animations: { speed: 450 }, background: 'transparent' }, opts.chart || {});
-        opts.grid = $.extend({ borderColor: '#e5e7eb', strokeDashArray: 3 }, opts.grid || {});
+        opts.grid = $.extend({ strokeDashArray: 3 }, opts.grid || {});
         opts.tooltip = $.extend({ theme: 'light' }, opts.tooltip || {});
-        charts[key] = new window.ApexCharts(box, opts);
+        charts[key] = new window.ApexCharts(box, CS.chartTheme(opts));
         charts[key].render();
     }
 
