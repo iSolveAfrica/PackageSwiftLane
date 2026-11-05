@@ -67,23 +67,34 @@ $actions = '<a class="btn btn-secondary btn-sm" href="support_inbox.php"><iconif
                 <div class="row">
                     <div class="col-12 col-xl-8">
                         <div class="card"><div class="card-body">
-                            <h5 class="card-title">New tickets per day</h5>
-                            <div class="swl-cs-bars" id="cs_days" role="img" aria-label="New tickets per day"></div>
-                            <div class="swl-cs-bar-axis" id="cs_days_axis"></div>
+                            <div class="swl-cs-card-head"><h5 class="card-title"><iconify-icon icon="solar:chart-2-linear" aria-hidden="true"></iconify-icon> Volume and outcomes per day</h5><span class="swl-cs-small swl-cs-muted" id="cs_daily_note"></span></div>
+                            <div id="cs_chart_daily" class="swl-cs-chart" role="img" aria-label="Tickets created, resolved, solved by King and handed to a person, per day"></div>
                         </div></div>
                     </div>
                     <div class="col-12 col-xl-4">
                         <div class="card"><div class="card-body">
-                            <h5 class="card-title">King (AI assistant)</h5>
+                            <div class="swl-cs-card-head"><h5 class="card-title"><iconify-icon icon="solar:magic-stick-3-linear" aria-hidden="true"></iconify-icon> Where King's chats ended</h5></div>
+                            <div id="cs_chart_ends" class="swl-cs-chart swl-cs-chart-sm" role="img" aria-label="Where King's chats ended"></div>
                             <div id="cs_king"></div>
                         </div></div>
                     </div>
-                    <div class="col-12 col-md-6 col-xl-4"><div class="card"><div class="card-body"><h5 class="card-title">By channel</h5><div id="cs_by_channel"></div></div></div></div>
-                    <div class="col-12 col-md-6 col-xl-4"><div class="card"><div class="card-body"><h5 class="card-title">By topic</h5><div id="cs_by_category"></div></div></div></div>
-                    <div class="col-12 col-md-6 col-xl-4"><div class="card"><div class="card-body"><h5 class="card-title">By team</h5><div id="cs_by_team"></div></div></div></div>
-                    <div class="col-12 col-md-6 col-xl-4"><div class="card"><div class="card-body"><h5 class="card-title">Why chats went to a person</h5><div id="cs_reasons"></div></div></div></div>
-                    <div class="col-12 col-md-6 col-xl-4"><div class="card"><div class="card-body"><h5 class="card-title">Open backlog by age</h5><div id="cs_backlog"></div></div></div></div>
-                    <div class="col-12 col-md-6 col-xl-4"><div class="card"><div class="card-body"><h5 class="card-title">Delivery and automation</h5><div id="cs_ops"></div></div></div></div>
+                    <div class="col-12 col-xl-5">
+                        <div class="card"><div class="card-body">
+                            <div class="swl-cs-card-head"><h5 class="card-title"><iconify-icon icon="solar:shield-check-linear" aria-hidden="true"></iconify-icon> Service health</h5></div>
+                            <div id="cs_chart_health" class="swl-cs-chart swl-cs-chart-sm" role="img" aria-label="Service health percentages"></div>
+                        </div></div>
+                    </div>
+                    <div class="col-12 col-xl-7">
+                        <div class="card"><div class="card-body">
+                            <div class="swl-cs-card-head"><h5 class="card-title"><iconify-icon icon="solar:hand-shake-linear" aria-hidden="true"></iconify-icon> Why chats went to a person</h5></div>
+                            <div id="cs_chart_reasons" class="swl-cs-chart swl-cs-chart-sm" role="img" aria-label="Reasons chats were handed to a person"></div>
+                        </div></div>
+                    </div>
+                    <div class="col-12 col-md-6 col-xl-4"><div class="card"><div class="card-body"><h5 class="card-title"><iconify-icon icon="solar:global-linear" aria-hidden="true"></iconify-icon> By channel</h5><div id="cs_by_channel"></div></div></div></div>
+                    <div class="col-12 col-md-6 col-xl-4"><div class="card"><div class="card-body"><h5 class="card-title"><iconify-icon icon="solar:tag-linear" aria-hidden="true"></iconify-icon> By topic</h5><div id="cs_by_category"></div></div></div></div>
+                    <div class="col-12 col-md-6 col-xl-4"><div class="card"><div class="card-body"><h5 class="card-title"><iconify-icon icon="solar:users-group-rounded-linear" aria-hidden="true"></iconify-icon> By team</h5><div id="cs_by_team"></div></div></div></div>
+                    <div class="col-12 col-md-6 col-xl-4"><div class="card"><div class="card-body"><h5 class="card-title"><iconify-icon icon="solar:hourglass-linear" aria-hidden="true"></iconify-icon> Open backlog by age</h5><div id="cs_backlog"></div></div></div></div>
+                    <div class="col-12 col-md-6 col-xl-4"><div class="card"><div class="card-body"><h5 class="card-title"><iconify-icon icon="solar:bolt-linear" aria-hidden="true"></iconify-icon> Delivery and automation</h5><div id="cs_ops"></div></div></div></div>
                     <div class="col-12">
                         <div class="card"><div class="card-body">
                             <h5 class="card-title">Agents</h5>
@@ -118,6 +129,7 @@ $actions = '<a class="btn btn-secondary btn-sm" href="support_inbox.php"><iconif
     </div>
 
     <?php include 'views/support/_vocab.php'; ?>
+    <script src="<?= cdp_asset('assets/css_main_swiftlane/js/apexcharts.min.js') ?>"></script>
     <script src="<?= cdp_asset('dataJs/support_common.js') ?>"></script>
     <script src="<?= cdp_asset('dataJs/support_reports.js') ?>"></script>
 </body>

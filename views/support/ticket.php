@@ -89,10 +89,10 @@ $actions = '<a class="btn btn-secondary btn-sm" href="support_inbox.php"><iconif
 
                     <aside class="swl-cs-side" aria-label="Ticket details">
                         <div class="swl-cs-tabs" role="tablist">
-                            <button type="button" class="is-on" data-tab="details" role="tab" aria-selected="true">Details</button>
-                            <button type="button" data-tab="customer" role="tab" aria-selected="false">Customer</button>
-                            <button type="button" data-tab="ai" role="tab" aria-selected="false">AI</button>
-                            <button type="button" data-tab="history" role="tab" aria-selected="false">History</button>
+                            <button type="button" class="is-on" data-tab="details" role="tab" aria-selected="true"><iconify-icon icon="solar:document-text-linear" aria-hidden="true"></iconify-icon> Details</button>
+                            <button type="button" data-tab="customer" role="tab" aria-selected="false"><iconify-icon icon="solar:user-id-linear" aria-hidden="true"></iconify-icon> Customer</button>
+                            <button type="button" data-tab="ai" role="tab" aria-selected="false"><iconify-icon icon="solar:magic-stick-3-linear" aria-hidden="true"></iconify-icon> King &amp; AI</button>
+                            <button type="button" data-tab="history" role="tab" aria-selected="false"><iconify-icon icon="solar:history-linear" aria-hidden="true"></iconify-icon> History</button>
                         </div>
                         <div data-pane="details" id="cs_p_details"></div>
                         <div data-pane="customer" id="cs_p_customer" hidden></div>

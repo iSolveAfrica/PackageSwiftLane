@@ -100,8 +100,8 @@
         var b = [];
         if (t.merged_into) { b.push('<div class="swl-cs-banner is-info">This ticket was merged into <a href="support_ticket.php?id=' + t.merged_into + '">' + CS.esc(t.merged_into_ref) + '</a>.</div>'); }
         if (t.disposition && t.disposition !== 'none') { b.push('<div class="swl-cs-banner">This ticket is in <b>' + CS.esc(t.disposition) + '</b>.</div>'); }
-        if (c && c.owner === 'handoff_queued') { b.push('<div class="swl-cs-banner is-info"><b>The customer is waiting for a person.</b> ' + (c.handover_reason ? 'Reason: ' + CS.esc(c.handover_reason) + '. ' : '') + 'Accept the chat to reply live.</div>'); }
-        if (c && c.owner === 'ai_active' && ['resolved', 'closed'].indexOf(t.status) === -1) { b.push('<div class="swl-cs-banner is-info">' + CS.esc(V.king) + ' is answering this chat. Replying takes it over; the customer is told a person joined.</div>'); }
+        if (c && c.owner === 'handoff_queued') { b.push('<div class="swl-cs-banner is-info"><b>The customer is waiting for a person.</b> ' + (c.handover_reason ? CS.ico('action', 'handover') + 'Why: ' + CS.esc(c.handover_reason.replace(/[_-]+/g, ' ')) + '. ' : '') + 'Accept the chat to reply live.</div>'); }
+        if (c && c.owner === 'ai_active' && ['resolved', 'closed'].indexOf(t.status) === -1) { b.push('<div class="swl-cs-banner is-info">' + CS.ico('action', 'king') + CS.esc(V.king) + ' is answering this chat. Replying takes it over; the customer is told a person joined.</div>'); }
         if (D.similar && D.similar.length) {
             b.push('<div class="swl-cs-banner">This customer has ' + D.similar.length + ' other open ticket' + (D.similar.length > 1 ? 's' : '') + ': '
                 + D.similar.map(function (s) { return '<a href="support_ticket.php?id=' + s.id + '">' + CS.esc(s.ref) + '</a> (' + CS.esc(s.subject) + ')'; }).join(', ') + '. Merge if it is the same issue.</div>');

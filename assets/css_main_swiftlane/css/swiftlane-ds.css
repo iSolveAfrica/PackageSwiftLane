@@ -2409,6 +2409,23 @@ a:has(> .btn:only-child) { display: inline-flex; max-width: 100%; }
 .swl-cs-kpi-l { font-size: 12px; color: var(--slate-400); font-weight: 600; }
 .swl-cs-kpi-n { font-family: var(--font-display); font-size: 28px; line-height: 34px; color: var(--ink-900); margin: 4px 0 2px; }
 .swl-cs-kpi-s { font-size: 12px; color: var(--slate-400); }
+/* Icons (support pages): one size, aligned to text; colour follows the pill or line it sits in. */
+.swl-cs-ico { font-size: 14px; margin-right: 4px; flex: none; }
+.swl-cs-view .swl-cs-ico { font-size: 16px; margin-right: 0; color: var(--slate-400); }
+.swl-cs-view.is-on .swl-cs-ico { color: var(--white); }
+.swl-cs-kpi-l iconify-icon { font-size: 15px; color: var(--blue-600); vertical-align: -2px; }
+.swl-cs-card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+.swl-cs-card-head .card-title { display: flex; align-items: center; gap: 8px; margin: 0; }
+.swl-cs-card-head .card-title iconify-icon { font-size: 18px; color: var(--blue-600); }
+.swl-cs-chart { width: 100%; min-height: 280px; }
+.swl-cs-chart-sm { min-height: 240px; }
+/* SLA: pill with a bar underneath that empties as the deadline nears. */
+.swl-cs-slacell { display: inline-flex; flex-direction: column; gap: 4px; min-width: 120px; }
+.swl-cs-slabar { display: block; height: 4px; border-radius: 999px; background: var(--fill-100); overflow: hidden; }
+.swl-cs-slabar > span { display: block; height: 100%; border-radius: 999px; background: var(--teal-700); }
+.swl-cs-slabar.is-warning > span { background: var(--warm-700); }
+.swl-cs-slabar.is-breached > span { background: var(--red-500); }
+.swl-cs-slabar.is-met > span, .swl-cs-slabar.is-paused > span { background: var(--slate-400); }
 .swl-cs-delta.is-up { color: var(--teal-700); }
 .swl-cs-delta.is-down { color: var(--red-500); }
 .swl-cs-bars { display: flex; align-items: flex-end; gap: 3px; height: 160px; padding-top: 10px; }

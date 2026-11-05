@@ -56,8 +56,8 @@
         var txt = unit === 'pts' ? Math.abs(Math.round(d)) + ' pts' : (unit === 'min' ? CS.dur(Math.abs(d)) : Math.abs(Math.round(d / prev * 100)) + '%');
         return '<span class="swl-cs-kpi-s" style="color: var(' + (good ? '--teal-700' : '--red-500') + ')">' + (d > 0 ? '▲ ' : '▼ ') + txt + ' vs previous</span>';
     }
-    function kpi(label, value, sub, d) {
-        return '<div class="swl-cs-kpi"><div class="swl-cs-kpi-l">' + CS.esc(label) + '</div><div class="swl-cs-kpi-n">' + value + '</div><div class="swl-cs-kpi-s">' + sub + '</div>' + (d || '') + '</div>';
+    function kpi(icon, label, value, sub, d) {
+        return '<div class="swl-cs-kpi"><div class="swl-cs-kpi-l"><iconify-icon icon="' + icon + '" aria-hidden="true"></iconify-icon> ' + CS.esc(label) + '</div><div class="swl-cs-kpi-n">' + value + '</div><div class="swl-cs-kpi-s">' + sub + '</div>' + (d || '') + '</div>';
     }
 
     function draw(r, p) {
@@ -69,22 +69,17 @@
         var fcr = pct(r.fcr.met, r.fcr.eligible);
         var kingRate = pct(r.ai.contained, r.ai.engaged), kingPrev = pct(p.ai.contained, p.ai.engaged);
         $('#cs_kpis').html([
-            kpi('Tickets', r.tickets, r.resolved + ' resolved · ' + r.reopened + ' reopened', delta(r.tickets, p.tickets, false)),
-            kpi('First reply (median)', CS.dur(r.human_first_response.median), '90% within ' + CS.dur(r.human_first_response.p90) + ' · ' + r.human_first_response.n + ' tickets', delta(r.human_first_response.median, p.human_first_median, true, 'min')),
-            kpi('Resolution (median)', CS.dur(r.resolution.median), '90% within ' + CS.dur(r.resolution.p90), delta(r.resolution.median, p.resolution_median, true, 'min')),
-            kpi('Resolution SLA met', slaR == null ? '–' : slaR + '%', r.sla_resolve.met + ' of ' + r.sla_resolve.eligible + (slaF == null ? '' : ' · first reply ' + slaF + '%'), delta(slaR, slaRp, false, 'pts')),
-            kpi('Solved first time', fcr == null ? '–' : fcr + '%', r.fcr.met + ' of ' + r.fcr.eligible + ' resolved'),
-            kpi('Customer rating', cs == null ? '–' : cs + '% happy', r.csat.responses + ' ratings from ' + r.csat.asked + ' resolved', delta(cs, csp, false, 'pts')),
-            kpi('Wait for a person (median)', CS.dur(r.handover_wait.median), 'From handover to a person replying · ' + r.handover_wait.n + ' chats'),
-            kpi('King solved', kingRate == null ? '–' : kingRate + '%', r.ai.contained + ' of ' + r.ai.engaged + ' chats King answered', delta(kingRate, kingPrev, false, 'pts'))
+            kpi('solar:ticket-linear', 'Tickets', r.tickets, r.resolved + ' resolved · ' + r.reopened + ' reopened', delta(r.tickets, p.tickets, false)),
+            kpi('solar:stopwatch-linear', 'First reply (median)', CS.dur(r.human_first_response.median), '90% within ' + CS.dur(r.human_first_response.p90) + ' · ' + r.human_first_response.n + ' tickets', delta(r.human_first_response.median, p.human_first_median, true, 'min')),
+            kpi('solar:check-circle-linear', 'Resolution (median)', CS.dur(r.resolution.median), '90% within ' + CS.dur(r.resolution.p90), delta(r.resolution.median, p.resolution_median, true, 'min')),
+            kpi('solar:shield-check-linear', 'Resolution SLA met', slaR == null ? '–' : slaR + '%', r.sla_resolve.met + ' of ' + r.sla_resolve.eligible + (slaF == null ? '' : ' · first reply ' + slaF + '%'), delta(slaR, slaRp, false, 'pts')),
+            kpi('solar:star-linear', 'Solved first time', fcr == null ? '–' : fcr + '%', r.fcr.met + ' of ' + r.fcr.eligible + ' resolved'),
+            kpi('solar:like-linear', 'Customer rating', cs == null ? '–' : cs + '% happy', r.csat.responses + ' ratings from ' + r.csat.asked + ' resolved', delta(cs, csp, false, 'pts')),
+            kpi('solar:hand-shake-linear', 'Wait for a person (median)', CS.dur(r.handover_wait.median), 'From handover to a person replying · ' + r.handover_wait.n + ' chats'),
+            kpi('solar:magic-stick-3-linear', 'King solved', kingRate == null ? '–' : kingRate + '%', r.ai.contained + ' of ' + r.ai.engaged + ' chats King answered', delta(kingRate, kingPrev, false, 'pts'))
         ].join(''));
 
-        // Per day, with empty days filled.
-        var days = [], d = new Date(r.period.from + 'T00:00'), end = new Date(r.period.to + 'T00:00');
-        while (d <= end && days.length < 400) { var k = ymd(d); days.push([k, r.by_day[k] || 0]); d.setDate(d.getDate() + 1); }
-        var max = Math.max.apply(null, days.map(function (x) { return x[1]; }).concat([1]));
-        $('#cs_days').html(days.map(function (x) { return '<div style="height:' + Math.max(2, x[1] / max * 100) + '%" title="' + CS.esc(x[0] + ': ' + x[1]) + '"></div>'; }).join(''));
-        $('#cs_days_axis').html('<span>' + CS.esc(days[0] ? days[0][0] : '') + '</span><span>Peak ' + max + '</span><span>' + CS.esc(days.length ? days[days.length - 1][0] : '') + '</span>');
+        drawCharts(r, p);
 
         $('#cs_by_channel').html(bars(r.by_channel));
         $('#cs_by_category').html(bars(r.by_category));
@@ -106,6 +101,114 @@
         $('#cs_agents').html(r.agents.length ? r.agents.map(function (a) {
             return '<tr><td>' + CS.esc(a.name) + '</td><td>' + a.assigned + '</td><td>' + a.resolved + '</td><td>' + CS.dur(a.first_median) + '</td><td>' + (a.csat == null ? '–' : a.csat + '/5 (' + a.csat_n + ')') + '</td></tr>';
         }).join('') : '<tr><td colspan="5"><div class="swl-cs-empty">No tickets in this period.</div></td></tr>');
+    }
+
+    // ---- Charts (ApexCharts, already vendored for the dashboards) ----------
+    var charts = {};
+    var PAL = { blue: '#2563eb', teal: '#0f766e', violet: '#7c3aed', amber: '#d97706', red: '#dc2626', slate: '#94a3b8' };
+
+    function ymdLabel(k) {
+        var d = new Date(k + 'T00:00');
+        return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+    }
+    function humanize(code) {
+        var t = String(code || '').replace(/[_-]+/g, ' ').trim();
+        return t ? t.charAt(0).toUpperCase() + t.slice(1) : 'Not given';
+    }
+    function pctOr0(v) { return v == null ? 0 : v; }
+
+    function chart(key, el, opts) {
+        var box = document.getElementById(el);
+        if (!box) { return; }
+        if (typeof window.ApexCharts === 'undefined') {
+            box.innerHTML = '<p class="swl-cs-small swl-cs-muted">The chart library did not load. The numbers above are still correct.</p>';
+            return;
+        }
+        if (charts[key]) { charts[key].destroy(); }
+        opts.chart = $.extend({ type: 'area', height: 300, toolbar: { show: false }, fontFamily: 'inherit', animations: { speed: 450 }, background: 'transparent' }, opts.chart || {});
+        opts.grid = $.extend({ borderColor: '#e5e7eb', strokeDashArray: 3 }, opts.grid || {});
+        opts.tooltip = $.extend({ theme: 'light' }, opts.tooltip || {});
+        charts[key] = new window.ApexCharts(box, opts);
+        charts[key].render();
+    }
+
+    function drawCharts(r, p) {
+        // 1. Daily volume and outcomes.
+        var daily = r.daily || [];
+        var cats = daily.map(function (x) { return ymdLabel(x.day); });
+        var total = daily.reduce(function (a, x) { return a + x.created; }, 0);
+        $('#cs_daily_note').text(total ? total + ' new in this period' : '');
+        if (!daily.length) { $('#cs_chart_daily').html('<div class="swl-cs-empty">No tickets in this period.</div>'); }
+        else {
+            chart('daily', 'cs_chart_daily', {
+                chart: { type: 'area', height: 320 },
+                series: [
+                    { name: 'New tickets', data: daily.map(function (x) { return x.created; }) },
+                    { name: 'Resolved', data: daily.map(function (x) { return x.resolved; }) },
+                    { name: 'Solved by King', data: daily.map(function (x) { return x.king; }) },
+                    { name: 'Handed to a person', data: daily.map(function (x) { return x.handed; }) }
+                ],
+                colors: [PAL.blue, PAL.teal, PAL.violet, PAL.amber],
+                stroke: { curve: 'smooth', width: 2 },
+                fill: { type: 'gradient', gradient: { shadeIntensity: 0.2, opacityFrom: 0.28, opacityTo: 0.02 } },
+                dataLabels: { enabled: false },
+                xaxis: { categories: cats, tickAmount: Math.min(10, cats.length), labels: { style: { colors: '#6b7280' } }, axisBorder: { show: false }, tooltip: { enabled: false } },
+                yaxis: { min: 0, forceNiceScale: true, decimalsInFloat: 0, labels: { style: { colors: '#6b7280' } } },
+                legend: { position: 'top', horizontalAlign: 'left', markers: { radius: 12 } },
+                markers: { size: 0, hover: { size: 5 } }
+            });
+        }
+
+        // 2. Where King's chats ended.
+        var ai = r.ai || {};
+        var left = ai.abandoned || 0, handed = ai.handed_over || 0, conf = ai.confirmed || 0;
+        var solvedNot = Math.max(0, (ai.contained || 0) - conf - left);
+        var ends = [conf, solvedNot, left, handed];
+        if (ends.reduce(function (a, b) { return a + b; }, 0) === 0) { $('#cs_chart_ends').html('<div class="swl-cs-empty">No King chats in this period.</div>'); }
+        else {
+            chart('ends', 'cs_chart_ends', {
+                chart: { type: 'donut', height: 240 },
+                series: ends,
+                labels: ['Solved, confirmed', 'Solved, not confirmed', 'Left mid-chat', 'Handed to a person'],
+                colors: [PAL.teal, PAL.blue, PAL.slate, PAL.amber],
+                dataLabels: { enabled: false },
+                legend: { position: 'bottom', fontSize: '12px' },
+                plotOptions: { pie: { donut: { size: '68%', labels: { show: true, total: { show: true, label: 'Chats', formatter: function (w) { return w.globals.seriesTotals.reduce(function (a, b) { return a + b; }, 0); } } } } } },
+                stroke: { width: 2, colors: ['#fff'] }
+            });
+        }
+
+        // 3. Service health, as percentages with a hollow radial each.
+        var health = [
+            ['Resolution SLA', r.sla_resolve.eligible ? pctOr0(pct(r.sla_resolve.met, r.sla_resolve.eligible)) : 0, r.sla_resolve.eligible],
+            ['Solved first time', r.fcr.eligible ? pct(r.fcr.met, r.fcr.eligible) : 0, r.fcr.eligible],
+            ['Happy customers', r.csat.responses ? pct(r.csat.positive, r.csat.responses) : 0, r.csat.responses],
+            ['King solved', ai.engaged ? pct(ai.contained, ai.engaged) : 0, ai.engaged]
+        ];
+        chart('health', 'cs_chart_health', {
+            chart: { type: 'radialBar', height: 260 },
+            series: health.map(function (h) { return h[1]; }),
+            labels: health.map(function (h) { return h[0] + (h[2] ? '' : ' (no data)'); }),
+            colors: [PAL.blue, PAL.teal, PAL.violet, PAL.amber],
+            plotOptions: { radialBar: { hollow: { size: '34%' }, track: { background: '#eef2f7' }, dataLabels: { name: { fontSize: '12px' }, value: { fontSize: '14px', fontWeight: 700, formatter: function (v) { return Math.round(v) + '%'; } }, total: { show: false } } } },
+            legend: { show: true, position: 'right', fontSize: '12px' }
+        });
+
+        // 4. Why chats went to a person.
+        var reasons = (r.handover_reasons || []).slice(0, 8);
+        if (!reasons.length) { $('#cs_chart_reasons').html('<div class="swl-cs-empty">No chats went to a person in this period.</div>'); }
+        else {
+            chart('reasons', 'cs_chart_reasons', {
+                chart: { type: 'bar', height: Math.max(180, reasons.length * 38 + 40) },
+                series: [{ name: 'Chats', data: reasons.map(function (x) { return x.n; }) }],
+                colors: [PAL.amber],
+                plotOptions: { bar: { horizontal: true, borderRadius: 6, barHeight: '60%' } },
+                xaxis: { categories: reasons.map(function (x) { return humanize(x.label); }), labels: { style: { colors: '#6b7280' } } },
+                dataLabels: { enabled: true, style: { fontSize: '12px' }, offsetX: 6 },
+                yaxis: { labels: { style: { fontSize: '12px' } } },
+                grid: { show: false }
+            });
+        }
     }
 
     function bars(list, empty) {

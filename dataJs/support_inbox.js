@@ -26,7 +26,24 @@
         bind();
         load();
         setInterval(function () { if (!document.hidden && !Object.keys(selected).length) { load(true); } }, 45000);
+        shortcuts();
     });
+
+    // Keyboard first: J/K move between tickets (Enter opens the focused one), / jumps to search. Ignored while typing.
+    function shortcuts() {
+        $(document).on('keydown', function (e) {
+            if (e.ctrlKey || e.metaKey || e.altKey) { return; }
+            var t = e.target, typing = t && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable);
+            if (typing) { return; }
+            if (e.key === '/') { e.preventDefault(); $('#cs_q').trigger('focus'); return; }
+            if (e.key !== 'j' && e.key !== 'k' && e.key !== 'J' && e.key !== 'K') { return; }
+            var rows = $('#cs_rows tr[data-id]'), i = rows.index(rows.filter(':focus'));
+            if (!rows.length) { return; }
+            var next = e.key.toLowerCase() === 'j' ? Math.min(rows.length - 1, i + 1) : Math.max(0, i < 0 ? 0 : i - 1);
+            e.preventDefault();
+            rows.eq(next).trigger('focus');
+        });
+    }
 
     function opts(obj) { return Object.keys(obj).map(function (k) { return '<option value="' + CS.esc(k) + '">' + CS.esc(obj[k]) + '</option>'; }).join(''); }
     function list(arr) { return arr.map(function (x) { return '<option value="' + x.id + '">' + CS.esc(x.name) + '</option>'; }).join(''); }
@@ -201,7 +218,7 @@
                 if (!viewNames[k]) { return; }
                 var n = counts[k];
                 h += '<button type="button" class="swl-cs-view' + (st.view === k ? ' is-on' : '') + '" data-view="' + k + '"' + (st.view === k ? ' aria-current="true"' : '') + '>'
-                    + CS.esc(viewNames[k]) + (n ? '<span class="n">' + n + '</span>' : '') + '</button>';
+                    + CS.ico('view', k) + CS.esc(viewNames[k]) + (n ? '<span class="n">' + n + '</span>' : '') + '</button>';
             });
         });
         if (savedViews.length) {
@@ -219,7 +236,12 @@
         if (s.state === 'met' || s.state === 'paused') { return CS.pill('sla', s.state); }
         var mins = Math.round((new Date(s.due.replace(' ', 'T')) - new Date()) / 60000);
         var txt = mins < 0 ? CS.dur(-mins) + ' late' : CS.dur(mins) + ' left';
-        return '<span class="swl-cs-pill is-' + (s.state === 'breached' || mins < 0 ? 'breached' : s.state) + '" title="' + CS.esc(s.label + ' due ' + CS.full(s.due)) + '">' + CS.esc(txt) + '</span>';
+        var st2 = s.state === 'breached' || mins < 0 ? 'breached' : s.state;
+        // Bar: a full bar means the deadline is gone; it empties over the last 8 hours.
+        var fill = st2 === 'breached' ? 100 : Math.max(4, Math.min(100, 100 - (mins / 480) * 100));
+        return '<span class="swl-cs-slacell" title="' + CS.esc(s.label + ' due ' + CS.full(s.due)) + '">'
+            + '<span class="swl-cs-pill is-' + st2 + '">' + CS.ico('sla', st2) + CS.esc(txt) + '</span>'
+            + '<span class="swl-cs-slabar is-' + st2 + '" aria-hidden="true"><span style="width:' + fill.toFixed(0) + '%"></span></span></span>';
     }
 
     function drawRows(l) {
@@ -233,7 +255,7 @@
                 var owner = t.owner_state && t.owner_state !== 'resolved' && ['ai_active', 'handoff_queued'].indexOf(t.owner_state) > -1 ? ' ' + CS.pill('owner', t.owner_state) : '';
                 return '<tr data-id="' + t.id + '" tabindex="0" class="' + (t.awaiting_us && ['resolved', 'closed'].indexOf(t.status) === -1 ? 'is-unread' : '') + '">'
                     + '<td><input type="checkbox" data-sel="' + t.id + '" aria-label="Select ' + CS.esc(t.ref) + '"' + (selected[t.id] ? ' checked' : '') + '></td>'
-                    + '<td class="swl-cs-subj"><b>' + CS.esc(t.subject) + '</b><small>' + CS.esc(t.ref) + (t.link_ref ? ' · ' + CS.esc(t.link_ref) : '') + ' · ' + CS.esc(V.categories[t.category] || t.category)
+                    + '<td class="swl-cs-subj"><b>' + CS.esc(t.subject) + '</b><small>' + CS.esc(t.ref) + (t.link_ref ? ' · ' + CS.esc(t.link_ref) : '') + ' · ' + CS.ico('category', t.category) + CS.esc(V.categories[t.category] || t.category)
                     + (t.tags.length ? ' · ' + t.tags.map(function (g) { return '#' + CS.esc(g); }).join(' ') : '') + '</small>'
                     + (t.preview ? '<small>' + (t.awaiting_us ? '● ' : '') + CS.esc(CS.plain(t.preview)) + '</small>' : '') + '</td>'
                     + '<td>' + CS.esc(t.is_internal ? 'Staff request' : t.customer) + (t.locker ? '<div class="swl-cs-small swl-cs-muted">' + CS.esc(t.locker) + '</div>' : '') + '</td>'

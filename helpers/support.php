@@ -2708,6 +2708,7 @@ if (!function_exists('cdp_csReport')) {
         $firstEligible = $firstMet = 0;
         $resolved = $reopened = $csatN = $csatPos = $fcr = 0;
         $byDay = $byChannel = $byCategory = $byTeam = $byAgent = [];
+        $resDay = [];
         $now = time();
         foreach ($tickets as $t) {
             $day = substr($t->created_at, 0, 10);
@@ -2728,6 +2729,8 @@ if (!function_exists('cdp_csReport')) {
             $isRes = in_array($t->status, ['resolved', 'closed'], true) && $t->resolved_at;
             if ($isRes) {
                 $resolved++;
+                $rd = substr($t->resolved_at, 0, 10);
+                $resDay[$rd] = ($resDay[$rd] ?? 0) + 1;
                 $resolve[] = max(0, $mins($t->created_at, $t->resolved_at) - (int) $t->sla_paused_minutes);
                 if ((int) $t->reopen_count === 0) {
                     $fcr++;
@@ -2773,17 +2776,23 @@ if (!function_exists('cdp_csReport')) {
             }
         }
         ksort($byDay);
+        ksort($resDay);
         // Conversations and King.
-        $convs = cdp_csQ("SELECT c.id, c.owner_state, c.ticket_id, c.handover_at, c.ai_turns, c.ai_outcome, c.rating
+        $convs = cdp_csQ("SELECT c.id, c.owner_state, c.ticket_id, c.handover_at, c.ai_turns, c.ai_outcome, c.rating, c.created_at
             FROM cdb_cs_conversations c WHERE c.created_at BETWEEN :f AND :t", [':f' => $b[':f'], ':t' => $b[':t']]);
         $ai = ['conversations' => count($convs), 'engaged' => 0, 'handed_over' => 0, 'contained' => 0, 'confirmed' => 0, 'abandoned' => 0];
+        $aiDay = [];
         foreach ($convs as $c) {
             if ((int) $c->ai_turns > 0 || $c->ai_outcome) {
                 $ai['engaged']++;
+                $ad = substr($c->created_at, 0, 10);
+                $aiDay[$ad] = $aiDay[$ad] ?? ['king' => 0, 'handed' => 0];
                 if ($c->handover_at) {
                     $ai['handed_over']++;
+                    $aiDay[$ad]['handed']++;
                 } else {
                     $ai['contained']++;
+                    $aiDay[$ad]['king']++;
                     if ($c->ai_outcome === 'confirmed') {
                         $ai['confirmed']++;
                     } elseif ($c->owner_state !== 'resolved') {
@@ -2833,12 +2842,34 @@ if (!function_exists('cdp_csReport')) {
             'ai' => $ai, 'ai_runs' => ['n' => (int) ($runs->n ?? 0), 'tokens_in' => (int) ($runs->tin ?? 0), 'tokens_out' => (int) ($runs->tout ?? 0),
                 'latency_ms' => $runs && $runs->lat !== null ? (int) $runs->lat : null, 'errors' => (int) ($runs->errs ?? 0), 'discarded' => (int) ($runs->discarded ?? 0)],
             'handover_reasons' => array_map(function ($r) { return ['label' => (string) $r->r, 'n' => (int) $r->n]; }, $reasons),
-            'by_day' => $byDay, 'by_channel' => $named($byChannel, cdp_csChannels()), 'by_category' => $named($byCategory, cdp_csCategories()),
+            'by_day' => $byDay,
+            'daily' => cdp_csDaily($from, $to, $byDay, $resDay, $aiDay),
+            'by_channel' => $named($byChannel, cdp_csChannels()), 'by_category' => $named($byCategory, cdp_csCategories()),
             'by_team' => $named($byTeam, $teams), 'agents' => $agents,
             'notifications' => array_map(function ($r) { return ['label' => (string) $r->status, 'n' => (int) $r->n]; }, $outbox),
             'automation' => array_map(function ($r) { return ['label' => (string) $r->outcome, 'n' => (int) $r->n]; }, $rules),
             'backlog' => array_map(function ($r) { return ['age' => (string) $r->age, 'status' => (string) $r->status, 'n' => (int) $r->n]; }, $backlog),
         ];
+    }
+
+    /** One row per day of the period (empty days included): created, resolved, King solved, handed to a person. */
+    function cdp_csDaily($from, $to, array $created, array $resolved, array $ai)
+    {
+        $rows = [];
+        $d = new DateTime($from);
+        $end = new DateTime($to);
+        while ($d <= $end && count($rows) < 400) {
+            $k = $d->format('Y-m-d');
+            $rows[] = [
+                'day' => $k,
+                'created' => (int) ($created[$k] ?? 0),
+                'resolved' => (int) ($resolved[$k] ?? 0),
+                'king' => (int) ($ai[$k]['king'] ?? 0),
+                'handed' => (int) ($ai[$k]['handed'] ?? 0),
+            ];
+            $d->modify('+1 day');
+        }
+        return $rows;
     }
 
     /** A CSV cell that a spreadsheet will never run as a formula. */
