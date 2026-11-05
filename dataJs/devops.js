@@ -128,6 +128,11 @@
         if (tab === 'deployments') { loadDeploys(); }
         if (tab === 'alerts') { loadAlerts(); }
         if (tab === 'access') { loadAccess(); }
+        if (tab === 'users') { loadUsers(); }
+        if (tab === 'data') { loadData(); }
+        if (tab === 'ai') { loadDiagList(); }
+        if (tab === 'infrastructure') { loadProcs(); }
+        if (tab === 'logs' && !S.ov) { loadOverview(); }
     }
 
     function schedule() {
@@ -138,6 +143,8 @@
         if (S.tab === 'logs' && S.tail) { timers.logs = setInterval(function () { if (!document.hidden) { loadLogs(false); } }, 3000); }
         if (S.tab === 'alerts') { timers.al = setInterval(function () { if (!document.hidden) { loadAlerts(); } }, 10000); }
         if (S.tab === 'metrics') { timers.m = setInterval(function () { if (!document.hidden) { loadMetric(); } }, 30000); }
+        if (S.tab === 'users') { timers.u = setInterval(function () { if (!document.hidden) { loadUsers(true); } }, 15000); }
+        if (S.tab === 'infrastructure') { timers.p = setInterval(function () { if (!document.hidden) { loadProcs(); } }, 20000); }
     }
 
     // ---------------------------------------------------------------- overview
@@ -303,6 +310,7 @@
     }
     function drawLogs() {
         $('#dv_log_n').text(S.logs.length.toLocaleString() + ' lines');
+        drawLogHist();
         $('#dv_log_rows').html(S.logs.length ? S.logs.map(function (x, i) {
             return '<tr class="is-click' + (S.logSel === x.id ? ' is-sel' : '') + '" data-log="' + i + '" tabindex="0"><td class="swl-dev-mono">' + esc(stamp(x.ts)) + '</td><td>' + esc(x.service) + '</td><td><span class="swl-dev-badge is-' + esc(x.level) + '">' + esc(x.level) + '</span></td><td class="wrap">' + esc(x.message) + '</td></tr>';
         }).join('') : '<tr><td colspan="4">' + empty('No log lines match these filters in this time window.', 'solar:document-text-linear') + '</td></tr>');
@@ -362,6 +370,7 @@
     }
     function drawMetricTiles() {
         if (!S.ov || !$('#dv_metric_tiles').is(':visible')) { return; }
+        setTimeout(metricTileCharts, 0);
         var sn = S.ov.snapshot, srv = sn.server;
         $('#dv_metric_tiles').html(
             '<div class="swl-dev-card swl-dev-kpi"><div class="l">' + ico('solar:ssd-round-linear') + 'Memory usage</div><div class="v">' + n(srv.mem_pct, 1) + '%</div><div class="s"><span>' + bytes(srv.mem_used) + ' of ' + bytes(srv.mem_total) + '</span></div></div>'
@@ -391,6 +400,7 @@
         $('#dv_pipe').html(d.pipeline.map(function (p) {
             return '<div class="st is-' + esc(p.state) + '"><span class="ic">' + ico(PI[p.state] || PI.unknown) + '</span><b>' + esc(p.name) + '</b>' + state(p.state) + '<small>' + esc(p.detail) + (p.at ? '<br>' + esc(stamp(p.at)) : '') + '</small></div>';
         }).join(''));
+        deployCharts(d.history);
         $('#dv_dep_rows').html(d.history.length ? d.history.map(function (x) {
             return '<tr><td class="swl-dev-mono">' + esc(x.hash) + '</td><td><span class="swl-dev-badge is-' + (x.kind === 'reset' ? 'warning' : 'success') + '">' + esc(x.kind) + '</span></td><td class="wrap">' + esc(x.message) + '</td><td>' + esc(x.author) + '</td><td class="swl-dev-mono">' + esc(x.from) + '</td><td>' + esc(stamp(x.ts)) + '<div class="swl-dev-note">' + esc(ago(x.ts)) + '</div></td></tr>';
         }).join('') : '<tr><td colspan="6">' + empty('No git history on this server.', 'solar:rocket-2-linear') + '</td></tr>');
@@ -410,6 +420,7 @@
             + gauge('Disk usage', srv.disk_pct, bytes(srv.disk_used) + ' of ' + bytes(srv.disk_total), 'solar:folder-linear')
             + gauge('DB connections', db.max_connections ? db.connections / db.max_connections * 100 : null, (db.connections != null ? db.connections : '–') + ' of ' + (db.max_connections || '–') + ' · ' + (db.running != null ? db.running : '–') + ' running', 'solar:database-linear'));
         drawArch('dv_arch');
+        infraExtras();
         if (srv.mem_total) {
             chart('mem', 'dv_c_mem', {
                 chart: { type: 'donut', height: 240 }, series: [Math.round(srv.mem_used / 1048576), Math.round((srv.mem_total - srv.mem_used) / 1048576)],
@@ -447,6 +458,7 @@
             ['Resolved, 24 h', res24, 'solar:check-circle-linear', 'is-green', 'Closed by themselves or by hand']
         ].map(function (x) { return '<div class="swl-dev-card swl-dev-kpi ' + x[3] + '"><div class="l">' + ico(x[2]) + esc(x[0]) + '</div><div class="v">' + x[1] + '</div><div class="s"><span>' + esc(x[4]) + '</span></div></div>'; }).join(''));
         $('#dv_alert_n').text(open.length).prop('hidden', !open.length);
+        alertCharts(a);
         var stf = S.alStatus, q = ($('#dv_al_q').val() || '').toLowerCase();
         var rows = a.filter(function (x) {
             return (stf === 'all' || (stf === 'open' ? x.status !== 'resolved' : x.status === 'resolved')) && (!q || (x.title + ' ' + x.service + ' ' + x.detail).toLowerCase().indexOf(q) > -1);
@@ -470,6 +482,269 @@
                 + '<td>' + (u.assigned ? state('operational', 'Assigned') : state('not_configured', 'Not assigned')) + '</td><td>' + esc(u.granted_at ? stamp(u.granted_at) : '–') + '</td>'
                 + '<td><button type="button" class="btn btn-secondary btn-sm" data-acc="' + u.id + '" data-on="' + (u.assigned ? 0 : 1) + '">' + ico(u.assigned ? 'solar:user-minus-linear' : 'solar:user-plus-linear') + (u.assigned ? ' Remove' : ' Assign') + '</button></td></tr>';
         }).join('') : '<tr><td colspan="5">' + empty('No super admins found.') + '</td></tr>');
+    }
+
+
+    // ---------------------------------------------------------------- extra charts
+    function dayKeys(n) {
+        var out = [], d = new Date();
+        d.setHours(0, 0, 0, 0);
+        for (var i = n - 1; i >= 0; i--) { var x = new Date(d); x.setDate(d.getDate() - i); out.push(x); }
+        return out;
+    }
+    function ymd(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+    function dlabel(d) { return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' }); }
+    function donut(key, el, labels, series, colors, total, height) {
+        if (!series.reduce(function (a, b) { return a + b; }, 0)) { $('#' + el).html(empty('Nothing to show yet.', 'solar:pie-chart-2-linear')); return; }
+        chart(key, el, {
+            chart: { type: 'donut', height: height || 240 }, series: series, labels: labels, colors: colors, legend: { position: 'bottom' },
+            stroke: { width: 2, colors: [css('--white')] },
+            plotOptions: { pie: { donut: { size: '68%', labels: { show: true, total: { show: true, label: total || 'Total', formatter: function (w) { return w.globals.seriesTotals.reduce(function (a, b) { return a + b; }, 0).toLocaleString(); } } } } } }
+        });
+    }
+    function hbar(key, el, labels, data, color, name, height) {
+        if (!data.length) { $('#' + el).html(empty('Nothing to show yet.', 'solar:chart-2-linear')); return; }
+        chart(key, el, {
+            chart: { type: 'bar', height: height || Math.max(180, data.length * 32 + 40) }, series: [{ name: name || 'Count', data: data }], colors: [color],
+            plotOptions: { bar: { horizontal: true, borderRadius: 5, barHeight: '62%' } }, xaxis: { categories: labels }, dataLabels: { enabled: true, offsetX: 4, style: { fontSize: '11px' } }, grid: { show: false }
+        });
+    }
+
+    function drawLogHist() {
+        if (!S.logs.length) { $('#dv_c_loghist').html(''); return; }
+        var b = {}, lv = ['INFO', 'WARN', 'ERROR'];
+        var times = S.logs.map(function (x) { return toDate(x.ts).getTime(); });
+        var span = Math.max.apply(null, times) - Math.min.apply(null, times), step = span > 86400000 ? 3600000 : (span > 7200000 ? 600000 : 60000);
+        S.logs.forEach(function (x) { var k = Math.floor(toDate(x.ts).getTime() / step) * step; b[k] = b[k] || { INFO: 0, WARN: 0, ERROR: 0 }; b[k][x.level] = (b[k][x.level] || 0) + 1; });
+        var keys = Object.keys(b).map(Number).sort();
+        chart('loghist', 'dv_c_loghist', {
+            chart: { type: 'bar', height: 150, stacked: true }, colors: [PAL.blue, PAL.amber, PAL.red],
+            series: lv.map(function (l) { return { name: l, data: keys.map(function (k) { return [k, b[k][l]]; }) }; }),
+            plotOptions: { bar: { columnWidth: '70%', borderRadius: 2 } }, xaxis: { type: 'datetime', labels: { datetimeUTC: false } },
+            yaxis: { labels: { formatter: function (v) { return Math.round(v); } } }, legend: { position: 'top', horizontalAlign: 'left' }
+        });
+    }
+
+    function metricTileCharts() {
+        var ser = S.mSeries || S.series || [];
+        if (!$('#dv_mt_mem').length) {
+            $('#dv_metric_tiles').append('<div class="swl-dev-card" style="grid-column: 1 / -1"><div class="swl-dev-grid is-4">'
+                + '<div><div class="swl-dev-note">Memory now</div><div id="dv_mt_mem"></div></div><div><div class="swl-dev-note">Network I/O</div><div id="dv_mt_net"></div></div>'
+                + '<div><div class="swl-dev-note">Disk I/O</div><div id="dv_mt_dio"></div></div><div><div class="swl-dev-note">Request rate</div><div id="dv_mt_apm"></div></div></div></div>');
+        }
+        var m = S.ov ? S.ov.snapshot.server.mem_pct : null;
+        chart('mt_mem', 'dv_mt_mem', { chart: { type: 'radialBar', height: 170 }, series: [m || 0], labels: ['Memory'], colors: [PAL.teal],
+            plotOptions: { radialBar: { hollow: { size: '58%' }, track: { background: css('--fill-100') }, dataLabels: { name: { show: false }, value: { fontSize: '20px', offsetY: 6, formatter: function (v) { return Math.round(v) + '%'; } } } } } });
+        chart('mt_net', 'dv_mt_net', areaOpts([pts(ser, 'rx'), pts(ser, 'tx')], ['In', 'Out'], [PAL.cyan, PAL.violet], 'B/s', 170));
+        chart('mt_dio', 'dv_mt_dio', areaOpts([pts(ser, 'dr'), pts(ser, 'dw')], ['Read', 'Write'], [PAL.teal, PAL.amber], 'B/s', 170));
+        chart('mt_apm', 'dv_mt_apm', areaOpts([pts(ser, 'apm')], ['Actions/min'], [PAL.amber], '', 170));
+    }
+
+    function infraExtras() {
+        var c = counts();
+        donut('health', 'dv_c_health', ['Healthy', 'Degraded', 'Down', 'Not set up / idle'], [c.operational, c.degraded, c.down, c.other], [PAL.green, PAL.amber, PAL.red, '#94A3B8'], 'Services');
+        var ev = (S.ov.alerts || []).map(function (a) { return { t: a.first_seen, text: a.title, icon: a.severity === 'critical' ? 'solar:danger-triangle-bold' : 'solar:danger-circle-bold', cls: a.severity === 'critical' ? 'bad' : 'warn' }; })
+            .concat((S.ov.deploys || []).map(function (d) { return { t: d.ts, text: 'Deploy ' + d.hash + ': ' + d.message, icon: 'solar:rocket-2-linear', cls: 'ok' }; }))
+            .sort(function (a, b) { return toDate(b.t) - toDate(a.t); }).slice(0, 8);
+        $('#dv_inf_events').html(ev.length ? ev.map(function (e) { return '<li>' + ico(e.icon, e.cls) + '<span class="nm" title="' + esc(e.text) + '">' + esc(e.text) + '</span><span></span><span class="ms">' + esc(ago(e.t)) + '</span></li>'; }).join('') : '<li>' + empty('No events yet.') + '</li>');
+        var ser = S.series || [];
+        ['cpu', 'mem', 'disk'].forEach(function (k, i) {
+            var card = $('#dv_inf_kpis .swl-dev-kpi').eq(i);
+            if (!card.find('.swl-dev-spark').length) { card.append('<div class="swl-dev-spark" id="dv_isp_' + k + '"></div>'); }
+            spark('isp_' + k, 'dv_isp_' + k, pts(ser, k), [PAL.green, PAL.blue, PAL.amber][i]);
+        });
+    }
+    function loadProcs() {
+        get({ action: 'processes' }).done(function (r) {
+            if (!r || !r.ok) { return; }
+            $('#dv_proc_rows').html(r.processes.length ? r.processes.map(function (p) {
+                return '<tr><td><b>' + esc(p.name) + '</b> <span class="swl-dev-note">' + esc(p.state) + '</span></td><td class="swl-dev-mono">' + p.pid + '</td><td>' + bytes(p.rss) + '</td><td>' + (p.cpu_avg == null ? '–' : n(p.cpu_avg, 1) + '%') + '</td></tr>';
+            }).join('') : '<tr><td colspan="4">' + empty('This host does not list its processes to PHP.', 'solar:cpu-bolt-linear') + '</td></tr>');
+        });
+    }
+
+    function deployCharts(h) {
+        var days = dayKeys(30), by = {}, kinds = {};
+        h.forEach(function (x) { var k = x.ts.slice(0, 10); by[k] = (by[k] || 0) + 1; kinds[x.kind] = (kinds[x.kind] || 0) + 1; });
+        chart('deploys', 'dv_c_deploys', { chart: { type: 'bar', height: 240 }, series: [{ name: 'Changes', data: days.map(function (d) { return by[ymd(d)] || 0; }) }], colors: [PAL.blue],
+            plotOptions: { bar: { borderRadius: 3, columnWidth: '60%' } }, xaxis: { categories: days.map(dlabel), tickAmount: 8, labels: { rotate: 0, hideOverlappingLabels: true } },
+            yaxis: { labels: { formatter: function (v) { return Math.round(v); } } } });
+        var kk = Object.keys(kinds);
+        donut('depkinds', 'dv_c_depkinds', kk, kk.map(function (k) { return kinds[k]; }), [PAL.green, PAL.blue, PAL.violet, PAL.amber, PAL.red, PAL.cyan, PAL.teal], 'Changes');
+    }
+
+    function alertCharts(a) {
+        var days = dayKeys(14), crit = {}, warn = {}, svc = {};
+        a.forEach(function (x) { var k = String(x.first_seen).slice(0, 10); (x.severity === 'critical' ? crit : warn)[k] = ((x.severity === 'critical' ? crit : warn)[k] || 0) + 1; svc[x.service] = (svc[x.service] || 0) + 1; });
+        chart('alday', 'dv_c_alday', { chart: { type: 'bar', height: 240, stacked: true }, colors: [PAL.red, PAL.amber],
+            series: [{ name: 'Critical', data: days.map(function (d) { return crit[ymd(d)] || 0; }) }, { name: 'Warning', data: days.map(function (d) { return warn[ymd(d)] || 0; }) }],
+            plotOptions: { bar: { borderRadius: 3, columnWidth: '55%' } }, xaxis: { categories: days.map(dlabel), labels: { rotate: 0, hideOverlappingLabels: true } },
+            yaxis: { labels: { formatter: function (v) { return Math.round(v); } } }, legend: { position: 'top', horizontalAlign: 'left' } });
+        var sk = Object.keys(svc).sort(function (x, y) { return svc[y] - svc[x]; }).slice(0, 8);
+        hbar('alsvc', 'dv_c_alsvc', sk, sk.map(function (k) { return svc[k]; }), PAL.violet, 'Alerts');
+    }
+
+    // ---------------------------------------------------------------- users
+    var U = { data: null, user: 0 };
+    function uParams() { return { action: 'users', module: $('#dv_u_mod').val(), outcome: $('#dv_u_out').val(), q: $('#dv_u_q').val(), user_id: U.user || '' }; }
+    function loadUsers(quiet) {
+        if (S.busy.u) { return; }
+        S.busy.u = true;
+        get(uParams()).done(function (r) {
+            if (!r || !r.ok) { return; }
+            U.data = r.users;
+            drawUsers(quiet);
+        }).fail(fail).always(function () { S.busy.u = false; });
+    }
+    function drawUsers(quiet) {
+        var u = U.data;
+        if (!u.available) { $('#dv_p_users .swl-dev-grid, #dv_p_users .swl-dev-card').first().before(empty('The activity log is not available on this database.', 'solar:users-group-two-rounded-linear')); return; }
+        var k = u.kpis || {};
+        var tiles = [['Online now', k.now5, 'solar:user-check-linear', 'is-green', 'Active in the last 5 minutes'], ['People today', k.today_users, 'solar:users-group-two-rounded-linear', '', (k.week_users || 0) + ' in 7 days'],
+            ['Actions today', k.today_actions, 'solar:pulse-2-linear', 'is-violet', (k.signins || 0) + ' sign-ins' + (k.signin_fail ? ' · ' + k.signin_fail + ' failed' : '')],
+            ['Problems today', (k.today_failed || 0) + (k.today_denied || 0), 'solar:danger-triangle-linear', 'is-red', (k.today_failed || 0) + ' failed · ' + (k.today_denied || 0) + ' denied' + (k.view_as ? ' · ' + k.view_as + ' using View as' : '')]];
+        $('#dv_u_kpis').html(tiles.map(function (x) { return '<div class="swl-dev-card swl-dev-kpi ' + x[3] + '"><div class="l">' + ico(x[2]) + esc(x[0]) + '</div><div class="v">' + n(x[1] || 0, 0) + '</div><div class="s"><span>' + esc(x[4]) + '</span></div></div>'; }).join(''));
+        if ($('#dv_u_mod option').length <= 1) { $('#dv_u_mod').append((u.all_modules || []).map(function (m) { return '<option value="' + esc(m) + '">' + esc(m) + '</option>'; }).join('')); }
+        if (!quiet || S.tab === 'users') {
+            var hrs = Object.keys(u.hourly).sort(), mods = (u.modules || []).concat(['other']);
+            var MC = [PAL.blue, PAL.teal, PAL.violet, PAL.amber, PAL.cyan, PAL.green, '#94A3B8'];
+            chart('uhour', 'dv_c_uhour', { chart: { type: 'bar', height: 300, stacked: true }, colors: MC,
+                series: mods.map(function (m) { return { name: m, data: hrs.map(function (h) { return [toDate(h).getTime(), u.hourly[h][m] || 0]; }) }; }).filter(function (sr) { return sr.data.some(function (d) { return d[1]; }); }),
+                plotOptions: { bar: { columnWidth: '75%', borderRadius: 2 } }, xaxis: { type: 'datetime', labels: { datetimeUTC: false } }, legend: { position: 'top', horizontalAlign: 'left' },
+                yaxis: { labels: { formatter: function (v) { return Math.round(v); } } }, noData: { text: 'No activity in 24 hours' } });
+            donut('urole', 'dv_c_urole', u.roles.map(function (r) { return r.label; }), u.roles.map(function (r) { return r.n; }), MC, 'Actions', 300);
+            var days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], grid = {};
+            u.heat.forEach(function (h) { grid[h.dw + '_' + h.h] = h.n; });
+            chart('uheat', 'dv_c_uheat', { chart: { type: 'heatmap', height: 280 }, colors: [PAL.blue], dataLabels: { enabled: false },
+                series: [2, 3, 4, 5, 6, 7, 1].reverse().map(function (dw) { return { name: days[dw - 1], data: Array.apply(null, Array(24)).map(function (_, h) { return { x: String(h).padStart(2, '0'), y: grid[dw + '_' + h] || 0 }; }) }; }),
+                plotOptions: { heatmap: { radius: 3, enableShades: true, shadeIntensity: 0.6 } }, xaxis: { labels: { rotate: 0, hideOverlappingLabels: true } } });
+            var dd = dayKeys(30), dm = {};
+            u.daily.forEach(function (x) { dm[x.d] = x; });
+            chart('uday', 'dv_c_uday', { chart: { type: 'line', height: 280 }, colors: [PAL.blue, PAL.green, PAL.red],
+                series: [{ name: 'Actions', type: 'column', data: dd.map(function (d) { return (dm[ymd(d)] || {}).n || 0; }) },
+                    { name: 'People', type: 'line', data: dd.map(function (d) { return (dm[ymd(d)] || {}).u || 0; }) },
+                    { name: 'Failed or denied', type: 'line', data: dd.map(function (d) { var x = dm[ymd(d)] || {}; return (x.f || 0) + (x.dn || 0); }) }],
+                stroke: { width: [0, 2.5, 2.5], curve: 'smooth' }, plotOptions: { bar: { columnWidth: '60%', borderRadius: 2 } }, labels: dd.map(dlabel),
+                xaxis: { labels: { rotate: 0, hideOverlappingLabels: true } },
+                yaxis: [{ title: { text: 'Actions' }, labels: { formatter: function (v) { return Math.round(v); } } }, { opposite: true, title: { text: 'People / problems' }, labels: { formatter: function (v) { return Math.round(v); } } }, { show: false }],
+                legend: { position: 'top', horizontalAlign: 'left' } });
+            hbar('utop', 'dv_c_utop', u.top.slice(0, 8).map(function (t) { return t.name || ('#' + t.id); }), u.top.slice(0, 8).map(function (t) { return t.n; }), PAL.teal, 'Actions', 300);
+            var OC = { success: PAL.green, failure: PAL.red, denied: PAL.amber };
+            donut('uout', 'dv_c_uout', u.outcomes.map(function (o) { return o.label; }), u.outcomes.map(function (o) { return o.n; }), u.outcomes.map(function (o) { return OC[o.label] || PAL.violet; }), 'Actions', 300);
+            $('#dv_u_failing').html(u.failing.length ? u.failing.map(function (f) { return '<li>' + ico('solar:danger-circle-bold', 'warn') + '<span class="nm" title="' + esc(f.label) + '">' + esc(f.label) + '<small class="d-block swl-dev-note">' + esc(f.module) + ' · last ' + esc(ago(f.last_at)) + '</small></span><span></span><span class="ms">' + n(f.n, 0) + '×</span></li>'; }).join('') : '<li>' + empty('Nothing failed in 7 days.', 'solar:check-circle-linear') + '</li>');
+            $('#dv_u_ips').html(u.ips.length ? u.ips.map(function (x) { return '<li>' + ico('solar:global-linear', x.f ? 'warn' : 'ok') + '<span class="nm swl-dev-mono">' + esc(x.ip) + '</span><span class="swl-dev-note">' + x.users + ' people</span><span class="ms">' + n(x.n, 0) + (x.f ? ' · ' + x.f + ' failed' : '') + '</span></li>'; }).join('') : '<li>' + empty('No requests recorded.') + '</li>');
+        }
+        $('#dv_u_online').html(u.online.length ? u.online.map(function (o) {
+            return '<tr><td><button type="button" class="swl-dev-linkbtn" data-uid="' + o.id + '">' + esc(o.name || ('#' + o.id)) + '</button></td><td>' + esc(o.role) + '</td><td class="wrap">' + esc(o.doing) + '</td><td class="swl-dev-mono">' + esc(o.endpoint) + '</td><td>' + esc(o.agent) + '</td><td class="swl-dev-mono">' + esc(o.ip) + '</td><td>' + o.n + '</td><td>' + esc(ago(o.last_at)) + '</td></tr>';
+        }).join('') : '<tr><td colspan="8">' + empty('Nobody has done anything in the last 15 minutes.', 'solar:user-check-linear') + '</td></tr>');
+        drawFeed(u.feed);
+    }
+    function drawFeed(f) {
+        $('#dv_u_feed_n').text(f.length + ' most recent' + (U.user ? ' for this person' : ''));
+        var OB = { success: 'success', denied: 'warning', failure: 'critical' };
+        $('#dv_u_feed').html(f.length ? f.map(function (x) {
+            return '<tr><td>' + esc(stamp(x.at)) + '</td><td><button type="button" class="swl-dev-linkbtn" data-uid="' + x.user_id + '">' + esc(x.name || ('#' + x.user_id)) + '</button>' + (x.view_as ? ' <span class="swl-dev-badge is-warning" title="Done while viewing as this person">View as</span>' : '') + '<div class="swl-dev-note">' + esc(x.role) + '</div></td>'
+                + '<td>' + esc(x.module) + '</td><td class="wrap">' + esc(x.summary || x.action) + '</td><td><span class="swl-dev-badge is-' + (OB[x.outcome] || 'info') + '">' + esc(x.outcome) + '</span></td>'
+                + '<td class="wrap swl-dev-note">' + esc(x.entity) + '</td><td class="swl-dev-mono">' + esc(x.request) + '</td><td class="swl-dev-mono">' + esc(x.ip) + '</td></tr>';
+        }).join('') : '<tr><td colspan="8">' + empty('No activity matches.') + '</td></tr>');
+    }
+    function openUser(id) {
+        U.user = id;
+        $('#dv_u_clear').prop('hidden', false);
+        get({ action: 'user', id: id }).done(function (r) {
+            if (!r || !r.ok) { return; }
+            var d = r.detail, u = d.user;
+            $('#dv_u_detail').html('<div class="swl-dev-user"><div class="swl-dev-card-h">' + ico('solar:user-id-linear') + '<h2>' + esc(u.name) + '</h2><div class="r swl-dev-note">' + esc(u.username || '') + (u.last_login ? ' · last sign-in ' + esc(stamp(u.last_login)) : '') + '</div></div>'
+                + '<div class="swl-dev-grid is-3"><div id="dv_c_udaily" class="swl-dev-chart" style="min-height:180px"></div><div id="dv_c_umods" class="swl-dev-chart" style="min-height:180px"></div>'
+                + '<ul class="swl-dev-status-list">' + d.ips.map(function (x) { return '<li>' + ico('solar:global-linear', 'ok') + '<span class="nm swl-dev-mono">' + esc(x.ip) + '</span><span class="swl-dev-note">' + x.n + ' actions</span><span class="ms">' + esc(ago(x.last_at)) + '</span></li>'; }).join('') + '</ul></div></div>');
+            var dd = dayKeys(14), dm = {};
+            d.daily.forEach(function (x) { dm[x.d] = x; });
+            chart('udaily', 'dv_c_udaily', { chart: { type: 'bar', height: 180, stacked: true }, colors: [PAL.blue, PAL.red],
+                series: [{ name: 'Succeeded', data: dd.map(function (x) { var r2 = dm[ymd(x)] || {}; return (r2.n || 0) - (r2.f || 0); }) }, { name: 'Problems', data: dd.map(function (x) { return (dm[ymd(x)] || {}).f || 0; }) }],
+                xaxis: { categories: dd.map(dlabel), labels: { rotate: 0, hideOverlappingLabels: true } }, plotOptions: { bar: { columnWidth: '60%', borderRadius: 2 } }, legend: { show: false } });
+            donut('umods', 'dv_c_umods', d.modules.map(function (m) { return m.label; }), d.modules.map(function (m) { return m.n; }), [PAL.blue, PAL.teal, PAL.violet, PAL.amber, PAL.cyan, PAL.green, PAL.red, '#94A3B8'], 'Actions', 200);
+            drawFeed(d.feed);
+            document.getElementById('dv_u_detail').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }).fail(fail);
+    }
+
+    // ---------------------------------------------------------------- system data
+    function loadData() {
+        get({ action: 'data' }).done(function (r) {
+            if (!r || !r.ok) { return; }
+            var d = r.data, A = d.areas;
+            var ic = { shipments: 'solar:box-linear', pickups: 'solar:delivery-linear', packages: 'solar:bag-4-linear', consolidations: 'solar:layers-linear', users: 'solar:users-group-rounded-linear', tickets: 'solar:ticket-linear', messages: 'solar:letter-linear' };
+            $('#dv_d_kpis').html(A.length ? A.slice(0, 8).map(function (a, i) {
+                var ch = a.prev7 ? Math.round((a.last7 - a.prev7) / a.prev7 * 100) : null;
+                return '<div class="swl-dev-card swl-dev-kpi ' + ['', 'is-green', 'is-violet', 'is-amber'][i % 4] + '"><div class="l">' + ico(ic[a.key] || 'solar:database-linear') + esc(a.label) + '</div><div class="v">' + n(a.total, 0) + '<small>total</small></div>'
+                    + '<div class="s"><span>' + n(a.last7, 0) + ' this week</span>' + (ch == null ? '' : '<span class="' + (ch >= 0 ? 'up' : 'down') + '">' + (ch >= 0 ? '+' : '') + ch + '%</span>') + '</div><div class="swl-dev-spark" id="dv_dsp_' + a.key + '"></div></div>';
+            }).join('') : empty('No business tables found on this database.', 'solar:database-linear'));
+            A.slice(0, 8).forEach(function (a, i) { spark('dsp_' + a.key, 'dv_dsp_' + a.key, a.series.map(function (x) { return [toDate(x.d).getTime(), x.n]; }), [PAL.blue, PAL.green, PAL.violet, PAL.amber][i % 4]); });
+            var days = (A[0] ? A[0].series : []).map(function (x) { return dlabel(toDate(x.d)); });
+            chart('dareas', 'dv_c_dareas', { chart: { type: 'bar', height: 320, stacked: true }, colors: [PAL.blue, PAL.teal, PAL.violet, PAL.amber, PAL.cyan, PAL.green, PAL.red],
+                series: A.map(function (a) { return { name: a.label, data: a.series.map(function (x) { return x.n; }) }; }), xaxis: { categories: days, labels: { rotate: 0, hideOverlappingLabels: true } },
+                plotOptions: { bar: { columnWidth: '65%', borderRadius: 2 } }, legend: { position: 'top', horizontalAlign: 'left' }, yaxis: { labels: { formatter: function (v) { return Math.round(v); } } } });
+            chart('dmsg', 'dv_c_dmsg', { chart: { type: 'bar', height: 260, stacked: true }, colors: [PAL.green, PAL.red, PAL.amber],
+                series: [{ name: 'Sent', data: d.channels.map(function (c) { return c.sent; }) }, { name: 'Failed', data: d.channels.map(function (c) { return c.failed; }) }, { name: 'Skipped', data: d.channels.map(function (c) { return c.skipped; }) }],
+                xaxis: { categories: d.channels.map(function (c) { return c.channel; }) }, plotOptions: { bar: { horizontal: true, borderRadius: 3, barHeight: '60%' } }, legend: { position: 'top', horizontalAlign: 'left' },
+                noData: { text: 'No messages in 30 days' } });
+            chart('dai', 'dv_c_dai', { chart: { type: 'line', height: 260 }, colors: [PAL.violet, PAL.amber],
+                series: [{ name: 'Calls', type: 'column', data: d.ai.map(function (x) { return [toDate(x.d).getTime(), x.calls]; }) }, { name: 'Tokens', type: 'line', data: d.ai.map(function (x) { return [toDate(x.d).getTime(), x.tokens]; }) }],
+                stroke: { width: [0, 2.5] }, xaxis: { type: 'datetime', labels: { datetimeUTC: false } }, yaxis: [{ labels: { formatter: function (v) { return Math.round(v); } } }, { opposite: true, labels: { formatter: function (v) { return n(v, 0); } } }],
+                legend: { position: 'top', horizontalAlign: 'left' }, noData: { text: 'No AI calls in 30 days' } });
+            var t = d.tables.slice(0, 8);
+            donut('dsize', 'dv_c_dsize', t.map(function (x) { return x.name; }), t.map(function (x) { return Math.round((x.data + x.index) / 1024); }), [PAL.blue, PAL.teal, PAL.violet, PAL.amber, PAL.cyan, PAL.green, PAL.red, '#94A3B8'], 'KB', 260);
+            $('#dv_d_tables').html(d.tables.length ? d.tables.map(function (x) {
+                return '<tr><td class="swl-dev-mono">' + esc(x.name) + '</td><td>' + n(x.rows, 0) + '</td><td>' + bytes(x.data) + '</td><td>' + bytes(x.index) + '</td><td>' + esc(x.engine) + '</td><td>' + esc(x.updated ? ago(x.updated) : '–') + '</td></tr>';
+            }).join('') : '<tr><td colspan="6">' + empty('No tables listed.') + '</td></tr>');
+        }).fail(fail);
+    }
+
+    // ---------------------------------------------------------------- AI diagnostics
+    function mdHtml(src) {
+        var lines = esc(String(src || '')).replace(/\r\n?/g, '\n').split('\n'), out = [], i = 0, para = [];
+        var inline = function (t) { return t.replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>'); };
+        var flush = function () { if (para.length) { out.push('<p>' + inline(para.join(' ')) + '</p>'); para = []; } };
+        while (i < lines.length) {
+            var l = lines[i];
+            if (/^```/.test(l)) { flush(); var code = []; i++; while (i < lines.length && !/^```/.test(lines[i])) { code.push(lines[i]); i++; } i++; out.push('<pre><code>' + code.join('\n') + '</code></pre>'); continue; }
+            var h = /^(#{1,4})\s+(.*)$/.exec(l);
+            if (h) { flush(); var lv = Math.min(3, h[1].length); out.push('<h' + lv + '>' + inline(h[2]) + '</h' + lv + '>'); i++; continue; }
+            if (/^\s*(-{3,}|\*{3,})\s*$/.test(l)) { flush(); out.push('<hr>'); i++; continue; }
+            if (/^&gt;\s?/.test(l)) { flush(); var q = []; while (i < lines.length && /^&gt;\s?/.test(lines[i])) { q.push(lines[i].replace(/^&gt;\s?/, '')); i++; } out.push('<blockquote>' + inline(q.join(' ')) + '</blockquote>'); continue; }
+            if (/^\s*([-*+]|\d+[.)])\s+/.test(l)) {
+                flush(); var ord = /^\s*\d+[.)]/.test(l), items = [];
+                while (i < lines.length && /^\s*([-*+]|\d+[.)])\s+/.test(lines[i])) { items.push('<li>' + inline(lines[i].replace(/^\s*([-*+]|\d+[.)])\s+/, '')) + '</li>'); i++; }
+                out.push(ord ? '<ol>' + items.join('') + '</ol>' : '<ul>' + items.join('') + '</ul>'); continue;
+            }
+            if (/^\s*$/.test(l)) { flush(); i++; continue; }
+            para.push(l.trim()); i++;
+        }
+        flush();
+        return out.join('');
+    }
+    function showReport(id, title, md) {
+        $('#dv_ai_out_card').prop('hidden', false);
+        $('#dv_ai_title').text(title);
+        $('#dv_ai_out').html(mdHtml(md));
+        $('#dv_ai_dl').attr('href', URL_ + '?action=diag_download&id=' + id);
+        $('#dv_ai_dle').attr('href', URL_ + '?action=diag_download&what=evidence&id=' + id);
+    }
+    function drawDiagList(list) {
+        $('#dv_ai_list').html(list.length ? list.map(function (r) {
+            return '<li>' + ico(r.status === 'analysed' ? 'solar:magic-stick-3-bold' : 'solar:document-text-linear', r.status === 'analysed' ? 'ok' : 'na')
+                + '<span class="nm"><button type="button" class="swl-dev-linkbtn" data-rep="' + r.id + '">' + esc(r.title) + '</button><small class="d-block swl-dev-note">' + esc(r.by) + ' · ' + esc(stamp(r.created_at)) + ' · ' + r.findings + ' findings</small></span>'
+                + '<a class="btn btn-secondary btn-sm" href="' + URL_ + '?action=diag_download&id=' + r.id + '" aria-label="Download ' + esc(r.title) + '">' + ico('solar:download-linear') + '</a>'
+                + '<button type="button" class="btn btn-secondary btn-sm" data-repdel="' + r.id + '" aria-label="Delete ' + esc(r.title) + '">' + ico('solar:trash-bin-trash-linear') + '</button></li>';
+        }).join('') : '<li>' + empty('No reports yet. Generate one on the left.', 'solar:folder-with-files-linear') + '</li>');
+    }
+    function loadDiagList() {
+        get({ action: 'diag_list' }).done(function (r) {
+            if (!r || !r.ok) { return; }
+            var a = r.ai_ready || {};
+            $('#dv_ai_state').html(a.ready ? state('operational', 'AI: ' + (a.provider || '') + ' ' + (a.model || '')) : state('not_configured', 'AI not set up: evidence and automatic findings only'));
+            drawDiagList(r.reports);
+        }).fail(fail);
     }
 
     // ---------------------------------------------------------------- wiring
@@ -520,12 +795,48 @@
                 if (r && r.ok) { S.access = r; drawAccess(); toast('Saved', 'success'); }
             }).fail(fail);
         });
+        var ut = null;
+        $('#dv_u_mod, #dv_u_out').on('change', function () { loadUsers(true); });
+        $('#dv_u_q').on('input', function () { clearTimeout(ut); ut = setTimeout(function () { loadUsers(true); }, 300); });
+        $(document).on('click', '[data-uid]', function () { if (S.tab !== 'users') { show('users'); } openUser(+$(this).data('uid')); });
+        $('#dv_u_clear').on('click', function () { U.user = 0; $(this).prop('hidden', true); $('#dv_u_detail').empty(); loadUsers(true); });
+        $('#dv_ai_form').on('submit', function (e) {
+            e.preventDefault();
+            var scope = $('#dv_ai_form input[name="scope"]:checked').map(function () { return this.value; }).get();
+            if (!scope.length) { toast('Pick at least one kind of evidence.'); return; }
+            var btn = $('#dv_ai_go').prop('disabled', true);
+            $('#dv_ai_out_card').prop('hidden', false);
+            $('#dv_ai_title').text('Working…');
+            $('#dv_ai_out').html('<span class="swl-dev-busy">Collecting evidence, reading code and asking the AI. This can take up to a minute.</span>');
+            post({ action: 'diag_run', question: $('#dv_ai_q').val(), scope: scope, window: $('#dv_ai_win').val(), paths: $('#dv_ai_paths').val() }).done(function (r) {
+                if (!r || !r.ok) { toast(r && r.error ? r.error : 'The report could not be made.'); return; }
+                showReport(r.id, r.ai_ok ? 'Diagnosis' : 'Diagnosis (evidence only)', r.markdown);
+                drawDiagList(r.reports);
+                if (!r.saved) { toast('Shown here, but the file could not be saved: make dev_reports/ writable.', 'warning'); }
+            }).fail(function (x) { fail(x); $('#dv_ai_out').html(empty('The report could not be made.')); }).always(function () { btn.prop('disabled', false); });
+        });
+        $('#dv_ai_list').on('click', '[data-rep]', function () {
+            var id = $(this).data('rep');
+            get({ action: 'diag_get', id: id }).done(function (r) { if (r && r.ok) { showReport(r.id, r.title, r.markdown); document.getElementById('dv_ai_out_card').scrollIntoView({ behavior: 'smooth' }); } }).fail(fail);
+        });
+        $('#dv_ai_list').on('click', '[data-repdel]', function () {
+            var id = $(this).data('repdel');
+            var go = function () { post({ action: 'diag_delete', id: id }).done(function (r) { if (r && r.ok) { drawDiagList(r.reports); } }).fail(fail); };
+            if (window.Swal) { Swal.fire({ title: 'Delete this report?', text: 'The report and its evidence file are removed.', icon: 'warning', showCancelButton: true, confirmButtonText: 'Delete' }).then(function (x) { if (x.isConfirmed) { go(); } }); }
+            else if (window.confirm('Delete this report?')) { go(); }
+        });
         $(document).on('swl:theme', function () {
+            if (S.tab === 'users' && U.data) { drawUsers(); }
+            if (S.tab === 'data') { loadData(); }
+            if (S.tab === 'deployments' && S.deploy) { drawDeploys(); }
+            if (S.tab === 'alerts') { drawAlerts(); }
+            if (S.tab === 'logs') { drawLogHist(); }
             if (S.ov) { drawKpis(); }
             if (S.tab === 'overview') { drawOvCharts(); }
             if (S.tab === 'metrics') { drawMetric(); }
             if (S.tab === 'infrastructure' && S.ov) { drawInfra(); }
         });
         show(h || 'overview');
+        $(window).on('hashchange', function () { var t = (location.hash || '').replace('#', ''); if (t && t !== S.tab) { show(t); } });
     });
 })(window.jQuery);

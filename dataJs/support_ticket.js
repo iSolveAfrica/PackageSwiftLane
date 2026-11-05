@@ -49,6 +49,7 @@
         drawAi();
         drawHistory();
         drawComposerState();
+        drawSide();
     }
 
     function schedulePoll() {
@@ -72,10 +73,13 @@
     function drawHead() {
         var t = D.ticket, c = t.conversation;
         $('#cs_t_subject').text(t.subject);
-        $('#cs_t_sub').html(CS.esc(t.ref) + ' ' + CS.pill('status', t.status) + ' ' + CS.pill('priority', t.priority)
-            + (c && c.owner && c.owner !== 'resolved' ? ' ' + CS.pill('owner', c.owner, c.owner === 'human_active' && c.owner_user ? 'With ' + c.owner_user : '') : '')
-            + ' · ' + CS.esc(V.channels[t.channel] || t.channel) + ' · opened ' + CS.esc(CS.full(t.created_at))
-            + (t.is_internal ? ' · ' + '<span class="swl-cs-pill is-pending_internal">Staff request</span>' : ''));
+        $('#cs_tk_ref').text(t.ref);
+        $('#cs_t_sub').html(CS.pill('status', t.status)
+            + '<span class="swl-cs-pri is-' + CS.esc(t.priority) + '">' + CS.ico('priority', t.priority) + CS.esc(V.priorities[t.priority] || t.priority) + '</span>'
+            + '<span class="swl-cs-ch is-' + CS.esc(t.channel) + '">' + CS.ico('channel', t.channel) + CS.esc(V.channels[t.channel] || t.channel) + '</span>'
+            + (c && c.owner && c.owner !== 'resolved' ? CS.pill('owner', c.owner, c.owner === 'human_active' && c.owner_user ? 'With ' + c.owner_user : '') : '')
+            + (t.is_internal ? '<span class="swl-cs-pill is-pending_internal">Staff request</span>' : '')
+            + '<span class="swl-tk-opened">Opened ' + CS.esc(CS.when(t.created_at)) + '</span>');
 
         var a = [];
         if (c) {
@@ -100,7 +104,7 @@
         var b = [];
         if (t.merged_into) { b.push('<div class="swl-cs-banner is-info">This ticket was merged into <a href="support_ticket.php?id=' + t.merged_into + '">' + CS.esc(t.merged_into_ref) + '</a>.</div>'); }
         if (t.disposition && t.disposition !== 'none') { b.push('<div class="swl-cs-banner">This ticket is in <b>' + CS.esc(t.disposition) + '</b>.</div>'); }
-        if (c && c.owner === 'handoff_queued') { b.push('<div class="swl-cs-banner is-info"><b>The customer is waiting for a person.</b> ' + (c.handover_reason ? CS.ico('action', 'handover') + 'Why: ' + CS.esc(c.handover_reason.replace(/[_-]+/g, ' ')) + '. ' : '') + 'Accept the chat to reply live.</div>'); }
+        if (c && c.owner === 'handoff_queued') { b.push('<div class="swl-tk-banner" role="status"><iconify-icon icon="solar:transfer-horizontal-linear" aria-hidden="true"></iconify-icon><div><b>' + CS.esc(V.king) + ' handed this chat to a person.</b> ' + (c.handover_reason ? 'Why: ' + CS.esc(c.handover_reason.replace(/[_-]+/g, ' ')) + '. ' : '') + 'The customer has been told someone is joining. Accept the chat to reply live.</div></div>'); }
         if (c && c.owner === 'ai_active' && ['resolved', 'closed'].indexOf(t.status) === -1) { b.push('<div class="swl-cs-banner is-info">' + CS.ico('action', 'king') + CS.esc(V.king) + ' is answering this chat. Replying takes it over; the customer is told a person joined.</div>'); }
         if (D.similar && D.similar.length) {
             b.push('<div class="swl-cs-banner">This customer has ' + D.similar.length + ' other open ticket' + (D.similar.length > 1 ? 's' : '') + ': '
@@ -142,13 +146,15 @@
         else if (m.author_type === 'system') { cls += internal ? ' is-note' : ' is-system'; who = internal ? 'System note' : ''; }
         else if (m.author_type === 'king') { cls += ' is-king'; who = V.king + ' (AI)'; }
         else if (m.author_type === 'staff') { cls += internal ? ' is-note' : (m.author_id === V.me ? ' is-staff-mine' : ''); }
-        if (m.author_type === 'staff' || (m.author_type === 'system' && internal) || m.author_type === 'king') { cls += ' is-mine'; }
+        if (m.author_type === 'staff' || (m.author_type === 'system' && internal)) { cls += ' is-mine'; }
         var extra = '';
         if (meta.sources && meta.sources.length) { extra += '<div class="swl-cs-src">Sources: ' + meta.sources.map(function (s) { return CS.esc(s.title || s); }).join(', ') + '</div>'; }
         if (meta.tools && meta.tools.length) { extra += '<div class="swl-cs-src">Looked up: ' + meta.tools.map(function (s) { return CS.esc(s.name || s); }).join(', ') + '</div>'; }
         if (meta.ai_assisted) { extra += '<div class="swl-cs-src">Drafted with AI, reviewed by the agent</div>'; }
         var state = m.delivery_state && ['failed', 'dead'].indexOf(m.delivery_state) > -1 ? ' · <span class="swl-cs-pill is-dead">Not delivered</span>' : '';
-        return '<div class="' + cls + '" data-mid="' + m.id + '"><div>'
+        var av = m.author_type === 'king' ? '<span class="swl-cs-av is-king" aria-hidden="true"><iconify-icon icon="solar:magic-stick-3-linear"></iconify-icon></span>'
+            : (m.author_type === 'system' && !internal ? '' : '<span class="swl-cs-av t' + (m.author_type === 'customer' ? 0 : 2) + '" aria-hidden="true">' + CS.esc(String(who || '?').split(/\s+/).slice(0, 2).map(function (p) { return p.charAt(0); }).join('').toUpperCase()) + '</span>');
+        return '<div class="' + cls + '" data-mid="' + m.id + '">' + av + '<div>'
             + (who ? '<div class="swl-cs-who">' + CS.esc(who) + (internal && m.author_type === 'staff' ? ' · internal note' : '') + '</div>' : '')
             + '<div class="swl-cs-bubble">' + CS.md(m.body) + CS.attachments(m.attachments) + '</div>' + extra
             + '<div class="swl-cs-meta">' + CS.esc(CS.full(m.created_at)) + (m.channel && m.channel !== 'web' && m.channel !== 'staff' ? ' · ' + CS.esc(V.channels[m.channel] || m.channel) : '') + state + '</div>'
@@ -340,6 +346,52 @@
     function group(label, html, id) { return '<div class="form-group"><label' + (id ? ' for="' + id + '"' : '') + '>' + CS.esc(label) + '</label>' + html + '</div>'; }
     function section(title, html) { return '<div class="swl-cs-section">' + CS.esc(title) + '</div><div>' + html + '</div>'; }
 
+    // ── Side cards (canvas: customer, King's summary, actions, shipments, service level) ──
+    var REC_ICON = { shipment: 'solar:plain-2-linear', pickup: 'solar:map-point-linear', package: 'solar:box-linear', consolidation: 'solar:layers-linear' };
+    function drawSide() {
+        var t = D.ticket, c = D.customer;
+        var ini = function (n) { return String(n || '?').split(/\s+/).filter(Boolean).slice(0, 2).map(function (p) { return p.charAt(0); }).join('').toUpperCase(); };
+        if (c) {
+            var ships = c.records.filter(function (r) { return r.type === 'shipment'; }).length;
+            $('#cs_tk_customer').html('<div class="swl-tk-who"><span class="swl-cs-av t0">' + CS.esc(ini(c.name)) + '</span><div><a href="customers_edit.php?user=' + c.id + '" target="_blank" rel="noopener"><b>' + CS.esc(c.name) + '</b></a>'
+                + '<small>Customer since ' + CS.esc(String(c.since || '').slice(0, 4) || '–') + (c.locker ? ' · Locker ' + CS.esc(c.locker) : '') + '</small></div></div>'
+                + '<div class="swl-tk-stats"><div><b>' + ships + (ships >= 6 ? '+' : '') + '</b><span>Shipments</span></div><div><b>' + (c.tickets.length + 1) + '</b><span>Tickets</span></div>'
+                + '<div><b class="' + (c.csat_avg >= 4 ? 'is-good' : '') + '">' + (c.csat_avg !== null ? c.csat_avg : '–') + '</b><span>Avg rating</span></div></div>'
+                + '<div class="swl-tk-contact">' + (c.email ? '<span><iconify-icon icon="solar:letter-linear" aria-hidden="true"></iconify-icon>' + CS.esc(c.email) + '</span>' : '')
+                + (c.phone ? '<span><iconify-icon icon="solar:phone-linear" aria-hidden="true"></iconify-icon>' + CS.esc(c.phone) + '</span>' : '')
+                + (c.unpaid_count ? '<span class="is-warn"><iconify-icon icon="solar:bill-cross-linear" aria-hidden="true"></iconify-icon>' + c.unpaid_count + ' unpaid record' + (c.unpaid_count > 1 ? 's' : '') + '</span>' : '') + '</div>');
+        } else {
+            $('#cs_tk_customer').html('<div class="swl-tk-who"><span class="swl-cs-av t3">' + CS.esc(ini(t.is_internal ? 'Staff' : t.customer)) + '</span><div><b>' + CS.esc(t.is_internal ? 'Staff request' : t.customer) + '</b><small>' + CS.esc(t.customer_email || 'No customer account linked') + '</small></div></div>');
+        }
+        $('#cs_tk_summary').prop('hidden', !t.summary).html(t.summary ? '<h3><iconify-icon icon="solar:magic-stick-3-linear" aria-hidden="true"></iconify-icon>' + CS.esc(V.king) + '\'s summary</h3><div class="swl-cs-md">' + CS.md(t.summary) + '</div>' : '');
+        $('#cs_tk_actions').html(actBtn('ask_approval', 'Request refund', 'solar:wallet-money-linear', 'refund')
+            + actBtn('ask_approval', 'Change address', 'solar:map-point-linear', 'address_change')
+            + actBtn('ask_approval', 'Waive a fee', 'solar:sale-linear', 'discount')
+            + actBtn('ask_approval', 'Damage / loss claim', 'solar:box-linear', 'claim')
+            + (V.copilot ? actBtn('ai_draft_btn', 'Draft with ' + V.king, 'solar:magic-stick-3-linear') : '')
+            + actBtn('note_mode', 'Internal note', 'solar:notes-linear')
+            + actBtn('task_focus', 'Create task', 'solar:checklist-minimalistic-linear')
+            + actBtn('follow', D.following ? 'Stop following' : 'Follow', D.following ? 'solar:bell-off-linear' : 'solar:bell-linear'));
+        var recs = (D.links || []).map(function (l) { return { type: l.type, ref: l.ref, status: l.status, url: l.url, label: l.label, linked: true }; });
+        if (!recs.length && c) { recs = c.records.slice(0, 3); }
+        $('#cs_tk_ships').html(recs.length ? recs.map(function (r) {
+            var st = String(r.status || '').toLowerCase(), cls = /hold|fail|cancel|return|lost/.test(st) ? 'is-bad' : (/deliver|ready|collect|paid/.test(st) ? 'is-good' : 'is-info');
+            return '<a class="swl-tk-rec" href="' + CS.esc(r.url || '#') + '" target="_blank" rel="noopener"><span class="ic ' + cls + '"><iconify-icon icon="' + (REC_ICON[r.type] || 'solar:box-linear') + '" aria-hidden="true"></iconify-icon></span>'
+                + '<span class="t"><b>' + CS.esc(r.ref) + '</b><small>' + CS.esc(r.label) + (r.linked ? ' · linked' : ' · recent') + '</small></span><span class="st ' + cls + '">' + CS.esc(r.status || '–') + '</span></a>';
+        }).join('') : '<p class="swl-tk-note">Nothing linked. Link a record in Details below.</p>');
+        var s = D.sla || {}, row = function (k) {
+            var x = s[k];
+            if (!x || !x.due) { return ''; }
+            var mins = Math.round((new Date(x.due.replace(' ', 'T')) - new Date()) / 60000);
+            var txt = x.state === 'met' ? 'Met' : (x.state === 'paused' ? 'Paused' : (mins < 0 ? CS.dur(-mins) + ' late' : CS.dur(mins) + ' left'));
+            var st = x.state === 'met' ? 'met' : (mins < 0 || x.state === 'breached' ? 'breached' : x.state);
+            return '<div class="swl-tk-sla is-' + st + '"><span>' + CS.esc(x.label) + '</span><b>' + CS.esc(txt) + '</b></div>'
+                + (k === 'resolve' && st !== 'met' ? '<span class="swl-tk-bar is-' + st + '"><span style="width:' + (st === 'breached' ? 100 : Math.max(4, Math.min(100, 100 - mins / 480 * 100))).toFixed(0) + '%"></span></span>' : '');
+        };
+        $('#cs_tk_sla').html(row('first') + row('resolve') + (s.policy ? '<p class="swl-tk-note">' + CS.esc(s.policy) + '</p>' : '')
+            + (t.tags.length ? '<div class="swl-tk-tags">' + t.tags.map(function (g) { return '<span>#' + CS.esc(g) + '</span>'; }).join('') + '</div>' : ''));
+    }
+
     function actBtn(act, label, icon, kind) {
         return '<button type="button" data-act="' + act + '"' + (kind ? ' data-kind="' + kind + '" class="is-approval"' : '') + '>'
             + '<iconify-icon icon="' + icon + '" aria-hidden="true"></iconify-icon><span>' + CS.esc(label) + '</span>'
@@ -349,20 +401,6 @@
     function drawDetails() {
         if (!D) { return; }
         var t = D.ticket, s = D.sla, h = '';
-        // What King knows, then the actions that change the customer's account.
-        if (t.summary) {
-            h += '<div class="swl-cs-summary-card"><div class="h"><iconify-icon icon="solar:magic-stick-3-linear" aria-hidden="true"></iconify-icon>' + CS.esc(V.king) + '\'s summary</div><div class="swl-cs-md">' + CS.md(t.summary) + '</div></div>';
-        }
-        h += section('Actions on this account', '<div class="swl-cs-actions">'
-            + actBtn('ask_approval', 'Request refund', 'solar:wallet-money-linear', 'refund')
-            + actBtn('ask_approval', 'Waive a fee', 'solar:sale-linear', 'discount')
-            + actBtn('ask_approval', 'Change address', 'solar:map-point-linear', 'address_change')
-            + actBtn('ask_approval', 'Damage / loss claim', 'solar:box-linear', 'claim')
-            + (V.copilot ? actBtn('ai_draft_btn', 'Draft with ' + V.king, 'solar:magic-stick-3-linear') : '')
-            + actBtn('note_mode', 'Internal note', 'solar:notes-linear')
-            + actBtn('task_focus', 'Create task', 'solar:checklist-minimalistic-linear')
-            + actBtn('follow', D.following ? 'Stop following' : 'Follow', D.following ? 'solar:bell-off-linear' : 'solar:bell-linear')
-            + '</div><p class="swl-cs-small swl-cs-muted mt-2 mb-0"><iconify-icon icon="solar:shield-check-linear" aria-hidden="true"></iconify-icon> Money and ownership changes go to an administrator for approval.</p>');
         h += '<div class="row">'
             + '<div class="col-12">' + group('Status', sel('status', V.statuses, t.status), 'cs_f_status') + '</div>'
             + (t.status.indexOf('pending') === 0 || t.status === 'on_hold' ? '<div class="col-12">' + group('Waiting for', '<input type="text" class="form-control form-control-sm" data-field="pending_reason" id="cs_f_pending_reason" value="' + CS.esc(t.pending_reason) + '" placeholder="e.g. receipt from the customer">', 'cs_f_pending_reason') + '</div>' : '')

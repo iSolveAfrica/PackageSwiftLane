@@ -21,9 +21,37 @@
 | Deployments | Success rate, deploys and rollbacks over 30 days, and the last deploy. Pipeline for the running version (code → tests → dependencies → deploy → health check) and the full history | The git reflog of this checkout (`.git/logs/HEAD`), `.phpunit.result.cache`, `composer.lock` vs `vendor/`, live health |
 | Infrastructure | CPU, memory, disk and DB-connection gauges, the infrastructure map with live status per node, a memory chart, and server, database and PHP facts | `/proc`, `disk_*_space`, MySQL `SHOW GLOBAL STATUS` |
 | Alerts | Open / critical / warning / resolved-in-24 h totals, and every alert with its service, severity, when it started, how long it lasted and its context. Acknowledge and Resolve buttons | `cdb_dev_alerts` |
+| User activity | Who is online now, people and actions today, problems (failed / denied). Actions per hour by module, actions by role, a weekday × hour heatmap over 30 days, daily actions / people / problems, most active people, outcomes, the actions that fail most and the busiest IP addresses. A searchable record of everything people did, filterable by module, outcome and text. Click a person for their 14-day activity, modules and the addresses they used | `cdb_activity_log` |
+| System data | Totals and 30-day growth for shipments, pickups, packages, consolidations, accounts, support tickets and messages. New records per day by area, messages by channel (sent / failed / skipped), AI calls and tokens per day, and the largest database tables | the business tables, `cdb_message_log`, `cdb_cs_ai_runs`, `information_schema` |
+| AI diagnostics | Ask a question (or none, for a general check), pick the evidence and the look-back window, and get a report. The report holds the automatic findings, the AI's analysis (summary, findings with evidence, code review, actions, what to watch) and the code it read. Each report is saved as a Markdown file plus its evidence as JSON, kept in `dev_reports/` and listed for download | everything above, plus the source files that errors point to |
 | Access | Super admins and who is assigned | `cdb_dev_access` |
 
 The page has a light and a dark theme (dark by default). The choice is remembered per browser.
+
+## AI diagnostics
+
+The evidence collected:
+- health and services
+- open and recent alerts
+- PHP errors, grouped
+- failed actions, messages and AI calls
+- the deployment pipeline
+- optionally, user activity
+
+With "Read the code errors point to", the dashboard opens every file named in a PHP error (`in /path/file.php on line N`) and includes 30 lines on each side of the reported line. You can also list files yourself, for example `helpers/support.php:1200`.
+
+Safety:
+- Only source files inside the app are read: `.php`, `.js`, `.css`, `.sql`, `.md`, `.json`, `.html`, `.txt`.
+- Never read: `loader.php`, config files, anything named like a credential or secret, `vendor/`, `.git/`, `uploads/`, `support_files/`, backups and `dev_reports/` itself.
+- Before anything leaves the server, values that look like passwords, tokens or API keys are masked, and so are long token-like strings and e-mail addresses.
+- People in the activity summary are shown as "User #id".
+
+The analysis uses the provider set in Tools › AI Assistant. Without one, the report still has the automatic findings and the full evidence.
+
+Reports are written to `dev_reports/`:
+- The folder is created on first use with a deny-all `.htaccess` and is git-ignored.
+- Files are served only through the dashboard's download action, after the same access check as the page.
+- The web server needs write access to the app folder once, to create it.
 
 ## Services and how their status is worked out
 

@@ -40,20 +40,32 @@ $actions = '<a class="btn btn-secondary btn-sm" href="support_inbox.php"><iconif
                 <?php if (!$ready) : ?>
                     <div class="swl-cs-banner is-danger">The helpdesk tables could not be created.</div>
                 <?php endif; ?>
-                <div id="cs_banners"></div>
+                <div class="swl-desk-wrap">
+                <div class="swl-tk">
+                    <nav class="swl-desk-rail" aria-label="Customer Service">
+                        <a href="support_inbox.php" class="is-on" aria-label="Inbox" title="Inbox"><iconify-icon icon="solar:inbox-linear" aria-hidden="true"></iconify-icon></a>
+                        <a href="support_reports.php" aria-label="Reports" title="Reports"><iconify-icon icon="solar:chart-2-linear" aria-hidden="true"></iconify-icon></a>
+                        <a href="support_settings.php#rules" aria-label="Automation" title="Automation"><iconify-icon icon="solar:bolt-linear" aria-hidden="true"></iconify-icon></a>
+                        <span class="grow"></span>
+                        <a href="support_settings.php" aria-label="Settings" title="Settings"><iconify-icon icon="solar:settings-linear" aria-hidden="true"></iconify-icon></a>
+                    </nav>
 
-                <div class="swl-cs-ws">
-                    <section class="swl-cs-ws-main" aria-label="Conversation">
-                        <header class="swl-cs-ws-head">
-                            <div class="swl-cs-ws-title">
-                                <h3 id="cs_t_subject">Loading…</h3>
-                                <div class="swl-cs-ws-sub" id="cs_t_sub"></div>
+                    <section class="swl-tk-main" aria-label="Conversation">
+                        <header class="swl-tk-head">
+                            <div class="swl-tk-crumb">
+                                <a href="support_inbox.php"><iconify-icon icon="solar:alt-arrow-left-linear" aria-hidden="true"></iconify-icon>Inbox</a>
+                                <span aria-hidden="true">/</span><span id="cs_tk_ref">…</span>
+                                <span class="swl-cs-viewers" id="cs_viewers" aria-live="polite"></span>
                             </div>
-                            <div class="swl-cs-viewers" id="cs_viewers" aria-live="polite"></div>
-                            <div id="cs_t_actions" class="d-flex" style="gap: 6px; flex-wrap: wrap;"></div>
+                            <div class="swl-tk-titlerow">
+                                <h2 id="cs_t_subject">Loading…</h2>
+                                <div class="swl-tk-chips" id="cs_t_sub"></div>
+                                <div class="swl-tk-actions" id="cs_t_actions"></div>
+                            </div>
                         </header>
+                        <div id="cs_banners" class="swl-tk-banners"></div>
 
-                        <div class="swl-cs-timeline" id="cs_timeline" role="log" aria-live="polite" aria-label="Messages"></div>
+                        <div class="swl-cs-timeline swl-tk-timeline" id="cs_timeline" role="log" aria-live="polite" aria-label="Messages"></div>
 
                         <div class="swl-cs-composer" id="cs_composer">
                             <div class="swl-cs-comp-top">
@@ -89,7 +101,17 @@ $actions = '<a class="btn btn-secondary btn-sm" href="support_inbox.php"><iconif
                         </div>
                     </section>
 
-                    <aside class="swl-cs-side" aria-label="Ticket details">
+                    <aside class="swl-tk-side" aria-label="Customer and actions">
+                        <div class="swl-tk-card" id="cs_tk_customer"></div>
+                        <div class="swl-tk-card is-king" id="cs_tk_summary" hidden></div>
+                        <div class="swl-tk-card">
+                            <h3>Actions on this account</h3>
+                            <div class="swl-cs-actions" id="cs_tk_actions"></div>
+                            <p class="swl-tk-note"><iconify-icon icon="solar:shield-check-linear" aria-hidden="true"></iconify-icon> Money and ownership changes need an admin's approval.</p>
+                        </div>
+                        <div class="swl-tk-card"><h3>Linked shipments</h3><div id="cs_tk_ships"></div></div>
+                        <div class="swl-tk-card"><h3>Service level</h3><div id="cs_tk_sla"></div></div>
+                        <div class="swl-tk-card swl-cs-side">
                         <div class="swl-cs-tabs" role="tablist">
                             <button type="button" class="is-on" data-tab="details" role="tab" aria-selected="true"><iconify-icon icon="solar:document-text-linear" aria-hidden="true"></iconify-icon> Details</button>
                             <button type="button" data-tab="customer" role="tab" aria-selected="false"><iconify-icon icon="solar:user-id-linear" aria-hidden="true"></iconify-icon> Customer</button>
@@ -100,7 +122,9 @@ $actions = '<a class="btn btn-secondary btn-sm" href="support_inbox.php"><iconif
                         <div data-pane="customer" id="cs_p_customer" hidden></div>
                         <div data-pane="ai" id="cs_p_ai" hidden></div>
                         <div data-pane="history" id="cs_p_history" hidden></div>
+                        </div>
                     </aside>
+                </div>
                 </div>
             </div>
 

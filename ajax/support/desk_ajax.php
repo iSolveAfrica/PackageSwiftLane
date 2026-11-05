@@ -134,6 +134,28 @@ if ($method !== 'POST') {
         case 'kb':
             $reply(['ok' => true, 'articles' => cdp_csKbSearch((string) ($_GET['q'] ?? ''), ['public', 'customer', 'staff'], 8)]);
 
+        case 'pulse': // the inbox top bar: happy customers, King today, colleagues online
+            $cs = cdp_csOne("SELECT SUM(csat_score >= 4) AS p, COUNT(csat_score) AS n FROM cdb_cs_tickets WHERE csat_score IS NOT NULL AND resolved_at >= NOW() - INTERVAL 30 DAY");
+            $k = cdp_csOne("SELECT SUM(ai_turns > 0 OR ai_outcome IS NOT NULL) AS e, SUM((ai_turns > 0 OR ai_outcome IS NOT NULL) AND handover_at IS NULL) AS c
+                FROM cdb_cs_conversations WHERE created_at >= CURDATE()");
+            $agents = [];
+            foreach (cdp_csAgents() as $a) {
+                $agents[$a['id']] = $a['name'];
+            }
+            $online = [];
+            $seen = cdp_csQ("SELECT DISTINCT user_id FROM cdb_activity_log WHERE created_at >= NOW() - INTERVAL 10 MINUTE AND user_id IS NOT NULL");
+            foreach ($seen as $r) {
+                if (isset($agents[(int) $r->user_id])) {
+                    $online[] = ['id' => (int) $r->user_id, 'name' => $agents[(int) $r->user_id]];
+                }
+            }
+            if (isset($agents[$uid]) && !in_array($uid, array_column($online, 'id'), true)) {
+                array_unshift($online, ['id' => $uid, 'name' => $agents[$uid]]);
+            }
+            $reply(['ok' => true, 'csat' => ($cs && (int) $cs->n) ? (int) round($cs->p / $cs->n * 100) : null,
+                'king_today' => ($k && (int) $k->e) ? (int) round($k->c / $k->e * 100) : null, 'online' => $online]);
+            break;
+
         default: // inbox
             if (mt_rand(1, 10) === 1) {
                 cdp_csSlaSweep(50); // keeps SLA flags fresh even before the worker is scheduled
@@ -149,7 +171,15 @@ if ($method !== 'POST') {
             foreach (cdp_csInboxViews($uid) as $k => $v) {
                 $views[$k] = $v[0];
             }
-            $reply(['ok' => true, 'list' => $list, 'counts' => cdp_csInboxCounts($uid), 'views' => $views, 'saved_views' => cdp_csSavedViews($uid)]);
+            // Counts for the views that are filters: open tickets per channel, and those tagged "vip".
+            $extra = ['channels' => [], 'vip' => 0];
+            foreach (cdp_csQ("SELECT channel, COUNT(*) AS n FROM cdb_cs_tickets WHERE disposition = 'none' AND status NOT IN ('resolved','closed') GROUP BY channel") as $r) {
+                $extra['channels'][(string) $r->channel] = (int) $r->n;
+            }
+            $vip = cdp_csOne("SELECT COUNT(DISTINCT t.id) AS n FROM cdb_cs_tickets t JOIN cdb_cs_ticket_tags g ON g.ticket_id = t.id
+                WHERE g.tag = 'vip' AND t.disposition = 'none' AND t.status NOT IN ('resolved','closed')");
+            $extra['vip'] = (int) ($vip->n ?? 0);
+            $reply(['ok' => true, 'list' => $list, 'counts' => cdp_csInboxCounts($uid), 'views' => $views, 'saved_views' => cdp_csSavedViews($uid), 'extra' => $extra]);
     }
 }
 

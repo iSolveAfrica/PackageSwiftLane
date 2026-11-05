@@ -106,6 +106,12 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 							<span class="hide-menu"> Developer </span>
 						</a>
 					</li>
+					<li class="sidebar-item">
+						<a class="sidebar-link waves-effect waves-dark" href="developer.php#ai" aria-expanded="false">
+							<iconify-icon icon="solar:magic-stick-3-linear" class="fs-5"></iconify-icon>
+							<span class="hide-menu"> AI diagnostics </span>
+						</a>
+					</li>
 					<?php } ?>
 					<?php if ($user->cdp_hasPermission('view_shipment_list')) { ?>
 					<li class="sidebar-item nav-divider"></li>

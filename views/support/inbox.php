@@ -11,7 +11,7 @@ $userData = $user->cdp_getUserData();
 $ready = cdp_csEnsureTables();
 $actions = '<a class="btn btn-secondary btn-sm" href="support_reports.php"><iconify-icon icon="solar:chart-2-linear"></iconify-icon> Reports</a> '
     . '<a class="btn btn-secondary btn-sm" href="support_settings.php"><iconify-icon icon="solar:settings-linear"></iconify-icon> Settings</a> '
-    . '<button type="button" class="btn btn-primary btn-sm" id="cs_new"><iconify-icon icon="solar:add-circle-linear"></iconify-icon> New ticket</button>' . ' ' . cdp_themeToggle();
+    . cdp_themeToggle();
 ?>
 <!DOCTYPE html>
 <html dir="<?php echo $direction_layout; ?>" lang="en">
@@ -41,39 +41,68 @@ $actions = '<a class="btn btn-secondary btn-sm" href="support_reports.php"><icon
                     <div class="swl-cs-banner is-danger">The helpdesk tables could not be created. The database user needs the CREATE privilege once.</div>
                 <?php endif; ?>
 
-                <div class="swl-cs-kpis swl-cs-sum" id="cs_sum" aria-label="Summary">
-                    <div class="swl-cs-kpi"><div class="swl-cs-kpi-l"><iconify-icon icon="solar:inbox-linear" aria-hidden="true"></iconify-icon> All tickets</div><div class="swl-cs-kpi-n" id="cs_sum_all">–</div><div class="swl-cs-kpi-s">Open and closed in the desk</div></div>
-                    <div class="swl-cs-kpi"><div class="swl-cs-kpi-l"><iconify-icon icon="solar:user-linear" aria-hidden="true"></iconify-icon> Assigned to me</div><div class="swl-cs-kpi-n" id="cs_sum_mine">–</div><div class="swl-cs-kpi-s">Your open work</div></div>
-                    <div class="swl-cs-kpi"><div class="swl-cs-kpi-l"><iconify-icon icon="solar:bell-ringing-linear" aria-hidden="true"></iconify-icon> Waiting for a person</div><div class="swl-cs-kpi-n" id="cs_sum_queued">–</div><div class="swl-cs-kpi-s">Chats handed over by King</div></div>
-                    <div class="swl-cs-kpi"><div class="swl-cs-kpi-l"><iconify-icon icon="solar:danger-triangle-linear" aria-hidden="true"></iconify-icon> SLA at risk</div><div class="swl-cs-kpi-n" id="cs_sum_risk">–</div><div class="swl-cs-kpi-s" id="cs_sum_overdue"></div></div>
-                </div>
-                <div class="card swl-cs-trend"><div class="card-body">
-                    <div class="swl-cs-card-head"><h5 class="card-title"><iconify-icon icon="solar:graph-up-linear" aria-hidden="true"></iconify-icon> Last 14 days</h5><span class="swl-cs-small swl-cs-muted" id="cs_trend_note"></span></div>
-                    <div id="cs_chart_trend" class="swl-cs-chart swl-cs-chart-sm" role="img" aria-label="Tickets created and resolved over the last 14 days"></div>
-                </div></div>
+                <!-- The desk: module rail, inbox panel and work area (design: Customer Service canvas, Inbox board) -->
+                <div class="swl-desk-wrap">
+                <div class="swl-desk">
+                    <nav class="swl-desk-rail" aria-label="Customer Service">
+                        <a href="support_inbox.php" class="is-on" aria-current="page" aria-label="Inbox" title="Inbox"><iconify-icon icon="solar:inbox-linear" aria-hidden="true"></iconify-icon></a>
+                        <a href="customers_list.php" aria-label="Customers" title="Customers"><iconify-icon icon="solar:users-group-rounded-linear" aria-hidden="true"></iconify-icon></a>
+                        <a href="support_reports.php" aria-label="Reports" title="Reports"><iconify-icon icon="solar:chart-2-linear" aria-hidden="true"></iconify-icon></a>
+                        <a href="support_settings.php#rules" aria-label="Automation" title="Automation"><iconify-icon icon="solar:bolt-linear" aria-hidden="true"></iconify-icon></a>
+                        <a href="support_settings.php#king" class="is-king" aria-label="King AI" title="King AI"><iconify-icon icon="solar:magic-stick-3-linear" aria-hidden="true"></iconify-icon></a>
+                        <span class="grow"></span>
+                        <a href="support_settings.php" aria-label="Settings" title="Settings"><iconify-icon icon="solar:settings-linear" aria-hidden="true"></iconify-icon></a>
+                        <a href="support_settings.php#kb" aria-label="Help articles" title="Help articles"><iconify-icon icon="solar:question-circle-linear" aria-hidden="true"></iconify-icon></a>
+                    </nav>
 
-                <div class="swl-cs-desk">
-                    <nav class="swl-cs-views" id="cs_views" aria-label="Inbox views"></nav>
+                    <aside class="swl-desk-panel" aria-label="Inbox views">
+                        <div class="swl-desk-panel-head">
+                            <h2>Inbox</h2>
+                            <button type="button" class="swl-desk-plus" id="cs_new" aria-label="New ticket" title="New ticket"><iconify-icon icon="solar:add-circle-linear" aria-hidden="true"></iconify-icon></button>
+                        </div>
+                        <nav class="swl-desk-views" id="cs_views" aria-label="Views"></nav>
+                        <div class="swl-desk-king" id="cs_king_card">
+                            <span class="ic"><iconify-icon icon="solar:magic-stick-3-linear" aria-hidden="true"></iconify-icon></span>
+                            <div><b id="cs_king_title">King is answering</b><span id="cs_king_line">…</span></div>
+                        </div>
+                    </aside>
 
-                    <section class="card mb-0">
-                        <div class="card-body">
-                            <div class="swl-cs-toolbar">
-                                <label for="cs_q" class="swl-cs-sr">Search tickets</label>
-                                <input type="search" id="cs_q" class="form-control" placeholder="Search reference, subject, customer, locker, tracking number or message text">
-                                <label for="cs_sort" class="swl-cs-sr">Sort</label>
-                                <select id="cs_sort" class="custom-select">
-                                    <option value="activity">Latest activity</option>
-                                    <option value="created">Newest</option>
-                                    <option value="oldest">Oldest</option>
-                                    <option value="priority">Priority</option>
-                                    <option value="sla">SLA due first</option>
-                                </select>
-                                <button type="button" class="btn btn-secondary btn-sm" id="cs_filter_btn" aria-expanded="false" aria-controls="cs_filters"><iconify-icon icon="solar:filter-linear"></iconify-icon> Filters <span id="cs_filter_n"></span></button>
-                                <button type="button" class="btn btn-secondary btn-sm" id="cs_save_view"><iconify-icon icon="solar:bookmark-linear"></iconify-icon> Save view</button>
-                                <button type="button" class="swl-cs-icon" id="cs_reload" aria-label="Refresh"><iconify-icon icon="solar:refresh-linear"></iconify-icon></button>
+                    <main class="swl-desk-main">
+                        <header class="swl-desk-top">
+                            <span class="swl-desk-chip" id="cs_pulse_csat" title="Share of ratings that were 4 or 5 stars, last 30 days"><iconify-icon icon="solar:smile-circle-linear" class="is-green" aria-hidden="true"></iconify-icon><b>–</b> happy customers</span>
+                            <span class="swl-desk-chip" id="cs_pulse_king" title="Chats King answered today that never needed a person"><iconify-icon icon="solar:magic-stick-3-linear" class="is-violet" aria-hidden="true"></iconify-icon><b>–</b> solved by King today</span>
+                            <label class="swl-desk-search" for="cs_q">
+                                <iconify-icon icon="solar:magnifer-linear" aria-hidden="true"></iconify-icon>
+                                <span class="swl-cs-sr">Search tickets</span>
+                                <input type="search" id="cs_q" placeholder="Search customer, reference, tracking no. or message…">
+                                <kbd>/</kbd>
+                            </label>
+                            <div class="swl-desk-online" id="cs_online" aria-live="polite"></div>
+                        </header>
+
+                        <section class="swl-desk-card" aria-labelledby="cs_view_title">
+                            <div class="swl-desk-card-head">
+                                <iconify-icon icon="solar:inbox-linear" id="cs_view_icon" aria-hidden="true"></iconify-icon>
+                                <h2 id="cs_view_title">All</h2>
+                                <span class="swl-desk-count" id="cs_count"></span>
+                                <div class="r">
+                                    <button type="button" class="swl-desk-btn" id="cs_filter_btn" aria-expanded="false" aria-controls="cs_filters"><iconify-icon icon="solar:filter-linear" aria-hidden="true"></iconify-icon> Filter <span id="cs_filter_n"></span></button>
+                                    <label for="cs_sort" class="swl-cs-sr">Sort</label>
+                                    <span class="swl-desk-btn is-select"><iconify-icon icon="solar:sort-vertical-linear" aria-hidden="true"></iconify-icon>
+                                        <select id="cs_sort">
+                                            <option value="activity">Latest activity</option>
+                                            <option value="sla">SLA due first</option>
+                                            <option value="created">Newest</option>
+                                            <option value="oldest">Oldest</option>
+                                            <option value="priority">Priority</option>
+                                        </select></span>
+                                    <button type="button" class="swl-desk-btn" id="cs_save_view" aria-label="Save this view" title="Save this view"><iconify-icon icon="solar:bookmark-linear" aria-hidden="true"></iconify-icon></button>
+                                    <button type="button" class="swl-desk-btn" id="cs_reload" aria-label="Refresh" title="Refresh"><iconify-icon icon="solar:refresh-linear" aria-hidden="true"></iconify-icon></button>
+                                    <button type="button" class="swl-desk-btn is-primary" id="cs_new2"><iconify-icon icon="solar:add-circle-linear" aria-hidden="true"></iconify-icon> New ticket</button>
+                                </div>
                             </div>
 
-                            <div class="swl-cs-filters" id="cs_filters">
+                            <div class="swl-cs-filters swl-desk-pad" id="cs_filters">
                                 <select class="custom-select" data-f="status" aria-label="Status"><option value="">Any status</option></select>
                                 <select class="custom-select" data-f="priority" aria-label="Priority"><option value="">Any priority</option></select>
                                 <select class="custom-select" data-f="category" aria-label="Topic"><option value="">Any topic</option></select>
@@ -87,7 +116,7 @@ $actions = '<a class="btn btn-secondary btn-sm" href="support_reports.php"><icon
                                 <button type="button" class="btn btn-secondary btn-sm" id="cs_clear"><iconify-icon icon="solar:eraser-linear" aria-hidden="true"></iconify-icon> Clear filters</button>
                             </div>
 
-                            <div class="swl-cs-bulk" id="cs_bulk" role="region" aria-label="Bulk actions">
+                            <div class="swl-cs-bulk swl-desk-pad" id="cs_bulk" role="region" aria-label="Bulk actions">
                                 <b id="cs_bulk_n">0 selected</b>
                                 <select class="custom-select" data-b="status" aria-label="Set status"><option value="">Status…</option></select>
                                 <select class="custom-select" data-b="priority" aria-label="Set priority"><option value="">Priority…</option></select>
@@ -99,11 +128,11 @@ $actions = '<a class="btn btn-secondary btn-sm" href="support_reports.php"><icon
                                 <button type="button" class="btn btn-secondary btn-sm" id="cs_bulk_clear"><iconify-icon icon="solar:close-circle-linear" aria-hidden="true"></iconify-icon> Cancel</button>
                             </div>
 
-                            <div class="table-responsive">
-                                <table class="table swl-cs-table mb-0">
+                            <div class="table-responsive swl-desk-scroll">
+                                <table class="table swl-cs-table swl-desk-table mb-0">
                                     <thead>
                                         <tr>
-                                            <th style="width: 32px;"><input type="checkbox" id="cs_all" aria-label="Select all on this page"></th>
+                                            <th class="c-sel"><input type="checkbox" id="cs_all" aria-label="Select all on this page"></th>
                                             <th>Customer</th>
                                             <th>Subject</th>
                                             <th>Channel</th>
@@ -111,15 +140,16 @@ $actions = '<a class="btn btn-secondary btn-sm" href="support_reports.php"><icon
                                             <th>Handled by</th>
                                             <th>Status</th>
                                             <th>SLA</th>
-                                            <th>Last message</th>
+                                            <th class="c-last">Last message</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="cs_rows"><tr><td colspan="8"><div class="swl-cs-empty">Loading…</div></td></tr></tbody>
+                                    <tbody id="cs_rows"><tr><td colspan="9"><div class="swl-cs-empty">Loading…</div></td></tr></tbody>
                                 </table>
                             </div>
-                            <div class="swl-cs-pager" id="cs_pager"></div>
-                        </div>
-                    </section>
+                            <div class="swl-desk-foot" id="cs_pager"></div>
+                        </section>
+                    </main>
+                </div>
                 </div>
             </div>
 

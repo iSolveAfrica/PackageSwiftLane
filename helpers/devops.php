@@ -1034,3 +1034,548 @@ if (!function_exists('cdp_devQ')) {
         return $s === null ? 'never' : ($s < 60 ? $s . ' s ago' : cdp_devDur($s) . ' ago');
     }
 }
+
+// =============================================================================
+// User activity monitoring, system data, processes and AI diagnostics
+// =============================================================================
+
+if (!function_exists('cdp_devUsers')) {
+
+    /** Everything the Users tab shows, from cdb_activity_log. */
+    function cdp_devUsers(array $f = [])
+    {
+        if (!cdp_devTableExists('cdb_activity_log')) {
+            return ['available' => false];
+        }
+        $k = cdp_devOne("SELECT
+                COUNT(DISTINCT CASE WHEN created_at >= NOW() - INTERVAL 5 MINUTE THEN user_id END) AS now5,
+                COUNT(DISTINCT CASE WHEN created_at >= CURDATE() THEN user_id END) AS today_users,
+                SUM(created_at >= CURDATE()) AS today_actions,
+                SUM(created_at >= CURDATE() AND outcome NOT IN ('success','denied')) AS today_failed,
+                SUM(created_at >= CURDATE() AND outcome = 'denied') AS today_denied,
+                SUM(created_at >= CURDATE() AND (action LIKE '%login%' OR verb = 'login') AND outcome = 'success') AS signins,
+                SUM(created_at >= CURDATE() AND (action LIKE '%login%' OR verb = 'login') AND outcome <> 'success') AS signin_fail,
+                COUNT(DISTINCT CASE WHEN created_at >= NOW() - INTERVAL 7 DAY THEN user_id END) AS week_users,
+                COUNT(DISTINCT CASE WHEN created_at >= CURDATE() AND impersonated_by IS NOT NULL THEN user_id END) AS view_as
+            FROM cdb_activity_log WHERE created_at >= NOW() - INTERVAL 7 DAY");
+        $mods = [];
+        foreach (cdp_devQ("SELECT module, COUNT(*) AS n FROM cdb_activity_log WHERE created_at >= NOW() - INTERVAL 1 DAY GROUP BY module ORDER BY n DESC LIMIT 6") as $r) {
+            $mods[] = (string) $r->module;
+        }
+        $hourly = [];
+        foreach (cdp_devQ("SELECT DATE_FORMAT(created_at, '%Y-%m-%d %H:00:00') AS h, module, COUNT(*) AS n FROM cdb_activity_log
+                WHERE created_at >= NOW() - INTERVAL 24 HOUR GROUP BY h, module ORDER BY h") as $r) {
+            $m = in_array($r->module, $mods, true) ? (string) $r->module : 'other';
+            $hourly[$r->h][$m] = ($hourly[$r->h][$m] ?? 0) + (int) $r->n;
+        }
+        $daily = cdp_devQ("SELECT DATE(created_at) AS d, COUNT(*) AS n, COUNT(DISTINCT user_id) AS u, SUM(outcome NOT IN ('success','denied')) AS f, SUM(outcome = 'denied') AS dn
+            FROM cdb_activity_log WHERE created_at >= CURDATE() - INTERVAL 29 DAY GROUP BY d ORDER BY d");
+        $heat = cdp_devQ("SELECT DAYOFWEEK(created_at) AS dw, HOUR(created_at) AS hr, COUNT(*) AS n FROM cdb_activity_log
+            WHERE created_at >= NOW() - INTERVAL 30 DAY GROUP BY dw, hr");
+        $roles = cdp_devQ("SELECT COALESCE(NULLIF(role_name,''),'Unknown') AS r, COUNT(*) AS n, COUNT(DISTINCT user_id) AS u FROM cdb_activity_log
+            WHERE created_at >= NOW() - INTERVAL 7 DAY GROUP BY r ORDER BY n DESC LIMIT 8");
+        $outcomes = cdp_devQ("SELECT outcome AS o, COUNT(*) AS n FROM cdb_activity_log WHERE created_at >= NOW() - INTERVAL 7 DAY GROUP BY outcome ORDER BY n DESC");
+        $verbs = cdp_devQ("SELECT verb AS v, COUNT(*) AS n FROM cdb_activity_log WHERE created_at >= NOW() - INTERVAL 7 DAY GROUP BY verb ORDER BY n DESC LIMIT 8");
+        $top = cdp_devQ("SELECT user_id, MAX(actor_name) AS name, MAX(role_name) AS role, COUNT(*) AS n, SUM(outcome NOT IN ('success','denied')) AS f,
+                SUM(outcome = 'denied') AS dn, MAX(created_at) AS last_at, COUNT(DISTINCT module) AS mods
+            FROM cdb_activity_log WHERE created_at >= NOW() - INTERVAL 7 DAY AND user_id IS NOT NULL GROUP BY user_id ORDER BY n DESC LIMIT 12");
+        $online = cdp_devQ("SELECT a.user_id, a.actor_name, a.role_name, a.action_label, a.summary, a.endpoint, a.ip, a.user_agent, a.created_at, x.n
+            FROM cdb_activity_log a JOIN (SELECT user_id, MAX(id) AS mid, COUNT(*) AS n FROM cdb_activity_log
+                WHERE created_at >= NOW() - INTERVAL 15 MINUTE AND user_id IS NOT NULL GROUP BY user_id) x ON x.mid = a.id ORDER BY a.created_at DESC LIMIT 50");
+        $ips = cdp_devQ("SELECT ip, COUNT(DISTINCT user_id) AS u, COUNT(*) AS n, SUM(outcome <> 'success') AS f FROM cdb_activity_log
+            WHERE created_at >= NOW() - INTERVAL 1 DAY AND ip IS NOT NULL AND ip <> '' GROUP BY ip ORDER BY n DESC LIMIT 10");
+        $failing = cdp_devQ("SELECT action_label AS a, module, COUNT(*) AS n, MAX(created_at) AS last_at FROM cdb_activity_log
+            WHERE created_at >= NOW() - INTERVAL 7 DAY AND outcome <> 'success' GROUP BY action_label, module ORDER BY n DESC LIMIT 10");
+        $allMods = array_map(function ($r) { return (string) $r->module; }, cdp_devQ("SELECT DISTINCT module FROM cdb_activity_log WHERE created_at >= NOW() - INTERVAL 30 DAY ORDER BY module"));
+        $agentOf = function ($ua) {
+            $ua = (string) $ua;
+            $b = preg_match('/Edg\//', $ua) ? 'Edge' : (preg_match('/Chrome\//', $ua) ? 'Chrome' : (preg_match('/Firefox\//', $ua) ? 'Firefox' : (preg_match('/Safari\//', $ua) ? 'Safari' : ($ua === '' ? '–' : 'Other'))));
+            $o = preg_match('/Android/', $ua) ? 'Android' : (preg_match('/iPhone|iPad/', $ua) ? 'iOS' : (preg_match('/Windows/', $ua) ? 'Windows' : (preg_match('/Mac OS/', $ua) ? 'macOS' : (preg_match('/Linux/', $ua) ? 'Linux' : ''))));
+            return trim($b . ($o ? ' · ' . $o : ''));
+        };
+        return [
+            'available' => true,
+            'kpis' => $k ? array_map('intval', (array) $k) : [],
+            'modules' => $mods, 'all_modules' => $allMods,
+            'hourly' => $hourly,
+            'daily' => array_map(function ($r) { return ['d' => (string) $r->d, 'n' => (int) $r->n, 'u' => (int) $r->u, 'f' => (int) $r->f, 'dn' => (int) $r->dn]; }, $daily),
+            'heat' => array_map(function ($r) { return ['dw' => (int) $r->dw, 'h' => (int) $r->hr, 'n' => (int) $r->n]; }, $heat),
+            'roles' => array_map(function ($r) { return ['label' => (string) $r->r, 'n' => (int) $r->n, 'users' => (int) $r->u]; }, $roles),
+            'outcomes' => array_map(function ($r) { return ['label' => (string) $r->o, 'n' => (int) $r->n]; }, $outcomes),
+            'verbs' => array_map(function ($r) { return ['label' => (string) $r->v, 'n' => (int) $r->n]; }, $verbs),
+            'top' => array_map(function ($r) { return ['id' => (int) $r->user_id, 'name' => (string) $r->name, 'role' => (string) $r->role, 'n' => (int) $r->n, 'f' => (int) $r->f, 'dn' => (int) $r->dn, 'last_at' => (string) $r->last_at, 'mods' => (int) $r->mods]; }, $top),
+            'online' => array_map(function ($r) use ($agentOf) {
+                return ['id' => (int) $r->user_id, 'name' => (string) $r->actor_name, 'role' => (string) $r->role_name, 'doing' => (string) ($r->summary ?: $r->action_label),
+                    'endpoint' => (string) $r->endpoint, 'ip' => (string) $r->ip, 'agent' => $agentOf($r->user_agent), 'last_at' => (string) $r->created_at, 'n' => (int) $r->n];
+            }, $online),
+            'ips' => array_map(function ($r) { return ['ip' => (string) $r->ip, 'users' => (int) $r->u, 'n' => (int) $r->n, 'f' => (int) $r->f]; }, $ips),
+            'failing' => array_map(function ($r) { return ['label' => (string) $r->a, 'module' => (string) $r->module, 'n' => (int) $r->n, 'last_at' => (string) $r->last_at]; }, $failing),
+            'feed' => cdp_devUserFeed($f),
+        ];
+    }
+
+    /** Recent actions, newest first, with optional filters. */
+    function cdp_devUserFeed(array $f, $limit = 120)
+    {
+        $w = 'created_at >= NOW() - INTERVAL 7 DAY';
+        $b = [];
+        if (!empty($f['user_id'])) {
+            $w .= ' AND user_id = :u';
+            $b[':u'] = (int) $f['user_id'];
+        }
+        if (!empty($f['module'])) {
+            $w .= ' AND module = :m';
+            $b[':m'] = (string) $f['module'];
+        }
+        if (!empty($f['outcome'])) {
+            $w .= $f['outcome'] === 'problem' ? " AND outcome <> 'success'" : ' AND outcome = :o';
+            if ($f['outcome'] !== 'problem') {
+                $b[':o'] = (string) $f['outcome'];
+            }
+        }
+        if (!empty($f['q'])) {
+            $w .= ' AND (summary LIKE :q OR action_label LIKE :q2 OR actor_name LIKE :q3 OR entity_label LIKE :q4 OR ip LIKE :q5)';
+            $like = '%' . $f['q'] . '%';
+            $b += [':q' => $like, ':q2' => $like, ':q3' => $like, ':q4' => $like, ':q5' => $like];
+        }
+        return array_map(function ($r) {
+            return ['id' => (int) $r->id, 'at' => (string) $r->created_at, 'user_id' => (int) $r->user_id, 'name' => (string) $r->actor_name, 'role' => (string) $r->role_name,
+                'module' => (string) $r->module, 'action' => (string) $r->action_label, 'verb' => (string) $r->verb, 'outcome' => (string) $r->outcome,
+                'summary' => (string) $r->summary, 'entity' => trim($r->entity_type . ' ' . $r->entity_label), 'ip' => (string) $r->ip,
+                'request' => trim($r->method . ' ' . $r->endpoint), 'view_as' => $r->impersonated_by ? (int) $r->impersonated_by : null];
+        }, cdp_devQ("SELECT id, created_at, user_id, actor_name, role_name, module, action_label, verb, outcome, summary, entity_type, entity_label, ip, method, endpoint, impersonated_by
+            FROM cdb_activity_log WHERE $w ORDER BY id DESC LIMIT " . (int) $limit, $b));
+    }
+
+    /** One person: what they did over 14 days. */
+    function cdp_devUserDetail($uid)
+    {
+        $uid = (int) $uid;
+        $u = cdp_devOne("SELECT id, username, fname, lname, email, userlevel, lastlogin, created FROM cdb_users WHERE id = :i", [':i' => $uid]);
+        $daily = cdp_devQ("SELECT DATE(created_at) AS d, COUNT(*) AS n, SUM(outcome <> 'success') AS f FROM cdb_activity_log
+            WHERE user_id = :u AND created_at >= CURDATE() - INTERVAL 13 DAY GROUP BY d ORDER BY d", [':u' => $uid]);
+        $mods = cdp_devQ("SELECT module, COUNT(*) AS n FROM cdb_activity_log WHERE user_id = :u AND created_at >= NOW() - INTERVAL 14 DAY GROUP BY module ORDER BY n DESC LIMIT 8", [':u' => $uid]);
+        $ips = cdp_devQ("SELECT ip, COUNT(*) AS n, MAX(created_at) AS last_at FROM cdb_activity_log WHERE user_id = :u AND created_at >= NOW() - INTERVAL 30 DAY GROUP BY ip ORDER BY last_at DESC LIMIT 8", [':u' => $uid]);
+        return [
+            'user' => $u ? ['id' => (int) $u->id, 'name' => trim($u->fname . ' ' . $u->lname) ?: $u->username, 'username' => (string) $u->username, 'email' => (string) $u->email,
+                'last_login' => (string) $u->lastlogin, 'since' => (string) $u->created] : ['id' => $uid, 'name' => 'User #' . $uid],
+            'daily' => array_map(function ($r) { return ['d' => (string) $r->d, 'n' => (int) $r->n, 'f' => (int) $r->f]; }, $daily),
+            'modules' => array_map(function ($r) { return ['label' => (string) $r->module, 'n' => (int) $r->n]; }, $mods),
+            'ips' => array_map(function ($r) { return ['ip' => (string) $r->ip, 'n' => (int) $r->n, 'last_at' => (string) $r->last_at]; }, $ips),
+            'feed' => cdp_devUserFeed(['user_id' => $uid], 80),
+        ];
+    }
+
+    /** Business records and the database itself: what the system holds and how fast it grows. */
+    function cdp_devData()
+    {
+        $areas = [
+            'shipments' => ['Shipments', "SELECT DATE(order_date) AS d, COUNT(*) AS n FROM cdb_add_order WHERE COALESCE(is_pickup,0) = 0 AND COALESCE(is_deleted,0) = 0 AND order_date >= CURDATE() - INTERVAL 29 DAY GROUP BY d",
+                "SELECT COUNT(*) AS n FROM cdb_add_order WHERE COALESCE(is_pickup,0) = 0 AND COALESCE(is_deleted,0) = 0", 'cdb_add_order'],
+            'pickups' => ['Pickups', "SELECT DATE(order_date) AS d, COUNT(*) AS n FROM cdb_add_order WHERE is_pickup = 1 AND COALESCE(is_deleted,0) = 0 AND order_date >= CURDATE() - INTERVAL 29 DAY GROUP BY d",
+                "SELECT COUNT(*) AS n FROM cdb_add_order WHERE is_pickup = 1 AND COALESCE(is_deleted,0) = 0", 'cdb_add_order'],
+            'packages' => ['Packages', "SELECT DATE(order_date) AS d, COUNT(*) AS n FROM cdb_customers_packages WHERE order_date >= CURDATE() - INTERVAL 29 DAY GROUP BY d",
+                "SELECT COUNT(*) AS n FROM cdb_customers_packages", 'cdb_customers_packages'],
+            'consolidations' => ['Consolidations', "SELECT DATE(c_date) AS d, COUNT(*) AS n FROM cdb_consolidate WHERE c_date >= CURDATE() - INTERVAL 29 DAY GROUP BY d",
+                "SELECT COUNT(*) AS n FROM cdb_consolidate", 'cdb_consolidate'],
+            'users' => ['Accounts', "SELECT DATE(created) AS d, COUNT(*) AS n FROM cdb_users WHERE created >= CURDATE() - INTERVAL 29 DAY GROUP BY d",
+                "SELECT COUNT(*) AS n FROM cdb_users", 'cdb_users'],
+            'tickets' => ['Support tickets', "SELECT DATE(created_at) AS d, COUNT(*) AS n FROM cdb_cs_tickets WHERE created_at >= CURDATE() - INTERVAL 29 DAY GROUP BY d",
+                "SELECT COUNT(*) AS n FROM cdb_cs_tickets", 'cdb_cs_tickets'],
+            'messages' => ['Messages sent', "SELECT DATE(created_at) AS d, COUNT(*) AS n FROM cdb_message_log WHERE created_at >= CURDATE() - INTERVAL 29 DAY GROUP BY d",
+                "SELECT COUNT(*) AS n FROM cdb_message_log", 'cdb_message_log'],
+        ];
+        $out = [];
+        foreach ($areas as $key => $a) {
+            if (!cdp_devTableExists($a[3])) {
+                continue;
+            }
+            $days = [];
+            foreach (cdp_devQ($a[1]) as $r) {
+                $days[(string) $r->d] = (int) $r->n;
+            }
+            $t = cdp_devOne($a[2]);
+            $series = [];
+            for ($i = 29; $i >= 0; $i--) {
+                $d = date('Y-m-d', strtotime("-$i days"));
+                $series[] = ['d' => $d, 'n' => $days[$d] ?? 0];
+            }
+            $last7 = array_sum(array_column(array_slice($series, -7), 'n'));
+            $prev7 = array_sum(array_column(array_slice($series, -14, 7), 'n'));
+            $out[] = ['key' => $key, 'label' => $a[0], 'total' => $t ? (int) $t->n : null, 'last30' => array_sum(array_column($series, 'n')),
+                'last7' => $last7, 'prev7' => $prev7, 'series' => $series];
+        }
+        $channels = cdp_devTableExists('cdb_message_log') ? array_map(function ($r) {
+            return ['channel' => (string) $r->channel, 'sent' => (int) $r->s, 'failed' => (int) $r->f, 'skipped' => (int) $r->k];
+        }, cdp_devQ("SELECT channel, SUM(status='sent') AS s, SUM(status='failed') AS f, SUM(status='skipped') AS k FROM cdb_message_log
+            WHERE created_at >= NOW() - INTERVAL 30 DAY GROUP BY channel ORDER BY s DESC")) : [];
+        $ai = cdp_devTableExists('cdb_cs_ai_runs') ? array_map(function ($r) {
+            return ['d' => (string) $r->d, 'calls' => (int) $r->n, 'tokens' => (int) $r->t, 'errors' => (int) $r->e, 'latency' => $r->l === null ? null : (int) $r->l];
+        }, cdp_devQ("SELECT DATE(created_at) AS d, COUNT(*) AS n, SUM(COALESCE(tokens_in,0) + COALESCE(tokens_out,0)) AS t, SUM(outcome LIKE 'error%') AS e, AVG(latency_ms) AS l
+            FROM cdb_cs_ai_runs WHERE created_at >= CURDATE() - INTERVAL 29 DAY GROUP BY d ORDER BY d")) : [];
+        $tables = array_map(function ($r) {
+            return ['name' => (string) $r->n, 'rows' => (int) $r->r, 'data' => (int) $r->dl, 'index' => (int) $r->il, 'engine' => (string) $r->e, 'updated' => (string) $r->u];
+        }, cdp_devQ("SELECT TABLE_NAME AS n, TABLE_ROWS AS r, DATA_LENGTH AS dl, INDEX_LENGTH AS il, ENGINE AS e, UPDATE_TIME AS u
+            FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() ORDER BY (DATA_LENGTH + INDEX_LENGTH) DESC LIMIT 15"));
+        return ['areas' => $out, 'channels' => $channels, 'ai' => $ai, 'tables' => $tables];
+    }
+
+    /** The heaviest processes by memory, from /proc (Linux; empty elsewhere). */
+    function cdp_devProcesses($limit = 10)
+    {
+        $out = [];
+        $ticks = 100;
+        $upt = (float) cdp_devRead('/proc/uptime');
+        foreach ((array) @glob('/proc/[0-9]*', GLOB_ONLYDIR) as $dir) {
+            $st = cdp_devRead($dir . '/status');
+            if ($st === '' || !preg_match('/^VmRSS:\s+(\d+)/m', $st, $rss)) {
+                continue;
+            }
+            preg_match('/^Name:\s+(.+)$/m', $st, $nm);
+            preg_match('/^State:\s+(\S+)/m', $st, $sv);
+            $stat = cdp_devRead($dir . '/stat');
+            $cpu = null;
+            if ($stat && preg_match('/\)\s+(.*)$/', $stat, $m)) {
+                $p = preg_split('/\s+/', $m[1]);
+                $busy = ((float) ($p[11] ?? 0) + (float) ($p[12] ?? 0)) / $ticks;
+                $age = $upt - ((float) ($p[19] ?? 0)) / $ticks;
+                $cpu = $age > 0 ? round($busy / $age * 100, 1) : null;
+            }
+            $out[] = ['pid' => (int) basename($dir), 'name' => trim($nm[1] ?? '?'), 'state' => $sv[1] ?? '', 'rss' => (int) $rss[1] * 1024, 'cpu_avg' => $cpu];
+        }
+        usort($out, function ($a, $b) { return $b['rss'] <=> $a['rss']; });
+        return array_slice($out, 0, $limit);
+    }
+
+    // -------------------------------------------------------------------------
+    // AI diagnostics: collect the evidence, read the code it points at, ask the
+    // configured AI provider for an analysis, keep the report as a file.
+    // -------------------------------------------------------------------------
+
+    function cdp_devReportDir()
+    {
+        $d = dirname(__DIR__) . '/dev_reports';
+        if (!is_dir($d)) {
+            @mkdir($d, 0750, true);
+        }
+        if (is_dir($d) && !is_file($d . '/.htaccess')) {
+            @file_put_contents($d . '/.htaccess', "Require all denied\nDeny from all\n");
+            @file_put_contents($d . '/index.html', '');
+        }
+        return $d;
+    }
+
+    function cdp_devEnsureAiTable()
+    {
+        return cdp_devX("CREATE TABLE IF NOT EXISTS cdb_dev_ai_reports (
+            id INT NOT NULL AUTO_INCREMENT, user_id INT NOT NULL, title VARCHAR(190) NOT NULL, question TEXT NULL, scope VARCHAR(255) NULL,
+            window_min INT NOT NULL DEFAULT 1440, status VARCHAR(20) NOT NULL, provider VARCHAR(30) NULL, model VARCHAR(120) NULL,
+            ms INT NULL, file VARCHAR(120) NULL, bundle_file VARCHAR(120) NULL, findings INT NULL, error VARCHAR(255) NULL, created_at DATETIME NOT NULL,
+            PRIMARY KEY (id), KEY idx_created (created_at)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    /** Masks anything that looks like a secret before it leaves the server. */
+    function cdp_devRedact($s)
+    {
+        $s = (string) $s;
+        $s = preg_replace('/((?:pass(?:word)?|pwd|secret|token|api[_-]?key|private[_-]?key|auth)[\'"]?\s*(?:=>|=|:)\s*)([\'"])[^\'"]{3,}\2/i', '$1$2[redacted]$2', $s);
+        $s = preg_replace('/\b(sk-[A-Za-z0-9_\-]{12,}|[A-Za-z0-9_\-]{40,})\b/', '[redacted-token]', $s);
+        $s = preg_replace('/\b[\w.+-]+@[\w-]+\.[\w.]+\b/', '[email]', $s);
+        return $s;
+    }
+
+    /** Files a developer may let the AI read: inside the app, source types only, never config or secrets. */
+    function cdp_devSafeFile($rel)
+    {
+        $root = realpath(dirname(__DIR__));
+        $rel = ltrim(str_replace('\\', '/', (string) $rel), '/');
+        if ($rel === '' || strpos($rel, '..') !== false) {
+            return null;
+        }
+        $p = realpath($root . '/' . $rel);
+        if (!$p || strpos($p, $root . DIRECTORY_SEPARATOR) !== 0 || !is_file($p) || filesize($p) > 600000) {
+            return null;
+        }
+        $base = strtolower(basename($p));
+        if (!preg_match('/\.(php|js|css|sql|md|json|html|txt)$/', $base) || preg_match('/^(loader|config|\.env|composer\.lock)|config\.php$|credential|secret|\.key$/', $base)
+            || preg_match('#/(vendor|\.git|support_files|dev_reports|uploads|backups?)/#', str_replace('\\', '/', $p))) {
+            return null;
+        }
+        return $p;
+    }
+
+    function cdp_devExcerpt($path, $line = 0, $around = 30, $max = 260)
+    {
+        $lines = @file($path, FILE_IGNORE_NEW_LINES);
+        if (!$lines) {
+            return '';
+        }
+        $from = $line > 0 ? max(1, $line - $around) : 1;
+        $to = $line > 0 ? min(count($lines), $line + $around) : min(count($lines), $max);
+        $out = [];
+        for ($i = $from; $i <= $to; $i++) {
+            $out[] = str_pad((string) $i, 5, ' ', STR_PAD_LEFT) . ($i === $line ? ' >| ' : '  | ') . $lines[$i - 1];
+        }
+        return cdp_devRedact(implode("\n", $out));
+    }
+
+    /** The evidence: health, alerts, errors, failures, deploys, activity and the code they point at. */
+    function cdp_devDiagBundle(array $scope, $window, array $paths)
+    {
+        $since = date('Y-m-d H:i:s', time() - 60 * max(5, min(10080, (int) $window)));
+        $b = ['generated_at' => cdp_devNow(), 'window_from' => $since, 'scope' => $scope];
+        $root = realpath(dirname(__DIR__));
+        if (in_array('health', $scope, true)) {
+            $snap = cdp_devCollect(false);
+            $srv = $snap['server'];
+            $b['environment'] = ['php' => $srv['php'], 'os' => $srv['os'], 'host' => $srv['host'], 'web_server' => $srv['software'], 'cores' => $srv['cores'],
+                'database' => ['version' => $snap['db']['version'] ?? null, 'up' => $snap['db']['up'], 'ping_ms' => $snap['db']['ping_ms'], 'connections' => $snap['db']['connections'] ?? null,
+                    'max_connections' => $snap['db']['max_connections'] ?? null, 'slow_queries' => $snap['db']['slow_queries'] ?? null, 'size_bytes' => $snap['db']['size_bytes'] ?? null]];
+            $b['resources'] = ['cpu_pct' => $srv['cpu_pct'], 'load' => $srv['load'], 'mem_pct' => $srv['mem_pct'], 'disk_pct' => $srv['disk_pct'], 'uptime_s' => $srv['uptime_s']];
+            $b['services'] = array_map(function ($s) { return array_intersect_key($s, array_flip(['name', 'status', 'latency_ms', 'error_rate', 'throughput', 'detail'])); }, $snap['services']);
+            $b['probes'] = ['web' => array_intersect_key($snap['web'], array_flip(['ok', 'code', 'ms', 'error'])), 'api' => array_intersect_key($snap['api'], array_flip(['ok', 'code', 'ms', 'error']))];
+        }
+        if (in_array('alerts', $scope, true)) {
+            $b['alerts'] = array_map(function ($a) { return array_intersect_key($a, array_flip(['severity', 'service', 'title', 'detail', 'status', 'first_seen', 'last_seen', 'context'])); },
+                array_slice(cdp_devAlerts('all', 40), 0, 40));
+        }
+        $refs = [];
+        if (in_array('errors', $scope, true)) {
+            $php = cdp_devPhpErrors($since, '', 150);
+            $grouped = [];
+            foreach ($php as $e) {
+                $line = $e['detail']['line'] ?? $e['message'];
+                $key = preg_replace('/^\[[^\]]+\]\s*/', '', $line);
+                $key = mb_substr(preg_replace('/\d{2,}/', '#', $key), 0, 220);
+                if (!isset($grouped[$key])) {
+                    $grouped[$key] = ['level' => $e['level'], 'count' => 0, 'last' => $e['ts'], 'sample' => cdp_devRedact(mb_substr($line, 0, 600))];
+                }
+                $grouped[$key]['count']++;
+                if (preg_match_all('#(?:in|at)\s+(/[^\s:()]+\.php)(?:\s+on line\s+|:|\()(\d+)#', $line, $mm, PREG_SET_ORDER)) {
+                    foreach ($mm as $m) {
+                        $rp = realpath($m[1]);
+                        if ($rp && strpos($rp, $root . DIRECTORY_SEPARATOR) === 0) {
+                            $refs[substr($rp, strlen($root) + 1) . ':' . (int) $m[2]] = true;
+                        }
+                    }
+                }
+            }
+            uasort($grouped, function ($x, $y) { return $y['count'] <=> $x['count']; });
+            $b['php_errors'] = array_values(array_slice($grouped, 0, 25));
+            if (cdp_devTableExists('cdb_activity_log')) {
+                $b['failed_actions'] = array_map(function ($r) {
+                    return ['action' => (string) $r->action, 'label' => (string) $r->l, 'module' => (string) $r->module, 'outcome' => (string) $r->outcome, 'count' => (int) $r->n,
+                        'last' => (string) $r->last_at, 'endpoint' => (string) $r->ep, 'sample' => cdp_devRedact((string) $r->s)];
+                }, cdp_devQ("SELECT action, MAX(action_label) AS l, module, outcome, COUNT(*) AS n, MAX(created_at) AS last_at, MAX(endpoint) AS ep, MAX(summary) AS s
+                    FROM cdb_activity_log WHERE created_at > :s AND outcome <> 'success' GROUP BY action, module, outcome ORDER BY n DESC LIMIT 25", [':s' => $since]));
+            }
+            if (cdp_devTableExists('cdb_message_log')) {
+                $b['failed_messages'] = array_map(function ($r) {
+                    return ['channel' => (string) $r->channel, 'status' => (string) $r->status, 'reason' => cdp_devRedact(mb_substr((string) $r->d, 0, 300)), 'count' => (int) $r->n, 'last' => (string) $r->last_at];
+                }, cdp_devQ("SELECT channel, status, status_detail AS d, COUNT(*) AS n, MAX(created_at) AS last_at FROM cdb_message_log
+                    WHERE created_at > :s AND status <> 'sent' GROUP BY channel, status, status_detail ORDER BY n DESC LIMIT 20", [':s' => $since]));
+            }
+            if (cdp_devTableExists('cdb_cs_ai_runs')) {
+                $b['ai_errors'] = array_map(function ($r) {
+                    return ['kind' => (string) $r->kind, 'outcome' => (string) $r->outcome, 'detail' => cdp_devRedact((string) $r->detail), 'count' => (int) $r->n, 'last' => (string) $r->last_at];
+                }, cdp_devQ("SELECT kind, outcome, detail, COUNT(*) AS n, MAX(created_at) AS last_at FROM cdb_cs_ai_runs
+                    WHERE created_at > :s AND outcome <> 'ok' AND outcome <> 'answered' GROUP BY kind, outcome, detail ORDER BY n DESC LIMIT 15", [':s' => $since]));
+            }
+        }
+        if (in_array('deploys', $scope, true)) {
+            $d = cdp_devDeployments($b['services'] ?? []);
+            $b['deployments'] = ['running' => $d['head'], 'pipeline' => $d['pipeline'], 'recent' => array_slice($d['history'], 0, 12)];
+        }
+        if (in_array('activity', $scope, true) && cdp_devTableExists('cdb_activity_log')) {
+            $u = cdp_devUsers();
+            $b['user_activity'] = ['kpis' => $u['kpis'] ?? [], 'top_users' => array_slice($u['top'] ?? [], 0, 8), 'failing_actions' => $u['failing'] ?? [],
+                'busy_ips' => $u['ips'] ?? [], 'roles' => $u['roles'] ?? [], 'outcomes' => $u['outcomes'] ?? []];
+            foreach ($b['user_activity']['top_users'] as &$tu) {
+                $tu['name'] = 'User #' . $tu['id'];
+            }
+            unset($tu);
+        }
+        $files = [];
+        if (in_array('code', $scope, true)) {
+            foreach (array_slice(array_keys($refs), 0, 8) as $ref) {
+                list($rel, $ln) = explode(':', $ref);
+                if ($p = cdp_devSafeFile($rel)) {
+                    $files[] = ['file' => $rel, 'line' => (int) $ln, 'why' => 'Named in a PHP error', 'excerpt' => cdp_devExcerpt($p, (int) $ln)];
+                }
+            }
+        }
+        foreach (array_slice($paths, 0, 6) as $spec) {
+            $spec = trim((string) $spec);
+            if ($spec === '') {
+                continue;
+            }
+            $ln = 0;
+            if (preg_match('/^(.+?):(\d+)$/', $spec, $m)) {
+                $spec = $m[1];
+                $ln = (int) $m[2];
+            }
+            if ($p = cdp_devSafeFile($spec)) {
+                $files[] = ['file' => $spec, 'line' => $ln, 'why' => 'Asked for by the developer', 'excerpt' => cdp_devExcerpt($p, $ln, 40, 320)];
+            } else {
+                $files[] = ['file' => $spec, 'line' => $ln, 'why' => 'Asked for by the developer', 'excerpt' => '', 'skipped' => 'Not readable here (outside the app, not a source file, or holds configuration).'];
+            }
+        }
+        if ($files) {
+            $b['code'] = $files;
+        }
+        return $b;
+    }
+
+    /** Findings that need no AI: what is plainly wrong in the evidence. */
+    function cdp_devDiagRules(array $b)
+    {
+        $f = [];
+        foreach ($b['services'] ?? [] as $s) {
+            if (in_array($s['status'], ['down', 'degraded'], true)) {
+                $f[] = ['sev' => $s['status'] === 'down' ? 'critical' : 'warning', 'text' => $s['name'] . ' is ' . $s['status'] . ': ' . $s['detail']];
+            }
+        }
+        foreach ($b['alerts'] ?? [] as $a) {
+            if ($a['status'] !== 'resolved') {
+                $f[] = ['sev' => $a['severity'], 'text' => 'Open alert: ' . $a['title'] . ' (' . $a['detail'] . ')'];
+            }
+        }
+        foreach (array_slice($b['php_errors'] ?? [], 0, 5) as $e) {
+            $f[] = ['sev' => $e['level'] === 'ERROR' ? 'critical' : 'warning', 'text' => $e['count'] . '× PHP ' . strtolower($e['level']) . ': ' . mb_substr($e['sample'], 0, 200)];
+        }
+        foreach (array_slice($b['failed_actions'] ?? [], 0, 5) as $e) {
+            $f[] = ['sev' => $e['outcome'] === 'denied' ? 'info' : 'warning', 'text' => $e['count'] . '× ' . $e['outcome'] . ': ' . ($e['label'] ?: $e['action']) . ' (' . $e['module'] . ')'];
+        }
+        foreach (array_slice($b['failed_messages'] ?? [], 0, 4) as $e) {
+            $f[] = ['sev' => 'warning', 'text' => $e['count'] . '× ' . $e['channel'] . ' ' . $e['status'] . ($e['reason'] ? ': ' . $e['reason'] : '')];
+        }
+        $r = $b['resources'] ?? [];
+        if (($r['disk_pct'] ?? 0) >= 85) {
+            $f[] = ['sev' => ($r['disk_pct'] >= 95 ? 'critical' : 'warning'), 'text' => 'Disk is ' . $r['disk_pct'] . '% full.'];
+        }
+        foreach ($b['deployments']['pipeline'] ?? [] as $p) {
+            if (in_array($p['state'], ['failed', 'warning'], true)) {
+                $f[] = ['sev' => $p['state'] === 'failed' ? 'critical' : 'warning', 'text' => 'Pipeline step "' . $p['name'] . '": ' . $p['detail']];
+            }
+        }
+        if (!empty($b['environment']['php']['missing'])) {
+            $f[] = ['sev' => 'warning', 'text' => 'PHP extensions missing: ' . implode(', ', $b['environment']['php']['missing'])];
+        }
+        return $f;
+    }
+
+    /** Runs one diagnosis and keeps it as a Markdown file plus the evidence as JSON. */
+    function cdp_devDiagRun($user, $question, array $scope, $window, array $paths)
+    {
+        cdp_devEnsureTables();
+        cdp_devEnsureAiTable();
+        $allowed = ['health', 'alerts', 'errors', 'deploys', 'activity', 'code'];
+        $scope = array_values(array_intersect($allowed, $scope)) ?: ['health', 'alerts', 'errors'];
+        $t0 = microtime(true);
+        $bundle = cdp_devDiagBundle($scope, $window, $paths);
+        $rules = cdp_devDiagRules($bundle);
+        $question = trim(mb_substr((string) $question, 0, 2000));
+        $ai = ['ok' => false, 'error' => 'AI provider not set up (Tools › AI Assistant). The report holds the automatic findings and the evidence only.'];
+        $provider = $model = null;
+        if (!function_exists('cdp_aiComplete')) {
+            @include_once __DIR__ . '/ai_assistant.php';
+            @include_once __DIR__ . '/ai_assistant_llm.php';
+        }
+        if (function_exists('cdp_aiConfigured') && cdp_aiConfigured() && function_exists('cdp_aiComplete')) {
+            $sys = "You are a senior PHP/MySQL site-reliability engineer reviewing a Swift Lane installation (a PHP shipping and courier management web app with a "
+                . "REST API, a customer-service helpdesk with an AI agent, cron workers, and e-mail/SMS/WhatsApp messaging). You receive a JSON evidence bundle: "
+                . "health checks, alerts, grouped errors, failed actions and messages, deployments, user activity and code excerpts (line numbers on the left, '>|' marks the reported line). "
+                . "Write a precise diagnostic report in GitHub Markdown with these sections: '## Summary' (3-5 sentences: overall state and the most important problem), "
+                . "'## Findings' (a numbered list ordered by impact; for each: what is wrong, the evidence quoted from the bundle, likely root cause, and how sure you are), "
+                . "'## Code review' (only when code excerpts are present: the defect, the file and line, and a corrected snippet), "
+                . "'## Recommended actions' (concrete steps a developer should take now, then later), '## What to watch'. "
+                . "Use only the evidence; when something cannot be concluded from it, say what extra data would settle it. Never invent log lines, numbers or files.";
+            $prompt = ($question !== '' ? "The developer asks: " . $question . "\n\n" : "Give a general health diagnosis.\n\n")
+                . "Automatic findings already detected:\n" . json_encode($rules, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+                . "\n\nEvidence bundle:\n" . mb_substr(json_encode($bundle, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR), 0, 180000);
+            $ai = cdp_aiComplete($sys, $prompt, null, null, null, 6000);
+            $s = function_exists('cdp_aiSettings') ? cdp_aiSettings() : [];
+            $provider = $s['provider'] ?? null;
+            $model = $ai['model'] ?? ($s['model'] ?? null);
+        }
+        $ms = (int) round((microtime(true) - $t0) * 1000);
+        $title = $question !== '' ? mb_substr($question, 0, 120) : 'Health diagnosis ' . date('j M Y H:i');
+        $who = trim(($user->fname ?? '') . ' ' . ($user->lname ?? '')) ?: ($user->username ?? ('User #' . (int) $user->uid));
+        $md = "# " . $title . "\n\n"
+            . "- Generated: " . cdp_devNow() . " by " . $who . "\n- Evidence window: since " . $bundle['window_from'] . "\n- Scope: " . implode(', ', $scope)
+            . "\n- Analysis: " . ($ai['ok'] ? ($provider . ' · ' . $model) : 'automatic findings only') . " · " . round($ms / 1000, 1) . " s\n\n";
+        if (!$ai['ok']) {
+            $md .= "> AI analysis unavailable: " . $ai['error'] . "\n\n";
+        }
+        $md .= "## Automatic findings\n\n" . ($rules ? implode("\n", array_map(function ($x, $i) { return ($i + 1) . '. **' . strtoupper($x['sev']) . '** ' . $x['text']; }, $rules, array_keys($rules))) : 'Nothing out of limits in the collected evidence.') . "\n\n";
+        if ($ai['ok']) {
+            $md .= "---\n\n" . $ai['text'] . "\n";
+        }
+        $md .= "\n---\n\n## Evidence collected\n\n";
+        foreach (['services' => 'Services checked', 'alerts' => 'Alerts', 'php_errors' => 'PHP error groups', 'failed_actions' => 'Failed action groups', 'failed_messages' => 'Failed message groups', 'ai_errors' => 'AI error groups', 'code' => 'Code excerpts'] as $k => $l) {
+            if (isset($bundle[$k])) {
+                $md .= "- " . $l . ": " . count($bundle[$k]) . "\n";
+            }
+        }
+        if (!empty($bundle['code'])) {
+            $md .= "\n### Code read\n\n";
+            foreach ($bundle['code'] as $c) {
+                $md .= "**" . $c['file'] . ($c['line'] ? ':' . $c['line'] : '') . "** (" . $c['why'] . ")" . (!empty($c['skipped']) ? ' – ' . $c['skipped'] : '') . "\n\n" . ($c['excerpt'] ? "```php\n" . $c['excerpt'] . "\n```\n\n" : '');
+            }
+        }
+        $dir = cdp_devReportDir();
+        $stamp = date('Ymd-His') . '-' . substr(bin2hex(random_bytes(4)), 0, 8);
+        $file = 'diagnosis-' . $stamp . '.md';
+        $bfile = 'evidence-' . $stamp . '.json';
+        @file_put_contents($dir . '/' . $file, $md);
+        @file_put_contents($dir . '/' . $bfile, json_encode($bundle, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR));
+        cdp_devX("INSERT INTO cdb_dev_ai_reports (user_id, title, question, scope, window_min, status, provider, model, ms, file, bundle_file, findings, error, created_at)
+            VALUES (:u, :t, :q, :s, :w, :st, :p, :m, :ms, :f, :bf, :fn, :e, :n)", [
+            ':u' => (int) $user->uid, ':t' => $title, ':q' => $question, ':s' => implode(',', $scope), ':w' => (int) $window, ':st' => $ai['ok'] ? 'analysed' : 'evidence_only',
+            ':p' => $provider, ':m' => $model, ':ms' => $ms, ':f' => $file, ':bf' => $bfile, ':fn' => count($rules), ':e' => $ai['ok'] ? null : mb_substr($ai['error'], 0, 255), ':n' => cdp_devNow(),
+        ]);
+        $id = cdp_devOne("SELECT MAX(id) AS id FROM cdb_dev_ai_reports WHERE file = :f", [':f' => $file]);
+        return ['ok' => true, 'id' => $id ? (int) $id->id : null, 'markdown' => $md, 'findings' => $rules, 'ai_ok' => $ai['ok'], 'file' => $file, 'saved' => is_file($dir . '/' . $file)];
+    }
+
+    /** Whether an AI provider is set up for the analysis part. */
+    function cdp_devAiReady()
+    {
+        if (!function_exists('cdp_aiConfigured')) {
+            @include_once __DIR__ . '/ai_assistant.php';
+            @include_once __DIR__ . '/ai_assistant_llm.php';
+        }
+        $s = function_exists('cdp_aiSettings') ? cdp_aiSettings() : [];
+        return ['ready' => function_exists('cdp_aiConfigured') && cdp_aiConfigured(), 'provider' => $s['provider'] ?? null, 'model' => $s['model'] ?? null];
+    }
+
+    function cdp_devDiagList()
+    {
+        cdp_devEnsureAiTable();
+        return array_map(function ($r) {
+            return ['id' => (int) $r->id, 'title' => (string) $r->title, 'scope' => (string) $r->scope, 'status' => (string) $r->status, 'model' => (string) $r->model,
+                'findings' => (int) $r->findings, 'ms' => (int) $r->ms, 'by' => trim($r->fname . ' ' . $r->lname) ?: ('User #' . $r->user_id), 'created_at' => (string) $r->created_at];
+        }, cdp_devQ("SELECT r.*, u.fname, u.lname FROM cdb_dev_ai_reports r LEFT JOIN cdb_users u ON u.id = r.user_id ORDER BY r.id DESC LIMIT 50"));
+    }
+
+    function cdp_devDiagGet($id)
+    {
+        $r = cdp_devOne("SELECT * FROM cdb_dev_ai_reports WHERE id = :i", [':i' => (int) $id]);
+        if (!$r) {
+            return null;
+        }
+        $p = cdp_devReportDir() . '/' . basename((string) $r->file);
+        return ['row' => $r, 'path' => $p, 'bundle' => cdp_devReportDir() . '/' . basename((string) $r->bundle_file), 'markdown' => is_file($p) ? (string) file_get_contents($p) : ''];
+    }
+
+    function cdp_devDiagDelete($id)
+    {
+        $g = cdp_devDiagGet($id);
+        if (!$g) {
+            return false;
+        }
+        @unlink($g['path']);
+        @unlink($g['bundle']);
+        return cdp_devX("DELETE FROM cdb_dev_ai_reports WHERE id = :i", [':i' => (int) $id]);
+    }
+}

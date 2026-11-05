@@ -11,12 +11,6 @@
     var CS = window.CS;
     var URL_ = 'ajax/support/desk_ajax.php';
     var FILTERS = ['status', 'priority', 'category', 'channel', 'team_id', 'assignee_id', 'language', 'tag', 'from', 'to'];
-    var GROUPS = [
-        ['Needs attention', ['queued', 'sla_risk', 'overdue'], true],
-        ['Tickets', ['all', 'mine', 'unassigned', 'ai', 'followed', 'internal']],
-        ['Status', ['new', 'open', 'pending_customer', 'pending_internal', 'on_hold', 'resolved', 'closed']],
-        ['Elsewhere', ['archived', 'spam', 'trash']]
-    ];
     // Collapsed groups are remembered per browser.
     var folded = {};
     try { folded = JSON.parse(localStorage.getItem('cs-folded') || '{}') || {}; } catch (e) { folded = {}; }
@@ -30,9 +24,8 @@
         load();
         setInterval(function () { if (!document.hidden && !Object.keys(selected).length) { load(true); } }, 45000);
         shortcuts();
-        loadTrend();
-        setInterval(loadTrend, 120000);
-        $(document).on('swl:theme', loadTrend);
+        loadPulse();
+        setInterval(function () { if (!document.hidden) { loadPulse(); } }, 60000);
     });
 
 
@@ -50,39 +43,38 @@
 
     var charts = {};
 
-    // Summary tiles: counts come from the same call as the list, so they never disagree with it.
-    function summary() {
-        var c = counts || {};
-        $('#cs_sum_all').text(c.all || 0);
-        $('#cs_sum_mine').text(c.mine || 0);
-        $('#cs_sum_queued').text(c.queued || 0);
-        $('#cs_sum_risk').text(c.sla_risk || 0);
-        $('#cs_sum_overdue').text((c.overdue || 0) + ' past deadline');
+    // Top bar: happy customers (30 days), solved by King today, colleagues online.
+    function loadPulse() {
+        CS.get(URL_, { action: 'pulse' }).done(function (r) {
+            if (!r || !r.ok) { return; }
+            $('#cs_pulse_csat b').text(r.csat == null ? '–' : r.csat + '%');
+            $('#cs_pulse_king b').text(r.king_today == null ? '–' : r.king_today + '%');
+            var on = r.online || [];
+            $('#cs_online').html(on.slice(0, 4).map(function (a, i) {
+                return '<span class="swl-cs-av is-sm t' + (i % 6) + '" title="' + CS.esc(a.name) + '">' + CS.esc(initials(a.name)) + '</span>';
+            }).join('') + '<span class="n">' + on.length + ' online</span>').attr('aria-label', on.length + ' colleagues online');
+        });
     }
 
-    // Trend: the last 14 days from the reports endpoint (same numbers as the Reports page).
-    function loadTrend() {
-        var to = new Date(), from = new Date();
-        from.setDate(to.getDate() - 13);
-        var ymd = function (d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
-        CS.get('ajax/support/reports_ajax.php', { action: 'report', from: ymd(from), to: ymd(to) }).done(function (r) {
-            if (!r || !r.ok || !r.report.daily) { return; }
-            var d = r.report.daily;
-            var created = d.reduce(function (a, x) { return a + x.created; }, 0), resolved = d.reduce(function (a, x) { return a + x.resolved; }, 0);
-            $('#cs_trend_note').text(created + ' created · ' + resolved + ' resolved');
-            drawChart('trend', 'cs_chart_trend', {
-                chart: { type: 'area', height: 220 },
-                series: [{ name: 'Created', data: d.map(function (x) { return x.created; }) }, { name: 'Resolved', data: d.map(function (x) { return x.resolved; }) }],
-                colors: ['#2563eb', '#0f766e'],
-                stroke: { curve: 'smooth', width: 2 },
-                fill: { type: 'gradient', gradient: { opacityFrom: 0.28, opacityTo: 0.02 } },
-                dataLabels: { enabled: false },
-                xaxis: { categories: d.map(function (x) { return new Date(x.day + 'T00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short' }); }), tickAmount: 7, labels: { style: { colors: '#6b7280' } } },
-                yaxis: { min: 0, forceNiceScale: true, decimalsInFloat: 0, labels: { style: { colors: '#6b7280' } } },
-                legend: { position: 'top', horizontalAlign: 'left' },
-                tooltip: { theme: 'light' }
-            });
-        });
+    function initials(name) { return String(name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map(function (p) { return p.charAt(0); }).join('').toUpperCase() || '?'; }
+
+    // Views that are filters rather than server views: a channel, or tickets tagged "vip".
+    var VIRTUAL = {
+        ch_web: ['Web chat', 'solar:global-linear', { channel: 'web' }],
+        ch_whatsapp: ['WhatsApp', 'solar:chat-round-dots-linear', { channel: 'whatsapp' }],
+        ch_sms: ['SMS', 'solar:chat-square-linear', { channel: 'sms' }],
+        ch_email: ['Email', 'solar:letter-linear', { channel: 'email' }],
+        vip: ['VIP customers', 'solar:star-linear', { tag: 'vip' }]
+    };
+    var extra = {};
+    function virtualOn(k) {
+        var f = VIRTUAL[k][2], keys = Object.keys(st.f);
+        return st.view === 'all' && keys.length === 1 && st.f[keys[0]] === f[keys[0]] && Object.keys(f)[0] === keys[0];
+    }
+    function currentTitle() {
+        var vk = Object.keys(VIRTUAL).filter(virtualOn)[0];
+        if (vk) { return [VIRTUAL[vk][0], VIRTUAL[vk][1]]; }
+        return [viewNames[st.view] || 'All', (CS.icons.view[st.view] || 'solar:inbox-linear')];
     }
 
     // Keyboard first: J/K move between tickets (Enter opens the focused one), / jumps to search. Ignored while typing.
@@ -153,7 +145,11 @@
 
     function bind() {
         $('#cs_views').on('click', '[data-view]', function () {
-            st.view = $(this).data('view'); st.pg = 1; clearSel(); load();
+            st.view = $(this).data('view'); st.f = {}; $('[data-f]').val(''); st.pg = 1; clearSel(); load();
+        }).on('click', '[data-virtual]', function () {
+            var f = VIRTUAL[$(this).data('virtual')][2];
+            st.view = 'all'; st.f = $.extend({}, f); $('[data-f]').val(''); Object.keys(f).forEach(function (k) { $('[data-f="' + k + '"]').val(f[k]); });
+            st.pg = 1; clearSel(); load();
         }).on('click', '[data-saved]', function () {
             var v = savedViews[+$(this).data('saved')];
             if (!v) { return; }
@@ -209,7 +205,7 @@
         $('#cs_bulk_apply').on('click', bulk);
 
         // New ticket
-        $('#cs_new').on('click', function () { $('#cs_new_modal').modal('show'); });
+        $('#cs_new, #cs_new2').on('click', function () { $('#cs_new_modal').modal('show'); });
         $('#cs_n_internal').on('change', function () { $('.cs-cust').toggle(!this.checked); });
         var ct;
         $('#cs_n_cust_q').on('input', function () {
@@ -266,30 +262,46 @@
         var data = $.extend({ action: 'inbox', view: st.view, q: st.q, sort: st.sort, pg: st.pg }, st.f);
         xhr = CS.get(URL_, data).done(function (r) {
             if (!r || !r.ok) { $('#cs_rows').html('<tr><td colspan="9"><div class="swl-cs-empty">' + CS.esc(r && r.error ? r.error : 'Could not load.') + '</div></td></tr>'); return; }
-            counts = r.counts; viewNames = r.views; savedViews = r.saved_views;
+            counts = r.counts; viewNames = r.views; savedViews = r.saved_views; extra = r.extra || {};
             drawViews();
-            summary();
+            var t = currentTitle();
+            $('#cs_view_title').text(t[0]);
+            $('#cs_view_icon').attr('icon', t[1]);
+            $('#cs_count').text(r.list.total.toLocaleString() + (r.list.total === 1 ? ' ticket' : ' tickets') + ({ sla: ' · most urgent first', activity: ' · latest first', created: ' · newest first', oldest: ' · oldest first', priority: ' · highest priority first' }[st.sort] || ''));
+            var ai = counts.ai || 0;
+            $('#cs_king_title').text(V.king_on ? V.king + ' is answering' : V.king + ' is off');
+            $('#cs_king_line').text(V.king_on ? ai + ' chat' + (ai === 1 ? '' : 's') + ' now · hands over when unsure or asked' : 'Switch King on in Settings to answer customers first.');
             drawRows(r.list);
         }).fail(function (x) { if (x.statusText !== 'abort') { CS.fail(x); } }).always(function () { $('#cs_rows').css('opacity', 1); xhr = null; });
     }
 
     function drawViews() {
         var h = '';
-        GROUPS.forEach(function (g) {
-            var keys = g[1].filter(function (k) { return viewNames[k]; });
-            if (!keys.length) { return; }
-            var closed = !!folded[g[0]] && !g[2];
-            h += g[2] ? '<div class="swl-cs-view-group">' + CS.esc(g[0]) + '</div>'
-                : '<button type="button" class="swl-cs-view-group" data-fold="' + CS.esc(g[0]) + '" aria-expanded="' + (closed ? 'false' : 'true') + '">' + CS.esc(g[0]) + '<iconify-icon icon="solar:alt-arrow-down-linear" aria-hidden="true"></iconify-icon></button>';
-            if (closed) { return; }
-            keys.forEach(function (k) {
-                var n = counts[k];
-                // Needs attention lights up while something is waiting; red for missed deadlines.
-                var hot = g[2] && n ? ' is-hot' + (k === 'queued' ? '' : ' is-red') : '';
-                h += '<button type="button" class="swl-cs-view' + (st.view === k ? ' is-on' : '') + '" data-view="' + k + '"' + (st.view === k ? ' aria-current="true"' : '') + '>'
-                    + CS.ico('view', k) + CS.esc(viewNames[k]) + (n ? '<span class="n' + hot + '">' + n + '</span>' : '') + '</button>';
-            });
-        });
+        var item = function (key, label, icon, n, on, attrs, hot) {
+            return '<button type="button" class="swl-cs-view' + (on ? ' is-on' : '') + '" ' + attrs + (on ? ' aria-current="true"' : '') + '>'
+                + '<iconify-icon icon="' + icon + '" class="swl-cs-ico" aria-hidden="true"></iconify-icon><span class="t">' + CS.esc(label) + '</span>'
+                + (n ? '<span class="n' + (hot || '') + '">' + n + '</span>' : '') + '</button>';
+        };
+        var view = function (k, label, hotCls) {
+            if (!viewNames[k]) { return ''; }
+            return item(k, label || viewNames[k], CS.icons.view[k] || CS.icons.status[k] || 'solar:inbox-linear', counts[k], st.view === k && !Object.keys(st.f).length, 'data-view="' + k + '"', hotCls);
+        };
+        var group = function (name, inner, fold) {
+            if (!inner) { return ''; }
+            var closed = fold && !!folded[name];
+            return (fold ? '<button type="button" class="swl-cs-view-group" data-fold="' + CS.esc(name) + '" aria-expanded="' + (closed ? 'false' : 'true') + '">' + CS.esc(name) + '<iconify-icon icon="solar:alt-arrow-down-linear" aria-hidden="true"></iconify-icon></button>'
+                : '<div class="swl-cs-view-group">' + CS.esc(name) + '</div>') + (closed ? '' : inner);
+        };
+        // Needs attention: lights up while something is waiting.
+        h += group('Needs attention', view('queued', 'Waiting for a person', counts.queued ? ' is-hot' : '') + view('sla_risk', 'SLA at risk', counts.sla_risk ? ' is-hot is-red' : '') + view('overdue', 'Overdue', counts.overdue ? ' is-hot is-red' : ''));
+        h += group('Views', Object.keys(VIRTUAL).slice(0, 4).map(function (k) {
+            return item(k, VIRTUAL[k][0], VIRTUAL[k][1], (extra.channels || {})[VIRTUAL[k][2].channel], virtualOn(k), 'data-virtual="' + k + '"');
+        }).join('') + view('ai', 'King AI chats') + item('vip', VIRTUAL.vip[0], VIRTUAL.vip[1], extra.vip, virtualOn('vip'), 'data-virtual="vip"') + view('followed'), true);
+        h += group('Tickets', view('all') + view('unassigned') + view('mine', 'My open') + view('new') + view('internal')
+            + '<div class="swl-desk-sep" role="separator"></div>'
+            + view('open') + view('pending_customer', 'Pending') + view('pending_internal') + view('on_hold') + view('resolved', 'Solved') + view('closed')
+            + '<div class="swl-desk-sep" role="separator"></div>'
+            + view('archived', 'Archive') + view('spam') + view('trash'), true);
         if (savedViews.length) {
             h += '<div class="swl-cs-view-group">Saved views</div>';
             savedViews.forEach(function (v, i) {
@@ -302,15 +314,15 @@
 
     function slaCell(s) {
         if (!s || !s.due) { return '<span class="swl-cs-muted">–</span>'; }
-        if (s.state === 'met' || s.state === 'paused') { return CS.pill('sla', s.state); }
+        if (s.state === 'met' || s.state === 'paused') {
+            return '<span class="swl-desk-sla is-' + s.state + '"><b>' + CS.esc(CS.labels.sla[s.state]) + '</b><span class="bar"><span style="width:' + (s.state === 'met' ? 100 : 0) + '%"></span></span></span>';
+        }
         var mins = Math.round((new Date(s.due.replace(' ', 'T')) - new Date()) / 60000);
-        var txt = mins < 0 ? CS.dur(-mins) + ' late' : CS.dur(mins) + ' left';
+        var txt = mins < 0 ? CS.dur(-mins) + ' late' : (mins > 1440 && s.state === 'ok' ? 'On track' : CS.dur(mins) + ' left');
         var st2 = s.state === 'breached' || mins < 0 ? 'breached' : s.state;
-        // Bar: a full bar means the deadline is gone; it empties over the last 8 hours.
+        // The bar fills as the deadline nears; full means it has passed.
         var fill = st2 === 'breached' ? 100 : Math.max(4, Math.min(100, 100 - (mins / 480) * 100));
-        return '<span class="swl-cs-slacell" title="' + CS.esc(s.label + ' due ' + CS.full(s.due)) + '">'
-            + '<span class="swl-cs-pill is-' + st2 + '">' + CS.ico('sla', st2) + CS.esc(txt) + '</span>'
-            + '<span class="swl-cs-slabar is-' + st2 + '" aria-hidden="true"><span style="width:' + fill.toFixed(0) + '%"></span></span></span>';
+        return '<span class="swl-desk-sla is-' + st2 + '" title="' + CS.esc(s.label + ' due ' + CS.full(s.due)) + '"><b>' + CS.esc(txt) + '</b><span class="bar"><span style="width:' + fill.toFixed(0) + '%"></span></span></span>';
     }
 
     // Initial on a tinted circle; the tint is picked from the name so a person keeps one colour.
@@ -333,8 +345,11 @@
         if (!t.assignee) {
             return '<span class="swl-cs-own swl-cs-muted"><span class="swl-cs-av is-sm is-none" aria-hidden="true"></span>Unassigned</span>';
         }
-        return '<span class="swl-cs-own">' + avatar(t.assignee, 'is-sm') + '<span>' + CS.esc(t.assignee) + (t.team ? '<span class="d-block swl-cs-small swl-cs-muted">' + CS.esc(t.team) + '</span>' : '') + '</span></span>';
+        return '<span class="swl-cs-own">' + avatar(t.assignee, 'is-sm') + '<span>' + CS.esc(t.assignee) + (t.team ? '<span class="swl-cs-small swl-cs-muted">' + CS.esc(t.team) + '</span>' : '') + '</span></span>';
     }
+
+    // The desk shows the short status names; the ticket page shows the full ones.
+    var SHORT = { 'new': 'New', open: 'Open', pending_customer: 'Pending', pending_internal: 'With us', on_hold: 'On hold', resolved: 'Solved', closed: 'Closed' };
 
     function drawRows(l) {
         lastRows = l.rows;
@@ -349,24 +364,30 @@
                 return '<tr data-id="' + t.id + '" tabindex="0" class="' + (t.awaiting_us && open ? 'is-unread' : '') + '">'
                     + '<td><input type="checkbox" data-sel="' + t.id + '" aria-label="Select ' + CS.esc(t.ref) + '"' + (selected[t.id] ? ' checked' : '') + '></td>'
                     + '<td><div class="swl-cs-who-cell">' + avatar(who) + '<div><b>' + CS.esc(who) + '</b><small>' + CS.esc(t.customer_email || t.locker || t.ref) + '</small></div></div></td>'
-                    + '<td class="swl-cs-subj"><b>' + (t.awaiting_us && open ? '<iconify-icon icon="solar:reply-linear" class="swl-cs-ico" role="img" aria-label="Customer replied"></iconify-icon>' : '') + CS.esc(t.subject) + '</b>'
+                    + '<td class="swl-cs-subj" title="' + CS.esc(CS.plain(t.preview || '')) + '"><b>' + (t.awaiting_us && open ? '<iconify-icon icon="solar:reply-linear" class="swl-cs-ico" role="img" aria-label="Customer replied"></iconify-icon>' : '') + CS.esc(t.subject) + '</b>'
                     + '<small>' + CS.esc(t.ref) + (t.link_ref ? ' · ' + CS.esc(t.link_ref) : '') + ' · ' + CS.ico('category', t.category) + CS.esc(V.categories[t.category] || t.category)
                     + (t.tags.length ? ' · ' + t.tags.map(function (g) { return '#' + CS.esc(g); }).join(' ') : '') + '</small>'
-                    + (t.preview ? '<small>' + CS.esc(CS.plain(t.preview)) + '</small>' : '') + '</td>'
-                    + '<td><span class="swl-cs-ch is-' + CS.esc(t.channel) + '">' + CS.ico('channel', t.channel) + CS.esc(V.channels[t.channel] || t.channel) + '</span></td>'
-                    + '<td><span class="swl-cs-pri is-' + CS.esc(t.priority) + '">' + CS.ico('priority', t.priority) + CS.esc(V.priorities[t.priority] || t.priority) + '</span></td>'
+                    + '</td>'
+                    + '<td><span class="swl-cs-ch is-' + CS.esc(t.channel) + '" title="' + CS.esc(V.channels[t.channel] || t.channel) + '">' + CS.ico('channel', t.channel) + CS.esc(V.channels[t.channel] || t.channel) + '</span></td>'
+                    + '<td><span class="swl-cs-pri is-' + CS.esc(t.priority) + '" title="' + CS.esc(V.priorities[t.priority] || t.priority) + ' priority">' + CS.ico('priority', t.priority) + CS.esc(V.priorities[t.priority] || t.priority) + '</span></td>'
                     + '<td>' + owner(t) + '</td>'
-                    + '<td>' + CS.pill('status', t.status) + '</td>'
+                    + '<td>' + CS.pill('status', t.status, SHORT[t.status]) + '</td>'
                     + '<td>' + (open ? slaCell(t.sla) : CS.pill('sla', t.sla_resolve.state)) + '</td>'
-                    + '<td><span title="' + CS.esc(CS.full(t.last_activity_at)) + '">' + CS.esc(CS.when(t.last_activity_at)) + '</span></td></tr>';
+                    + '<td class="c-last"><span title="' + CS.esc(CS.full(t.last_activity_at)) + '">' + CS.esc(CS.when(t.last_activity_at)) + '</span></td></tr>';
             }).join(''));
         }
         var pages = Math.max(1, Math.ceil(l.total / l.per));
         if (st.pg > pages && l.total) { st.pg = pages; load(); return; }
         var from = l.total ? (l.page - 1) * l.per + 1 : 0, to = Math.min(l.total, l.page * l.per);
-        $('#cs_pager').html('<span>' + from + '–' + to + ' of ' + l.total + '</span><span>'
-            + '<button type="button" class="btn btn-secondary btn-sm" data-pg="' + (l.page - 1) + '"' + (l.page <= 1 ? ' disabled' : '') + '>Previous</button> '
-            + '<button type="button" class="btn btn-secondary btn-sm" data-pg="' + (l.page + 1) + '"' + (l.page >= pages ? ' disabled' : '') + '>Next</button></span>');
+        var nums = [], lo = Math.max(1, l.page - 2), hi = Math.min(pages, lo + 4);
+        lo = Math.max(1, Math.min(lo, hi - 4));
+        for (var p = lo; p <= hi; p++) {
+            nums.push('<button type="button" data-pg="' + p + '"' + (p === l.page ? ' class="is-on" aria-current="page"' : '') + '>' + p + '</button>');
+        }
+        $('#cs_pager').html('<span>' + (l.total ? 'Showing ' + from + '–' + to + ' of ' + l.total.toLocaleString() : 'No tickets') + '</span><nav class="swl-desk-pages" aria-label="Pages">'
+            + '<button type="button" data-pg="' + (l.page - 1) + '" aria-label="Previous page"' + (l.page <= 1 ? ' disabled' : '') + '><iconify-icon icon="solar:alt-arrow-left-linear" aria-hidden="true"></iconify-icon></button>'
+            + nums.join('') + (hi < pages ? '<span>…</span><button type="button" data-pg="' + pages + '">' + pages + '</button>' : '')
+            + '<button type="button" data-pg="' + (l.page + 1) + '" aria-label="Next page"' + (l.page >= pages ? ' disabled' : '') + '><iconify-icon icon="solar:alt-arrow-right-linear" aria-hidden="true"></iconify-icon></button></nav>');
         drawBulk();
     }
 

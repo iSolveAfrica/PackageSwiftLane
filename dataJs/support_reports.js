@@ -18,6 +18,11 @@
         $('[data-rf="priority"]').append(o(V.priorities));
         $('[data-rf="team_id"]').append(V.teams.map(function (t) { return '<option value="' + t.id + '">' + CS.esc(t.name) + '</option>'; }).join(''));
         $('[data-rf="assignee_id"]').append(V.agents.map(function (a) { return '<option value="' + a.id + '">' + CS.esc(a.name) + '</option>'; }).join(''));
+        $('.swl-rp-seg').on('click', '[data-range]', function () {
+            $('.swl-rp-seg [data-range]').removeClass('is-on').attr('aria-pressed', 'false');
+            $(this).addClass('is-on').attr('aria-pressed', 'true');
+            $('#cs_rep_range').val(String($(this).data('range'))).trigger('change');
+        });
         $('#cs_rep_range').on('change', function () {
             var custom = this.value === 'custom';
             $('#cs_rep_from, #cs_rep_to').prop('hidden', !custom);
@@ -51,13 +56,14 @@
     function delta(cur, prev, lowerIsBetter, unit) {
         if (cur == null || prev == null || prev === 0) { return ''; }
         var d = cur - prev;
-        if (Math.abs(d) < 0.5) { return '<span class="swl-cs-kpi-s">Same as before</span>'; }
+        if (Math.abs(d) < 0.5) { return '<span class="swl-rp-delta">same</span>'; }
         var good = lowerIsBetter ? d < 0 : d > 0;
         var txt = unit === 'pts' ? Math.abs(Math.round(d)) + ' pts' : (unit === 'min' ? CS.dur(Math.abs(d)) : Math.abs(Math.round(d / prev * 100)) + '%');
-        return '<span class="swl-cs-kpi-s" style="color: var(' + (good ? '--teal-700' : '--red-500') + ')">' + (d > 0 ? '▲ ' : '▼ ') + txt + ' vs previous</span>';
+        return '<span class="swl-rp-delta ' + (good ? 'is-good' : 'is-bad') + '" title="Compared with the previous period"><iconify-icon icon="' + (d > 0 ? 'solar:arrow-up-linear' : 'solar:arrow-down-linear') + '" aria-hidden="true"></iconify-icon>' + txt + '</span>';
     }
     function kpi(icon, label, value, sub, d) {
-        return '<div class="swl-cs-kpi"><div class="swl-cs-kpi-l"><iconify-icon icon="' + icon + '" aria-hidden="true"></iconify-icon> ' + CS.esc(label) + '</div><div class="swl-cs-kpi-n">' + value + '</div><div class="swl-cs-kpi-s">' + sub + '</div>' + (d || '') + '</div>';
+        return '<div class="swl-rp-kpi" title="' + CS.esc(sub.replace(/<[^>]+>/g, '')) + '"><div class="l"><span class="ic"><iconify-icon icon="' + icon + '" aria-hidden="true"></iconify-icon></span>' + CS.esc(label) + '</div>'
+            + '<div class="v"><b>' + value + '</b>' + (d || '') + '</div><div class="swl-rp-spark" data-spark="' + CS.esc(label) + '"></div></div>';
     }
 
     var last = null;
@@ -73,28 +79,54 @@
         var fcr = pct(r.fcr.met, r.fcr.eligible);
         var kingRate = pct(r.ai.contained, r.ai.engaged), kingPrev = pct(p.ai.contained, p.ai.engaged);
         $('#cs_kpis').html([
-            kpi('solar:ticket-linear', 'Tickets', r.tickets, r.resolved + ' resolved · ' + r.reopened + ' reopened', delta(r.tickets, p.tickets, false)),
-            kpi('solar:stopwatch-linear', 'First reply (median)', CS.dur(r.human_first_response.median), '90% within ' + CS.dur(r.human_first_response.p90) + ' · ' + r.human_first_response.n + ' tickets', delta(r.human_first_response.median, p.human_first_median, true, 'min')),
-            kpi('solar:check-circle-linear', 'Resolution (median)', CS.dur(r.resolution.median), '90% within ' + CS.dur(r.resolution.p90), delta(r.resolution.median, p.resolution_median, true, 'min')),
-            kpi('solar:shield-check-linear', 'Resolution SLA met', slaR == null ? '–' : slaR + '%', r.sla_resolve.met + ' of ' + r.sla_resolve.eligible + (slaF == null ? '' : ' · first reply ' + slaF + '%'), delta(slaR, slaRp, false, 'pts')),
-            kpi('solar:star-linear', 'Solved first time', fcr == null ? '–' : fcr + '%', r.fcr.met + ' of ' + r.fcr.eligible + ' resolved'),
-            kpi('solar:like-linear', 'Customer rating', cs == null ? '–' : cs + '% happy', r.csat.responses + ' ratings from ' + r.csat.asked + ' resolved', delta(cs, csp, false, 'pts')),
-            kpi('solar:hand-shake-linear', 'Wait for a person (median)', CS.dur(r.handover_wait.median), 'From handover to a person replying · ' + r.handover_wait.n + ' chats'),
-            kpi('solar:magic-stick-3-linear', 'King solved', kingRate == null ? '–' : kingRate + '%', r.ai.contained + ' of ' + r.ai.engaged + ' chats King answered', delta(kingRate, kingPrev, false, 'pts'))
+            kpi('solar:ticket-linear', 'New tickets', r.tickets.toLocaleString(), r.resolved + ' resolved · ' + r.reopened + ' reopened', delta(r.tickets, p.tickets, false)),
+            kpi('solar:stopwatch-linear', 'First reply', CS.dur(r.human_first_response.median), 'Median · 90% within ' + CS.dur(r.human_first_response.p90), delta(r.human_first_response.median, p.human_first_median, true, 'min')),
+            kpi('solar:shield-check-linear', 'SLA met', slaR == null ? '–' : slaR + '%', r.sla_resolve.met + ' of ' + r.sla_resolve.eligible + (slaF == null ? '' : ' · first reply ' + slaF + '%'), delta(slaR, slaRp, false, 'pts')),
+            kpi('solar:magic-stick-3-linear', 'Solved by King', kingRate == null ? '–' : kingRate + '%', r.ai.contained + ' of ' + r.ai.engaged + ' chats King answered', delta(kingRate, kingPrev, false, 'pts')),
+            kpi('solar:smile-circle-linear', 'Happy customers', cs == null ? '–' : cs + '%', r.csat.responses + ' ratings from ' + r.csat.asked + ' resolved', delta(cs, csp, false, 'pts')),
+            kpi('solar:hand-shake-linear', 'Wait for a person', CS.dur(r.handover_wait.median), 'Median from handover to a person replying · ' + r.handover_wait.n + ' chats')
         ].join(''));
+        var sparkData = {
+            'New tickets': (r.daily || []).map(function (x) { return x.created; }), 'First reply': (r.daily || []).map(function (x) { return x.resolved; }),
+            'SLA met': (r.daily || []).map(function (x) { return x.resolved; }), 'Solved by King': (r.daily || []).map(function (x) { return x.king; }),
+            'Happy customers': (r.daily || []).map(function (x) { return x.resolved; }), 'Wait for a person': (r.daily || []).map(function (x) { return x.handed; })
+        };
+        var SC = ['#2563eb', '#0e7490', '#047857', '#7c3aed', '#d97706', '#b91c1c'];
+        $('#cs_kpis [data-spark]').each(function (i) {
+            var data = sparkData[$(this).data('spark')] || [];
+            var mx = Math.max.apply(null, data.concat([1])), mn = Math.min.apply(null, data.concat([0]));
+            var pts = data.map(function (v, j) { return (data.length > 1 ? j * 120 / (data.length - 1) : 0).toFixed(1) + ',' + (27 - (v - mn) / ((mx - mn) || 1) * 24).toFixed(1); }).join(' ');
+            $(this).html(data.length > 1 ? '<svg viewBox="0 0 120 30" preserveAspectRatio="none" aria-hidden="true"><polyline points="' + pts + '" fill="none" stroke="' + SC[i % 6] + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"></polyline></svg>' : '');
+        });
 
         drawCharts(r, p);
 
-        $('#cs_by_channel').html(bars(r.by_channel));
+        var chMax = Math.max.apply(null, (r.by_channel || []).map(function (x) { return x.n; }).concat([1]));
+        $('#cs_by_channel').html((r.by_channel || []).length ? r.by_channel.map(function (x) {
+            return '<div class="swl-rp-chrow is-' + CS.esc(x.key) + '">' + CS.ico('channel', x.key) + '<span class="l">' + CS.esc(x.label) + '</span><span class="t"><span style="width:' + (x.n / chMax * 100).toFixed(0) + '%"></span></span><b>' + x.n + '</b></div>';
+        }).join('') : '<p class="swl-cs-small swl-cs-muted">No tickets in this period.</p>');
+        var rs = r.handover_reasons || [], rMax = Math.max.apply(null, rs.map(function (x) { return x.n; }).concat([1]));
+        $('#cs_reasons_bars').html(rs.length ? rs.map(function (x) {
+            return '<div class="swl-rp-bar"><div class="h"><span>' + CS.esc(humanize(x.label)) + '</span><b>' + x.n + '</b></div><span class="t"><span style="width:' + (x.n / rMax * 100).toFixed(0) + '%"></span></span></div>';
+        }).join('') : '<p class="swl-cs-small swl-cs-muted">No chats went to a person in this period.</p>');
+        var rt = r.ratings || {}, rn = ['5', '4', '3', '2', '1'].reduce(function (a, k) { return a + (rt[k] || 0); }, 0);
+        $('#cs_rating_n').text(rn + ' ratings');
+        $('#cs_ratings').html(['5', '4', '3', '2', '1'].map(function (k) {
+            var pc = rn ? Math.round((rt[k] || 0) / rn * 100) : 0;
+            return '<div class="swl-rp-starrow is-s' + k + '"><span class="l">' + k + (k === '1' ? ' star' : ' stars') + '</span><span class="t"><span style="width:' + pc + '%"></span></span><b>' + pc + '%</b></div>';
+        }).join(''));
         $('#cs_by_category').html(bars(r.by_category));
         $('#cs_by_team').html(bars(r.by_team));
         $('#cs_reasons').html(bars(r.handover_reasons));
         var ages = {}; r.backlog.forEach(function (b) { ages[b.age] = (ages[b.age] || 0) + b.n; });
-        $('#cs_backlog').html(bars(Object.keys(ages).map(function (k) { return { label: k, n: ages[k] }; }), 'Nothing open.'));
+        var order = ['< 1 day', '1-3 days', '3-7 days', '> 7 days'], aMax = Math.max.apply(null, order.map(function (k) { return ages[k] || 0; }).concat([1]));
+        $('#cs_backlog').html('<div class="cols">' + order.map(function (k, i) {
+            return '<div class="col-b is-a' + i + '"><b>' + (ages[k] || 0) + '</b><span class="bar" style="height:' + Math.max(6, Math.round((ages[k] || 0) / aMax * 96)) + 'px"></span></div>';
+        }).join('') + '</div><div class="lbls">' + order.map(function (k) { return '<span>' + CS.esc(k.replace('-', '–')) + '</span>'; }).join('') + '</div>');
         $('#cs_ops').html('<p class="swl-cs-small mb-1"><b>Customer updates sent</b></p>' + bars(r.notifications, 'None in this period.') + '<p class="swl-cs-small mb-1 mt-2"><b>Automation runs</b></p>' + bars(r.automation, 'None in this period.'));
 
         var ai = r.ai, runs = r.ai_runs;
-        $('#cs_king').html(ai.conversations ? '<dl class="swl-cs-kv mb-2">'
+        $('#cs_king').html(ai.conversations ? '<p class="mb-2">' + CS.esc(V.king) + ' answered ' + ai.engaged + ' chats. ' + (ai.engaged ? Math.round(ai.confirmed / ai.engaged * 100) : 0) + '% of customers confirmed ' + CS.esc(V.king) + ' solved it; ' + (ai.engaged ? Math.round(ai.handed_over / ai.engaged * 100) : 0) + '% went to a person.</p><dl class="swl-cs-kv mb-2">'
             + '<dt>Chats started</dt><dd>' + ai.conversations + '</dd><dt>King answered</dt><dd>' + ai.engaged + '</dd>'
             + '<dt>Solved, confirmed</dt><dd>' + ai.confirmed + '</dd><dt>Solved, not confirmed</dt><dd>' + (ai.contained - ai.confirmed - ai.abandoned) + '</dd>'
             + '<dt>Left mid-chat</dt><dd>' + ai.abandoned + '</dd><dt>Handed to a person</dt><dd>' + ai.handed_over + '</dd></dl>'
@@ -102,8 +134,13 @@
             + (runs.discarded ? ' · ' + runs.discarded + ' late answers discarded after a person took over' : '') + ' · ' + (runs.tokens_in + runs.tokens_out).toLocaleString() + ' tokens</p>'
             : '<div class="swl-cs-empty">No chats in this period.</div>');
 
-        $('#cs_agents').html(r.agents.length ? r.agents.map(function (a) {
-            return '<tr><td>' + CS.esc(a.name) + '</td><td>' + a.assigned + '</td><td>' + a.resolved + '</td><td>' + CS.dur(a.first_median) + '</td><td>' + (a.csat == null ? '–' : a.csat + '/5 (' + a.csat_n + ')') + '</td></tr>';
+        $('#cs_agents').html(r.agents.length ? r.agents.map(function (a, i) {
+            var pc = a.assigned ? Math.round(a.resolved / a.assigned * 100) : 0;
+            var ini = String(a.name || '?').split(/\s+/).slice(0, 2).map(function (q) { return q.charAt(0); }).join('').toUpperCase();
+            return '<tr><td><span class="swl-rp-agent"><span class="swl-cs-av is-sm t' + (i % 6) + '" aria-hidden="true">' + CS.esc(ini) + '</span><b>' + CS.esc(a.name) + '</b></span></td>'
+                + '<td><span class="swl-rp-res"><span class="t"><span style="width:' + pc + '%"></span></span><span class="n">' + a.resolved + ' / ' + a.assigned + '</span></span></td>'
+                + '<td>' + CS.dur(a.first_median) + '</td><td><b class="' + (a.sla_met == null ? '' : (a.sla_met >= 90 ? 'is-good' : 'is-warn')) + '">' + (a.sla_met == null ? '–' : a.sla_met + '%') + '</b></td>'
+                + '<td>' + (a.csat == null ? '–' : '<span class="swl-rp-rating"><iconify-icon icon="solar:star-bold" aria-hidden="true"></iconify-icon>' + a.csat + '</span>') + '</td></tr>';
         }).join('') : '<tr><td colspan="5"><div class="swl-cs-empty">No tickets in this period.</div></td></tr>');
     }
 

@@ -2709,6 +2709,7 @@ if (!function_exists('cdp_csReport')) {
         $resolved = $reopened = $csatN = $csatPos = $fcr = 0;
         $byDay = $byChannel = $byCategory = $byTeam = $byAgent = [];
         $resDay = [];
+        $stars = [];
         $now = time();
         foreach ($tickets as $t) {
             $day = substr($t->created_at, 0, 10);
@@ -2762,7 +2763,7 @@ if (!function_exists('cdp_csReport')) {
             }
             $ak = (int) $t->assignee_id;
             if (!isset($byAgent[$ak])) {
-                $byAgent[$ak] = ['assigned' => 0, 'resolved' => 0, 'first' => [], 'csat' => [], 'name' => $ak ? cdp_csUserName($ak) : 'Unassigned'];
+                $byAgent[$ak] = ['assigned' => 0, 'resolved' => 0, 'first' => [], 'csat' => [], 'sla_e' => 0, 'sla_m' => 0, 'name' => $ak ? cdp_csUserName($ak) : 'Unassigned'];
             }
             $byAgent[$ak]['assigned']++;
             if ($isRes) {
@@ -2773,6 +2774,13 @@ if (!function_exists('cdp_csReport')) {
             }
             if ($t->csat_score !== null) {
                 $byAgent[$ak]['csat'][] = (int) $t->csat_score;
+                $stars[(int) $t->csat_score] = ($stars[(int) $t->csat_score] ?? 0) + 1;
+            }
+            if (!$t->is_internal && ($isRes || $t->resolve_breached_at)) {
+                $byAgent[$ak]['sla_e']++;
+                if (!$t->resolve_breached_at) {
+                    $byAgent[$ak]['sla_m']++;
+                }
             }
         }
         ksort($byDay);
@@ -2820,6 +2828,7 @@ if (!function_exists('cdp_csReport')) {
         foreach ($byAgent as $k => $a) {
             $s = cdp_csStats($a['first']);
             $agents[] = ['name' => $a['name'], 'assigned' => $a['assigned'], 'resolved' => $a['resolved'], 'first_median' => $s['median'],
+                'sla_met' => $a['sla_e'] ? (int) round($a['sla_m'] / $a['sla_e'] * 100) : null,
                 'csat' => $a['csat'] ? round(array_sum($a['csat']) / count($a['csat']), 2) : null, 'csat_n' => count($a['csat'])];
         }
         usort($agents, function ($x, $y) { return $y['assigned'] <=> $x['assigned']; });
@@ -2843,6 +2852,7 @@ if (!function_exists('cdp_csReport')) {
                 'latency_ms' => $runs && $runs->lat !== null ? (int) $runs->lat : null, 'errors' => (int) ($runs->errs ?? 0), 'discarded' => (int) ($runs->discarded ?? 0)],
             'handover_reasons' => array_map(function ($r) { return ['label' => (string) $r->r, 'n' => (int) $r->n]; }, $reasons),
             'by_day' => $byDay,
+            'ratings' => ['5' => $stars[5] ?? 0, '4' => $stars[4] ?? 0, '3' => $stars[3] ?? 0, '2' => $stars[2] ?? 0, '1' => $stars[1] ?? 0],
             'daily' => cdp_csDaily($from, $to, $byDay, $resDay, $aiDay),
             'by_channel' => $named($byChannel, cdp_csChannels()), 'by_category' => $named($byCategory, cdp_csCategories()),
             'by_team' => $named($byTeam, $teams), 'agents' => $agents,

@@ -19,6 +19,9 @@ $tabs = [
     'deployments' => ['Deployments', 'solar:rocket-2-linear'],
     'infrastructure' => ['Infrastructure', 'solar:structure-linear'],
     'alerts' => ['Alerts', 'solar:bell-bing-linear'],
+    'users' => ['User activity', 'solar:users-group-two-rounded-linear'],
+    'data' => ['System data', 'solar:database-linear'],
+    'ai' => ['AI diagnostics', 'solar:magic-stick-3-linear'],
     'access' => ['Access', 'solar:shield-user-linear'],
 ];
 ?>
@@ -138,6 +141,7 @@ $tabs = [
                                 <button type="button" class="btn btn-secondary btn-sm swl-dev-live is-on" id="dv_tail" aria-pressed="true">Live tail</button>
                                 <span class="swl-dev-note" id="dv_log_n"></span>
                             </div>
+                            <div class="swl-dev-chart" id="dv_c_loghist" style="min-height: 150px" role="img" aria-label="Log lines over time by level"></div>
                             <div class="swl-dev-logs">
                                 <div class="swl-dev-logbox">
                                     <div class="table-responsive"><table class="table swl-dev-table"><thead><tr><th>Timestamp</th><th>Service</th><th>Level</th><th>Message</th></tr></thead><tbody id="dv_log_rows"></tbody></table></div>
@@ -163,6 +167,10 @@ $tabs = [
                     <!-- Deployments -->
                     <section id="dv_p_deployments" data-pane="deployments" role="tabpanel" aria-label="Deployments" class="swl-dev" hidden>
                         <div class="swl-dev-grid is-4" id="dv_dep_kpis"></div>
+                        <div class="swl-dev-grid is-2">
+                            <div class="swl-dev-card"><div class="swl-dev-card-h"><iconify-icon icon="solar:chart-2-linear" aria-hidden="true"></iconify-icon><h2>Deployments per day</h2><div class="r"><span class="swl-dev-note">Last 30 days</span></div></div><div class="swl-dev-chart" id="dv_c_deploys" role="img" aria-label="Deployments per day"></div></div>
+                            <div class="swl-dev-card"><div class="swl-dev-card-h"><iconify-icon icon="solar:pie-chart-2-linear" aria-hidden="true"></iconify-icon><h2>Change types</h2></div><div class="swl-dev-chart" id="dv_c_depkinds" role="img" aria-label="Change types"></div></div>
+                        </div>
                         <div class="swl-dev-card">
                             <div class="swl-dev-card-h"><iconify-icon icon="solar:routing-2-linear" aria-hidden="true"></iconify-icon><h2>Deployment pipeline</h2><div class="r"><span class="swl-dev-note" id="dv_dep_head"></span></div></div>
                             <div class="swl-dev-pipe" id="dv_pipe"></div>
@@ -186,11 +194,21 @@ $tabs = [
                             <div class="swl-dev-card"><div class="swl-dev-card-h"><iconify-icon icon="solar:server-linear" aria-hidden="true"></iconify-icon><h2>Server</h2></div><dl class="swl-dev-kv" id="dv_srv_kv"></dl></div>
                             <div class="swl-dev-card"><div class="swl-dev-card-h"><iconify-icon icon="solar:database-linear" aria-hidden="true"></iconify-icon><h2>Database and PHP</h2></div><dl class="swl-dev-kv" id="dv_db_kv"></dl></div>
                         </div>
+                        <div class="swl-dev-grid is-3">
+                            <div class="swl-dev-card"><div class="swl-dev-card-h"><iconify-icon icon="solar:heart-pulse-linear" aria-hidden="true"></iconify-icon><h2>Health status</h2></div><div class="swl-dev-chart" id="dv_c_health" role="img" aria-label="Services by health"></div></div>
+                            <div class="swl-dev-card"><div class="swl-dev-card-h"><iconify-icon icon="solar:cpu-bolt-linear" aria-hidden="true"></iconify-icon><h2>Top processes</h2><div class="r"><span class="swl-dev-note">By memory</span></div></div>
+                                <div class="table-responsive"><table class="table swl-dev-table"><thead><tr><th>Process</th><th>PID</th><th>Memory</th><th>CPU avg</th></tr></thead><tbody id="dv_proc_rows"></tbody></table></div></div>
+                            <div class="swl-dev-card"><div class="swl-dev-card-h"><iconify-icon icon="solar:history-linear" aria-hidden="true"></iconify-icon><h2>Recent events</h2></div><ul class="swl-dev-status-list" id="dv_inf_events"></ul></div>
+                        </div>
                     </section>
 
                     <!-- Alerts -->
                     <section id="dv_p_alerts" data-pane="alerts" role="tabpanel" aria-label="Alerts" class="swl-dev" hidden>
                         <div class="swl-dev-grid is-4" id="dv_al_kpis"></div>
+                        <div class="swl-dev-grid is-2">
+                            <div class="swl-dev-card"><div class="swl-dev-card-h"><iconify-icon icon="solar:chart-2-linear" aria-hidden="true"></iconify-icon><h2>Alerts per day</h2><div class="r"><span class="swl-dev-note">By severity, last 14 days</span></div></div><div class="swl-dev-chart" id="dv_c_alday" role="img" aria-label="Alerts per day"></div></div>
+                            <div class="swl-dev-card"><div class="swl-dev-card-h"><iconify-icon icon="solar:server-square-linear" aria-hidden="true"></iconify-icon><h2>Alerts by service</h2></div><div class="swl-dev-chart" id="dv_c_alsvc" role="img" aria-label="Alerts by service"></div></div>
+                        </div>
                         <div class="swl-dev-card">
                             <div class="swl-dev-toolbar">
                                 <label class="swl-cs-sr" for="dv_al_status">Status</label>
@@ -200,6 +218,94 @@ $tabs = [
                             </div>
                             <div class="table-responsive"><table class="table swl-dev-table"><thead><tr><th>Alert</th><th>Service</th><th>Status</th><th>Severity</th><th>Triggered</th><th>Duration</th><th>Context</th><th><span class="swl-cs-sr">Actions</span></th></tr></thead><tbody id="dv_al_rows"></tbody></table></div>
                             <p class="swl-dev-note mb-0 mt-2">Alerts open and close by themselves on every check (every refresh, and every minute when the collector runs from cron). Acknowledge one to show you are on it.</p>
+                        </div>
+                    </section>
+
+                    <!-- User activity -->
+                    <section id="dv_p_users" data-pane="users" role="tabpanel" aria-label="User activity" class="swl-dev" hidden>
+                        <div class="swl-dev-grid is-4" id="dv_u_kpis"></div>
+                        <div class="swl-dev-grid is-main">
+                            <div class="swl-dev-card"><div class="swl-dev-card-h"><iconify-icon icon="solar:chart-2-linear" aria-hidden="true"></iconify-icon><h2>Activity, last 24 hours</h2><div class="r"><span class="swl-dev-note">Actions per hour by module</span></div></div><div class="swl-dev-chart" id="dv_c_uhour" style="min-height: 300px" role="img" aria-label="Actions per hour by module"></div></div>
+                            <div class="swl-dev-card"><div class="swl-dev-card-h"><iconify-icon icon="solar:pie-chart-2-linear" aria-hidden="true"></iconify-icon><h2>Actions by role</h2><div class="r"><span class="swl-dev-note">7 days</span></div></div><div class="swl-dev-chart" id="dv_c_urole" role="img" aria-label="Actions by role"></div></div>
+                        </div>
+                        <div class="swl-dev-grid is-2">
+                            <div class="swl-dev-card"><div class="swl-dev-card-h"><iconify-icon icon="solar:calendar-linear" aria-hidden="true"></iconify-icon><h2>When people work</h2><div class="r"><span class="swl-dev-note">Actions by weekday and hour, 30 days</span></div></div><div class="swl-dev-chart" id="dv_c_uheat" style="min-height: 280px" role="img" aria-label="Activity heatmap"></div></div>
+                            <div class="swl-dev-card"><div class="swl-dev-card-h"><iconify-icon icon="solar:graph-up-linear" aria-hidden="true"></iconify-icon><h2>Daily activity</h2><div class="r"><span class="swl-dev-note">Actions, people and problems, 30 days</span></div></div><div class="swl-dev-chart" id="dv_c_uday" style="min-height: 280px" role="img" aria-label="Daily activity"></div></div>
+                        </div>
+                        <div class="swl-dev-grid is-3">
+                            <div class="swl-dev-card"><div class="swl-dev-card-h"><iconify-icon icon="solar:ranking-linear" aria-hidden="true"></iconify-icon><h2>Most active people</h2><div class="r"><span class="swl-dev-note">7 days</span></div></div><div class="swl-dev-chart" id="dv_c_utop" role="img" aria-label="Most active people"></div></div>
+                            <div class="swl-dev-card"><div class="swl-dev-card-h"><iconify-icon icon="solar:check-circle-linear" aria-hidden="true"></iconify-icon><h2>Outcomes</h2><div class="r"><span class="swl-dev-note">7 days</span></div></div><div class="swl-dev-chart" id="dv_c_uout" role="img" aria-label="Action outcomes"></div></div>
+                            <div class="swl-dev-card"><div class="swl-dev-card-h"><iconify-icon icon="solar:danger-triangle-linear" aria-hidden="true"></iconify-icon><h2>Actions that fail most</h2><div class="r"><span class="swl-dev-note">7 days</span></div></div><ul class="swl-dev-status-list" id="dv_u_failing"></ul></div>
+                        </div>
+                        <div class="swl-dev-grid is-main">
+                            <div class="swl-dev-card"><div class="swl-dev-card-h"><iconify-icon icon="solar:user-check-linear" aria-hidden="true"></iconify-icon><h2>Online now</h2><div class="r"><span class="swl-dev-note">Active in the last 15 minutes</span></div></div>
+                                <div class="table-responsive"><table class="table swl-dev-table"><thead><tr><th>Person</th><th>Role</th><th>Last action</th><th>Where</th><th>Device</th><th>IP</th><th>Actions</th><th>Seen</th></tr></thead><tbody id="dv_u_online"></tbody></table></div></div>
+                            <div class="swl-dev-card"><div class="swl-dev-card-h"><iconify-icon icon="solar:global-linear" aria-hidden="true"></iconify-icon><h2>Busiest addresses</h2><div class="r"><span class="swl-dev-note">24 hours</span></div></div><ul class="swl-dev-status-list" id="dv_u_ips"></ul></div>
+                        </div>
+                        <div class="swl-dev-card">
+                            <div class="swl-dev-card-h"><iconify-icon icon="solar:list-check-linear" aria-hidden="true"></iconify-icon><h2>Everything people did</h2><div class="r"><span class="swl-dev-note" id="dv_u_feed_n"></span></div></div>
+                            <div class="swl-dev-toolbar">
+                                <label class="swl-cs-sr" for="dv_u_mod">Module</label><select class="custom-select" id="dv_u_mod"><option value="">All modules</option></select>
+                                <label class="swl-cs-sr" for="dv_u_out">Outcome</label><select class="custom-select" id="dv_u_out"><option value="">All outcomes</option><option value="success">Succeeded</option><option value="problem">Failed or denied</option><option value="denied">Denied</option></select>
+                                <label class="swl-cs-sr" for="dv_u_q">Search activity</label><input type="search" class="form-control grow" id="dv_u_q" placeholder="Search person, action, record or IP…">
+                                <button type="button" class="btn btn-secondary btn-sm" id="dv_u_clear" hidden><iconify-icon icon="solar:close-circle-linear" aria-hidden="true"></iconify-icon> <span>Clear person</span></button>
+                            </div>
+                            <div id="dv_u_detail"></div>
+                            <div class="swl-dev-logbox"><div class="table-responsive"><table class="table swl-dev-table"><thead><tr><th>When</th><th>Person</th><th>Module</th><th>Action</th><th>Outcome</th><th>Record</th><th>Request</th><th>IP</th></tr></thead><tbody id="dv_u_feed"></tbody></table></div></div>
+                        </div>
+                    </section>
+
+                    <!-- System data -->
+                    <section id="dv_p_data" data-pane="data" role="tabpanel" aria-label="System data" class="swl-dev" hidden>
+                        <div class="swl-dev-grid is-4" id="dv_d_kpis"></div>
+                        <div class="swl-dev-card"><div class="swl-dev-card-h"><iconify-icon icon="solar:chart-2-linear" aria-hidden="true"></iconify-icon><h2>New records per day</h2><div class="r"><span class="swl-dev-note">Last 30 days</span></div></div><div class="swl-dev-chart" id="dv_c_dareas" style="min-height: 320px" role="img" aria-label="New records per day by area"></div></div>
+                        <div class="swl-dev-grid is-3">
+                            <div class="swl-dev-card"><div class="swl-dev-card-h"><iconify-icon icon="solar:letter-linear" aria-hidden="true"></iconify-icon><h2>Messages by channel</h2><div class="r"><span class="swl-dev-note">30 days</span></div></div><div class="swl-dev-chart" id="dv_c_dmsg" role="img" aria-label="Messages by channel"></div></div>
+                            <div class="swl-dev-card"><div class="swl-dev-card-h"><iconify-icon icon="solar:magic-stick-3-linear" aria-hidden="true"></iconify-icon><h2>AI usage</h2><div class="r"><span class="swl-dev-note">Calls and tokens, 30 days</span></div></div><div class="swl-dev-chart" id="dv_c_dai" role="img" aria-label="AI calls and tokens"></div></div>
+                            <div class="swl-dev-card"><div class="swl-dev-card-h"><iconify-icon icon="solar:pie-chart-2-linear" aria-hidden="true"></iconify-icon><h2>Database by size</h2></div><div class="swl-dev-chart" id="dv_c_dsize" role="img" aria-label="Largest tables by size"></div></div>
+                        </div>
+                        <div class="swl-dev-card"><div class="swl-dev-card-h"><iconify-icon icon="solar:database-linear" aria-hidden="true"></iconify-icon><h2>Largest tables</h2></div>
+                            <div class="table-responsive"><table class="table swl-dev-table"><thead><tr><th>Table</th><th>Rows (approx.)</th><th>Data</th><th>Indexes</th><th>Engine</th><th>Last write</th></tr></thead><tbody id="dv_d_tables"></tbody></table></div></div>
+                    </section>
+
+                    <!-- AI diagnostics -->
+                    <section id="dv_p_ai" data-pane="ai" role="tabpanel" aria-label="AI diagnostics" class="swl-dev" hidden>
+                        <div class="swl-dev-grid is-main">
+                            <div class="swl-dev-card">
+                                <div class="swl-dev-card-h"><iconify-icon icon="solar:magic-stick-3-linear" aria-hidden="true"></iconify-icon><h2>Ask for a diagnosis</h2><div class="r" id="dv_ai_state"></div></div>
+                                <form id="dv_ai_form" class="swl-dev-aiform" autocomplete="off">
+                                    <div class="form-group"><label for="dv_ai_q">What should it look into?</label>
+                                        <textarea class="form-control" id="dv_ai_q" rows="3" maxlength="2000" placeholder="e.g. Why are SMS failing since this morning? Or leave empty for a general health check."></textarea></div>
+                                    <fieldset class="form-group"><legend class="swl-dev-legend-t">Evidence to collect</legend>
+                                        <div class="swl-dev-checks">
+                                            <label><input type="checkbox" name="scope" value="health" checked> <iconify-icon icon="solar:pulse-2-linear" aria-hidden="true"></iconify-icon> Health and services</label>
+                                            <label><input type="checkbox" name="scope" value="alerts" checked> <iconify-icon icon="solar:bell-bing-linear" aria-hidden="true"></iconify-icon> Alerts</label>
+                                            <label><input type="checkbox" name="scope" value="errors" checked> <iconify-icon icon="solar:danger-triangle-linear" aria-hidden="true"></iconify-icon> Errors and failures</label>
+                                            <label><input type="checkbox" name="scope" value="deploys" checked> <iconify-icon icon="solar:rocket-2-linear" aria-hidden="true"></iconify-icon> Deployments</label>
+                                            <label><input type="checkbox" name="scope" value="activity"> <iconify-icon icon="solar:users-group-two-rounded-linear" aria-hidden="true"></iconify-icon> User activity</label>
+                                            <label><input type="checkbox" name="scope" value="code" checked> <iconify-icon icon="solar:code-file-linear" aria-hidden="true"></iconify-icon> Read the code errors point to</label>
+                                        </div></fieldset>
+                                    <div class="swl-dev-grid is-2">
+                                        <div class="form-group mb-0"><label for="dv_ai_win">Look back</label><select class="custom-select" id="dv_ai_win"><option value="60">1 hour</option><option value="360">6 hours</option><option value="1440" selected>24 hours</option><option value="4320">3 days</option><option value="10080">7 days</option></select></div>
+                                        <div class="form-group mb-0"><label for="dv_ai_paths">Also read these files <span class="swl-dev-note">(optional, one per line, file.php:120 for a line)</span></label>
+                                            <textarea class="form-control" id="dv_ai_paths" rows="2" placeholder="helpers/support.php:1200"></textarea></div>
+                                    </div>
+                                    <div class="swl-dev-toolbar mt-3 mb-0">
+                                        <button type="submit" class="btn btn-primary" id="dv_ai_go"><iconify-icon icon="solar:magic-stick-3-linear" aria-hidden="true"></iconify-icon> Generate report</button>
+                                        <span class="swl-dev-note">Secrets, e-mail addresses and tokens are masked before anything is sent. Configuration files are never read.</span>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="swl-dev-card">
+                                <div class="swl-dev-card-h"><iconify-icon icon="solar:folder-with-files-linear" aria-hidden="true"></iconify-icon><h2>Saved reports</h2></div>
+                                <ul class="swl-dev-status-list" id="dv_ai_list"></ul>
+                            </div>
+                        </div>
+                        <div class="swl-dev-card" id="dv_ai_out_card" hidden>
+                            <div class="swl-dev-card-h"><iconify-icon icon="solar:document-text-linear" aria-hidden="true"></iconify-icon><h2 id="dv_ai_title">Report</h2>
+                                <div class="r"><a class="btn btn-secondary btn-sm" id="dv_ai_dl" href="#"><iconify-icon icon="solar:download-linear" aria-hidden="true"></iconify-icon> Report (.md)</a>
+                                    <a class="btn btn-secondary btn-sm" id="dv_ai_dle" href="#"><iconify-icon icon="solar:code-file-linear" aria-hidden="true"></iconify-icon> Evidence (.json)</a></div></div>
+                            <div class="swl-dev-md" id="dv_ai_out" aria-live="polite"></div>
                         </div>
                     </section>
 

@@ -103,6 +103,80 @@ switch ($action) {
         $send(['users' => cdp_devAccessList(), 'me' => (int) $user->uid]);
         break;
 
+    case 'users':
+        $send(['users' => cdp_devUsers([
+            'user_id' => (int) ($_GET['user_id'] ?? 0), 'module' => mb_substr((string) ($_GET['module'] ?? ''), 0, 60),
+            'outcome' => in_array($_GET['outcome'] ?? '', ['success', 'failure', 'denied', 'problem'], true) ? $_GET['outcome'] : '',
+            'q' => mb_substr((string) ($_GET['q'] ?? ''), 0, 120),
+        ]), 'at' => cdp_devNow()]);
+        break;
+
+    case 'user':
+        $send(['detail' => cdp_devUserDetail((int) ($_GET['id'] ?? 0))]);
+        break;
+
+    case 'data':
+        $send(['data' => cdp_devData(), 'processes' => cdp_devProcesses(10)]);
+        break;
+
+    case 'processes':
+        $send(['processes' => cdp_devProcesses(12)]);
+        break;
+
+    case 'diag_list':
+        $send(['reports' => cdp_devDiagList(), 'ai_ready' => cdp_devAiReady()]);
+        break;
+
+    case 'diag_get':
+        $g = cdp_devDiagGet((int) ($_GET['id'] ?? 0));
+        if (!$g) {
+            http_response_code(404);
+            echo json_encode(['ok' => false, 'error' => 'Report not found.']);
+            exit;
+        }
+        $send(['id' => (int) $g['row']->id, 'title' => (string) $g['row']->title, 'markdown' => $g['markdown']]);
+        break;
+
+    case 'diag_download':
+        $g = cdp_devDiagGet((int) ($_GET['id'] ?? 0));
+        $evidence = ($_GET['what'] ?? '') === 'evidence';
+        $path = $g ? ($evidence ? $g['bundle'] : $g['path']) : null;
+        if (!$path || !is_file($path)) {
+            http_response_code(404);
+            header('Content-Type: text/plain; charset=utf-8');
+            echo 'Report file not found.';
+            exit;
+        }
+        header('Content-Type: ' . ($evidence ? 'application/json' : 'text/markdown') . '; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . basename($path) . '"');
+        header('X-Content-Type-Options: nosniff');
+        readfile($path);
+        exit;
+
+    case 'diag_run':
+        if (!$post) {
+            http_response_code(405);
+            echo json_encode(['ok' => false, 'error' => 'Use POST.']);
+            exit;
+        }
+        $me = $user->cdp_getUserData();
+        $who = (object) ['uid' => (int) $user->uid, 'fname' => $me->fname ?? '', 'lname' => $me->lname ?? '', 'username' => $me->username ?? ''];
+        $scope = array_map('strval', (array) ($_POST['scope'] ?? []));
+        $paths = array_filter(array_map('trim', preg_split('/[\r\n,]+/', (string) ($_POST['paths'] ?? ''))));
+        $r = cdp_devDiagRun($who, (string) ($_POST['question'] ?? ''), $scope, (int) ($_POST['window'] ?? 1440), $paths);
+        $send($r + ['reports' => cdp_devDiagList()]);
+        break;
+
+    case 'diag_delete':
+        if (!$post) {
+            http_response_code(405);
+            echo json_encode(['ok' => false, 'error' => 'Use POST.']);
+            exit;
+        }
+        cdp_devDiagDelete((int) ($_POST['id'] ?? 0));
+        $send(['reports' => cdp_devDiagList()]);
+        break;
+
     default:
         http_response_code(400);
         echo json_encode(['ok' => false, 'error' => 'Unknown action.']);
