@@ -165,7 +165,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
                             <?php if ($user->cdp_hasPermission('prealert_list')) { ?>
 							<li class="sidebar-item">
 								<a class="sidebar-link waves-effect waves-dark" href="prealert_list.php" aria-expanded="false">
-									<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+									<iconify-icon icon="solar:bell-linear" class="fs-5"></iconify-icon>
 									<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-7'] ?> </span>
 								</a>
 							</li>
@@ -174,7 +174,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 							<?php if ($user->cdp_hasPermission('add_shipment')) { ?>
 							<li class="sidebar-item">
 								<a href="courier_add.php" class="sidebar-link">
-									<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+									<iconify-icon icon="solar:add-square-linear" class="fs-5"></iconify-icon>
 									<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-15'] ?> </span>
 								</a>
 							</li>
@@ -183,7 +183,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 							<?php if ($user->cdp_hasPermission('add_multiple_shipments')) { ?>
 							<li class="sidebar-item">
 								<a href="import_excel_add_courier.php" class="sidebar-link">
-									<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+									<iconify-icon icon="solar:file-download-linear" class="fs-5"></iconify-icon>
 									<span class="hide-menu"> <?php echo $lang['asingmoduleexcell1'] ?> </span>
 								</a>
 							</li>
@@ -192,7 +192,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 							<?php if ($user->cdp_hasPermission('view_shipment_list')) { ?>
 							<li class="sidebar-item">
 								<a href="courier_list.php" class="sidebar-link">
-									<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+									<iconify-icon icon="solar:list-check-linear" class="fs-5"></iconify-icon>
 									<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-16'] ?> </span>
 								</a>
 							</li>
@@ -201,7 +201,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 							<?php if ($user->cdp_hasPermission('view_payment_shipment_list')) { ?>
 							<li class="sidebar-item">
 								<a class="sidebar-link waves-effect waves-dark" href="payments_gateways_courier_list.php" aria-expanded="false">
-									<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+									<iconify-icon icon="solar:card-recive-linear" class="fs-5"></iconify-icon>
 									<span class="hide-menu"><?php echo $lang['left-menu-sidebar-12'] ?> </span>
 								</a>
 							</li>
@@ -247,7 +247,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 							<?php if ($user->cdp_hasPermission('add_package')) { ?>
 							<li class="sidebar-item">
 								<a href="customer_packages_add.php" class="sidebar-link">
-									<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+									<iconify-icon icon="solar:add-square-linear" class="fs-5"></iconify-icon>
 									<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-8'] ?> </span>
 								</a>
 							</li>
@@ -256,7 +256,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 							<?php if ($user->cdp_hasPermission('view_package_list')) { ?>
 							<li class="sidebar-item">
 								<a class="sidebar-link waves-effect waves-dark" href="customer_packages_list.php" aria-expanded="false">
-									<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+									<iconify-icon icon="solar:box-linear" class="fs-5"></iconify-icon>
 									<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-11'] ?> </span>
 								</a>
 							</li>
@@ -265,7 +265,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 							<?php if ($user->cdp_hasPermission('view_payment_list')) { ?>
 							<li class="sidebar-item">
 								<a class="sidebar-link waves-effect waves-dark" href="payments_gateways_list.php" aria-expanded="false">
-									<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+									<iconify-icon icon="solar:card-recive-linear" class="fs-5"></iconify-icon>
 									<span class="hide-menu"><?php echo $lang['left-menu-sidebar-12'] ?> </span>
 								</a>
 							</li>
@@ -306,7 +306,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 							<?php if ($user->cdp_hasPermission('add_full_pickup')) { ?>
 							<li class="sidebar-item">
 								<a href="pickup_add_full.php" class="sidebar-link">
-									<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+									<iconify-icon icon="solar:add-square-linear" class="fs-5"></iconify-icon>
 									<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-20'] ?> </span>
 								</a>
 							</li>
@@ -315,7 +315,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 							<?php if ($user->cdp_hasPermission('view_pickup_list')) { ?>
 							<li class="sidebar-item">
 								<a href="pickup_list.php" class="sidebar-link">
-									<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+									<iconify-icon icon="solar:map-point-linear" class="fs-5"></iconify-icon>
 									<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-21'] ?> </span>
 								</a>
 							</li>
@@ -361,7 +361,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 									<?php if ($user->cdp_hasPermission('view_dashboard_shipments')) { ?>
 									<li class="sidebar-item">
 										<a href="dashboard_admin_consolidated.php" class="sidebar-link">
-											<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+											<iconify-icon icon="solar:widget-5-linear" class="fs-5"></iconify-icon>
 											<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-23'] ?></span>
 										</a>
 									</li>
@@ -370,7 +370,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 									<?php if ($user->cdp_hasPermission('add_consolidate_shipment')) { ?>
 									<li class="sidebar-item">
 										<a href="consolidate_add.php" class="sidebar-link">
-											<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+											<iconify-icon icon="solar:add-square-linear" class="fs-5"></iconify-icon>
 											<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-25'] ?> </span>
 										</a>
 									</li>
@@ -379,7 +379,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 									<?php if ($user->cdp_hasPermission('view_consolidate_list')) { ?>
 									<li class="sidebar-item">
 										<a href="consolidate_list.php" class="sidebar-link">
-											<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+											<iconify-icon icon="solar:layers-linear" class="fs-5"></iconify-icon>
 											<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-24'] ?> </span>
 										</a>
 									</li>
@@ -388,7 +388,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 									<?php if ($user->cdp_hasPermission('payments_gateways_consolidate_shipment')) { ?>
 									<li class="sidebar-item">
 										<a class="sidebar-link waves-effect waves-dark" href="payments_gateways_consolidate_list.php" aria-expanded="false">
-											<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+											<iconify-icon icon="solar:card-recive-linear" class="fs-5"></iconify-icon>
 											<span class="hide-menu"><?php echo $lang['left-menu-sidebar-12'] ?> </span>
 										</a>
 									</li>
@@ -409,7 +409,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 									<?php if ($user->cdp_hasPermission('view_dashboard_packages')) { ?>
 									<li class="sidebar-item">
 										<a href="dashboard_admin_package_consolidated.php" class="sidebar-link">
-											<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+											<iconify-icon icon="solar:widget-5-linear" class="fs-5"></iconify-icon>
 											<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-23'] ?></span>
 										</a>
 									</li>
@@ -418,7 +418,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 									<?php if ($user->cdp_hasPermission('view_consolidate_package_list')) { ?>
 									<li class="sidebar-item">
 										<a href="consolidate_package_list.php" class="sidebar-link">
-											<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+											<iconify-icon icon="solar:box-minimalistic-linear" class="fs-5"></iconify-icon>
 											<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-24'] ?> </span>
 										</a>
 									</li>
@@ -427,7 +427,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 									<?php if ($user->cdp_hasPermission('add_consolidate_package')) { ?>
 									<li class="sidebar-item">
 										<a href="consolidate_package_add.php" class="sidebar-link">
-											<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+											<iconify-icon icon="solar:add-square-linear" class="fs-5"></iconify-icon>
 											<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-25'] ?> </span>
 										</a>
 									</li>
@@ -436,7 +436,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 									<?php if ($user->cdp_hasPermission('payments_gateways_package_consolidate')) { ?>
 									<li class="sidebar-item">
 										<a class="sidebar-link waves-effect waves-dark" href="payments_gateways_package_consolidate_list.php" aria-expanded="false">
-											<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+											<iconify-icon icon="solar:card-recive-linear" class="fs-5"></iconify-icon>
 											<span class="hide-menu"><?php echo $lang['left-menu-sidebar-12'] ?> </span>
 										</a>
 									</li>
@@ -530,7 +530,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 							<?php if ($user->cdp_hasPermission('view_dashboard')) { ?>
 							<li class="sidebar-item">
 								<a href="dashboard_admin_account.php" class="sidebar-link">
-									<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+									<iconify-icon icon="solar:pie-chart-2-linear" class="fs-5"></iconify-icon>
 									<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-28'] ?></span>
 								</a>
 							</li>
@@ -539,7 +539,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 							<?php if ($user->cdp_hasPermission('view_financial_overview')) { ?>
 							<li class="sidebar-item">
 								<a class="sidebar-link waves-effect waves-dark" href="financial_overview.php" aria-expanded="false">
-									<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+									<iconify-icon icon="solar:chart-square-linear" class="fs-5"></iconify-icon>
 									<span class="hide-menu">Financial Overview</span>
 								</a>
 							</li>
@@ -548,7 +548,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 							<?php if ($user->cdp_hasPermission('view_receivable_accounts')) { ?>
 							<li class="sidebar-item">
 								<a href="accounts_receivable.php" class="sidebar-link">
-									<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+									<iconify-icon icon="solar:bill-list-linear" class="fs-5"></iconify-icon>
 									<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-29'] ?> </span>
 								</a>
 							</li>
@@ -557,7 +557,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 							<?php if ($user->cdp_hasPermission('view_global_payments')) { ?>
 							<li class="sidebar-item">
 								<a class="sidebar-link waves-effect waves-dark" href="global_payments_gateways.php" aria-expanded="false">
-									<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+									<iconify-icon icon="solar:card-transfer-linear" class="fs-5"></iconify-icon>
 									<span class="hide-menu"><?php echo $lang['left-menu-sidebar-12'] ?> </span>
 								</a>
 							</li>
@@ -566,7 +566,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 							<?php if ($user->cdp_hasPermission('view_transactions')) { ?>
 							<li class="sidebar-item">
 								<a class="sidebar-link waves-effect waves-dark" href="transactions.php" aria-expanded="false">
-									<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+									<iconify-icon icon="solar:transfer-horizontal-linear" class="fs-5"></iconify-icon>
 									<span class="hide-menu">Transactions</span>
 								</a>
 							</li>
@@ -590,7 +590,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 							<?php if ($user->cdp_hasPermission('view_client_list')) { ?>
 							<li class="sidebar-item">
 								<a class="sidebar-link waves-effect waves-dark" href="customers_list.php" aria-expanded="false">
-									<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+									<iconify-icon icon="solar:users-group-rounded-linear" class="fs-5"></iconify-icon>
 									<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-31'] ?> </span>
 								</a>
 							</li>
@@ -627,7 +627,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 							<?php if ($user->cdp_hasPermission('view_user_list')) { ?>
 							<li class="sidebar-item">
 								<a class="sidebar-link waves-effect waves-dark" href="users_list.php" aria-expanded="false">
-									<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+									<iconify-icon icon="solar:users-group-two-rounded-linear" class="fs-5"></iconify-icon>
 									<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-34'] ?> </span>
 								</a>
 							</li>
@@ -636,7 +636,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 							<?php if ($user->cdp_hasPermission('add_user')) { ?>
 							<li class="sidebar-item">
 								<a class="sidebar-link waves-effect waves-dark" href="users_add.php" aria-expanded="false">
-									<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+									<iconify-icon icon="solar:user-plus-linear" class="fs-5"></iconify-icon>
 									<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-35'] ?> </span>
 								</a>
 							</li>
@@ -666,7 +666,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 							<?php if ($user->cdp_hasPermission('view_role_assignment')) { ?>
 							<li class="sidebar-item">
 								<a class="sidebar-link waves-effect waves-dark" href="permissions_list.php" aria-expanded="false">
-									<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+									<iconify-icon icon="solar:shield-keyhole-linear" class="fs-5"></iconify-icon>
 									<span class="hide-menu"> <?php echo $lang['rolesp9'] ?> </span>
 								</a>
 							</li>
@@ -674,7 +674,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 							<?php if ($user->cdp_hasPermission('view_module_permissions')) { ?>
 							<li class="sidebar-item">
 								<a class="sidebar-link waves-effect waves-dark" href="asingrole_list.php" aria-expanded="false">
-									<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+									<iconify-icon icon="solar:user-id-linear" class="fs-5"></iconify-icon>
 									<span class="hide-menu"> <?php echo $lang['rolesp23'] ?> </span>
 								</a>
 							</li>
@@ -710,14 +710,14 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 						<ul aria-expanded="false" class="collapse first-level">
 							<li class="sidebar-item">
 								<a class="sidebar-link waves-effect waves-dark" href="dashboard_warehouse.php" aria-expanded="false">
-									<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+									<iconify-icon icon="solar:widget-5-linear" class="fs-5"></iconify-icon>
 									<span class="hide-menu"> Warehouse Panel </span>
 								</a>
 							</li>
 							<?php if ($user->cdp_hasPermission('warehouse_view')) { ?>
 							<li class="sidebar-item">
 								<a class="sidebar-link waves-effect waves-dark" href="warehouse.php" aria-expanded="false">
-									<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+									<iconify-icon icon="solar:box-linear" class="fs-5"></iconify-icon>
 									<span class="hide-menu"> Warehouse View </span>
 								</a>
 							</li>
@@ -725,7 +725,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 							<?php if ($user->cdp_hasPermission('view_warehouse_delivery')) { ?>
 							<li class="sidebar-item">
 								<a class="sidebar-link waves-effect waves-dark" href="warehouse_delivery.php" aria-expanded="false">
-									<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+									<iconify-icon icon="solar:delivery-linear" class="fs-5"></iconify-icon>
 									<span class="hide-menu"> Warehouse Delivery </span>
 										<span class="wd-nav-badge badge badge-danger ml-1" style="display:none;" title="Packages cleared and awaiting delivery"></span>
 								</a>
@@ -864,7 +864,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 									<?php if ($user->cdp_hasPermission('view_offices')) { ?>
 									<li class="sidebar-item">
 										<a class="sidebar-link waves-effect waves-dark" href="offices_list.php">
-											<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+											<iconify-icon icon="solar:buildings-linear" class="fs-5"></iconify-icon>
 											<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-43'] ?></span>
 										</a>
 									</li>
@@ -872,7 +872,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 									<?php if ($user->cdp_hasPermission('view_branches')) { ?>
 									<li class="sidebar-item">
 										<a class="sidebar-link waves-effect waves-dark" href="branchoffices_list.php">
-											<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+											<iconify-icon icon="solar:buildings-2-linear" class="fs-5"></iconify-icon>
 											<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-44'] ?></span>
 										</a>
 									</li>
@@ -880,7 +880,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 									<?php if ($user->cdp_hasPermission('view_courier_companies')) { ?>
 									<li class="sidebar-item">
 										<a class="sidebar-link waves-effect waves-dark" href="courier_company_list.php">
-											<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+											<iconify-icon icon="solar:delivery-linear" class="fs-5"></iconify-icon>
 											<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-45'] ?></span>
 										</a>
 									</li>
@@ -888,7 +888,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 									<?php if ($user->cdp_hasPermission('view_packaging')) { ?>
 									<li class="sidebar-item">
 										<a class="sidebar-link waves-effect waves-dark" href="packaging_list.php">
-											<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+											<iconify-icon icon="solar:box-minimalistic-linear" class="fs-5"></iconify-icon>
 											<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-54'] ?></span>
 										</a>
 									</li>
@@ -896,7 +896,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 									<?php if ($user->cdp_hasPermission('view_shipping_modes')) { ?>
 									<li class="sidebar-item">
 										<a class="sidebar-link waves-effect waves-dark" href="shipping_mode_list.php">
-											<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+											<iconify-icon icon="solar:routing-2-linear" class="fs-5"></iconify-icon>
 											<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-55'] ?></span>
 										</a>
 									</li>
@@ -904,7 +904,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 									<?php if ($user->cdp_hasPermission('view_delivery_times')) { ?>
 									<li class="sidebar-item">
 										<a class="sidebar-link waves-effect waves-dark" href="delivery_time_list.php">
-											<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+											<iconify-icon icon="solar:clock-circle-linear" class="fs-5"></iconify-icon>
 											<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-56'] ?></span>
 										</a>
 									
@@ -913,7 +913,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 									<?php if ($user->cdp_hasPermission('view_statuses')) { ?>
 									<li class="sidebar-item">
 										<a class="sidebar-link waves-effect waves-dark" href="status_courier_list.php">
-											<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+											<iconify-icon icon="solar:checklist-minimalistic-linear" class="fs-5"></iconify-icon>
 											<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-46'] ?></span>
 										</a>
 									</li>
@@ -921,7 +921,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 									<?php if ($user->cdp_hasPermission('view_categories')) { ?>
 									<li class="sidebar-item">
 										<a class="sidebar-link waves-effect waves-dark" href="category_list.php">
-											<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+											<iconify-icon icon="solar:tag-linear" class="fs-5"></iconify-icon>
 											<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-47'] ?></span>
 										</a>
 									</li>
@@ -952,7 +952,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 									<?php if ($user->cdp_hasPermission('manage_taxes_and_fees')) { ?>
 									<li class="sidebar-item">
 										<a class="sidebar-link waves-effect waves-dark" href="taxesadnfees.php" aria-expanded="false">
-											<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+											<iconify-icon icon="solar:percent-square-linear" class="fs-5"></iconify-icon>
 											<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-49'] ?> </span>
 										</a>
 									</li> 
@@ -960,7 +960,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 									<?php if ($user->cdp_hasPermission('view_shipping_tariffs')) { ?>
 									<li class="sidebar-item">
 										<a class="sidebar-link waves-effect waves-dark sidebar-link" href="shipping_tariffs_list.php" aria-expanded="false">
-											<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+											<iconify-icon icon="solar:calculator-linear" class="fs-5"></iconify-icon>
 											<span class="hide-menu"><?php echo $lang['left-menu-sidebar-53'] ?></span>
 										</a>
 									</li>
@@ -968,7 +968,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 									<?php if ($user->cdp_hasPermission('track_invoices')) { ?>
 									<li class="sidebar-item">
 										<a class="sidebar-link waves-effect waves-dark" href="track_invoice.php" aria-expanded="false">
-											<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+											<iconify-icon icon="solar:bill-check-linear" class="fs-5"></iconify-icon>
 											<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-50'] ?></span>
 										</a>
 									</li>
@@ -976,7 +976,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 									<?php if ($user->cdp_hasPermission('manage_default_shipping_info')) { ?>
 									<li class="sidebar-item">
 										<a class="sidebar-link waves-effect waves-dark" href="info_ship_default.php" aria-expanded="false">
-											<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+											<iconify-icon icon="solar:document-text-linear" class="fs-5"></iconify-icon>
 											<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-51'] ?></span>
 										</a>
 									</li>
@@ -1006,7 +1006,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 									<?php if ($user->cdp_hasPermission('manage_payment_modes')) { ?>
 									<li class="sidebar-item">
 										<a class="sidebar-link waves-effect waves-dark sidebar-link" href="payment_mode_list.php" aria-expanded="false">
-											<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+											<iconify-icon icon="solar:wallet-linear" class="fs-5"></iconify-icon>
 											<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-40'] ?></span>
 										</a>
 									</li>
@@ -1014,7 +1014,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 									<?php if ($user->cdp_hasPermission('manage_payment_methods')) { ?>
 									<li class="sidebar-item">
 										<a class="sidebar-link waves-effect waves-dark" href="payment_methods_list.php">
-											<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+											<iconify-icon icon="solar:card-linear" class="fs-5"></iconify-icon>
 											<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-41'] ?></span>
 										</a>
 									</li>
@@ -1045,7 +1045,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 									<?php if ($user->cdp_hasPermission('manage_countries')) { ?>
 									<li class="sidebar-item">
 										<a class="sidebar-link waves-effect waves-dark" href="countries_list.php" aria-expanded="false">
-											<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+											<iconify-icon icon="solar:earth-linear" class="fs-5"></iconify-icon>
 											<span class="hide-menu"><?php echo $lang['left-menu-sidebar-58'] ?> </span>
 										</a>
 									</li>
@@ -1053,7 +1053,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 									<?php if ($user->cdp_hasPermission('manage_states')) { ?>
 									<li class="sidebar-item">
 										<a class="sidebar-link waves-effect waves-dark" href="states_list.php" aria-expanded="false">
-											<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+											<iconify-icon icon="solar:map-linear" class="fs-5"></iconify-icon>
 											<span class="hide-menu"><?php echo $lang['left-menu-sidebar-59'] ?> </span>
 										</a>
 									</li>
@@ -1061,7 +1061,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 									<?php if ($user->cdp_hasPermission('manage_cities')) { ?>
 									<li class="sidebar-item">
 										<a class="sidebar-link waves-effect waves-dark" href="cities_list.php" aria-expanded="false">
-											<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+											<iconify-icon icon="solar:city-linear" class="fs-5"></iconify-icon>
 											<span class="hide-menu"><?php echo $lang['left-menu-sidebar-60'] ?> </span>
 										</a>
 									</li>
@@ -1194,7 +1194,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 							<?php } ?>
 							<?php if ($user->cdp_hasPermission('view_shipment_list')) { ?>
 							<li class="sidebar-item">
-								<a href="courier_list.php?mode=air" class="sidebar-link"><iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+								<a href="courier_list.php?mode=air" class="sidebar-link"><iconify-icon icon="solar:list-check-linear" class="fs-5"></iconify-icon>
 									<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-16'] ?> </span>
 								</a>
 							</li>
@@ -1208,14 +1208,14 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 							<?php } ?>
 							<?php if ($user->cdp_hasPermission('prealert_list')) { ?>
 							<li class="sidebar-item">
-								<a class="sidebar-link waves-effect waves-dark" href="prealert_list.php" aria-expanded="false"><iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+								<a class="sidebar-link waves-effect waves-dark" href="prealert_list.php" aria-expanded="false"><iconify-icon icon="solar:bell-linear" class="fs-5"></iconify-icon>
 									<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-7'] ?> </span>
 								</a>
 							</li>
 							<?php } ?>
 							<?php if ($user->cdp_hasPermission('view_payment_shipment_list')) { ?>
 							<li class="sidebar-item">
-								<a class="sidebar-link waves-effect waves-dark" href="payments_gateways_courier_list.php" aria-expanded="false"><iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+								<a class="sidebar-link waves-effect waves-dark" href="payments_gateways_courier_list.php" aria-expanded="false"><iconify-icon icon="solar:card-recive-linear" class="fs-5"></iconify-icon>
 									<span class="hide-menu"><?php echo $lang['left-menu-sidebar-12'] ?> </span>
 								</a>
 							</li>
@@ -1253,7 +1253,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 							<?php } ?>
 							<?php if ($user->cdp_hasPermission('view_shipment_list')) { ?>
 							<li class="sidebar-item">
-								<a href="courier_list.php?mode=sea" class="sidebar-link"><iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+								<a href="courier_list.php?mode=sea" class="sidebar-link"><iconify-icon icon="solar:list-check-linear" class="fs-5"></iconify-icon>
 									<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-16'] ?> </span>
 								</a>
 							</li>
@@ -1261,7 +1261,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 							<?php if ($user->cdp_hasPermission('view_payment_list')) { ?>
 							<li class="sidebar-item">
 								<a class="sidebar-link waves-effect waves-dark" href="payments_gateways_list.php" aria-expanded="false">
-									<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+									<iconify-icon icon="solar:card-recive-linear" class="fs-5"></iconify-icon>
 									<span class="hide-menu"><?php echo $lang['left-menu-sidebar-12'] ?> </span>
 								</a>
 							</li>
@@ -1303,7 +1303,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 							<?php } ?>
 							<?php if ($user->cdp_hasPermission('view_pickup_list')) { ?>
 							<li class="sidebar-item">
-								<a href="pickup_list.php" class="sidebar-link"><iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+								<a href="pickup_list.php" class="sidebar-link"><iconify-icon icon="solar:map-point-linear" class="fs-5"></iconify-icon>
 									<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-21'] ?> </span>
 								</a>
 							</li>
@@ -1347,7 +1347,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 									<?php if ($user->cdp_hasPermission('view_consolidate_list')) { ?>
 									<li class="sidebar-item">
 										<a href="consolidate_list.php" class="sidebar-link">
-											<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+											<iconify-icon icon="solar:layers-linear" class="fs-5"></iconify-icon>
 											<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-24'] ?> </span>
 										</a>
 									</li>
@@ -1355,7 +1355,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 									<?php if ($user->cdp_hasPermission('payments_gateways_consolidate_shipment')) { ?>
 									<li class="sidebar-item">
 										<a class="sidebar-link waves-effect waves-dark" href="payments_gateways_consolidate_list.php" aria-expanded="false">
-											<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+											<iconify-icon icon="solar:card-recive-linear" class="fs-5"></iconify-icon>
 											<span class="hide-menu"><?php echo $lang['left-menu-sidebar-12'] ?> </span>
 										</a>
 									</li>
@@ -1385,7 +1385,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 									<?php if ($user->cdp_hasPermission('view_consolidate_package_list')) { ?>
 									<li class="sidebar-item">
 										<a href="consolidate_package_list.php" class="sidebar-link">
-											<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+											<iconify-icon icon="solar:box-minimalistic-linear" class="fs-5"></iconify-icon>
 											<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-24'] ?> </span>
 										</a>
 									</li>
@@ -1394,7 +1394,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 									<?php if ($user->cdp_hasPermission('payments_gateways_package_consolidate')) { ?>
 									<li class="sidebar-item">
 										<a class="sidebar-link waves-effect waves-dark" href="payments_gateways_package_consolidate_list.php" aria-expanded="false">
-											<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+											<iconify-icon icon="solar:card-recive-linear" class="fs-5"></iconify-icon>
 											<span class="hide-menu"><?php echo $lang['left-menu-sidebar-12'] ?> </span>
 										</a>
 									</li>
@@ -1501,7 +1501,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 							<?php if ($user->cdp_hasPermission('view_package_list')) { ?>
 							<li class="sidebar-item">
 								<a class="sidebar-link waves-effect waves-dark" href="customer_packages_list.php" aria-expanded="false">
-									<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+									<iconify-icon icon="solar:box-linear" class="fs-5"></iconify-icon>
 									<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-11'] ?> </span>
 								</a>
 							</li>
@@ -1539,7 +1539,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 							<?php if ($user->cdp_hasPermission('view_shipment_list')) { ?>
 							<li class="sidebar-item">
 								<a href="courier_list.php?mode=air" class="sidebar-link">
-									<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+									<iconify-icon icon="solar:list-check-linear" class="fs-5"></iconify-icon>
 									<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-16'] ?> </span>
 								</a>
 							</li>
@@ -1555,7 +1555,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 							<?php if ($user->cdp_hasPermission('view_consolidate_list')) { ?>
 							<li class="sidebar-item">
 								<a href="consolidate_list.php?mode=air" class="sidebar-link">
-									<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+									<iconify-icon icon="solar:layers-linear" class="fs-5"></iconify-icon>
 									<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-24'] ?> </span>
 								</a>
 							</li>
@@ -1585,7 +1585,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 							<?php if ($user->cdp_hasPermission('view_shipment_list')) { ?>
 							<li class="sidebar-item">
 								<a href="courier_list.php?mode=sea" class="sidebar-link">
-									<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+									<iconify-icon icon="solar:list-check-linear" class="fs-5"></iconify-icon>
 									<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-16'] ?> </span>
 								</a>
 							</li>
@@ -1601,7 +1601,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 							<?php if ($user->cdp_hasPermission('view_consolidate_list')) { ?>
 							<li class="sidebar-item">
 								<a href="consolidate_list.php?mode=sea" class="sidebar-link">
-									<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+									<iconify-icon icon="solar:layers-linear" class="fs-5"></iconify-icon>
 									<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-24'] ?> </span>
 								</a>
 							</li>
@@ -1639,7 +1639,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 							<?php if ($user->cdp_hasPermission('view_pickup_list')) { ?>
 							<li class="sidebar-item">
 								<a href="pickup_list.php" class="sidebar-link">
-									<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+									<iconify-icon icon="solar:map-point-linear" class="fs-5"></iconify-icon>
 									<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-21'] ?> </span>
 								</a>
 							</li>
@@ -1682,7 +1682,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 									<?php if ($user->cdp_hasPermission('view_dashboard_shipments')) { ?>
 									<li class="sidebar-item">
 										<a href="dashboard_admin_consolidated.php" class="sidebar-link">
-											<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+											<iconify-icon icon="solar:widget-5-linear" class="fs-5"></iconify-icon>
 											<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-23'] ?></span>
 										</a>
 									</li>
@@ -1691,7 +1691,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 									<?php if ($user->cdp_hasPermission('add_consolidate_shipment')) { ?>
 									<li class="sidebar-item">
 										<a href="consolidate_add.php" class="sidebar-link">
-											<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+											<iconify-icon icon="solar:add-square-linear" class="fs-5"></iconify-icon>
 											<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-25'] ?> </span>
 										</a>
 									</li>
@@ -1700,7 +1700,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 									<?php if ($user->cdp_hasPermission('view_consolidate_list')) { ?>
 									<li class="sidebar-item">
 										<a href="consolidate_list.php" class="sidebar-link">
-											<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+											<iconify-icon icon="solar:layers-linear" class="fs-5"></iconify-icon>
 											<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-24'] ?> </span>
 										</a>
 									</li>
@@ -1709,7 +1709,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 									<?php if ($user->cdp_hasPermission('payments_gateways_consolidate_shipment')) { ?>
 									<li class="sidebar-item">
 										<a class="sidebar-link waves-effect waves-dark" href="payments_gateways_consolidate_list.php" aria-expanded="false">
-											<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+											<iconify-icon icon="solar:card-recive-linear" class="fs-5"></iconify-icon>
 											<span class="hide-menu"><?php echo $lang['left-menu-sidebar-12'] ?> </span>
 										</a>
 									</li>
@@ -1730,7 +1730,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 									<?php if ($user->cdp_hasPermission('view_dashboard_packages')) { ?>
 									<li class="sidebar-item">
 										<a href="dashboard_admin_package_consolidated.php" class="sidebar-link">
-											<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+											<iconify-icon icon="solar:widget-5-linear" class="fs-5"></iconify-icon>
 											<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-23'] ?></span>
 										</a>
 									</li>
@@ -1739,7 +1739,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 									<?php if ($user->cdp_hasPermission('view_consolidate_package_list')) { ?>
 									<li class="sidebar-item">
 										<a href="consolidate_package_list.php" class="sidebar-link">
-											<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+											<iconify-icon icon="solar:box-minimalistic-linear" class="fs-5"></iconify-icon>
 											<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-24'] ?> </span>
 										</a>
 									</li>
@@ -1748,7 +1748,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 									<?php if ($user->cdp_hasPermission('add_consolidate_package')) { ?>
 									<li class="sidebar-item">
 										<a href="consolidate_package_add.php" class="sidebar-link">
-											<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+											<iconify-icon icon="solar:add-square-linear" class="fs-5"></iconify-icon>
 											<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-25'] ?> </span>
 										</a>
 									</li>
@@ -1757,7 +1757,7 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 									<?php if ($user->cdp_hasPermission('payments_gateways_package_consolidate')) { ?>
 									<li class="sidebar-item">
 										<a class="sidebar-link waves-effect waves-dark" href="payments_gateways_package_consolidate_list.php" aria-expanded="false">
-											<iconify-icon icon="solar:alt-arrow-right-outline" class="fs-5" style="color:#fc3f7"></iconify-icon>
+											<iconify-icon icon="solar:card-recive-linear" class="fs-5"></iconify-icon>
 											<span class="hide-menu"><?php echo $lang['left-menu-sidebar-12'] ?> </span>
 										</a>
 									</li>

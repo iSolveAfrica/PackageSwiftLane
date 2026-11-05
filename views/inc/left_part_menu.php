@@ -15,7 +15,7 @@
 		<div class="scroll-sidebar">
 
 			<div class="p-15">
-				<a id="compose_mail" class="waves-effect waves-light btn btn-danger d-block" href=""><?php echo $lang['apis04'] ?></a>
+				<a id="compose_mail" class="waves-effect waves-light btn btn-danger d-block" href=""><iconify-icon icon="solar:settings-linear" aria-hidden="true"></iconify-icon> <?php echo $lang['apis04'] ?></a>
 			</div>
 
 			<div class="divider"></div>
