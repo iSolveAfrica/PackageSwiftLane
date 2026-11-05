@@ -27,7 +27,59 @@
         load();
         setInterval(function () { if (!document.hidden && !Object.keys(selected).length) { load(true); } }, 45000);
         shortcuts();
+        loadTrend();
+        setInterval(loadTrend, 120000);
     });
+
+
+    // Shared small-chart helper: ApexCharts is loaded by the page; without it the summary numbers still show.
+    function drawChart(key, el, opts) {
+        var box = document.getElementById(el);
+        if (!box) { return; }
+        if (typeof window.ApexCharts === 'undefined') { box.innerHTML = '<p class="swl-cs-small swl-cs-muted">The chart library did not load.</p>'; return; }
+        if (charts[key]) { charts[key].destroy(); }
+        opts.chart = $.extend({ height: 220, toolbar: { show: false }, fontFamily: 'inherit', background: 'transparent' }, opts.chart || {});
+        opts.grid = $.extend({ borderColor: '#e5e7eb', strokeDashArray: 3 }, opts.grid || {});
+        charts[key] = new window.ApexCharts(box, opts);
+        charts[key].render();
+    }
+
+    var charts = {};
+
+    // Summary tiles: counts come from the same call as the list, so they never disagree with it.
+    function summary() {
+        var c = counts || {};
+        $('#cs_sum_all').text(c.all || 0);
+        $('#cs_sum_mine').text(c.mine || 0);
+        $('#cs_sum_queued').text(c.queued || 0);
+        $('#cs_sum_risk').text(c.sla_risk || 0);
+        $('#cs_sum_overdue').text((c.overdue || 0) + ' past deadline');
+    }
+
+    // Trend: the last 14 days from the reports endpoint (same numbers as the Reports page).
+    function loadTrend() {
+        var to = new Date(), from = new Date();
+        from.setDate(to.getDate() - 13);
+        var ymd = function (d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+        CS.get('ajax/support/reports_ajax.php', { action: 'report', from: ymd(from), to: ymd(to) }).done(function (r) {
+            if (!r || !r.ok || !r.report.daily) { return; }
+            var d = r.report.daily;
+            var created = d.reduce(function (a, x) { return a + x.created; }, 0), resolved = d.reduce(function (a, x) { return a + x.resolved; }, 0);
+            $('#cs_trend_note').text(created + ' created · ' + resolved + ' resolved');
+            drawChart('trend', 'cs_chart_trend', {
+                chart: { type: 'area', height: 220 },
+                series: [{ name: 'Created', data: d.map(function (x) { return x.created; }) }, { name: 'Resolved', data: d.map(function (x) { return x.resolved; }) }],
+                colors: ['#2563eb', '#0f766e'],
+                stroke: { curve: 'smooth', width: 2 },
+                fill: { type: 'gradient', gradient: { opacityFrom: 0.28, opacityTo: 0.02 } },
+                dataLabels: { enabled: false },
+                xaxis: { categories: d.map(function (x) { return new Date(x.day + 'T00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short' }); }), tickAmount: 7, labels: { style: { colors: '#6b7280' } } },
+                yaxis: { min: 0, forceNiceScale: true, decimalsInFloat: 0, labels: { style: { colors: '#6b7280' } } },
+                legend: { position: 'top', horizontalAlign: 'left' },
+                tooltip: { theme: 'light' }
+            });
+        });
+    }
 
     // Keyboard first: J/K move between tickets (Enter opens the focused one), / jumps to search. Ignored while typing.
     function shortcuts() {
@@ -206,6 +258,7 @@
             if (!r || !r.ok) { $('#cs_rows').html('<tr><td colspan="8"><div class="swl-cs-empty">' + CS.esc(r && r.error ? r.error : 'Could not load.') + '</div></td></tr>'); return; }
             counts = r.counts; viewNames = r.views; savedViews = r.saved_views;
             drawViews();
+            summary();
             drawRows(r.list);
         }).fail(function (x) { if (x.statusText !== 'abort') { CS.fail(x); } }).always(function () { $('#cs_rows').css('opacity', 1); xhr = null; });
     }

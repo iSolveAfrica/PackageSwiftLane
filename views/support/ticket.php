@@ -56,8 +56,8 @@ $actions = '<a class="btn btn-secondary btn-sm" href="support_inbox.php"><iconif
                         <div class="swl-cs-composer" id="cs_composer">
                             <div class="swl-cs-comp-top">
                                 <div class="swl-cs-mode" role="tablist" aria-label="Reply or internal note">
-                                    <button type="button" class="is-on" data-mode="reply" role="tab" aria-selected="true">Reply to customer</button>
-                                    <button type="button" data-mode="note" role="tab" aria-selected="false">Internal note</button>
+                                    <button type="button" class="is-on" data-mode="reply" role="tab" aria-selected="true"><iconify-icon icon="solar:reply-linear" aria-hidden="true"></iconify-icon> Reply to customer</button>
+                                    <button type="button" data-mode="note" role="tab" aria-selected="false"><iconify-icon icon="solar:notes-linear" aria-hidden="true"></iconify-icon> Internal note</button>
                                 </div>
                                 <span class="note-warn" id="cs_note_warn" hidden>Only staff see notes. Use @name to notify a colleague.</span>
                                 <span class="ml-auto"></span>
@@ -82,7 +82,7 @@ $actions = '<a class="btn btn-secondary btn-sm" href="support_inbox.php"><iconif
                                     <option value="pending_internal">and wait on our team</option>
                                     <option value="resolved">and resolve</option>
                                 </select>
-                                <button type="button" class="btn btn-primary btn-sm" id="cs_send">Send <span class="swl-cs-small">(Ctrl+Enter)</span></button>
+                                <button type="button" class="btn btn-primary btn-sm" id="cs_send"><iconify-icon icon="solar:plain-2-linear" aria-hidden="true"></iconify-icon> Send <span class="swl-cs-small">(Ctrl+Enter)</span></button>
                             </div>
                         </div>
                     </section>

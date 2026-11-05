@@ -47,10 +47,11 @@ $actions = '<button type="button" class="btn btn-primary btn-sm" id="cs_new_req"
                     <aside class="card">
                         <div class="card-body">
                             <div class="swl-cs-tabs" role="tablist">
-                                <button type="button" class="is-on" data-tab="req" role="tab" aria-selected="true">My requests <span id="cs_req_n" class="swl-cs-muted"></span></button>
-                                <button type="button" data-tab="chats" role="tab" aria-selected="false">Chats</button>
-                                <button type="button" data-tab="help" role="tab" aria-selected="false">Help</button>
+                                <button type="button" class="is-on" data-tab="req" role="tab" aria-selected="true"><iconify-icon icon="solar:ticket-linear" aria-hidden="true"></iconify-icon> My requests <span id="cs_req_n" class="swl-cs-muted"></span></button>
+                                <button type="button" data-tab="chats" role="tab" aria-selected="false"><iconify-icon icon="solar:chat-round-dots-linear" aria-hidden="true"></iconify-icon> Chats</button>
+                                <button type="button" data-tab="help" role="tab" aria-selected="false"><iconify-icon icon="solar:question-circle-linear" aria-hidden="true"></iconify-icon> Help</button>
                             </div>
+                            <div id="cs_req_chart" class="swl-cs-chart swl-cs-chart-sm" role="img" aria-label="Your requests by status" hidden></div>
                             <div data-pane="req" id="cs_reqs"><div class="swl-cs-empty">Loading…</div></div>
                             <div data-pane="chats" hidden>
                                 <button type="button" class="btn btn-secondary btn-sm btn-block mb-2" id="cs_chat_new"><iconify-icon icon="solar:pen-new-square-linear"></iconify-icon> New chat</button>
@@ -102,7 +103,7 @@ $actions = '<button type="button" class="btn btn-primary btn-sm" id="cs_new_req"
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-primary" id="cs_req_send">Send request</button>
+                            <button type="submit" class="btn btn-primary" id="cs_req_send"><iconify-icon icon="solar:plain-2-linear" aria-hidden="true"></iconify-icon> Send request</button>
                         </div>
                     </form>
                 </div>
@@ -126,7 +127,7 @@ $actions = '<button type="button" class="btn btn-primary btn-sm" id="cs_new_req"
                                 <div class="d-flex mt-2" style="gap: 8px; align-items: center;">
                                     <input type="file" id="cs_tk_file" accept="image/*,application/pdf" class="form-control" style="max-width: 280px;">
                                     <span class="swl-cs-pending-files mb-0" id="cs_tk_files"></span>
-                                    <button type="submit" class="btn btn-primary ml-auto">Send reply</button>
+                                    <button type="submit" class="btn btn-primary ml-auto"><iconify-icon icon="solar:reply-linear" aria-hidden="true"></iconify-icon> Send reply</button>
                                 </div>
                             </form>
                         </div>
@@ -157,6 +158,7 @@ $actions = '<button type="button" class="btn btn-primary btn-sm" id="cs_new_req"
             openTicket: <?php echo (int) ($_GET['t'] ?? 0); ?>
         };
     </script>
+    <script src="<?= cdp_asset('assets/css_main_swiftlane/js/apexcharts.min.js') ?>"></script>
     <script src="<?= cdp_asset('dataJs/support_common.js') ?>"></script>
     <script src="<?= cdp_asset('dataJs/support_chat.js') ?>"></script>
     <script src="<?= cdp_asset('dataJs/support_hub.js') ?>"></script>

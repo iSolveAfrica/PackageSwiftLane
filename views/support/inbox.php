@@ -39,6 +39,17 @@ $actions = '<a class="btn btn-secondary btn-sm" href="support_reports.php"><icon
                     <div class="swl-cs-banner is-danger">The helpdesk tables could not be created. The database user needs the CREATE privilege once.</div>
                 <?php endif; ?>
 
+                <div class="swl-cs-kpis swl-cs-sum" id="cs_sum" aria-label="Summary">
+                    <div class="swl-cs-kpi"><div class="swl-cs-kpi-l"><iconify-icon icon="solar:inbox-linear" aria-hidden="true"></iconify-icon> All tickets</div><div class="swl-cs-kpi-n" id="cs_sum_all">–</div><div class="swl-cs-kpi-s">Open and closed in the desk</div></div>
+                    <div class="swl-cs-kpi"><div class="swl-cs-kpi-l"><iconify-icon icon="solar:user-linear" aria-hidden="true"></iconify-icon> Assigned to me</div><div class="swl-cs-kpi-n" id="cs_sum_mine">–</div><div class="swl-cs-kpi-s">Your open work</div></div>
+                    <div class="swl-cs-kpi"><div class="swl-cs-kpi-l"><iconify-icon icon="solar:bell-ringing-linear" aria-hidden="true"></iconify-icon> Waiting for a person</div><div class="swl-cs-kpi-n" id="cs_sum_queued">–</div><div class="swl-cs-kpi-s">Chats handed over by King</div></div>
+                    <div class="swl-cs-kpi"><div class="swl-cs-kpi-l"><iconify-icon icon="solar:danger-triangle-linear" aria-hidden="true"></iconify-icon> SLA at risk</div><div class="swl-cs-kpi-n" id="cs_sum_risk">–</div><div class="swl-cs-kpi-s" id="cs_sum_overdue"></div></div>
+                </div>
+                <div class="card swl-cs-trend"><div class="card-body">
+                    <div class="swl-cs-card-head"><h5 class="card-title"><iconify-icon icon="solar:graph-up-linear" aria-hidden="true"></iconify-icon> Last 14 days</h5><span class="swl-cs-small swl-cs-muted" id="cs_trend_note"></span></div>
+                    <div id="cs_chart_trend" class="swl-cs-chart swl-cs-chart-sm" role="img" aria-label="Tickets created and resolved over the last 14 days"></div>
+                </div></div>
+
                 <div class="swl-cs-desk">
                     <nav class="swl-cs-views" id="cs_views" aria-label="Inbox views"></nav>
 
@@ -71,7 +82,7 @@ $actions = '<a class="btn btn-secondary btn-sm" href="support_reports.php"><icon
                                 <input type="text" class="form-control" data-f="tag" placeholder="Tag" aria-label="Tag">
                                 <input type="date" class="form-control" data-f="from" aria-label="Created from">
                                 <input type="date" class="form-control" data-f="to" aria-label="Created to">
-                                <button type="button" class="btn btn-secondary btn-sm" id="cs_clear">Clear filters</button>
+                                <button type="button" class="btn btn-secondary btn-sm" id="cs_clear"><iconify-icon icon="solar:eraser-linear" aria-hidden="true"></iconify-icon> Clear filters</button>
                             </div>
 
                             <div class="swl-cs-bulk" id="cs_bulk" role="region" aria-label="Bulk actions">
@@ -82,8 +93,8 @@ $actions = '<a class="btn btn-secondary btn-sm" href="support_reports.php"><icon
                                 <select class="custom-select" data-b="team_id" aria-label="Move to team"><option value="">Team…</option></select>
                                 <select class="custom-select" data-b="disposition" aria-label="Move to"><option value="">Move to…</option><option value="none">Inbox</option><option value="archived">Archive</option><option value="spam">Spam</option><option value="trash">Trash</option></select>
                                 <input type="text" class="form-control" data-b="tag" placeholder="Add tag" aria-label="Add tag" style="width: 120px; height: 36px;">
-                                <button type="button" class="btn btn-primary btn-sm" id="cs_bulk_apply">Apply</button>
-                                <button type="button" class="btn btn-secondary btn-sm" id="cs_bulk_clear">Cancel</button>
+                                <button type="button" class="btn btn-primary btn-sm" id="cs_bulk_apply"><iconify-icon icon="solar:check-read-linear" aria-hidden="true"></iconify-icon> Apply</button>
+                                <button type="button" class="btn btn-secondary btn-sm" id="cs_bulk_clear"><iconify-icon icon="solar:close-circle-linear" aria-hidden="true"></iconify-icon> Cancel</button>
                             </div>
 
                             <div class="table-responsive">
@@ -173,7 +184,7 @@ $actions = '<a class="btn btn-secondary btn-sm" href="support_reports.php"><icon
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-primary">Create ticket</button>
+                            <button type="submit" class="btn btn-primary"><iconify-icon icon="solar:add-circle-linear" aria-hidden="true"></iconify-icon> Create ticket</button>
                         </div>
                     </form>
                 </div>
@@ -184,6 +195,7 @@ $actions = '<a class="btn btn-secondary btn-sm" href="support_reports.php"><icon
     </div>
 
     <?php include 'views/support/_vocab.php'; ?>
+    <script src="<?= cdp_asset('assets/css_main_swiftlane/js/apexcharts.min.js') ?>"></script>
     <script src="<?= cdp_asset('dataJs/support_common.js') ?>"></script>
     <script src="<?= cdp_asset('dataJs/support_inbox.js') ?>"></script>
 </body>

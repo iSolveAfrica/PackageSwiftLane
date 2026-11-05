@@ -194,7 +194,23 @@
             legend: { show: true, position: 'right', fontSize: '12px' }
         });
 
-        // 4. Why chats went to a person.
+        // 4. Agents: assigned against resolved, the top eight by volume.
+        var agents = (r.agents || []).slice(0, 8);
+        if (!agents.length) { $('#cs_chart_agents').html('<div class="swl-cs-empty">No tickets in this period.</div>'); }
+        else {
+            chart('agents', 'cs_chart_agents', {
+                chart: { type: 'bar', height: 280 },
+                series: [{ name: 'Assigned', data: agents.map(function (a) { return a.assigned; }) }, { name: 'Resolved', data: agents.map(function (a) { return a.resolved; }) }],
+                colors: [PAL.blue, PAL.teal],
+                plotOptions: { bar: { borderRadius: 4, columnWidth: '55%' } },
+                dataLabels: { enabled: false },
+                xaxis: { categories: agents.map(function (a) { return a.name; }), labels: { style: { colors: '#6b7280' } } },
+                yaxis: { min: 0, forceNiceScale: true, decimalsInFloat: 0 },
+                legend: { position: 'top', horizontalAlign: 'left' }
+            });
+        }
+
+        // 5. Why chats went to a person.
         var reasons = (r.handover_reasons || []).slice(0, 8);
         if (!reasons.length) { $('#cs_chart_reasons').html('<div class="swl-cs-empty">No chats went to a person in this period.</div>'); }
         else {

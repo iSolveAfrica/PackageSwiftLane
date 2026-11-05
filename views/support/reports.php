@@ -95,9 +95,15 @@ $actions = '<a class="btn btn-secondary btn-sm" href="support_inbox.php"><iconif
                     <div class="col-12 col-md-6 col-xl-4"><div class="card"><div class="card-body"><h5 class="card-title"><iconify-icon icon="solar:users-group-rounded-linear" aria-hidden="true"></iconify-icon> By team</h5><div id="cs_by_team"></div></div></div></div>
                     <div class="col-12 col-md-6 col-xl-4"><div class="card"><div class="card-body"><h5 class="card-title"><iconify-icon icon="solar:hourglass-linear" aria-hidden="true"></iconify-icon> Open backlog by age</h5><div id="cs_backlog"></div></div></div></div>
                     <div class="col-12 col-md-6 col-xl-4"><div class="card"><div class="card-body"><h5 class="card-title"><iconify-icon icon="solar:bolt-linear" aria-hidden="true"></iconify-icon> Delivery and automation</h5><div id="cs_ops"></div></div></div></div>
-                    <div class="col-12">
+                    <div class="col-12 col-xl-6">
                         <div class="card"><div class="card-body">
-                            <h5 class="card-title">Agents</h5>
+                            <div class="swl-cs-card-head"><h5 class="card-title"><iconify-icon icon="solar:users-group-rounded-linear" aria-hidden="true"></iconify-icon> Agent workload</h5></div>
+                            <div id="cs_chart_agents" class="swl-cs-chart" role="img" aria-label="Tickets assigned and resolved per agent"></div>
+                        </div></div>
+                    </div>
+                    <div class="col-12 col-xl-6">
+                        <div class="card"><div class="card-body">
+                            <div class="swl-cs-card-head"><h5 class="card-title"><iconify-icon icon="solar:users-group-two-rounded-linear" aria-hidden="true"></iconify-icon> Agents</h5></div>
                             <div class="table-responsive">
                                 <table class="table table-sm mb-0">
                                     <thead><tr><th>Agent</th><th>Assigned</th><th>Resolved</th><th>Median first reply</th><th>Rating</th></tr></thead>
