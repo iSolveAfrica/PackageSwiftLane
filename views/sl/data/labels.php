@@ -126,7 +126,7 @@ function sl_labelFor(int $id, string $type = 'air'): ?array
     return [
         'id' => $id, 'type' => $type, 'track' => $track, 'carrier' => $courier->name_com ?? '', 'carrierNo' => $carrierNo,
         'mode' => $sea ? 'SEA' : 'AIR', 'svc' => $deli->delitime ?? '', 'pack' => $pack->name_pack ?? 'Parcel',
-        'locker' => (string) ($sender->locker ?? ''), 'bay' => $bay,
+        'locker' => (string) ($sender->locker ?? ''), 'bay' => $bay, 'dg' => !empty($o->is_dangerous_good),
         'name' => mb_strtoupper(trim(($recip->fname ?? '') . ' ' . ($recip->lname ?? ''))), 'phone' => $masked,
         'addr' => $toAddr, 'to' => mb_strtoupper($toCity ?: '—'), 'from' => mb_strtoupper($fromCity ?: ($office->city ?? '')),
         'hub' => mb_strtoupper(($core->site_name ?? 'Swift Lane') . ($office ? ' · ' . $office->name_off : '')), 'hubAddr' => trim(($office->address ?? '') . ', ' . ($office->city ?? ''), ', '),
@@ -186,7 +186,28 @@ function sl_receiptData(int $id, string $type): ?array
         $pay = ['method' => str_replace('_', ' ', (string) ($g->gateway ?? ($c->name_pay ?? ($mode->name_pay ?? '—')))), 'ref' => $g->payment_transaction ?? ($c->number_reference ?? '—'), 'on' => sl_date($o->payment_date ?: ($g->date_payment ?? ($c->charge_date ?? '')), 'M j, Y · H:i'), 'by' => $c ? trim(($c->fname ?? '') . ' ' . ($c->lname ?? '')) : 'Online'];
     }
     $rate = (float) ($core->exchange_rate ?? 0);
+    // Consolidation serial ("n of N") and the Financial Sheet payment that cleared
+    // this package, as on the previous invoice layout (views/print/partials/inv_data_helpers.php).
+    $serial = '';
+    $fsPay = null;
+    if ($type === 'air') {
+        require_once CDP_ROOT . '/helpers/querys.php';
+        $sr = function_exists('cdp_getOrderFinancialSerial') ? cdp_getOrderFinancialSerial($o->order_prefix, $o->order_no, (int) ($_GET['consolidate_id'] ?? 0)) : null;
+        if ($sr) {
+            $cn = sl_row('SELECT c_prefix, c_no FROM cdb_consolidate WHERE consolidate_id = :c', [':c' => (int) $sr['consolidate_id']]);
+            $serial = ($cn ? $cn->c_prefix . $cn->c_no . ' · ' : '') . (int) $sr['sn'] . ' of ' . (int) $sr['total'];
+        }
+        if (is_file(CDP_ROOT . '/helpers/fs_payments.php')) {
+            require_once CDP_ROOT . '/helpers/fs_payments.php';
+            $fp = function_exists('cdp_fsPaymentForOrder') ? cdp_fsPaymentForOrder($id) : null;
+            if ($fp) {
+                $modes = ['cash' => 'Cash', 'paystack' => 'Mobile Money (Paystack)', 'hubtel' => 'Mobile Money (Hubtel)', 'paypal' => 'PayPal'];
+                $fsPay = ['mode' => $modes[strtolower((string) $fp->mode)] ?? ucfirst((string) $fp->mode), 'amount' => '₵' . number_format((float) ($fp->amount_ghs ?? 0), 2), 'ref' => (string) ($fp->reference ?? ''), 'on' => sl_date($fp->recorded_at ?? '', 'M j, Y · H:i')];
+            }
+        }
+    }
     return $l + [
+        'serial' => $serial, 'fsPay' => $fsPay,
         'paidState' => sl_shipPaid($o->status_invoice), 'date' => sl_date($o->order_datetime ?: $o->order_date, 'M j, Y · H:i'),
         'office' => (string) (sl_scalar('SELECT name_off FROM cdb_offices WHERE id = :id', [':id' => (int) $o->origin_off], '') ?: ''),
         'bill' => ['name' => trim(($sender->fname ?? '') . ' ' . ($sender->lname ?? '')), 'locker' => $sender->locker ?? '—', 'phone' => $sender->phone ?? '—', 'loc' => $l['to']],

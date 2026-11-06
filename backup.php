@@ -1,44 +1,23 @@
 <?php
 // *************************************************************************
-// *                                                                       *
 // * Swiftlane - Integrated Web Shipping System                            *
 // * Copyright (c) iSolveAfrica Ltd. All rights reserved.                  *
-// *                                                                       *
 // *************************************************************************
-// *                                                                       *
-// * This software and its source code are proprietary and confidential    *
-// * property of iSolveAfrica Ltd. and were developed specifically for     *
-// * Swiftlane.                                                            *
-// *                                                                       *
-// * The software may not be copied, reproduced, modified, distributed,    *
-// * sublicensed, published, or used in whole or in part except as         *
-// * expressly permitted under the applicable license or written           *
-// * agreement with iSolveAfrica Ltd. Any permitted copies or derivative   *
-// * works must retain this copyright notice and all applicable            *
-// * proprietary notices.                                                  *
-// *                                                                       *
-// *************************************************************************
-
-
-
-    require_once("loader.php");
-
-    $user = new User();
-    $core = new Core();
-
-    $permissions = $user->cdp_getUserPermissions();
-    
-    // ... ask if we are logged in here:
-    if ($user->cdp_loginCheck() == true) 
-    {
-
-       
-      include('views/tools/backup/backup.php');     
-           
-
-    } else{
-        
-        header("location: login.php");
-        exit;       
-    }
-?>
+// Database backup and restore (Swift Lane design: views/sl/pages/Backups.php).
+// ?do=backup&create=1 makes a backup (helpers/backups_function.php doBackup(), then ?backupok=1).
+require_once 'loader.php';
+$user = new User();
+$core = new Core();
+require_once 'helpers/sl_view.php';
+sl_gate();
+if (!$user->cdp_is_Admin()) {
+    header('Location: login.php');
+    exit;
+}
+if (CDP_APP_MODE_DEMO === false && isset($_GET['create']) && $_GET['create'] == '1') {
+    require_once 'helpers/backups_function.php';
+    doBackup(); // writes backups/backup_<date>.sql and redirects to backup.php?do=backup&backupok=1
+    exit;
+}
+require_once 'views/sl/data/account_edit.php';
+sl_render('Backups', ['id' => 'general', 'title' => 'Backup and restore', 'board' => ''], sl_backupData($core));

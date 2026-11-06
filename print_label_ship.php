@@ -5,20 +5,10 @@
 // *************************************************************************
 // Shipping labels (Swift Lane UI: views/sl/pages/Label4x6.php / Label1x2.php).
 // ?id=N or ?ids=1,2,3 · &size=46|12 (default from Label Studio) · &type=air|sea
-// The previous TCPDF/HTML label stays at print_label_ship.php?legacy=1.
+// ?legacy=1 (the previous TCPDF/HTML label) is retired and renders the same label.
 require_once("loader.php");
 $user = new User();
 $core = new Core();
-if (!empty($_GET['legacy'])) {
-    if ($user->cdp_loginCheck() == true) {
-        require_once(__DIR__ . "/helpers/activity_log.php");
-        cdp_activityLogDocument();
-        include('views/print/print_label_ship.php');
-    } else {
-        header("location: login.php");
-    }
-    exit;
-}
 require_once 'helpers/sl_view.php';
 sl_gate('print_label');
 require_once 'helpers/activity_log.php';

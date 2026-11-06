@@ -1,24 +1,11 @@
 <?php
-// *************************************************************************
-// * Warehouse Delivery — one consolidation (own page)                     *
-// *************************************************************************
-
-require_once("loader.php");
-
+// Warehouse Delivery - one consolidation (Swift Lane UI: views/sl/pages/WarehouseConsolidation.php).
+require_once 'loader.php';
 $user = new User();
 $core = new Core();
-
-if ($user->cdp_loginCheck() == true) {
-
-    if (!$user->cdp_hasPermission('view_warehouse_delivery')) {
-        header("location: error403.php");
-        exit;
-    }
-
-    include('views/courier/warehouse_delivery_consolidation.php');
-
-} else {
-    header("location: login.php");
-    exit;
-}
-?>
+require_once 'helpers/sl_view.php';
+sl_gate('view_warehouse_delivery');
+require_once 'views/sl/data/ops_forms.php';
+$d = sl_wdConsolData($user, $core, (int) ($_GET['id'] ?? 0));
+if ((int) $d['cid'] <= 0) { header('Location: warehouse_delivery.php?view=consolidations'); exit; }
+sl_render('WarehouseConsolidation', ['id' => 'warehouse', 'title' => $d['ref'] . ' · Warehouse Delivery', 'board' => 'WarehouseDelivery', 'styles' => ['assets/swiftlane/pages/ops.css'], 'scripts' => ['dataJs/sl/ops_forms.js']], $d);

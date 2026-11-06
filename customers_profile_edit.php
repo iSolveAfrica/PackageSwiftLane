@@ -1,60 +1,32 @@
 <?php
 // *************************************************************************
-// *                                                                       *
 // * Swiftlane - Integrated Web Shipping System                            *
 // * Copyright (c) iSolveAfrica Ltd. All rights reserved.                  *
-// *                                                                       *
 // *************************************************************************
-// *                                                                       *
-// * This software and its source code are proprietary and confidential    *
-// * property of iSolveAfrica Ltd. and were developed specifically for     *
-// * Swiftlane.                                                            *
-// *                                                                       *
-// * The software may not be copied, reproduced, modified, distributed,    *
-// * sublicensed, published, or used in whole or in part except as         *
-// * expressly permitted under the applicable license or written           *
-// * agreement with iSolveAfrica Ltd. Any permitted copies or derivative   *
-// * works must retain this copyright notice and all applicable            *
-// * proprietary notices.                                                  *
-// *                                                                       *
-// *************************************************************************
-
-
-
-    require_once("loader.php");
-
-    $user = new User();
-    $core = new Core();
-    // ... ask if we are logged in here:
-    if ($user->cdp_loginCheck() == true) 
-    {
-
-        $permissions = $user->cdp_getUserPermissions();
-
-        if (!$user->cdp_hasPermission('customers_profile_edit')) {
-            header("location: error403.php");
-            exit;
-        }
-
-
-       
-      // ?edit=1 keeps the full legacy edit form (addresses, ID document, password, WhatsApp OTP).
-      if (!empty($_GET['edit'])) {
-          include('views/customers/customers_profile_edit.php');
-      } else {
-          // UserHome board (views/sl/pages/UserHome.php)
-          require_once 'helpers/sl_view.php';
-          require_once 'helpers/sl_auth.php';
-          sl_passwordRotationGuard();
-          require_once 'views/sl/data/portal.php';
-          $userData = $user->cdp_getUserData();
-          sl_render('UserHome', ['id' => 'myaccount', 'title' => 'My account', 'board' => 'UserHome'], sl_userHomeData($user, $core, $userData));
-      }     
-           
-
-    } else{
-        
-        header("location: login.php");
-        exit;       
+// My account (Swift Lane design).
+//   default      UserHome board (views/sl/pages/UserHome.php)
+//   ?edit=1      ProfileEdit (views/sl/pages/ProfileEdit.php): details, addresses, ID document,
+//                password and WhatsApp number with a one-time code. ?user= lets an admin edit a customer.
+require_once 'loader.php';
+$user = new User();
+$core = new Core();
+require_once 'helpers/sl_view.php';
+sl_gate('customers_profile_edit');
+if (!empty($_GET['edit'])) {
+    require_once 'helpers/sl_form.php';
+    require_once 'views/sl/data/account_edit.php';
+    $targetId = isset($_GET['user']) ? (int) $_GET['user'] : (int) $user->uid;
+    if ($targetId !== (int) $user->uid && !$user->cdp_is_Admin()) {
+        header('Location: login.php');
+        exit;
     }
-?>
+    $d = sl_profileEditData($user, $targetId);
+    if (!$d) {
+        header('Location: ' . ($user->cdp_is_Admin() ? 'customers_list.php' : 'index.php'));
+        exit;
+    }
+    sl_render('ProfileEdit', ['id' => 'myaccount', 'title' => $d['isOwn'] ? 'My details' : 'Edit ' . $d['name'], 'board' => 'UserHome'], $d);
+    exit;
+}
+require_once 'views/sl/data/portal.php';
+sl_render('UserHome', ['id' => 'myaccount', 'title' => 'My account', 'board' => 'UserHome'], sl_userHomeData($user, $core, $userData));

@@ -1,48 +1,12 @@
 <?php
-// *************************************************************************
-// *                                                                       *
-// * Swiftlane - Integrated Web Shipping System                            *
-// * Copyright (c) iSolveAfrica Ltd. All rights reserved.                  *
-// *                                                                       *
-// *************************************************************************
-// *                                                                       *
-// * This software and its source code are proprietary and confidential    *
-// * property of iSolveAfrica Ltd. and were developed specifically for     *
-// * Swiftlane.                                                            *
-// *                                                                       *
-// * The software may not be copied, reproduced, modified, distributed,    *
-// * sublicensed, published, or used in whole or in part except as         *
-// * expressly permitted under the applicable license or written           *
-// * agreement with iSolveAfrica Ltd. Any permitted copies or derivative   *
-// * works must retain this copyright notice and all applicable            *
-// * proprietary notices.                                                  *
-// *                                                                       *
-// *************************************************************************
+// Complete a customer shipment (Swift Lane UI: views/sl/pages/ShipmentForm.php, mode "accept").
+// Saves through the legacy endpoint the old view used; see views/sl/data/ops_forms.php.
+require_once 'loader.php';
+$user = new User();
+$core = new Core();
+require_once 'helpers/sl_view.php';
+sl_gate('complete_client_shipment');
 
-
-
-    require_once("loader.php");
-
-    $user = new User();
-    $core = new Core();
-    // ... ask if we are logged in here:
-    if ($user->cdp_loginCheck() == true) 
-    {
-
-        $permissions = $user->cdp_getUserPermissions();
-
-        if (!$user->cdp_hasPermission('complete_client_shipment')) {
-            header("location: error403.php");
-            exit;
-        }
-
-       
-      include('views/courier/courier_accept.php');     
-           
-
-    } else{
-        
-        header("location: login.php");
-        exit;       
-    }
-?>
+require_once 'views/sl/data/ops_forms.php';
+$d = sl_shipFormData($user, $core, 'accept', (int) ($_GET['id'] ?? 0));
+sl_render('ShipmentForm', ['id' => 'air', 'title' => $d['title'], 'board' => 'NewShipment', 'scripts' => ['dataJs/sl/ops_forms.js', 'dataJs/sl/shipment_form.js']], $d);

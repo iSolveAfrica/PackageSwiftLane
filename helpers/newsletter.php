@@ -10,7 +10,7 @@
  * ============================================================================
  * E-mail newsletter: saved designs, audiences, personalisation, delivery.
  *
- * The page (views/tools/newsletter.php + dataJs/newsletter*.js) is a
+ * The page (newsletter.php: views/sl/pages/EmailBuilder.php + dataJs/sl/email_builder.js) is a
  * drag-and-drop builder that produces a complete HTML e-mail in the browser.
  * This helper is the server side of it, used by ajax/tools/newsletter_ajax.php:
  *

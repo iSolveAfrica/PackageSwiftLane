@@ -96,6 +96,7 @@ function sl_routes(): array
         'FinancialOverviewRestricted' => 'financial_overview.php',
         'Transactions'                => 'transactions.php',
         'BillingHub'                  => 'financial_sheet.php',
+        'FinancialSheet'              => 'financial_sheet_consolidation.php',
         'MyBills'                     => 'my_bills.php',
         'PayCheckout'                 => 'pay_checkout.php',
         'CostSettings'                => 'cost_settings.php',

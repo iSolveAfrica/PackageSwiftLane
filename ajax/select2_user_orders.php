@@ -52,8 +52,13 @@ if ($ship_from !== '' && $ship_to !== '') {
     }
 }
 
+// cdb_add_order.tracking_num exists only on databases upgraded from the old schema.
+$db->cdp_query("SELECT COUNT(*) AS n FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_add_order' AND COLUMN_NAME = 'tracking_num'");
+$db->cdp_execute();
+$trkCol = ((int) ($db->cdp_registro()->n ?? 0)) > 0 ? 'o.tracking_num' : "''";
+
 // Query: fetch orders where the DB's sender_id = selected sender and optional date filters apply
-$sql = "SELECT o.order_id, o.order_prefix, o.order_no, COALESCE(NULLIF(pt.tracking_number, ''), o.tracking_num, '') AS postal_tracking
+$sql = "SELECT o.order_id, o.order_prefix, o.order_no, COALESCE(NULLIF(pt.tracking_number, ''), {$trkCol}, '') AS postal_tracking
         FROM cdb_add_order o
         LEFT JOIN cdb_package_tracking_number pt ON pt.order_id = o.order_id
         WHERE o.sender_id = :sender_id

@@ -1,10 +1,9 @@
 <?php
-// Pickup aging (PickupAging artboard). Legacy report kept at ?legacy=1: views/reports/pickup_aging/pickup_aging.php.
+// Pickup aging (PickupAging artboard). Legacy report (retired): views/reports/pickup_aging/pickup_aging.php.
 require_once 'loader.php';
 $user = new User(); $core = new Core();
 require_once 'helpers/sl_view.php';
 sl_gate('view_pickup_aging');
-if (!empty($_GET['legacy'])) { $permissions = $user->cdp_getUserPermissions(); include 'views/reports/pickup_aging/pickup_aging.php'; exit; }
 require_once 'helpers/pickup_aging.php';
 require_once 'views/sl/data/warehouse.php';
 $d = sl_pickupAgingData($user, $core);

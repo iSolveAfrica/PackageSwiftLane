@@ -1,0 +1,6 @@
+/* Runtime additions for the bound Email builder (newsletter.php). */
+#eb-design [hidden],#eb-send[hidden],#eb-prog[hidden],#eb-insp[hidden]{display:none!important}
+#eb-insp{position:static;width:auto;max-height:none;margin:0 0 12px;box-shadow:none}
+.eb-tabs{overflow-x:auto}
+#eb-mail table{border-collapse:collapse}
+#eb-mail p{margin:0 0 12px}

@@ -1,48 +1,12 @@
 <?php
-// *************************************************************************
-// *                                                                       *
-// * Swiftlane - Integrated Web Shipping System                            *
-// * Copyright (c) iSolveAfrica Ltd. All rights reserved.                  *
-// *                                                                       *
-// *************************************************************************
-// *                                                                       *
-// * This software and its source code are proprietary and confidential    *
-// * property of iSolveAfrica Ltd. and were developed specifically for     *
-// * Swiftlane.                                                            *
-// *                                                                       *
-// * The software may not be copied, reproduced, modified, distributed,    *
-// * sublicensed, published, or used in whole or in part except as         *
-// * expressly permitted under the applicable license or written           *
-// * agreement with iSolveAfrica Ltd. Any permitted copies or derivative   *
-// * works must retain this copyright notice and all applicable            *
-// * proprietary notices.                                                  *
-// *                                                                       *
-// *************************************************************************
+// Edit package (Swift Lane UI: views/sl/pages/ShipmentForm.php, mode "package_edit").
+// Saves through the legacy endpoint the old view used; see views/sl/data/ops_forms.php.
+require_once 'loader.php';
+$user = new User();
+$core = new Core();
+require_once 'helpers/sl_view.php';
+sl_gate('edit_package');
 
-
-
-    require_once("loader.php");
-
-    $user = new User();
-    $core = new Core();
-    // ... ask if we are logged in here:
-    if ($user->cdp_loginCheck() == true) 
-    {
-
-        $permissions = $user->cdp_getUserPermissions();
-
-        if (!$user->cdp_hasPermission('edit_package')) {
-            header("location: error403.php");
-            exit;
-        }
-
-       
-      include('views/customer_packages/customer_package_edit.php');     
-           
-
-    } else{
-        
-        header("location: login.php");
-        exit;       
-    }
-?>
+require_once 'views/sl/data/ops_forms.php';
+$d = sl_shipFormData($user, $core, 'package_edit', (int) ($_GET['id'] ?? 0));
+sl_render('ShipmentForm', ['id' => 'sea', 'title' => $d['title'], 'board' => 'NewShipment', 'scripts' => ['dataJs/sl/ops_forms.js', 'dataJs/sl/shipment_form.js']], $d);

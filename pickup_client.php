@@ -1,10 +1,9 @@
 <?php
-// Counter hand-out (HandOut artboard). Legacy tracking search kept at ?legacy=1 (views/pickup_client.php).
+// Counter hand-out (HandOut artboard). Legacy tracking search (retired) (views/pickup_client.php).
 require_once 'loader.php';
 $user = new User(); $core = new Core();
 require_once 'helpers/sl_view.php';
 sl_gate(['view_warehouse_delivery', 'warehouse_deliver_package', 'view_shipment_list']);
-if (!empty($_GET['legacy'])) { $permissions = $user->cdp_getUserPermissions(); include 'views/pickup_client.php'; exit; }
 if (sl_userIs('client')) { header('Location: error403.php'); exit; }
 require_once 'views/sl/data/warehouse.php';
 // ?tracking= jumps straight to the owner of that ready parcel

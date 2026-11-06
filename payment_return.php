@@ -20,10 +20,8 @@ require_once(__DIR__ . '/helpers/fs_payments.php');
 $user = new User();
 $core = new Core();
 
-if ($user->cdp_loginCheck() !== true) {
-    header("location: login.php");
-    exit;
-}
+require_once 'helpers/sl_view.php';
+sl_gate(); // login, like before (no extra permission)
 
 $reference = trim((string) ($_GET['reference'] ?? $_GET['trxref'] ?? ''));
 $sid = (int) ($_SESSION['userid'] ?? 0);
@@ -46,4 +44,6 @@ if ($reference !== '') {
     }
 }
 
-include('views/customer/payment_return.php');
+// Swift Lane design: views/sl/pages/PaymentReturn.php
+sl_render('PaymentReturn', ['id' => 'bills', 'title' => $state === 'success' ? 'Payment confirmed' : ($state === 'pending' ? 'Payment pending' : 'Payment not confirmed'), 'board' => ''],
+    ['state' => $state, 'message' => (string) $message, 'reference' => $reference]);

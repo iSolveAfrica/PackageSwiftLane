@@ -3,7 +3,9 @@
  * Single-record settings forms shown in the Swift Lane design (settings_form.php).
  * Each form posts the legacy field names to its existing save endpoint, so the
  * validation and storage rules of ajax/tools/config_*_ajax.php are unchanged.
- * field: [label, type, help, options]  type: text|number|textarea|select|lookup|yesno
+ * field: [label, type, help, options]  type: text|number|textarea|select|lookup|yesno|password|email|file
+ * 'file' fields show the current asset ($core->field) and post multipart; optional 'values' => callable() adds
+ * values that do not live on $core; optional 'hub' => true lists the form in the Settings hub index.
  */
 function sl_settingsForms(): array
 {
@@ -48,6 +50,71 @@ function sl_settingsForms(): array
                 'signing_customer' => ['Customer signature label', 'text', ''],
                 'signing_company' => ['Company signature label', 'text', ''],
                 'interms' => ['Invoice terms and conditions', 'textarea', 'Printed at the bottom of invoices'],
+            ]],
+        'system' => ['title' => 'Company and sign-up', 'lede' => 'Company details, customer sign-up rules and locker numbers', 'perm' => 'view_tools',
+            'endpoint' => 'ajax/tools/config_system_ajax.php', 'source' => 'core',
+            'values' => function () { require_once CDP_ROOT . '/helpers/otp_settings.php'; return ['active_otp' => function_exists('cdp_otpEnabled') && cdp_otpEnabled() ? '1' : '0']; },
+            'fields' => [
+                'site_name' => ['Company name', 'text', 'Required'],
+                'site_url' => ['Website address', 'text', 'Required, e.g. https://example.com'],
+                'site_email' => ['Company e-mail', 'email', ''],
+                'c_nit' => ['Tax number', 'text', ''],
+                'c_phone' => ['Phone', 'text', ''],
+                'cell_phone' => ['Mobile phone', 'text', ''],
+                'c_address' => ['Address', 'text', ''],
+                'c_city' => ['City', 'text', ''],
+                'c_country' => ['Country', 'text', ''],
+                'c_postal' => ['Postal code', 'text', ''],
+                'locker_address' => ['Locker address', 'textarea', 'Shown to customers with their locker number'],
+                'reg_allowed' => ['Customers can sign up', 'yesno', ''],
+                'reg_verify' => ['New accounts need approval', 'yesno', ''],
+                'auto_verify' => ['Verify accounts automatically', 'yesno', ''],
+                'notify_admin' => ['E-mail the admin on sign-up', 'yesno', ''],
+                'active_otp' => ['E-mail one-time code at sign-in and sign-up', 'yesno', 'Switches every OTP check on or off'],
+                'code_number_locker' => ['Locker numbers', 'select', '', ['1' => 'Sequential', '2' => 'Random (recommended)']],
+                'digit_random_locker' => ['Locker number digits', 'number', '1 to 10'],
+                'prefix_locker' => ['Locker prefix', 'text', 'Required, e.g. SL-'],
+            ]],
+        'logo' => ['title' => 'Logo and images', 'lede' => 'Logo, web logo and favicon used on labels, receipts, e-mails and the browser tab', 'perm' => 'view_tools',
+            'endpoint' => 'ajax/tools/config_logo_ajax.php', 'source' => 'core',
+            'fields' => [
+                'logo' => ['Logo', 'file', 'JPEG, PNG or GIF. Leave empty to keep the current one'],
+                'logo_web' => ['Web logo', 'file', 'Shown on the website and sign-in pages'],
+                'favicon' => ['Favicon', 'file', 'Small square icon for the browser tab'],
+                'thumb_w' => ['Logo width (px)', 'number', ''],
+                'thumb_h' => ['Logo height (px)', 'number', ''],
+                'thumb_web' => ['Web logo width (px)', 'number', ''],
+                'thumb_hweb' => ['Web logo height (px)', 'number', ''],
+            ]],
+        'seo' => ['title' => 'Search and sharing (SEO)', 'lede' => 'How the site shows in search results and when a link is shared', 'perm' => 'view_tools',
+            'endpoint' => 'ajax/tools/config_seo_ajax.php', 'source' => 'core',
+            'fields' => [
+                'meta_description' => ['Meta description', 'textarea', 'Required. One or two sentences for search results'],
+                'meta_keywords' => ['Meta keywords', 'text', 'Comma separated'],
+                'og_title' => ['Share title', 'text', 'Required'],
+                'og_description' => ['Share description', 'text', 'Required'],
+                'og_type' => ['Share type', 'text', 'Required, usually website'],
+                'og_url' => ['Share URL', 'text', 'Required'],
+                'og_image' => ['Share image URL', 'text', 'Required'],
+            ]],
+        'smtp' => ['title' => 'E-mail server (SMTP)', 'lede' => 'The mail server every system e-mail is sent through', 'perm' => 'view_tools',
+            'endpoint' => 'ajax/tools/config_smtp_ajax.php', 'source' => 'core',
+            'fields' => [
+                'mailer' => ['Mailer', 'select', '', ['SMTP' => 'SMTP mailer', 'PHP' => 'Sendmail']],
+                'smtp_names' => ['From name', 'text', 'Required'],
+                'email_address' => ['From address', 'email', 'Required'],
+                'smtp_host' => ['Host', 'text', 'Required'],
+                'smtp_user' => ['User', 'text', 'Required'],
+                'smtp_password' => ['Password', 'password', 'Required'],
+                'smtp_port' => ['Port', 'number', 'Required, e.g. 587'],
+                'smtp_secure' => ['Security', 'text', 'Required: tls or ssl'],
+            ]],
+        'google' => ['title' => 'Google Maps', 'lede' => 'API key and the map centre used for addresses and routes', 'perm' => 'view_tools',
+            'endpoint' => 'ajax/tools/config_api_google_ajax.php', 'source' => 'core',
+            'fields' => [
+                'apikey' => ['API key', 'password', 'Required'],
+                'latitude' => ['Map centre latitude', 'text', 'Required'],
+                'longitude' => ['Map centre longitude', 'text', 'Required'],
             ]],
     ];
 }

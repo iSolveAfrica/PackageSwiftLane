@@ -1,56 +1,35 @@
 <?php
 // *************************************************************************
-// *                                                                       *
 // * Swiftlane - Integrated Web Shipping System                            *
 // * Copyright (c) iSolveAfrica Ltd. All rights reserved.                  *
-// *                                                                       *
 // *************************************************************************
-// *                                                                       *
-// * This software and its source code are proprietary and confidential    *
-// * property of iSolveAfrica Ltd. and were developed specifically for     *
-// * Swiftlane.                                                            *
-// *                                                                       *
-// * The software may not be copied, reproduced, modified, distributed,    *
-// * sublicensed, published, or used in whole or in part except as         *
-// * expressly permitted under the applicable license or written           *
-// * agreement with iSolveAfrica Ltd. Any permitted copies or derivative   *
-// * works must retain this copyright notice and all applicable            *
-// * proprietary notices.                                                  *
-// *                                                                       *
-// *************************************************************************
-
-
-
-    require_once("loader.php");
-
-    $user = new User();
-    $core = new Core();
-
-    // Fetch active roles for role selector
-    $db = new Conexion();
-    $db->cdp_query("SELECT role_id, role_name FROM cdb_user_roles WHERE rol_active = 1");
-    $roles = $db->cdp_registros();
-    // ... ask if we are logged in here:
-    if ($user->cdp_loginCheck() == true) 
-    {
-
-        $permissions = $user->cdp_getUserPermissions();
-
-        // Everyone may open their OWN account ("My Profile"); other accounts
-        // need the edit_user permission (Employees do not have it).
-        $isOwnProfile = isset($_GET['user']) && (int) $_GET['user'] === (int) $user->uid;
-        if (!$isOwnProfile && !$user->cdp_hasPermission('edit_user')) {
-            header("location: error403.php");
-            exit;
-        }
-
-       
-      include('views/tools/users/users_edit.php');     
-           
-
-    } else{
-        
-        header("location: login.php");
-        exit;       
-    }
-?>
+// Edit a staff account (Swift Lane design: views/sl/pages/StaffEdit.php). ?user=<id>
+// Everyone may open their OWN account ("My profile"); other accounts need edit_user
+// and a higher rank than the target (cdp_canManageUser).
+require_once 'loader.php';
+$user = new User();
+$core = new Core();
+require_once 'helpers/sl_view.php';
+require_once 'helpers/sl_form.php';
+sl_gate();
+$targetId = (int) ($_GET['user'] ?? 0);
+$isOwnProfile = $targetId === (int) $user->uid;
+if (!$isOwnProfile && !$user->cdp_hasPermission('edit_user')) {
+    header('Location: error403.php');
+    exit;
+}
+if (!$isOwnProfile && !$user->cdp_is_Admin()) {
+    header('Location: login.php');
+    exit;
+}
+require_once 'views/sl/data/account_edit.php';
+$d = sl_staffEditData($user, $core, $targetId, false);
+if (!$d) {
+    header('Location: login.php');
+    exit;
+}
+if (!empty($d['denied'])) {
+    header('Location: users_list.php');
+    exit;
+}
+sl_render('StaffEdit', ['id' => 'staff', 'title' => $isOwnProfile ? 'My profile' : 'Edit ' . $d['name'], 'board' => 'InviteStaff'], $d);

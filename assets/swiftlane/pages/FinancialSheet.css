@@ -1,0 +1,35 @@
+/* Financial Sheet workspace (Swift Lane design tokens; layout only). */
+.fs-ws{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:1100px){.fs-ws{grid-template-columns:1fr}}
+.fs-list{display:flex;flex-direction:column;gap:6px;max-height:70vh;overflow:auto}
+.fs-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);cursor:pointer;width:100%;text-align:left;font:inherit;color:var(--ink)}
+.fs-row:hover{border-color:var(--ink-2)}
+.fs-row.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.fs-row small{display:block;color:var(--muted);font-size:12px}
+.fs-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.fs-money{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+.fs-money div{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border:1px solid var(--line);border-radius:12px}
+.fs-money b{font:600 17px var(--font);font-variant-numeric:tabular-nums}
+.fs-money small{color:var(--muted);font-size:12px}
+.fs-money .bad b{color:var(--red-ink)}
+.fs-pkg{border:1px solid var(--line);border-radius:14px;background:var(--card)}
+.fs-pkg>summary{list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px;cursor:pointer}
+.fs-pkg>summary::-webkit-details-marker{display:none}
+.fs-pkg[open]>summary{border-bottom:1px solid var(--line)}
+.fs-pkg .fs-body{padding:12px 14px;display:flex;flex-direction:column;gap:12px}
+.fs-price{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.fs-price .sl-in{width:110px;height:34px}
+.fs-price .sl-seg{height:34px}
+.fs-price .sl-seg button{padding:0 10px}
+.fs-eq{font-size:12px;color:var(--muted);min-width:90px}
+.fs-grp{border:1px dashed var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.fs-log{display:flex;flex-direction:column;gap:6px;font-size:13px}
+.fs-log>div{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--line)}
+.fs-log>div:last-child{border-bottom:0}
+.fs-log .ic{margin-top:2px;flex:none}
+.fs-chk{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}
+.fs-chk:last-child{border-bottom:0}
+.fs-scroll{max-height:220px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:4px 10px}
+.fs-warn{font-size:12.5px;color:var(--amber-ink)}
+.fs-err{font-size:13px;color:var(--red-ink)}
+.fs-price [hidden],#fs-dlg [hidden]{display:none!important}

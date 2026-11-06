@@ -7,15 +7,15 @@ function sl_settingsIndex($user): array
 {
     $g = [
         ['label' => 'Company and system', 'icon' => 'i-cog', 'items' => [
-            ['Company and system', 'Name, address, sign-up rules, lockers', 'tools.php#company', 'view_tools'], ['Language, currency and rate', 'Language, time zone, money format, USD rate', 'tools.php#language', 'view_tools'],
-            ['Logo and images', 'Logo, web logo, favicon', 'tools.php?legacy=1', 'view_tools'], ['Taxes and fees', 'Tax, insurance, declared value, weight units', 'taxesadnfees.php', 'view_tools'],
+            ['Company and system', 'Name, address, sign-up rules, lockers', 'settings_form.php?f=system', 'view_tools'], ['Language, currency and rate', 'Language, time zone, money format, USD rate', 'tools.php#language', 'view_tools'],
+            ['Logo and images', 'Logo, web logo, favicon', 'settings_form.php?f=logo', 'view_tools'], ['Search and sharing (SEO)', 'Meta description, keywords, share card', 'settings_form.php?f=seo', 'view_tools'], ['Google Maps', 'API key and map centre', 'settings_form.php?f=google', 'view_tools'], ['Taxes and fees', 'Tax, insurance, declared value, weight units', 'taxesadnfees.php', 'view_tools'],
             ['Tracking and invoice numbers', 'Prefixes, digits, terms and signatures', 'track_invoice.php', 'view_tools'], ['New shipment defaults', 'Default service, packaging, courier, payment', 'info_ship_default.php', 'view_tools'],
             ['Backup', 'Download or restore a database backup', 'backup.php', 'view_tools']]],
         ['label' => 'Messaging', 'icon' => 'i-message', 'items' => [
             ['SMS providers', 'Hubtel, mNotify, default and fallback', 'tools.php#messaging', 'view_tools'], ['SMS (legacy Nexmo / Twilio)', 'Older SMS gateways', 'config_sms.php', 'view_tools'],
             ['Twilio', 'Twilio account', 'config_twilio.php', 'view_tools'], ['WhatsApp API', 'URL and token', 'api_connections.php?p=whatsapp', 'manage_api_settings'],
             ['Switch SMS on or off', 'Global SMS switch', 'activate_sms.php', 'view_tools'], ['Switch WhatsApp on or off', 'Global WhatsApp switch', 'activate_whatsapp.php', 'view_tools'],
-            ['E-mail (SMTP)', 'Mail server for every e-mail', 'api_connections.php?p=smtp', 'manage_api_settings'], ['Notification Center', 'Which event sends which channel', 'notification_center.php', 'view_tools']]],
+            ['E-mail (SMTP)', 'Mail server for every e-mail', 'api_connections.php?p=smtp', 'manage_api_settings'], ['E-mail server form', 'Mailer, host, port, user and password', 'settings_form.php?f=smtp', 'view_tools'], ['Notification Center', 'Which event sends which channel', 'notification_center.php', 'view_tools']]],
         ['label' => 'Logistics lists', 'icon' => 'i-truck', 'items' => [
             ['Offices', 'Offices and hubs', 'offices_list.php', 'view_tools'], ['Branch offices', 'Agencies and branches', 'branchoffices_list.php', 'view_tools'], ['Courier companies', 'Carriers you work with', 'courier_company_list.php', 'view_tools'],
             ['Packaging', 'Box and bag types', 'packaging_list.php', 'view_tools'], ['Shipping modes', 'Air, sea, express…', 'shipping_mode_list.php', 'view_tools'], ['Delivery times', 'Service levels', 'delivery_time_list.php', 'view_tools'],

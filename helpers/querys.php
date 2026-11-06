@@ -2950,6 +2950,15 @@ function cdp_getConsolidationFinancialRows($consolidate_id)
     // Billing state lives in cdb_consolidate_customer_billing and only affects
     // the on-screen billed badge / pricing lock, never membership.
     $db = new Conexion;
+    // cdb_add_order.tracking_num only exists on installations upgraded from the
+    // old schema; without the guard the whole query fails and the sheet is empty.
+    static $hasTrackingNum = null;
+    if ($hasTrackingNum === null) {
+        $db->cdp_query("SELECT COUNT(*) AS n FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_add_order' AND COLUMN_NAME = 'tracking_num'");
+        $db->cdp_execute();
+        $hasTrackingNum = (int) ($db->cdp_registro()->n ?? 0) > 0;
+    }
+    $legacyTrk = $hasTrackingNum ? 'a.tracking_num' : 'NULL';
     $db->cdp_query("
         SELECT
             a.order_id AS oid,
@@ -2958,7 +2967,7 @@ function cdp_getConsolidationFinancialRows($consolidate_id)
             d.weight AS detail_weight,
             a.total_weight AS pkg_weight,
             a.total_order,
-            COALESCE(NULLIF(pt.tracking_number,''), a.tracking_num) AS carrier_tracking,
+            COALESCE(NULLIF(pt.tracking_number,''), $legacyTrk) AS carrier_tracking,
             a.sender_id,
             u.fname,
             u.lname,

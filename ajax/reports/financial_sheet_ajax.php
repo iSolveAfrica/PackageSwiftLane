@@ -842,6 +842,9 @@ function fs_log_history($uid, $order_id, $what)
     return $track;
 }
 
+// JSON read models for the Swift Lane Financial Sheet page (sl_list, sl_find, sl_sheet, sl_items).
+require __DIR__ . '/financial_sheet_sl.php';
+
 // ----------------------------------------------------------------------------
 // LOCK HEARTBEAT / RELEASE  (JSON)
 // ----------------------------------------------------------------------------
@@ -2265,7 +2268,7 @@ if ($action === 'payment_events') {
                   'customer_checkout' => 'Customer checkout'];
 
     if (!$evs) {
-        echo json_encode(['ok' => true, 'html' =>
+        echo json_encode(['ok' => true, 'events' => [], 'html' =>
             '<p class="text-muted">Nothing has happened to this payment since it was recorded.</p>']);
         exit;
     }
@@ -2300,7 +2303,16 @@ if ($action === 'payment_events') {
     $h .= '</tbody></table>'
         . '<p class="text-muted" style="font-size:.8rem">This is the complete record of what the gateway told us about this payment.</p>';
 
-    echo json_encode(['ok' => true, 'html' => $h]);
+    $slEv = [];
+    foreach ($evs as $e) {
+        $slEv[] = ['when' => date('Y-m-d H:i', strtotime((string) $e->created_at)), 'event' => (string) $e->event,
+            'from' => $e->old_status ? cdp_fsStatusMeta((string) $e->old_status)['label'] : '',
+            'to' => $e->new_status ? cdp_fsStatusMeta((string) $e->new_status)['label'] : '',
+            'message' => (string) $e->message,
+            'source' => $sourceLbl[(string) $e->source] ?? ucfirst(str_replace('_', ' ', (string) $e->source)),
+            'who' => (string) $e->actor !== '' ? (string) $e->actor : ($e->source === 'paystack_webhook' ? 'Paystack' : 'System')];
+    }
+    echo json_encode(['ok' => true, 'events' => $slEv, 'html' => $h]);
     exit;
 }
 
@@ -2417,9 +2429,23 @@ if ($action === 'payment_history') {
         <?php endif; ?>
     </div>
     <?php
+    $slRows = function ($list, $kind) {
+        $out = [];
+        foreach ($list as $r) {
+            $out[] = $kind === 'p'
+                ? ['when' => date('Y-m-d H:i', strtotime((string) $r->recorded_at)), 'cid' => (int) $r->consolidate_id, 'mode' => ucfirst((string) $r->mode), 'ref' => (string) ($r->reference ?? ''), 'ghs' => round((float) $r->amount_ghs, 2), 'by' => (string) $r->by_name]
+                : ['when' => date('Y-m-d H:i', strtotime((string) $r->applied_at)), 'cid' => (int) $r->consolidate_id, 'type' => (string) $r->disc_type, 'reason' => (string) ($r->reason ?? ''), 'ghs' => round((float) $r->amount_ghs, 2), 'by' => (string) $r->by_name];
+        }
+        return $out;
+    };
     echo json_encode([
         'ok'    => true,
         'name'  => $custLabel,
+        'payments'   => $slRows($payments, 'p'),
+        'discounts'  => $slRows($discounts, 'd'),
+        'total_paid' => round($totalPaid, 2),
+        'total_disc' => round($totalDisc, 2),
+        'owed_ghs'   => round($owed, 2),
         'html'  => ob_get_clean(),
     ]);
     exit;

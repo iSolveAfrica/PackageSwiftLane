@@ -5,20 +5,10 @@
 // *************************************************************************
 // Package receipt, paid or not paid (Swift Lane UI: views/sl/pages/ReceiptPaid.php /
 // ReceiptNotPaid.php). ?id=N for a sea package (default), &type=air for an air shipment.
-// The previous invoice layout stays at print_invoice_package.php?legacy=1.
+// ?legacy=1 (the previous invoice layout) is retired and renders the same receipt.
 require_once("loader.php");
 $user = new User();
 $core = new Core();
-if (!empty($_GET['legacy'])) {
-    if ($user->cdp_loginCheck() == true) {
-        require_once(__DIR__ . "/helpers/activity_log.php");
-        cdp_activityLogDocument();
-        include('views/customer_packages/print_invoice_package.php');
-    } else {
-        header("location: login.php");
-    }
-    exit;
-}
 require_once 'helpers/sl_view.php';
 $type = ($_GET['type'] ?? 'sea') === 'air' ? 'air' : 'sea';
 // Customers may print their own receipts; scope is enforced by sl_labelFor().

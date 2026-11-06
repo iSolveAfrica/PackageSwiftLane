@@ -25,5 +25,8 @@ if ($form['source'] === 'info') {
         $values[$k] = $core->$k ?? '';
     }
 }
+if (isset($form['values']) && is_callable($form['values'])) {
+    $values = array_merge($values, (array) ($form['values'])());
+}
 $siblings = array_filter($forms, fn($f) => $user->cdp_hasPermission($f['perm']));
 sl_render('SettingsForm', ['id' => 'general', 'title' => $form['title'], 'board' => 'SettingsForm'], ['key' => $key, 'form' => $form, 'values' => $values, 'siblings' => $siblings]);

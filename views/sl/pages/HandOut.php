@@ -3,7 +3,7 @@
  * HandOut - from docs/handover/artifact-source/HandOut.dc.html. Counter hand-out by pickup code or tracking.
  * Data: views/sl/data/warehouse.php (sl_handOutData). Steps: pick the customer from the queue (or search name, locker,
  * phone or tracking) → enter the code they show → fetch from the bay and scan each label → checks → hand over (Picked up).
- * Writes: ajax/sl/warehouse_ajax.php (verify_customer, send_customer, handover). Legacy search by tracking: pickup_client.php?legacy=1.
+ * Writes: ajax/sl/warehouse_ajax.php (verify_customer, send_customer, handover). Search by tracking: pickup_client.php?tracking=.
  */
 if (!isset($d)) { $d = []; }
 $c = $d['c'];

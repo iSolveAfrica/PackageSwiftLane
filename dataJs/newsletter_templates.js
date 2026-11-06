@@ -1,7 +1,7 @@
 "use strict";
 
 /* ---------------------------------------------------------------------------
-   Starter templates for the e-mail newsletter builder (dataJs/newsletter.js).
+   Starter templates for the e-mail newsletter builder (dataJs/sl/email_builder.js).
 
    NLB_TEMPLATES(cfg, mk) returns the list shown on the "Choose Template" step.
    mk(type, props) makes a block with that type's defaults and the given props;

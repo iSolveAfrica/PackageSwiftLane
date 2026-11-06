@@ -7,7 +7,7 @@
 // *************************************************************************
 
 /**
- * The e-mail newsletter builder's server side (views/tools/newsletter.php).
+ * The e-mail newsletter builder's server side (newsletter.php, dataJs/sl/email_builder.js).
  *
  * POST action =
  *   designs              list of saved designs

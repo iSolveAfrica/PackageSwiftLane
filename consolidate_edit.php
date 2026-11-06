@@ -1,49 +1,18 @@
 <?php
-// *************************************************************************
-// *                                                                       *
-// * Swiftlane - Integrated Web Shipping System                            *
-// * Copyright (c) iSolveAfrica Ltd. All rights reserved.                  *
-// *                                                                       *
-// *************************************************************************
-// *                                                                       *
-// * This software and its source code are proprietary and confidential    *
-// * property of iSolveAfrica Ltd. and were developed specifically for     *
-// * Swiftlane.                                                            *
-// *                                                                       *
-// * The software may not be copied, reproduced, modified, distributed,    *
-// * sublicensed, published, or used in whole or in part except as         *
-// * expressly permitted under the applicable license or written           *
-// * agreement with iSolveAfrica Ltd. Any permitted copies or derivative   *
-// * works must retain this copyright notice and all applicable            *
-// * proprietary notices.                                                  *
-// *                                                                       *
-// *************************************************************************
-
-
-
-    require_once("loader.php");
-
-    $user = new User();
-    $core = new Core();
-    // ... ask if we are logged in here:
-    if ($user->cdp_loginCheck() == true) 
-    {
-
-    
-        $permissions = $user->cdp_getUserPermissions();
-
-        if (!$user->cdp_hasPermission('edit_consolidate')) {
-            header("location: error403.php");
-            exit;
-        }
-
-       
-      include('views/consolidate/consolidate_edit.php');     
-           
-
-    } else{
-        
-        header("location: login.php");
-        exit;       
-    }
-?>
+// Edit a consolidation - Swift Lane UI: views/sl/pages/ConsolidationEdit.php.
+require_once 'loader.php';
+$user = new User();
+$core = new Core();
+require_once 'helpers/sl_view.php';
+sl_gate('edit_consolidate');
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // The old view's POST handler, moved verbatim (views/sl/handlers/consolidate_edit.php); replies JSON.
+    require_once 'helpers/sl_legacy_post.php';
+    $db = new Conexion;
+    sl_legacyPostBegin();
+    include 'views/sl/handlers/consolidate_edit.php';
+    sl_legacyPostEnd([], ['message' => $message ?? null, 'ok' => isset($success_script), 'bad' => isset($error_script), 'requireOk' => true, 'redirect' => 'consolidate_view.php?id=' . (int) ($_GET['id'] ?? 0)]);
+}
+require_once 'views/sl/data/ops_forms.php';
+$d = sl_consolEditData($user, $core, 'consol', (int) ($_GET['id'] ?? 0));
+sl_render('ConsolidationEdit', ['id' => 'consol', 'title' => 'Edit ' . $d['sum']['track'], 'board' => 'ConsolidationDetail', 'scripts' => ['dataJs/sl/ops_forms.js']], $d);
