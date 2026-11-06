@@ -114,6 +114,7 @@ function sl_documentsData($user, $core): array
             $meta = json_decode((string) $r->meta, true) ?: [];
             $params = is_array($meta['params'] ?? null) ? $meta['params'] : [];
             unset($params['legacy']);
+            $params = array_filter($params, fn($v) => is_scalar($v) && (string) $v !== '');
             $ep = basename((string) ($r->endpoint ?: (($meta['page'] ?? '') . '.php')));
             $catName = sl_documentCategory($ep);
             $label = $r->entity_id !== '' && $r->entity_id !== null ? sl_documentNumber($ep, (int) $r->entity_id, $params) : '';

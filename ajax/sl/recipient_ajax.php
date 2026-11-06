@@ -58,7 +58,7 @@ switch ((string) ($_POST['op'] ?? '')) {
         }
         if ($addr !== '') cdp_insertAddressRecipient(['recipient_id' => $id, 'address' => cdp_sanitize($addr), 'country' => $country, 'city' => (int) ($_POST['city'] ?? 0), 'state' => (int) ($_POST['state'] ?? 0), 'postal' => cdp_sanitize((string) ($_POST['postal'] ?? ''))]);
         cdp_activityLog(['module' => 'recipients', 'verb' => empty($_POST['id']) ? 'create' : 'update', 'action' => 'recipient.save', 'action_label' => empty($_POST['id']) ? 'Added recipient' : 'Updated recipient', 'outcome' => 'ok', 'entity_type' => 'recipient', 'entity_id' => $id, 'entity_label' => trim("$fname $lname"), 'summary' => (empty($_POST['id']) ? 'added recipient ' : 'updated recipient ') . trim("$fname $lname") . ' for user #' . $owner]);
-        sl_json(['success' => true, 'message' => 'Recipient saved', 'redirect' => sl_route('Recipients') . (sl_userIs('client') ? '' : '')]);
+        sl_json(['success' => true, 'message' => 'Recipient saved', 'redirect' => $client ? 'recipients_list.php' : sl_route('Recipients')]);
     case 'address_delete':
         require_permission(['recipients_edit', 'view_recipients']);
         $r = $find((int) ($_POST['id'] ?? 0));
