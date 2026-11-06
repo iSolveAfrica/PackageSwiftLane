@@ -1,19 +1,4 @@
 <?php
-// *************************************************************************
-// * Hubtel payment-method edit — entry point                            *
-// *************************************************************************
-
-require_once("loader.php");
-
-$user = new User();
-$core = new Core();
-
-if ($user->cdp_loginCheck() == true) {
-
-    include('views/tools/payment_gateways/setting_methods_hubtel_edit.php');
-
-} else {
-    header("location: login.php");
-    exit;
-}
-?>
+/** payment_mode_hubtel_edit.php Replaced by the Swift Lane page api_connections.php; old URL kept for bookmarks. */
+header("Location: api_connections.php", true, 301);
+exit;

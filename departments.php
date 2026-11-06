@@ -1,23 +1,4 @@
 <?php
-// *************************************************************************
-// * PackageSwiftLane — Departments (Access Control) root controller       *
-// *************************************************************************
-
-require_once("loader.php");
-
-$user = new User();
-$core = new Core();
-
-if ($user->cdp_loginCheck() !== true) {
-    header("location: login.php");
-    exit;
-}
-
-$user->cdp_getUserPermissions();
-
-if (!$user->cdp_hasPermission('view_role_assignment')) {
-    header("location: error403.php");
-    exit;
-}
-
-include('views/tools/permissions/departments.php');
+/** departments.php Replaced by the Swift Lane page manage_permissions.php; old URL kept for bookmarks. */
+header("Location: manage_permissions.php", true, 301);
+exit;

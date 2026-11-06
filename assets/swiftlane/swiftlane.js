@@ -57,12 +57,21 @@
     var m = document.querySelector('meta[name="csrf-token"]'), p = document.querySelector('meta[name="csrf-param"]');
     return { token: m ? m.content : '', param: p ? p.content : 'csrf_token' };
   }
+  /* Legacy endpoints answer with Bootstrap alert HTML instead of JSON: read it as a result. */
+  SL.fromHtml = function (html, httpOk) {
+    var box = document.createElement('div'); box.innerHTML = html;
+    var bad = !httpOk || !!box.querySelector('.alert-danger, .alert-warning, .error');
+    var items = Array.prototype.map.call(box.querySelectorAll('li'), function (li) { return li.textContent.trim(); }).filter(Boolean);
+    var text = items.length ? items.join(' · ') : box.textContent.replace(/\s+/g, ' ').trim();
+    if (!text) text = bad ? 'The request was not accepted' : 'Saved';
+    return { success: !bad, message: text.slice(0, 300) };
+  };
   SL.post = function (url, data) {
     var c = csrf(), body;
     if (data instanceof FormData) { body = data; body.append(c.param, c.token); }
     else { body = new URLSearchParams(); Object.keys(data || {}).forEach(function (k) { body.append(k, data[k]); }); body.append(c.param, c.token); }
     return fetch(url, { method: 'POST', body: body, headers: { 'X-CSRF-Token': c.token, 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
-      .then(function (r) { return r.text().then(function (t) { var j; try { j = JSON.parse(t); } catch (e) { j = { success: r.ok, message: t }; } if (!r.ok && j.success === undefined) j.success = false; return j; }); });
+      .then(function (r) { return r.text().then(function (t) { var j; try { j = JSON.parse(t); } catch (e) { j = SL.fromHtml(t, r.ok); } if (!r.ok && j.success === undefined) j.success = false; return j; }); });
   };
   SL.get = function (url, params) {
     var u = new URL(url, location.href); Object.keys(params || {}).forEach(function (k) { u.searchParams.set(k, params[k]); });
