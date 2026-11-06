@@ -11,6 +11,22 @@
 
 SET NAMES utf8mb4;
 
+-- Guard added 2026-11-06: cdb_countries.iso2 and cdb_virtual_mailbox_addresses
+-- are referenced below but do not exist on the vendor baseline dump.
+SET @has_col := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_countries' AND COLUMN_NAME = 'iso2');
+SET @sql := IF(@has_col = 0, 'ALTER TABLE cdb_countries ADD COLUMN iso2 CHAR(2) NULL AFTER iso3', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+CREATE TABLE IF NOT EXISTS cdb_virtual_mailbox_addresses (
+    id               INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    cdb_countries_id BIGINT UNSIGNED NULL,
+    country          VARCHAR(190) NULL,
+    city             VARCHAR(190) NULL,
+    postcode         VARCHAR(40) NULL,
+    address          TEXT NULL,
+    default_address  TINYINT(1) NOT NULL DEFAULT 0,
+    PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 -- ----------------------------------------------------------------------------
 -- 1. Pickup codes (helpers/pickup_code.php)
 --    The app creates these tables on first use; this makes sure they exist and
@@ -146,3 +162,7 @@ FROM cdb_virtual_mailbox_addresses v
 LEFT JOIN cdb_countries c ON c.id = v.cdb_countries_id
 WHERE c.iso2 = 'CN' OR c.name LIKE '%China%'
 ORDER BY v.id;
+
+-- Ledger (added 2026-11-06)
+CREATE TABLE IF NOT EXISTS cdb_schema_migrations (name VARCHAR(190) NOT NULL, applied_at DATETIME NOT NULL, PRIMARY KEY (name)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+INSERT INTO cdb_schema_migrations (name, applied_at) SELECT '2026_11_04_pickup_codes_handover_sms_mailbox', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_schema_migrations WHERE name = '2026_11_04_pickup_codes_handover_sms_mailbox');

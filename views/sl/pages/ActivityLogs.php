@@ -1,31 +1,30 @@
 <?php
 /**
- * ActivityLogs - generated from docs/handover/artifact-source/ActivityLogs.dc.html by scripts/sl_convert.py.
- * Shell page: yes (rendered inside views/sl/inc/shell_start.php)
- * Data contract ($d):
- *   loop  rows                         as $r
- *   loop  feed                         as $f
- *   value feed, rows
- * Demo data shapes: see the renderVals() script in the artifact source file.
+ * ActivityLogs - from docs/handover/artifact-source/ActivityLogs.dc.html.
+ * Data: views/sl/data/activity_logs.php (sl_activityLogsData).
  */
 if (!isset($d)) { $d = []; }
 ?>
         <div class="sl-head">
           <div><h1 class="sl-title">Activity Logs</h1><p class="sl-lede">Who did what, and when, across the whole workspace</p></div>
-          <a class="sl-btn ghost" href="<?= sl_route('Documents') ?>"><i class="ic ic-sm i-download" aria-hidden="true"></i>Export Log</a>
+          <?php if ($d['canExport']): ?><a class="sl-btn ghost" href="<?= h(sl_url(['export' => 'csv', 'page' => null])) ?>"><i class="ic ic-sm i-download" aria-hidden="true"></i>Export Log</a><?php endif; ?>
         </div>
+        <?php if (!$d['ready']): ?><div class="sl-card"><div class="sl-empty"><span class="sl-tile"><i class="ic i-clock" aria-hidden="true"></i></span>The activity log table is not installed yet. Run the database upgrade (migrations/2026_11_06_swiftlane_ui_core.sql) to start recording actions.</div></div>
+        <?php else: ?>
         <div class="split">
           <section class="a sl-card flush">
-            <div class="row wrap g12" style="padding: 14px 16px"><div class="sl-search"><i class="ic ic-sm i-search" aria-hidden="true"></i><input aria-label="Search activity" placeholder="Search action, user or tracking number"></div><div class="sl-sel" style="width: 150px"><span>All users</span><i class="ic ic-sm i-down" aria-hidden="true"></i></div><div class="sl-seg boxed"><button class="on">All</button><button>Shipments</button><button>Payments</button><button>Security</button></div></div>
+            <form method="get" class="row wrap g12" style="padding: 14px 16px"><input type="hidden" name="filter" value="<?= h($d['filter']) ?>"><div class="sl-search"><i class="ic ic-sm i-search" aria-hidden="true"></i><input name="q" value="<?= h($d['q']) ?>" aria-label="Search activity" placeholder="Search action, user or tracking number"></div><label class="sl-sel native" style="width: 170px"><select name="user_id" aria-label="User" onchange="this.form.submit()"><option value="">All users</option><?php foreach ($d['users'] as $u): ?><option value="<?= (int) $u['id'] ?>" <?= $u['id'] === $d['user_id'] ? 'selected' : '' ?>><?= h($u['name']) ?></option><?php endforeach; ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></label><div class="sl-seg boxed"><?php foreach ($d['filters'] as $x): ?><a class="<?= $x['f'] === $d['filter'] ? 'on' : '' ?>" href="<?= h(sl_url(['filter' => $x['f'], 'page' => null])) ?>"><?= h($x['label']) ?></a><?php endforeach; ?></div></form>
             <div class="sl-tw"><table class="sl-table"><thead><tr><th>Time</th><th>User</th><th>Action</th><th>Target</th><th>IP address</th></tr></thead><tbody>
-              <?php foreach ((array) sl_get($d, 'rows', []) as $__i => $r): ?><tr><td class="mono sm"><?= sl_v($r, 't') ?></td><td><div class="sl-cell"><span class="sl-av sm"><?= sl_v($r, 'ini') ?></span><?= sl_v($r, 'u') ?></div></td><td><span class="sl-badge <?= sl_v($r, 'b') ?>"><?= sl_v($r, 'a') ?></span></td><td class="mono sm"><?= sl_v($r, 'tg') ?></td><td class="mono sm mut"><?= sl_v($r, 'ip') ?></td></tr><?php endforeach; ?>
+              <?php foreach ($d['rows'] as $r): ?><tr title="<?= h($r['module'] . ' · ' . $r['summary']) ?>"><td class="mono sm"><?= h($r['t']) ?></td><td><div class="sl-cell"><span class="sl-av sm"><?= h($r['ini']) ?></span><?php if ($r['uid'] && $user->cdp_hasPermission('view_user_list')): ?><a href="<?= h(sl_route('StaffActivity', ['id' => $r['uid']])) ?>"><?= h($r['u']) ?></a><?php else: ?><?= h($r['u']) ?><?php endif; ?></div></td><td><span class="sl-badge <?= h($r['b']) ?>"><?= h($r['a']) ?></span></td><td class="mono sm"><?= h($r['tg']) ?></td><td class="mono sm mut"><?= h($r['ip']) ?></td></tr><?php endforeach; ?>
+              <?php if (!$d['rows']): ?><tr><td colspan="5"><div class="sl-empty"><span class="sl-tile"><i class="ic i-clock" aria-hidden="true"></i></span>No events match this filter.</div></td></tr><?php endif; ?>
             </tbody></table></div>
-            <div class="sl-pager"><span>Showing 1–10 of 3,408 events</span><div class="sl-pg"><a class="on" href="<?= sl_route('ActivityLogs') ?>">1</a><a href="<?= sl_route('ActivityLogs') ?>">2</a><a href="<?= sl_route('ActivityLogs') ?>">3</a></div></div>
+            <?= sl_pager($d['page'], $d['per'], $d['count'], 'events') ?>
           </section>
           <aside class="b sl-card col g12"><h2 class="sl-ct">Live feed</h2>
             <div class="sl-feed">
-              <?php foreach ((array) sl_get($d, 'feed', []) as $__i => $f): ?><div class="row g12 top"><span class="sl-dot <?= sl_v($f, 'c') ?>"></span><div class="grow"><div class="sm"><span class="fw5"><?= sl_v($f, 'u') ?></span> <?= sl_v($f, 'a') ?></div><div class="mut sm"><?= sl_v($f, 'w') ?></div></div></div><?php endforeach; ?>
+              <?php foreach ($d['feed'] as $f): ?><div class="row g12 top"><span class="sl-dot <?= h($f['c']) ?>"></span><div class="grow"><div class="sm"><span class="fw5"><?= h($f['u']) ?></span> <?= h($f['a']) ?></div><div class="mut sm"><?= h($f['w']) ?></div></div></div><?php endforeach; ?>
+              <?php if (!$d['feed']): ?><div class="mut sm">Nothing recorded yet.</div><?php endif; ?>
             </div>
           </aside>
         </div>
-      
+        <?php endif; ?>
