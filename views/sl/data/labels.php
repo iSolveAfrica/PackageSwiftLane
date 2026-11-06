@@ -192,7 +192,7 @@ function sl_receiptData(int $id, string $type): ?array
         'bill' => ['name' => trim(($sender->fname ?? '') . ' ' . ($sender->lname ?? '')), 'locker' => $sender->locker ?? '—', 'phone' => $sender->phone ?? '—', 'loc' => $l['to']],
         'items' => array_map(fn($i) => ['q' => 0 + $i->q, 'd' => $i->d], $items),
         'charges' => $charges, 'totalRaw' => (float) $o->total_order, 'ghs' => $rate > 0 ? '₵' . number_format((float) $o->total_order * $rate, 2) : '',
-        'due' => $o->due_date ? sl_date($o->due_date) : '', 'pay' => $pay,
+        'due' => !empty($o->due_date) ? sl_date($o->due_date) : '', 'pay' => $pay,
         'bcTrack' => sl_barcodeSvg($l['track'], 170, 46), 'bcCarrier' => $l['carrierNo'] !== '' ? sl_barcodeSvg($l['carrierNo'], 340, 52, 9) : '',
         'qr' => sl_codeGridSvg($l['url'], 86),
         'company' => ['name' => (string) ($core->site_name ?? 'Swift Lane'), 'phone' => (string) ($core->c_phone ?? ''), 'mail' => (string) ($core->site_email ?? ''), 'addr' => trim(($core->c_address ?? '') . ', ' . ($core->c_city ?? '') . ', ' . ($core->c_country ?? ''), ', ')],

@@ -91,7 +91,7 @@
       SL.toast(msg, !ok);
       if (ok && j.redirect) setTimeout(function () { location.href = j.redirect; }, 300);
       else if (ok && f.hasAttribute('data-sl-reload')) setTimeout(function () { location.reload(); }, 300);
-      f.dispatchEvent(new CustomEvent('sl:done', { detail: j }));
+      f.dispatchEvent(new CustomEvent('sl:done', { detail: j, bubbles: true }));
     }).catch(function () { SL.toast('Network error. Please try again.', true); })
       .finally(function () { if (btn) { btn.classList.remove('loading'); btn.disabled = false; } });
   });

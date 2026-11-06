@@ -66,7 +66,7 @@ function sl_statusLabel($id): string
 function sl_payPill($statusInvoice): array
 {
     switch ((int) $statusInvoice) {
-        case 1: return ['Paid', 'paid'];
+        case 1: case 19: return ['Paid', 'paid'];
         case 3: return ['Verify payment', 'onway'];
         case 0: case 2: return ['Pending', 'pending'];
         default: return ['Unpaid', 'overdue'];

@@ -59,6 +59,9 @@ function sl_navStaff(): array
             ['id' => 'whpick', 'label' => 'Warehouse Pickups', 'icon' => 'check', 'board' => 'WarehousePickups', 'perm' => ['view_warehouse_pickups', 'view_warehouse_delivery']],
             ['id' => 'handout', 'label' => 'Hand Out Packages', 'icon' => 'box', 'board' => 'HandOut', 'perm' => ['view_warehouse_delivery', 'warehouse_deliver_package'],
                 'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (6,32) $w")],
+            ['id' => 'intake', 'label' => 'Package Intake', 'icon' => 'scan', 'board' => 'PackageIntake', 'perm' => ['package_intake', 'add_package']],
+            ['id' => 'import', 'label' => 'Import Shipments', 'icon' => 'upload', 'board' => 'ImportData', 'perm' => 'add_multiple_shipments'],
+            ['id' => 'docs', 'label' => 'Documents', 'icon' => 'file', 'board' => 'Documents', 'perm' => ['view_documents', 'view_general_reports']],
             ['id' => 'locker', 'label' => 'Locker Search', 'icon' => 'lock', 'board' => 'LockerSearch', 'perm' => 'view_shipment_list'],
         ]],
         ['label' => 'Hubs', 'items' => [
@@ -147,7 +150,7 @@ function sl_navStaff(): array
             ['id' => 'loginpg', 'label' => 'Login Page', 'icon' => 'image', 'board' => 'LoginSettings', 'perm' => 'view_tools'],
             ['id' => 'devmod', 'label' => 'Modules', 'icon' => 'sliders', 'board' => 'ModuleController', 'perm' => 'superadmin'],
             ['id' => 'perm', 'label' => 'Permissions', 'icon' => 'key', 'board' => 'StaffPermissions', 'perm' => 'view_role_assignment'],
-            ['id' => 'lblstudio', 'label' => 'Label Printing', 'icon' => 'print', 'board' => 'LabelStudio', 'perm' => 'view_tools'],
+            ['id' => 'lblstudio', 'label' => 'Label Printing', 'icon' => 'print', 'board' => 'LabelStudio', 'perm' => ['view_tools', 'print_label']],
             ['id' => 'auto', 'label' => 'Automations', 'icon' => 'bolt', 'board' => 'Automations', 'perm' => 'manage_automations'],
         ]],
     ];

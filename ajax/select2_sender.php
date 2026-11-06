@@ -23,6 +23,10 @@
 
 
 require_once("../loader.php");
+// Login required (security fix 2026-11-06).
+$__u = new User();
+if (!$__u->cdp_loginCheck()) { http_response_code(401); header('Content-Type: application/json'); echo json_encode(['success' => false, 'message' => 'Session required']); exit; }
+
 require_once(__DIR__ . '/../helpers/querys.php');
 
 $user = new User();

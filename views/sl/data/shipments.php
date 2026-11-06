@@ -253,6 +253,11 @@ function sl_shipmentLoad(int $id): ?array
     $recip = $rtype === 'user'
         ? sl_row('SELECT id, fname, lname, email, phone, locker FROM cdb_users WHERE id = :id', [':id' => (int) $o->receiver_id])
         : sl_row('SELECT id, fname, lname, email, phone FROM cdb_recipients WHERE id = :id', [':id' => (int) $o->receiver_id]);
+    if (!$recip) {
+        // Imported / legacy rows without a recipient ship to the sender's own address.
+        $recip = $sender;
+        $rtype = 'user';
+    }
     $addr = sl_row('SELECT * FROM cdb_address_shipments WHERE order_track = :t', [':t' => $track]);
     $items = sl_rows('SELECT * FROM cdb_add_order_item WHERE order_id = :id', [':id' => $id]);
     $events = sl_rows('SELECT t.*, s.mod_style, s.color, o.name_off FROM cdb_courier_track t LEFT JOIN cdb_styles s ON s.id = t.status_courier LEFT JOIN cdb_offices o ON o.id = t.office_id WHERE t.order_track = :t ORDER BY t.t_date ASC, t.id ASC', [':t' => $track]);

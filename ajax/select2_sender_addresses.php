@@ -23,10 +23,14 @@
 
 
 require_once("../loader.php");
+// Login required (security fix 2026-11-06).
+$__u = new User();
+if (!$__u->cdp_loginCheck()) { http_response_code(401); header('Content-Type: application/json'); echo json_encode(['success' => false, 'message' => 'Session required']); exit; }
+
 
 $db = new Conexion;
 
-$sender = cdp_sanitize($_REQUEST['id']);
+$sender = (int) ($_REQUEST['id'] ?? 0);
 
 $list = array();
 
@@ -58,13 +62,13 @@ if (!$datas) {
 } else {
 	foreach ($datas as $key) {
 
-		$db->cdp_query("SELECT * FROM cdb_countries where id= '" . $key->country . "'");
+		$db->cdp_query("SELECT * FROM cdb_countries where id= '" . (int) $key->country . "'");
 		$country = $db->cdp_registro();
 
-		$db->cdp_query("SELECT * FROM cdb_states where id= '" . $key->state . "'");
+		$db->cdp_query("SELECT * FROM cdb_states where id= '" . (int) $key->state . "'");
 		$state = $db->cdp_registro();
 
-		$db->cdp_query("SELECT * FROM cdb_cities where id= '" . $key->city . "'");
+		$db->cdp_query("SELECT * FROM cdb_cities where id= '" . (int) $key->city . "'");
 		$city = $db->cdp_registro();
 
 		$data[] = array(

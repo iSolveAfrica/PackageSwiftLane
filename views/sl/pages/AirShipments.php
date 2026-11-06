@@ -39,7 +39,7 @@ $client = !empty($d['client']);
           <?php endif; ?>
           <div class="sl-tw">
             <table class="sl-table">
-              <thead><tr><?php if ($d['canSelect']): ?><th style="width: 40px"><label class="sl-chk" aria-label="Select all"><input type="checkbox" data-as-all style="position:absolute;opacity:0;width:0;height:0"></label></th><?php endif; ?><th>Swift tracking</th><th>Carrier tracking</th><th>Date</th><?php if (!$client): ?><th>Sender</th><?php endif; ?><th>Recipient</th><th>Destination</th><th class="num">Weight</th><th class="num">Total</th><th>Payment</th><th>Status</th><th></th></tr></thead>
+              <thead><tr><?php if ($d['canSelect']): ?><th style="width: 40px"><label class="sl-chk" aria-label="Select all"><input type="checkbox" data-as-all style="position:absolute;opacity:0;width:0;height:0"></label></th><?php endif; ?><th>Swift tracking</th><th>Carrier tracking</th><th>Date</th><?php if (!$client): ?><th>Sender</th><?php endif; ?><th>Recipient</th><th>Destination</th><th class="num">Weight</th><th>Payment</th><th>Status</th><th></th></tr></thead>
               <tbody>
                 <?php foreach ($d['rows'] as $r): $cols = 11 - ($client ? 1 : 0) - ($d['canSelect'] ? 0 : 1); ?>
                   <tr data-as-row>
@@ -51,8 +51,7 @@ $client = !empty($d['client']);
                     <td><div class="sl-cell"><span class="sl-av sm"><?= h($r['ini']) ?></span><?= h($r['name']) ?></div></td>
                     <td><?= h($r['dest']) ?></td>
                     <td class="num"><?= h($r['kg']) ?></td>
-                    <td class="num mono"><?= h($r['total']) ?></td>
-                    <td><span class="sl-pill <?= h($r['payCls']) ?>"><?= h($r['pay']) ?></span></td>
+                    <td><span class="col g4"><span class="sl-pill <?= h($r['payCls']) ?>"><?= h($r['pay']) ?></span><span class="mut mono" style="font-size:11.5px"><?= h($r['total']) ?></span></span></td>
                     <td><span class="col g4"><span class="sl-pill <?= h($r['stCls']) ?>"><?= h($r['st']) ?></span><?php foreach ($r['badges'] as $b): ?><span class="mut" style="font-size:11.5px"><?= h($b) ?></span><?php endforeach; ?></span></td>
                     <td class="as-dots"><button type="button" class="as-more" aria-label="More actions for <?= h($r['track']) ?>" aria-expanded="false" data-as-toggle><i class="ic i-more" aria-hidden="true"></i></button></td>
                   </tr>
