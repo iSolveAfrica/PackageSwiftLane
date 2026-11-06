@@ -1,6 +1,6 @@
 <?php require_once __DIR__ . '/../../helpers/asset.php'; ?>
 <!----Footer--->
-<footer class="footer text-center py-3">
+<footer class="footer text-center py-3" hidden>
     &copy <?php echo date('Y') . ' ' . $core->site_name; ?> - <?php echo $lang['foot'] ?>
 </footer>
 <!----Footer End--->

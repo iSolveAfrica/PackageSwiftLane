@@ -4,10 +4,10 @@
  * Transactions, Accounts Receivable, global payments, the Accounts Receivable
  * reports and the customer's My Bills).
  *
- * The module is switched OFF for now. Nothing is deleted: the pages, endpoints,
- * tables and ledgers all stay, they are only hidden and refused. To bring the
- * module back, set CDP_FINANCE_ENABLED to true — here, or per environment in
- * config/config.php (a define there wins because it runs first).
+ * Nothing is deleted when the module is off: the pages, endpoints, tables and
+ * ledgers all stay, they are only hidden and refused. The switch is the
+ * CDP_FINANCE_ENABLED constant in config/config.php when it is defined, else
+ * the 'finance_enabled' row of cdb_sl_settings (the Billing hub toggle).
  *
  * While it is off:
  *  - every finance permission reads as "not granted", for every role including
@@ -23,15 +23,48 @@
  *    still booked.
  */
 
-if (!defined('CDP_FINANCE_ENABLED')) {
-    define('CDP_FINANCE_ENABLED', false);
-}
-
 if (!function_exists('cdp_financeEnabled')) {
 
+    /**
+     * Is the financial module on?
+     *  - A CDP_FINANCE_ENABLED constant (config/config.php) always wins, so an
+     *    environment can pin the module on or off regardless of the database.
+     *  - Without the constant the switch lives in cdb_sl_settings
+     *    ('finance_enabled', written by the Billing hub toggle). No row, no
+     *    table or no database yet means OFF, exactly as before.
+     * The answer is cached for the request: User::cdp_hasPermission() calls it
+     * on every permission check.
+     */
     function cdp_financeEnabled(): bool
     {
-        return (bool) CDP_FINANCE_ENABLED;
+        static $cached = null;
+        if (defined('CDP_FINANCE_ENABLED')) {
+            return (bool) CDP_FINANCE_ENABLED;
+        }
+        if ($cached !== null) {
+            return $cached;
+        }
+        $cached = false;
+        if (class_exists('Conexion')) {
+            try {
+                $db = new Conexion();
+                $db->cdp_query("SELECT setting_value FROM cdb_sl_settings WHERE setting_key = 'finance_enabled' LIMIT 1");
+                $db->cdp_execute();
+                $row = $db->cdp_registro();
+                if ($row) {
+                    $cached = in_array(strtolower(trim((string) $row->setting_value)), ['1', 'true', 'on', 'yes'], true);
+                }
+            } catch (Throwable $e) {
+                $cached = false;
+            }
+        }
+        return $cached;
+    }
+
+    /** True when config/config.php pins the switch, so the database setting is ignored. */
+    function cdp_financePinnedByConfig(): bool
+    {
+        return defined('CDP_FINANCE_ENABLED');
     }
 
     /** Permission keys that belong to the financial module. */

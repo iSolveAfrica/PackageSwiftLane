@@ -1,214 +1,25 @@
-<?php require_once __DIR__ . '/page_header.php'; // cdp_pageHeader(): the title row each page opens with ?>
 <?php
-// The tray and the menu are built from the signed-in user's record. A page that
-// did not load it rendered an empty sidebar (Message Logs, 2026-10-07), so the
-// shell loads it itself when the page has not.
-if (empty($userData) && isset($user) && is_object($user) && method_exists($user, 'cdp_getUserData')) {
-    $userData = $user->cdp_getUserData();
+/**
+ * Legacy bridge (top bar): legacy content pages are wrapped in the Swift Lane
+ * shell. This include opens the shell (header, rail, sidebar, <main>);
+ * views/inc/left_sidebar.php is intentionally empty and views/inc/footer.php
+ * closes the shell at shutdown. New pages use views/sl/inc/shell_start.php.
+ */
+require_once __DIR__ . '/../../helpers/sl_view.php';
+require_once __DIR__ . '/../../helpers/sl_nav.php';
+require_once __DIR__ . '/page_header.php';
+if (!isset($slPage) || !is_array($slPage)) {
+    $slPage = [];
 }
-?>
-<a class="swl-skip-link" href="#swl-main-content">Skip to main content</a>
-<?php if (!empty($_SESSION['imp_original_username'])): ?>
-	<?php
-		$imp_viewing = trim((string) ($_SESSION['name'] ?? '')) !== '' ? $_SESSION['name'] : ($_SESSION['username'] ?? 'user');
-		$imp_real    = trim((string) ($_SESSION['imp_original_name'] ?? '')) !== '' ? $_SESSION['imp_original_name'] : ($_SESSION['imp_original_username'] ?? '');
-	?>
-	<style>
-		/* The View Mode bar is fixed to the bottom of the viewport, so it sat on
-		   top of the sidebar's last menu items (and the end of the page). Reserve
-		   its height at the foot of both while impersonating. */
-		.scroll-sidebar { padding-bottom: 60px !important; }
-		.page-wrapper   { padding-bottom: 60px; }
-	</style>
-	<div id="view-as-banner" style="position:fixed;left:0;right:0;bottom:0;z-index:100000;background:#b45309;color:#fff;
-		box-shadow:0 -2px 12px rgba(0,0,0,.25);font-size:14px;line-height:1.3;">
-		<div style="max-width:1100px;margin:0 auto;padding:8px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;">
-			<span style="font-weight:600;letter-spacing:.02em;">
-				<iconify-icon icon="solar:eye-bold" style="vertical-align:-2px;"></iconify-icon>
-				View Mode
-			</span>
-			<span>
-				You are viewing the system as <b><?php echo htmlspecialchars($imp_viewing, ENT_QUOTES, 'UTF-8'); ?></b><?php if ($imp_real !== ''): ?>
-				&nbsp;&middot;&nbsp; signed in as <b><?php echo htmlspecialchars($imp_real, ENT_QUOTES, 'UTF-8'); ?></b><?php endif; ?>
-			</span>
-			<a href="view_as.php?stop=1" style="background:#fff;color:#b45309;font-weight:600;padding:4px 14px;border-radius:4px;text-decoration:none;">
-				Exit View
-			</a>
-		</div>
-	</div>
-	<?php endif; ?>
-	<?php if (!empty($_SESSION['view_as_error'])): ?>
-	<div style="position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:100001;background:#b91c1c;color:#fff;
-		padding:10px 18px;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.3);font-size:14px;" onclick="this.remove()">
-		<?php echo htmlspecialchars((string) $_SESSION['view_as_error'], ENT_QUOTES, 'UTF-8'); ?>
-	</div>
-	<?php unset($_SESSION['view_as_error']); endif; ?>
-	<header class="topbar <?php echo isset($show_dashboard_new_header) && $show_dashboard_new_header ? 'topbar-new-variant' : ''; ?>">
-		<?php /* Collapse choice is remembered per browser (dataJs/swiftlane_ui.js). Applying
-		   it here, before the sidebar is parsed, keeps the page from painting
-		   expanded and then snapping shut. */ ?>
-		<script>(function(){try{if(window.innerWidth>=768&&localStorage.getItem('swl.nav')==='mini'){var m=document.getElementById('main-wrapper');if(m){m.classList.add('mini-sidebar');m.setAttribute('data-sidebartype','mini-sidebar');}}}catch(e){}})();</script>
-		<nav class="navbar top-navbar navbar-expand-md <?php echo isset($show_dashboard_new_header) && $show_dashboard_new_header ? 'navbar-light' : 'navbar-dark'; ?>">
-				<!-- This is for the sidebar toggle which is visible on mobile only -->
-			<div class="navbar-header">
-				<a class="nav-toggler waves-effect waves-light d-block d-md-none" href="javascript:void(0)"><iconify-icon icon="solar:hamburger-menu-linear"></iconify-icon></a>
-				<a class="navbar-brand d-flex align-items-center" href="index.php">
-					<?php if (isset($show_dashboard_new_header) && $show_dashboard_new_header) { ?>
-					<span class="logo-v-new me-2">V</span>
-						<!-- dark Logo text -->
-					<?php } ?>
-					<span class="logo-text">
-						<?php echo ($core->logo) ? '<img src="assets/' . $core->logo . '" alt="' . $core->site_name . '" width="' . $core->thumb_w . '" height="' . $core->thumb_h . '"/>' : $core->site_name; ?>
-					</span>
-				</a>
-				<?php if (isset($show_dashboard_new_header) && $show_dashboard_new_header) { ?>
-				<div class="topbar-search-new d-none d-md-flex align-items-center">
-					<iconify-icon icon="solar:magnifer-linear" class="text-muted me-2"></iconify-icon>
-					<input type="text" class="form-control border-0 bg-transparent p-0" placeholder="Search [CTRL + K]" readonly aria-label="Search">
-			<!-- ============================================================== -->
-			<!-- End Logo -->
-				<!-- ============================================================== -->
-				<!-- toggle and nav items -->
-				<!-- ============================================================== -->
-			<!-- ============================================================== -->
-				</div>
-				<?php } ?>
-				<a class="topbartoggler d-block d-md-none waves-effect waves-light" href="javascript:void(0)" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><iconify-icon icon="solar:menu-dots-bold"></iconify-icon></a>
-			</div>
-			<div class="navbar-collapse collapse" id="navbarSupportedContent">
-				<ul class="navbar-nav float-left mr-auto">
-					<?php if (!isset($show_dashboard_new_header) || !$show_dashboard_new_header) { ?>
-					<li class="nav-item d-none d-md-block"><a class="nav-link sidebartoggler waves-effect waves-light" href="javascript:void(0)" data-sidebartype="mini-sidebar"><iconify-icon icon="solar:hamburger-menu-linear" class="font-24"></iconify-icon></a></li>
-					<?php } else { ?>
-				<!-- ============================================================== -->
-				<!-- Right side toggle and nav items -->
-				<!-- ============================================================== -->
-					<li class="nav-item d-none d-md-block"><a class="nav-link sidebartoggler waves-effect waves-dark" href="javascript:void(0)" data-sidebartype="mini-sidebar"><iconify-icon icon="solar:hamburger-menu-linear" class="font-24"></iconify-icon></a></li>
-					<?php } ?>
-				</ul>
-				<ul class="navbar-nav float-right">
-					<?php if (isset($show_dashboard_new_header) && $show_dashboard_new_header) { ?>
-					<li class="nav-item d-none d-md-block"><a class="nav-link waves-effect waves-dark text-body" href="javascript:void(0)"><iconify-icon icon="solar:sun-2-linear" class="font-22"></iconify-icon></a></li>
-					<li class="nav-item d-none d-md-block"><a class="nav-link waves-effect waves-dark text-body" href="javascript:void(0)"><iconify-icon icon="solar:widget-4-linear" class="font-22"></iconify-icon></a></li>
-					<?php } ?>
-					<li class="nav-item dropdown">
-						<?php /* Language indicator only: the site language is set in Settings, there is no menu to open. */ ?>
-						<span class="nav-link swl-tray__lang" title="Language" aria-label="Language">
-							<?php if ($core->language == "en") { ?>
-								<img class="swl-tray__flag" src="assets/template/assets/icon-flag/us.png" alt="EN" />
-							<?php } else if ($core->language == "es") { ?>
-								<img class="swl-tray__flag" src="assets/template/assets/icon-flag/es.png" alt="ES" />
-							<?php } else if ($core->language == "ar") { ?>
-								<img class="swl-tray__flag" src="assets/template/assets/icon-flag/ar.png" alt="AR" />
-							<?php } else if ($core->language == "he") { ?>
-								<img class="swl-tray__flag" src="assets/template/assets/icon-flag/he.png" alt="HE" />
-							<?php } else if ($core->language == "fr") { ?>
-								<img class="swl-tray__flag" src="assets/template/assets/icon-flag/fr.png" alt="FR" />
-							<?php } ?>
-						</span>
-					</li>
-					<!-- ============================================================== -->
-					<!-- Comment -->
-					<!-- ============================================================== -->
-
-					<?php
-					require_once __DIR__ . '/../../helpers/pickup_code.php';
-					if (isset($user) && cdp_pickupCodeCanUse($user)) { ?>
-					<li class="nav-item">
-						<a class="nav-link waves-effect waves-dark cdp-pickup-code-list" href="javascript:void(0)" title="Pickup Codes" aria-label="Pickup Codes">
-							<iconify-icon icon="solar:key-linear"></iconify-icon>
-						</a>
-					</li>
-					<?php } ?>
-
-					<li class="nav-item dropdown">
-						<a id="clickme" class="nav-link dropdown-toggle waves-effect waves-dark" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Notifications" aria-label="Notifications">
-							<iconify-icon icon="solar:bell-linear"></iconify-icon>
-							<span class="badge badge-notify badge-sm up badge-light pull-top-xs" id="countNotifications">0</span>
-						</a>
-
-                        <?php if (($userData->userlevel != 1)) { ?>
-                            <a class="sidebar-link waves-effect waves-dark" href="customers_list.php" aria-expanded="false" title="New Customers" aria-label="New Customers">
-                                <iconify-icon icon="solar:users-group-rounded-linear"></iconify-icon>
-                                <span class="badge badge-notify badge-sm up badge-light pull-top-xs" id=""><?php echo $core->cdp_getNewUsers(); ?></span>
-                            </a>
-                        <?php } ?>
-                        
-						<div class="dropdown-menu dropdown-menu-right mailbox animated bounceInDown">
-							<div id="ajax_response"></div>
-						</div>
-					</li>
-					<?php if (isset($show_dashboard_new_header) && $show_dashboard_new_header) { ?>
-					<li class="nav-item d-none d-md-block"><a class="nav-link waves-effect waves-dark text-body" href="javascript:void(0)"><iconify-icon icon="solar:settings-outline" class="font-22"></iconify-icon></a></li>
-					<?php } ?>
-					<li class="nav-item dropdown">
-						<a class="nav-link dropdown-toggle text-muted waves-effect waves-dark pro-pic" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><img src="<?php echo cdp_avatarUrl($userData->avatar); ?>" class="rounded-circle" width="36" height="36" alt="" /><span class="swl-tray__name"><?php echo htmlspecialchars(trim((string) ($userData->fname ?? '')), ENT_QUOTES, 'UTF-8'); ?></span><iconify-icon icon="solar:alt-arrow-down-linear"></iconify-icon></a>
-						<div class="dropdown-menu dropdown-menu-right user-dd animated flipInY">
-							<span class="with-arrow"><span class="bg-primary"></span></span>
-							<div class="d-flex no-block align-items-center p-15 bg-primary text-white m-b-10">
-								<div class="">
-									<img src="<?php echo cdp_avatarUrl($userData->avatar); ?>" class="rounded-circle" width="80" height="80" alt="" />
-								</div>
-								<div class="m-l-10">
-									<h4 class="m-b-0"><?php echo htmlspecialchars((string) ($userData->username ?? ''), ENT_QUOTES, 'UTF-8'); ?></h4>
-									<p class=" m-b-0"><?php echo htmlspecialchars((string) ($userData->email ?? ''), ENT_QUOTES, 'UTF-8'); ?></p>
-								</div>
-							</div>
-
-							<?php
-							if ($userData->userlevel == 9 || $userData->userlevel == 2) {
-							?>
-								<a class="dropdown-item" href="users_edit.php?user=<?php echo $userData->id; ?>">
-									<iconify-icon icon="solar:user-linear" class="m-r-5 m-l-5"></iconify-icon> <?php echo $lang['miprofile'] ?></a>
-							<?php
-							} else	if ($userData->userlevel == 1) {
-
-							?>
-								<a class="dropdown-item" href="customers_profile_edit.php?user=<?php echo $userData->id; ?>">
-									<iconify-icon icon="solar:user-linear" class="m-r-5 m-l-5"></iconify-icon> <?php echo $lang['miprofile'] ?></a>
-							<?php
-
-							} else	if ($userData->userlevel == 3) {
-
-							?>
-								<a class="dropdown-item" href="drivers_edit.php?user=<?php echo $userData->id; ?>">
-									<iconify-icon icon="solar:user-linear" class="m-r-5 m-l-5"></iconify-icon> <?php echo $lang['miprofile'] ?></a>
-							<?php
-							} else {
-							?>
-								<a class="dropdown-item" href="users_edit.php?user=<?php echo $userData->id; ?>">
-									<iconify-icon icon="solar:user-linear" class="m-r-5 m-l-5"></iconify-icon> <?php echo $lang['miprofile'] ?></a>
-							<?php
-							}
-							?>
-
-
-							<div class="dropdown-divider"></div>
-							<?php
-							if ($user->cdp_hasPermission('view_user_list')) {
-							?>
-								<a class="dropdown-item" href="users_list.php">
-									<iconify-icon icon="solar:settings-outline" class="m-r-5 m-l-5"></iconify-icon> <?php echo $lang['accountset'] ?></a>
-								<div class="dropdown-divider"></div>
-							<?php
-							}
-							?>
-
-							<a class="dropdown-item" href="logout.php"><iconify-icon icon="solar:login-2-outline" class="m-r-5 m-l-5"></iconify-icon>
-								<?php echo $lang['logoouts'] ?></a>
-						</div>
-					</li>
-					<!-- ============================================================== -->
-					<!-- User profile and search -->
-					<!-- ============================================================== -->
-				</ul>
-			</div>
-		</nav>
-	</header>
-
-	<audio id="chatAudio">
-		<source src="assets/notify.mp3" type="audio/mpeg">
-	</audio>
-
-
-	<!-- <script src="<?= cdp_asset('dataJs/load_notifications_all.js') ?>"> </script> -->
+$slPage += ['id' => sl_navIdForBoard(sl_boardForScript()), 'title' => '', 'board' => '', 'legacy' => true, 'mainClass' => 'sl-legacy', 'wide' => true];
+if (!isset($user) || !($user instanceof User)) {
+    $user = new User();
+}
+if (!isset($core) || !($core instanceof Core)) {
+    $core = new Core();
+}
+require __DIR__ . '/../sl/inc/shell_vars.php';
+include __DIR__ . '/../sl/inc/shell_frame.php';
+register_shutdown_function(function () {
+    echo "\n</div></main></div></div>\n<div id=\"sl-toast\" class=\"sl-toast\" role=\"status\" aria-live=\"polite\" hidden></div>\n<script src=\"" . h(cdp_asset('assets/swiftlane/swiftlane.js')) . "\"></script>\n</body></html>\n";
+});

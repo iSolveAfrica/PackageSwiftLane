@@ -5,7 +5,7 @@
 // in the <head> of every authenticated page, which makes it the single place
 // page views can be captured. See helpers/activity_log.php.
 require_once __DIR__ . '/../../helpers/activity_log.php';
-cdp_activityPageView();
+if (!defined('SL_PAGEVIEW_LOGGED')) { define('SL_PAGEVIEW_LOGGED', true); cdp_activityPageView(); }
 ?>
 <link href="<?= cdp_asset('assets/vendor/libs/sweetalert2/sweetalert2.css') ?>" rel="stylesheet">
 <meta name="csrf-param" content="<?php echo htmlspecialchars(cdp_csrf_param(), ENT_QUOTES, 'UTF-8'); ?>">
@@ -46,6 +46,13 @@ cdp_activityPageView();
 <link href="<?= cdp_asset('assets/css_main_swiftlane/css/swiftlane-ds.css') ?>" rel="stylesheet" type="text/css" />
 
 
+<!-- Swift Lane design shell (legacy bridge): the approved design system wraps legacy content -->
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="<?= cdp_asset('assets/swiftlane/swiftlane.css') ?>" rel="stylesheet">
+<link href="<?= cdp_asset('assets/swiftlane/app.css') ?>" rel="stylesheet">
+<link href="<?= cdp_asset('assets/swiftlane/legacy-bridge.css') ?>" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>(function(){try{var t=localStorage.getItem('sl.theme');if(t==='dark'||(t==='auto'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('sl-dark');}}catch(e){}})();</script>
 <?php
 if ($direction_layout == 'rtl') {
 ?>

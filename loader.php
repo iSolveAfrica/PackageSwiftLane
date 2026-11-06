@@ -105,3 +105,4 @@ require_once CDP_ROOT . '/helpers/autoload_lang.php';
 require_once CDP_ROOT . '/helpers/functions.php';
 require_once CDP_ROOT . '/helpers/function_exist.php';
 require_once CDP_ROOT . '/helpers/querys.php';
+require_once CDP_ROOT . '/helpers/pagination.php';

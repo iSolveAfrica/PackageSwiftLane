@@ -259,3 +259,32 @@ function sl_navResolve(string $activeId): array
     }
     return $out;
 }
+
+/** Board name served by the current script (reverse of sl_route), or ''. */
+function sl_boardForScript(?string $script = null): string
+{
+    $script = $script ?? sl_self();
+    foreach (sl_routes() as $board => $url) {
+        if (strtok($url, '?') === $script) {
+            return $board;
+        }
+    }
+    return '';
+}
+
+/** Navigation item id that links to a board, or ''. */
+function sl_navIdForBoard(string $board): string
+{
+    if ($board === '') {
+        return '';
+    }
+    $groups = sl_userIs('client') ? sl_navCustomer() : sl_navStaff();
+    foreach ($groups as $g) {
+        foreach ($g['items'] as $it) {
+            if ($it['board'] === $board) {
+                return $it['id'];
+            }
+        }
+    }
+    return '';
+}

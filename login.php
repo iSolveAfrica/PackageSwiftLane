@@ -65,7 +65,12 @@ if (isset($_POST['login']) && !cdp_csrf_validate_request()) {
         if ($result === 'otp_required') {
             header("location: auth-otp.php?flow=login");
         } else {
-            header("location: index.php");
+            require_once 'helpers/sl_auth.php';
+            $slNext = (string) ($_POST['next'] ?? '');
+            $slDest = ($slNext !== '' && preg_match('#^[a-z0-9_./?=&%-]+$#i', $slNext) && strpos($slNext, '//') === false) ? $slNext : 'index.php';
+            // Password rotation (PasswordReset board): an expired password is changed before anything else.
+            $slAge = sl_passwordAge(sl_row('SELECT password_changed_at, created FROM cdb_users WHERE id = :id', [':id' => (int) ($_SESSION['userid'] ?? 0)]));
+            header('location: ' . ($slAge && $slAge['expired'] ? 'forgot-reset.php?expired=1' : $slDest));
         }
         exit;
     }
@@ -73,163 +78,43 @@ if (isset($_POST['login']) && !cdp_csrf_validate_request()) {
 ?>
 
 
-<?php require_once __DIR__ . '/helpers/asset.php'; ?>
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="utf-8" />
-
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta name="keywords" content="Swiftlane - Integrated Web Shipping System">
-        <meta name="author" content="iSolveAfrica Ltd.">
-        <meta name="description" content="">
-        <!-- favicon -->
-        <title><?php echo $lang['message_title_login0'] ?> | <?php echo $core->site_name ?></title>
-        <link rel="icon" type="image/png" sizes="16x16" href="assets/<?php echo $core->favicon ?>">
-
-
-        <!-- Bootstrap -->
-        <link href="<?= cdp_asset('assets/css_main_swiftlane/css/bootstrap.min.css') ?>" rel="stylesheet" type="text/css" />
-        <!-- Icons -->
-        <link href="<?= cdp_asset('assets/css_main_swiftlane/css/materialdesignicons.min.css') ?>" rel="stylesheet" type="text/css" />
-        <!-- Main Css -->
-        <link href="<?= cdp_asset('assets/css_main_swiftlane/css/style.css') ?>" rel="stylesheet" type="text/css" id="theme-opt" />
-        <link href="<?= cdp_asset('assets/css_main_swiftlane/css/colors/default.css') ?>" rel="stylesheet" id="color-opt">
-        <?php $cdpAuthPhoto = 'login'; include 'views/inc/auth_head.php'; ?>
-    </head>
-
-    <body class="auth-page">
-        <!-- Loader -->
-        <div id="preloader">
-            <div id="status">
-                <div class="spinner">
-                    <div class="double-bounce1"></div>
-                    <div class="double-bounce2"></div>
-                </div>
-            </div>
-        </div>
-        <!-- Loader -->
-
-    <?php cdp_authFrameOpen($core, [
-        'photo' => 'login',
-        'badge' => 'Swift Lane Logistics',
-        'title' => 'Freight that moves the moment you do.',
-    ]); ?>
-
-        <div class="auth-card auth-card--compact card login-page border-0">
-            <div class="auth-card__top text-center">
-                <a class="logo" href="index.php">
-                    <?php echo ($core->logo_web) ? '<img src="assets/' . $core->logo_web . '" alt="' . $core->site_name . '" width="' . $core->thumb_web . '" height="' . $core->thumb_hweb . '"/>' : $core->site_name; ?>
-                </a>
-            </div>
-
-            <div class="card-body">
-                <div class="text-center">
-                    <h1 class="auth-heading mb-2"><?php echo $lang['message_title_login0'] ?></h1>
-                    <p class="auth-subtitle">Use your account to continue.</p>
-                </div>
-
-                <div id="msgholder2" class="mt-4" aria-live="polite" aria-atomic="true">
-                    <?php if ($authFormError !== '') { ?>
-                        <div class="alert alert-danger" role="alert"><?php echo cdp_authFrameEsc($authFormError); ?></div>
-                    <?php } ?>
-                    <?php
-                    if (isset($_GET['notice']) && $_GET['notice'] === 'otp_expired') {
-                    ?>
-                        <div class="alert alert-warning">
-                            <p class="mb-0">Your verification session expired. Please log in again to receive a new code.</p>
-                        </div>
-                    <?php } ?>
-                    <?php
-                    if (isset($_GET['notice']) && $_GET['notice'] === 'registration_complete') {
-                    ?>
-                        <div class="alert alert-success">
-                            <p class="mb-0">Your email is verified and your registration is complete. Your account is now awaiting approval — you'll get an email once it's activated.</p>
-                        </div>
-                    <?php } ?>
-                    <?php
-                    if (isset($login) && $login->errors) {
-                    ?>
-                        <div class="alert alert-danger" id="success-alert" role="alert">
-                            <p class="mb-0"><span class="icon-minus-sign"></span>
-                                <i class="close icon-remove-circle"></i>
-                                <span>Error!</span>
-                                <?php
-                                foreach ($login->errors as $error) {
-                                    echo cdp_authFrameEsc($error) . ' ';
-                                }
-                                ?>
-                            </p>
-                        </div>
-                    <?php } ?>
-                </div>
-
-                <div id="loader" style="display:none"></div>
-
-                <form class="login-form mt-4" method="post" name="login_form" id="login-form">
-                    <input type="hidden" name="<?php echo cdp_csrf_param(); ?>" value="<?php echo cdp_csrf_token(); ?>">
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="mb-3">
-                                <label for="username" class="form-label"><?php echo 'Swift ' . $lang['left115'] . ' / Email' ?> <span class="text-danger" aria-hidden="true">*</span></label>
-                                <div class="form-icon position-relative">
-                                    <i data-feather="mail" class="fea icon-sm icons"></i>
-                                    <input type="text" class="form-control ps-5" placeholder="<?php echo $lang['left116'] . ' / Email' ?>" name="username" id="username" required="" autocomplete="username" autocapitalize="none" spellcheck="false" value="<?php echo cdp_authFrameEsc($submittedUsername); ?>">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-12">
-                            <div class="mb-3">
-                                <label for="password" class="form-label"><?php echo $lang['left117'] ?> <span class="text-danger" aria-hidden="true">*</span></label>
-                                <div class="form-icon position-relative">
-                                    <i data-feather="shield" class="fea icon-sm icons"></i>
-                                    <input type="password" class="form-control ps-5" placeholder="<?php echo $lang['left118'] ?>" name="password" id="password" required="" autocomplete="current-password">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-12">
-                            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
-                                <div class="form-check mb-0">
-                                    <input class="form-check-input" type="checkbox" name="remember_me" value="1" id="flexCheckDefault"<?php echo !empty($_POST['remember_me']) ? ' checked' : ''; ?>>
-                                    <label class="form-check-label" for="flexCheckDefault"><?php echo $lang['left120'] ?></label>
-                                </div>
-                                <p class="forgot-pass mb-0"><a href="forgot-password.php" class="text-dark fw-bold"><?php echo $lang['left119'] ?></a></p>
-                            </div>
-                        </div>
-
-                        <div class="col-12 mt-2">
-                            <div class="d-grid">
-                                <button class="btn btn-grad"><i data-feather="chevrons-right" class="icons"></i><?php echo $lang['left121'] ?></button>
-                                <input name="login" type="hidden" value="1" />
-                            </div>
-                        </div>
-
-                        <div class="col-12">
-                            <div class="auth-divider">or</div>
-                            <div class="auth-footer-links">
-                                <a href="tracking.php" class="btn btn-swl-outline"><i data-feather="send" class="icons"></i>Track a Parcel</a>
-                                <a href="sign-up.php" class="btn btn-swl-outline"><i data-feather="plus" class="icons"></i>Register</a>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-    <?php cdp_authFrameClose($core); ?>
-
-        <!-- javascript -->
-        <script src="assets/custom_dependencies/jquery-3.6.0.min.js"></script>
-        <script src="<?= cdp_asset('assets/css_main_swiftlane/js/bootstrap.bundle.min.js') ?>"></script>
-        <!-- Icons -->
-        <script src="<?= cdp_asset('assets/css_main_swiftlane/js/feather.min.js') ?>"></script>
-        <!-- Main Js -->
-        <script src="<?= cdp_asset('assets/css_main_swiftlane/js/plugins.init.js') ?>"></script>
-        <!--Note: All init js like tiny slider, counter, countdown, maintenance, lightbox, gallery, swiper slider, aos animation etc.-->
-        <script src="<?= cdp_asset('assets/css_main_swiftlane/js/app.js') ?>"></script>
-        <!--Note: All important javascript like page loader, menu, sticky menu, menu-toggler, one page menu etc. -->
-
-    </body>
-</html>
+<?php
+// ── Swift Lane design: Login board (views/sl/pages/Login.php) ────────────────
+require_once 'helpers/sl_view.php';
+require_once 'helpers/sl_auth.php';
+$user = $login;
+$errors = [];
+if ($authFormError !== '') {
+    $errors[] = $authFormError;
+}
+foreach ((array) $login->errors as $e) {
+    $errors[] = (string) $e;
+}
+$notice = '';
+switch ((string) ($_GET['notice'] ?? '')) {
+    case 'otp_expired':
+        $notice = 'Your verification session expired. Please log in again to receive a new code.';
+        break;
+    case 'registration_complete':
+        $notice = 'Your email is verified and your registration is complete. Your account is now awaiting approval — you will get an email once it is activated.';
+        break;
+    case 'password_updated':
+        $notice = 'Your password was updated. Log in with the new one.';
+        break;
+    case 'logged_out':
+        $notice = 'You have been signed out.';
+        break;
+}
+$pics = sl_loginPicturesHtml('login', 'lg');
+sl_render('Login', ['title' => 'Log in', 'board' => 'Login', 'plain' => true, 'scripts' => ['dataJs/sl/auth.js']], [
+    'errors' => $errors,
+    'notice' => $notice,
+    'username' => $submittedUsername,
+    'remember' => !empty($_POST['remember_me']),
+    'otp' => cdp_otpEnabled(),
+    'pics' => $pics,
+    'heading' => $pics['texts'][0] ?? 'Welcome back',
+    'button' => $pics['texts'][1] ?? 'Log in',
+    'site' => $core->site_name ?? 'Swift Lane',
+    'next' => preg_match('#^[a-z0-9_./?=&%-]+$#i', (string) ($_GET['next'] ?? '')) && strpos((string) $_GET['next'], '//') === false ? (string) $_GET['next'] : '',
+]);

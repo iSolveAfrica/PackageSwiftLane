@@ -1,48 +1,19 @@
 <?php
-// *************************************************************************
-// *                                                                       *
-// * Swiftlane - Integrated Web Shipping System                            *
-// * Copyright (c) iSolveAfrica Ltd. All rights reserved.                  *
-// *                                                                       *
-// *************************************************************************
-// *                                                                       *
-// * This software and its source code are proprietary and confidential    *
-// * property of iSolveAfrica Ltd. and were developed specifically for     *
-// * Swiftlane.                                                            *
-// *                                                                       *
-// * The software may not be copied, reproduced, modified, distributed,    *
-// * sublicensed, published, or used in whole or in part except as         *
-// * expressly permitted under the applicable license or written           *
-// * agreement with iSolveAfrica Ltd. Any permitted copies or derivative   *
-// * works must retain this copyright notice and all applicable            *
-// * proprietary notices.                                                  *
-// *                                                                       *
-// *************************************************************************
-
-
-
-    require_once("loader.php");
-
-    $user = new User();
-    $core = new Core();
-    // ... ask if we are logged in here:
-    if ($user->cdp_loginCheck() == true) 
-    {
-
-        $permissions = $user->cdp_getUserPermissions();
-
-        if (!$user->cdp_hasPermission('view_user_list')) {
-            header("location: error403.php");
-            exit;
-        }
-
-       
-      include('views/tools/users/users_list.php');     
-           
-
-    } else{
-        
-        header("location: login.php");
-        exit;       
-    }
-?>
+// Staff & Roles (Swift Lane UI): staff list, roles, access changes.
+require_once 'loader.php';
+$user = new User();
+$core = new Core();
+require_once 'helpers/sl_view.php';
+sl_gate(['view_user_list', 'view_role_assignment']);
+require_once 'views/sl/data/staff.php';
+if (($_GET['export'] ?? '') === 'csv') {
+    $d = sl_staffRolesData($user, $core);
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="staff-' . date('Ymd') . '.csv"');
+    $out = fopen('php://output', 'w');
+    fputcsv($out, ['Name', 'Email', 'Role', 'Branch', 'Last active', 'Status']);
+    foreach ($d['rows'] as $r) fputcsv($out, [$r['name'], $r['mail'], $r['role'], $r['branch'], $r['seen'], $r['st']]);
+    fclose($out);
+    exit;
+}
+sl_render('StaffRoles', ['id' => 'staff', 'title' => 'Staff & Roles', 'board' => 'StaffRoles', 'primary' => ($user->cdp_hasPermission('add_user') ? ['href' => sl_route('InviteStaff'), 'label' => 'Invite staff'] : null)], sl_staffRolesData($user, $core));

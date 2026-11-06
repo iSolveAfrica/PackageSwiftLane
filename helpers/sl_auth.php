@@ -308,3 +308,37 @@ function sl_storeImage(array $file, string $subdir, string $prefix, int $maxByte
     }
     return ['ok' => true, 'path' => 'assets/uploads/' . trim($subdir, '/') . '/' . $name, 'w' => $info[0], 'h' => $info[1]];
 }
+
+/**
+ * Background pictures + captions markup for an auth page.
+ * $variant 'lg' = Login board (.lg-bg/.lg-cap), 'fs' = the split boards (.fs-bg/.fs-cap).
+ * Returns ['bgs' => html, 'caps' => html, 'n' => count, 'every' => seconds, 'style' => css vars] (all pre-escaped).
+ */
+function sl_loginPicturesHtml(string $page, string $variant = 'fs'): array
+{
+    $p = sl_loginPictures($page);
+    $slides = $p['show'] ? $p['slides'] : [];
+    $n = max(1, count($slides));
+    $every = $p['interval'];
+    $bgCls = $variant === 'lg' ? 'lg-bg' : 'fs-bg';
+    $bgs = '';
+    $caps = '';
+    foreach ($slides as $i => $s) {
+        $sty = 'animation-delay:' . ($i * $every) . 's;animation-duration:' . ($n * $every) . 's;filter:blur(var(--sl-blur,8px));';
+        if ($s['url'] !== '') {
+            $sty .= 'background-image:url(' . h($s['url']) . ');';
+        }
+        $bgs .= '<div class="' . $bgCls . ' ' . h($s['cls']) . '" style="' . $sty . '"></div>';
+        $csty = 'animation-delay:' . ($i * $every) . 's;animation-duration:' . ($n * $every) . 's;';
+        if ($variant === 'lg') {
+            $caps .= '<div style="' . $csty . '"><b>' . h($s['title']) . '</b><div>' . h($s['sub']) . '</div></div>';
+        } else {
+            $caps .= '<div style="' . $csty . '"><span class="fs-ic"><i class="ic i-image" aria-hidden="true"></i></span><span class="up" style="color:rgba(255,255,255,.7)">' . h($s['title']) . '</span><h2>' . h($s['sub']) . '</h2></div>';
+        }
+    }
+    $dots = '';
+    for ($i = 0; $i < count($slides); $i++) {
+        $dots .= '<i class="' . ($i === 0 ? 'on' : '') . '" style="animation-duration:' . ($n * $every) . 's"></i>';
+    }
+    return ['bgs' => $bgs, 'caps' => $caps, 'dots' => $dots, 'n' => count($slides), 'every' => $every, 'style' => $p['style'], 'captions' => $p['captions'] && $slides, 'texts' => $p['texts']];
+}

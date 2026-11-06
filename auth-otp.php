@@ -4,6 +4,7 @@ require_once("helpers/querys.php");
 require_once("lib/OtpService.php");
 require_once("helpers/activity_log.php");
 require_once("helpers/otp_settings.php");
+require_once("helpers/csrf.php");
 
 $user = new User();
 $core = new Core();
@@ -81,7 +82,9 @@ function cdp_cleanupTempDir($tempDir) {
     rmdir($tempDir);
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !cdp_csrf_validate_request()) {
+    $error = 'Your session expired. Reload the page and try again.';
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // ── Resend ────────────────────────────────────────────────────────────────
     if (isset($_POST['resend'])) {
@@ -192,6 +195,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $otpSuccess  = true;
                 $otpRedirect = 'index.php';
+                require_once 'helpers/sl_auth.php';
+                $slAge = sl_passwordAge(sl_row('SELECT password_changed_at, created FROM cdb_users WHERE id = :id', [':id' => (int) $verify['user_id']]));
+                if ($slAge && $slAge['expired']) {
+                    $otpRedirect = 'forgot-reset.php?expired=1';
+                }
 
             // ── Sign-up flow ──────────────────────────────────────────────────
             } elseif ($flow === 'signup') {
@@ -322,315 +330,41 @@ if ($challengeId > 0) {
     }
 }
 ?>
-<?php require_once __DIR__ . '/helpers/asset.php'; ?>
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="keywords" content="Swiftlane - Integrated Web Shipping System">
-    <meta name="author" content="iSolveAfrica Ltd.">
-    <meta name="description" content="">
-    <title>OTP Verification | <?php echo $core->site_name; ?></title>
-    <link rel="icon" type="image/png" sizes="16x16" href="assets/<?php echo $core->favicon ?>">
-
-    <!-- Bootstrap -->
-    <link href="<?= cdp_asset('assets/css_main_swiftlane/css/bootstrap.min.css') ?>" rel="stylesheet" type="text/css" />
-    <!-- Icons -->
-    <link href="<?= cdp_asset('assets/css_main_swiftlane/css/materialdesignicons.min.css') ?>" rel="stylesheet" type="text/css" />
-    <!-- Main Css -->
-    <link href="<?= cdp_asset('assets/css_main_swiftlane/css/style.css') ?>" rel="stylesheet" type="text/css" id="theme-opt" />
-    <link href="<?= cdp_asset('assets/css_main_swiftlane/css/colors/default.css') ?>" rel="stylesheet" id="color-opt">
-    <?php $cdpAuthPhoto = 'otp'; include 'views/inc/auth_head.php'; ?>
-    <link rel="stylesheet" href="assets/template/assets/libs/sweetalert2/sweetalert2.min.css">
-    <style>
-        /* Keep all OTP boxes on a single row, even on small phones. */
-        #otp_boxes {
-            flex-wrap: nowrap;
-        }
-        .otp-box {
-            width: 48px;
-            height: 56px;
-            padding: 0;
-            border-radius: 8px;
-            border: 2px solid #dee2e6;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        /* On narrow viewports the fixed-width boxes would overflow/wrap, so let
-           them shrink equally to share the row instead of breaking to a new line. */
-        @media (max-width: 480px) {
-            #otp_boxes {
-                gap: 6px !important;
-            }
-            .otp-box {
-                flex: 1 1 0;
-                width: auto;
-                min-width: 0;
-                height: 52px;
-                font-size: 1.1rem !important;
-            }
-        }
-        .otp-box:focus {
-            border-color: #336aea;
-            box-shadow: 0 0 0 3px rgba(51, 106, 234, 0.15);
-            outline: none;
-        }
-        .otp-box.filled {
-            border-color: #336aea;
-        }
-        #resend-timer {
-            font-size: 0.82rem;
-            color: #6c757d;
-            margin-top: 6px;
-        }
-        #resendBtn:disabled {
-            opacity: 0.45;
-            cursor: not-allowed;
-            pointer-events: none;
-        }
-    </style>
-</head>
-
-<body class="auth-page">
-
-    <div id="preloader">
-        <div id="status">
-            <div class="spinner">
-                <div class="double-bounce1"></div>
-                <div class="double-bounce2"></div>
-            </div>
-        </div>
-    </div>
-
-    <?php cdp_authFrameOpen($core, [
-        'photo' => 'otp',
-        'badge' => 'Secure Verification',
-        'title' => 'Confirm the session, then continue.',
-        'links' => [['href' => 'login.php', 'label' => 'Back to Sign In', 'icon' => 'arrow-left']],
-    ]); ?>
-
-        <div class="auth-card auth-card--compact card login-page border-0">
-            <div class="auth-card__top text-center">
-                <a class="logo" href="index.php">
-                    <?php echo ($core->logo_web)
-                        ? '<img src="assets/' . $core->logo_web . '" alt="' . $core->site_name . '" width="' . $core->thumb_web . '" height="' . $core->thumb_hweb . '"/>'
-                        : $core->site_name; ?>
-                </a>
-            </div>
-
-            <div class="card-body">
-                <div class="text-center">
-                    <h1 class="auth-heading mb-2">OTP Verification</h1>
-                    <p class="auth-subtitle" id="otp-help">Enter the six-digit code sent to your email or WhatsApp. You can paste the complete code.</p>
-                </div>
-
-                <div id="msgholder2" class="mt-4" aria-live="polite" aria-atomic="true">
-                    <?php if ($message): ?>
-                        <div class="alert alert-success">
-                            <p class="mb-0"><?php echo cdp_authFrameEsc($message); ?></p>
-                        </div>
-                    <?php endif; ?>
-                    <?php if ($error): ?>
-                        <div class="alert alert-danger">
-                            <p class="mb-0">
-                                <span class="icon-minus-sign"></span>
-                                <i class="close icon-remove-circle"></i>
-                                <span>Error!</span> <?php echo cdp_authFrameEsc($error); ?>
-                            </p>
-                        </div>
-                    <?php endif; ?>
-                </div>
-
-                <div id="loader" style="display:none"></div>
-
-                <form class="login-form mt-4" method="post" id="otp-form">
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="mb-3">
-                                <div class="d-flex justify-content-center gap-2 flex-nowrap" id="otp_boxes" role="group" aria-label="Verification code" aria-describedby="otp-help">
-                                    <input type="text" maxlength="1" class="otp-box form-control fw-bold fs-4" inputmode="numeric" pattern="[0-9]" autocomplete="one-time-code" aria-label="Digit 1 of 6">
-                                    <input type="text" maxlength="1" class="otp-box form-control fw-bold fs-4" inputmode="numeric" pattern="[0-9]" autocomplete="one-time-code" aria-label="Digit 2 of 6">
-                                    <input type="text" maxlength="1" class="otp-box form-control fw-bold fs-4" inputmode="numeric" pattern="[0-9]" autocomplete="one-time-code" aria-label="Digit 3 of 6">
-                                    <input type="text" maxlength="1" class="otp-box form-control fw-bold fs-4" inputmode="numeric" pattern="[0-9]" autocomplete="one-time-code" aria-label="Digit 4 of 6">
-                                    <input type="text" maxlength="1" class="otp-box form-control fw-bold fs-4" inputmode="numeric" pattern="[0-9]" autocomplete="one-time-code" aria-label="Digit 5 of 6">
-                                    <input type="text" maxlength="1" class="otp-box form-control fw-bold fs-4" inputmode="numeric" pattern="[0-9]" autocomplete="one-time-code" aria-label="Digit 6 of 6">
-                                </div>
-                                <input type="hidden" name="otp_code" id="otp_code_hidden">
-                            </div>
-                        </div>
-
-                        <div class="col-12 mt-2">
-                            <div class="d-grid">
-                                <button type="submit" class="btn btn-grad">Verify</button>
-                            </div>
-                        </div>
-
-                        <div class="col-12 text-center">
-                            <p class="mb-0 mt-3">
-                                <button type="submit" name="resend" value="1"
-                                    class="btn btn-link p-0 text-dark fw-bold align-baseline"
-                                    id="resendBtn" disabled>
-                                    Resend code
-                                </button>
-                            </p>
-                            <p id="resend-timer" style="display:none;">
-                                You can request a new code in <strong id="timer-countdown"></strong>
-                            </p>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-    <?php cdp_authFrameClose($core); ?>
-
-    <script src="assets/custom_dependencies/jquery-3.6.0.min.js"></script>
-    <script src="<?= cdp_asset('assets/css_main_swiftlane/js/bootstrap.bundle.min.js') ?>"></script>
-    <script src="<?= cdp_asset('assets/css_main_swiftlane/js/feather.min.js') ?>"></script>
-    <script src="<?= cdp_asset('assets/css_main_swiftlane/js/plugins.init.js') ?>"></script>
-    <script src="<?= cdp_asset('assets/css_main_swiftlane/js/app.js') ?>"></script>
-    <script src="assets/template/assets/libs/sweetalert2/sweetalert2.min.js"></script>
-
-    <script>
-    (function () {
-        function initOtpBoxes(containerId, hiddenId) {
-            var $boxes  = $('#' + containerId + ' .otp-box');
-            var $hidden = $('#' + hiddenId);
-
-            function syncHidden() {
-                $hidden.val(
-                    $boxes.map(function () { return $(this).val(); }).get().join('')
-                );
-            }
-
-            $boxes.on('keydown', function (e) {
-                var $this = $(this);
-                var idx   = $boxes.index($this);
-
-                if (e.key === 'Backspace') {
-                    if ($this.val() !== '') {
-                        $this.val('').removeClass('filled');
-                    } else if (idx > 0) {
-                        $boxes.eq(idx - 1).val('').removeClass('filled').focus();
-                    }
-                    syncHidden();
-                    e.preventDefault();
-                    return;
-                }
-                if (e.key === 'ArrowLeft'  && idx > 0)                { $boxes.eq(idx - 1).focus(); }
-                if (e.key === 'ArrowRight' && idx < $boxes.length - 1){ $boxes.eq(idx + 1).focus(); }
-            });
-
-            $boxes.on('input', function () {
-                var $this = $(this);
-                var val   = $this.val().replace(/\D/g, '').slice(-1);
-                $this.val(val);
-                val ? $this.addClass('filled') : $this.removeClass('filled');
-                syncHidden();
-                if (val && $boxes.index($this) < $boxes.length - 1) {
-                    $boxes.eq($boxes.index($this) + 1).focus();
-                }
-            });
-
-            $boxes.on('paste', function (e) {
-                var pasted = (e.originalEvent.clipboardData || window.clipboardData)
-                    .getData('text').replace(/\D/g, '').slice(0, 6);
-                if (!pasted) return;
-                e.preventDefault();
-                $boxes.each(function (i) {
-                    var ch = pasted[i] || '';
-                    $(this).val(ch);
-                    ch ? $(this).addClass('filled') : $(this).removeClass('filled');
-                });
-                syncHidden();
-                var $nextEmpty = $boxes.filter(function () { return !$(this).val(); }).first();
-                ($nextEmpty.length ? $nextEmpty : $boxes.last()).focus();
-            });
-        }
-
-        if ($('#force_otp_boxes').length) {
-            initOtpBoxes('force_otp_boxes', 'force_phone_otp_code');
-            $('#userUpdatePhoneOtp').on('show.bs.modal', function () {
-                $('#force_otp_boxes .otp-box').val('').removeClass('filled');
-                $('#force_phone_otp_code').val('');
-                setTimeout(function () { $('#force_otp_boxes .otp-box').first().focus(); }, 300);
-            });
-        }
-
-        if ($('#otp_boxes').length) {
-            initOtpBoxes('otp_boxes', 'otp_code_hidden');
-
-            $('#otp-form').on('submit', function () {
-                var val = $('#otp_boxes .otp-box').map(function () { return $(this).val(); }).get().join('');
-                $('#otp_code_hidden').val(val);
-            });
-
-            setTimeout(function () { $('#otp_boxes .otp-box').first().focus(); }, 100);
-        }
-
-        // ── Resend cooldown timer ─────────────────────────────────────────────
-        // The server tells us when the active challenge was created (Unix seconds).
-        // From that we derive the exact moment the 1-minute cooldown expires and
-        // count down to it — so the timer survives page reloads perfectly.
-        var COOLDOWN_SEC     = 60; // must match createChallenge() rate-limit window
-        var challengeCreated = <?php echo (int) $challengeCreatedAt; ?>; // 0 if none
-
-        var $resendBtn   = $('#resendBtn');
-        var $timerWrap   = $('#resend-timer');
-        var $countdown   = $('#timer-countdown');
-        var _interval    = null;
-
-        function pad(n) { return n < 10 ? '0' + n : '' + n; }
-
-        function startCountdown(endTimeSec) {
-            clearInterval(_interval);
-            $resendBtn.prop('disabled', true);
-            $timerWrap.show();
-
-            _interval = setInterval(function () {
-                var remaining = endTimeSec - Math.floor(Date.now() / 1000);
-
-                if (remaining <= 0) {
-                    clearInterval(_interval);
-                    $resendBtn.prop('disabled', false);
-                    $timerWrap.hide();
-                    return;
-                }
-
-                var m = Math.floor(remaining / 60);
-                var s = remaining % 60;
-                $countdown.text(m + ':' + pad(s));
-            }, 500);
-
-            // Tick immediately so there is no 500 ms blank flash
-            var r = endTimeSec - Math.floor(Date.now() / 1000);
-            if (r > 0) {
-                $countdown.text(Math.floor(r / 60) + ':' + pad(r % 60));
-            }
-        }
-
-        if (challengeCreated > 0) {
-            var endTimeSec = challengeCreated + COOLDOWN_SEC;
-            var nowSec     = Math.floor(Date.now() / 1000);
-
-            if (endTimeSec > nowSec) {
-                // Cooldown still running — resume from the real remaining time
-                startCountdown(endTimeSec);
-            } else {
-                // Cooldown already expired — button is immediately available
-                $resendBtn.prop('disabled', false);
-                $timerWrap.hide();
-            }
-        } else {
-            // No active challenge (page arrived without one) — button stays disabled
-            // until a challenge exists; nothing to count down to
-            $resendBtn.prop('disabled', true);
-            $timerWrap.hide();
-        }
-
-    })();
-    </script>
-
-</body>
-</html>
+<?php
+// ── Swift Lane design: LoginOtp board (login / sign-up code) or ForgotPassword board step 2 (reset code) ──
+require_once 'helpers/sl_view.php';
+require_once 'helpers/sl_auth.php';
+$otpUser = null;
+$otpUid = 0;
+if ($flow === 'login' && !empty($_SESSION['otp_login_user_id'])) {
+    $otpUid = (int) $_SESSION['otp_login_user_id'];
+} elseif ($flow === 'forgot' && !empty($_SESSION['otp_forgot_user_id'])) {
+    $otpUid = (int) $_SESSION['otp_forgot_user_id'];
+} elseif ($flow === 'signup' && !empty($_SESSION['signup_user_id'])) {
+    $otpUid = (int) $_SESSION['signup_user_id'];
+} elseif ($challengeId > 0) {
+    $otpUid = (int) sl_scalar('SELECT user_id FROM cdb_auth_otp_challenges WHERE id = :id', [':id' => $challengeId]);
+}
+if ($otpUid > 0) {
+    $otpUser = sl_row('SELECT id, email, phone, fname, lname, created' . (sl_columnExists('cdb_users', 'password_changed_at') ? ', password_changed_at' : '') . ' FROM cdb_users WHERE id = :id', [':id' => $otpUid]);
+}
+$pics = sl_loginPicturesHtml($flow === 'forgot' ? 'forgot' : 'otp', 'fs');
+$d = [
+    'flow' => $flow,
+    'step' => 2,
+    'message' => $message,
+    'error' => $error,
+    'email' => sl_maskEmail((string) ($otpUser->email ?? '')),
+    'phone' => sl_maskPhone((string) ($otpUser->phone ?? '')),
+    'hasPhone' => !empty($otpUser->phone) && !empty($core->active_whatsapp),
+    'countdownEnd' => $challengeCreatedAt > 0 ? $challengeCreatedAt + 60 : 0,
+    'canResend' => $challengeCreatedAt <= 0 || $challengeCreatedAt + 60 <= time(),
+    'remember' => !empty($_SESSION['otp_login_remember']),
+    'age' => $flow === 'login' ? sl_passwordAge($otpUser) : null,
+    'pics' => $pics,
+    'site' => $core->site_name ?? 'Swift Lane',
+    'back' => $flow === 'signup' ? sl_route('SignUp') : sl_route('Login'),
+    'backLabel' => $flow === 'signup' ? 'Back to sign up' : 'Back to log in',
+];
+$board = $flow === 'forgot' ? 'ForgotPassword' : 'LoginOtp';
+sl_render($board, ['title' => $flow === 'forgot' ? 'Verify your code' : 'Enter your login code', 'board' => $board, 'plain' => true, 'scripts' => ['dataJs/sl/auth.js']], $d);

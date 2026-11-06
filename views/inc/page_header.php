@@ -42,17 +42,12 @@ if (!function_exists('cdp_pageHeader')) {
         $icon  = trim((string) ($opt['icon'] ?? ''));
         $acts  = (string) ($opt['actions'] ?? '');
 
-        echo '<div class="page-breadcrumb">'
-           . '<div class="row">'
-           . '<div class="col-12 align-self-center">'
-           . '<h1 class="page-title">'
-           . ($icon !== '' ? '<iconify-icon icon="' . $e($icon) . '"></iconify-icon> ' : '')
-           . $e($title)
-           . ($sub !== '' ? ' <small>' . $e($sub) . '</small>' : '')
-           . '</h1>'
+        // Swift Lane design: title row (.sl-head) with optional lede and actions.
+        echo '<div class="sl-head page-breadcrumb">'
+           . '<div><h1 class="sl-title page-title">' . $e($title) . '</h1>'
+           . ($sub !== '' ? '<p class="sl-lede">' . $e($sub) . '</p>' : '')
            . '</div>'
-           . (trim($acts) !== '' ? '<div class="col-auto">' . $acts . '</div>' : '')
-           . '</div>'
+           . (trim($acts) !== '' ? '<div class="row g8 wrap sl-head-actions">' . $acts . '</div>' : '')
            . '</div>';
     }
 }

@@ -4,7 +4,7 @@
   function selected() { return Array.prototype.map.call(document.querySelectorAll('.cs-row-chk.on'), function (c) { return c.getAttribute('data-id'); }); }
   function refresh() {
     var n = selected().length, bar = document.getElementById('cs-bulk');
-    if (bar) { bar.hidden = n === 0; var cnt = bar.querySelector('[data-cs-n]'); if (cnt) cnt.textContent = n + ' selected'; }
+    if (bar) { bar.style.display = n === 0 ? 'none' : 'flex'; var cnt = bar.querySelector('[data-cs-n]'); if (cnt) cnt.textContent = n + ' selected'; }
   }
   document.addEventListener('click', function (e) {
     var c = e.target.closest('.cs-row-chk');
@@ -25,5 +25,5 @@
   });
   var f = document.getElementById('cs-filters');
   var tg = document.getElementById('cs-filter-btn');
-  if (tg && f) tg.addEventListener('click', function () { f.hidden = !f.hidden; tg.classList.toggle('on', !f.hidden); });
+  if (tg && f) tg.addEventListener('click', function () { var show = f.style.display === 'none'; f.style.display = show ? 'flex' : 'none'; tg.classList.toggle('on', show); });
 })();
