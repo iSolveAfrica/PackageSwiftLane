@@ -111,13 +111,21 @@ CREATE TABLE IF NOT EXISTS cdb_rider_settlements (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Rider profile columns on cdb_users ------------------------------------------
-SET @has_col := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_users' AND COLUMN_NAME = 'vehicle_type');
-SET @sql := IF(@has_col = 0, 'ALTER TABLE cdb_users ADD COLUMN vehicle_type VARCHAR(20) NULL, ADD COLUMN zone VARCHAR(80) NULL, ADD COLUMN rider_status VARCHAR(12) NULL', 'SELECT 1');
-PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_users' AND COLUMN_NAME = 'vehicle_type');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_users ADD COLUMN vehicle_type VARCHAR(20) NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_users' AND COLUMN_NAME = 'zone');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_users ADD COLUMN zone VARCHAR(80) NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_users' AND COLUMN_NAME = 'rider_status');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_users ADD COLUMN rider_status VARCHAR(12) NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
 -- Proof of delivery on orders (DriverApp) -------------------------------------
-SET @has_col := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_add_order' AND COLUMN_NAME = 'pod_photo');
-SET @sql := IF(@has_col = 0, 'ALTER TABLE cdb_add_order ADD COLUMN pod_photo VARCHAR(350) NULL, ADD COLUMN pod_receiver VARCHAR(150) NULL, ADD COLUMN pod_at DATETIME NULL, ADD COLUMN assigned_at DATETIME NULL', 'SELECT 1');
-PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_add_order' AND COLUMN_NAME = 'pod_photo');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_add_order ADD COLUMN pod_photo VARCHAR(350) NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_add_order' AND COLUMN_NAME = 'pod_receiver');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_add_order ADD COLUMN pod_receiver VARCHAR(150) NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_add_order' AND COLUMN_NAME = 'pod_at');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_add_order ADD COLUMN pod_at DATETIME NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_add_order' AND COLUMN_NAME = 'assigned_at');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_add_order ADD COLUMN assigned_at DATETIME NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
 
 -- Default fee rules ------------------------------------------------------------
 INSERT INTO cdb_rider_fee_rules (rule_key, label, rule_type, amount, rider_pct, active, sort_order, created_at)

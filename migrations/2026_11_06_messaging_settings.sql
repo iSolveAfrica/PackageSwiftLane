@@ -136,9 +136,18 @@ CREATE TABLE IF NOT EXISTS cdb_virtual_mailbox_addresses (
     default_address  TINYINT(1) NOT NULL DEFAULT 0,
     PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-SET @has_col := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_virtual_mailbox_addresses' AND COLUMN_NAME = 'label');
-SET @sql := IF(@has_col = 0, 'ALTER TABLE cdb_virtual_mailbox_addresses ADD COLUMN label VARCHAR(120) NULL, ADD COLUMN shipping_mode VARCHAR(10) NOT NULL DEFAULT ''air'', ADD COLUMN transit_days VARCHAR(40) NULL, ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1, ADD COLUMN sort_order INT NOT NULL DEFAULT 0, ADD COLUMN updated_at DATETIME NULL', 'SELECT 1');
-PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_virtual_mailbox_addresses' AND COLUMN_NAME = 'label');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_virtual_mailbox_addresses ADD COLUMN label VARCHAR(120) NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_virtual_mailbox_addresses' AND COLUMN_NAME = 'shipping_mode');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_virtual_mailbox_addresses ADD COLUMN shipping_mode VARCHAR(10) NOT NULL DEFAULT ''air''', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_virtual_mailbox_addresses' AND COLUMN_NAME = 'transit_days');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_virtual_mailbox_addresses ADD COLUMN transit_days VARCHAR(40) NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_virtual_mailbox_addresses' AND COLUMN_NAME = 'is_active');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_virtual_mailbox_addresses ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_virtual_mailbox_addresses' AND COLUMN_NAME = 'sort_order');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_virtual_mailbox_addresses ADD COLUMN sort_order INT NOT NULL DEFAULT 0', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_virtual_mailbox_addresses' AND COLUMN_NAME = 'updated_at');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_virtual_mailbox_addresses ADD COLUMN updated_at DATETIME NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
 
 -- Permissions -----------------------------------------------------------------
 SET @mod := (SELECT id FROM cdb_user_module_permissions WHERE module_name = 'CONFIGURACION_GENERAL' LIMIT 1);

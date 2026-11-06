@@ -49,6 +49,10 @@ php scripts/create_admin.php --username=admin --email=you@example.com --name="Yo
 
 ## Rerun behaviour
 
+Every column and every index has its own guard (one `ALTER TABLE` per item), so a database that already has some of the new columns or indexes skips exactly those and adds the rest.
+
+**If an earlier copy of this file stopped with `1061 Duplicate key name` or `1060 Duplicate column name`:** nothing needs to be undone. Run the current `upgrade_existing_database.sql` again; it completes the upgrade. (The earlier copy grouped several columns or indexes per statement, and MySQL rejects the whole statement when one of them already exists.)
+
 Every migration statement is guarded (`CREATE TABLE IF NOT EXISTS`, information_schema checks before `ALTER TABLE ADD COLUMN`, `WHERE NOT EXISTS` before seed inserts). Running `upgrade_existing_database.sql` twice is safe; it was tested twice on the vendor baseline and on an empty database.
 
 If a step fails (for example a privilege problem), fix the cause and run the whole file again: completed steps are skipped.

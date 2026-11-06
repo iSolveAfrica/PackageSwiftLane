@@ -29,21 +29,41 @@ SET @sql := IF(@c = 0, 'ALTER TABLE cdb_add_order ADD COLUMN is_dangerous_good T
 SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_add_order' AND COLUMN_NAME = 'discount_type');
 SET @sql := IF(@c = 0, 'ALTER TABLE cdb_add_order ADD COLUMN discount_type VARCHAR(20) NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
 SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_add_order' AND COLUMN_NAME = 'fs_cleared_for_delivery');
-SET @sql := IF(@c = 0, 'ALTER TABLE cdb_add_order ADD COLUMN fs_cleared_for_delivery TINYINT(1) NOT NULL DEFAULT 0, ADD COLUMN fs_cleared_at DATETIME NULL, ADD COLUMN fs_cleared_by INT NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_add_order ADD COLUMN fs_cleared_for_delivery TINYINT(1) NOT NULL DEFAULT 0', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_add_order' AND COLUMN_NAME = 'fs_cleared_at');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_add_order ADD COLUMN fs_cleared_at DATETIME NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_add_order' AND COLUMN_NAME = 'fs_cleared_by');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_add_order ADD COLUMN fs_cleared_by INT NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
 SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_add_order' AND COLUMN_NAME = 'tracking_purchase');
-SET @sql := IF(@c = 0, 'ALTER TABLE cdb_add_order ADD COLUMN tracking_purchase VARCHAR(300) NULL, ADD COLUMN provider_purchase VARCHAR(300) NULL, ADD COLUMN price_purchase DECIMAL(12,2) NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_add_order ADD COLUMN tracking_purchase VARCHAR(300) NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_add_order' AND COLUMN_NAME = 'provider_purchase');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_add_order ADD COLUMN provider_purchase VARCHAR(300) NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_add_order' AND COLUMN_NAME = 'price_purchase');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_add_order ADD COLUMN price_purchase DECIMAL(12,2) NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
 SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_add_order' AND COLUMN_NAME = 'estimated_eta');
 SET @sql := IF(@c = 0, 'ALTER TABLE cdb_add_order ADD COLUMN estimated_eta DATE NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
 SET @c := (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_add_order' AND INDEX_NAME = 'idx_order_sender_status');
-SET @sql := IF(@c = 0, 'ALTER TABLE cdb_add_order ADD KEY idx_order_sender_status (sender_id, status_courier, is_deleted), ADD KEY idx_order_date (order_date), ADD KEY idx_order_status (status_courier, is_deleted), ADD KEY idx_order_driver (driver_id)', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_add_order ADD KEY idx_order_sender_status (sender_id, status_courier, is_deleted)', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_add_order' AND INDEX_NAME = 'idx_order_date');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_add_order ADD KEY idx_order_date (order_date)', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_add_order' AND INDEX_NAME = 'idx_order_status');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_add_order ADD KEY idx_order_status (status_courier, is_deleted)', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_add_order' AND INDEX_NAME = 'idx_order_driver');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_add_order ADD KEY idx_order_driver (driver_id)', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
 
 -- cdb_add_order_item
 SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_add_order_item' AND COLUMN_NAME = 'custom_price');
-SET @sql := IF(@c = 0, 'ALTER TABLE cdb_add_order_item ADD COLUMN custom_price DECIMAL(12,2) NULL, ADD COLUMN priced_at DATETIME NULL, ADD COLUMN order_item_weight_group VARCHAR(40) NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_add_order_item ADD COLUMN custom_price DECIMAL(12,2) NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_add_order_item' AND COLUMN_NAME = 'priced_at');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_add_order_item ADD COLUMN priced_at DATETIME NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_add_order_item' AND COLUMN_NAME = 'order_item_weight_group');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_add_order_item ADD COLUMN order_item_weight_group VARCHAR(40) NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
 
 -- cdb_customers_packages
 SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_customers_packages' AND COLUMN_NAME = 'receiver_id');
-SET @sql := IF(@c = 0, 'ALTER TABLE cdb_customers_packages ADD COLUMN receiver_id INT NULL, ADD COLUMN receiver_address_id INT NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_customers_packages ADD COLUMN receiver_id INT NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_customers_packages' AND COLUMN_NAME = 'receiver_address_id');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_customers_packages ADD COLUMN receiver_address_id INT NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
 SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_customers_packages' AND COLUMN_NAME = 'recipient_type');
 SET @sql := IF(@c = 0, "ALTER TABLE cdb_customers_packages ADD COLUMN recipient_type VARCHAR(20) NOT NULL DEFAULT 'recipient'", 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
 SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_customers_packages' AND COLUMN_NAME = 'notify_whatsapp_sender');
@@ -51,7 +71,11 @@ SET @sql := IF(@c = 0, 'ALTER TABLE cdb_customers_packages ADD COLUMN notify_wha
 SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_customers_packages' AND COLUMN_NAME = 'estimated_eta');
 SET @sql := IF(@c = 0, 'ALTER TABLE cdb_customers_packages ADD COLUMN estimated_eta DATE NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
 SET @c := (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_customers_packages' AND INDEX_NAME = 'idx_pkg_sender_status');
-SET @sql := IF(@c = 0, 'ALTER TABLE cdb_customers_packages ADD KEY idx_pkg_sender_status (sender_id, status_courier), ADD KEY idx_pkg_date (order_date), ADD KEY idx_pkg_tracking (tracking_purchase(64))', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_customers_packages ADD KEY idx_pkg_sender_status (sender_id, status_courier)', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_customers_packages' AND INDEX_NAME = 'idx_pkg_date');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_customers_packages ADD KEY idx_pkg_date (order_date)', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_customers_packages' AND INDEX_NAME = 'idx_pkg_tracking');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_customers_packages ADD KEY idx_pkg_tracking (tracking_purchase(64))', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
 
 -- cdb_consolidate / cdb_consolidate_packages
 SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_consolidate' AND COLUMN_NAME = 'awb_no');
@@ -73,15 +97,31 @@ SET @sql := IF(@c = 0, 'ALTER TABLE cdb_consolidate_packages ADD COLUMN is_conso
 
 -- cdb_courier_track
 SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_courier_track' AND COLUMN_NAME = 'flight_no');
-SET @sql := IF(@c = 0, 'ALTER TABLE cdb_courier_track ADD COLUMN flight_no VARCHAR(40) NULL, ADD COLUMN awb_no VARCHAR(40) NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_courier_track ADD COLUMN flight_no VARCHAR(40) NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_courier_track' AND COLUMN_NAME = 'awb_no');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_courier_track ADD COLUMN awb_no VARCHAR(40) NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
 SET @c := (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_courier_track' AND INDEX_NAME = 'idx_track_order');
-SET @sql := IF(@c = 0, 'ALTER TABLE cdb_courier_track ADD KEY idx_track_order (order_id), ADD KEY idx_track_date (t_date), ADD KEY idx_track_status (status_courier, t_date)', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_courier_track ADD KEY idx_track_order (order_id)', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_courier_track' AND INDEX_NAME = 'idx_track_date');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_courier_track ADD KEY idx_track_date (t_date)', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_courier_track' AND INDEX_NAME = 'idx_track_status');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_courier_track ADD KEY idx_track_status (status_courier, t_date)', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
 
 -- cdb_user_roles: typed roles and inheritance (helpers/rbac.php)
 SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_user_roles' AND COLUMN_NAME = 'parent_role_id');
 SET @sql := IF(@c = 0, 'ALTER TABLE cdb_user_roles ADD COLUMN parent_role_id INT NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
 SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_user_roles' AND COLUMN_NAME = 'is_superadmin');
-SET @sql := IF(@c = 0, 'ALTER TABLE cdb_user_roles ADD COLUMN is_superadmin TINYINT(1) NOT NULL DEFAULT 0, ADD COLUMN is_admin TINYINT(1) NOT NULL DEFAULT 0, ADD COLUMN is_staff TINYINT(1) NOT NULL DEFAULT 0, ADD COLUMN is_driver TINYINT(1) NOT NULL DEFAULT 0, ADD COLUMN is_client TINYINT(1) NOT NULL DEFAULT 0, ADD COLUMN is_agency TINYINT(1) NOT NULL DEFAULT 0', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_user_roles ADD COLUMN is_superadmin TINYINT(1) NOT NULL DEFAULT 0', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_user_roles' AND COLUMN_NAME = 'is_admin');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_user_roles ADD COLUMN is_admin TINYINT(1) NOT NULL DEFAULT 0', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_user_roles' AND COLUMN_NAME = 'is_staff');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_user_roles ADD COLUMN is_staff TINYINT(1) NOT NULL DEFAULT 0', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_user_roles' AND COLUMN_NAME = 'is_driver');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_user_roles ADD COLUMN is_driver TINYINT(1) NOT NULL DEFAULT 0', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_user_roles' AND COLUMN_NAME = 'is_client');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_user_roles ADD COLUMN is_client TINYINT(1) NOT NULL DEFAULT 0', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_user_roles' AND COLUMN_NAME = 'is_agency');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_user_roles ADD COLUMN is_agency TINYINT(1) NOT NULL DEFAULT 0', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
 SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_user_roles' AND COLUMN_NAME = 'dashboard_type');
 SET @sql := IF(@c = 0, "ALTER TABLE cdb_user_roles ADD COLUMN dashboard_type VARCHAR(12) NOT NULL DEFAULT ''", 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
 UPDATE cdb_user_roles SET is_superadmin = 1, is_admin = 1, is_staff = 1, dashboard_type = 'admin' WHERE role_id = 9 AND is_superadmin = 0 AND is_admin = 0 AND is_staff = 0;
@@ -159,6 +199,20 @@ CREATE TABLE IF NOT EXISTS cdb_virtual_mailbox_addresses (
     default_address  TINYINT(1) NOT NULL DEFAULT 0,
     PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Older installs may have a narrower cdb_virtual_mailbox_addresses: add any missing base column.
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_virtual_mailbox_addresses' AND COLUMN_NAME = 'cdb_countries_id');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_virtual_mailbox_addresses ADD COLUMN cdb_countries_id BIGINT UNSIGNED NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_virtual_mailbox_addresses' AND COLUMN_NAME = 'country');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_virtual_mailbox_addresses ADD COLUMN country VARCHAR(190) NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_virtual_mailbox_addresses' AND COLUMN_NAME = 'city');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_virtual_mailbox_addresses ADD COLUMN city VARCHAR(190) NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_virtual_mailbox_addresses' AND COLUMN_NAME = 'postcode');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_virtual_mailbox_addresses ADD COLUMN postcode VARCHAR(40) NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_virtual_mailbox_addresses' AND COLUMN_NAME = 'address');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_virtual_mailbox_addresses ADD COLUMN address TEXT NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_virtual_mailbox_addresses' AND COLUMN_NAME = 'default_address');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_virtual_mailbox_addresses ADD COLUMN default_address TINYINT(1) NOT NULL DEFAULT 0', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
 
 CREATE TABLE IF NOT EXISTS cdb_pickup_codes (
     id           INT UNSIGNED NOT NULL AUTO_INCREMENT,

@@ -166,9 +166,12 @@ CREATE TABLE IF NOT EXISTS cdb_operating_cost_log (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Tariff rows: minimum charge and validity window shown by the rate editor -----
-SET @has_col := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_shipping_fees' AND COLUMN_NAME = 'min_charge');
-SET @sql := IF(@has_col = 0, 'ALTER TABLE cdb_shipping_fees ADD COLUMN min_charge DECIMAL(12,2) NOT NULL DEFAULT 0, ADD COLUMN valid_from DATE NULL, ADD COLUMN valid_until DATE NULL', 'SELECT 1');
-PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_shipping_fees' AND COLUMN_NAME = 'min_charge');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_shipping_fees ADD COLUMN min_charge DECIMAL(12,2) NOT NULL DEFAULT 0', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_shipping_fees' AND COLUMN_NAME = 'valid_from');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_shipping_fees ADD COLUMN valid_from DATE NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_shipping_fees' AND COLUMN_NAME = 'valid_until');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_shipping_fees ADD COLUMN valid_until DATE NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
 
 -- Settings read by the new pages (finance switch, targets) -------------------
 CREATE TABLE IF NOT EXISTS cdb_sl_settings (
