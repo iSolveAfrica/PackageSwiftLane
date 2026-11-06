@@ -190,7 +190,7 @@ if ($numrows > 0) { ?>
 								<?php echo $recipient_type == 'user' ? ($sender_data->fname ?? '') : ($receiver_data->fname ?? ''); ?> <?php echo $recipient_type == 'user' ? ($sender_data->lname ?? '') : ($receiver_data->lname ?? ''); ?>
 							</td>
 
-							<td><?php echo $recipient_type == 'user' ? $address_order->sender_country : $address_order->recipient_country; ?>-<?php echo $recipient_type == 'user' ? $address_order->sender_city : $address_order->recipient_city; ?></td>
+							<td><?php echo $recipient_type == 'user' ? ($address_order->sender_country ?? "") : ($address_order->recipient_country ?? ""); ?>-<?php echo $recipient_type == 'user' ? ($address_order->sender_city ?? "") : ($address_order->recipient_city ?? ""); ?></td>
 							<?php if ($userData->userlevel == 1) { ?>
 								<td class="text-nowrap"><?php echo ((float) $row->total_weight > 0) ? number_format((float) $row->total_weight, 2) . ' ' . htmlspecialchars((string) $core->weight_p, ENT_QUOTES, 'UTF-8') : '—'; ?></td>
 							<?php } ?>
