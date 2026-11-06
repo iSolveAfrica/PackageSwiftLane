@@ -7,10 +7,11 @@
 // * (dataJs/support_ticket.js).                                           *
 // *************************************************************************
 
+require_once __DIR__ . '/../../helpers/theme.php';
 $userData = $user->cdp_getUserData();
 $ready = cdp_csEnsureTables();
 $ticketId = (int) ($_GET['id'] ?? 0);
-$actions = '<a class="btn btn-secondary btn-sm" href="support_inbox.php"><iconify-icon icon="solar:arrow-left-linear"></iconify-icon> Inbox</a>';
+$actions = '<a class="btn btn-secondary btn-sm" href="support_inbox.php"><iconify-icon icon="solar:arrow-left-linear"></iconify-icon> Inbox</a>' . ' ' . cdp_themeToggle();
 ?>
 <!DOCTYPE html>
 <html dir="<?php echo $direction_layout; ?>" lang="en">
@@ -21,6 +22,7 @@ $actions = '<a class="btn btn-secondary btn-sm" href="support_inbox.php"><iconif
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" type="image/png" sizes="16x16" href="assets/<?php echo $core->favicon ?>">
     <title>Ticket | <?php echo $core->site_name ?></title>
+    <?php cdp_themeBoot('light'); ?>
     <?php include 'views/inc/head_scripts.php'; ?>
 </head>
 
@@ -38,26 +40,38 @@ $actions = '<a class="btn btn-secondary btn-sm" href="support_inbox.php"><iconif
                 <?php if (!$ready) : ?>
                     <div class="swl-cs-banner is-danger">The helpdesk tables could not be created.</div>
                 <?php endif; ?>
-                <div id="cs_banners"></div>
+                <div class="swl-desk-wrap">
+                <div class="swl-tk">
+                    <nav class="swl-desk-rail" aria-label="Customer Service">
+                        <a href="support_inbox.php" class="is-on" aria-label="Inbox" title="Inbox"><iconify-icon icon="solar:inbox-linear" aria-hidden="true"></iconify-icon></a>
+                        <a href="support_reports.php" aria-label="Reports" title="Reports"><iconify-icon icon="solar:chart-2-linear" aria-hidden="true"></iconify-icon></a>
+                        <a href="support_settings.php#rules" aria-label="Automation" title="Automation"><iconify-icon icon="solar:bolt-linear" aria-hidden="true"></iconify-icon></a>
+                        <span class="grow"></span>
+                        <a href="support_settings.php" aria-label="Settings" title="Settings"><iconify-icon icon="solar:settings-linear" aria-hidden="true"></iconify-icon></a>
+                    </nav>
 
-                <div class="swl-cs-ws">
-                    <section class="swl-cs-ws-main" aria-label="Conversation">
-                        <header class="swl-cs-ws-head">
-                            <div class="swl-cs-ws-title">
-                                <h3 id="cs_t_subject">Loading…</h3>
-                                <div class="swl-cs-ws-sub" id="cs_t_sub"></div>
+                    <section class="swl-tk-main" aria-label="Conversation">
+                        <header class="swl-tk-head">
+                            <div class="swl-tk-crumb">
+                                <a href="support_inbox.php"><iconify-icon icon="solar:alt-arrow-left-linear" aria-hidden="true"></iconify-icon>Inbox</a>
+                                <span aria-hidden="true">/</span><span id="cs_tk_ref">…</span>
+                                <span class="swl-cs-viewers" id="cs_viewers" aria-live="polite"></span>
                             </div>
-                            <div class="swl-cs-viewers" id="cs_viewers" aria-live="polite"></div>
-                            <div id="cs_t_actions" class="d-flex" style="gap: 6px; flex-wrap: wrap;"></div>
+                            <div class="swl-tk-titlerow">
+                                <h2 id="cs_t_subject">Loading…</h2>
+                                <div class="swl-tk-chips" id="cs_t_sub"></div>
+                                <div class="swl-tk-actions" id="cs_t_actions"></div>
+                            </div>
                         </header>
+                        <div id="cs_banners" class="swl-tk-banners"></div>
 
-                        <div class="swl-cs-timeline" id="cs_timeline" role="log" aria-live="polite" aria-label="Messages"></div>
+                        <div class="swl-cs-timeline swl-tk-timeline" id="cs_timeline" role="log" aria-live="polite" aria-label="Messages"></div>
 
                         <div class="swl-cs-composer" id="cs_composer">
                             <div class="swl-cs-comp-top">
                                 <div class="swl-cs-mode" role="tablist" aria-label="Reply or internal note">
-                                    <button type="button" class="is-on" data-mode="reply" role="tab" aria-selected="true">Reply to customer</button>
-                                    <button type="button" data-mode="note" role="tab" aria-selected="false">Internal note</button>
+                                    <button type="button" class="is-on" data-mode="reply" role="tab" aria-selected="true"><iconify-icon icon="solar:reply-linear" aria-hidden="true"></iconify-icon> Reply to customer</button>
+                                    <button type="button" data-mode="note" role="tab" aria-selected="false"><iconify-icon icon="solar:notes-linear" aria-hidden="true"></iconify-icon> Internal note</button>
                                 </div>
                                 <span class="note-warn" id="cs_note_warn" hidden>Only staff see notes. Use @name to notify a colleague.</span>
                                 <span class="ml-auto"></span>
@@ -82,23 +96,35 @@ $actions = '<a class="btn btn-secondary btn-sm" href="support_inbox.php"><iconif
                                     <option value="pending_internal">and wait on our team</option>
                                     <option value="resolved">and resolve</option>
                                 </select>
-                                <button type="button" class="btn btn-primary btn-sm" id="cs_send">Send <span class="swl-cs-small">(Ctrl+Enter)</span></button>
+                                <button type="button" class="btn btn-primary btn-sm" id="cs_send"><iconify-icon icon="solar:plain-2-linear" aria-hidden="true"></iconify-icon> Send <span class="swl-cs-small">(Ctrl+Enter)</span></button>
                             </div>
                         </div>
                     </section>
 
-                    <aside class="swl-cs-side" aria-label="Ticket details">
+                    <aside class="swl-tk-side" aria-label="Customer and actions">
+                        <div class="swl-tk-card" id="cs_tk_customer"></div>
+                        <div class="swl-tk-card is-king" id="cs_tk_summary" hidden></div>
+                        <div class="swl-tk-card">
+                            <h3>Actions on this account</h3>
+                            <div class="swl-cs-actions" id="cs_tk_actions"></div>
+                            <p class="swl-tk-note"><iconify-icon icon="solar:shield-check-linear" aria-hidden="true"></iconify-icon> Money and ownership changes need an admin's approval.</p>
+                        </div>
+                        <div class="swl-tk-card"><h3>Linked shipments</h3><div id="cs_tk_ships"></div></div>
+                        <div class="swl-tk-card"><h3>Service level</h3><div id="cs_tk_sla"></div></div>
+                        <div class="swl-tk-card swl-cs-side">
                         <div class="swl-cs-tabs" role="tablist">
-                            <button type="button" class="is-on" data-tab="details" role="tab" aria-selected="true">Details</button>
-                            <button type="button" data-tab="customer" role="tab" aria-selected="false">Customer</button>
-                            <button type="button" data-tab="ai" role="tab" aria-selected="false">AI</button>
-                            <button type="button" data-tab="history" role="tab" aria-selected="false">History</button>
+                            <button type="button" class="is-on" data-tab="details" role="tab" aria-selected="true"><iconify-icon icon="solar:document-text-linear" aria-hidden="true"></iconify-icon> Details</button>
+                            <button type="button" data-tab="customer" role="tab" aria-selected="false"><iconify-icon icon="solar:user-id-linear" aria-hidden="true"></iconify-icon> Customer</button>
+                            <button type="button" data-tab="ai" role="tab" aria-selected="false"><iconify-icon icon="solar:magic-stick-3-linear" aria-hidden="true"></iconify-icon> King &amp; AI</button>
+                            <button type="button" data-tab="history" role="tab" aria-selected="false"><iconify-icon icon="solar:history-linear" aria-hidden="true"></iconify-icon> History</button>
                         </div>
                         <div data-pane="details" id="cs_p_details"></div>
                         <div data-pane="customer" id="cs_p_customer" hidden></div>
                         <div data-pane="ai" id="cs_p_ai" hidden></div>
                         <div data-pane="history" id="cs_p_history" hidden></div>
+                        </div>
                     </aside>
+                </div>
                 </div>
             </div>
 
@@ -108,6 +134,7 @@ $actions = '<a class="btn btn-secondary btn-sm" href="support_inbox.php"><iconif
 
     <?php include 'views/support/_vocab.php'; ?>
     <script>window.CDP_CS_TICKET = <?php echo $ticketId; ?>;</script>
+    <script src="<?= cdp_asset('dataJs/swl_theme.js') ?>"></script>
     <script src="<?= cdp_asset('dataJs/support_common.js') ?>"></script>
     <script src="<?= cdp_asset('dataJs/support_ticket.js') ?>"></script>
 </body>

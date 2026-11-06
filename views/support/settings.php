@@ -8,11 +8,13 @@
 // * (dataJs/support_settings.js).                                         *
 // *************************************************************************
 
+require_once __DIR__ . '/../../helpers/theme.php';
 $userData = $user->cdp_getUserData();
 $ready = cdp_csEnsureTables();
 $isAdmin = cdp_csIsAdmin($user);
-$actions = '<a class="btn btn-secondary btn-sm" href="support_inbox.php"><iconify-icon icon="solar:inbox-linear"></iconify-icon> Inbox</a>';
+$actions = '<a class="btn btn-secondary btn-sm" href="support_inbox.php"><iconify-icon icon="solar:inbox-linear"></iconify-icon> Inbox</a>' . ' ' . cdp_themeToggle();
 $tabs = ['king' => 'King & general', 'teams' => 'Teams & routing', 'rules' => 'Automation', 'sla' => 'Service levels', 'canned' => 'Saved replies', 'kb' => 'Knowledge base', 'channels' => 'Channels & delivery'];
+$tabIcons = ['king' => 'solar:magic-stick-3-linear', 'teams' => 'solar:users-group-two-rounded-linear', 'rules' => 'solar:bolt-linear', 'sla' => 'solar:stopwatch-linear', 'canned' => 'solar:clipboard-text-linear', 'kb' => 'solar:notebook-linear', 'channels' => 'solar:global-linear'];
 ?>
 <!DOCTYPE html>
 <html dir="<?php echo $direction_layout; ?>" lang="en">
@@ -23,6 +25,7 @@ $tabs = ['king' => 'King & general', 'teams' => 'Teams & routing', 'rules' => 'A
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" type="image/png" sizes="16x16" href="assets/<?php echo $core->favicon ?>">
     <title>Customer Service settings | <?php echo $core->site_name ?></title>
+    <?php cdp_themeBoot('light'); ?>
     <?php include 'views/inc/head_scripts.php'; ?>
 </head>
 
@@ -48,7 +51,7 @@ $tabs = ['king' => 'King & general', 'teams' => 'Teams & routing', 'rules' => 'A
                     <div class="card-body">
                         <div class="swl-cs-tabs" role="tablist" id="cs_set_tabs">
                             <?php $first = true; foreach ($tabs as $k => $label) : ?>
-                                <button type="button" class="<?php echo $first ? 'is-on' : ''; ?>" data-tab="<?php echo $k; ?>" role="tab" aria-selected="<?php echo $first ? 'true' : 'false'; ?>"><?php echo htmlspecialchars($label); ?></button>
+                                <button type="button" class="<?php echo $first ? 'is-on' : ''; ?>" data-tab="<?php echo $k; ?>" role="tab" aria-selected="<?php echo $first ? 'true' : 'false'; ?>"><iconify-icon icon="<?php echo $tabIcons[$k] ?? 'solar:settings-linear'; ?>" aria-hidden="true"></iconify-icon> <?php echo htmlspecialchars($label); ?></button>
                             <?php $first = false; endforeach; ?>
                         </div>
                         <?php $first = true; foreach ($tabs as $k => $label) : ?>
@@ -70,8 +73,8 @@ $tabs = ['king' => 'King & general', 'teams' => 'Teams & routing', 'rules' => 'A
                         <div class="modal-footer">
                             <span class="swl-cs-small swl-cs-muted mr-auto">Saving keeps the previous version. Drafts never run.</span>
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                            <button type="button" class="btn btn-secondary" data-rule-save="draft">Save as draft</button>
-                            <button type="button" class="btn btn-primary" data-rule-save="published">Save and turn on</button>
+                            <button type="button" class="btn btn-secondary" data-rule-save="draft"><iconify-icon icon="solar:diskette-linear" aria-hidden="true"></iconify-icon> Save as draft</button>
+                            <button type="button" class="btn btn-primary" data-rule-save="published"><iconify-icon icon="solar:power-linear" aria-hidden="true"></iconify-icon> Save and turn on</button>
                         </div>
                     </div>
                 </div>
@@ -82,6 +85,7 @@ $tabs = ['king' => 'King & general', 'teams' => 'Teams & routing', 'rules' => 'A
     </div>
 
     <?php include 'views/support/_vocab.php'; ?>
+    <script src="<?= cdp_asset('dataJs/swl_theme.js') ?>"></script>
     <script src="<?= cdp_asset('dataJs/support_common.js') ?>"></script>
     <script src="<?= cdp_asset('dataJs/support_settings.js') ?>"></script>
 </body>

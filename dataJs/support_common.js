@@ -156,9 +156,41 @@
         priority: { low: 'Low', normal: 'Normal', high: 'High', urgent: 'Urgent' }
     };
 
+    // One icon per meaning (Solar set, the same family the rest of the app uses).
+    CS.icons = {
+        status: { 'new': 'solar:stars-minimalistic-linear', open: 'solar:play-circle-linear', pending_customer: 'solar:clock-circle-linear', pending_internal: 'solar:users-group-rounded-linear', on_hold: 'solar:pause-circle-linear', resolved: 'solar:check-circle-linear', closed: 'solar:lock-keyhole-linear' },
+        owner: { ai_active: 'solar:magic-stick-3-linear', handoff_queued: 'solar:bell-ringing-linear', human_active: 'solar:user-linear', resolved: 'solar:check-read-linear' },
+        sla: { ok: 'solar:stopwatch-linear', warning: 'solar:hourglass-linear', breached: 'solar:danger-triangle-linear', paused: 'solar:pause-linear', met: 'solar:check-circle-linear' },
+        priority: { low: 'solar:arrow-down-linear', normal: 'solar:minus-circle-linear', medium: 'solar:minus-circle-linear', high: 'solar:arrow-up-linear', urgent: 'solar:double-alt-arrow-up-linear' },
+        channel: { web: 'solar:monitor-linear', portal: 'solar:global-linear', email: 'solar:letter-linear', phone: 'solar:phone-linear', whatsapp: 'solar:chat-round-dots-linear', sms: 'solar:chat-square-linear', walk_in: 'solar:user-speak-linear', staff: 'solar:user-id-linear', chat: 'solar:chat-round-line-linear' },
+        category: { customs: 'solar:shield-check-linear', delivery: 'solar:box-linear', pickup: 'solar:map-point-linear', invoice: 'solar:bill-list-linear', refund: 'solar:wallet-money-linear', locker: 'solar:lock-linear', account: 'solar:user-circle-linear' },
+        view: { all: 'solar:inbox-linear', mine: 'solar:user-linear', unassigned: 'solar:user-rounded-linear', queued: 'solar:bell-ringing-linear', ai: 'solar:magic-stick-3-linear', followed: 'solar:bell-linear', internal: 'solar:users-group-rounded-linear', sla_risk: 'solar:stopwatch-linear', overdue: 'solar:danger-triangle-linear', archived: 'solar:archive-linear', spam: 'solar:shield-warning-linear', trash: 'solar:trash-bin-trash-linear' },
+        action: { reply: 'solar:reply-linear', note: 'solar:notes-linear', hand: 'solar:hand-shake-linear', takeover: 'solar:user-hand-up-linear', release: 'solar:undo-left-linear', resolve: 'solar:check-circle-linear', follow: 'solar:bell-linear', ai: 'solar:magic-stick-3-linear', refund: 'solar:wallet-money-linear', address: 'solar:map-point-linear', resend: 'solar:restart-linear', clock: 'solar:calendar-linear', shield: 'solar:shield-check-linear', tag: 'solar:tag-linear', link: 'solar:link-linear', search: 'solar:magnifer-linear', dashboard: 'solar:chart-2-linear', download: 'solar:download-linear', settings: 'solar:settings-linear', king: 'solar:magic-stick-3-linear', person: 'solar:user-linear', mail: 'solar:letter-linear', chat: 'solar:chat-round-dots-linear', sms: 'solar:chat-square-linear', wa: 'solar:chat-round-dots-linear', ok: 'solar:check-circle-bold', warn: 'solar:danger-circle-linear', info: 'solar:info-circle-linear', star: 'solar:star-bold', flag: 'solar:flag-linear', clock2: 'solar:history-linear', pulse: 'solar:pulse-2-linear', ticket: 'solar:ticket-linear', handover: 'solar:transfer-horizontal-linear', tokens: 'solar:cpu-bolt-linear' }
+    };
+
+    // Icon for a key of a group (status, owner, sla, priority, channel, category, view, action).
+    CS.ico = function (group, key, extra) {
+        var map = CS.icons[group] || {};
+        var name = map[key];
+        if (!name) { return ''; }
+        return '<iconify-icon icon="' + name + '" class="swl-cs-ico' + (extra ? ' ' + extra : '') + '" aria-hidden="true"></iconify-icon>';
+    };
+
     CS.pill = function (kind, key, label) {
         var text = label || (CS.labels[kind] && CS.labels[kind][key]) || key || '';
-        return text ? '<span class="swl-cs-pill is-' + CS.esc(key) + '">' + CS.esc(text) + '</span>' : '';
+        return text ? '<span class="swl-cs-pill is-' + CS.esc(key) + '">' + CS.ico(kind, key) + CS.esc(text) + '</span>' : '';
+    };
+
+    // Chart options that follow the light/dark theme (helpers/theme.php).
+    CS.chartTheme = function (opts) {
+        var root = getComputedStyle(document.documentElement), dark = document.documentElement.getAttribute('data-swl-theme') === 'dark';
+        var v = function (n, d) { return (root.getPropertyValue(n) || '').trim() || d; };
+        opts.chart = $.extend({}, opts.chart || {}, { foreColor: v('--slate-600', '#59697D'), background: 'transparent' });
+        opts.theme = { mode: dark ? 'dark' : 'light' };
+        opts.grid = $.extend({}, opts.grid || {}, { borderColor: v('--line-200', '#e5e7eb') });
+        opts.tooltip = $.extend({}, opts.tooltip || {}, { theme: dark ? 'dark' : 'light' });
+        if (opts.stroke && opts.stroke.colors && opts.stroke.colors[0] === '#fff') { opts.stroke.colors = [v('--white', '#fff')]; }
+        return opts;
     };
 
     CS.grow = function (el) {

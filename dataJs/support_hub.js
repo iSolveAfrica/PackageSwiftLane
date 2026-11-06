@@ -67,9 +67,39 @@
         }).fail(CS.fail);
     }
 
+    // Requests by status, as a donut: the customer sees where each request stands.
+    var reqChart = null, lastReqs = null;
+    $(document).on('swl:theme', function () { if (lastReqs) { drawReqChart(lastReqs); } });
+    function drawReqChart(list) {
+        lastReqs = list;
+        var box = document.getElementById('cs_req_chart');
+        if (!box) { return; }
+        if (!list.length || typeof window.ApexCharts === 'undefined') { box.hidden = true; return; }
+        var groups = { 'Open': 0, 'Waiting on you': 0, 'Resolved': 0 };
+        list.forEach(function (t) {
+            if (['resolved', 'closed'].indexOf(t.status_key) > -1) { groups['Resolved']++; }
+            else if (t.status_key === 'pending_customer') { groups['Waiting on you']++; }
+            else { groups['Open']++; }
+        });
+        box.hidden = false;
+        if (reqChart) { reqChart.destroy(); }
+        reqChart = new window.ApexCharts(box, CS.chartTheme({
+            chart: { type: 'donut', height: 200, fontFamily: 'inherit', background: 'transparent' },
+            series: Object.keys(groups).map(function (k) { return groups[k]; }),
+            labels: Object.keys(groups),
+            colors: ['#2563eb', '#d97706', '#0f766e'],
+            legend: { position: 'right', fontSize: '12px' },
+            dataLabels: { enabled: false },
+            stroke: { width: 2, colors: ['#fff'] },
+            plotOptions: { pie: { donut: { size: '66%', labels: { show: true, total: { show: true, label: 'Requests', formatter: function (w) { return w.globals.seriesTotals.reduce(function (a, b) { return a + b; }, 0); } } } } } }
+        }));
+        reqChart.render();
+    }
+
     function renderReqs(list) {
         var open = list.filter(function (t) { return ['resolved', 'closed'].indexOf(t.status_key) === -1; }).length;
         $('#cs_req_n').text(open ? '(' + open + ' open)' : '');
+        drawReqChart(list);
         if (!list.length) {
             $('#cs_reqs').html('<div class="swl-cs-empty"><iconify-icon icon="solar:inbox-linear"></iconify-icon>No requests yet. Chat with us, or use New request.</div>');
             return;

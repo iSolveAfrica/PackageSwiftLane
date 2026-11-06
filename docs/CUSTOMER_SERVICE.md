@@ -83,3 +83,62 @@ The look follows Swift Lane's own design system (`swiftlane-ds.css` §25, tokens
 - **Times use the server time zone.** SLA clocks run in calendar time; business-hours calendars and holidays are not modelled.
 - **Delegated business-account access (A26) is not modelled.** Each customer sees only their own account.
 - **Logged-out visitors cannot chat.** The chat and the request form are for signed-in customers.
+
+## Look and theme (November 2026)
+
+The inbox, ticket and reports pages follow the Customer Service design canvas: the Inbox, Ticket workspace and Reports boards. They have a light and a dark theme. The toggle is in the page header and the choice is kept per browser (`helpers/theme.php`, `dataJs/swl_theme.js`). Styles are in swiftlane-ds.css §26 (theme) and §29 (desk, ticket, reports), with the canvas palette and its dark mirror.
+
+**Inbox**
+
+Layout:
+- A module rail: Inbox, Customers, Reports, Automation, King, Settings, Help.
+- The inbox panel:
+  - "Needs attention": waiting for a person, SLA at risk and overdue. These light up while something is waiting.
+  - "Views": web chat, WhatsApp, SMS, e-mail, King AI chats, VIP customers (tickets tagged `vip`) and Following.
+  - "Tickets": all, unassigned, my open, new and staff requests. Then the statuses (Open, Pending, With us, On hold, Solved, Closed), then Archive, Spam and Trash.
+  - A King card showing how many chats King has now.
+  - Groups collapse, and the browser remembers which are collapsed.
+- The top bar:
+  - happy customers over 30 days
+  - share solved by King today
+  - search (press `/`)
+  - colleagues online, meaning staff with activity in the last 10 minutes. This comes from `action=pulse` in `ajax/support/desk_ajax.php`.
+
+The ticket list:
+- Header: view icon, title, count with the sort order, Filter, sort, Save view, Refresh and New ticket.
+- Columns: Customer (avatar and e-mail), Subject (a mark when the customer replied), Channel, Priority, Handled by (King, a person, "Waiting for a person" or Unassigned), Status, SLA (text over a bar) and Last message.
+- Paged footer.
+- Bulk changes and filters work as before.
+- Keyboard: J and K move between tickets, Enter opens one.
+- When the space is narrow (for example with the side menu open), Channel and Priority show as icons with a tooltip, and "Last message" is hidden.
+
+**Ticket**
+
+The conversation column:
+- Breadcrumb and who else is viewing.
+- Title with status, priority, channel and owner chips.
+- The take-over / hand-back / follow / more actions.
+- A banner saying why King handed over.
+- The timeline, with avatars: customer and King on the left, King marked AI in violet; agents and internal notes on the right. Events are centred.
+- The composer: reply / internal note, Draft with King, saved replies, improve, attach, status after sending, Send.
+
+The right column, in order:
+1. Customer card: shipments, tickets, average rating, contact details and unpaid records.
+2. King's summary.
+3. Actions on this account. Refund, address change, fee waiver and damage claim go to approval. Also Draft with King, internal note, create task and follow.
+4. Linked shipments (or the customer's recent records).
+5. Service level, with a bar and tags.
+6. The full Details / Customer / King & AI / History tabs.
+
+**Reports**
+
+- Period buttons (7, 30, 90 days, this month, custom) and filters.
+- Six KPI tiles, each with a change against the previous period and a trend line.
+- Volume and outcomes per day.
+- Where King's chats ended, with a summary.
+- An agents table: resolved out of assigned, first reply, SLA met and rating.
+- Why chats went to a person.
+- Tickets by channel.
+- Open backlog by age.
+- Customer ratings: share of each star level.
+- "More detail" holds the rest: agent workload, service health, by topic, by team, delivery and automation, and how each number is worked out.

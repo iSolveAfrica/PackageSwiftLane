@@ -53,3 +53,4 @@ dev_preview/
 assets/uploads/push_media/
 support_files/*
 !support_files/.htaccess
+dev_reports/
