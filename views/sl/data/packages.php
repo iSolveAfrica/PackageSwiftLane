@@ -26,7 +26,7 @@ function sl_seaPackagesData($user, $core): array
     $d['total'] = $total;
     $d['open'] = $open;
     $next = sl_row("SELECT c_prefix, c_no, c_date FROM cdb_consolidate_packages WHERE status_courier NOT IN (8,15,21) ORDER BY consolidate_id DESC");
-    $d['lede'] = sl_num($open) . ' open package' . ($open === 1 ? '' : 's') . ($next ? ' · next container ' . $next->c_prefix . $next->c_no . ' (' . sl_date($next->c_date) . ')' : '');
+    $d['lede'] = sl_num($open) . ' open package' . ($open === 1 ? '' : 's') . ($next && !$isClient ? ' · next container ' . $next->c_prefix . $next->c_no . ' (' . sl_date($next->c_date) . ')' : '');
 
     $q = trim((string) ($_GET['q'] ?? ''));
     $filter = (string) ($_GET['filter'] ?? 'all');
@@ -34,7 +34,7 @@ function sl_seaPackagesData($user, $core): array
     $container = (int) ($_GET['container'] ?? 0);
     $view = ($_GET['view'] ?? 'list') === 'container' ? 'container' : 'list';
     $page = max(1, (int) ($_GET['page'] ?? 1));
-    $per = 25;
+    $per = ($_GET['export'] ?? '') === 'csv' ? 5000 : 25;
     $where = "1 = 1 $scope";
     $binds = [];
     if ($q !== '') {

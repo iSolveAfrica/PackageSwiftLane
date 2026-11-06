@@ -56,6 +56,7 @@ function sl_navStaff(): array
             ['id' => 'consol', 'label' => 'Consolidations', 'icon' => 'layers', 'board' => 'Consolidations', 'perm' => ['view_consolidate_list', 'view_consolidate_package_list'],
                 'count' => fn() => sl_navCount("SELECT (SELECT COUNT(*) FROM cdb_consolidate WHERE status_courier NOT IN ('8','15','21')) + (SELECT COUNT(*) FROM cdb_consolidate_packages WHERE status_courier NOT IN ('8','15','21'))")],
             ['id' => 'warehouse', 'label' => 'Warehouse', 'icon' => 'warehouse', 'board' => 'Warehouse', 'perm' => ['warehouse_view', 'view_warehouse_delivery']],
+            ['id' => 'whpick', 'label' => 'Warehouse Pickups', 'icon' => 'check', 'board' => 'WarehousePickups', 'perm' => ['view_warehouse_pickups', 'view_warehouse_delivery']],
             ['id' => 'handout', 'label' => 'Hand Out Packages', 'icon' => 'box', 'board' => 'HandOut', 'perm' => ['view_warehouse_delivery', 'warehouse_deliver_package'],
                 'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (6,32) $w")],
             ['id' => 'locker', 'label' => 'Locker Search', 'icon' => 'lock', 'board' => 'LockerSearch', 'perm' => 'view_shipment_list'],
@@ -166,7 +167,7 @@ function sl_navCustomer(): array
             ['id' => 'prealert', 'label' => 'Pre-Alerts', 'icon' => 'inbox', 'board' => 'PreAlerts', 'perm' => 'prealert_list',
                 'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_pre_alert WHERE customer_id = :u AND is_package = 0", [':u' => $uid])],
             ['id' => 'track', 'label' => 'Track a parcel', 'icon' => 'route', 'board' => 'PublicTracking', 'perm' => null],
-            ['id' => 'pickup', 'label' => 'Request pickup', 'icon' => 'truck', 'board' => 'SchedulePickup', 'perm' => 'pickup_add'],
+            ['id' => 'pickup', 'label' => 'My pickups', 'icon' => 'truck', 'board' => 'Pickups', 'perm' => ['view_pickup_list', 'pickup_add']],
         ]],
         ['label' => 'Account', 'items' => [
             ['id' => 'recip', 'label' => 'Recipients', 'icon' => 'user', 'board' => 'RecipientsMine', 'perm' => 'view_recipients',
