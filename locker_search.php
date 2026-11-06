@@ -1,22 +1,10 @@
 <?php
-
-    require_once("loader.php");
-
-    $user = new User();
-    $core = new Core();
-
-    if ($user->cdp_loginCheck() == true) {
-
-        $permissions = $user->cdp_getUserPermissions();
-
-        if (!$user->cdp_hasPermission('view_shipment_list')) {
-            header("location: error403.php");
-            exit;
-        }
-
-        include('views/locker/locker_search.php');
-    } else {
-        header("location: login.php");
-        exit;       
-    }
-?>
+// Locker search (LockerSearch artboard). Legacy view kept at ?legacy=1: views/locker/locker_search.php.
+require_once 'loader.php';
+$user = new User(); $core = new Core();
+require_once 'helpers/sl_view.php';
+sl_gate('view_shipment_list');
+if (!empty($_GET['legacy'])) { $permissions = $user->cdp_getUserPermissions(); include 'views/locker/locker_search.php'; exit; }
+if (sl_userIs('client')) { header('Location: error403.php'); exit; }
+require_once 'views/sl/data/warehouse.php';
+sl_render('LockerSearch', ['id' => 'locker', 'title' => 'Locker Search', 'board' => 'LockerSearch', 'styles' => ['assets/swiftlane/pages/ops.css']], sl_lockerSearchData($user, $core));

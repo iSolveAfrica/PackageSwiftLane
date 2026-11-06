@@ -65,7 +65,7 @@ function sl_settingsHubData($user, $core): array
         $hub = cdp_hubtelSmsConfig();
         $mno = function_exists('cdp_mnotifySmsConfig') ? cdp_mnotifySmsConfig() : ['api_key' => '', 'sender' => ''];
         $sms += ['hub_id' => $hub['client_id'], 'hub_secret_set' => $hub['client_secret'] !== '', 'hub_sender' => $hub['sender'], 'mn_key_set' => ($mno['api_key'] ?? '') !== '', 'mn_sender' => (string) cdp_smsSetting('mnotify_sender_id'),
-            'hub_on' => cdp_smsProviderEnabled('hubtel'), 'mn_on' => cdp_smsProviderEnabled('mnotify'), 'default' => cdp_smsDefaultProvider(), 'fallback' => cdp_smsFallbackOn(), 'active' => (int) ($s->active_sms ?? 0) === 1,
+            'hub_on' => cdp_smsProviderEnabled('hubtel') && cdp_smsProviderConfigured('hubtel'), 'mn_on' => cdp_smsProviderEnabled('mnotify') && cdp_smsProviderConfigured('mnotify'), 'default' => cdp_smsDefaultProvider(), 'fallback' => cdp_smsFallbackOn(), 'active' => (int) ($s->active_sms ?? 0) === 1,
             'canManage' => cdp_smsCanManage($user)];
     }
     $d['sms'] = $sms;

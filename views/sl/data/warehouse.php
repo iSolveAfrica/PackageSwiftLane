@@ -229,7 +229,9 @@ function sl_whCustomer(int $id): ?array
         if ($s['live'] && !$state['live']) $state['live'] = $s['live'];
         $state['verified'] = $state['verified'] || $s['verified'];
     }
-    return ['id' => (int) $u->id, 'name' => sl_userName($u), 'ini' => sl_initials(sl_userName($u)), 'lock' => $u->locker ?: '', 'phone' => $u->phone ?: '', 'pkgs' => $rows, 'byMod' => $byMod, 'code' => $state,
+    $vi = [];
+    foreach ($byMod as $m => $ids) if ($ids) foreach (array_keys(cdp_pickupCodeVerifiedFor($m, $ids)) as $oid) $vi[] = $m . ':' . $oid;
+    return ['verifiedItems' => $vi, 'id' => (int) $u->id, 'name' => sl_userName($u), 'ini' => sl_initials(sl_userName($u)), 'lock' => $u->locker ?: '', 'phone' => $u->phone ?: '', 'pkgs' => $rows, 'byMod' => $byMod, 'code' => $state,
         'payL' => $unpaid ? $unpaid . ' unpaid' : 'Paid up', 'payCls' => $unpaid ? 'overdue' : 'paid', 'unpaid' => $unpaid];
 }
 
@@ -260,7 +262,7 @@ function sl_whHistory(string $q, string $kind, int $days, int $page, int $per): 
     foreach ($rows as $r) {
         $u = $users[(int) $r->sender_id] ?? null;
         $k = $r->module . ':' . (int) $r->order_id;
-        $out[] = ['tid' => (int) $r->id, 'module' => $r->module, 'oid' => (int) $r->order_id, 'id' => $r->order_track, 'href' => $r->module === 'sea' ? sl_route('PackageDetail', ['id' => (int) $r->order_id]) : sl_route('ShipmentDetail', ['id' => (int) $r->order_id]),
+        $out[] = ['tid' => (int) $r->id, 'sender' => (int) $r->sender_id, 'module' => $r->module, 'oid' => (int) $r->order_id, 'id' => $r->order_track, 'href' => $r->module === 'sea' ? sl_route('PackageDetail', ['id' => (int) $r->order_id]) : sl_route('ShipmentDetail', ['id' => (int) $r->order_id]),
             'cust' => sl_userName($u), 'ini' => sl_initials(sl_userName($u)), 'locker' => $u->locker ?? '', 'w' => sl_weight($r->w), 'kind' => cdp_handoverLabel($r->status_courier), 'kc' => (int) $r->status_courier === 15 ? 'ok' : '',
             'by' => trim(($r->sf ?? '') . ' ' . mb_substr((string) ($r->sl ?? ''), 0, 1) . '.'), 'time' => sl_date($r->t_date, 'H:i'), 'day' => sl_date($r->t_date, 'M j'), 'code' => isset($used[$k]) ? 'Code checked' : ((int) $r->status_courier === 8 ? 'On delivery' : 'No code record'),
             'still' => cdp_isHandedOver($r->cur), 'receipt' => $r->module === 'sea' ? 'print_invoice_package.php?id=' . (int) $r->order_id : 'print_inv_ship.php?id=' . (int) $r->order_id,

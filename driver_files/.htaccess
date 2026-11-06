@@ -1,0 +1,6 @@
+Order from deny,allow
+Deny from all
+<FilesMatch "\.(jpe?g|png|webp)$">
+  # Proof-of-delivery photos: served only through authorised download.php
+  Deny from all
+</FilesMatch>

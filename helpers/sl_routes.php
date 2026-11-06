@@ -76,6 +76,7 @@ function sl_routes(): array
         'CustomerProfile'  => 'customer_view.php',
         'AddCustomer'      => 'customers_add.php',
         'Recipients'       => 'recipients_admin_list.php',
+        'RecipientsMine'   => 'recipients_list.php',
         'Drivers'          => 'drivers_list.php',
         'DriverApp'        => 'driver_app.php',
         'RiderDispatch'    => 'rider_dispatch.php',

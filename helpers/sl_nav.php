@@ -89,6 +89,8 @@ function sl_navStaff(): array
                 'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_users WHERE userlevel = 3 AND active = 1"),
                 'count2' => fn() => '/ ' . sl_navCount("SELECT COUNT(*) FROM cdb_users WHERE userlevel = 3")],
             ['id' => 'drvapp', 'label' => 'Rider App', 'icon' => 'phone', 'board' => 'DriverApp', 'perm' => ['view_user_list', 'driver:self']],
+            ['id' => 'dispatch', 'label' => 'Dispatch Board', 'icon' => 'route', 'board' => 'RiderDispatch', 'perm' => 'dispatch_riders'],
+            ['id' => 'staffact', 'label' => 'Staff Activity', 'icon' => 'clock', 'board' => 'StaffActivity', 'perm' => 'view_staff_activity'],
             ['id' => 'staff', 'label' => 'Staff & Roles', 'icon' => 'shield', 'board' => 'StaffRoles', 'perm' => ['view_user_list', 'view_role_assignment']],
         ]],
         ['label' => 'Finance', 'finance' => true, 'items' => [
@@ -139,7 +141,7 @@ function sl_navStaff(): array
             ['id' => 'bcast', 'label' => 'Push Notifications', 'icon' => 'send', 'board' => 'Broadcast', 'perm' => 'push_notifications'],
             ['id' => 'costs', 'label' => 'Operating Costs', 'icon' => 'dollar', 'board' => 'CostSettings', 'perm' => 'superadmin'],
             ['id' => 'addr', 'label' => 'Shipping Addresses', 'icon' => 'pin', 'board' => 'ShippingAddresses', 'perm' => 'view_tools'],
-            ['id' => 'rfees', 'label' => 'Rider Fees', 'icon' => 'truck', 'board' => 'RiderSettings', 'perm' => 'view_tools'],
+            ['id' => 'rfees', 'label' => 'Rider Fees', 'icon' => 'truck', 'board' => 'RiderSettings', 'perm' => ['manage_rider_fees', 'view_tools']],
             ['id' => 'loginpg', 'label' => 'Login Page', 'icon' => 'image', 'board' => 'LoginSettings', 'perm' => 'view_tools'],
             ['id' => 'devmod', 'label' => 'Modules', 'icon' => 'sliders', 'board' => 'ModuleController', 'perm' => 'superadmin'],
             ['id' => 'perm', 'label' => 'Permissions', 'icon' => 'key', 'board' => 'StaffPermissions', 'perm' => 'view_role_assignment'],
@@ -167,7 +169,7 @@ function sl_navCustomer(): array
             ['id' => 'pickup', 'label' => 'Request pickup', 'icon' => 'truck', 'board' => 'SchedulePickup', 'perm' => 'pickup_add'],
         ]],
         ['label' => 'Account', 'items' => [
-            ['id' => 'recip', 'label' => 'Recipients', 'icon' => 'user', 'board' => 'Recipients', 'perm' => 'view_recipients',
+            ['id' => 'recip', 'label' => 'Recipients', 'icon' => 'user', 'board' => 'RecipientsMine', 'perm' => 'view_recipients',
                 'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_recipients WHERE sender_id = :u", [':u' => $uid])],
             ['id' => 'pay', 'label' => 'Payments', 'icon' => 'card', 'board' => 'Payments', 'perm' => 'view_payment_shipment_list'],
             ['id' => 'profile', 'label' => 'Profile', 'icon' => 'sliders', 'board' => 'AiStudio', 'perm' => null],

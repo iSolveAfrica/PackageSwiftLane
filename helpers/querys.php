@@ -7011,7 +7011,7 @@ function cdp_insertCourierShipment($datos)
 
     $db->bind(':manual_tariff',  $datos['manual_tariff']);
     $db->bind(':order_incomplete',  $datos['order_incomplete']);
-    $db->bind(':recipient_type',  $datos['recipient_type']);
+    $db->bind(':recipient_type',  ($datos['recipient_type'] ?? 'recipient'));
     $db->bind(':is_pickup',  $datos['is_pickup']);
     $db->bind(':user_id',  $datos['user_id']);
     $db->bind(':order_prefix',  $datos['order_prefix']);
@@ -7040,7 +7040,7 @@ function cdp_insertCourierShipment($datos)
     $db->bind(':provider_purchase', $datos['provider_purchase'] ?? null);
     $db->bind(':price_purchase',    $datos['price_purchase'] ?? null);
     $db->bind(':notify_whatsapp_sender', (int) ($datos['notify_whatsapp_sender'] ?? 0), PDO::PARAM_INT);
-    $db->bind(':courier_notes', $datos['courier_notes']);
+    $db->bind(':courier_notes', ($datos['courier_notes'] ?? null));
     // Dangerous-goods (hazmat) flag — orthogonal to status_courier. A package is
     // either a dangerous good or not; a consolidation may only group one kind.
     $db->bind(':is_dangerous_good', (int) ($datos['is_dangerous_good'] ?? 0), PDO::PARAM_INT);

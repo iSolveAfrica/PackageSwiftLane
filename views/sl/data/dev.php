@@ -369,8 +369,8 @@ function sl_devDeploymentsData($user, $core): array
         ['label' => 'Last deploy', 'v' => $st['last_at'] ? sl_ago($st['last_at']) : '—', 'unit' => '', 'd' => $git['branch'] ? $git['branch'] . ' @ ' . $git['head'] : ($git['source'] ?: ''), 'dc' => ''],
     ];
     $icons = ['Code' => 'i-code', 'Tests' => 'i-check', 'Dependencies' => 'i-box', 'Deploy' => 'i-rocket', 'Health check' => 'i-activity'];
-    $d['steps'] = array_map(fn($p) => ['label' => $p['name'], 'sub' => $p['detail'], 'icon' => $icons[$p['name']] ?? 'i-check', 'cls' => $p['state'] === 'passed' ? 'ok' : ($p['state'] === 'failed' ? 'bad' : ($p['state'] === 'warning' ? 'w' : ''))], $dep['pipeline']);
-    $d['deps'] = array_map(fn($h) => ['svc' => 'app', 'ver' => $h['hash'], 'sha' => $h['from'] ?? '', 'msg' => $h['message'], 'dur' => $h['kind'], 'by' => $h['author'], 'ini' => sl_initials((string) $h['author']), 'env' => 'this checkout', 'status' => $h['kind'] === 'reset' ? 'Rollback' : 'Deployed', 'pc' => $h['kind'] === 'reset' ? 'pending' : 'delivered', 'dc' => $h['kind'] === 'reset' ? 'w' : 'ok', 'when' => sl_ago($h['ts'])], array_slice($dep['history'], 0, 25));
+    $d['steps'] = array_map(fn($p) => ['label' => $p['name'], 'sub' => $p['detail'], 'icon' => $icons[$p['name']] ?? 'i-check', 'cls' => $p['state'] === 'passed' ? '' : (in_array($p['state'], ['failed', 'warning'], true) ? 'run' : 'todo'), 'state' => $p['state']], $dep['pipeline']);
+    $d['deps'] = array_map(fn($h) => ['svc' => 'app', 'ver' => $h['hash'], 'sha' => $h['from'] ?? '', 'msg' => $h['message'], 'dur' => $h['kind'], 'by' => $h['author'], 'ini' => sl_initials((string) $h['author']), 'env' => 'this checkout', 'status' => $h['kind'] === 'reset' ? 'Rollback' : 'Deployed', 'pc' => $h['kind'] === 'reset' ? 'pending' : 'delivered', 'dc' => $h['kind'] === 'reset' ? 'y' : '', 'when' => sl_ago($h['ts'])], array_slice($dep['history'], 0, 25));
     $d['commits'] = $git['commits'];
     // deploy frequency, 14 days
     $days = [];
@@ -394,7 +394,7 @@ function sl_devDeploymentsData($user, $core): array
             $byV[$c->version][] = $c;
         }
         foreach ($byV as $v => $items) {
-            $d['log'][] = ['ver' => $v, 'env' => $items[0]->environment, 'date' => sl_date($items[0]->released_at), 'by' => $items[0]->author ?: '—', 'n' => count($items), 'items' => array_map(fn($c) => ['type' => $c->kind, 'cls' => $c->kind, 'text' => $c->title, 'ref' => $c->ref ?: ''], $items)];
+            $d['log'][] = ['ver' => $v, 'env' => $items[0]->environment, 'date' => sl_date($items[0]->released_at), 'by' => $items[0]->author ?: '—', 'n' => count($items), 'items' => array_map(fn($c) => ['type' => $c->kind, 'cls' => ['feature' => 'add', 'fix' => 'fix', 'security' => 'sec', 'change' => 'chg', 'migration' => 'chg'][$c->kind] ?? 'chg', 'text' => $c->title, 'ref' => $c->ref ?: ''], $items)];
         }
     }
     $d['changeCount'] = $d['changelogReady'] ? (int) sl_scalar('SELECT COUNT(*) FROM cdb_dev_changelog') : 0;

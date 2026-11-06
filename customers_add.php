@@ -1,47 +1,21 @@
 <?php
-// *************************************************************************
-// *                                                                       *
-// * Swiftlane - Integrated Web Shipping System                            *
-// * Copyright (c) iSolveAfrica Ltd. All rights reserved.                  *
-// *                                                                       *
-// *************************************************************************
-// *                                                                       *
-// * This software and its source code are proprietary and confidential    *
-// * property of iSolveAfrica Ltd. and were developed specifically for     *
-// * Swiftlane.                                                            *
-// *                                                                       *
-// * The software may not be copied, reproduced, modified, distributed,    *
-// * sublicensed, published, or used in whole or in part except as         *
-// * expressly permitted under the applicable license or written           *
-// * agreement with iSolveAfrica Ltd. Any permitted copies or derivative   *
-// * works must retain this copyright notice and all applicable            *
-// * proprietary notices.                                                  *
-// *                                                                       *
-// *************************************************************************
-
-
-
-    require_once("loader.php");
-
-    $user = new User();
-    $core = new Core();
-    // ... ask if we are logged in here:
-    if ($user->cdp_loginCheck() == true) 
-    {
-
-        $permissions = $user->cdp_getUserPermissions();
-        if (!$user->cdp_hasPermission('add_client')) {
-            header("location: error403.php");
-            exit;
-        }
-
-       
-      include('views/customers/customers_add.php');     
-           
-
-    } else{
-        
-        header("location: login.php");
-        exit;       
-    }
-?>
+// Add customer or recipient (Swift Lane UI). Customer creation keeps the e-mail OTP flow of ajax/customers/*.
+require_once 'loader.php';
+$user = new User();
+$core = new Core();
+require_once 'helpers/sl_view.php';
+sl_gate(($_GET['type'] ?? '') === 'recipient' ? ['recipients_add', 'add_client'] : 'add_client');
+require_once 'helpers/otp_settings.php';
+$ctx = function_exists('cdp_getAgencyContext') ? cdp_getAgencyContext() : ['is_restricted' => false, 'agency_id' => null];
+$scope = !empty($ctx['is_restricted']) ? ' AND agency_id = ' . (int) $ctx['agency_id'] : '';
+$d = [
+    'type' => ($_GET['type'] ?? '') === 'recipient' ? 'recipient' : 'customer',
+    'countries' => sl_rows('SELECT id, name FROM cdb_countries WHERE is_active = 1 ORDER BY name LIMIT 300'),
+    'customers' => sl_rows("SELECT id, fname, lname, locker FROM cdb_users WHERE userlevel = 1 $scope ORDER BY fname, lname LIMIT 1000"),
+    'owner' => (int) ($_GET['owner'] ?? 0),
+    'otp' => function_exists('cdp_otpEnabled') ? cdp_otpEnabled() : true,
+    'lockerHint' => 'Next free number, on save',
+    'agency' => !empty($ctx['is_restricted']) ? (string) sl_scalar('SELECT name_off FROM cdb_offices WHERE id = :a', [':a' => (int) $ctx['agency_id']], 'Your agency') : 'Main',
+    'canRecip' => $user->cdp_hasPermission(['recipients_add', 'view_recipients']),
+];
+sl_render('AddCustomer', ['id' => 'cust', 'title' => 'Add customer', 'board' => 'AddCustomer'], $d);
