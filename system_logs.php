@@ -1,24 +1,9 @@
 <?php
-// *************************************************************************
-// * System Logs — entry point.                                           *
-// *************************************************************************
-
-require_once("loader.php");
-
+// System Logs (Swift Lane UI): PHP error log tail, audit failures, cron and security. Read only.
+require_once 'loader.php';
 $user = new User();
 $core = new Core();
-
-if ($user->cdp_loginCheck() == true) {
-
-    if (!$user->cdp_hasPermission('view_system_logs')) {
-        header("location: error403.php");
-        exit;
-    }
-
-    include('views/reports/system_logs/system_logs.php');
-
-} else {
-    header("location: login.php");
-    exit;
-}
-?>
+require_once 'helpers/sl_view.php';
+sl_gate('view_system_logs');
+require_once 'views/sl/data/system_logs.php';
+sl_render('SystemLogs', ['id' => 'security', 'title' => 'System Logs', 'board' => 'SystemLogs'], sl_systemLogsData($user, $core));
