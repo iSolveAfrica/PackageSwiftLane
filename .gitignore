@@ -24,7 +24,7 @@
 /app/Config/database.php
 /vendors/*
 
-/config
+/config/config.php
 
 order_files/*
 pre_alert_files/*
@@ -38,7 +38,7 @@ analyze_migration.php
 migrate_seuptpfxcj_to_v84.php
 migrate_v2.php
 
-loader.php
+
 
 .gitignore
 
