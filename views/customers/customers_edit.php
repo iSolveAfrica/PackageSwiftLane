@@ -28,7 +28,7 @@ if (!$user->cdp_hasPermission('edit_client')) {
     cdp_redirect_to("customers_profile_edit.php?user=" . $userData->id);
 }
 
-if (intval($userData->id) !== intval($_GET['user']) && !$user->cdp_hasPermission('edit_client')) {
+if (intval($userData->id) !== intval(($_GET['user'] ?? '')) && !$user->cdp_hasPermission('edit_client')) {
     cdp_redirect_to("login.php");
 }
 

@@ -160,7 +160,7 @@ if ($numrows > 0) { ?>
 							</td>
 
 							<td>
-								<?php echo $receiver_data->fname; ?> <?php echo $receiver_data->lname; ?>
+								<?php echo ($receiver_data->fname ?? ''); ?> <?php echo ($receiver_data->lname ?? ''); ?>
 							</td>
 
 							<td><?php echo $address_order->sender_country; ?>-<?php echo $address_order->sender_city; ?></td>

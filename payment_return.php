@@ -18,6 +18,7 @@ require_once("loader.php");
 require_once(__DIR__ . '/helpers/fs_payments.php');
 
 $user = new User();
+$core = new Core();
 
 if ($user->cdp_loginCheck() !== true) {
     header("location: login.php");

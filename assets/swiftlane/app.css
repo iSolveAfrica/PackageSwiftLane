@@ -38,3 +38,9 @@ form.sl-inline{display:contents}
 @media print{.sl-top,.sl-rail,.sl-side,.sl-toast,[data-sl-theme]{display:none!important}.sl-main{border:0;padding:0}}
 .sl-skip{position:absolute;left:-999px;top:0;background:var(--ink);color:var(--inverse);padding:8px 12px;border-radius:8px;z-index:100}
 .sl-skip:focus{left:12px;top:12px}
+
+/* Full-width layout (requested 2026-11-06): page content fills the main panel
+   edge to edge on every page instead of a centred 1060px column. */
+.sl-wrap,.sl-wrap.wide,.sl-main>.sl-wrap[style]{max-width:none!important;width:100%}
+.sl-main{padding-left:24px;padding-right:24px}
+@media (max-width:900px){.sl-main{padding-left:16px;padding-right:16px}}

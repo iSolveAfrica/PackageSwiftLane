@@ -104,7 +104,7 @@ $virtualMailboxes = $core->cdp_getVirtualMailboxes($where);
                                             <div class="card-title mb-6">
                                                 <form method="GET" class="mb-3">
                                                     <div class="form-group">
-                                                        <label for="inputcontact" class="control-label col-form-label"><?php echo $lang['filter87'] ?></label>
+                                                        <label for="inputcontact" class="control-label col-form-label"><?php echo ($lang['filter87'] ?? '') ?></label>
                                                         <div class="input-group">
                                                             <select class="custom-select col-12" id="filterMailbox" name="filter_virtual_mail_boxes" onchange="this.form.submit()">
                                                                 <option value=""><?= $lang['all_countries'] ?? 'All Countries' ?></option>
@@ -129,7 +129,7 @@ $virtualMailboxes = $core->cdp_getVirtualMailboxes($where);
                                                 <?php foreach ($virtualMailboxes as $virtualMailbox) {
                                                     $db->cdp_query("SELECT * FROM cdb_countries WHERE id='" . $virtualMailbox-> cdb_countries_id . "'");
                                                     $db->cdp_execute();
-                                                    $flag = strtolower($db->cdp_registro()->iso2);
+                                                    $flag = strtolower((string) ($db->cdp_registro()->iso2 ?? ""));
 
                                                     require_once __DIR__ . '/../../../helpers/virtual_mailbox.php';
                                                     $updatedAddress = cdp_mailboxAddressHtml($virtualMailbox->address, $userData->locker ?? '');

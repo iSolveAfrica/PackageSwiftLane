@@ -33,7 +33,7 @@ $core = new Core;
 $userData = $user->cdp_getUserData();
 
 $search = cdp_sanitize($_REQUEST['search']);
-$gateway = $_REQUEST['gateway'];
+$gateway = ($_REQUEST['gateway'] ?? '');
 
 
 $sWhere = "";

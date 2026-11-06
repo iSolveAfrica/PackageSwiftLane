@@ -73,18 +73,18 @@ if (CDP_APP_MODE_DEMO === true) {
     $response = array();
 
 
-    if (cdp_paymentMethodExists($_POST['name_pay'], $_POST['id'])) {
+    if (cdp_paymentMethodExists(($_POST['name_pay'] ?? ''), ($_POST['id'] ?? ''))) {
 
         $response['status'] = 'error';
         $response['message'] = $lang['validate_field_ajax77'];
     }
     if (!isset($response['status'])) {
         $data = array(
-            'name_pay' => cdp_sanitize($_POST['name_pay']),
-            'detail_pay' => cdp_sanitize($_POST['detail_pay']),
-            'paypal_client_id' => cdp_sanitize($_POST['paypal_client_id']),
+            'name_pay' => cdp_sanitize(($_POST['name_pay'] ?? '')),
+            'detail_pay' => cdp_sanitize(($_POST['detail_pay'] ?? '')),
+            'paypal_client_id' => cdp_sanitize(($_POST['paypal_client_id'] ?? '')),
             'is_active' => $is_active,
-            'id' => cdp_sanitize($_POST['id']),
+            'id' => cdp_sanitize(($_POST['id'] ?? '')),
         );
 
         $update = cdp_updatePaymentMethod_paypal($data);

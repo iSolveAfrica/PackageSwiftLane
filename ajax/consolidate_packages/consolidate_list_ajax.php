@@ -34,7 +34,7 @@ $core = new Core;
 $userData = $user->cdp_getUserData();
 
 $search = cdp_sanitize($_REQUEST['search']);
-$status_courier = intval($_REQUEST['status_courier']);
+$status_courier = intval(($_REQUEST['status_courier'] ?? ''));
 
 $sWhere = "";
 
@@ -160,6 +160,8 @@ if ($numrows > 0) { ?>
 
 
 
+						$text_status = '';
+						$label_class = 'label-default';
 						if ($row->status_invoice == 1) {
 							$text_status = $lang['invoice_paid'];
 							$label_class = "label-success";
@@ -205,11 +207,11 @@ if ($numrows > 0) { ?>
 							</td>
 
 							<td>
-								<?php echo $recipient_type == 'user' ? $sender_data->fname : $receiver_data->fname; ?> <?php echo $recipient_type == 'user' ? $sender_data->lname : $receiver_data->lname; ?>
+								<?php echo $recipient_type == 'user' ? ($sender_data->fname ?? '') : ($receiver_data->fname ?? ''); ?> <?php echo $recipient_type == 'user' ? ($sender_data->lname ?? '') : ($receiver_data->lname ?? ''); ?>
 							</td>
 
-							<td><?php echo $address_order->sender_country; ?>-<?php echo $address_order->sender_city; ?></td>
-							<td><?php echo $address_order->recipient_country; ?>-<?php echo $address_order->recipient_city; ?></td> -->
+							<td><?php echo ($address_order->sender_country ?? ''); ?>-<?php echo ($address_order->sender_city ?? ''); ?></td>
+							<td><?php echo ($address_order->recipient_country ?? ''); ?>-<?php echo ($address_order->recipient_city ?? ''); ?></td> -->
 
 							<td class="">
 								<span style="background: <?php echo $row->color; ?>;" class="label label-large"><?php echo $row->mod_style; ?></span>

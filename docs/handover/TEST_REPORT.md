@@ -29,3 +29,14 @@ FEATURE_MATRIX.md: 128 screens — 113 done, 12 partial (listed with reasons), 2
 - Browsers other than Chromium; screen readers.
 - A role holding only the new freight/developer permissions.
 - Performance under production data volume (indexes were added for the list and dashboard queries; not load-tested).
+
+## Follow-up fixes (failure sweep, 2026-11-06)
+Wider sweep: every page route plus all 59 legacy AJAX list endpoints (`ajax/**/*list*_ajax.php`, `load_*_ajax.php`), as admin, driver and customer.
+
+| Before | After |
+|---|---|
+| 3 fatals (division by zero in `ajax/consolidate_packages/courier_list_add_ajax.php`), 1,052 warnings in 113 distinct places | 0 fatals, 0 warnings |
+
+Fixed: property reads on lookups that found no row (null-safe at each reported line), unset request keys, undefined variables (`$label_class`, `$text_status`, `$userData`, report totals), missing `Core` in `payment_return.php`, `cdp_sanitize(null)`, zero volumetric divisor. Legacy AJAX JSON replies are now protected from stray warnings by an output guard in `helpers/ajax_guard.php` (warnings go to the error log). The unused PHP-5-era PDF library (`pdf/_tcpdf_5.0.002`, `pdf/html2pdf.class.php`, `pdf/_class`, `pdf/locale`) is removed, so `php -l` passes on every file. Re-tested: Offices list, forgot-password request (returns success and redirects to the code page).
+
+Layout: page content now uses the full width of the main panel on all pages (new and legacy), instead of a centred 1060px column.

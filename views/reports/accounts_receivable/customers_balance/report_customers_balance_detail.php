@@ -31,9 +31,12 @@ $user = new User;
 $core = new Core;
 $userData = $user->cdp_getUserData();
 
-$customer_id = intval($_REQUEST['customer']);
-$fecha_inicio = cdp_sanitize($_REQUEST['fecha_inicio']);
-$fecha_fin = cdp_sanitize($_REQUEST['fecha_fin']);
+$customer_id = intval(($_REQUEST['customer'] ?? ''));
+$sumador_pendiente = 0;
+$sumador_total = 0;
+$sumador_pagado = 0;
+$fecha_inicio = cdp_sanitize(($_REQUEST['fecha_inicio'] ?? ''));
+$fecha_fin = cdp_sanitize(($_REQUEST['fecha_fin'] ?? ''));
 
 $sWhere = "";
 
@@ -167,7 +170,7 @@ $fecha_fin = str_replace('-', '/', $fecha_fin);
 
                             <h4 class="card-title  ml-4 mt-3">
 
-                                <?php echo $lang['report-text82'] ?>: <?php echo $sender_data->fname . ' ' . $sender_data->lname; ?>
+                                <?php echo $lang['report-text82'] ?>: <?php echo ($sender_data->fname ?? '') . ' ' . ($sender_data->lname ?? ''); ?>
                             </h4>
 
                             <div class="card-body">

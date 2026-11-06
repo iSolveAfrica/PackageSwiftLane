@@ -11,7 +11,7 @@ $num = fn($v) => (float) $v > 0 ? rtrim(rtrim(number_format((float) $v, 2, '.', 
 ?>
 <div class="sl-app" style="min-height:100%">
 <header class="row between wrap g12" style="padding:18px 32px;border-bottom:1px solid var(--line)"><a class="sl-brand" href="<?= sl_route('PublicTracking') ?>"><span class="sl-logo"><i></i></span><?= sl_v($d, 'site') ?></a><nav class="row g16 sm"><a href="<?= sl_route('PublicTracking') ?>">Track</a><a class="fw5" href="<?= sl_route('QuoteCalculator') ?>">Rates</a><?php if (sl_get($d, 'loggedIn')): ?><a class="sl-btn sm" href="<?= sl_route('Main') ?>">My account</a><?php else: ?><a href="<?= sl_route('Login') ?>">Sign in</a><a class="sl-btn sm" href="<?= sl_route('SignUp') ?>">Get a shipping address</a><?php endif; ?></nav></header>
-<main style="max-width:1080px;margin:0 auto;padding:48px 24px;display:flex;flex-direction:column;gap:24px">
+<main style="margin:0 auto;padding:48px 24px;display:flex;flex-direction:column;gap:24px">
 <div style="text-align:center"><div class="up">Public rate calculator</div><h1 style="font-size:40px;font-weight:600;letter-spacing:-.025em;margin-top:8px">What will it cost to ship?</h1><p class="mut" style="font-size:16px;margin-top:8px">Pick the route and enter the weight. No account needed.</p></div>
 <div class="split" style="align-items:stretch">
 <form class="a sl-card col g16" style="padding:24px" method="get" action="<?= sl_route('QuoteCalculator') ?>">

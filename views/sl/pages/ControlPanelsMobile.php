@@ -3,7 +3,7 @@
  * ControlPanelsMobile - generated from docs/handover/artifact-source/ControlPanelsMobile.dc.html by scripts/sl_convert.py.
  * Shell page: yes (rendered inside views/sl/inc/shell_start.php)
  * Data contract ($d):
- * sl-wrap extras in the design: style="max-width:1180px;gap:20px"
+ * sl-wrap extras in the design: style="gap:20px"
  * Demo data shapes: see the renderVals() script in the artifact source file.
  */
 if (!isset($d)) { $d = []; }

@@ -22,7 +22,7 @@
 
 
 
-if (intval($user->uid) !== intval($_GET['user']) && !$user->cdp_is_Admin()) {
+if (intval($user->uid) !== intval(($_GET['user'] ?? '')) && !$user->cdp_is_Admin()) {
 	cdp_redirect_to("login.php");
 }
 

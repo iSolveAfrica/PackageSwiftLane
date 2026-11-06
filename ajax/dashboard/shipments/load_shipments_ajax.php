@@ -187,7 +187,7 @@ if ($numrows > 0) { ?>
 							</td>
 
 							<td>
-								<?php echo $recipient_type == 'user' ? $sender_data->fname : $receiver_data->fname; ?> <?php echo $recipient_type == 'user' ? $sender_data->lname : $receiver_data->lname; ?>
+								<?php echo $recipient_type == 'user' ? ($sender_data->fname ?? '') : ($receiver_data->fname ?? ''); ?> <?php echo $recipient_type == 'user' ? ($sender_data->lname ?? '') : ($receiver_data->lname ?? ''); ?>
 							</td>
 
 							<td><?php echo $recipient_type == 'user' ? $address_order->sender_country : $address_order->recipient_country; ?>-<?php echo $recipient_type == 'user' ? $address_order->sender_city : $address_order->recipient_city; ?></td>

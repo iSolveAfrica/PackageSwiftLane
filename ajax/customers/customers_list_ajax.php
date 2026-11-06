@@ -26,6 +26,7 @@ require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_once(__DIR__ . '/../../helpers/querys.php');
 require_login();
 require_permission('view_client_list');
+$userData = $user->cdp_getUserData();
 
 
 require_once(__DIR__ . '/../../helpers/rbac.php');
@@ -182,7 +183,7 @@ if ($numrows > 0) { ?>
                                     </button>
                                 </a>
                             <?php else : ?>
-                                <?php if ($userData->userlevel == 9) { ?>
+                                <?php if (($userData->userlevel ?? '') == 9) { ?>
                                     <a onclick="cdp_eliminar('<?php echo $user->id; ?>')" id="item_<?php echo $user->id; ?>" class="delete" data-toggle="tooltip" data-placement="top" title="<?php echo $lang['edit-clien47'] ?>">
                                         <i class="fi fi-rr-trash"></i>
                                     </a>

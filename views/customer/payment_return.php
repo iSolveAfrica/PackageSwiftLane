@@ -21,8 +21,8 @@ $v = $map[$state] ?? $map['failed'];
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" type="image/png" sizes="16x16" href="assets/<?php echo $core->favicon ?>">
-    <title><?php echo $v['title']; ?> | <?php echo $core->site_name ?></title>
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/<?php echo ($core->favicon ?? '') ?>">
+    <title><?php echo $v['title']; ?> | <?php echo ($core->site_name ?? '') ?></title>
     <?php include 'views/inc/head_scripts.php'; ?>
 </head>
 

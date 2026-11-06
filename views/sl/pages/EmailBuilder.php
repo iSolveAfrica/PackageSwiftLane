@@ -36,7 +36,7 @@
  *   if    b.isFooter
  *   if    stSend
  *   value aligns, backDesign, blockCount, blocks, closeInsp, colors, dataLabel, dragEnd, endDrop, endDropFn, endOver, false, flash, hasAlign, hasColor, hasLink, hasText, inspOpen, ltabs, mailCls, palette, pre, preShown, save, saveLabel, selText, selTitle, selType, sendTest, setPre, setSubject, setText, stDesign, stSend, stageOver, stages, subject, subjectShown, tabBlocks, tabTpl, tabVars, textLab, toggleData, tplName, tpls, true, vars, views, widthLabel
- * sl-wrap extras in the design: style="max-width:1460px"
+ * sl-wrap extras in the design: 
  * Demo data shapes: see the renderVals() script in the artifact source file.
  */
 if (!isset($d)) { $d = []; }

@@ -13,7 +13,7 @@
 if (!isset($d)) { $d = []; }
 ?>
 <div class="sl-app" style="padding: 0 0 56px">
-  <div style="width: 100%; max-width: 1180px; margin: 0 auto; padding: 56px 24px 0; display: flex; flex-direction: column; gap: 56px">
+  <div style="width: 100%; margin: 0 auto; padding: 56px 24px 0; display: flex; flex-direction: column; gap: 56px">
 
     <header class="col g12">
       <div class="sl-brand"><span class="sl-logo"><i></i></span>Swift Lane</div>

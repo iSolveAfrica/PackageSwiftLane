@@ -26,7 +26,7 @@ require_once("../../../loader.php");
 $db = new Conexion;
 
 
-$search = cdp_sanitize($_REQUEST['search']);
+$search = cdp_sanitize(($_REQUEST["search"] ?? ""));
 
 $tables = "cdb_offices";
 $fields = "*";

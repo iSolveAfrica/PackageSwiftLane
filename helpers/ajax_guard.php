@@ -14,6 +14,43 @@ if (!defined('SWIFTLANE_AJAX_GUARD_LOADED')) {
         $user = new User();
     }
     define('SWIFTLANE_AJAX_GUARD_LOADED', true);
+
+    // JSON guard: legacy endpoints can print a PHP warning or notice before
+    // their JSON reply, which breaks the browser's JSON parse. Buffer the
+    // output; if the reply is meant to be JSON, drop anything printed before
+    // the JSON body and send it to the error log instead.
+    if (PHP_SAPI !== 'cli' && !defined('SL_AJAX_JSON_GUARD')) {
+        define('SL_AJAX_JSON_GUARD', true);
+        ob_start(function ($out) {
+            $isJson = false;
+            foreach (headers_list() as $h) {
+                if (stripos($h, 'content-type:') === 0 && stripos($h, 'json') !== false) {
+                    $isJson = true;
+                    break;
+                }
+            }
+            $trim = ltrim($out);
+            if ($trim === '' || $trim[0] === '{' || $trim[0] === '[') {
+                return $out;
+            }
+            $looksJson = preg_match('/^(?:\s*<br\s*\/?>)?\s*(?:<b>)?(?:Warning|Notice|Deprecated)\b/i', $trim);
+            if (!$isJson && !$looksJson) {
+                return $out;
+            }
+            $pos = strcspn($out, '{[');
+            if ($pos >= strlen($out)) {
+                return $out;
+            }
+            $noise = substr($out, 0, $pos);
+            $body = substr($out, $pos);
+            json_decode($body);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                return $out;
+            }
+            error_log('ajax output before JSON (' . ($_SERVER['SCRIPT_NAME'] ?? '') . '): ' . strip_tags(trim($noise)));
+            return $body;
+        });
+    }
 }
 
 /**

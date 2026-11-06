@@ -24,7 +24,7 @@
 
 $userData = $user->cdp_getUserData();
 
-if (intval($userData->id) !== intval($_GET['user']) && !$user->cdp_is_Admin()) {
+if (intval($userData->id) !== intval(($_GET['user'] ?? '')) && !$user->cdp_is_Admin()) {
     cdp_redirect_to("login.php");
 }
 

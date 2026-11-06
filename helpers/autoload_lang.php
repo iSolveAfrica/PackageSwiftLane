@@ -229,7 +229,7 @@ function cdp_redirect_to($location)
 
 function cdp_sanitize($string, $trim = false, $int = false, $str = false)
 {
-	$string = htmlspecialchars($string, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+	$string = htmlspecialchars((string) $string, ENT_QUOTES | ENT_HTML5, 'UTF-8');
 	$string = trim($string);
 	$string = stripslashes($string);
 	$string = strip_tags($string);

@@ -32,7 +32,7 @@ $core = new Core;
 $userData = $user->cdp_getUserData();
 
 
-$order_id = intval($_REQUEST['id']);
+$order_id = intval(($_REQUEST['id'] ?? ''));
 
 $sWhere = "";
 
@@ -120,9 +120,9 @@ $order_data = $db->cdp_registro();
 				$sumador_total += $row->total;
 			}
 
-			$total_pendiente = $order_data->total_order - $sumador_total;
+			$total_pendiente = (float) ($order_data->total_order ?? 0) - $sumador_total;
 
-			$due_date = date('Ymd', strtotime($order_data->due_date));
+			$due_date = date('Ymd', strtotime(($order_data->due_date ?? '')));
 			$fecha_hoy = date('Ymd');
 
 			if ($total_pendiente == 0) {
@@ -146,7 +146,7 @@ $order_data = $db->cdp_registro();
 				<td colspan="1"></td>
 				<td colspan="1"></td>
 				<td class="text-right"><b><?php echo $lang['modal-text15'] ?>:</b> </td>
-				<td class="text-center"><?php echo cdb_money_format($order_data->total_order); ?> </td>
+				<td class="text-center"><?php echo cdb_money_format((float) ($order_data->total_order ?? 0)); ?> </td>
 				<td colspan="1"></td>
 			</tr>
 

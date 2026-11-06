@@ -50,3 +50,12 @@ body.sl-body-page{background:var(--bg)!important;overflow-x:hidden}
 .sl-legacy .sl-head-actions .btn{height:36px}
 .sl-legacy .sl-head .sl-lede{margin:2px 0 0}
 .sl-legacy .page-title,.sl-legacy .sl-title{text-transform:none!important}
+
+/* Full-width legacy pages: undo the template's centred columns, offsets and container caps. */
+.sl-legacy .container,.sl-legacy .container-fluid,.sl-legacy .container-xl,.sl-legacy .container-lg{max-width:none!important;width:100%!important;padding-left:0!important;padding-right:0!important}
+.sl-legacy [class*="offset-"]{margin-left:0!important}
+.sl-legacy .row>[class*="col-"]:only-child{flex:0 0 100%!important;max-width:100%!important}
+.sl-legacy .row.justify-content-center>[class*="col-"]{flex:1 1 0!important;max-width:100%!important}
+.sl-legacy .card{width:100%}
+/* The template reserves room for its old sidebar on .page-wrapper; the new shell has its own. */
+html body #main-wrapper #sl-main .page-wrapper,html body #main-wrapper[data-layout] #sl-main .page-wrapper,html body #main-wrapper[data-sidebartype] #sl-main .page-wrapper,html body #sl-main #swl-main-content{margin-left:0!important;margin-right:0!important;width:auto!important;max-width:none!important;padding:0!important}

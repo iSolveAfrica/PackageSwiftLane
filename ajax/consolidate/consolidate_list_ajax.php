@@ -36,7 +36,7 @@ $userData = $user->cdp_getUserData();
 $permissions = $user->cdp_getUserPermissions();
 
 $search = cdp_sanitize($_REQUEST['search']);
-$status_courier = intval($_REQUEST['status_courier']);
+$status_courier = intval(($_REQUEST['status_courier'] ?? ''));
 
 $sWhere = "";
 
@@ -222,11 +222,11 @@ if ($numrows > 0) { ?>
 							</td>
 
 							<td>
-								<?php echo $receiver_data->fname; ?> <?php echo $receiver_data->lname; ?>
+								<?php echo ($receiver_data->fname ?? ''); ?> <?php echo ($receiver_data->lname ?? ''); ?>
 							</td>
 
-							<td class="text-wrap: wrap;"><?php echo $address_order->sender_country; ?>-<?php echo $address_order->sender_city; ?></td>
-							<td style="text-wrap: wrap;"><?php echo $address_order->recipient_country; ?>-<?php echo $address_order->recipient_city; ?></td>
+							<td class="text-wrap: wrap;"><?php echo ($address_order->sender_country ?? ''); ?>-<?php echo ($address_order->sender_city ?? ''); ?></td>
+							<td style="text-wrap: wrap;"><?php echo ($address_order->recipient_country ?? ''); ?>-<?php echo ($address_order->recipient_city ?? ''); ?></td>
 
 							
 							<td><?php

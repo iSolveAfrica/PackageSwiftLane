@@ -147,7 +147,7 @@ $userData = $user->cdp_getUserData();
 													<div class="col-md-12">
 														<div class="form-group">
 															<label for="firstName1"><?php echo $lang['left1118'] ?></label>
-															<input type="text" class="form-control" name="twilio_sid" id="twilio_sid" placeholder="<?php echo $lang['left1118'] ?>" value="<?php echo $core->twilio_sid; ?>">
+															<input type="text" class="form-control" name="twilio_sid" id="twilio_sid" placeholder="<?php echo $lang['left1118'] ?>" value="<?php echo ($core->twilio_sid ?? ''); ?>">
 														</div>
 													</div>
 
@@ -157,7 +157,7 @@ $userData = $user->cdp_getUserData();
 													<div class="col-md-12">
 														<div class="form-group">
 															<label for="firstName1"><?php echo $lang['left1119'] ?></label>
-															<input type="text" class="form-control" name="twilio_token" id="twilio_token" placeholder="<?php echo $lang['left1119'] ?>" value="<?php echo $core->twilio_token; ?>">
+															<input type="text" class="form-control" name="twilio_token" id="twilio_token" placeholder="<?php echo $lang['left1119'] ?>" value="<?php echo ($core->twilio_token ?? ''); ?>">
 														</div>
 													</div>
 
@@ -167,13 +167,13 @@ $userData = $user->cdp_getUserData();
 													<div class="col-md-12">
 														<div class="form-group">
 															<label for="firstName1"><?php echo $lang['left1120'] ?></label>
-															<input type="text" class="form-control" name="phone_custom" id="phone_custom" placeholder="+14155238886" value="<?php echo $core->twilio_number; ?>">
+															<input type="text" class="form-control" name="phone_custom" id="phone_custom" placeholder="+14155238886" value="<?php echo ($core->twilio_number ?? ''); ?>">
 															<span id="valid-msg" class="hide"></span>
 															<div id="error-msg" class="hide text-danger"></div>
 														</div>
 													</div>
 
-													<input type="hidden" name="twilio_number" id="twilio_number" value="<?php echo $core->twilio_number; ?>" />
+													<input type="hidden" name="twilio_number" id="twilio_number" value="<?php echo ($core->twilio_number ?? ''); ?>" />
 
 
 												</div>

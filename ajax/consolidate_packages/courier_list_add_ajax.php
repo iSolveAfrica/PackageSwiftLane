@@ -33,7 +33,7 @@ $core = new Core;
 $userData = $user->cdp_getUserData();
 
 $search = cdp_sanitize($_REQUEST['search']);
-$status_courier = intval($_REQUEST['status_courier']);
+$status_courier = intval(($_REQUEST['status_courier'] ?? ''));
 
 $sWhere = "";
 
@@ -137,7 +137,8 @@ if ($numrows > 0) { ?>
 						$width = $order_width->width;
 						$height = $order_height->height;
 
-						$total_metric = $length * $width * $height / $row->volumetric_percentage;
+						$volPct = (float) ($row->volumetric_percentage ?? 0);
+						$total_metric = $volPct > 0 ? $length * $width * $height / $volPct : 0;
 
 						$db->cdp_query("SELECT * FROM cdb_styles where id= '14'");
 						$status_style_pickup = $db->cdp_registro();
@@ -156,7 +157,7 @@ if ($numrows > 0) { ?>
 							data-order-no="<?php echo $row->order_no; ?>"
 							data-order-prefix="<?php echo $row->order_prefix; ?>"
                             data-sender="<?php echo htmlspecialchars(cdp_nameWithLocker($sender), ENT_QUOTES, 'UTF-8'); ?>"
-                            data-description="<?php echo $description->order_item_description; ?>"
+                            data-description="<?php echo ($description->order_item_description ?? ''); ?>"
                             data-total-order="<?php echo cdb_money_format($row->total_order); ?>"
                             >
 
@@ -169,7 +170,7 @@ if ($numrows > 0) { ?>
 							?>
 							<td><?php echo ($__pt && !empty($__pt->tracking_purchase)) ? htmlspecialchars((string) $__pt->tracking_purchase) : 'N/A'; ?></td>
 
-                            <td><?php echo $description->order_item_description; ?></td>
+                            <td><?php echo ($description->order_item_description ?? ''); ?></td>
 
 							<td><?php echo $weight; ?></td>
 
@@ -181,7 +182,7 @@ if ($numrows > 0) { ?>
 								<br>
 
 								<?php
-								if ($row->is_pickup == true) { ?>
+								if (($row->is_pickup ?? '') == true) { ?>
 									<span style="background: <?php echo $status_style_pickup->color; ?>;" class="label label-large"><?php echo $status_style_pickup->mod_style; ?></span>
 								<?php
 								}
@@ -194,7 +195,7 @@ if ($numrows > 0) { ?>
 
 							<td class="text-right">
 								<button type="button" name="add_row" id="add_row" 
-									onclick="cdp_add_item('<?php echo $row->order_id; ?>','<?php echo $total_metric; ?>', '<?php echo $weight; ?>', '<?php echo $length; ?>', '<?php echo $width; ?>', '<?php echo $height; ?>', '<?php echo $tracking; ?>', '<?php echo $row->order_no; ?>','<?php echo $row->order_prefix; ?>', '<?php echo htmlspecialchars(addslashes(cdp_nameWithLocker($sender)), ENT_QUOTES, 'UTF-8'); ?>', '<?php echo $description->order_item_description; ?>', '<?php echo cdb_money_format($row->total_order); ?>'); 
+									onclick="cdp_add_item('<?php echo $row->order_id; ?>','<?php echo $total_metric; ?>', '<?php echo $weight; ?>', '<?php echo $length; ?>', '<?php echo $width; ?>', '<?php echo $height; ?>', '<?php echo $tracking; ?>', '<?php echo $row->order_no; ?>','<?php echo $row->order_prefix; ?>', '<?php echo htmlspecialchars(addslashes(cdp_nameWithLocker($sender)), ENT_QUOTES, 'UTF-8'); ?>', '<?php echo ($description->order_item_description ?? ''); ?>', '<?php echo cdb_money_format($row->total_order); ?>'); 
 									$('#tb_row_id_<?php echo $row->order_id; ?>').addClass('marked-row').hide();" 
 									class="btn btn-outline-success btn-sm add_row">
 									<i class="fa fa-plus"></i>

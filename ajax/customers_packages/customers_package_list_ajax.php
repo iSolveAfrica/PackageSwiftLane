@@ -37,7 +37,7 @@ $userData = $user->cdp_getUserData();
 $permissions = $user->cdp_getUserPermissions();
 
 $search = cdp_sanitize($_REQUEST['search']);
-$status_courier = intval($_REQUEST['status_courier']);
+$status_courier = intval(($_REQUEST['status_courier'] ?? ''));
 
 $sWhere = "";
 
@@ -236,7 +236,7 @@ if ($numrows > 0) { ?>
 
 
 
-							<td class="text-center"><?php echo $address_order->sender_country; ?>-<?php echo $address_order->sender_city; ?></td>
+							<td class="text-center"><?php echo ($address_order->sender_country ?? ''); ?>-<?php echo ($address_order->sender_city ?? ''); ?></td>
 							<?php if ($userData->userlevel == 1) { ?>
 								<td class="text-center text-nowrap"><?php echo ((float) $row->total_weight > 0) ? number_format((float) $row->total_weight, 2) . ' ' . htmlspecialchars((string) $core->weight_p, ENT_QUOTES, 'UTF-8') : '—'; ?></td>
 							<?php } ?>

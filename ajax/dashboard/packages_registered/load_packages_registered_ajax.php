@@ -178,7 +178,7 @@ if ($numrows > 0) { ?>
 
 
 
-							<td class="text-center"><?php echo $address_order->sender_country; ?>-<?php echo $address_order->sender_city; ?></td>
+							<td class="text-center"><?php echo ($address_order->sender_country ?? ''); ?>-<?php echo ($address_order->sender_city ?? ''); ?></td>
 							<td class="text-center"><?php echo $courier_com->name_com; ?></td>
 
 							<td class="text-center">
