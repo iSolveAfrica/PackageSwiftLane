@@ -1,49 +1,13 @@
 <?php
-// *************************************************************************
-// *                                                                       *
-// * Swiftlane - Integrated Web Shipping System                            *
-// * Copyright (c) iSolveAfrica Ltd. All rights reserved.                  *
-// *                                                                       *
-// *************************************************************************
-// *                                                                       *
-// * This software and its source code are proprietary and confidential    *
-// * property of iSolveAfrica Ltd. and were developed specifically for     *
-// * Swiftlane.                                                            *
-// *                                                                       *
-// * The software may not be copied, reproduced, modified, distributed,    *
-// * sublicensed, published, or used in whole or in part except as         *
-// * expressly permitted under the applicable license or written           *
-// * agreement with iSolveAfrica Ltd. Any permitted copies or derivative   *
-// * works must retain this copyright notice and all applicable            *
-// * proprietary notices.                                                  *
-// *                                                                       *
-// *************************************************************************
-
-
-    // Incluye el archivo loader.php
-    require_once("loader.php");
-
-    // Crea instancias de las clases User y Core
-    $user = new User();
-    $core = new Core();
-
-    $permissions = $user->cdp_getUserPermissions();
-
-    // ... ask if we are logged in here:
-    if ($user->cdp_loginCheck() == true)
-    {
-
-      if (!$user->cdp_hasPermission('view_tools')) {
-          header("location: error403.php");
-          exit;
-      }
-
-      include('views/tools/all_tools.php');
-           
- 
-    } else{
-        
-        header("location: login.php");
-        exit;       
-    }
-?>
+/** Settings hub: every setting in one place (SettingsHub artboard). The previous tools grid stays at tools.php?legacy=1. */
+require_once 'loader.php';
+$user = new User();
+$core = new Core();
+require_once 'helpers/sl_view.php';
+sl_gate('view_tools');
+if (isset($_GET['legacy'])) {
+    include 'views/tools/all_tools.php';
+    exit;
+}
+require_once 'views/sl/data/settings_hub.php';
+sl_render('SettingsHub', ['id' => 'general', 'title' => 'Settings', 'board' => 'SettingsHub'], sl_settingsHubData($user, $core));

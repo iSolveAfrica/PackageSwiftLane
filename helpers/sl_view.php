@@ -263,6 +263,12 @@ function sl_gate($permission = null): void
     }
     $permissions = $user->cdp_getUserPermissions();
     $userData = $user->cdp_getUserData();
+    if (is_file(CDP_ROOT . '/helpers/sl_auth.php')) {
+        require_once CDP_ROOT . '/helpers/sl_auth.php';
+        if (function_exists('sl_passwordRotationGuard')) {
+            sl_passwordRotationGuard();
+        }
+    }
     if ($permission !== null && !$user->cdp_hasPermission($permission)) {
         header('Location: error403.php');
         exit;

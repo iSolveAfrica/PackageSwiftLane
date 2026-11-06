@@ -1,49 +1,19 @@
 <?php
-// *************************************************************************
-// *                                                                       *
-// * Swiftlane - Integrated Web Shipping System                            *
-// * Copyright (c) iSolveAfrica Ltd. All rights reserved.                  *
-// *                                                                       *
-// *************************************************************************
-// *                                                                       *
-// * This software and its source code are proprietary and confidential    *
-// * property of iSolveAfrica Ltd. and were developed specifically for     *
-// * Swiftlane.                                                            *
-// *                                                                       *
-// * The software may not be copied, reproduced, modified, distributed,    *
-// * sublicensed, published, or used in whole or in part except as         *
-// * expressly permitted under the applicable license or written           *
-// * agreement with iSolveAfrica Ltd. Any permitted copies or derivative   *
-// * works must retain this copyright notice and all applicable            *
-// * proprietary notices.                                                  *
-// *                                                                       *
-// *************************************************************************
-
-
-
-    require_once("loader.php");
-
-    $user = new User();
-    $core = new Core();
-    // ... ask if we are logged in here:
-    if ($user->cdp_loginCheck() == true) 
-    {
-
-        $permissions = $user->cdp_getUserPermissions();
-
-        $userData = $user->cdp_getUserData();
-        if (!$user->cdp_hasPermission('view_recipients')) {
-            header("location: error403.php");
-            exit;
-        }
-
-       
-      include('views/recipients/recipients_admin_list.php');     
-           
-
-    } else{
-        
-        header("location: login.php");
-        exit;       
-    }
-?>
+// Recipients (Swift Lane UI). Staff view: every recipient in agency scope.
+require_once 'loader.php';
+$user = new User();
+$core = new Core();
+require_once 'helpers/sl_view.php';
+sl_gate('view_recipients');
+require_once 'views/sl/data/recipients.php';
+$d = sl_recipientsData($user, $core);
+if (($_GET['export'] ?? '') === 'csv') {
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="recipients-' . date('Ymd') . '.csv"');
+    $out = fopen('php://output', 'w');
+    fputcsv($out, ['Name', 'Phone', 'E-mail', 'Country', 'Address', 'Added by', 'Parcels']);
+    foreach ($d['rows'] as $r) fputcsv($out, [$r['name'], $r['phone'], $r['mail'], $r['region'], $r['addr'], $r['by'], $r['n']]);
+    fclose($out);
+    exit;
+}
+sl_render('Recipients', ['id' => 'recip', 'title' => 'Recipients', 'board' => 'Recipients'], $d);

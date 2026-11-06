@@ -4,17 +4,17 @@ One row per screen of the approved design. Status: **done** (real data, actions 
 
 | Screen | Design title | Legacy equivalent / decision | Status | Data source (tables) | Endpoints / writes | Permissions | Verification |
 |---|---|---|---|---|---|---|---|
-| DesignSystem | Design System | | planned | | | | |
+| DesignSystem | Design System | new design_system.php | done | static tokens/icons (design_system.php) | none | view_tools | screenshot 1440 admin; customer gets 403 |
 | Main | Overview (Admin) | views/dashboard/index.php (replaced; richer briefing, queues, forecast) | done | cdb_add_order, cdb_customers_packages, cdb_pre_alert, cdb_consolidate*, cdb_courier_track, cdb_users, cdb_activity_log, cdb_met_payment, cdb_sl_settings | none (read only) | main_dashboard_index via index.php routing; money hidden without view_money_dashboard | screenshot 1440/390, seeded DB |
-| ClientDashboard | Customer Portal Home | | planned | | | | |
-| UserHome | My Account (Customer) | | planned | | | | |
-| CustomerNotifications | My Notification Settings (Customer) | | planned | | | | |
-| Login | Log In | | planned | | | | |
-| SignUp | Sign Up | | planned | | | | |
-| ForgotPassword | Forgot Password | | planned | | | | |
-| LoginOtp | Login OTP | | planned | | | | |
-| PasswordReset | Password Reset (every 30 days) | | planned | | | | |
-| PublicTracking | Public Tracking | | planned | | | | |
+| ClientDashboard | Customer Portal Home | views/dashboard/dashboard_client.php (replaced via index.php client branch) | done | cdb_add_order, cdb_customers_packages, cdb_courier_track, cdb_virtual_mailbox_addresses / cdb_settings | none (read only; track form → track.php, support → support.php) | client role; finance cards hidden when finance is off | screenshot 1440 as customer |
+| UserHome | My Account (Customer) | customers_profile_edit.php (legacy full edit form kept at ?edit=1) | partial | cdb_users, cdb_senders_addresses, cdb_add_order, cdb_customers_packages, cdb_pre_alert, cdb_recipients, cdb_courier_track, cdb_user_notification_prefs | none on this page (edit → ?edit=1 legacy endpoints, AiStudio, PasswordReset) | customers_profile_edit | screenshot 1440 as customer; promo banner, shipper standing and inline support chat omitted (no data source) |
+| CustomerNotifications | My Notification Settings (Customer) | new customer_notifications.php | partial | cdb_user_notification_prefs, cdb_user_preferences, cdb_users.newsletter, cdb_message_log / cdb_notifications | ajax/sl/notification_prefs_ajax.php (channel, event, preset, pref, quiet, newsletter, test) | login (own rows only) | channel/event/quiet/test exercised, rows checked; senders do not yet consult sl_notifAllowed() |
+| Login | Log In | login.php (cdp_login + OTP + CSRF kept; view replaced) | done | cdb_users, cdb_sl_settings (pictures/texts) | POST login.php | public | good + bad password via browser/curl, screenshot |
+| SignUp | Sign Up | sign-up.php → ajax/sign_up_ajax.php (unchanged) | done | cdb_users, cdb_senders_addresses, cdb_countries/states/cities | ajax/sign_up_ajax.php | public | full sign-up submitted in browser, row created then removed |
+| ForgotPassword | Forgot Password | forgot-password.php (step 1) + auth-otp.php?flow=forgot (step 2) | done | cdb_users, cdb_auth_otp_challenges | ajax/forgot-password-ajax.php, POST auth-otp.php | public | request sent (local mail template #27 missing, error surfaced), OTP page rendered |
+| LoginOtp | Login OTP | auth-otp.php (flows login/signup; CSRF added to verify/resend) | done | cdb_auth_otp_challenges, cdb_auth_trusted_devices | POST auth-otp.php | public with OTP session | rendered with active_otp=1; no-context redirect checked |
+| PasswordReset | Password Reset (every 30 days) | forgot-reset.php (forgot token or logged-in rotation) | done | cdb_users.password_changed_at, cdb_sl_settings.password_rotation_days | POST forgot-reset.php | forgot token or login | rotation=30 + 40-day-old password → redirected after login, changed, password_changed_at set |
+| PublicTracking | Public Tracking | track.php (views/track.php replaced) | done | cdb_add_order / cdb_customers_packages, cdb_courier_track, cdb_address_shipments, item tables | GET track.php?order_track= | public (names masked, 30 lookups/min/session) | found, not found, package numbers; screenshot |
 | AirShipments | Air Shipments | | planned | | | | |
 | NewShipment | New Shipment | | planned | | | | |
 | ShipmentDetail | Shipment Detail | | planned | | | | |
@@ -87,8 +87,8 @@ One row per screen of the approved design. Status: **done** (real data, actions 
 | MessageCosts | Message Costs | | planned | | | | |
 | Transactions | Transactions | transactions.php (replaced) | done | payments union (gateway, charges, fs ledger incl. refunds) | ?export=csv | view_transactions; finance guard | screenshot 1440/390 |
 | SystemLogs | System Logs | | planned | | | | |
-| MyBills | My Bills (Customer) | | planned | | | | |
-| QuoteCalculator | Rate Calculator (Public) | | planned | | | | |
+| MyBills | My Bills (Customer) | my_bills.php (legacy checklist at ?legacy=1) | done | cdb_add_order, cdb_consolidate_customer_billing, cdb_fs_payments, cdb_fs_discounts | none (pay → PayCheckout) | view_my_bills, finance switch | screenshot as customer |
+| QuoteCalculator | Rate Calculator (Public) | cotizar.php | done | cdb_shipping_fees (public rows), cdb_countries, cdb_category | GET cotizar.php | public | temporary public tariff: $72 for 12 kg, no-tariff message |
 | PackageIntake | Package Intake (AI lookup) | | planned | | | | |
 | Label4x6 | Label 4×6 in | | planned | | | | |
 | Label1x2 | Label 1×2 in | | planned | | | | |
@@ -101,9 +101,9 @@ One row per screen of the approved design. Status: **done** (real data, actions 
 | StaffPermissions | Staff Permissions | | planned | | | | |
 | FinancialOverviewRestricted | Financial Overview · no money permission | same page when cdp_canViewMoney($user,'finance') denies (or ?as_restricted=1 to preview) | done | as FinancialOverview; every amount scrubbed server-side before render | reminders via ar_remind_ajax | view_financial_overview without view_money_finance/view_monetary_values | screenshot 1440 |
 | CostSettings | Operating Costs (super admin) | new cost_settings.php | done | cdb_operating_costs, cdb_operating_cost_log, cdb_message_log | ajax/sl/cost_settings_ajax.php (save / add / remove, change log, activity log) | read: view_tools; write: super admin or manage_operating_costs | added two lines, screenshot 1440/390 |
-| LoginSettings | Login Page (settings) | | planned | | | | |
+| LoginSettings | Login Page (settings) | new login_settings.php | partial | cdb_sl_settings (login_*), assets/uploads/login/ | ajax/sl/login_settings_ajax.php (upload, toggle, up, delete, page, save, reset) | view_tools | upload (bad file rejected), save texts, toggle; login page shows them. Logo/favicon link to Settings; register-form toggles and button colour not implemented |
 | ShippingAddresses | Shipping Addresses (settings) | | planned | | | | |
-| AiStudio | AI Profile Studio | | planned | | | | |
+| AiStudio | AI Profile Studio | new ai_studio.php | partial | cdb_users, cdb_user_preferences.avatar_style | ajax/sl/profile_studio_ajax.php (profile, icon, reset_photo); upload via existing users/customers avatar endpoints | login (own account) | name, upload, icon, reset exercised. AI retouch disabled: configured assistant is text only |
 | SettingsHub | Settings (hub + general) | | planned | | | | |
 | Documents | Documents & exports | | planned | | | | |
 | ComposeMessage | Compose message | | planned | | | | |
@@ -112,7 +112,7 @@ One row per screen of the approved design. Status: **done** (real data, actions 
 | InviteStaff | Invite staff | | planned | | | | |
 | RecordPayment | Record payment | add_payment_gateways_{courier,package,consolidate,consolidate_package}.php (replaced; one design form, ?type=) | done | invoices with status_invoice 23 per customer, cdb_payment_methods | ajax/sl/record_payment_ajax.php: cdp_insertPaymentGateway (packages/consolidations) or cdb_charges_order (air) + cdp_confirmPayment* → 19 when paid in full, fs_cleared_for_delivery, optional release of held parcels and receipt via cdp_pushNotifyUser; activity log | fs_record_payment / manage_account_payments / verify_*payment; finance guard | wrote one air payment (SL-101463 → invoice 19, charge row), screenshot 1440/390 |
 | SchedulePickup | Schedule pickup | | planned | | | | |
-| PayCheckout | Pay bills (customer) | | planned | | | | |
+| PayCheckout | Pay bills (customer) | new pay_checkout.php → ajax/customer/my_bills_ajax.php (bill/checkout) → Paystack | partial | cdb_consolidate_customer_billing, cdb_fs_* | ajax/customer/my_bills_ajax.php | pay_my_bills, finance switch | renders; foreign bill refused; no local billing rows so hosted checkout not reached; single shipments are pay-at-office |
 | RateEditor | Rate editor | shipping_tariffs_add.php / shipping_tariffs_edit.php?id= (replaced) | done | cdb_shipping_fees (+ min_charge, valid_from/until), countries/states/cities | ajax/sl/tariff_save_ajax.php (cdp_verifyRangeTariffsExist, cdp_insertTariffs/cdp_updateTariffs/cdp_deleteTariffs, same rules as ajax/tools/ship_tariffs/*) | create_shipping_tariff / edit_shipping_tariff / delete_shipping_tariff | created one band, overlap refused (422) |
 | NewIntegration | Add integration | | planned | | | | |
 | ApiConnections | API connections (payments, couriers, AI…) | | planned | | | | |

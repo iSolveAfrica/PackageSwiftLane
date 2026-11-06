@@ -305,7 +305,7 @@ function sl_devInfraData($user, $core): array
     $s = cdp_devSeries('24h');
     $sp = fn($k) => sl_devSpark(array_column($s, $k), 200, 40);
     $d['kpis'] = [
-        ['icon' => 'i-cpu', 'label' => 'CPU', 'v' => $srv['cpu_pct'] ?? null !== null ? (string) $srv['cpu_pct'] : '—', 'unit' => isset($srv['cpu_pct']) && $srv['cpu_pct'] !== null ? '%' : '', 'd' => ($srv['cores'] ?? '?') . ' cores · load ' . ($srv['load'] ? implode(' / ', $srv['load']) : '—'), 'dc' => '', 'sp' => $sp('cpu')],
+        ['icon' => 'i-cpu', 'label' => 'CPU', 'v' => isset($srv['cpu_pct']) ? (string) $srv['cpu_pct'] : '—', 'unit' => isset($srv['cpu_pct']) && $srv['cpu_pct'] !== null ? '%' : '', 'd' => ($srv['cores'] ?? '?') . ' cores · load ' . ($srv['load'] ? implode(' / ', $srv['load']) : '—'), 'dc' => '', 'sp' => $sp('cpu')],
         ['icon' => 'i-server', 'label' => 'Memory', 'v' => isset($srv['mem_pct']) && $srv['mem_pct'] !== null ? (string) $srv['mem_pct'] : '—', 'unit' => isset($srv['mem_pct']) && $srv['mem_pct'] !== null ? '%' : '', 'd' => !empty($srv['mem_total']) ? sl_devBytes($srv['mem_used']) . ' of ' . sl_devBytes($srv['mem_total']) : 'Not readable', 'dc' => '', 'sp' => $sp('mem')],
         ['icon' => 'i-folder', 'label' => 'Disk', 'v' => (string) $disk['pct'], 'unit' => '%', 'd' => sl_devBytes($disk['free']) . ' free', 'dc' => $disk['pct'] >= 85 ? 'dv-warn' : '', 'sp' => $sp('disk')],
         ['icon' => 'i-database', 'label' => 'Database', 'v' => $my['ok'] ? (string) $my['ms'] : '—', 'unit' => $my['ok'] ? 'ms' : '', 'd' => $my['threads'] . ' / ' . $my['max_conn'] . ' connections', 'dc' => $my['ok'] ? '' : 'dv-bad', 'sp' => $sp('db')],

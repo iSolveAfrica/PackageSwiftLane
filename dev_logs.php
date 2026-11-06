@@ -1,0 +1,9 @@
+<?php
+/** Developer console: Logs (Swift Lane design: DevLogs, dark). */
+require_once 'loader.php';
+$user = new User();
+$core = new Core();
+require_once 'helpers/sl_view.php';
+sl_gate('view_developer');
+require_once 'views/sl/data/dev.php';
+sl_render('DevLogs', ['id' => 'devlogs', 'title' => 'Logs', 'board' => 'DevLogs', 'theme' => 'dk'], sl_devLogsData($user, $core));

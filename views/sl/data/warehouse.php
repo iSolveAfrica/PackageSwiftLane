@@ -146,12 +146,12 @@ function sl_whHandoverStats(int $days): array
 {
     $scope = '';
     $rows = sl_rows("SELECT DATE(t.t_date) AS d, HOUR(t.t_date) AS h, DAYOFWEEK(t.t_date) AS wd, t.status_courier AS s, COUNT(DISTINCT t.order_track) AS n FROM cdb_courier_track t WHERE t.status_courier IN (8,15) AND t.t_date >= CURDATE() - INTERVAL " . ($days - 1) . " DAY GROUP BY d, h, wd, s");
-    $byDay = []; $hours = array_fill(8, 11, 0); $heat = []; $pick = 0; $del = 0;
+    $byDay = []; $hours = array_fill(8, 12, 0); $heat = []; $pick = 0; $del = 0;
     foreach ($rows as $r) {
         $n = (int) $r->n;
         $byDay[$r->d][(int) $r->s] = ($byDay[$r->d][(int) $r->s] ?? 0) + $n;
         if ((int) $r->s === 15) $pick += $n; else $del += $n;
-        if ((int) $r->h >= 8 && (int) $r->h <= 18) $hours[(int) $r->h] += $n;
+        if ((int) $r->h >= 8 && (int) $r->h <= 19) $hours[(int) $r->h] += $n;
         $heat[(int) $r->wd][(int) $r->h] = ($heat[(int) $r->wd][(int) $r->h] ?? 0) + $n;
     }
     $bars = []; $mx = 1; $busy = ['', 0];
@@ -167,7 +167,7 @@ function sl_whHandoverStats(int $days): array
     $hm = [];
     foreach ([2 => 'Mon', 3 => 'Tue', 4 => 'Wed', 5 => 'Thu', 6 => 'Fri', 7 => 'Sat'] as $wd => $l) {
         $c = [];
-        for ($h = 8; $h <= 18; $h++) $c[] = sl_heatLevel($heat[$wd][$h] ?? 0, $peak);
+        for ($h = 8; $h <= 19; $h++) $c[] = sl_heatLevel($heat[$wd][$h] ?? 0, $peak);
         $hm[] = ['d' => $l, 'c' => $c];
     }
     $tot = $pick + $del;
