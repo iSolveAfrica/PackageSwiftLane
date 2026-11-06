@@ -260,5 +260,12 @@ SELECT 1, ma.id, 1, NOW() FROM cdb_user_module_actions ma
 WHERE ma.action_name IN ('client_virtual_mail_box_addresses', 'pay_my_bills', 'view_my_bills')
   AND NOT EXISTS (SELECT 1 FROM cdb_user_role_permissions p WHERE p.role_id = 1 AND p.module_action_id = ma.id);
 
+
+-- One-time code e-mail templates used by lib/OtpService.php (ids 27 forgot, 28 login, 30 sign-up).
+-- Only inserted when missing; an existing template with the same id is never changed.
+INSERT INTO cdb_email_templates (id, name, subject, help, body) SELECT 27, 'Password reset code', 'Your [SITE_NAME] password reset code', 'Placeholders: [USERNAME] [SITE_NAME] [PASSWORD] (the code) [IP] [URL] [TTL]', '<p>Hello [USERNAME],</p><p>Use this code to reset your [SITE_NAME] password: <b style="font-size:20px;letter-spacing:3px">[PASSWORD]</b></p><p>The code expires in [TTL]. If you did not ask for it, ignore this e-mail. Request from IP [IP].</p>' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_email_templates WHERE id = 27);
+INSERT INTO cdb_email_templates (id, name, subject, help, body) SELECT 28, 'Login code', 'Your [SITE_NAME] sign-in code', 'Placeholders: [USERNAME] [SITE_NAME] [PASSWORD] (the code) [IP] [URL] [TTL]', '<p>Hello [USERNAME],</p><p>Your [SITE_NAME] sign-in code is <b style="font-size:20px;letter-spacing:3px">[PASSWORD]</b></p><p>The code expires in [TTL]. If this was not you, change your password. Request from IP [IP].</p>' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_email_templates WHERE id = 28);
+INSERT INTO cdb_email_templates (id, name, subject, help, body) SELECT 30, 'Sign-up verification code', 'Confirm your [SITE_NAME] account', 'Placeholders: [USERNAME] [SITE_NAME] [PASSWORD] (the code) [IP] [URL] [TTL]', '<p>Welcome [USERNAME],</p><p>Enter this code to confirm your [SITE_NAME] account: <b style="font-size:20px;letter-spacing:3px">[PASSWORD]</b></p><p>The code expires in [TTL].</p>' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_email_templates WHERE id = 30);
+
 INSERT INTO cdb_schema_migrations (name, applied_at) SELECT '2026_11_06_legacy_drift', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_schema_migrations WHERE name = '2026_11_06_legacy_drift');
 SELECT 'ok: 2026_11_06_legacy_drift' AS result;

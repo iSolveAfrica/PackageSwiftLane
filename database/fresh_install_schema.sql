@@ -157118,6 +157118,13 @@ SELECT 1, ma.id, 1, NOW() FROM cdb_user_module_actions ma
 WHERE ma.action_name IN ('client_virtual_mail_box_addresses', 'pay_my_bills', 'view_my_bills')
   AND NOT EXISTS (SELECT 1 FROM cdb_user_role_permissions p WHERE p.role_id = 1 AND p.module_action_id = ma.id);
 
+
+-- One-time code e-mail templates used by lib/OtpService.php (ids 27 forgot, 28 login, 30 sign-up).
+-- Only inserted when missing; an existing template with the same id is never changed.
+INSERT INTO cdb_email_templates (id, name, subject, help, body) SELECT 27, 'Password reset code', 'Your [SITE_NAME] password reset code', 'Placeholders: [USERNAME] [SITE_NAME] [PASSWORD] (the code) [IP] [URL] [TTL]', '<p>Hello [USERNAME],</p><p>Use this code to reset your [SITE_NAME] password: <b style="font-size:20px;letter-spacing:3px">[PASSWORD]</b></p><p>The code expires in [TTL]. If you did not ask for it, ignore this e-mail. Request from IP [IP].</p>' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_email_templates WHERE id = 27);
+INSERT INTO cdb_email_templates (id, name, subject, help, body) SELECT 28, 'Login code', 'Your [SITE_NAME] sign-in code', 'Placeholders: [USERNAME] [SITE_NAME] [PASSWORD] (the code) [IP] [URL] [TTL]', '<p>Hello [USERNAME],</p><p>Your [SITE_NAME] sign-in code is <b style="font-size:20px;letter-spacing:3px">[PASSWORD]</b></p><p>The code expires in [TTL]. If this was not you, change your password. Request from IP [IP].</p>' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_email_templates WHERE id = 28);
+INSERT INTO cdb_email_templates (id, name, subject, help, body) SELECT 30, 'Sign-up verification code', 'Confirm your [SITE_NAME] account', 'Placeholders: [USERNAME] [SITE_NAME] [PASSWORD] (the code) [IP] [URL] [TTL]', '<p>Welcome [USERNAME],</p><p>Enter this code to confirm your [SITE_NAME] account: <b style="font-size:20px;letter-spacing:3px">[PASSWORD]</b></p><p>The code expires in [TTL].</p>' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_email_templates WHERE id = 30);
+
 INSERT INTO cdb_schema_migrations (name, applied_at) SELECT '2026_11_06_legacy_drift', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_schema_migrations WHERE name = '2026_11_06_legacy_drift');
 SELECT 'ok: 2026_11_06_legacy_drift' AS result;
 
@@ -157287,6 +157294,270 @@ FROM cdb_virtual_mailbox_addresses v
 LEFT JOIN cdb_countries c ON c.id = v.cdb_countries_id
 WHERE c.iso2 = 'CN' OR c.name LIKE '%China%'
 ORDER BY v.id;
+
+-- Ledger (added 2026-11-06)
+CREATE TABLE IF NOT EXISTS cdb_schema_migrations (name VARCHAR(190) NOT NULL, applied_at DATETIME NOT NULL, PRIMARY KEY (name)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+INSERT INTO cdb_schema_migrations (name, applied_at) SELECT '2026_11_04_pickup_codes_handover_sms_mailbox', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_schema_migrations WHERE name = '2026_11_04_pickup_codes_handover_sms_mailbox');
+
+
+-- >>> migrations/2026_11_06_auth_portal.sql
+-- =============================================================================
+-- 2026-11-06  Swift Lane UI: authentication, public pages and customer portal
+-- Run:  mysql -u USER -p DBNAME < migrations/2026_11_06_auth_portal.sql
+-- Every step is safe to run again (guards on information_schema / WHERE NOT EXISTS).
+-- Requires 2026_11_06_swiftlane_ui_core.sql (cdb_sl_settings, cdb_user_preferences,
+-- cdb_users.password_changed_at, cdb_schema_migrations).
+-- =============================================================================
+SET NAMES utf8mb4;
+
+-- Per-channel notification preferences of a customer (CustomerNotifications) ---
+-- channel: whatsapp | sms | email      event_key: '*' = channel master switch,
+-- otherwise one of the keys in views/sl/data/portal.php (sl_notificationEvents()).
+CREATE TABLE IF NOT EXISTS cdb_user_notification_prefs (
+    user_id     INT NOT NULL,
+    channel     VARCHAR(20) NOT NULL,
+    event_key   VARCHAR(40) NOT NULL,
+    enabled     TINYINT(1) NOT NULL DEFAULT 1,
+    updated_at  DATETIME NULL,
+    PRIMARY KEY (user_id, channel, event_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Password rotation (PasswordReset board): 0 = off, N = must change every N days.
+INSERT INTO cdb_sl_settings (setting_key, setting_value, updated_at)
+    SELECT 'password_rotation_days', '0', NOW() FROM DUAL
+    WHERE NOT EXISTS (SELECT 1 FROM cdb_sl_settings WHERE setting_key = 'password_rotation_days');
+
+-- Login page pictures and captions (LoginSettings board) are stored as JSON in
+-- cdb_sl_settings.login_slides; the look settings keep their own keys so an
+-- operator can edit them by hand.
+INSERT INTO cdb_sl_settings (setting_key, setting_value, updated_at)
+    SELECT 'login_blur', '50', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_sl_settings WHERE setting_key = 'login_blur');
+INSERT INTO cdb_sl_settings (setting_key, setting_value, updated_at)
+    SELECT 'login_dim', '30', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_sl_settings WHERE setting_key = 'login_dim');
+INSERT INTO cdb_sl_settings (setting_key, setting_value, updated_at)
+    SELECT 'login_interval', '6', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_sl_settings WHERE setting_key = 'login_interval');
+INSERT INTO cdb_sl_settings (setting_key, setting_value, updated_at)
+    SELECT 'login_captions', '1', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_sl_settings WHERE setting_key = 'login_captions');
+INSERT INTO cdb_sl_settings (setting_key, setting_value, updated_at)
+    SELECT 'login_pages', 'login,register,forgot', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_sl_settings WHERE setting_key = 'login_pages');
+
+-- Users who never changed their password count from the day the column arrived,
+-- so enabling rotation does not lock everybody out at once.
+UPDATE cdb_users SET password_changed_at = NOW() WHERE password_changed_at IS NULL;
+
+INSERT INTO cdb_schema_migrations (name, applied_at) SELECT '2026_11_06_auth_portal', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_schema_migrations WHERE name = '2026_11_06_auth_portal');
+SELECT 'ok: 2026_11_06_auth_portal' AS result;
+
+
+-- >>> migrations/2026_11_06_finance_reports.sql
+-- =============================================================================
+-- 2026-11-06  Swift Lane UI: finance, tariffs, reports and control panels
+-- Run:  mysql -u USER -p DBNAME < migrations/2026_11_06_finance_reports.sql
+-- Every step is safe to run again (guards on information_schema). Never drops.
+-- =============================================================================
+SET NAMES utf8mb4;
+
+CREATE TABLE IF NOT EXISTS cdb_schema_migrations (
+    name        VARCHAR(190) NOT NULL,
+    applied_at  DATETIME NOT NULL,
+    PRIMARY KEY (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Financial module ledgers (helpers/fs_payments.php, fs_status.php, fs_reports.php,
+-- dashboard_data.php and ajax/reports/financial_sheet_ajax.php). These tables had
+-- no DDL in the repository; the columns below are the ones that code reads/writes.
+CREATE TABLE IF NOT EXISTS cdb_consolidate_customer_billing (
+    consolidate_id  INT NOT NULL,
+    sender_id       INT NOT NULL,
+    amount_usd      DECIMAL(14,2) NOT NULL DEFAULT 0,
+    amount_ghs      DECIMAL(14,2) NULL,
+    handling_ghs    DECIMAL(14,2) NULL,
+    discount_ghs    DECIMAL(14,2) NULL,
+    paid_ghs        DECIMAL(14,2) NULL,
+    paid_at         DATETIME NULL,
+    paid_by         INT NULL,
+    exchange_rate   DECIMAL(12,4) NOT NULL DEFAULT 0,
+    billed_by       INT NULL,
+    billed_at       DATETIME NULL,
+    PRIMARY KEY (consolidate_id, sender_id),
+    KEY idx_sender (sender_id),
+    KEY idx_billed (billed_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_consolidate_billing_notes (
+    id              INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    consolidate_id  INT NOT NULL,
+    sender_id       INT NOT NULL,
+    note            TEXT NULL,
+    created_by      INT NULL,
+    created_at      DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    KEY idx_cs (consolidate_id, sender_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_fs_payments (
+    id                   INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    consolidate_id       INT NOT NULL DEFAULT 0,
+    sender_id            INT NOT NULL,
+    amount_ghs           DECIMAL(14,2) NOT NULL DEFAULT 0,
+    refunded_ghs         DECIMAL(14,2) NULL,
+    refunded_at          DATETIME NULL,
+    mode                 VARCHAR(20) NOT NULL DEFAULT 'cash',
+    reference            VARCHAR(190) NULL,
+    gateway_status       VARCHAR(30) NULL,
+    gateway_raw_status   VARCHAR(60) NULL,
+    gateway_response     VARCHAR(255) NULL,
+    gateway_channel      VARCHAR(60) NULL,
+    gateway_currency     VARCHAR(10) NULL,
+    gateway_fees_ghs     DECIMAL(14,2) NULL,
+    gateway_customer     VARCHAR(190) NULL,
+    gateway_paid_at      DATETIME NULL,
+    gateway_checked_at   DATETIME NULL,
+    gateway_payload      MEDIUMTEXT NULL,
+    reversed_at          DATETIME NULL,
+    reversal_reason      VARCHAR(255) NULL,
+    cleared_for_delivery TINYINT(1) NOT NULL DEFAULT 0,
+    cleared_orders       TEXT NULL,
+    note                 VARCHAR(500) NULL,
+    exchange_rate        DECIMAL(12,4) NOT NULL DEFAULT 0,
+    recorded_by          INT NULL,
+    recorded_at          DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    KEY idx_cs (consolidate_id, sender_id),
+    KEY idx_recorded (recorded_at),
+    KEY idx_reference (reference),
+    KEY idx_status (gateway_status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_fs_payment_intents (
+    id             INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    reference      VARCHAR(190) NOT NULL,
+    consolidate_id INT NOT NULL DEFAULT 0,
+    sender_id      INT NOT NULL,
+    amount_ghs     DECIMAL(14,2) NOT NULL DEFAULT 0,
+    exchange_rate  DECIMAL(12,4) NOT NULL DEFAULT 0,
+    mode           VARCHAR(20) NOT NULL DEFAULT 'paystack',
+    orders         TEXT NULL,
+    status         VARCHAR(20) NOT NULL DEFAULT 'pending',
+    checkout_url   VARCHAR(500) NULL,
+    payment_id     INT UNSIGNED NULL,
+    fail_reason    VARCHAR(255) NULL,
+    gateway_payload MEDIUMTEXT NULL,
+    created_by     INT NULL,
+    created_at     DATETIME NOT NULL,
+    completed_at   DATETIME NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_reference (reference),
+    KEY idx_cs (consolidate_id, sender_id),
+    KEY idx_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_fs_payment_events (
+    id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    payment_id  INT UNSIGNED NULL,
+    reference   VARCHAR(190) NULL,
+    source      VARCHAR(40) NOT NULL DEFAULT 'unknown',
+    event       VARCHAR(60) NULL,
+    old_status  VARCHAR(30) NULL,
+    new_status  VARCHAR(30) NULL,
+    amount_ghs  DECIMAL(14,2) NULL,
+    message     VARCHAR(255) NULL,
+    payload     TEXT NULL,
+    actor_id    INT NULL,
+    created_at  DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    KEY idx_payment (payment_id),
+    KEY idx_reference (reference)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_fs_discounts (
+    id             INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    consolidate_id INT NOT NULL DEFAULT 0,
+    sender_id      INT NOT NULL,
+    order_id       INT NULL,
+    amount_ghs     DECIMAL(14,2) NOT NULL DEFAULT 0,
+    disc_type      VARCHAR(10) NOT NULL DEFAULT 'fixed',
+    reason         VARCHAR(255) NULL,
+    exchange_rate  DECIMAL(12,4) NOT NULL DEFAULT 0,
+    applied_by     INT NULL,
+    applied_at     DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    KEY idx_cs (consolidate_id, sender_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Operating costs (Cost Settings, super admin) ---------------------------------
+CREATE TABLE IF NOT EXISTS cdb_operating_costs (
+    id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    name         VARCHAR(120) NOT NULL,
+    category     VARCHAR(30) NOT NULL DEFAULT 'other',
+    amount       DECIMAL(14,2) NOT NULL DEFAULT 0,
+    currency     VARCHAR(5) NOT NULL DEFAULT 'GHS',
+    frequency    VARCHAR(10) NOT NULL DEFAULT 'monthly',
+    unit_label   VARCHAR(40) NULL,
+    on_billing   TINYINT(1) NOT NULL DEFAULT 1,
+    applies_from DATE NULL,
+    is_active    TINYINT(1) NOT NULL DEFAULT 1,
+    created_by   INT NULL,
+    created_at   DATETIME NOT NULL,
+    updated_by   INT NULL,
+    updated_at   DATETIME NULL,
+    PRIMARY KEY (id),
+    KEY idx_active (is_active, category)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_operating_cost_log (
+    id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    cost_id     INT UNSIGNED NULL,
+    cost_name   VARCHAR(120) NOT NULL,
+    old_amount  DECIMAL(14,2) NULL,
+    new_amount  DECIMAL(14,2) NULL,
+    changed_by  INT NULL,
+    changed_at  DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    KEY idx_changed (changed_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Tariff rows: minimum charge and validity window shown by the rate editor -----
+SET @has_col := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_shipping_fees' AND COLUMN_NAME = 'min_charge');
+SET @sql := IF(@has_col = 0, 'ALTER TABLE cdb_shipping_fees ADD COLUMN min_charge DECIMAL(12,2) NOT NULL DEFAULT 0, ADD COLUMN valid_from DATE NULL, ADD COLUMN valid_until DATE NULL', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- Settings read by the new pages (finance switch, targets) -------------------
+CREATE TABLE IF NOT EXISTS cdb_sl_settings (
+    setting_key   VARCHAR(64) NOT NULL,
+    setting_value TEXT NULL,
+    updated_by    INT NULL,
+    updated_at    DATETIME NULL,
+    PRIMARY KEY (setting_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+INSERT INTO cdb_sl_settings (setting_key, setting_value, updated_at) SELECT 'finance_enabled', '1', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_sl_settings WHERE setting_key = 'finance_enabled');
+INSERT INTO cdb_sl_settings (setting_key, setting_value, updated_at) SELECT 'margin_target_pct', '42', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_sl_settings WHERE setting_key = 'margin_target_pct');
+INSERT INTO cdb_sl_settings (setting_key, setting_value, updated_at) SELECT 'price_message_template', 'Hello [NAME], your package [TRACKING] is priced at [PRICE]. Reply to this message or pay online: [URL]', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_sl_settings WHERE setting_key = 'price_message_template');
+
+-- Permissions ---------------------------------------------------------------
+INSERT INTO cdb_user_module_permissions (module_name, description) SELECT 'SWIFTLANE_UI', 'Swift Lane interface, logs, finance and warehouse permissions' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_user_module_permissions WHERE module_name = 'SWIFTLANE_UI');
+SET @mod := (SELECT id FROM cdb_user_module_permissions WHERE module_name = 'SWIFTLANE_UI' LIMIT 1);
+INSERT INTO cdb_user_module_actions (module_id, action_name, description_module)
+SELECT @mod, a.name, a.descr FROM (
+    SELECT 'fs_price_items' AS name, 'Finance: price package items' AS descr UNION ALL
+    SELECT 'fs_bill_customer', 'Finance: bill a customer' UNION ALL
+    SELECT 'fs_record_payment', 'Finance: record a payment' UNION ALL
+    SELECT 'fs_apply_discount', 'Finance: apply or remove a discount' UNION ALL
+    SELECT 'view_monetary_values', 'See money figures on dashboards and reports' UNION ALL
+    SELECT 'view_money_dashboard', 'See money on the dashboards' UNION ALL
+    SELECT 'view_money_finance', 'See money on the financial overview' UNION ALL
+    SELECT 'manage_operating_costs', 'Edit operating costs (super admin)' UNION ALL
+    SELECT 'send_prices', 'Send package prices to customers' UNION ALL
+    SELECT 'manage_finance_switch', 'Switch the finance module on or off' UNION ALL
+    SELECT 'view_exec_dashboard', 'View the management dashboard'
+) a WHERE NOT EXISTS (SELECT 1 FROM cdb_user_module_actions x WHERE x.action_name = a.name);
+INSERT INTO cdb_user_role_permissions (role_id, module_action_id, permitted, created_at)
+SELECT r.role_id, ma.id, 1, NOW() FROM cdb_user_module_actions ma JOIN cdb_user_roles r ON r.role_id IN (9, 2)
+WHERE ma.action_name IN ('fs_price_items','fs_bill_customer','fs_record_payment','fs_apply_discount','view_monetary_values','view_money_dashboard','view_money_finance','manage_operating_costs','send_prices','manage_finance_switch','view_exec_dashboard')
+  AND NOT EXISTS (SELECT 1 FROM cdb_user_role_permissions p WHERE p.role_id = r.role_id AND p.module_action_id = ma.id);
+
+INSERT INTO cdb_schema_migrations (name, applied_at) SELECT '2026_11_06_finance_reports', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_schema_migrations WHERE name = '2026_11_06_finance_reports');
+SELECT 'ok: 2026_11_06_finance_reports' AS result;
 
 
 -- >>> migrations/2026_11_06_freight_devops.sql
@@ -157526,25 +157797,14 @@ CREATE TABLE IF NOT EXISTS cdb_dev_alert_rules (
     UNIQUE KEY uq_rule (rule_key)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- Alerts: same table the live DevOps dashboard (helpers/devops.php) creates on
+-- first use, so both the collector and the rule engine write one list.
 CREATE TABLE IF NOT EXISTS cdb_dev_alerts (
-    id              BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    rule_id         INT UNSIGNED NULL,
-    rule_key        VARCHAR(40) NOT NULL,
-    severity        VARCHAR(10) NOT NULL DEFAULT 'warning',
-    title           VARCHAR(190) NOT NULL,
-    detail          VARCHAR(500) NULL,
-    value           DECIMAL(12,2) NULL,
-    threshold       DECIMAL(12,2) NULL,
-    status          VARCHAR(14) NOT NULL DEFAULT 'firing',    -- firing | acknowledged | resolved
-    first_seen_at   DATETIME NOT NULL,
-    last_seen_at    DATETIME NOT NULL,
-    acknowledged_by INT NULL,
-    acknowledged_at DATETIME NULL,
-    resolved_at     DATETIME NULL,
-    PRIMARY KEY (id),
-    KEY idx_status (status, rule_key),
-    KEY idx_seen (last_seen_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+    id INT NOT NULL AUTO_INCREMENT, alert_key VARCHAR(80) NOT NULL, severity VARCHAR(12) NOT NULL, service VARCHAR(60) NOT NULL,
+    title VARCHAR(160) NOT NULL, detail VARCHAR(500) NULL, context TEXT NULL, status VARCHAR(12) NOT NULL DEFAULT 'active',
+    first_seen DATETIME NOT NULL, last_seen DATETIME NOT NULL, resolved_at DATETIME NULL, ack_by INT NULL, ack_at DATETIME NULL,
+    PRIMARY KEY (id), KEY idx_key (alert_key, status), KEY idx_status (status, last_seen)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS cdb_dev_issues (
     id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -157580,6 +157840,11 @@ CREATE TABLE IF NOT EXISTS cdb_dev_issue_events (
     KEY idx_issue (issue_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- Security Centre: flag that makes a user choose a new password ---------------
+SET @has_col := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_users' AND COLUMN_NAME = 'force_password_reset');
+SET @sql := IF(@has_col = 0, 'ALTER TABLE cdb_users ADD COLUMN force_password_reset TINYINT(1) NOT NULL DEFAULT 0', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
 -- Default alert rules (edit on the Alerts page) --------------------------------
 INSERT INTO cdb_dev_alert_rules (rule_key, label, metric, comparator, threshold, window_min, severity, notify, enabled, created_at)
 SELECT 'disk', 'Disk usage above 85%', 'disk_pct', '>', 85, 0, 'critical', 'email', 1, NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_dev_alert_rules WHERE rule_key = 'disk');
@@ -157611,6 +157876,231 @@ WHERE ma.action_name IN ('view_freight', 'manage_freight', 'manage_insurance', '
 
 INSERT INTO cdb_schema_migrations (name, applied_at) SELECT '2026_11_06_freight_devops', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_schema_migrations WHERE name = '2026_11_06_freight_devops');
 SELECT 'ok: 2026_11_06_freight_devops' AS result;
+
+
+-- >>> migrations/2026_11_06_messaging_settings.sql
+-- =============================================================================
+-- 2026-11-06  Swift Lane UI: messaging, automations, settings and API admin
+-- Run:  mysql -u USER -p DBNAME < migrations/2026_11_06_messaging_settings.sql
+-- Every step is safe to run again (guards on information_schema).
+-- Pages: Notification Center, Compose, Broadcast, Email Builder, Templates,
+--        Message Logs / Costs, Comms Hub, Automations, Settings Hub,
+--        Shipping Addresses, Module Controller, API Connections / Access /
+--        Monitor / Traffic.
+-- =============================================================================
+SET NAMES utf8mb4;
+
+CREATE TABLE IF NOT EXISTS cdb_schema_migrations (
+    name        VARCHAR(190) NOT NULL,
+    applied_at  DATETIME NOT NULL,
+    PRIMARY KEY (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_sl_settings (
+    setting_key   VARCHAR(64) NOT NULL,
+    setting_value TEXT NULL,
+    updated_by    INT NULL,
+    updated_at    DATETIME NULL,
+    PRIMARY KEY (setting_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Notification Center: which system event goes out on which channel ---------
+-- One row per (event, channel). Absent row = the channel's default (on for
+-- the events the legacy senders already cover). template_id points at
+-- cdb_email_templates / cdb_sms_templates / whatsapp_templates by channel.
+CREATE TABLE IF NOT EXISTS cdb_notification_rules (
+    event_key    VARCHAR(60) NOT NULL,
+    channel      VARCHAR(12) NOT NULL,
+    enabled      TINYINT(1) NOT NULL DEFAULT 1,
+    template_id  INT NULL,
+    updated_by   INT NULL,
+    updated_at   DATETIME NULL,
+    PRIMARY KEY (event_key, channel)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Automations: "when <trigger> [only if <conditions>] then <actions>" --------
+CREATE TABLE IF NOT EXISTS cdb_automations (
+    id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    name          VARCHAR(150) NOT NULL,
+    trigger_key   VARCHAR(60) NOT NULL,
+    conditions    TEXT NULL,            -- JSON list [{key,op,value}]
+    actions       TEXT NULL,            -- JSON list [{type, ...params}]
+    enabled       TINYINT(1) NOT NULL DEFAULT 1,
+    run_count     INT UNSIGNED NOT NULL DEFAULT 0,
+    last_run_at   DATETIME NULL,
+    created_by    INT NULL,
+    created_at    DATETIME NOT NULL,
+    updated_at    DATETIME NULL,
+    PRIMARY KEY (id),
+    KEY idx_trigger (trigger_key, enabled)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_automation_runs (
+    id             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    automation_id  INT UNSIGNED NOT NULL,
+    trigger_key    VARCHAR(60) NOT NULL,
+    entity_type    VARCHAR(40) NULL,
+    entity_id      VARCHAR(64) NULL,
+    entity_label   VARCHAR(190) NULL,
+    outcome        VARCHAR(12) NOT NULL DEFAULT 'ok',   -- ok | skipped | failed | test
+    detail         VARCHAR(500) NULL,
+    created_at     DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    KEY idx_auto (automation_id, created_at),
+    KEY idx_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- API connections: state and non-secret config per outside service ----------
+-- Secrets of payments / SMS / WhatsApp / AI stay in their own tables
+-- (cdb_met_payment, cdb_sms_settings, cdb_settings, cdb_ai_settings); only
+-- providers without a legacy home (couriers, maps, Slack) keep a secret here.
+CREATE TABLE IF NOT EXISTS cdb_api_connections (
+    provider_key      VARCHAR(40) NOT NULL,
+    category          VARCHAR(20) NOT NULL DEFAULT 'other',
+    enabled           TINYINT(1) NOT NULL DEFAULT 0,
+    config            TEXT NULL,          -- JSON of non-secret fields
+    secret_value      VARCHAR(500) NULL,  -- only for providers with no legacy column
+    environment       VARCHAR(10) NOT NULL DEFAULT 'live',
+    last_check_at     DATETIME NULL,
+    last_check_ok     TINYINT(1) NULL,
+    last_check_ms     INT NULL,
+    last_check_detail VARCHAR(255) NULL,
+    updated_by        INT NULL,
+    updated_at        DATETIME NULL,
+    PRIMARY KEY (provider_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- REST API request log (api/v1/index.php writes one lean row per request) ---
+CREATE TABLE IF NOT EXISTS cdb_api_request_log (
+    id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    created_at   DATETIME NOT NULL,
+    direction    VARCHAR(4) NOT NULL DEFAULT 'in',   -- in = our API was called
+    method       VARCHAR(8) NOT NULL,
+    path         VARCHAR(190) NOT NULL,
+    status       SMALLINT NOT NULL DEFAULT 0,
+    duration_ms  INT NOT NULL DEFAULT 0,
+    user_id      INT NULL,
+    token_id     BIGINT UNSIGNED NULL,
+    ip           VARCHAR(45) NULL,
+    user_agent   VARCHAR(120) NULL,
+    error        VARCHAR(190) NULL,
+    PRIMARY KEY (id),
+    KEY idx_created (created_at),
+    KEY idx_path (path(60), created_at),
+    KEY idx_user (user_id, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- cdb_api_tokens: the table ApiAuth uses (created on first use by the API) ---
+CREATE TABLE IF NOT EXISTS cdb_api_tokens (
+    id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    user_id      INT NOT NULL,
+    token_hash   VARCHAR(128) NOT NULL,
+    name         VARCHAR(100) NULL,
+    expires_at   DATETIME NOT NULL,
+    last_used_at DATETIME NULL,
+    created_at   DATETIME NOT NULL,
+    revoked_at   DATETIME NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_token_hash (token_hash),
+    KEY idx_user_id (user_id),
+    KEY idx_expires (expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Shipping addresses: columns the admin page adds (label, mode, on/off) -----
+CREATE TABLE IF NOT EXISTS cdb_virtual_mailbox_addresses (
+    id               INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    cdb_countries_id BIGINT UNSIGNED NULL,
+    country          VARCHAR(190) NULL,
+    city             VARCHAR(190) NULL,
+    postcode         VARCHAR(40) NULL,
+    address          TEXT NULL,
+    default_address  TINYINT(1) NOT NULL DEFAULT 0,
+    PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+SET @has_col := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_virtual_mailbox_addresses' AND COLUMN_NAME = 'label');
+SET @sql := IF(@has_col = 0, 'ALTER TABLE cdb_virtual_mailbox_addresses ADD COLUMN label VARCHAR(120) NULL, ADD COLUMN shipping_mode VARCHAR(10) NOT NULL DEFAULT ''air'', ADD COLUMN transit_days VARCHAR(40) NULL, ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1, ADD COLUMN sort_order INT NOT NULL DEFAULT 0, ADD COLUMN updated_at DATETIME NULL', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- Permissions -----------------------------------------------------------------
+SET @mod := (SELECT id FROM cdb_user_module_permissions WHERE module_name = 'CONFIGURACION_GENERAL' LIMIT 1);
+SET @mod_api := (SELECT id FROM cdb_user_module_permissions WHERE module_name = 'API_ADMINISTRATION' LIMIT 1);
+INSERT INTO cdb_user_module_actions (module_id, action_name, description_module)
+SELECT a.m, a.name, a.d FROM (
+    SELECT IFNULL(@mod, 10) AS m, 'push_notifications' AS name, 'Send push notifications to customers' AS d UNION ALL
+    SELECT IFNULL(@mod, 10), 'view_message_logs', 'View message logs and message costs' UNION ALL
+    SELECT IFNULL(@mod, 10), 'manage_automations', 'Create and edit automations' UNION ALL
+    SELECT IFNULL(@mod, 10), 'manage_notification_rules', 'Switch system notifications on or off per channel' UNION ALL
+    SELECT IFNULL(@mod, 10), 'manage_shipping_addresses', 'Manage the warehouse shipping addresses shown to customers' UNION ALL
+    SELECT IFNULL(@mod_api, 19), 'manage_api_settings', 'Manage API connections to outside services' UNION ALL
+    SELECT IFNULL(@mod_api, 19), 'view_api_logs', 'View API request logs and live traffic' UNION ALL
+    SELECT IFNULL(@mod_api, 19), 'use_api_tokens', 'Create and revoke own REST API tokens'
+) a WHERE NOT EXISTS (SELECT 1 FROM cdb_user_module_actions x WHERE x.action_name = a.name);
+INSERT INTO cdb_user_role_permissions (role_id, module_action_id, permitted, created_at)
+SELECT r.role_id, ma.id, 1, NOW()
+FROM cdb_user_module_actions ma
+JOIN (SELECT 9 AS role_id UNION ALL SELECT 2) r
+WHERE ma.action_name IN ('push_notifications', 'view_message_logs', 'manage_automations', 'manage_notification_rules',
+                         'manage_shipping_addresses', 'manage_api_settings', 'view_api_logs', 'use_api_tokens')
+  AND NOT EXISTS (SELECT 1 FROM cdb_user_role_permissions p WHERE p.role_id = r.role_id AND p.module_action_id = ma.id);
+
+-- Default notification rules (match what the legacy senders do today) --------
+INSERT INTO cdb_notification_rules (event_key, channel, enabled, template_id, updated_at)
+SELECT a.k, a.c, a.e, a.t, NOW() FROM (
+    SELECT 'shipment.registered' AS k, 'email' AS c, 1 AS e, 16 AS t UNION ALL
+    SELECT 'shipment.registered', 'sms', 1, 2 UNION ALL
+    SELECT 'shipment.registered', 'whatsapp', 1, 8 UNION ALL
+    SELECT 'shipment.tracking', 'email', 1, 10 UNION ALL
+    SELECT 'shipment.tracking', 'sms', 0, 4 UNION ALL
+    SELECT 'shipment.tracking', 'whatsapp', 1, 6 UNION ALL
+    SELECT 'shipment.delivered', 'email', 1, 18 UNION ALL
+    SELECT 'shipment.delivered', 'sms', 1, 5 UNION ALL
+    SELECT 'shipment.delivered', 'whatsapp', 1, 7 UNION ALL
+    SELECT 'package.registered', 'email', 1, 21 UNION ALL
+    SELECT 'package.registered', 'sms', 1, 7 UNION ALL
+    SELECT 'package.registered', 'whatsapp', 1, 8 UNION ALL
+    SELECT 'package.tracking', 'email', 1, 22 UNION ALL
+    SELECT 'package.tracking', 'sms', 0, 8 UNION ALL
+    SELECT 'package.tracking', 'whatsapp', 1, 6 UNION ALL
+    SELECT 'package.delivered', 'email', 1, 23 UNION ALL
+    SELECT 'package.delivered', 'sms', 1, 9 UNION ALL
+    SELECT 'package.delivered', 'whatsapp', 1, 7 UNION ALL
+    SELECT 'pickup.requested', 'email', 1, 24 UNION ALL
+    SELECT 'pickup.requested', 'sms', 1, 11 UNION ALL
+    SELECT 'pickup.requested', 'whatsapp', 0, NULL UNION ALL
+    SELECT 'consolidation.created', 'email', 1, 1 UNION ALL
+    SELECT 'consolidation.created', 'sms', 0, 13 UNION ALL
+    SELECT 'consolidation.created', 'whatsapp', 0, NULL UNION ALL
+    SELECT 'consolidation.tracking', 'email', 1, 19 UNION ALL
+    SELECT 'consolidation.tracking', 'sms', 0, NULL UNION ALL
+    SELECT 'consolidation.tracking', 'whatsapp', 0, NULL UNION ALL
+    SELECT 'consolidation.delivered', 'email', 1, 14 UNION ALL
+    SELECT 'consolidation.delivered', 'sms', 0, 17 UNION ALL
+    SELECT 'consolidation.delivered', 'whatsapp', 0, NULL UNION ALL
+    SELECT 'prealert.created', 'email', 1, 20 UNION ALL
+    SELECT 'prealert.created', 'sms', 0, NULL UNION ALL
+    SELECT 'prealert.created', 'whatsapp', 0, NULL UNION ALL
+    SELECT 'payment.pending', 'email', 0, NULL UNION ALL
+    SELECT 'payment.pending', 'sms', 0, NULL UNION ALL
+    SELECT 'payment.pending', 'whatsapp', 1, 1 UNION ALL
+    SELECT 'account.welcome', 'email', 1, 7 UNION ALL
+    SELECT 'account.welcome', 'sms', 0, NULL UNION ALL
+    SELECT 'account.welcome', 'whatsapp', 0, NULL UNION ALL
+    SELECT 'account.activated', 'email', 1, 17 UNION ALL
+    SELECT 'account.activated', 'sms', 0, NULL UNION ALL
+    SELECT 'account.activated', 'whatsapp', 0, NULL UNION ALL
+    SELECT 'account.password_reset', 'email', 1, 2 UNION ALL
+    SELECT 'account.password_reset', 'sms', 0, NULL UNION ALL
+    SELECT 'account.password_reset', 'whatsapp', 0, NULL UNION ALL
+    SELECT 'admin.new_user', 'email', 1, 13 UNION ALL
+    SELECT 'admin.new_user', 'sms', 0, NULL UNION ALL
+    SELECT 'admin.new_user', 'whatsapp', 0, NULL UNION ALL
+    SELECT 'push.manual', 'email', 1, 29 UNION ALL
+    SELECT 'push.manual', 'sms', 1, NULL UNION ALL
+    SELECT 'push.manual', 'whatsapp', 1, 12
+) a WHERE NOT EXISTS (SELECT 1 FROM cdb_notification_rules r WHERE r.event_key = a.k AND r.channel = a.c);
+
+INSERT INTO cdb_schema_migrations (name, applied_at) SELECT '2026_11_06_messaging_settings', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_schema_migrations WHERE name = '2026_11_06_messaging_settings');
+SELECT 'ok: 2026_11_06_messaging_settings' AS result;
 
 
 -- >>> migrations/2026_11_06_people_staff.sql
@@ -157747,6 +158237,13 @@ SELECT 'on_time_bonus', 'On-time bonus (90%+ in a week)', 'bonus', 20.00, 100, 1
 INSERT INTO cdb_rider_fee_rules (rule_key, label, rule_type, amount, rider_pct, active, sort_order, created_at)
 SELECT 'failed_attempt', 'Failed delivery attempt', 'penalty', 2.00, 100, 1, 5, NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_rider_fee_rules WHERE rule_key = 'failed_attempt');
 
+INSERT INTO cdb_rider_fee_rules (rule_key, label, rule_type, amount, rider_pct, active, sort_order, created_at)
+SELECT 'veh_motorbike', 'Motorbike', 'vehicle', 0, 60, 1, 10, NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_rider_fee_rules WHERE rule_key = 'veh_motorbike');
+INSERT INTO cdb_rider_fee_rules (rule_key, label, rule_type, amount, rider_pct, active, sort_order, created_at)
+SELECT 'veh_van', 'Van', 'vehicle', 0, 65, 1, 11, NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_rider_fee_rules WHERE rule_key = 'veh_van');
+INSERT INTO cdb_rider_fee_rules (rule_key, label, rule_type, amount, rider_pct, active, sort_order, created_at)
+SELECT 'veh_car', 'Car', 'vehicle', 0, 65, 1, 12, NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_rider_fee_rules WHERE rule_key = 'veh_car');
+
 -- Permissions ------------------------------------------------------------------
 INSERT INTO cdb_user_module_permissions (module_name, description) SELECT 'SWIFTLANE_UI', 'Swift Lane interface, logs, finance and warehouse permissions' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_user_module_permissions WHERE module_name = 'SWIFTLANE_UI');
 SET @mod := (SELECT id FROM cdb_user_module_permissions WHERE module_name = 'SWIFTLANE_UI' LIMIT 1);
@@ -157767,4 +158264,521 @@ WHERE ma.action_name IN ('view_staff_activity', 'dispatch_riders', 'view_rider_d
 -- Ledger --------------------------------------------------------------------
 INSERT INTO cdb_schema_migrations (name, applied_at) SELECT '2026_11_06_people_staff', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_schema_migrations WHERE name = '2026_11_06_people_staff');
 SELECT 'people_staff migration applied' AS result;
+
+
+-- >>> migrations/2026_11_06_shipments.sql
+-- =============================================================================
+-- 2026-11-06  Swift Lane UI: air shipments, tracking, labels and documents
+-- Run:  mysql -u USER -p DBNAME < migrations/2026_11_06_shipments.sql
+-- Every step is safe to run again (guards on information_schema).
+-- =============================================================================
+SET NAMES utf8mb4;
+
+CREATE TABLE IF NOT EXISTS cdb_schema_migrations (
+    name        VARCHAR(190) NOT NULL,
+    applied_at  DATETIME NOT NULL,
+    PRIMARY KEY (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_sl_settings (
+    setting_key   VARCHAR(64) NOT NULL,
+    setting_value TEXT NULL,
+    updated_by    INT NULL,
+    updated_at    DATETIME NULL,
+    PRIMARY KEY (setting_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Tracking events: where a milestone came from (staff, import, rider, api) ---
+SET @has_col := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_courier_track' AND COLUMN_NAME = 'source');
+SET @sql := IF(@has_col = 0, 'ALTER TABLE cdb_courier_track ADD COLUMN source VARCHAR(40) NULL', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- Status disputes raised from the tracking page --------------------------------
+CREATE TABLE IF NOT EXISTS cdb_tracking_disputes (
+    id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    order_id    INT NOT NULL,
+    order_track VARCHAR(100) NOT NULL,
+    reason      VARCHAR(190) NOT NULL,
+    note        VARCHAR(500) NULL,
+    raised_by   INT NULL,
+    raised_at   DATETIME NOT NULL,
+    resolved_by INT NULL,
+    resolved_at DATETIME NULL,
+    PRIMARY KEY (id),
+    KEY idx_order (order_id, resolved_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Label Studio options and public tracking privacy (cdb_sl_settings) --------
+INSERT INTO cdb_sl_settings (setting_key, setting_value, updated_at)
+SELECT 'label_options', '{"size":"46","sender":1,"fragile":0,"phone":1,"qr":1,"contents":1,"value":1,"customs":0,"code":1,"postage":0,"care":1,"ret":0,"copies":1,"printer":"Default printer"}', NOW() FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM cdb_sl_settings WHERE setting_key = 'label_options');
+INSERT INTO cdb_sl_settings (setting_key, setting_value, updated_at)
+SELECT 'label_small_options', '{"use":"locker","size":"17","tag":1,"barcode":1,"code":0}', NOW() FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM cdb_sl_settings WHERE setting_key = 'label_small_options');
+INSERT INTO cdb_sl_settings (setting_key, setting_value, updated_at)
+SELECT 'tracking_public_privacy', '{"name":0,"address":0,"items":0,"expires":"30"}', NOW() FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM cdb_sl_settings WHERE setting_key = 'tracking_public_privacy');
+
+-- Permissions: package intake (packages module) and documents hub (reports) --
+INSERT INTO cdb_user_module_actions (module_id, action_name, description_module)
+SELECT 1, 'package_intake', 'Register packages by tracking number (Package Intake)' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM cdb_user_module_actions WHERE action_name = 'package_intake');
+INSERT INTO cdb_user_module_actions (module_id, action_name, description_module)
+SELECT 5, 'view_documents', 'Documents and exports hub' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM cdb_user_module_actions WHERE action_name = 'view_documents');
+INSERT INTO cdb_user_role_permissions (role_id, module_action_id, permitted, created_at)
+SELECT r.role_id, a.id, 1, NOW() FROM cdb_user_roles r JOIN cdb_user_module_actions a ON a.action_name IN ('package_intake', 'view_documents')
+WHERE r.role_id IN (9, 2) AND NOT EXISTS (SELECT 1 FROM cdb_user_role_permissions p WHERE p.role_id = r.role_id AND p.module_action_id = a.id);
+
+INSERT INTO cdb_schema_migrations (name, applied_at) SELECT '2026_11_06_shipments', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_schema_migrations WHERE name = '2026_11_06_shipments');
+SELECT 'ok: 2026_11_06_shipments' AS result;
+
+
+-- >>> migrations/2026_11_06_support_ai_loyalty.sql
+-- =============================================================================
+-- 2026-11-06  Swift Lane UI: customer service, AI assistant and loyalty
+-- Run:  mysql -u USER -p DBNAME < migrations/2026_11_06_support_ai_loyalty.sql
+-- Every step is safe to run again (CREATE TABLE IF NOT EXISTS, WHERE NOT EXISTS,
+-- guards on information_schema). Nothing is dropped or truncated.
+--
+-- 1. The helpdesk tables (cdb_cs_*) and the AI assistant tables (cdb_ai_*) are
+--    created here so a fresh install does not rely on the lazy creation in
+--    helpers/support.php / helpers/ai_assistant.php (which stays as a fallback).
+--    The DDL below is a verbatim copy of those helpers.
+-- 2. Loyalty, referrals and rewards (helpers/loyalty.php, loyalty_rewards.php).
+-- 3. Settings seeds in cdb_sl_settings and the schema ledger.
+-- =============================================================================
+SET NAMES utf8mb4;
+
+CREATE TABLE IF NOT EXISTS cdb_schema_migrations (
+    name        VARCHAR(190) NOT NULL,
+    applied_at  DATETIME NOT NULL,
+    PRIMARY KEY (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_sl_settings (
+    setting_key   VARCHAR(64) NOT NULL,
+    setting_value TEXT NULL,
+    updated_by    INT NULL,
+    updated_at    DATETIME NULL,
+    PRIMARY KEY (setting_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Customer service (copy of helpers/support.php, CDP_CS_SCHEMA 1) -----------
+
+CREATE TABLE IF NOT EXISTS cdb_cs_settings (
+    setting_key VARCHAR(64) NOT NULL, setting_value TEXT NULL, updated_by INT NULL, updated_at DATETIME NULL,
+    PRIMARY KEY (setting_key)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_cs_teams (
+    id INT NOT NULL AUTO_INCREMENT, name VARCHAR(120) NOT NULL, description VARCHAR(255) NULL,
+    assign_mode VARCHAR(20) NOT NULL DEFAULT 'manual', timezone VARCHAR(64) NULL, is_default TINYINT(1) NOT NULL DEFAULT 0,
+    active TINYINT(1) NOT NULL DEFAULT 1, created_at DATETIME NOT NULL,
+    PRIMARY KEY (id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_cs_team_members (
+    team_id INT NOT NULL, user_id INT NOT NULL, is_lead TINYINT(1) NOT NULL DEFAULT 0,
+    capacity INT NOT NULL DEFAULT 20, available TINYINT(1) NOT NULL DEFAULT 1, last_assigned_at DATETIME NULL,
+    PRIMARY KEY (team_id, user_id), KEY idx_user (user_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_cs_conversations (
+    id INT NOT NULL AUTO_INCREMENT, public_ref VARCHAR(20) NOT NULL, customer_id INT NULL,
+    channel VARCHAR(20) NOT NULL DEFAULT 'web', subject VARCHAR(190) NULL,
+    owner_state VARCHAR(20) NOT NULL DEFAULT 'ai_active', owner_seq INT NOT NULL DEFAULT 0, owner_user_id INT NULL,
+    ticket_id INT NULL, language VARCHAR(12) NULL, ai_turns INT NOT NULL DEFAULT 0, handover_reason VARCHAR(255) NULL,
+    handover_at DATETIME NULL, accepted_at DATETIME NULL, resolved_at DATETIME NULL, ai_outcome VARCHAR(20) NULL,
+    rating TINYINT NULL, last_customer_at DATETIME NULL, last_message_at DATETIME NULL,
+    customer_read_id INT NOT NULL DEFAULT 0, created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL,
+    PRIMARY KEY (id), UNIQUE KEY uq_ref (public_ref), KEY idx_customer (customer_id, updated_at),
+    KEY idx_state (owner_state, updated_at), KEY idx_ticket (ticket_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_cs_messages (
+    id INT NOT NULL AUTO_INCREMENT, conversation_id INT NULL, ticket_id INT NULL,
+    author_type VARCHAR(12) NOT NULL, author_id INT NULL, visibility VARCHAR(10) NOT NULL DEFAULT 'public',
+    channel VARCHAR(20) NOT NULL DEFAULT 'web', body MEDIUMTEXT NULL, attachments TEXT NULL, meta TEXT NULL,
+    client_msg_id VARCHAR(64) NULL, delivery_state VARCHAR(16) NOT NULL DEFAULT 'sent', created_at DATETIME NOT NULL,
+    PRIMARY KEY (id), KEY idx_conv (conversation_id, id), KEY idx_ticket (ticket_id, id),
+    UNIQUE KEY uq_client (author_type, author_id, client_msg_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_cs_tickets (
+    id INT NOT NULL AUTO_INCREMENT, public_ref VARCHAR(20) NOT NULL, conversation_id INT NULL, customer_id INT NULL,
+    contact_name VARCHAR(190) NULL, contact_email VARCHAR(190) NULL, contact_phone VARCHAR(40) NULL,
+    subject VARCHAR(190) NOT NULL, description TEXT NULL, category VARCHAR(40) NOT NULL DEFAULT 'general',
+    priority VARCHAR(10) NOT NULL DEFAULT 'normal', status VARCHAR(20) NOT NULL DEFAULT 'new',
+    disposition VARCHAR(10) NOT NULL DEFAULT 'none', channel VARCHAR(20) NOT NULL DEFAULT 'web',
+    language VARCHAR(12) NOT NULL DEFAULT 'en', language_source VARCHAR(10) NULL, team_id INT NULL, assignee_id INT NULL,
+    is_internal TINYINT(1) NOT NULL DEFAULT 0, pending_reason VARCHAR(255) NULL, resolution_code VARCHAR(40) NULL,
+    resolution_summary TEXT NULL, summary MEDIUMTEXT NULL, merged_into INT NULL, parent_id INT NULL,
+    sla_policy VARCHAR(40) NULL, sla_first_due DATETIME NULL, sla_resolve_due DATETIME NULL,
+    sla_paused_at DATETIME NULL, sla_paused_minutes INT NOT NULL DEFAULT 0,
+    first_breached_at DATETIME NULL, resolve_breached_at DATETIME NULL, sla_warned TINYINT(1) NOT NULL DEFAULT 0,
+    first_response_at DATETIME NULL, human_first_response_at DATETIME NULL, resolved_at DATETIME NULL, closed_at DATETIME NULL,
+    reopen_count INT NOT NULL DEFAULT 0, csat_score TINYINT NULL, csat_comment TEXT NULL, csat_at DATETIME NULL,
+    last_customer_at DATETIME NULL, last_activity_at DATETIME NOT NULL, ack_sent TINYINT(1) NOT NULL DEFAULT 0,
+    version INT NOT NULL DEFAULT 1, created_by INT NULL, created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL,
+    PRIMARY KEY (id), UNIQUE KEY uq_ref (public_ref), KEY idx_customer (customer_id, status),
+    KEY idx_queue (disposition, status, assignee_id, last_activity_at), KEY idx_team (team_id, status),
+    KEY idx_created (created_at)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_cs_ticket_tags (
+    ticket_id INT NOT NULL, tag VARCHAR(40) NOT NULL, PRIMARY KEY (ticket_id, tag), KEY idx_tag (tag)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_cs_followers (
+    ticket_id INT NOT NULL, user_id INT NOT NULL, PRIMARY KEY (ticket_id, user_id), KEY idx_user (user_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_cs_links (
+    id INT NOT NULL AUTO_INCREMENT, ticket_id INT NOT NULL, entity_type VARCHAR(20) NOT NULL, entity_id INT NOT NULL,
+    entity_ref VARCHAR(80) NULL, created_by INT NULL, created_at DATETIME NOT NULL,
+    PRIMARY KEY (id), UNIQUE KEY uq_link (ticket_id, entity_type, entity_id), KEY idx_entity (entity_type, entity_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_cs_tasks (
+    id INT NOT NULL AUTO_INCREMENT, ticket_id INT NULL, title VARCHAR(255) NOT NULL, due_at DATETIME NULL,
+    assignee_id INT NULL, done_at DATETIME NULL, done_by INT NULL, created_by INT NULL, created_at DATETIME NOT NULL,
+    PRIMARY KEY (id), KEY idx_ticket (ticket_id), KEY idx_assignee (assignee_id, done_at)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_cs_events (
+    id BIGINT NOT NULL AUTO_INCREMENT, ticket_id INT NULL, conversation_id INT NULL, event_type VARCHAR(40) NOT NULL,
+    actor_type VARCHAR(12) NOT NULL DEFAULT 'system', actor_id INT NULL, data TEXT NULL, created_at DATETIME NOT NULL,
+    PRIMARY KEY (id), KEY idx_ticket (ticket_id, id), KEY idx_conv (conversation_id, id), KEY idx_type (event_type, created_at)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_cs_rules (
+    id INT NOT NULL AUTO_INCREMENT, name VARCHAR(160) NOT NULL, kind VARCHAR(12) NOT NULL DEFAULT 'automation',
+    trigger_event VARCHAR(40) NOT NULL, match_mode VARCHAR(4) NOT NULL DEFAULT 'all', conditions TEXT NULL, actions TEXT NULL,
+    status VARCHAR(12) NOT NULL DEFAULT 'draft', sort_order INT NOT NULL DEFAULT 100, stop_processing TINYINT(1) NOT NULL DEFAULT 0,
+    max_per_ticket INT NOT NULL DEFAULT 1, version INT NOT NULL DEFAULT 1, run_count INT NOT NULL DEFAULT 0,
+    fail_count INT NOT NULL DEFAULT 0, last_run_at DATETIME NULL, template_key VARCHAR(40) NULL,
+    created_by INT NULL, updated_by INT NULL, created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL,
+    PRIMARY KEY (id), KEY idx_trigger (status, trigger_event, sort_order)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_cs_rule_versions (
+    id INT NOT NULL AUTO_INCREMENT, rule_id INT NOT NULL, version INT NOT NULL, snapshot TEXT NOT NULL,
+    saved_by INT NULL, saved_at DATETIME NOT NULL, PRIMARY KEY (id), KEY idx_rule (rule_id, version)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_cs_rule_runs (
+    id BIGINT NOT NULL AUTO_INCREMENT, rule_id INT NOT NULL, rule_version INT NOT NULL DEFAULT 1, ticket_id INT NULL,
+    event VARCHAR(40) NOT NULL, dedupe_key VARCHAR(120) NULL, outcome VARCHAR(12) NOT NULL, steps TEXT NULL, created_at DATETIME NOT NULL,
+    PRIMARY KEY (id), KEY idx_rule (rule_id, id), UNIQUE KEY uq_dedupe (rule_id, dedupe_key)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_cs_canned (
+    id INT NOT NULL AUTO_INCREMENT, title VARCHAR(160) NOT NULL, body TEXT NOT NULL, shortcut VARCHAR(40) NULL,
+    shared TINYINT(1) NOT NULL DEFAULT 1, created_by INT NULL, created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL,
+    PRIMARY KEY (id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_cs_kb (
+    id INT NOT NULL AUTO_INCREMENT, title VARCHAR(190) NOT NULL, body MEDIUMTEXT NOT NULL, category VARCHAR(60) NULL,
+    audience VARCHAR(10) NOT NULL DEFAULT 'customer', status VARCHAR(12) NOT NULL DEFAULT 'draft', version INT NOT NULL DEFAULT 1,
+    owner_id INT NULL, approved_by INT NULL, approved_at DATETIME NULL, review_at DATE NULL, source_ticket_id INT NULL,
+    helpful INT NOT NULL DEFAULT 0, not_helpful INT NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL,
+    PRIMARY KEY (id), KEY idx_status (status, audience)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_cs_views (
+    id INT NOT NULL AUTO_INCREMENT, user_id INT NOT NULL, name VARCHAR(80) NOT NULL, filters TEXT NOT NULL,
+    shared TINYINT(1) NOT NULL DEFAULT 0, created_at DATETIME NOT NULL, PRIMARY KEY (id), KEY idx_user (user_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_cs_presence (
+    ticket_id INT NOT NULL, user_id INT NOT NULL, seen_at DATETIME NOT NULL, typing_at DATETIME NULL,
+    PRIMARY KEY (ticket_id, user_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_cs_ai_runs (
+    id BIGINT NOT NULL AUTO_INCREMENT, conversation_id INT NULL, ticket_id INT NULL, kind VARCHAR(20) NOT NULL,
+    provider VARCHAR(20) NULL, model VARCHAR(120) NULL, prompt_version VARCHAR(20) NULL, tokens_in INT NULL, tokens_out INT NULL,
+    latency_ms INT NULL, tools TEXT NULL, outcome VARCHAR(30) NOT NULL, detail VARCHAR(255) NULL, user_id INT NULL, created_at DATETIME NOT NULL,
+    PRIMARY KEY (id), KEY idx_kind (kind, created_at), KEY idx_conv (conversation_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_cs_proposals (
+    id INT NOT NULL AUTO_INCREMENT, ticket_id INT NOT NULL, kind VARCHAR(30) NOT NULL, details TEXT NOT NULL,
+    payload_hash CHAR(64) NOT NULL, status VARCHAR(12) NOT NULL DEFAULT 'pending', requested_by_type VARCHAR(12) NOT NULL,
+    requested_by INT NULL, decided_by INT NULL, decided_at DATETIME NULL, decision_note TEXT NULL, ticket_version INT NULL,
+    expires_at DATETIME NOT NULL, created_at DATETIME NOT NULL,
+    PRIMARY KEY (id), KEY idx_ticket (ticket_id, status)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_cs_files (
+    id INT NOT NULL AUTO_INCREMENT, token CHAR(32) NOT NULL, uploaded_by INT NOT NULL, stored_name VARCHAR(80) NOT NULL,
+    original_name VARCHAR(190) NOT NULL, mime VARCHAR(80) NOT NULL, size_bytes INT NOT NULL, created_at DATETIME NOT NULL,
+    PRIMARY KEY (id), UNIQUE KEY uq_token (token), KEY idx_user (uploaded_by)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_cs_outbox (
+    id BIGINT NOT NULL AUTO_INCREMENT, ticket_id INT NULL, user_id INT NOT NULL, kind VARCHAR(20) NOT NULL,
+    channel VARCHAR(12) NOT NULL, subject VARCHAR(190) NULL, body TEXT NOT NULL, dedupe_key VARCHAR(160) NOT NULL,
+    status VARCHAR(12) NOT NULL DEFAULT 'queued', attempts INT NOT NULL DEFAULT 0, send_after DATETIME NOT NULL,
+    last_error VARCHAR(255) NULL, sent_at DATETIME NULL, created_at DATETIME NOT NULL,
+    PRIMARY KEY (id), UNIQUE KEY uq_dedupe (dedupe_key), KEY idx_due (status, send_after), KEY idx_ticket (ticket_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+-- First-run seeds the helper would otherwise write on first use
+INSERT INTO cdb_cs_teams (name, description, assign_mode, is_default, active, created_at)
+SELECT 'Customer Support', 'Default team: receives every case no rule routes elsewhere. Add members on Channels & Teams.', 'least_loaded', 1, 1, NOW() FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM cdb_cs_teams);
+INSERT INTO cdb_cs_settings (setting_key, setting_value, updated_at) SELECT 'seeded', '1', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_cs_settings WHERE setting_key = 'seeded');
+INSERT INTO cdb_cs_settings (setting_key, setting_value, updated_at) SELECT 'schema_version', '1', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_cs_settings WHERE setting_key = 'schema_version');
+
+-- AI assistant (copy of helpers/ai_assistant.php) ----------------------------
+
+CREATE TABLE IF NOT EXISTS cdb_ai_settings (
+    setting_key   VARCHAR(64) NOT NULL,
+    setting_value TEXT NULL,
+    updated_by    INT NULL,
+    updated_at    DATETIME NULL,
+    PRIMARY KEY (setting_key)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_ai_conversations (
+    id          INT NOT NULL AUTO_INCREMENT,
+    user_id     INT NOT NULL,
+    title       VARCHAR(190) NOT NULL DEFAULT 'New chat',
+    created_at  DATETIME NOT NULL,
+    updated_at  DATETIME NOT NULL,
+    is_deleted  TINYINT(1) NOT NULL DEFAULT 0,
+    PRIMARY KEY (id),
+    KEY idx_user (user_id, is_deleted, updated_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_ai_messages (
+    id              INT NOT NULL AUTO_INCREMENT,
+    conversation_id INT NOT NULL,
+    role            VARCHAR(16) NOT NULL,
+    content         MEDIUMTEXT NULL,
+    tools           TEXT NULL,
+    provider        VARCHAR(20) NULL,
+    model           VARCHAR(120) NULL,
+    tokens_in       INT NULL,
+    tokens_out      INT NULL,
+    created_at      DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    KEY idx_conv (conversation_id, id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_ai_questions (
+    id          INT NOT NULL AUTO_INCREMENT,
+    user_id     INT NOT NULL,
+    role_id     INT NULL,
+    role_name   VARCHAR(100) NULL,
+    question    TEXT NOT NULL,
+    tools_used  VARCHAR(500) NULL,
+    outcome     VARCHAR(20) NOT NULL DEFAULT 'answered',
+    created_at  DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    KEY idx_created (created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_ai_knowledge (
+    id          INT NOT NULL AUTO_INCREMENT,
+    note        TEXT NOT NULL,
+    source      VARCHAR(20) NOT NULL DEFAULT 'admin',
+    active      TINYINT(1) NOT NULL DEFAULT 1,
+    created_by  INT NULL,
+    created_at  DATETIME NOT NULL,
+    PRIMARY KEY (id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_ai_page_ideas (
+    id                INT NOT NULL AUTO_INCREMENT,
+    title             VARCHAR(190) NOT NULL,
+    purpose           TEXT NULL,
+    audience          VARCHAR(190) NULL,
+    data_needed       TEXT NULL,
+    rationale         TEXT NULL,
+    example_questions TEXT NULL,
+    source            VARCHAR(20) NOT NULL DEFAULT 'chat',
+    status            VARCHAR(20) NOT NULL DEFAULT 'new',
+    votes             INT NOT NULL DEFAULT 1,
+    created_by        INT NULL,
+    created_at        DATETIME NOT NULL,
+    updated_at        DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    KEY idx_status (status)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+-- Loyalty, referrals and rewards ---------------------------------------------
+CREATE TABLE IF NOT EXISTS cdb_loyalty_accounts (
+    user_id         INT NOT NULL,
+    referral_code   VARCHAR(24) NOT NULL,
+    points_balance  INT NOT NULL DEFAULT 0,
+    lifetime_points INT NOT NULL DEFAULT 0,
+    tier            VARCHAR(12) NOT NULL DEFAULT 'standard',
+    referred_by     INT NULL,
+    created_at      DATETIME NOT NULL,
+    updated_at      DATETIME NOT NULL,
+    PRIMARY KEY (user_id),
+    UNIQUE KEY uq_code (referral_code),
+    KEY idx_tier (tier)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_loyalty_events (
+    id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    user_id       INT NOT NULL,
+    kind          VARCHAR(16) NOT NULL,            -- earn | redeem | adjust | referral | expire
+    points        INT NOT NULL,                    -- signed
+    entity_type   VARCHAR(20) NULL,                -- shipment | package | referral | reward
+    entity_id     INT NULL,
+    note          VARCHAR(190) NULL,
+    created_by    INT NULL,
+    created_at    DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_once (kind, entity_type, entity_id, user_id),
+    KEY idx_user (user_id, id),
+    KEY idx_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_referrals (
+    id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    referrer_id   INT NOT NULL,
+    referee_id    INT NOT NULL,
+    code          VARCHAR(24) NOT NULL,
+    status        VARCHAR(12) NOT NULL DEFAULT 'signed_up',  -- signed_up | shipped | rewarded
+    channel       VARCHAR(20) NULL,
+    rewarded_at   DATETIME NULL,
+    created_at    DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_referee (referee_id),
+    KEY idx_referrer (referrer_id, status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_rewards (
+    id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    code          VARCHAR(40) NOT NULL,
+    title         VARCHAR(160) NOT NULL,
+    kind          VARCHAR(12) NOT NULL DEFAULT 'coupon',    -- coupon | voucher | birthday
+    value_type    VARCHAR(8) NOT NULL DEFAULT 'amount',     -- amount | percent
+    value_amount  DECIMAL(12,2) NOT NULL DEFAULT 0,
+    points_cost   INT NOT NULL DEFAULT 0,                   -- 0 = not redeemable with points
+    max_uses      INT NOT NULL DEFAULT 0,                   -- 0 = unlimited
+    used_count    INT NOT NULL DEFAULT 0,
+    active        TINYINT(1) NOT NULL DEFAULT 1,
+    starts_at     DATE NULL,
+    ends_at       DATE NULL,
+    created_by    INT NULL,
+    created_at    DATETIME NOT NULL,
+    updated_at    DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_code (code),
+    KEY idx_active (active, ends_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Loyalty rules (read by helpers/loyalty.php; edited on loyalty_rewards.php)
+INSERT INTO cdb_sl_settings (setting_key, setting_value, updated_at) SELECT 'loyalty_enabled', '1', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_sl_settings WHERE setting_key = 'loyalty_enabled');
+INSERT INTO cdb_sl_settings (setting_key, setting_value, updated_at) SELECT 'loyalty_points_air', '1', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_sl_settings WHERE setting_key = 'loyalty_points_air');
+INSERT INTO cdb_sl_settings (setting_key, setting_value, updated_at) SELECT 'loyalty_points_sea', '0.5', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_sl_settings WHERE setting_key = 'loyalty_points_sea');
+INSERT INTO cdb_sl_settings (setting_key, setting_value, updated_at) SELECT 'loyalty_redeem_points', '100', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_sl_settings WHERE setting_key = 'loyalty_redeem_points');
+INSERT INTO cdb_sl_settings (setting_key, setting_value, updated_at) SELECT 'loyalty_redeem_value', '10', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_sl_settings WHERE setting_key = 'loyalty_redeem_value');
+INSERT INTO cdb_sl_settings (setting_key, setting_value, updated_at) SELECT 'loyalty_tier_silver', '1000', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_sl_settings WHERE setting_key = 'loyalty_tier_silver');
+INSERT INTO cdb_sl_settings (setting_key, setting_value, updated_at) SELECT 'loyalty_tier_gold', '3000', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_sl_settings WHERE setting_key = 'loyalty_tier_gold');
+INSERT INTO cdb_sl_settings (setting_key, setting_value, updated_at) SELECT 'referral_enabled', '1', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_sl_settings WHERE setting_key = 'referral_enabled');
+INSERT INTO cdb_sl_settings (setting_key, setting_value, updated_at) SELECT 'referral_friend_reward', '20 off the first air shipment', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_sl_settings WHERE setting_key = 'referral_friend_reward');
+INSERT INTO cdb_sl_settings (setting_key, setting_value, updated_at) SELECT 'referral_referrer_points', '200', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_sl_settings WHERE setting_key = 'referral_referrer_points');
+
+-- Permission: manage_loyalty is created by 2026_11_06_legacy_drift.sql (not duplicated here).
+
+INSERT INTO cdb_schema_migrations (name, applied_at) SELECT '2026_11_06_support_ai_loyalty', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_schema_migrations WHERE name = '2026_11_06_support_ai_loyalty');
+SELECT 'ok: 2026_11_06_support_ai_loyalty' AS result;
+
+
+-- >>> migrations/2026_11_06_warehouse_packages.sql
+-- =============================================================================
+-- 2026-11-06  Swift Lane UI: sea packages, pre-alerts, pickups, consolidations
+--             and the warehouse (SeaPackages … LockerSearch artboards)
+-- Run:  mysql -u USER -p DBNAME < migrations/2026_11_06_warehouse_packages.sql
+-- Every step is safe to run again (guards on information_schema).
+-- =============================================================================
+SET NAMES utf8mb4;
+
+CREATE TABLE IF NOT EXISTS cdb_schema_migrations (
+    name        VARCHAR(190) NOT NULL,
+    applied_at  DATETIME NOT NULL,
+    PRIMARY KEY (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Pickup codes (helpers/pickup_code.php creates these lazily; the new
+-- Warehouse pages read them on every load, so they exist up front) ----------
+CREATE TABLE IF NOT EXISTS cdb_pickup_codes (
+    id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    code         VARCHAR(10)   NOT NULL,
+    module       VARCHAR(8)    NOT NULL,
+    owner_id     INT           NOT NULL,
+    trackings    VARCHAR(2000) NOT NULL DEFAULT '',
+    context      VARCHAR(40)   NOT NULL DEFAULT '',
+    status       VARCHAR(12)   NOT NULL DEFAULT 'active',
+    attempts     INT           NOT NULL DEFAULT 0,
+    channels     VARCHAR(255)  NOT NULL DEFAULT '',
+    created_by   INT           NULL,
+    created_at   DATETIME      NOT NULL,
+    expires_at   DATETIME      NOT NULL,
+    last_sent_at DATETIME      NULL,
+    verified_by  INT           NULL,
+    verified_at  DATETIME      NULL,
+    PRIMARY KEY (id),
+    KEY idx_owner (owner_id),
+    KEY idx_status (status, expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+CREATE TABLE IF NOT EXISTS cdb_pickup_code_items (
+    code_id     INT UNSIGNED NOT NULL,
+    module      VARCHAR(8)   NOT NULL,
+    order_id    INT          NOT NULL,
+    used_at     DATETIME     NULL,
+    used_by     INT          NULL,
+    PRIMARY KEY (code_id, order_id),
+    KEY idx_pkg (module, order_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+SET @has_col := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_pickup_codes' AND COLUMN_NAME = 'last_sent_at');
+SET @sql := IF(@has_col = 0, 'ALTER TABLE cdb_pickup_codes ADD COLUMN last_sent_at DATETIME NULL AFTER expires_at', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- Warehouse bays: where a parcel sits while it waits (Warehouse, HandOut) ----
+SET @has_col := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_add_order' AND COLUMN_NAME = 'warehouse_bay');
+SET @sql := IF(@has_col = 0, 'ALTER TABLE cdb_add_order ADD COLUMN warehouse_bay VARCHAR(12) NULL', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET @has_col := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_customers_packages' AND COLUMN_NAME = 'warehouse_bay');
+SET @sql := IF(@has_col = 0, 'ALTER TABLE cdb_customers_packages ADD COLUMN warehouse_bay VARCHAR(12) NULL', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- Warehouse scans: the "Recent scans" feed and the receive / move-bay log ----
+CREATE TABLE IF NOT EXISTS cdb_warehouse_scans (
+    id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    module      VARCHAR(8)   NOT NULL DEFAULT 'air',
+    order_id    INT          NOT NULL,
+    tracking    VARCHAR(120) NOT NULL DEFAULT '',
+    action      VARCHAR(20)  NOT NULL DEFAULT 'receive',
+    bay         VARCHAR(12)  NULL,
+    note        VARCHAR(255) NULL,
+    user_id     INT          NULL,
+    created_at  DATETIME     NOT NULL,
+    PRIMARY KEY (id),
+    KEY idx_created (created_at),
+    KEY idx_pkg (module, order_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Settings the warehouse pages read (bay capacity) ---------------------------
+CREATE TABLE IF NOT EXISTS cdb_sl_settings (
+    setting_key   VARCHAR(64) NOT NULL,
+    setting_value TEXT NULL,
+    updated_by    INT NULL,
+    updated_at    DATETIME NULL,
+    PRIMARY KEY (setting_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+INSERT INTO cdb_sl_settings (setting_key, setting_value, updated_at) SELECT 'warehouse_bays', '50', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_sl_settings WHERE setting_key = 'warehouse_bays');
+INSERT INTO cdb_sl_settings (setting_key, setting_value, updated_at) SELECT 'warehouse_bay_prefix', 'B-', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_sl_settings WHERE setting_key = 'warehouse_bay_prefix');
+
+-- Permissions the new pages check -------------------------------------------
+INSERT INTO cdb_user_module_permissions (module_name, description) SELECT 'SWIFTLANE_UI', 'Swift Lane interface, logs, finance and warehouse permissions' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_user_module_permissions WHERE module_name = 'SWIFTLANE_UI');
+SET @mod := (SELECT id FROM cdb_user_module_permissions WHERE module_name = 'SWIFTLANE_UI' LIMIT 1);
+INSERT INTO cdb_user_module_actions (module_id, action_name, description_module)
+SELECT @mod, a.name, a.descr FROM (
+    SELECT 'view_warehouse_pickups' AS name, 'Warehouse: handed-out history' AS descr UNION ALL
+    SELECT 'warehouse_receive', 'Warehouse: receive parcels and move bays' UNION ALL
+    SELECT 'warehouse_view', 'View the warehouse' UNION ALL
+    SELECT 'view_warehouse_delivery', 'Warehouse delivery and hand out' UNION ALL
+    SELECT 'warehouse_deliver_package', 'Hand out a package' UNION ALL
+    SELECT 'warehouse_deliver_user', 'Hand out all packages of a customer' UNION ALL
+    SELECT 'warehouse_undo_delivery', 'Undo a warehouse delivery' UNION ALL
+    SELECT 'view_pickup_aging', 'View pickup aging'
+) a WHERE NOT EXISTS (SELECT 1 FROM cdb_user_module_actions x WHERE x.action_name = a.name);
+INSERT INTO cdb_user_role_permissions (role_id, module_action_id, permitted, created_at)
+SELECT r.role_id, ma.id, 1, NOW() FROM cdb_user_module_actions ma JOIN cdb_user_roles r ON r.role_id IN (9, 2)
+WHERE ma.action_name IN ('view_warehouse_pickups', 'warehouse_receive', 'warehouse_view', 'view_warehouse_delivery', 'warehouse_deliver_package', 'warehouse_deliver_user', 'warehouse_undo_delivery', 'view_pickup_aging')
+  AND NOT EXISTS (SELECT 1 FROM cdb_user_role_permissions p WHERE p.role_id = r.role_id AND p.module_action_id = ma.id);
+
+INSERT INTO cdb_schema_migrations (name, applied_at) SELECT '2026_11_06_warehouse_packages', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_schema_migrations WHERE name = '2026_11_06_warehouse_packages');
+SELECT 'ok: 2026_11_06_warehouse_packages' AS result;
 
