@@ -9,6 +9,18 @@ require_once CDP_ROOT . '/views/sl/data/ops_common.php';
 require_once CDP_ROOT . '/helpers/air_journey.php';
 require_once CDP_ROOT . '/helpers/track_progress.php';
 
+/** Paid? Legacy rows use status_invoice 1, imported/seeded rows the cdb_styles id 19 (Invoiced, paid). */
+function sl_shipPaid($statusInvoice): bool
+{
+    return in_array((int) $statusInvoice, [1, 19], true);
+}
+
+/** Payment pill for an air shipment (19 counts as paid, see sl_shipPaid). */
+function sl_shipPayPill($statusInvoice): array
+{
+    return sl_shipPaid($statusInvoice) ? ['Paid', 'paid'] : sl_payPill($statusInvoice);
+}
+
 /** Carrier tracking numbers for a set of order ids (cdb_package_tracking_number, legacy column fallback). */
 function sl_carrierTrackingFor(array $orderIds): array
 {
@@ -196,7 +208,7 @@ function sl_airShipmentsData($user, $core): array
         $rc = $recips[(int) $r->order_id] ?? null;
         $a = $addr[$track] ?? null;
         $dest = $a ? trim(($r->recipient_type === 'user' ? $a->sender_city : $a->recipient_city) . ', ' . ($r->recipient_type === 'user' ? $a->sender_country : $a->recipient_country), ', ') : '—';
-        [$payLabel, $payCls] = sl_payPill($r->status_invoice);
+        [$payLabel, $payCls] = sl_shipPayPill($r->status_invoice);
         $badges = [];
         if ((int) $r->is_pickup) $badges[] = 'Pick-up';
         if ($eff->in_consolidation) $badges[] = 'Consolidated ' . $eff->consolidate_code;
@@ -297,7 +309,7 @@ function sl_shipmentDetailData($user, $core, int $id): array
     foreach ($rev as $i => $e) {
         $events[] = ['cls' => $i === 0 ? 'now' : 'done', 'ic' => $i === 0 ? 'i-pin' : 'i-check', 't' => str_replace('_', ' ', $e->mod_style ?: 'Update'), 's' => sl_date($e->t_date, 'M j, Y H:i') . ($e->name_off ? ' · ' . $e->name_off : '') . ($e->comments ? ' · ' . $e->comments : '')];
     }
-    [$payLabel, $payCls] = sl_payPill($o->status_invoice);
+    [$payLabel, $payCls] = sl_shipPayPill($o->status_invoice);
     $d = [
         'id' => $id, 'track' => $s['track'], 'status' => $statusName, 'stCls' => sl_statusClass($s['eff']->status_id), 'stColor' => $s['eff']->color,
         'mode' => (int) $o->order_item_category === 27 ? 'Sea' : 'Air', 'carrier' => $s['courier']->name_com ?? '', 'carrierNo' => $s['carrier']->tracking_number ?? '',

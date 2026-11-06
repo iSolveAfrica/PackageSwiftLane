@@ -319,7 +319,7 @@ function sl_financialOverviewData($user, $core, bool $money): array
     if (sl_tableExists('cdb_operating_costs')) {
         $rate = sl_finRate();
         foreach (sl_rows("SELECT amount, currency, frequency FROM cdb_operating_costs WHERE is_active = 1 AND on_billing = 1 AND frequency <> 'once'") as $c) {
-            $m = (float) $c->amount * ($c->frequency === 'yearly' ? 1 / 12 : ($c->frequency === 'weekly' ? 52 / 12 : ($c->frequency === 'daily' ? 30 : 1)));
+            $m = (float) $c->amount * ($c->frequency === 'yearly' ? 1 / 12 : ($c->frequency === 'weekly' ? 52 / 12 : ($c->frequency === 'daily' ? 365 / 12 : 1)));
             $opMonthly += strtoupper($c->currency) === 'GHS' && $rate > 0 ? $m / $rate : $m;
         }
     }
@@ -507,9 +507,9 @@ function sl_billingHubData($user, $core): array
     $todayGw = (float) sl_scalar("SELECT COALESCE(SUM(x.usd),0) FROM $u x WHERE DATE(x.at) = CURDATE() AND x.src <> 'charge' AND x.gateway <> 'cash' AND x.gateway NOT LIKE 'Manual%' AND x.status IN ('success','manual','completed','approved','paid')");
     $todayPending = (int) sl_scalar("SELECT COUNT(*) FROM $u x WHERE DATE(x.at) = CURDATE() AND x.status IN ('pending','ongoing','processing','queued')");
     $d['rec'] = [
-        ['d' => 'ok', 't' => 'Cash and manual', 's' => 'Recorded at the counter today', 'v' => sl_money($todayCash)],
-        ['d' => 'ok', 't' => 'Gateways', 's' => 'Confirmed by Paystack, Hubtel, Stripe or PayPal', 'v' => sl_money($todayGw)],
-        ['d' => $todayPending ? 'warn' : 'ok', 't' => 'Awaiting confirmation', 's' => $todayPending ? 'Re-check from the Financial Sheet' : 'Nothing pending', 'v' => (string) $todayPending],
+        ['d' => '', 't' => 'Cash and manual', 's' => 'Recorded at the counter today', 'v' => sl_money($todayCash)],
+        ['d' => '', 't' => 'Gateways', 's' => 'Confirmed by Paystack, Hubtel, Stripe or PayPal', 'v' => sl_money($todayGw)],
+        ['d' => $todayPending ? 'w' : '', 't' => 'Awaiting confirmation', 's' => $todayPending ? 'Re-check from the Financial Sheet' : 'Nothing pending', 'v' => (string) $todayPending],
     ];
     $d['reconL'] = 'Open Financial Sheet';
     $d['bulkL'] = 'Bill unbilled packages';

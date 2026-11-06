@@ -26,7 +26,7 @@ $tab = (string) ($_GET['tab'] ?? 'home');
 <label class="sl-field"><span class="sl-lab">Who received it</span><input class="sl-in" name="person_receives" required placeholder="Full name"></label>
 <label class="da-photo"><span><i class="ic i-image" aria-hidden="true"></i> <span id="da-photo-l">Take a photo of the hand-over</span></span><input type="file" name="miarchivo" accept="image/*" capture="environment" hidden></label>
 <input type="hidden" name="shipment_id" value="<?= (int) $j['id'] ?>"><input type="hidden" name="driver_id" value="<?= (int) $_SESSION['userid'] ?>"><input type="hidden" name="handover_type" value="delivered"><input type="hidden" name="deliver_date" value="<?= date('Y-m-d') ?>"><input type="hidden" name="country" value=""><input type="hidden" name="address" value="<?= h($j['addr']) ?>"><input type="hidden" name="comments" value="Delivered by rider app">
-<div class="da-bad" id="da-bad" hidden><i class="ic ic-sm i-x" aria-hidden="true"></i><span></span></div>
+<div class="da-bad" id="da-bad" style="display:none"><i class="ic ic-sm i-x" aria-hidden="true"></i><span></span></div>
 <button class="da-pri" type="submit"><i class="ic ic-sm i-check" aria-hidden="true"></i>Confirm delivery</button>
 <button class="da-sec" type="button" style="flex:none" data-sl-action="ajax/sl/rider_ajax.php" data-p-op="failed" data-p-id="<?= (int) $j['id'] ?>" data-p-note="Customer not home" data-sl-confirm="Record a failed attempt?">Customer not home · try later</button></form>
 <?php elseif ($j['state'] === 'open' && $j['pickup']): ?>
@@ -57,9 +57,9 @@ $tab = (string) ($_GET['tab'] ?? 'home');
   document.querySelectorAll('.da-photo input[type=file]').forEach(function (inp) { inp.addEventListener('change', function () { var l = inp.closest('.da-photo').querySelector('span span, span'); if (inp.files[0]) { inp.closest('.da-photo').classList.add('on'); l.lastChild.textContent = ' Photo added: ' + inp.files[0].name; } }); });
   var f = document.getElementById('da-deliver'); if (!f) return;
   var bad = document.getElementById('da-bad');
-  function fail(m) { bad.hidden = false; bad.querySelector('span').textContent = m; }
+  function fail(m) { bad.style.display = ''; bad.querySelector('span').textContent = m; }
   f.addEventListener('submit', function (e) {
-    e.preventDefault(); bad.hidden = true;
+    e.preventDefault(); bad.style.display = 'none';
     var btn = f.querySelector('[type=submit]'); btn.disabled = true;
     var code = f.querySelector('[name=code]'), id = f.querySelector('[name=shipment_id]').value;
     var step = code && code.value.trim() ? SL.post('ajax/pickup_code/pickup_code_ajax.php', { action: 'verify', module: 'air', 'order_ids[]': id, code: code.value.trim() }) : Promise.resolve({ success: true });
@@ -74,3 +74,9 @@ $tab = (string) ($_GET['tab'] ?? 'home');
   });
 })();
 </script>
+<style>/* links in place of the design's buttons (server-side navigation) */
+.da-seg a{flex:none;height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--line-2);background:var(--card);font:500 13.5px var(--font);color:var(--ink);display:inline-flex;align-items:center}
+.da-seg a.on{background:var(--ink);color:var(--inverse);border-color:var(--ink)}
+.da-tab a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;height:54px;font:500 11.5px var(--font);color:var(--muted);border-radius:14px}
+.da-tab a.on{color:var(--ink)}.da-tab a.on .ic{color:#E2632A}
+.da-photo{cursor:pointer}.da-body{padding-bottom:96px}</style>

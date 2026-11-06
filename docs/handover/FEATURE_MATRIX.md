@@ -42,19 +42,19 @@ One row per screen of the approved design. Status: **done** (real data, actions 
 | RiderDetail | Rider detail | | planned | | | | |
 | StaffRoles | Staff & Roles | | planned | | | | |
 | StaffActivity | Staff activity log | | planned | | | | |
-| Payments | Payments | | planned | | | | |
-| SendPrices | Send package prices | | planned | | | | |
-| AccountsReceivable | Accounts Receivable | | planned | | | | |
-| FinancialOverview | Financial Overview | | planned | | | | |
-| Reports | Reports | | planned | | | | |
+| Payments | Payments | global_payments_gateways.php (replaced); payments_gateways_{courier,list,consolidate,package_consolidate}_list.php redirect here with ?type= | done | cdb_payments_gateway, cdb_charges_order, cdb_fs_payments (USD via each row's stored rate), cdb_users | export ?export=csv; links to RecordPayment / SendPrices | view_global_payments or any legacy list permission; cdp_financeGuardPage | php -l; loaded logged in (admin) 1440 + 390 (no horizontal scroll), php.log clean; screenshots /tmp/claude-0/shots/ |
+| SendPrices | Send package prices | new send_prices.php | done (design's per-package pricing table replaced by customer/segment picker + tariff sheet, as specified) | cdb_users segments, cdb_shipping_fees, cdb_message_cost_rates | ajax/sl/send_prices_ajax.php (cdp_pushNotifyUser WhatsApp/e-mail, cdp_sendSms; source send_prices in cdb_message_log; 50 per request) | send_prices or push_notifications | sent once (logged as failed/skipped: no SMTP/SMS in dev) |
+| AccountsReceivable | Accounts Receivable | accounts_receivable.php (replaced) | done | unpaid air/sea/consolidation invoices (status_invoice 23, due_date) bucketed current/1-30/31-60/60+ | ajax/sl/ar_remind_ajax.php (one invoice or all overdue, cdp_pushNotifyUser → cdb_message_log); ?export=csv | view_receivable_accounts; finance guard | sent one reminder (logged; SMTP not configured in dev) |
+| FinancialOverview | Financial Overview | financial_overview.php (replaced) | done | revenue cdb_add_order + cdb_customers_packages + cdb_consolidate; cost = price_purchase + cdb_operating_costs (on billing, prorated); payments union for gateways | none (read only) | view_financial_overview + cdp_canViewMoney(finance) | screenshot 1440/390 |
+| Reports | Reports | reports.php (replaced hub; every report_* list/excel/print page unchanged) | partial | KPIs, monthly volume, status mix, catalogue of 24 legacy reports with counts for the date range | Download all (Excel links in a dialog, sequential download) | view_general_reports + each report's own permission; finance reports hidden when finance off | design chart galleries for warehouse/people/support/messaging/platform not reproduced (linked to their boards) |
 | ActivityLogs | Activity Logs | | planned | | | | |
 | MessageLogs | Message Logs | | planned | | | | |
-| Tariffs | Shipping Tariffs | | planned | | | | |
+| Tariffs | Shipping Tariffs | shipping_tariffs_list.php (replaced) | done | cdb_shipping_fees by mode (air first), cdb_shipping_fees_custom | delete via ajax/sl/tariff_save_ajax.php; ?export=csv rate card; client-side price check | view_shipping_tariffs; edit/delete/create permissions per action | screenshot 1440/390 |
 | Notifications | Notifications | | planned | | | | |
-| ControlPanels | Control Panels | | planned | | | | |
-| ControlPanelsMobile | Control Panels · Mobile (live page at phone width) | | planned | | | | |
-| ControlPanelsMobile2 | Control Panels · Mobile 2 | | planned | | | | |
-| ControlPanelsMobile3 | Control Panels · Mobile 3 | | planned | | | | |
+| ControlPanels | Control Panels | new control_panels.php replaces dashboard_admin_{shipments,packages_customers,pickup,consolidated,package_consolidated,account}.php and dashboard_warehouse.php (all redirect to control_panels.php#section) | done | live counts per module (helpers/dashboard_data.php loaded, nav agency scope), 7-day attention sparks, health from cdb_met_payment / SMS settings / cdb_message_log | none (read only); client-side panel search, ⌘K | any legacy dashboard permission; rows filtered by sl_navAllowed | screenshot 1440 + 390 |
+| ControlPanelsMobile | Control Panels · Mobile (live page at phone width) | control_panels.php at 390px | done | as ControlPanels | — | as ControlPanels | 390 screenshot, no horizontal scroll |
+| ControlPanelsMobile2 | Control Panels · Mobile 2 | control_panels.php at 390px (sections stack) | done | as ControlPanels | — | as ControlPanels | 390 screenshot |
+| ControlPanelsMobile3 | Control Panels · Mobile 3 | control_panels.php at 390px (sections stack) | done | as ControlPanels | — | as ControlPanels | 390 screenshot |
 | DevOverview | Developer Overview | | planned | | | | |
 | DevServices | Services | | planned | | | | |
 | DevLogs | Logs | | planned | | | | |
@@ -85,7 +85,7 @@ One row per screen of the approved design. Status: **done** (real data, actions 
 | PickupAging | Pickup Aging | | planned | | | | |
 | StaffProductivity | Staff Productivity | | planned | | | | |
 | MessageCosts | Message Costs | | planned | | | | |
-| Transactions | Transactions | | planned | | | | |
+| Transactions | Transactions | transactions.php (replaced) | done | payments union (gateway, charges, fs ledger incl. refunds) | ?export=csv | view_transactions; finance guard | screenshot 1440/390 |
 | SystemLogs | System Logs | | planned | | | | |
 | MyBills | My Bills (Customer) | | planned | | | | |
 | QuoteCalculator | Rate Calculator (Public) | | planned | | | | |
@@ -99,8 +99,8 @@ One row per screen of the approved design. Status: **done** (real data, actions 
 | ApiMonitor | API Monitoring (admin) | | planned | | | | |
 | ApiAccess | API Access (users) | | planned | | | | |
 | StaffPermissions | Staff Permissions | | planned | | | | |
-| FinancialOverviewRestricted | Financial Overview · no money permission | | planned | | | | |
-| CostSettings | Operating Costs (super admin) | | planned | | | | |
+| FinancialOverviewRestricted | Financial Overview · no money permission | same page when cdp_canViewMoney($user,'finance') denies (or ?as_restricted=1 to preview) | done | as FinancialOverview; every amount scrubbed server-side before render | reminders via ar_remind_ajax | view_financial_overview without view_money_finance/view_monetary_values | screenshot 1440 |
+| CostSettings | Operating Costs (super admin) | new cost_settings.php | done | cdb_operating_costs, cdb_operating_cost_log, cdb_message_log | ajax/sl/cost_settings_ajax.php (save / add / remove, change log, activity log) | read: view_tools; write: super admin or manage_operating_costs | added two lines, screenshot 1440/390 |
 | LoginSettings | Login Page (settings) | | planned | | | | |
 | ShippingAddresses | Shipping Addresses (settings) | | planned | | | | |
 | AiStudio | AI Profile Studio | | planned | | | | |
@@ -110,10 +110,10 @@ One row per screen of the approved design. Status: **done** (real data, actions 
 | ImportData | Import from Excel | | planned | | | | |
 | AddCustomer | Add customer / recipient | | planned | | | | |
 | InviteStaff | Invite staff | | planned | | | | |
-| RecordPayment | Record payment | | planned | | | | |
+| RecordPayment | Record payment | add_payment_gateways_{courier,package,consolidate,consolidate_package}.php (replaced; one design form, ?type=) | done | invoices with status_invoice 23 per customer, cdb_payment_methods | ajax/sl/record_payment_ajax.php: cdp_insertPaymentGateway (packages/consolidations) or cdb_charges_order (air) + cdp_confirmPayment* → 19 when paid in full, fs_cleared_for_delivery, optional release of held parcels and receipt via cdp_pushNotifyUser; activity log | fs_record_payment / manage_account_payments / verify_*payment; finance guard | wrote one air payment (SL-101463 → invoice 19, charge row), screenshot 1440/390 |
 | SchedulePickup | Schedule pickup | | planned | | | | |
 | PayCheckout | Pay bills (customer) | | planned | | | | |
-| RateEditor | Rate editor | | planned | | | | |
+| RateEditor | Rate editor | shipping_tariffs_add.php / shipping_tariffs_edit.php?id= (replaced) | done | cdb_shipping_fees (+ min_charge, valid_from/until), countries/states/cities | ajax/sl/tariff_save_ajax.php (cdp_verifyRangeTariffsExist, cdp_insertTariffs/cdp_updateTariffs/cdp_deleteTariffs, same rules as ajax/tools/ship_tariffs/*) | create_shipping_tariff / edit_shipping_tariff / delete_shipping_tariff | created one band, overlap refused (422) |
 | NewIntegration | Add integration | | planned | | | | |
 | ApiConnections | API connections (payments, couriers, AI…) | | planned | | | | |
 | ApiTraffic | Live API traffic (push and pull) | | planned | | | | |
@@ -124,8 +124,8 @@ One row per screen of the approved design. Status: **done** (real data, actions 
 | CargoExceptions | Cargo Exceptions, Bulk Updates, Partial, Hand-overs | | planned | | | | |
 | InsuranceClaims | Insurance and Claims | | planned | | | | |
 | FreightPartners | Freight Partners | | planned | | | | |
-| ExecDashboard | Management Dashboard (air first) | | planned | | | | |
-| BillingHub | Billing and Finance (switch off finance) | | planned | | | | |
+| ExecDashboard | Management Dashboard (air first) | new exec_dashboard.php | done | cdb_add_order / cdb_customers_packages (mode air/sea/all), cdb_offices, cdb_operating_costs | none (read only); links to Excel/PDF exports | main_dashboard_index or view_exec_dashboard; money hidden without view_money_dashboard | screenshot 1440 |
+| BillingHub | Billing and finance (switch off finance) | financial_sheet.php (hub; legacy sheet at ?legacy=1); financial_sheet_consolidation.php unchanged | done | cdb_add_order, payments union, cdb_payment_methods, cdb_shipping_fees, settings | ajax/sl/finance_switch_ajax.php writes cdb_sl_settings.finance_enabled (read by cdp_financeEnabled when CDP_FINANCE_ENABLED is not defined) | financial_sheet; switch: super admin or manage_finance_switch | toggled once; screenshot 1440 |
 | LastMile | Ghana Last-Mile Delivery | | planned | | | | |
 | AiCenter | AI Centre (air first) | new ai_center.php; ai_assistant_settings.php 301 → ai_center.php | partial | cdb_ai_settings (keys masked), cdb_ai_knowledge, cdb_ai_page_ideas, cdb_ai_questions, cdb_ai_messages, cdb_cs_ai_runs | ajax/ai_assistant/settings_ajax.php save/test/models/knowledge_add/knowledge_delete/idea_status/analyse | super admin (keys) / rank 3+ (insights) | php -l; page loaded logged in (admin), screenshot 1440 under /tmp/claude-0/shots; design demo panels (label reader, forecasts, WhatsApp bot) not built: no backend |
 | CommsHub | Messages and Automation | | planned | | | | |

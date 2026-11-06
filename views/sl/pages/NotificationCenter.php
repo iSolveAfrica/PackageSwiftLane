@@ -44,7 +44,7 @@ $ajax = 'ajax/sl/notification_rules_ajax.php';
       <div class="row g8"><span class="ov-pill"><?= h($d['cur']['audience']) ?></span><span class="ov-pill"><?= h($d['cur']['sent']) ?> sent this month</span></div>
     </div>
     <div class="nc-tabs" role="tablist">
-      <?php foreach ($d['tabs'] as $t): ?><a role="tab" class="<?= h($t['cls']) ?>" aria-selected="<?= h($t['sel']) ?>" href="<?= h($t['href']) ?>"><i class="ic ic-sm <?= h($t['icon']) ?>" aria-hidden="true"></i><?= h($t['label']) ?><span class="nc-sw <?= h($t['on']) ?>" aria-hidden="true"></span></a><?php endforeach; ?>
+      <?php foreach ($d['tabs'] as $t): ?><button type="button" role="tab" class="<?= h($t['cls']) ?>" aria-selected="<?= h($t['sel']) ?>" onclick="location.href='<?= h($t['href']) ?>'"><i class="ic ic-sm <?= h($t['icon']) ?>" aria-hidden="true"></i><?= h($t['label']) ?><span class="nc-sw <?= h($t['on']) ?>" aria-hidden="true"></span></button><?php endforeach; ?>
     </div>
     <form class="nc-edit" id="nc-form" data-sl-form action="<?= $ajax ?>" method="post">
       <input type="hidden" name="op" value="save"><input type="hidden" name="event" value="<?= h($d['cur']['key']) ?>"><input type="hidden" name="channel" value="<?= h($d['channel']) ?>">

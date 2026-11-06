@@ -124,7 +124,7 @@ function sl_msgSample(): array
 function sl_msgPreviewFill(string $body, array $sample): string
 {
     global $core;
-    $map = ['[USERNAME]' => $sample['name'], '[NAME]' => $sample['name'], '[FIRST_NAME]' => $sample['first'], '[SITE_NAME]' => $core->site_name ?? 'Swift Lane', '[TRACKING]' => 'SL-100480', '[TRACKING_NUMBER]' => 'SL-100480',
+    $map = ['[USERNAME]' => $sample['name'], '[NAME]' => $sample['name'], '[FIRST_NAME]' => $sample['first'], '[SITE_NAME]' => $core->site_name ?? 'Swift Lane', '[TRACKING]' => 'SL-100480', '[TRACK]' => 'SL-100480', '[LINK]' => 'https://' . ($_SERVER['HTTP_HOST'] ?? 'swiftlane.gh') . '/track.php', '[TRACKING_NUMBER]' => 'SL-100480',
         '[URL]' => 'https://' . ($_SERVER['HTTP_HOST'] ?? 'swiftlane.gh'), '[URL_SHIP]' => 'https://' . ($_SERVER['HTTP_HOST'] ?? 'swiftlane.gh') . '/track.php', '[STATUS]' => 'Ready for pickup', '[MESSAGE]' => 'Your parcel is ready.', '[SUBJECT]' => 'Parcel update',
         '[LOCKER]' => $sample['locker'], '[CUSTOMER_FULLNAME]' => $sample['name'], '[COMPANY_NAME]' => $core->site_name ?? 'Swift Lane', '[COMPANY_SITE_URL]' => 'https://' . ($_SERVER['HTTP_HOST'] ?? 'swiftlane.gh'), '[EMAIL]' => $sample['email'], '[CODE]' => '482193', '[PICKUP_CODE]' => '482193', '[AMOUNT]' => sl_money(420), '[DATE]' => date('M j, Y')];
     return strtr($body, $map);

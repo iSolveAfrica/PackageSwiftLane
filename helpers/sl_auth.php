@@ -342,3 +342,42 @@ function sl_loginPicturesHtml(string $page, string $variant = 'fs'): array
     }
     return ['bgs' => $bgs, 'caps' => $caps, 'dots' => $dots, 'n' => count($slides), 'every' => $every, 'style' => $p['style'], 'captions' => $p['captions'] && $slides, 'texts' => $p['texts']];
 }
+
+/**
+ * Should a message go out? For senders (WhatsApp/SMS/e-mail) to consult before sending a
+ * customer update. $channel whatsapp|sms|email, $event a key of sl_notificationEvents().
+ * Security codes must not call this (they are always sent).
+ */
+function sl_notifAllowed(int $userId, string $channel, string $event): bool
+{
+    $events = sl_notificationEvents();
+    if (!isset($events[$event])) {
+        return true;
+    }
+    $prefs = sl_prefs($userId);
+    if (($prefs['notif_paused'] ?? '0') === '1') {
+        return false;
+    }
+    if (in_array($channel, ['whatsapp', 'sms'], true) && ($prefs['notif_quiet'] ?? '1') === '1') {
+        $now = date('H:i');
+        $from = $prefs['notif_quiet_from'] ?? '21:00';
+        $to = $prefs['notif_quiet_to'] ?? '07:00';
+        $inQuiet = $from <= $to ? ($now >= $from && $now < $to) : ($now >= $from || $now < $to);
+        if ($inQuiet && !in_array($event, ['delivery'], true)) {
+            return false;
+        }
+    }
+    if (!sl_tableExists('cdb_user_notification_prefs')) {
+        return true;
+    }
+    $rows = sl_rows("SELECT event_key, enabled FROM cdb_user_notification_prefs WHERE user_id = :u AND channel = :c AND event_key IN ('*', :e)", [':u' => $userId, ':c' => $channel, ':e' => $event]);
+    $map = [];
+    foreach ($rows as $r) {
+        $map[$r->event_key] = (int) $r->enabled;
+    }
+    if (($map['*'] ?? 1) === 0) {
+        return false;
+    }
+    $idx = ['whatsapp' => 2, 'sms' => 3, 'email' => 4][$channel] ?? 2;
+    return ($map[$event] ?? $events[$event][$idx]) === 1;
+}

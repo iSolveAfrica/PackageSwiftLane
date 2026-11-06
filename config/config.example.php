@@ -20,7 +20,9 @@ define('CDP_APP_URL', 'https://example.com');
 define('CDP_RBAC_MODE', 'enforce');
 
 // Finance module (billing hub, transactions, receivables). false hides the money pages.
-define('CDP_FINANCE_ENABLED', true);
+// Uncomment to pin the finance module on or off; when not defined the switch in
+// Billing & Finance (cdb_sl_settings.finance_enabled) decides.
+// define('CDP_FINANCE_ENABLED', true);
 
 // Comma separated list of origins allowed to call /api/v1 from a browser. '*' allows all.
 define('CDP_API_ALLOWED_ORIGINS', '*');

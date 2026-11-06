@@ -113,8 +113,8 @@ function sl_reportsData($user, $core): array
             [$title, $sub, $list, $xls, $prn, $perm, $fin, $byl, $countKey] = $it;
             if ($fin && !$finance) continue;
             if ($perm === 'superadmin' ? !sl_userIs('superadmin') : !$user->cdp_hasPermission($perm)) continue;
-            $q = (strpos((string) $xls, '?') === false ? '?' : '&') . 'range=' . rawurlencode($legacyRange);
-            $items[] = ['title' => $title, 'sub' => $sub, 'href' => $list, 'xls' => $xls ? $xls . (strpos($xls, 'export=csv') !== false ? '' : $q) : null, 'prn' => $prn ? $prn . '?range=' . rawurlencode($legacyRange) : null, 'by' => array_map(fn($x) => ['label' => $x[0], 'href' => $x[1]], $byl), 'n' => $countKey !== null && isset($counts[$countKey]) && $counts[$countKey] !== null ? sl_num($counts[$countKey]) : ''];
+            $q = (strpos((string) $xls, '?') === false ? '?' : '&') . 'range=' . rawurlencode($legacyRange) . '&status_courier=0&method=0&agency=0&customer_id=0&driver_id=0&employee_id=0';
+            $items[] = ['title' => $title, 'sub' => $sub, 'href' => $list, 'xls' => $xls ? $xls . (strpos($xls, 'export=csv') !== false ? '' : $q) : null, 'prn' => $prn ? $prn . '?range=' . rawurlencode($legacyRange) . '&status_courier=0&method=0&agency=0&customer_id=0&driver_id=0&employee_id=0' : null, 'by' => array_map(fn($x) => ['label' => $x[0], 'href' => $x[1]], $byl), 'n' => $countKey !== null && isset($counts[$countKey]) && $counts[$countKey] !== null ? sl_num($counts[$countKey]) : ''];
             if ($xls) $excel[] = ['title' => $title, 'href' => end($items)['xls']];
         }
         if ($items) $groups[] = ['id' => $g['id'], 'icon' => $g['icon'], 'title' => $g['title'], 'items' => $items];

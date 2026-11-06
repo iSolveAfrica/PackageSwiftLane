@@ -61,8 +61,8 @@ function sl_navStaff(): array
             ['id' => 'locker', 'label' => 'Locker Search', 'icon' => 'lock', 'board' => 'LockerSearch', 'perm' => 'view_shipment_list'],
         ]],
         ['label' => 'Hubs', 'items' => [
-            ['id' => 'execdash', 'label' => 'Management Dashboard', 'icon' => 'chart', 'board' => 'ExecDashboard', 'perm' => 'main_dashboard_index'],
-            ['id' => 'billhub', 'label' => 'Billing & Finance', 'icon' => 'dollar', 'board' => 'BillingHub', 'perm' => 'financial_sheet', 'finance' => true],
+            ['id' => 'execdash', 'label' => 'Management Dashboard', 'icon' => 'chart', 'board' => 'ExecDashboard', 'perm' => ['main_dashboard_index', 'view_exec_dashboard']],
+            ['id' => 'billhub', 'label' => 'Billing & Finance', 'icon' => 'dollar', 'board' => 'BillingHub', 'perm' => ['financial_sheet', 'manage_finance_switch']],
             ['id' => 'lastmile', 'label' => 'Last-Mile Delivery', 'icon' => 'truck', 'board' => 'LastMile', 'perm' => 'view_pickup_list'],
             ['id' => 'aicenter', 'label' => 'AI Centre', 'icon' => 'ai', 'board' => 'AiCenter', 'perm' => 'ai:manage'],
             ['id' => 'commshub', 'label' => 'Messages & Automation', 'icon' => 'message', 'board' => 'CommsHub', 'perm' => ['push_notifications', 'manage_newsletter', 'view_message_logs']],
@@ -93,6 +93,8 @@ function sl_navStaff(): array
         ]],
         ['label' => 'Finance', 'finance' => true, 'items' => [
             ['id' => 'pay', 'label' => 'Payments', 'icon' => 'card', 'board' => 'Payments', 'perm' => 'view_global_payments'],
+            ['id' => 'trans', 'label' => 'Transactions', 'icon' => 'activity', 'board' => 'Transactions', 'perm' => 'view_transactions'],
+            ['id' => 'sendp', 'label' => 'Send Prices', 'icon' => 'send', 'board' => 'SendPrices', 'perm' => 'send_prices'],
             ['id' => 'ar', 'label' => 'Accounts Receivable', 'icon' => 'receipt', 'board' => 'AccountsReceivable', 'perm' => 'view_receivable_accounts'],
             ['id' => 'fin', 'label' => 'Financial Overview', 'icon' => 'dollar', 'board' => 'FinancialOverview', 'perm' => 'view_financial_overview', 'ok' => true,
                 'count' => fn() => sl_money(sl_navCount("SELECT COALESCE(SUM(a.total_order),0) FROM cdb_add_order a WHERE a.is_deleted = 0 AND MONTH(a.order_date) = MONTH(CURDATE()) AND YEAR(a.order_date) = YEAR(CURDATE()) $w"))],

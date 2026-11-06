@@ -37,8 +37,7 @@ function sl_execData($user, $core): array
     if (sl_tableExists('cdb_operating_costs')) {
         $rate = (float) ($core->exchange_rate ?? 0);
         foreach (sl_rows("SELECT amount, currency, frequency FROM cdb_operating_costs WHERE is_active = 1 AND on_billing = 1 AND frequency <> 'once'") as $c) {
-            $m = (float) $c->amount * ['yearly' => 1 / 12, 'weekly' => 52 / 12, 'daily' => 365 / 12][$c->frequency] ?? (float) $c->amount;
-            $m = $c->frequency === 'monthly' ? (float) $c->amount : $m;
+            $m = (float) $c->amount * (['yearly' => 1 / 12, 'weekly' => 52 / 12, 'daily' => 365 / 12, 'monthly' => 1][$c->frequency] ?? 1);
             $cost += (strtoupper($c->currency) === 'GHS' && $rate > 0 ? $m / $rate : $m) * $days / 30 * ($mode === 'all' ? 1 : ($mode === 'air' ? 0.6 : 0.4));
         }
     }
@@ -83,11 +82,11 @@ function sl_execData($user, $core): array
     $aging = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (6,32) AND a.order_date < CURDATE() - INTERVAL 30 DAY $agency");
     $unassigned = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.is_pickup = 1 AND a.status_courier IN (1,14) AND (a.driver_id IS NULL OR a.driver_id = 0) $agency");
     $d['watch'] = [];
-    if ($held) $d['watch'][] = ['d' => 'bad', 't' => "$held parcels on hold", 's' => 'Rejected, held or not shipped', 'href' => sl_route('Warehouse', ['filter' => 'exceptions'])];
-    if ($overdue) $d['watch'][] = ['d' => 'warn', 't' => "$overdue invoices past due", 's' => 'Send reminders from Accounts Receivable', 'href' => sl_route('AccountsReceivable', ['filter' => 'overdue'])];
-    if ($aging) $d['watch'][] = ['d' => 'warn', 't' => "$aging parcels waiting over 30 days", 's' => 'Ready for pickup but not collected', 'href' => sl_route('PickupAging')];
-    if ($unassigned) $d['watch'][] = ['d' => 'warn', 't' => "$unassigned pickups without a rider", 's' => 'Assign on the dispatch board', 'href' => sl_route('RiderDispatch')];
-    if (!$d['watch']) $d['watch'][] = ['d' => 'ok', 't' => 'Nothing on the watch list', 's' => 'No exceptions right now', 'href' => sl_route('ActivityLogs')];
+    if ($held) $d['watch'][] = ['d' => 'e', 't' => "$held parcels on hold", 's' => 'Rejected, held or not shipped', 'href' => sl_route('Warehouse', ['filter' => 'exceptions'])];
+    if ($overdue) $d['watch'][] = ['d' => 'w', 't' => "$overdue invoices past due", 's' => 'Send reminders from Accounts Receivable', 'href' => sl_route('AccountsReceivable', ['filter' => 'overdue'])];
+    if ($aging) $d['watch'][] = ['d' => 'w', 't' => "$aging parcels waiting over 30 days", 's' => 'Ready for pickup but not collected', 'href' => sl_route('PickupAging')];
+    if ($unassigned) $d['watch'][] = ['d' => 'w', 't' => "$unassigned pickups without a rider", 's' => 'Assign on the dispatch board', 'href' => sl_route('RiderDispatch')];
+    if (!$d['watch']) $d['watch'][] = ['d' => '', 't' => 'Nothing on the watch list', 's' => 'No exceptions right now', 'href' => sl_route('ActivityLogs')];
     // insights: rule-based sentences from the figures above
     $ins = [];
     if ($pn > 0) $ins[] = $d['modeL'] . ' volume is ' . ($n >= $pn ? 'up' : 'down') . ' ' . number_format(abs($n - $pn) / $pn * 100, 1) . "% on the previous $days days ($n vs $pn).";
