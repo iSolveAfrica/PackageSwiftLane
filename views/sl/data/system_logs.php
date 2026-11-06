@@ -88,7 +88,7 @@ function sl_systemLogsData($user, $core): array
     $hasLog = cdp_activityTableReady();
     if ($hasLog) {
         foreach (sl_rows("SELECT l.created_at, l.module, l.verb, l.outcome, l.summary, l.actor_name, l.endpoint, l.ip FROM cdb_activity_log l WHERE l.created_at >= :s AND (l.outcome IN ('denied','failure') OR l.verb IN ('login','logout','impersonate') OR l.module IN ('auth','system','access')) ORDER BY l.id DESC LIMIT 1500", [':s' => $sinceSql]) as $r) {
-            $lv = $r->outcome === 'failure' ? 'err' : ($r->outcome === 'denied' || ($r->verb === 'login' && $r->outcome !== 'ok') ? 'warn' : 'info');
+            $lv = $r->outcome === 'failure' ? 'err' : ($r->outcome === 'denied' || ($r->verb === 'login' && !in_array($r->outcome, ['ok', 'success'], true)) ? 'warn' : 'info');
             $events[] = ['ts' => strtotime($r->created_at), 'lv' => $lv, 'src' => $r->endpoint ?: ($r->module ?: 'app'), 'msg' => ($r->actor_name ? $r->actor_name . ' · ' : '') . ($r->summary ?: $r->verb) . ($r->ip ? ' from ' . $r->ip : '')];
         }
     }
@@ -174,7 +174,7 @@ function sl_systemLogsData($user, $core): array
     // security
     $sec = ['fails' => 0, 'otp' => 0, 'viewas' => 0, 'perm' => 0, 'keys' => 0, 'blocked' => 0];
     if ($hasLog) {
-        $sec['fails'] = (int) sl_scalar("SELECT COUNT(*) FROM cdb_activity_log WHERE verb = 'login' AND outcome <> 'ok' AND created_at >= :s", [':s' => $sinceSql]);
+        $sec['fails'] = (int) sl_scalar("SELECT COUNT(*) FROM cdb_activity_log WHERE verb = 'login' AND outcome NOT IN ('ok','success') AND created_at >= :s", [':s' => $sinceSql]);
         $sec['viewas'] = (int) sl_scalar("SELECT COUNT(*) FROM cdb_activity_log WHERE verb = 'impersonate' AND created_at >= :s", [':s' => $sinceSql]);
         $sec['perm'] = (int) sl_scalar("SELECT COUNT(*) FROM cdb_activity_log WHERE module = 'access' AND verb <> 'view' AND created_at >= :s", [':s' => $sinceSql]);
         $sec['blocked'] = (int) sl_scalar("SELECT COUNT(DISTINCT ip) FROM cdb_activity_log WHERE outcome = 'denied' AND created_at >= :s", [':s' => $sinceSql]);
