@@ -64,7 +64,7 @@ function sl_navStaff(): array
         ['label' => 'Hubs', 'items' => [
             ['id' => 'execdash', 'label' => 'Management Dashboard', 'icon' => 'chart', 'board' => 'ExecDashboard', 'perm' => ['main_dashboard_index', 'view_exec_dashboard']],
             ['id' => 'billhub', 'label' => 'Billing & Finance', 'icon' => 'dollar', 'board' => 'BillingHub', 'perm' => ['financial_sheet', 'manage_finance_switch']],
-            ['id' => 'lastmile', 'label' => 'Last-Mile Delivery', 'icon' => 'truck', 'board' => 'LastMile', 'perm' => 'view_pickup_list'],
+            ['id' => 'lastmile', 'label' => 'Last-Mile Delivery', 'icon' => 'truck', 'board' => 'LastMile', 'perm' => ['view_freight', 'view_pickup_list']],
             ['id' => 'aicenter', 'label' => 'AI Centre', 'icon' => 'ai', 'board' => 'AiCenter', 'perm' => 'ai:manage'],
             ['id' => 'commshub', 'label' => 'Messages & Automation', 'icon' => 'message', 'board' => 'CommsHub', 'perm' => ['push_notifications', 'manage_newsletter', 'view_message_logs']],
             ['id' => 'supporthub', 'label' => 'Support & CRM', 'icon' => 'ticket', 'board' => 'SupportHub', 'perm' => 'cs:agent'],
@@ -74,7 +74,7 @@ function sl_navStaff(): array
         ['label' => 'Freight', 'items' => [
             ['id' => 'frhub', 'label' => 'Freight Hub', 'icon' => 'plane', 'board' => 'FreightHub', 'perm' => 'view_freight'],
             ['id' => 'frsched', 'label' => 'Departures & Arrivals', 'icon' => 'calendar', 'board' => 'FreightSchedule', 'perm' => 'view_freight',
-                'count' => fn() => sl_tableExists('cdb_freight_schedules') ? sl_navCount("SELECT COUNT(*) FROM cdb_freight_schedules WHERE status IN ('scheduled','boarding','in_transit')") : 0],
+                'count' => fn() => sl_tableExists('cdb_freight_schedules') ? sl_navCount("SELECT COUNT(*) FROM cdb_freight_schedules WHERE status NOT IN ('arrived','cancelled','completed')") : 0],
             ['id' => 'frwb', 'label' => 'Waybills & Manifests', 'icon' => 'file', 'board' => 'Waybills', 'perm' => 'view_freight'],
             ['id' => 'frex', 'label' => 'Cargo Exceptions', 'icon' => 'alert', 'board' => 'CargoExceptions', 'perm' => 'view_freight',
                 'count' => fn() => sl_tableExists('cdb_cargo_exceptions') ? sl_navCount("SELECT COUNT(*) FROM cdb_cargo_exceptions WHERE status = 'open'") : 0],
@@ -125,7 +125,7 @@ function sl_navStaff(): array
             ['id' => 'devinfra', 'label' => 'Infrastructure', 'icon' => 'cloud', 'board' => 'DevInfrastructure', 'perm' => 'view_developer'],
             ['id' => 'devdep', 'label' => 'Deployments', 'icon' => 'rocket', 'board' => 'DevDeployments', 'perm' => 'view_developer'],
             ['id' => 'devalert', 'label' => 'Alerts', 'icon' => 'alert', 'board' => 'DevAlerts', 'perm' => 'view_developer',
-                'count' => fn() => sl_tableExists('cdb_dev_alerts') ? sl_navCount("SELECT COUNT(*) FROM cdb_dev_alerts WHERE status = 'firing'") : 0],
+                'count' => fn() => sl_tableExists('cdb_dev_alerts') ? sl_navCount("SELECT COUNT(*) FROM cdb_dev_alerts WHERE status = 'active'") : 0],
             ['id' => 'devissues', 'label' => 'Issues & Change Log', 'icon' => 'bug', 'board' => 'DevIssues', 'perm' => 'view_developer',
                 'count' => fn() => sl_tableExists('cdb_dev_issues') ? sl_navCount("SELECT COUNT(*) FROM cdb_dev_issues WHERE status IN ('open','in_progress')") : 0],
             ['id' => 'devint', 'label' => 'Integrations', 'icon' => 'puzzle', 'board' => 'DevIntegrations', 'perm' => 'view_developer'],
