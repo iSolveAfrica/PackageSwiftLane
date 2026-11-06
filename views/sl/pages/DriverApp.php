@@ -1,79 +1,76 @@
 <?php
 /**
- * DriverApp - generated from docs/handover/artifact-source/DriverApp.dc.html by scripts/sl_convert.py.
- * Shell page: no (plain page)
- * Data contract ($d):
- *   loop  segs                         as $g
- *   loop  pkgs                         as $p
- *   loop  boxes                        as $b
- *   loop  keys                         as $k
- *   loop  stops                        as $s
- *   loop  pkgsAll                      as $p
- *   loop  week                         as $w
- *   loop  payouts                      as $p
- *   loop  tabs                         as $t
- *   if    toast
- *   if    inDetail
- *   if    notDetail
- *   if    scrHome
- *   if    hasNext
- *   if    scrDetail
- *   if    d.note
- *   if    canDeliver
- *   if    codeBad
- *   if    delivered
- *   if    scrMap
- *   if    scrPay
- *   if    scrMe
- *   value alerts, back, boxes, canDeliver, codeBad, codeCls, confOp, confirm, delivered, dismiss, done, earned, fail, false, feesToday, hasNext, inDetail, keys, left, notDetail, onAria, onCls, onLabel, onSub, openNext, payouts, photoCls, photoLabel, pkgs, pkgsAll, routeInfo, scrDetail, scrHome, scrMap, scrMe, scrPay, segs, stops, tabs, takePhoto, title, toast, toggleOn, total, true, week
- * Demo data shapes: see the renderVals() script in the artifact source file.
+ * DriverApp - from docs/handover/artifact-source/DriverApp.dc.html (plain, mobile).
+ * Data: views/sl/data/riders.php (sl_driverAppData) for the logged-in rider.
+ * Deliveries post to the legacy ajax/courier/add_courier_delivered_ajax.php (photo, receiver,
+ * pickup-code gate, notifications); pickups and failed attempts to ajax/sl/rider_ajax.php.
  */
 if (!isset($d)) { $d = []; }
+$j = $d['job'] ?? null;
+$tab = (string) ($_GET['tab'] ?? 'home');
 ?>
 <div class="da">
-<?php if (sl_get($d, 'toast')): ?><div class="da-toast" role="status"><i class="ic i-box" aria-hidden="true"></i><span class="grow"><?= sl_v($d, 'toast') ?></span><button class="da-ib" style="width:36px;height:36px;background:transparent;border-color:rgba(255,255,255,.2);color:#fff" aria-label="Dismiss" data-sl-on="click:dismiss"><i class="ic ic-sm i-x" aria-hidden="true"></i></button></div><?php endif; ?>
-<header class="da-top"><?php if (sl_get($d, 'inDetail')): ?><button class="da-ib" aria-label="Back" data-sl-on="click:back"><i class="ic i-left" aria-hidden="true"></i></button><?php endif; ?><?php if (sl_get($d, 'notDetail')): ?><span class="me-pic p-kb" style="width:44px;height:44px"><i class="me-on" aria-hidden="true"></i></span><?php endif; ?><h1><?= sl_v($d, 'title') ?></h1><a class="da-ib" href="<?= sl_route('Notifications') ?>" aria-label="Alerts"><i class="ic i-bell" aria-hidden="true"></i><b><?= sl_v($d, 'alerts') ?></b></a></header>
+<header class="da-top"><?php if ($j || $tab !== 'home'): ?><a class="da-ib" aria-label="Back" href="<?= sl_route('DriverApp') ?>"><i class="ic i-left" aria-hidden="true"></i></a><?php else: ?><span class="sl-av" style="width:44px;height:44px"><?= h($d['ini']) ?></span><?php endif; ?><h1><?= h($j ? $j['trk'] : ($tab === 'pay' ? 'My earnings' : ($tab === 'route' ? "Today's route" : 'Hi ' . explode(' ', $d['name'] ?: 'rider')[0]))) ?></h1><a class="da-ib" href="<?= sl_route('Notifications') ?>" aria-label="Alerts"><i class="ic i-bell" aria-hidden="true"></i><?php if (!empty($d['unread'])): ?><b><?= (int) $d['unread'] ?></b><?php endif; ?></a></header>
 <div class="da-body">
-<?php if (sl_get($d, 'scrHome')): ?>
-<div class="da-on"><span class="t"><b class="fw5"><?= sl_v($d, 'onLabel') ?></b><small><?= sl_v($d, 'onSub') ?></small></span><button class="da-sw <?= sl_v($d, 'onCls') ?>" role="switch" aria-checked="<?= sl_v($d, 'onAria') ?>" aria-label="Online" data-sl-on="click:toggleOn"></button></div>
-<div class="da-k"><div><b><?= sl_v($d, 'left') ?></b><small>To deliver</small></div><div><b><?= sl_v($d, 'done') ?></b><small>Delivered</small></div><div><b><?= sl_v($d, 'earned') ?></b><small>Earned today</small></div></div>
-<?php if (sl_get($d, 'hasNext')): ?><section class="da-next"><div class="da-mini"><svg viewBox="0 0 360 130" preserveAspectRatio="xMidYMid slice"><rect width="360" height="130" fill="#EAE6DF"/><path d="M0 95 C 80 70, 140 115, 220 90 S 320 60, 360 80 L 360 110 C 300 100, 250 125, 200 118 S 70 100, 0 125Z" fill="#D5DEE3"/><g stroke="#F7F5F1" stroke-width="7"><path d="M0 40H360M0 75H360M70 0V130M180 0V130M280 0V130"/></g><polyline points="40,110 70,75 180,75 180,40 280,40" fill="none" stroke="#E2632A" stroke-width="4" stroke-linecap="round"/><circle cx="70" cy="75" r="9" fill="#E2632A" stroke="#fff" stroke-width="3"/><path d="M280 18c-6 0-11 5-11 11 0 8 11 18 11 18s11-10 11-18c0-6-5-11-11-11z" fill="#1E1D1A"/></svg></div>
-<div class="in"><div class="da-row"><span class="up grow">Next stop · <?= sl_v($d, 'next.eta') ?></span><span class="sl-pill onway"><?= sl_v($d, 'next.km') ?> km</span></div><div class="da-row"><span class="col grow"><b class="fw5" style="font-size:17px"><?= sl_v($d, 'next.name') ?></b><span class="mut sm"><?= sl_v($d, 'next.addr') ?></span></span><span class="da-fee"><?= sl_v($d, 'next.fee') ?><small>you get <?= sl_v($d, 'next.cut') ?></small></span></div>
-<div class="da-row" style="gap:8px"><a class="da-sec" href="tel:+233245510921"><i class="ic ic-sm i-phone" aria-hidden="true"></i>Call</a><a class="da-sec" href="<?= sl_route('ComposeMessage') ?>"><i class="ic ic-sm i-message" aria-hidden="true"></i>WhatsApp</a><button class="da-sec" data-sl-on="click:openNext"><i class="ic ic-sm i-route" aria-hidden="true"></i>Details</button></div>
-<button class="da-pri" data-sl-on="click:openNext"><i class="ic ic-sm i-key" aria-hidden="true"></i>Deliver with pickup code</button></div></section><?php endif; ?>
-<div class="da-row"><b class="fw5 grow">My packages</b><span class="mut sm"><?= sl_v($d, 'total') ?> assigned</span></div>
-<div class="da-seg"><?php foreach ((array) sl_get($d, 'segs', []) as $__i => $g): ?><button class="<?= sl_v($g, 'cls') ?>" data-sl-on="click:pick"><?= sl_v($g, 'label') ?></button><?php endforeach; ?></div>
-<?php foreach ((array) sl_get($d, 'pkgs', []) as $__i => $p): ?><button class="da-pk <?= sl_v($p, 'anim') ?>" data-sl-on="click:open"><span class="da-n <?= sl_v($p, 'nCls') ?>"><?= sl_v($p, 'n') ?></span><span class="m"><b class="fw5"><?= sl_v($p, 'name') ?></b><small><?= sl_v($p, 'addr') ?></small><small class="mono"><?= sl_v($p, 'id') ?> · <?= sl_v($p, 'pcs') ?></small></span><span class="col" style="align-items:flex-end;gap:6px"><span class="sl-pill <?= sl_v($p, 'pc') ?>"><?= sl_v($p, 'st') ?></span><span class="da-fee"><?= sl_v($p, 'fee') ?></span></span></button><?php endforeach; ?>
-<?php endif; ?>
-<?php if (sl_get($d, 'scrDetail')): ?>
-<section class="da-sheet"><div class="da-row"><span class="me-pic <?= sl_v($d, 'd.pic') ?>" style="width:52px;height:52px"></span><span class="col grow"><b class="fw5" style="font-size:17px"><?= sl_v($d, 'd.name') ?></b><span class="mut sm"><?= sl_v($d, 'd.locker') ?> · <?= sl_v($d, 'd.phone') ?></span></span><span class="sl-pill <?= sl_v($d, 'd.pc') ?>"><?= sl_v($d, 'd.st') ?></span></div>
-<div class="da-row"><i class="ic i-pin" aria-hidden="true"></i><span class="grow"><?= sl_v($d, 'd.addr') ?></span></div>
-<div class="da-row" style="gap:8px"><a class="da-sec" href="tel:+233245510921"><i class="ic ic-sm i-phone" aria-hidden="true"></i>Call</a><a class="da-sec" href="<?= sl_route('ComposeMessage') ?>"><i class="ic ic-sm i-message" aria-hidden="true"></i>WhatsApp</a><a class="da-sec" href="<?= sl_route('DeliveryTracking') ?>"><i class="ic ic-sm i-route" aria-hidden="true"></i>Navigate</a></div>
-<div class="da-kv"><div><small>Tracking</small><b class="mono"><?= sl_v($d, 'd.id') ?></b></div><div><small>Pieces</small><b><?= sl_v($d, 'd.pcs') ?></b></div><div><small>Weight</small><b><?= sl_v($d, 'd.kg') ?></b></div><div><small>Collect cash</small><b><?= sl_v($d, 'd.cash') ?></b></div><div><small>Delivery fee</small><b><?= sl_v($d, 'd.fee') ?></b></div><div><small>You get (64%)</small><b><?= sl_v($d, 'd.cut') ?></b></div></div>
-<?php if (sl_get($d, 'd.note')): ?><div class="sl-banner info"><i class="ic i-info" aria-hidden="true"></i><span><?= sl_v($d, 'd.note') ?></span></div><?php endif; ?></section>
-<?php if (sl_get($d, 'canDeliver')): ?><section class="da-sheet"><b class="fw5">Ask the customer for their 4-digit pickup code</b><div class="da-code <?= sl_v($d, 'codeCls') ?>"><?php foreach ((array) sl_get($d, 'boxes', []) as $__i => $b): ?><span class="<?= sl_v($b, 'cls') ?>"><?= sl_v($b, 'd') ?></span><?php endforeach; ?></div>
-<?php if (sl_get($d, 'codeBad')): ?><div class="da-bad"><i class="ic ic-sm i-x" aria-hidden="true"></i>That code doesn't match. Check with the customer.</div><?php endif; ?>
-<div class="da-pad"><?php foreach ((array) sl_get($d, 'keys', []) as $__i => $k): ?><button aria-label="<?= sl_v($k, 'l') ?>" data-sl-on="click:press"><?= sl_v($k, 'l') ?></button><?php endforeach; ?></div>
-<button class="da-photo <?= sl_v($d, 'photoCls') ?>" data-sl-on="click:takePhoto"><span><i class="ic i-image" aria-hidden="true"></i> <?= sl_v($d, 'photoLabel') ?></span></button>
-<button class="da-pri" style="opacity:<?= sl_v($d, 'confOp') ?>" data-sl-on="click:confirm"><i class="ic ic-sm i-check" aria-hidden="true"></i>Confirm delivery</button>
-<button class="da-sec" style="flex:none" data-sl-on="click:fail">Customer not home · try later</button></section><?php endif; ?>
-<?php if (sl_get($d, 'delivered')): ?><div class="da-ok"><i class="ic i-check" aria-hidden="true"></i><span>Delivered and code matched. <?= sl_v($d, 'd.cut') ?> added to today's earnings.</span></div><button class="da-pri" data-sl-on="click:back">Next package</button><?php endif; ?>
-<?php endif; ?>
-<?php if (sl_get($d, 'scrMap')): ?>
-<section class="da-next"><div class="da-mini" style="height:300px"><svg viewBox="0 0 360 300" preserveAspectRatio="xMidYMid slice"><rect width="360" height="300" fill="#EAE6DF"/><path d="M0 200 C 90 170, 150 230, 230 200 S 330 160, 360 180 L 360 220 C 300 210, 240 250, 200 240 S 60 220, 0 250Z" fill="#D5DEE3"/><g stroke="#F7F5F1" stroke-width="8"><path d="M0 60H360M0 130H360M0 270H360M60 0V300M170 0V300M290 0V300"/></g><polyline points="30,280 60,130 170,130 170,60 290,60 290,130 330,130" fill="none" stroke="#E2632A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><?php foreach ((array) sl_get($d, 'stops', []) as $__i => $s): ?><g transform="translate(<?= sl_v($s, 'x') ?> <?= sl_v($s, 'y') ?>)"><circle r="13" fill="<?= sl_v($s, 'fill') ?>" stroke="#fff" stroke-width="3"/><text y="4" text-anchor="middle" font-size="11" font-weight="600" fill="#fff" font-family="Figtree"><?= sl_v($s, 'n') ?></text></g><?php endforeach; ?><circle cx="<?= sl_v($d, 'me.x') ?>" cy="<?= sl_v($d, 'me.y') ?>" r="9" fill="#2F6FB5" stroke="#fff" stroke-width="3"/></svg></div>
-<div class="in"><div class="da-row"><b class="fw5 grow">Today's route</b><span class="mut sm"><?= sl_v($d, 'routeInfo') ?></span></div><a class="da-pri" href="<?= sl_route('DeliveryTracking') ?>"><i class="ic ic-sm i-route" aria-hidden="true"></i>Start navigation</a></div></section>
-<section class="da-sheet"><?php foreach ((array) sl_get($d, 'pkgsAll', []) as $__i => $p): ?><div class="da-li"><span class="da-n <?= sl_v($p, 'nCls') ?>"><?= sl_v($p, 'n') ?></span><span class="col grow" style="min-width:0"><span class="fw5"><?= sl_v($p, 'name') ?></span><span class="mut sm"><?= sl_v($p, 'addr') ?></span></span><span class="sl-pill <?= sl_v($p, 'pc') ?>"><?= sl_v($p, 'st') ?></span></div><?php endforeach; ?></section>
-<?php endif; ?>
-<?php if (sl_get($d, 'scrPay')): ?>
-<section class="da-sheet"><span class="up">Earned today</span><b style="font:600 38px var(--font);letter-spacing:-.02em"><?= sl_v($d, 'earned') ?></b><span class="mut sm"><?= sl_v($d, 'done') ?> deliveries · 64% of <?= sl_v($d, 'feesToday') ?> in delivery fees</span><div class="da-bars"><?php foreach ((array) sl_get($d, 'week', []) as $__i => $w): ?><i class="<?= sl_v($w, 'cls') ?>" style="<?= sl_v($w, 'h') ?>" title="<?= sl_v($w, 't') ?>"></i><?php endforeach; ?></div><div class="row between mut" style="font-size:11.5px"><span>Fri</span><span>Sat</span><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span></div></section>
-<div class="da-k"><div><b>₵1,284</b><small>This week</small></div><div><b>₵4,820</b><small>Cash to hand in</small></div><div><b>Fri</b><small>Next payout</small></div></div>
-<section class="da-sheet"><b class="fw5">Payouts</b><?php foreach ((array) sl_get($d, 'payouts', []) as $__i => $p): ?><div class="da-li"><i class="ic i-card" aria-hidden="true"></i><span class="col grow"><span class="fw5"><?= sl_v($p, 'a') ?></span><span class="mut sm"><?= sl_v($p, 'd') ?></span></span><span class="sl-pill <?= sl_v($p, 'c') ?>"><?= sl_v($p, 's') ?></span></div><?php endforeach; ?></section>
-<?php endif; ?>
-<?php if (sl_get($d, 'scrMe')): ?>
-<section class="da-sheet" style="align-items:center;text-align:center"><span class="me-pic p-kb" style="width:84px;height:84px"><i class="me-on" aria-hidden="true"></i></span><b style="font-size:19px">Kwesi Bonsu</b><span class="mut sm">Rider · Accra Hub · ★ 4.9 · 1,204 deliveries</span></section>
-<section class="da-sheet"><a class="da-li" href="<?= sl_route('RiderDetail') ?>"><i class="ic i-truck" aria-hidden="true"></i><span class="grow">Motorbike · GR 4471-24</span><i class="ic ic-sm i-right mut" aria-hidden="true"></i></a><a class="da-li" href="<?= sl_route('Documents') ?>"><i class="ic i-file" aria-hidden="true"></i><span class="grow">Licence and insurance</span><span class="sl-pill delivered">Valid</span></a><a class="da-li" href="<?= sl_route('CustomerNotifications') ?>"><i class="ic i-bell" aria-hidden="true"></i><span class="grow">Notifications</span><i class="ic ic-sm i-right mut" aria-hidden="true"></i></a><a class="da-li" href="<?= sl_route('RiderSettings') ?>"><i class="ic i-dollar" aria-hidden="true"></i><span class="grow">My fee split · 64%</span><i class="ic ic-sm i-right mut" aria-hidden="true"></i></a><a class="da-li" href="<?= sl_route('CsInbox') ?>"><i class="ic i-help" aria-hidden="true"></i><span class="grow">Help from the hub</span><i class="ic ic-sm i-right mut" aria-hidden="true"></i></a><a class="da-li" href="<?= sl_route('Login') ?>" style="color:var(--red-ink)"><i class="ic i-logout" aria-hidden="true"></i><span class="grow">Sign out</span></a></section>
-<a class="da-sec" style="flex:none" href="<?= sl_route('RiderDispatch') ?>"><i class="ic ic-sm i-monitor" aria-hidden="true"></i>Open the desktop view</a>
+<?php if (!$d['isRider']): ?>
+<section class="da-sheet"><b class="fw5">This screen is for riders</b><span class="mut sm">Sign in with a driver account to see assigned pickups and deliveries. Staff can assign jobs on the dispatch board.</span><a class="da-pri" href="<?= sl_route('RiderDispatch') ?>">Open dispatch board</a><a class="da-sec" href="<?= sl_route('Main') ?>" style="flex:none">Back to overview</a></section>
+<?php elseif ($j): ?>
+<section class="da-sheet"><div class="da-row"><span class="sl-av" style="width:52px;height:52px"><?= h(sl_initials($j['cust'])) ?></span><span class="col grow"><b class="fw5" style="font-size:17px"><?= h($j['cust']) ?></b><span class="mut sm"><?= $j['pickup'] ? 'Pickup' : 'Delivery' ?><?= $j['phone'] ? ' · ' . h($j['phone']) : '' ?></span></span><span class="sl-pill <?= h($j['cls']) ?>"><?= h($j['st']) ?></span></div>
+<div class="da-row"><i class="ic i-pin" aria-hidden="true"></i><span class="grow"><?= h($j['addr']) ?></span></div>
+<div class="da-row" style="gap:8px"><?php if ($j['phone']): ?><a class="da-sec" href="tel:<?= h(preg_replace('/[^0-9+]/', '', $j['phone'])) ?>"><i class="ic ic-sm i-phone" aria-hidden="true"></i>Call</a><a class="da-sec" href="https://wa.me/<?= h(preg_replace('/[^0-9]/', '', $j['phone'])) ?>" target="_blank" rel="noopener"><i class="ic ic-sm i-message" aria-hidden="true"></i>WhatsApp</a><?php endif; ?><a class="da-sec" href="https://maps.google.com/?q=<?= h(urlencode($j['addr'])) ?>" target="_blank" rel="noopener"><i class="ic ic-sm i-route" aria-hidden="true"></i>Navigate</a></div>
+<div class="da-kv"><div><small>Tracking</small><b class="mono"><?= h($j['trk']) ?></b></div><div><small>Weight</small><b><?= h($j['kg']) ?> kg</b></div><div><small>Value</small><b><?= h($j['value']) ?></b></div><div><small>Delivery fee</small><b><?= h($j['fee']) ?></b></div><div><small>You get (<?= (int) $j['pct'] ?>%)</small><b><?= h($j['rid']) ?></b></div><div><small>Status</small><b><?= h($j['st']) ?></b></div></div></section>
+<?php if ($j['state'] === 'open' && !$j['pickup']): ?>
+<?php if ($j['st'] !== 'On route'): ?><button class="da-sec" style="flex:none" data-sl-action="ajax/sl/rider_ajax.php" data-p-op="onroute" data-p-id="<?= (int) $j['id'] ?>" data-sl-reload><i class="ic ic-sm i-truck" aria-hidden="true"></i>Start: I have the package</button><?php endif; ?>
+<form class="da-sheet" id="da-deliver" enctype="multipart/form-data"><b class="fw5">Hand over</b>
+<?php if ($d['codesOn']): ?><label class="sl-field"><span class="sl-lab">Customer's pickup code (if they have one)</span><input class="sl-in mono" name="code" inputmode="numeric" maxlength="6" placeholder="6 digits" autocomplete="off" style="font-size:22px;letter-spacing:.3em;text-align:center"></label><?php endif; ?>
+<label class="sl-field"><span class="sl-lab">Who received it</span><input class="sl-in" name="person_receives" required placeholder="Full name"></label>
+<label class="da-photo"><span><i class="ic i-image" aria-hidden="true"></i> <span id="da-photo-l">Take a photo of the hand-over</span></span><input type="file" name="miarchivo" accept="image/*" capture="environment" hidden></label>
+<input type="hidden" name="shipment_id" value="<?= (int) $j['id'] ?>"><input type="hidden" name="driver_id" value="<?= (int) $_SESSION['userid'] ?>"><input type="hidden" name="handover_type" value="delivered"><input type="hidden" name="deliver_date" value="<?= date('Y-m-d') ?>"><input type="hidden" name="country" value=""><input type="hidden" name="address" value="<?= h($j['addr']) ?>"><input type="hidden" name="comments" value="Delivered by rider app">
+<div class="da-bad" id="da-bad" hidden><i class="ic ic-sm i-x" aria-hidden="true"></i><span></span></div>
+<button class="da-pri" type="submit"><i class="ic ic-sm i-check" aria-hidden="true"></i>Confirm delivery</button>
+<button class="da-sec" type="button" style="flex:none" data-sl-action="ajax/sl/rider_ajax.php" data-p-op="failed" data-p-id="<?= (int) $j['id'] ?>" data-p-note="Customer not home" data-sl-confirm="Record a failed attempt?">Customer not home · try later</button></form>
+<?php elseif ($j['state'] === 'open' && $j['pickup']): ?>
+<form class="da-sheet" data-sl-form action="ajax/sl/rider_ajax.php" method="post" enctype="multipart/form-data" data-sl-redirect><b class="fw5">Collect the parcel</b><input type="hidden" name="op" value="collected"><input type="hidden" name="id" value="<?= (int) $j['id'] ?>">
+<label class="sl-field"><span class="sl-lab">Who handed it over</span><input class="sl-in" name="person" required placeholder="Full name"></label>
+<label class="da-photo"><span><i class="ic i-image" aria-hidden="true"></i> <span>Photo of the parcel</span></span><input type="file" name="photo" accept="image/*" capture="environment" hidden></label>
+<input class="sl-in" name="note" placeholder="Note (optional)"><button class="da-pri" type="submit"><i class="ic ic-sm i-check" aria-hidden="true"></i>Mark collected</button>
+<button class="da-sec" type="button" style="flex:none" data-sl-action="ajax/sl/rider_ajax.php" data-p-op="failed" data-p-id="<?= (int) $j['id'] ?>" data-p-note="Customer not available" data-sl-confirm="Record a failed attempt?">Customer not there · try later</button></form>
+<?php else: ?><div class="da-ok"><i class="ic i-check" aria-hidden="true"></i><span><?= h($j['st']) ?><?= $j['receiver'] ? ' to ' . h($j['receiver']) : '' ?>. <?= h($j['rid']) ?> added to today's earnings.</span></div><a class="da-pri" href="<?= sl_route('DriverApp') ?>">Next package</a><?php endif; ?>
+<?php elseif ($tab === 'pay'): ?>
+<section class="da-sheet"><span class="up">Earned today</span><b style="font:600 38px var(--font);letter-spacing:-.02em"><?= h($d['earned']) ?></b><span class="mut sm"><?= (int) $d['done'] ?> jobs · <?= (int) $d['pct'] ?>% of <?= h($d['feesToday']) ?> in fees</span><div class="da-bars"><?php foreach ($d['week'] as $w): ?><i class="<?= h($w['cls']) ?>" style="<?= h($w['h']) ?>" title="<?= h($w['t']) ?>"></i><?php endforeach; ?></div><div class="row between mut" style="font-size:11.5px"><?php foreach ($d['week'] as $w): ?><span><?= h($w['l']) ?></span><?php endforeach; ?></div></section>
+<div class="da-k"><div><b><?= h($d['weekEarned']) ?></b><small>Last 7 days</small></div><div><b><?= (int) $d['done'] ?></b><small>Done today</small></div><div><b><?= (int) $d['left'] ?></b><small>Still to do</small></div></div>
+<?php else: ?>
+<div class="da-k"><div><b><?= (int) $d['left'] ?></b><small>To do</small></div><div><b><?= (int) $d['done'] ?></b><small>Done</small></div><div><b><?= h($d['earned']) ?></b><small>Earned today</small></div></div>
+<?php if ($d['next'] && $tab === 'home'): $n = $d['next']; ?><section class="da-next"><div class="in"><div class="da-row"><span class="up grow">Next stop</span><span class="sl-pill <?= h($n['cls']) ?>"><?= h($n['st']) ?></span></div><div class="da-row"><span class="col grow"><b class="fw5" style="font-size:17px"><?= h($n['cust']) ?></b><span class="mut sm"><?= h($n['addr']) ?></span></span><span class="da-fee"><?= h($n['fee']) ?><small>you get <?= h($n['rid']) ?></small></span></div>
+<div class="da-row" style="gap:8px"><?php if ($n['phone']): ?><a class="da-sec" href="tel:<?= h(preg_replace('/[^0-9+]/', '', $n['phone'])) ?>"><i class="ic ic-sm i-phone" aria-hidden="true"></i>Call</a><?php endif; ?><a class="da-sec" href="<?= h(sl_url(['job' => $n['id']])) ?>"><i class="ic ic-sm i-route" aria-hidden="true"></i>Details</a></div>
+<a class="da-pri" href="<?= h(sl_url(['job' => $n['id']])) ?>"><i class="ic ic-sm i-key" aria-hidden="true"></i><?= $n['pickup'] ? 'Collect' : 'Deliver' ?></a></div></section><?php endif; ?>
+<div class="da-row"><b class="fw5 grow">My packages</b><span class="mut sm"><?= (int) $d['total'] ?> today</span></div>
+<div class="da-seg"><?php foreach ($d['segs'] as $g): ?><a class="<?= $g['k'] === $d['seg'] ? 'on' : '' ?>" href="<?= h(sl_url(['seg' => $g['k']])) ?>"><?= h($g['label']) ?></a><?php endforeach; ?></div>
+<?php foreach ($d['jobs'] as $i => $p): ?><a class="da-pk" href="<?= h(sl_url(['job' => $p['id']])) ?>" style="color:inherit"><span class="da-n <?= $p['state'] === 'open' ? '' : 'done' ?>"><?= $i + 1 ?></span><span class="m"><b class="fw5"><?= h($p['cust']) ?></b><small><?= h($p['addr']) ?></small><small class="mono"><?= h($p['trk']) ?> · <?= $p['pickup'] ? 'pickup' : 'delivery' ?></small></span><span class="col" style="align-items:flex-end;gap:6px"><span class="sl-pill <?= h($p['cls']) ?>"><?= h($p['st']) ?></span><span class="da-fee"><?= h($p['fee']) ?></span></span></a><?php endforeach; ?>
+<?php if (!$d['jobs']): ?><div class="da-sheet mut sm">Nothing here. New jobs appear when the office assigns them.</div><?php endif; ?>
 <?php endif; ?>
 </div>
-<nav class="da-tab" aria-label="Rider app"><?php foreach ((array) sl_get($d, 'tabs', []) as $__i => $t): ?><button class="<?= sl_v($t, 'cls') ?>" data-sl-on="click:pick" aria-current="<?= sl_v($t, 'cur') ?>"><i class="ic <?= sl_v($t, 'icon') ?>" aria-hidden="true"></i><?= sl_v($t, 'label') ?></button><?php endforeach; ?></nav>
+<?php if ($d['isRider']): ?><nav class="da-tab" aria-label="Rider app"><a class="<?= $tab === 'home' && !$j ? 'on' : '' ?>" href="<?= sl_route('DriverApp') ?>"><i class="ic i-box" aria-hidden="true"></i>Jobs</a><a class="<?= $tab === 'pay' ? 'on' : '' ?>" href="<?= sl_route('DriverApp', ['tab' => 'pay']) ?>"><i class="ic i-dollar" aria-hidden="true"></i>Earnings</a><a href="<?= sl_route('Notifications') ?>"><i class="ic i-bell" aria-hidden="true"></i>Alerts</a><a href="logout.php"><i class="ic i-logout" aria-hidden="true"></i>Sign out</a></nav><?php endif; ?>
 </div>
+<script>
+(function () {
+  document.querySelectorAll('.da-photo input[type=file]').forEach(function (inp) { inp.addEventListener('change', function () { var l = inp.closest('.da-photo').querySelector('span span, span'); if (inp.files[0]) { inp.closest('.da-photo').classList.add('on'); l.lastChild.textContent = ' Photo added: ' + inp.files[0].name; } }); });
+  var f = document.getElementById('da-deliver'); if (!f) return;
+  var bad = document.getElementById('da-bad');
+  function fail(m) { bad.hidden = false; bad.querySelector('span').textContent = m; }
+  f.addEventListener('submit', function (e) {
+    e.preventDefault(); bad.hidden = true;
+    var btn = f.querySelector('[type=submit]'); btn.disabled = true;
+    var code = f.querySelector('[name=code]'), id = f.querySelector('[name=shipment_id]').value;
+    var step = code && code.value.trim() ? SL.post('ajax/pickup_code/pickup_code_ajax.php', { action: 'verify', module: 'air', 'order_ids[]': id, code: code.value.trim() }) : Promise.resolve({ success: true });
+    step.then(function (j) {
+      if (!j.success) throw new Error(j.message || 'That code does not match');
+      var fd = new FormData(f); fd.delete('code');
+      return SL.post('ajax/courier/add_courier_delivered_ajax.php', fd);
+    }).then(function (j) {
+      if (!j.success) { var er = j.errors || {}; throw new Error(Object.keys(er).map(function (k) { return er[k]; }).join(' ') || j.message || 'Could not deliver'); }
+      SL.toast('Delivered'); setTimeout(function () { location.href = location.pathname; }, 500);
+    }).catch(function (err) { fail(err.message); }).finally(function () { btn.disabled = false; });
+  });
+})();
+</script>
