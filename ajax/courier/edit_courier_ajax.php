@@ -130,7 +130,7 @@ if (empty($errors)) {
         $r = $db_snap->cdp_registro();
         $old_courier_name = $r ? $r->name_com : 'N/A';
 
-        $db_snap->cdp_query("SELECT * FROM cdb_shipping_mode WHERE id = 8");
+        $db_snap->cdp_query("SELECT * FROM cdb_shipping_mode WHERE id = :id LIMIT 1");
         $db_snap->bind(':id', (int) $old_shipment->order_service_options);
         $db_snap->cdp_execute();
         $r = $db_snap->cdp_registro();

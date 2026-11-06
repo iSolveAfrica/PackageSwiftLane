@@ -102,6 +102,7 @@ if (isset($_POST['person_receives'])) {
         $img = $_POST['sig-dataUrl']; // Your data 'data:image/png;base64,AAAFBfj42Pj4';
         $img = str_replace('data:image/png;base64,', '', $img);
         $img = str_replace(' ', '+', $img);
+        if (!is_dir('doc_signs/consolidate_packages')) { @mkdir('doc_signs/consolidate_packages', 0755, true); }
         file_put_contents('doc_signs/consolidate_packages/' . $id . '.png', base64_decode($img));
     }
 
