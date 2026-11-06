@@ -48,7 +48,7 @@ switch ($op) {
         if ($cutoff && $departs && $cutoff > $departs) $errors['cutoff_at'] = 'Cut-off must be before departure';
         if ($arrives && $departs && $arrives < $departs) $errors['arrives_at'] = 'Arrival must be after departure';
         $capacity = $_POST['capacity_total'] !== '' ? max(0, (float) $_POST['capacity_total']) : null;
-        $unit = in_array($_POST['capacity_unit'] ?? 'pkgs', ['pkgs', 'kg', 'ft3'], true) ? $_POST['capacity_unit'] : 'pkgs';
+        $unit = (in_array($_POST['capacity_unit'] ?? 'pkgs', ['pkgs', 'kg', 'ft3'], true) ? ($_POST['capacity_unit'] ?? 'pkgs') : 'pkgs');
         $partner = (int) ($_POST['partner_id'] ?? 0) ?: null;
         $carrier = mb_substr(trim((string) ($_POST['carrier_name'] ?? '')), 0, 150);
         if ($partner && sl_tableExists('cdb_freight_partners')) {

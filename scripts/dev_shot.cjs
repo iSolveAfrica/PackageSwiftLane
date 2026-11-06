@@ -11,9 +11,9 @@ const { chromium } = require('playwright');
     await page.goto('http://127.0.0.1:8084/login.php');
     await page.fill('input[name="username"], #username, input[type="email"], input[name="email"]', user).catch(()=>{});
     await page.fill('input[name="password"], #password, input[type="password"]', pass);
-    await Promise.all([page.waitForNavigation({ waitUntil: 'networkidle' }).catch(()=>{}), page.click('form button, button[type="submit"], input[type="submit"]')]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load" }).catch(()=>{}), page.click('button[type="submit"], input[type="submit"]')]);
   }
-  await page.goto(url, { waitUntil: 'networkidle' });
+  await page.goto(url, { waitUntil: "load" });
   await page.screenshot({ path: out, fullPage: true });
   console.log('url now:', page.url(), 'height', await page.evaluate(() => document.body.scrollHeight));
   if (errors.length) console.log('ERRORS:\n' + errors.join('\n'));

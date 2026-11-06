@@ -68,6 +68,33 @@ require_once __DIR__ . '/handlers/PreAlertsHandler.php';
 require_once __DIR__ . '/handlers/ReferencesHandler.php';
 require_once __DIR__ . '/handlers/NotificationsHandler.php';
 
+// ── Request log (cdb_api_request_log, one lean row per request) ─────────────
+$GLOBALS['cdp_api_t0'] = microtime(true);
+register_shutdown_function(function () {
+    try {
+        $path = (string) parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
+        $db = new Conexion();
+        $db->cdp_query("SELECT COUNT(*) AS n FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_api_request_log'");
+        $row = $db->cdp_registro();
+        if (!$row || (int) $row->n === 0) {
+            return;
+        }
+        $db->cdp_query('INSERT INTO cdb_api_request_log (created_at, direction, method, path, status, duration_ms, user_id, ip, user_agent) VALUES (NOW(), :d, :m, :p, :s, :ms, :u, :ip, :ua)');
+        $db->bind(':d', 'in');
+        $db->bind(':m', substr((string) ($_SERVER['REQUEST_METHOD'] ?? ''), 0, 8));
+        // Path only: query strings can carry tokens or personal data.
+        $db->bind(':p', substr(preg_replace('#^.*?/api/v1#', '/api/v1', $path), 0, 190));
+        $db->bind(':s', (int) http_response_code());
+        $db->bind(':ms', (int) round((microtime(true) - $GLOBALS['cdp_api_t0']) * 1000));
+        $db->bind(':u', isset($_SESSION['userid']) ? (int) $_SESSION['userid'] : null);
+        $db->bind(':ip', substr((string) ($_SERVER['REMOTE_ADDR'] ?? ''), 0, 45));
+        $db->bind(':ua', substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 120));
+        $db->cdp_execute();
+    } catch (Throwable $e) {
+        // logging never breaks the API
+    }
+});
+
 // ── Route resolution ──────────────────────────────────────────────────────────
 $method = $_SERVER['REQUEST_METHOD'];
 

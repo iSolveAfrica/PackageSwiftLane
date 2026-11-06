@@ -7,6 +7,7 @@ require_once CDP_ROOT . '/helpers/sl_view.php';
 require_once CDP_ROOT . '/helpers/querys.php';
 require_once CDP_ROOT . '/helpers/handover.php';
 require_once CDP_ROOT . '/helpers/finance_switch.php';
+require_once CDP_ROOT . '/helpers/sl_charts.php';
 
 /** Row scope for the current user: drivers see their rows, customers theirs, agencies their agency. */
 function sl_opsScope(string $alias = 'a', string $ownerCol = 'sender_id'): string
@@ -147,6 +148,7 @@ function sl_opsLookups(): array
         'payments'  => sl_rows('SELECT id, name_pay AS label FROM cdb_met_payment WHERE is_active = 1 ORDER BY id'),
         'drivers'   => sl_rows('SELECT id, fname, lname FROM cdb_users WHERE userlevel = 3 AND active = 1 ORDER BY fname'),
         'statuses'  => sl_rows('SELECT id, mod_style AS label FROM cdb_styles ORDER BY id'),
+        'paymethods'=> sl_rows('SELECT id, label, days FROM cdb_payment_methods ORDER BY id'),
     ];
 }
 

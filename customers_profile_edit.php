@@ -38,7 +38,18 @@
 
 
        
-      include('views/customers/customers_profile_edit.php');     
+      // ?edit=1 keeps the full legacy edit form (addresses, ID document, password, WhatsApp OTP).
+      if (!empty($_GET['edit'])) {
+          include('views/customers/customers_profile_edit.php');
+      } else {
+          // UserHome board (views/sl/pages/UserHome.php)
+          require_once 'helpers/sl_view.php';
+          require_once 'helpers/sl_auth.php';
+          sl_passwordRotationGuard();
+          require_once 'views/sl/data/portal.php';
+          $userData = $user->cdp_getUserData();
+          sl_render('UserHome', ['id' => 'myaccount', 'title' => 'My account', 'board' => 'UserHome'], sl_userHomeData($user, $core, $userData));
+      }     
            
 
     } else{

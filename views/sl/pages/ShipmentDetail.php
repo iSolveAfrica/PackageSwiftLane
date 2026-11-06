@@ -96,5 +96,5 @@ document.addEventListener('sl:done', function (e) {
   var j = e.detail || {};
   if (j.success) { SL.toast((j.messages || ['Status updated']).join(' ')); setTimeout(function () { location.reload(); }, 400); }
   else if (j.errors) { var m = Object.keys(j.errors).map(function (k) { return j.errors[k]; }).join(' '); if (m) SL.toast(m, true); }
-});
+}, true); // sl:done does not bubble: listen in the capture phase
 </script>

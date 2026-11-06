@@ -1,44 +1,12 @@
 <?php
-// *************************************************************************
-// *                                                                       *
-// * Swiftlane - Integrated Web Shipping System                            *
-// * Copyright (c) iSolveAfrica Ltd. All rights reserved.                  *
-// *                                                                       *
-// *************************************************************************
-// *                                                                       *
-// * This software and its source code are proprietary and confidential    *
-// * property of iSolveAfrica Ltd. and were developed specifically for     *
-// * Swiftlane.                                                            *
-// *                                                                       *
-// * The software may not be copied, reproduced, modified, distributed,    *
-// * sublicensed, published, or used in whole or in part except as         *
-// * expressly permitted under the applicable license or written           *
-// * agreement with iSolveAfrica Ltd. Any permitted copies or derivative   *
-// * works must retain this copyright notice and all applicable            *
-// * proprietary notices.                                                  *
-// *                                                                       *
-// *************************************************************************
-
-
-
-require_once("loader.php");
-
+/** Rate editor (RateEditor.dc.html). Write: ajax/sl/tariff_save_ajax.php (same validation as ajax/tools/ship_tariffs/*). */
+require_once 'loader.php';
 $user = new User();
 $core = new Core();
-// ... ask if we are logged in here:
-if ($user->cdp_loginCheck() == true) {
-
-        $permissions = $user->cdp_getUserPermissions();
-
-      if (!$user->cdp_hasPermission('create_shipping_tariff')) {
-          header("location: error403.php");
-          exit;
-      }
-
-
-  include('views/tools/shipTariffs/shipping_tariffs_add.php');
-} else {
-
-  header("location: login.php");
-  exit;
-}
+require_once 'helpers/sl_view.php';
+sl_gate('create_shipping_tariff');
+require_once 'views/sl/data/tariffs.php';
+$id = (int) ($_GET['id'] ?? 0);
+$d = sl_rateEditorData($user, $core, $id);
+if ($id && !$d['row']) { header('Location: shipping_tariffs_list.php'); exit; }
+sl_render('RateEditor', ['id' => 'tariffs', 'title' => $id ? 'Edit rate' : 'New rate', 'board' => 'RateEditor'], $d);

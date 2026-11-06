@@ -260,6 +260,8 @@ if (empty($errors)) {
         'notify_whatsapp_sender' => (isset($_POST['notify_whatsapp_sender']) && intval($_POST['notify_whatsapp_sender']) === 1) ? 1 : 0,
         // Dangerous-goods (hazmat) flag — checkbox only posts when checked.
         'is_dangerous_good' => (isset($_POST['is_dangerous_good']) && intval($_POST['is_dangerous_good']) === 1) ? 1 : 0,
+        // Staff note on the parcel (cdp_insertCourierShipment reads this key).
+        'courier_notes' => cdp_sanitize((string) ($_POST['courier_notes'] ?? '')),
     );
 
     // Pre-alert conversion (air): carry the purchase details onto the shipment.

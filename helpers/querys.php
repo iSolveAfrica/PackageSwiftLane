@@ -6730,6 +6730,9 @@ function cdp_calculateTariffServerSide($sender_id, $sender_address_id, $recipien
     $peso_real_total  = 0.0;
     $volumetric_total = 0.0;
     foreach ($packages as $p) {
+        // add_courier_ajax.php passes json_decode() objects, the price endpoint
+        // passes arrays: normalise so isset($p['x']) never fatals on stdClass.
+        $p = (array) $p;
         $qty    = isset($p['qty'])    ? (float)$p['qty']    : (isset($p->qty)    ? (float)$p->qty    : 1.0);
         $length = isset($p['length']) ? (float)$p['length'] : (isset($p->length) ? (float)$p->length : 0.0);
         $width  = isset($p['width'])  ? (float)$p['width']  : (isset($p->width)  ? (float)$p->width  : 0.0);

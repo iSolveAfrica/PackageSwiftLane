@@ -1,48 +1,10 @@
 <?php
-// *************************************************************************
-// *                                                                       *
-// * Swiftlane - Integrated Web Shipping System                            *
-// * Copyright (c) iSolveAfrica Ltd. All rights reserved.                  *
-// *                                                                       *
-// *************************************************************************
-// *                                                                       *
-// * This software and its source code are proprietary and confidential    *
-// * property of iSolveAfrica Ltd. and were developed specifically for     *
-// * Swiftlane.                                                            *
-// *                                                                       *
-// * The software may not be copied, reproduced, modified, distributed,    *
-// * sublicensed, published, or used in whole or in part except as         *
-// * expressly permitted under the applicable license or written           *
-// * agreement with iSolveAfrica Ltd. Any permitted copies or derivative   *
-// * works must retain this copyright notice and all applicable            *
-// * proprietary notices.                                                  *
-// *                                                                       *
-// *************************************************************************
-
-
-
-    require_once("loader.php");
-
-    $user = new User();
-    $core = new Core();
-    // ... ask if we are logged in here:
-    if ($user->cdp_loginCheck() == true) 
-    {
-
-        $permissions = $user->cdp_getUserPermissions();
-
-        if (!$user->cdp_hasPermission('add_full_pickup')) {
-            header("location: error403.php");
-            exit;
-        }
-
-       
-      include('views/pickup/pickup_add_full.php');     
-           
-
-    } else{
-        
-        header("location: login.php");
-        exit;       
-    }
-?>
+// Staff: schedule a pickup (SchedulePickup artboard). Legacy view: views/pickup/pickup_add_full.php (?legacy=1).
+require_once 'loader.php';
+$user = new User(); $core = new Core();
+require_once 'helpers/sl_view.php';
+sl_gate('add_full_pickup');
+if (!empty($_GET['legacy'])) { $permissions = $user->cdp_getUserPermissions(); include 'views/pickup/pickup_add_full.php'; exit; }
+if (sl_userIs('client')) { header('Location: pickup_add.php'); exit; }
+require_once 'views/sl/data/pickups.php';
+sl_render('SchedulePickup', ['id' => 'pickup', 'title' => 'Schedule a pickup', 'board' => 'SchedulePickup', 'styles' => ['assets/swiftlane/pages/ops.css']], sl_schedulePickupData($user, $core));

@@ -137,6 +137,9 @@ if ($action === 'deliver') {
         $dbu->bind(':id', (int) $row->order_id);
         $dbu->cdp_execute();
         cdp_pickupCodeConsume('air', [(int) $row->order_id], $uid);
+        // Loyalty points for a delivered / picked-up shipment (idempotent).
+        require_once __DIR__ . '/../../helpers/loyalty.php';
+        if (function_exists('sl_loyaltyOnDelivered')) { sl_loyaltyOnDelivered('shipment', (int) $row->order_id); }
         cdp_freeConsolidatedItem((int) $row->order_id);
 
         $tracking = ($row->order_prefix ?? '') . $no;

@@ -116,6 +116,15 @@ foreach ($data as $key) {
         $user = $_SESSION['userid'];
         cdp_updateShipTrackingMultiple($tracking, $status, $comment, $office, $user);
 
+        // Automations (helpers/automations.php): "when shipment status changes".
+        @include_once __DIR__ . '/../../helpers/automations.php';
+        if (function_exists('cdp_automationsFire')) {
+            cdp_automationsFire('shipment.status', ['entity_type' => 'shipment', 'entity_id' => (int) $courier->order_id, 'entity_label' => $tracking,
+                'tracking' => $tracking, 'user_id' => (int) ($courier->sender_id ?? 0), 'status_id' => (int) $status, 'mode' => 'air',
+                'amount' => (float) ($courier->total_order ?? 0), 'is_pickup' => (int) ($courier->is_pickup ?? 0) === 1,
+                'unpaid' => (int) ($courier->status_invoice ?? 0) === 23]);
+        }
+
         // Audit: one row per shipment moved.
         cdp_activityLogStatus(
             'shipments',

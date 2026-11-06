@@ -277,6 +277,11 @@ CREATE TABLE IF NOT EXISTS cdb_dev_issue_events (
     KEY idx_issue (issue_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- Security Centre: flag that makes a user choose a new password ---------------
+SET @has_col := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_users' AND COLUMN_NAME = 'force_password_reset');
+SET @sql := IF(@has_col = 0, 'ALTER TABLE cdb_users ADD COLUMN force_password_reset TINYINT(1) NOT NULL DEFAULT 0', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
 -- Default alert rules (edit on the Alerts page) --------------------------------
 INSERT INTO cdb_dev_alert_rules (rule_key, label, metric, comparator, threshold, window_min, severity, notify, enabled, created_at)
 SELECT 'disk', 'Disk usage above 85%', 'disk_pct', '>', 85, 0, 'critical', 'email', 1, NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_dev_alert_rules WHERE rule_key = 'disk');

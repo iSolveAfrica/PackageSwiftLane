@@ -6,7 +6,8 @@
   CS.admin = 'ajax/support/admin_ajax.php';
   /** POST to a support endpoint; resolves with {success, message, ...payload}. */
   CS.post = function (url, action, data) {
-    var d = Object.assign({ action: action }, data || {});
+    var d;
+    if (data instanceof FormData) { d = data; d.set('action', action); } else d = Object.assign({ action: action }, data || {});
     return SL.post(url, d).then(function (j) {
       j.success = j.ok === true || j.success === true;
       if (!j.success && !j.message) j.message = j.error || 'Something went wrong';
@@ -23,10 +24,7 @@
     e.preventDefault();
     var btn = f.querySelector('[type="submit"]');
     if (btn) { btn.classList.add('loading'); btn.disabled = true; }
-    var fd = new FormData(f);
-    var data = {};
-    fd.forEach(function (v, k) { data[k] = v; });
-    CS.post(f.getAttribute('data-cs-url') || CS.desk, f.getAttribute('data-cs-form'), data).then(function (j) {
+    CS.post(f.getAttribute('data-cs-url') || CS.desk, f.getAttribute('data-cs-form'), new FormData(f)).then(function (j) {
       SL.toast(j.message || (j.success ? 'Saved' : 'Failed'), !j.success);
       f.dispatchEvent(new CustomEvent('cs:done', { detail: j }));
       if (j.success && f.hasAttribute('data-cs-redirect')) location.href = f.getAttribute('data-cs-redirect').replace('{id}', j.id || j.saved_id || '');

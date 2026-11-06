@@ -1,44 +1,9 @@
 <?php
-// *************************************************************************
-// *                                                                       *
-// * Swiftlane - Integrated Web Shipping System                            *
-// * Copyright (c) iSolveAfrica Ltd. All rights reserved.                  *
-// *                                                                       *
-// *************************************************************************
-// *                                                                       *
-// * This software and its source code are proprietary and confidential    *
-// * property of iSolveAfrica Ltd. and were developed specifically for     *
-// * Swiftlane.                                                            *
-// *                                                                       *
-// * The software may not be copied, reproduced, modified, distributed,    *
-// * sublicensed, published, or used in whole or in part except as         *
-// * expressly permitted under the applicable license or written           *
-// * agreement with iSolveAfrica Ltd. Any permitted copies or derivative   *
-// * works must retain this copyright notice and all applicable            *
-// * proprietary notices.                                                  *
-// *                                                                       *
-// *************************************************************************
-
-
-
-require_once("loader.php");
-
-$user = new User();
-$core = new Core();
-// ... ask if we are logged in here:
-if ($user->cdp_loginCheck() == true) {
-
-        $permissions = $user->cdp_getUserPermissions();
-
-        if (!$user->cdp_hasPermission('add_consolidate_package')) {
-            header("location: error403.php");
-            exit;
-        }
-
-
-    include('views/consolidate_packages/consolidate_add.php');
-} else {
-
-    header("location: login.php");
-    exit;
-}
+// New sea consolidation: the NewConsolidation page in sea mode. Legacy form at ?legacy=1.
+require_once 'loader.php';
+$user = new User(); $core = new Core();
+require_once 'helpers/sl_view.php';
+sl_gate('add_consolidate_package');
+if (!empty($_GET['legacy']) || $_SERVER['REQUEST_METHOD'] === 'POST') { $permissions = $user->cdp_getUserPermissions(); include 'views/consolidate_packages/consolidate_add.php'; exit; }
+header('Location: consolidate_add.php?type=sea');
+exit;

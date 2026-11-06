@@ -272,7 +272,7 @@ function sl_csCustomerData($user, $core, int $customerId): array
         $ym = date('Y-m', strtotime("first day of -$i months"));
         $months[] = ['l' => date('M', strtotime($ym . '-01')), 'n' => $map[$ym] ?? 0];
     }
-    $events = sl_tableExists('cdb_activity_log') ? sl_rows('SELECT action_label, summary, created_at, module FROM cdb_activity_log WHERE (entity_type = :t AND entity_id = :i) OR user_id = :u ORDER BY id DESC LIMIT 6', [':t' => 'customer', ':i' => $customerId, ':u' => $customerId]) : [];
+    $events = sl_tableExists('cdb_activity_log') ? sl_rows('SELECT action_label, summary, created_at, module FROM cdb_activity_log WHERE entity_type = :t AND entity_id = :i ORDER BY id DESC LIMIT 6', [':t' => 'customer', ':i' => $customerId]) : [];
     $notes = $d['ready'] ? sl_rows("SELECT m.body, m.author_id, m.created_at FROM cdb_cs_messages m JOIN cdb_cs_tickets t ON t.id = m.ticket_id WHERE t.customer_id = :c AND m.visibility = 'internal' AND m.author_type = 'staff' ORDER BY m.id DESC LIMIT 3", [':c' => $customerId]) : [];
     $lastTicket = $tickets[0] ?? null;
     require_once CDP_ROOT . '/helpers/loyalty.php';
@@ -396,7 +396,7 @@ function sl_csPlaybookData($user, $core): array
 function sl_csReportsData($user, $core): array
 {
     $d = sl_csBase($user, 'reports');
-    $days = in_array((int) ($_GET['days'] ?? 30), [7, 30, 90], true) ? (int) $_GET['days'] : 30;
+    $days = in_array((int) ($_GET['days'] ?? 30), [7, 30, 90], true) ? (int) ($_GET['days'] ?? 30) : 30;
     $d['days'] = $days;
     $d['section'] = (string) ($_GET['section'] ?? 'resolution');
     $d['sections'] = [['resolution', 'Resolution time', 'clock'], ['first', 'First response', 'reply'], ['volume', 'Ticket volume', 'chart'], ['csat', 'Customer satisfaction', 'star'], ['agents', 'Teammate workload', 'users'], ['channels', 'Channel mix', 'message']];
@@ -453,7 +453,7 @@ function sl_csReportsData($user, $core): array
     $d['teamsMix'] = $r['by_team'];
     $d['ai'] = $r['ai'];
     $d['backlog'] = $r['backlog'];
-    $d['exportHref'] = 'ajax/support/reports_ajax.php?action=csv&from=' . $from . '&to=' . $to;
+    $d['exportHref'] = 'ajax/support/reports_ajax.php?action=export&from=' . $from . '&to=' . $to;
     $d['from'] = $from;
     $d['to'] = $to;
     return $d;

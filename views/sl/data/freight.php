@@ -153,7 +153,7 @@ function sl_freightHubData($user, $core): array
 function sl_freightScheduleData($user, $core): array
 {
     $d = ['ready' => sl_tableExists('cdb_freight_schedules'), 'flash' => (string) ($_GET['flash'] ?? ''), 'canManage' => $user->cdp_hasPermission('manage_freight')];
-    $mode = in_array($_GET['mode'] ?? 'all', ['all', 'air', 'sea'], true) ? $_GET['mode'] : 'all';
+    $mode = in_array($_GET['mode'] ?? 'all', ['all', 'air', 'sea'], true) ? ($_GET['mode'] ?? 'all') : 'all';
     $d['mode'] = $mode;
     $d['modes'] = array_map(fn($m) => ['label' => $m[1], 'cls' => $mode === $m[0] ? 'on' : '', 'href' => sl_url(['mode' => $m[0] === 'all' ? '' : $m[0]])], [['all', 'All'], ['air', 'Air'], ['sea', 'Sea']]);
     $d['partners'] = sl_frPartnerOptions();
@@ -235,6 +235,8 @@ function sl_freightScheduleData($user, $core): array
         $avg = $delays ? array_sum($delays) / count($delays) : 0;
         $consIds = array_filter(array_map('trim', explode(',', (string) $cur->consolidation_ids)));
         $consHref = $consIds ? sl_route('Consolidations', ['q' => reset($consIds)]) : sl_route('Consolidations');
+        $loc = fn($x) => $x ? date('Y-m-d\\TH:i', strtotime($x)) : '';
+        $d['edit'] = ['id' => (int) $cur->id, 'mode' => $cur->mode, 'voyage_no' => $cur->voyage_no, 'partner_id' => (int) $cur->partner_id, 'carrier_name' => $cur->carrier_name, 'origin' => $cur->origin, 'destination' => $cur->destination, 'cutoff_at' => $loc($cur->cutoff_at), 'departs_at' => $loc($cur->departs_at), 'arrives_at' => $loc($cur->arrives_at), 'capacity_total' => $cur->capacity_total, 'capacity_unit' => $cur->capacity_unit, 'consolidation_ids' => $cur->consolidation_ids, 'notes' => $cur->notes];
         $d['d'] = ['id' => (int) $cur->id, 'n' => $cur->voyage_no, 'icon' => $cur->mode === 'sea' ? 'i-ship' : 'i-plane', 'route' => $cur->origin . ' → ' . $cur->destination . ($cur->partner ? ' · ' . $cur->partner : ($cur->carrier_name ? ' · ' . $cur->carrier_name : '')), 'st' => $st[0], 'pc' => $st[1], 'status' => $cur->status, 'dep' => sl_frWhen($cur->departs_at), 'cut' => sl_frWhen($cur->cutoff_at), 'fill' => sl_num($cur->capacity_booked) . ' / ' . ($cap > 0 ? sl_num($cap) : '—') . ' ' . sl_frUnit($cur->capacity_unit), 'cons' => $consIds ? implode(', ', $consIds) : '—', 'consHref' => $consHref, 'eta0' => sl_frWhen($cur->arrives_at), 'eta' => $cur->arrived_at ? sl_frWhen($cur->arrived_at) . ' (actual)' : ($pred['eta'] ?: '—'), 'bars' => $bars, 'hist' => $hist ? $lateN . ' of the last ' . count($hist) . ' were late · average ' . ($avg >= 0 ? '+' : '') . round($avg, 1) . ' h vs carrier ETA' : 'No arrivals recorded on this route yet', 'notes' => (string) $cur->notes, 'unit' => sl_frUnit($cur->capacity_unit), 'mode' => $cur->mode];
     }
     $d['count'] = count($rows);
@@ -261,7 +263,7 @@ function sl_frPredict($s): array
 function sl_waybillsData($user, $core): array
 {
     $d = ['ready' => sl_tableExists('cdb_waybills') && sl_tableExists('cdb_waybill_items'), 'flash' => (string) ($_GET['flash'] ?? ''), 'canManage' => $user->cdp_hasPermission('manage_freight')];
-    $tab = in_array($_GET['tab'] ?? 'awb', ['awb', 'man', 'load'], true) ? $_GET['tab'] : 'awb';
+    $tab = (in_array($_GET['tab'] ?? 'awb', ['awb', 'man', 'load'], true) ? ($_GET['tab'] ?? 'awb') : 'awb');
     $d['tabs'] = array_map(fn($t) => ['label' => $t[1], 'icon' => $t[2], 'cls' => $tab === $t[0] ? 'on' : '', 'href' => sl_url(['tab' => $t[0]])], [['awb', 'Master and house bills', 'i-layers'], ['man', 'Cargo manifest', 'i-file'], ['load', 'Container loading', 'i-box']]);
     $d['tAwb'] = $tab === 'awb';
     $d['tMan'] = $tab === 'man';
@@ -319,7 +321,7 @@ function sl_waybillsData($user, $core): array
         $d['issueLabel'] = $cur->status === 'draft' ? 'Issue ' . $cur->waybill_no : $cur->waybill_no . ' ' . $cur->status;
         $d['issueDisabled'] = $cur->status !== 'draft';
         // manifest text
-        $fmt = in_array($_GET['fmt'] ?? 'iata', ['iata', 'customs', 'load'], true) ? $_GET['fmt'] : 'iata';
+        $fmt = (in_array($_GET['fmt'] ?? 'iata', ['iata', 'customs', 'load'], true) ? ($_GET['fmt'] ?? 'iata') : 'iata');
         $d['fmts'] = array_map(fn($f) => ['label' => $f[1], 'cls' => $fmt === $f[0] ? 'on' : '', 'href' => sl_url(['fmt' => $f[0], 'tab' => 'man'])], [['iata', 'IATA'], ['customs', 'Customs'], ['load', 'Loading list']]);
         $d['manifest'] = sl_frManifestText($cur, $items, $fmt, $core);
         $d['fmt'] = $fmt;
@@ -415,7 +417,7 @@ function sl_frManifestText($w, array $items, string $fmt, $core): string
 function sl_cargoExceptionsData($user, $core): array
 {
     $d = ['ready' => sl_tableExists('cdb_cargo_exceptions'), 'flash' => (string) ($_GET['flash'] ?? ''), 'canManage' => $user->cdp_hasPermission('manage_freight'), 'canInsure' => $user->cdp_hasPermission('manage_insurance')];
-    $tab = in_array($_GET['tab'] ?? 'ex', ['ex', 'bulk', 'part', 'chain'], true) ? $_GET['tab'] : 'ex';
+    $tab = (in_array($_GET['tab'] ?? 'ex', ['ex', 'bulk', 'part', 'chain'], true) ? ($_GET['tab'] ?? 'ex') : 'ex');
     $d['tabs'] = array_map(fn($t) => ['label' => $t[1], 'icon' => $t[2], 'cls' => $tab === $t[0] ? 'on' : '', 'href' => sl_url(['tab' => $t[0]])], [['ex', 'Exceptions', 'i-alert'], ['bulk', 'Bulk status update', 'i-refresh'], ['part', 'Partial shipments', 'i-layers'], ['chain', 'Hand-over tracking', 'i-users']]);
     $d['tEx'] = $tab === 'ex';
     $d['tBulk'] = $tab === 'bulk';
@@ -442,7 +444,7 @@ function sl_cargoExceptionsData($user, $core): array
             ['l' => 'Hand-overs today', 'v' => (string) $today, 's' => $noSig . ' missing a name or photo'],
             ['l' => 'Average time to fix', 'v' => $k->fix_h !== null ? number_format((float) $k->fix_h / 24, 1) . ' d' : '—', 's' => 'Delays excluded'],
         ];
-        $filter = in_array($_GET['filter'] ?? 'open', ['open', 'resolved', 'all'], true) ? $_GET['filter'] : 'open';
+        $filter = (in_array($_GET['filter'] ?? 'open', ['open', 'resolved', 'all'], true) ? ($_GET['filter'] ?? 'open') : 'open');
         $d['filter'] = $filter;
         $d['filters'] = array_map(fn($f) => ['label' => $f[1], 'cls' => $filter === $f[0] ? 'on' : '', 'href' => sl_url(['filter' => $f[0]])], [['open', 'Open'], ['resolved', 'Resolved'], ['all', 'All']]);
         $w = $filter === 'open' ? "status IN ('open','in_progress')" : ($filter === 'resolved' ? "status IN ('resolved','closed')" : '1');
@@ -531,6 +533,7 @@ function sl_insuranceClaimsData($user, $core): array
     $insurer = sl_tableExists('cdb_freight_partners') ? sl_row("SELECT * FROM cdb_freight_partners WHERE type = 'insurer' AND active = 1 ORDER BY id") : null;
     $d['insurer'] = $insurer ? ['name' => $insurer->name, 'policy' => $insurer->code ?: '—', 'renews' => $insurer->contract_ends ? sl_date($insurer->contract_ends) : '—', 'contact' => trim(($insurer->contact_name ?: '') . ' ' . ($insurer->contact_phone ?: '')) ?: ($insurer->contact_email ?: '—')] : null;
     $d['premMonth'] = sl_money($ins->prem);
+    $d['prefill'] = ['open' => !empty($_GET['new']), 'track' => (string) ($_GET['track'] ?? ''), 'exception' => (int) ($_GET['exception'] ?? 0), 'type' => ($_GET['type'] ?? '') === 'lost' ? 'lost' : 'damaged'];
     $d['claims'] = [];
     $d['c'] = null;
     if (!$d['ready']) {
@@ -544,7 +547,7 @@ function sl_insuranceClaimsData($user, $core): array
     $d['paidYear'] = sl_money($k->paid_y);
     $prem12 = (float) sl_scalar('SELECT COALESCE(SUM(total_tax_insurance),0) FROM cdb_add_order WHERE is_deleted = 0 AND YEAR(order_date) = YEAR(CURDATE())');
     $d['lossRatio'] = $prem12 > 0 ? sl_pct($k->paid_y, $prem12) . '%' : '—';
-    $filter = in_array($_GET['filter'] ?? 'open', ['open', 'paid', 'all'], true) ? $_GET['filter'] : 'open';
+    $filter = (in_array($_GET['filter'] ?? 'open', ['open', 'paid', 'all'], true) ? ($_GET['filter'] ?? 'open') : 'open');
     $d['filters'] = array_map(fn($f) => ['label' => $f[1], 'cls' => $filter === $f[0] ? 'on' : '', 'href' => sl_url(['filter' => $f[0]])], [['open', 'Open'], ['paid', 'Paid or rejected'], ['all', 'All']]);
     $w = $filter === 'open' ? "status NOT IN ('paid','rejected')" : ($filter === 'paid' ? "status IN ('paid','rejected')" : '1');
     $sel = (int) ($_GET['id'] ?? 0);

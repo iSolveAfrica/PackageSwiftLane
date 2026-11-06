@@ -1,51 +1,18 @@
 <?php
 // *************************************************************************
-// *                                                                       *
 // * Swiftlane - Integrated Web Shipping System                            *
 // * Copyright (c) iSolveAfrica Ltd. All rights reserved.                  *
-// *                                                                       *
 // *************************************************************************
-// *                                                                       *
-// * This software and its source code are proprietary and confidential    *
-// * property of iSolveAfrica Ltd. and were developed specifically for     *
-// * Swiftlane.                                                            *
-// *                                                                       *
-// * The software may not be copied, reproduced, modified, distributed,    *
-// * sublicensed, published, or used in whole or in part except as         *
-// * expressly permitted under the applicable license or written           *
-// * agreement with iSolveAfrica Ltd. Any permitted copies or derivative   *
-// * works must retain this copyright notice and all applicable            *
-// * proprietary notices.                                                  *
-// *                                                                       *
-// *************************************************************************
-
-
-
-    require_once("loader.php");
-
-    $user = new User();
-    $core = new Core();
-    // ... ask if we are logged in here:
-    if ($user->cdp_loginCheck() == true) 
-    {
-
-         $permissions = $user->cdp_getUserPermissions();
-
-        // Customers (userlevel 1) may view their OWN shipments even without the
-        // staff 'view_shipment_details' permission. Ownership (sender == viewer)
-        // is enforced inside views/courier/courier_view.php.
-        if (!$user->cdp_hasPermission('view_shipment_details') && (int)$user->userlevel !== 1) {
-            header("location: error403.php");
-            exit;
-        }
-
-       
-      include('views/courier/courier_view.php');     
-           
-
-    } else{
-        
-        header("location: login.php");
-        exit;       
-    }
-?>
+// Shipment detail (Swift Lane UI: views/sl/pages/ShipmentDetail.php).
+// Customers may open their own shipments only (scope enforced in sl_shipmentLoad).
+require_once("loader.php");
+$user = new User();
+$core = new Core();
+require_once 'helpers/sl_view.php';
+sl_gate(sl_userIs('client') ? null : 'view_shipment_details');
+require_once 'views/sl/data/shipments.php';
+$d = sl_shipmentDetailData($user, $core, (int) ($_GET['id'] ?? 0));
+if (!empty($d['missing'])) {
+    http_response_code(404);
+}
+sl_render('ShipmentDetail', ['id' => 'air', 'title' => !empty($d['track']) ? 'Shipment ' . $d['track'] : 'Shipment', 'board' => 'ShipmentDetail'], $d);

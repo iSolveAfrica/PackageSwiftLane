@@ -9,6 +9,11 @@ if (!empty($_GET['filter_virtual_mail_boxes'])) {
     $where = " WHERE id = {$id}";
     $col = 'col-12';
 }
+// Addresses switched off on Settings › Shipping addresses are not shown to customers.
+require_once __DIR__ . '/../../../helpers/sl_view.php';
+if (sl_columnExists('cdb_virtual_mailbox_addresses', 'is_active')) {
+    $where .= ($where === '' ? ' WHERE' : ' AND') . ' is_active = 1';
+}
 
 $virtualMailboxes = $core->cdp_getVirtualMailboxes($where);
 

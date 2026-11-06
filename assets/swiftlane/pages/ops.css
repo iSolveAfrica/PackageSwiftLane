@@ -25,3 +25,4 @@
 .ops-row.on{border-color:var(--ink);background:var(--active)}
 .ops-row[disabled]{opacity:.5;cursor:default}
 .row[hidden],.col[hidden],.grid[hidden]{display:none}
+button.np-chip{border:0;font:inherit;cursor:pointer;height:34px}

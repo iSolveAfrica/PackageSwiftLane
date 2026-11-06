@@ -11,4 +11,4 @@ if (!cdp_csIsAgent($user)) {
     exit;
 }
 require_once 'views/sl/data/support.php';
-sl_render('CsChannels', ['id' => 'cschan', 'title' => 'Channels & Teams', 'board' => 'CsChannels', 'scripts' => ['dataJs/sl/cs_common.js', 'dataJs/sl/cs_channels.js']], sl_csChannelsData($user, $core));
+sl_render('CsChannels', ['id' => 'cschan', 'title' => 'Channels & Teams', 'board' => 'CsChannels', 'scripts' => ['dataJs/sl/cs_common.js']], sl_csChannelsData($user, $core));

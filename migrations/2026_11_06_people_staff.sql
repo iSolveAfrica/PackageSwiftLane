@@ -131,6 +131,13 @@ SELECT 'on_time_bonus', 'On-time bonus (90%+ in a week)', 'bonus', 20.00, 100, 1
 INSERT INTO cdb_rider_fee_rules (rule_key, label, rule_type, amount, rider_pct, active, sort_order, created_at)
 SELECT 'failed_attempt', 'Failed delivery attempt', 'penalty', 2.00, 100, 1, 5, NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_rider_fee_rules WHERE rule_key = 'failed_attempt');
 
+INSERT INTO cdb_rider_fee_rules (rule_key, label, rule_type, amount, rider_pct, active, sort_order, created_at)
+SELECT 'veh_motorbike', 'Motorbike', 'vehicle', 0, 60, 1, 10, NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_rider_fee_rules WHERE rule_key = 'veh_motorbike');
+INSERT INTO cdb_rider_fee_rules (rule_key, label, rule_type, amount, rider_pct, active, sort_order, created_at)
+SELECT 'veh_van', 'Van', 'vehicle', 0, 65, 1, 11, NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_rider_fee_rules WHERE rule_key = 'veh_van');
+INSERT INTO cdb_rider_fee_rules (rule_key, label, rule_type, amount, rider_pct, active, sort_order, created_at)
+SELECT 'veh_car', 'Car', 'vehicle', 0, 65, 1, 12, NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_rider_fee_rules WHERE rule_key = 'veh_car');
+
 -- Permissions ------------------------------------------------------------------
 INSERT INTO cdb_user_module_permissions (module_name, description) SELECT 'SWIFTLANE_UI', 'Swift Lane interface, logs, finance and warehouse permissions' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_user_module_permissions WHERE module_name = 'SWIFTLANE_UI');
 SET @mod := (SELECT id FROM cdb_user_module_permissions WHERE module_name = 'SWIFTLANE_UI' LIMIT 1);

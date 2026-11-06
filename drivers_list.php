@@ -1,48 +1,19 @@
 <?php
-// *************************************************************************
-// *                                                                       *
-// * Swiftlane - Integrated Web Shipping System                            *
-// * Copyright (c) iSolveAfrica Ltd. All rights reserved.                  *
-// *                                                                       *
-// *************************************************************************
-// *                                                                       *
-// * This software and its source code are proprietary and confidential    *
-// * property of iSolveAfrica Ltd. and were developed specifically for     *
-// * Swiftlane.                                                            *
-// *                                                                       *
-// * The software may not be copied, reproduced, modified, distributed,    *
-// * sublicensed, published, or used in whole or in part except as         *
-// * expressly permitted under the applicable license or written           *
-// * agreement with iSolveAfrica Ltd. Any permitted copies or derivative   *
-// * works must retain this copyright notice and all applicable            *
-// * proprietary notices.                                                  *
-// *                                                                       *
-// *************************************************************************
-
-
-
-    require_once("loader.php");
-
-    $user = new User();
-    $core = new Core();
-    // ... ask if we are logged in here:
-    if ($user->cdp_loginCheck() == true) 
-    {
-
-        $permissions = $user->cdp_getUserPermissions();
-
-        if (!$user->cdp_hasPermission('view_user_list')) {
-            header("location: error403.php");
-            exit;
-        }
-
-       
-      include('views/drivers/drivers_list.php');     
-           
-
-    } else{
-        
-        header("location: login.php");
-        exit;       
-    }
-?>
+// Riders (Swift Lane UI): split sheet and rider cards. Legacy drivers_add/edit pages stay for the forms.
+require_once 'loader.php';
+$user = new User();
+$core = new Core();
+require_once 'helpers/sl_view.php';
+sl_gate('view_user_list');
+require_once 'views/sl/data/riders.php';
+$d = sl_driversData($user, $core);
+if (($_GET['export'] ?? '') === 'csv' && $d['canMoney']) {
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="rider-split-' . $d['period'] . '-' . date('Ymd') . '.csv"');
+    $out = fopen('php://output', 'w');
+    fputcsv($out, ['Rider', 'Vehicle', 'Assigned', 'Done', 'Fees', 'Rider %', 'Rider gets', 'We get', 'Status']);
+    foreach ($d['rows'] as $r) fputcsv($out, [$r['name'], $r['veh'], $r['assigned'], $r['done'], $r['fees'], $r['pct'], $r['rid'], $r['sw'], $r['st']]);
+    fclose($out);
+    exit;
+}
+sl_render('Drivers', ['id' => 'drivers', 'title' => 'Riders', 'board' => 'Drivers'], $d);

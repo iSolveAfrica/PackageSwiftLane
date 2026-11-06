@@ -19,7 +19,17 @@ if ($user->cdp_loginCheck() == true) {
         exit;
     }
 
-    include('views/customer/my_bills.php');
+    // MyBills board (views/sl/pages/MyBills.php); ?legacy=1 keeps the old per-package checklist page.
+    if (!empty($_GET['legacy'])) {
+        include('views/customer/my_bills.php');
+    } else {
+        require_once 'helpers/sl_view.php';
+        require_once 'helpers/sl_auth.php';
+        sl_passwordRotationGuard();
+        require_once 'views/sl/data/portal.php';
+        $userData = $user->cdp_getUserData();
+        sl_render('MyBills', ['id' => 'mybills', 'title' => 'My bills', 'board' => 'MyBills'], sl_billsData($user, $core, $userData));
+    }
 
 } else {
 

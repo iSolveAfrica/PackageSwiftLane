@@ -50,7 +50,13 @@ if ($user->cdp_loginCheck() == true) {
             sl_render('Main', ['id' => 'dash', 'title' => 'Overview', 'board' => 'Main'], sl_overviewData($user, $core, $userData));
             break;
         case 'client':
-            include('views/dashboard/dashboard_client.php');
+            // ClientDashboard board (views/sl/pages/ClientDashboard.php)
+            require_once 'helpers/sl_view.php';
+            require_once 'helpers/sl_auth.php';
+            sl_passwordRotationGuard();
+            require_once 'views/sl/data/portal.php';
+            $userData = $user->cdp_getUserData();
+            sl_render('ClientDashboard', ['id' => 'dash', 'title' => 'Dashboard', 'board' => 'ClientDashboard'], sl_clientDashboardData($user, $core, $userData));
             break;
         case 'driver':
             include('views/dashboard/dashboard_driver.php');

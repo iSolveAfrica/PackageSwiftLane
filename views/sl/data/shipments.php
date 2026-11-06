@@ -401,13 +401,13 @@ function sl_shipmentTrackingData($user, $core, int $id, string $q = ''): array
     if ($isSea) {
         $p = cdp_trackProgress((int) $s['eff']->status_id, $statusName);
         foreach ($p['steps'] as $i => $st) {
-            $legs[] = ['t' => $st['label'], 'icon' => $i < 2 ? 'i-warehouse' : ($i < 3 ? 'i-ship' : ($i < 5 ? 'i-layers' : 'i-box')), 'cls' => $i < $p['index'] ? 'done' : ($i === $p['index'] ? 'now' : '')];
+            $legs[] = ['t' => $st['label'], 'icon' => $i < 2 ? 'i-warehouse' : ($i < 3 ? 'i-ship' : ($i < 5 ? 'i-layers' : 'i-box')), 'cls' => $i < $p['index'] ? 'ok' : ($i === $p['index'] ? 'warn' : '')];
         }
         $d['legNote'] = 'Sea freight · ' . $p['steps'][$p['index']]['label'];
     } else {
         $groups = [['t' => 'US warehouse', 'icon' => 'i-warehouse', 'from' => 0, 'to' => 4], ['t' => 'Flight to London', 'icon' => 'i-plane', 'from' => 5, 'to' => 8], ['t' => 'London hub', 'icon' => 'i-layers', 'from' => 9, 'to' => 10], ['t' => 'Flight to Accra', 'icon' => 'i-plane', 'from' => 11, 'to' => 12], ['t' => 'Customs', 'icon' => 'i-shield', 'from' => 13, 'to' => 14], ['t' => 'Ready / delivery', 'icon' => 'i-box', 'from' => 15, 'to' => 15]];
         foreach ($groups as $g) {
-            $cls = $delivered || $idx > $g['to'] ? 'done' : (($idx >= $g['from'] && $idx <= $g['to']) ? 'now' : '');
+            $cls = $delivered || $idx > $g['to'] ? 'ok' : (($idx >= $g['from'] && $idx <= $g['to']) ? 'warn' : '');
             $legs[] = ['t' => $g['t'], 'icon' => $g['icon'], 'cls' => $cls];
         }
         $d['legNote'] = 'Air · ' . ($journey['steps'][$idx]['label'] ?? $statusName);

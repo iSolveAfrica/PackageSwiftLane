@@ -318,7 +318,7 @@ function sl_financialOverviewData($user, $core, bool $money): array
     $opMonthly = 0.0;
     if (sl_tableExists('cdb_operating_costs')) {
         $rate = sl_finRate();
-        foreach (sl_rows("SELECT amount, currency, frequency FROM cdb_operating_costs WHERE is_active = 1") as $c) {
+        foreach (sl_rows("SELECT amount, currency, frequency FROM cdb_operating_costs WHERE is_active = 1 AND on_billing = 1 AND frequency <> 'once'") as $c) {
             $m = (float) $c->amount * ($c->frequency === 'yearly' ? 1 / 12 : ($c->frequency === 'weekly' ? 52 / 12 : ($c->frequency === 'daily' ? 30 : 1)));
             $opMonthly += strtoupper($c->currency) === 'GHS' && $rate > 0 ? $m / $rate : $m;
         }
@@ -386,7 +386,16 @@ function sl_financialOverviewData($user, $core, bool $money): array
         ['t' => 'Export the ledger', 'i' => $money ? 'i-check' : 'i-lock', 'c' => $money ? 'ok' : 'no'],
     ];
     $d['roleName'] = (string) sl_scalar('SELECT role_name FROM cdb_user_roles WHERE role_id = :r', [':r' => (int) ($_SESSION['userlevel'] ?? 0)], 'Staff');
-    $d['tickets'] = sl_tableExists('cdb_cs_tickets') ? sl_row("SELECT SUM(status NOT IN ('closed','resolved')) AS open_n, SUM(status IN ('closed','resolved') AND updated_at >= CURDATE() - INTERVAL 7 DAY) AS solved FROM cdb_cs_tickets") : null;
+    $d['tickets'] = sl_tableExists('cdb_cs_tickets') ? (int) sl_scalar("SELECT COUNT(*) FROM cdb_cs_tickets WHERE status NOT IN ('closed','resolved')") : 0;
+    if (!$money) {
+        // Restricted board: no amount leaves the server.
+        $hid = '₵ ••••';
+        foreach ($d['kpi'] as $k => $v) { $d['kpi'][$k]['v'] = $hid; $d['kpi'][$k]['sub'] = ''; $d['kpi'][$k]['foot'] = 'Amounts hidden for your role'; }
+        foreach ($d['gw'] as $k => $v) { $d['gw'][$k]['v'] = $v['count'] . ' payments'; }
+        foreach ($d['svc'] as $k => $v) { $d['svc'][$k]['r'] = $hid; $d['svc'][$k]['c'] = $hid; $d['svc'][$k]['m'] = $hid; }
+        foreach ($d['feed'] as $k => $v) { $d['feed'][$k]['amt'] = ''; }
+        foreach ($d['months'] as $k => $v) { $d['months'][$k]['tip'] = ''; }
+    }
     return $d;
 }
 
@@ -494,8 +503,8 @@ function sl_billingHubData($user, $core): array
         ['t' => 'Tariff rows', 'v' => sl_num(sl_scalar('SELECT COUNT(*) FROM cdb_shipping_fees')) . ' active'],
     ];
     // reconciliation today
-    $todayCash = (float) sl_scalar("SELECT COALESCE(SUM(x.usd),0) FROM $u x WHERE DATE(x.at) = CURDATE() AND (x.src = 'charge' OR x.gateway IN ('cash','Cash_payment','Manual'))");
-    $todayGw = (float) sl_scalar("SELECT COALESCE(SUM(x.usd),0) FROM $u x WHERE DATE(x.at) = CURDATE() AND x.src <> 'charge' AND x.gateway NOT IN ('cash','Cash_payment','Manual') AND x.status IN ('success','manual','completed','approved','paid')");
+    $todayCash = (float) sl_scalar("SELECT COALESCE(SUM(x.usd),0) FROM $u x WHERE DATE(x.at) = CURDATE() AND (x.src = 'charge' OR x.gateway = 'cash' OR x.gateway LIKE 'Manual%')");
+    $todayGw = (float) sl_scalar("SELECT COALESCE(SUM(x.usd),0) FROM $u x WHERE DATE(x.at) = CURDATE() AND x.src <> 'charge' AND x.gateway <> 'cash' AND x.gateway NOT LIKE 'Manual%' AND x.status IN ('success','manual','completed','approved','paid')");
     $todayPending = (int) sl_scalar("SELECT COUNT(*) FROM $u x WHERE DATE(x.at) = CURDATE() AND x.status IN ('pending','ongoing','processing','queued')");
     $d['rec'] = [
         ['d' => 'ok', 't' => 'Cash and manual', 's' => 'Recorded at the counter today', 'v' => sl_money($todayCash)],

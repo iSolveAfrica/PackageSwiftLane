@@ -1,44 +1,27 @@
 <?php
-// *************************************************************************
-// *                                                                       *
-// * Swiftlane - Financial Sheet entry point                               *
-// * Copyright (c) iSolveAfrica Ltd. All rights reserved.                  *
-// *                                                                       *
-// *************************************************************************
-// *                                                                       *
-// * This software and its source code are proprietary and confidential    *
-// * property of iSolveAfrica Ltd. and were developed specifically for     *
-// * Swiftlane.                                                            *
-// *                                                                       *
-// * The software may not be copied, reproduced, modified, distributed,    *
-// * sublicensed, published, or used in whole or in part except as         *
-// * expressly permitted under the applicable license or written           *
-// * agreement with iSolveAfrica Ltd. Any permitted copies or derivative   *
-// * works must retain this copyright notice and all applicable            *
-// * proprietary notices.                                                  *
-// *                                                                       *
-// *************************************************************************
-
-require_once("loader.php");
-require_once("helpers/finance_switch.php");
-cdp_financeGuardPage(); // financial module switched off: back to the dashboard
-
+/**
+ * Billing and finance hub (BillingHub.dc.html). The hub stays reachable while
+ * finance is OFF so an admin can switch it back on. The legacy Financial Sheet
+ * (consolidation pricing/billing/payment UI) stays at ?legacy=1.
+ */
+require_once 'loader.php';
+require_once 'helpers/finance_switch.php';
 $user = new User();
 $core = new Core();
-
-if ($user->cdp_loginCheck() == true) {
-
-    $permissions = $user->cdp_getUserPermissions();
-
-    if (!$user->cdp_hasPermission('financial_sheet')) {
-        header("location: error403.php");
+require_once 'helpers/sl_view.php';
+if (!empty($_GET['legacy'])) {
+    if ($user->cdp_loginCheck() && $user->cdp_hasPermission('financial_sheet')) {
+        $permissions = $user->cdp_getUserPermissions();
+        include 'views/reports/financial_sheet/financial_sheet.php';
         exit;
     }
-
-    include('views/reports/financial_sheet/financial_sheet.php');
-
-} else {
-    header("location: login.php");
+    header('Location: ' . ($user->cdp_loginCheck() ? 'error403.php' : 'login.php'));
     exit;
 }
-?>
+sl_gate();
+if (!$user->cdp_hasPermission('financial_sheet') && !sl_userIs('superadmin') && !$user->cdp_hasPermission('manage_finance_switch')) {
+    header('Location: error403.php');
+    exit;
+}
+require_once 'views/sl/data/finance.php';
+sl_render('BillingHub', ['id' => 'billhub', 'title' => 'Billing and finance', 'board' => 'BillingHub', 'wide' => true], sl_billingHubData($user, $core));

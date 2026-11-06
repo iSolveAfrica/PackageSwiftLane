@@ -55,11 +55,16 @@ $when = $paidAt . ' ' . date('H:i:s');
 $db = new Conexion();
 $db->dbh->beginTransaction();
 try {
-    $ok = cdp_insertPaymentGateway([
-        'amount' => round($amount, 2), 'currency_code' => $currency, 'status' => 'success', 'gateway' => $methodLabel, 'payment_id' => $ref,
-        'type_transaccition_courier' => $label, 'date' => $when, 'order_track' => implode(', ', array_map(fn($r) => $r->track, $rows)), 'order_track_customer_id' => $customerId,
-    ]);
-    if (!$ok) throw new RuntimeException('Could not save the payment');
+    // One ledger per payment, so totals never double count: air shipments use
+    // cdb_charges_order (the legacy manual-charge ledger, per order); packages and
+    // consolidations have no charge table and use cdb_payments_gateway.
+    if ($tbl !== 'cdb_add_order') {
+        $ok = cdp_insertPaymentGateway([
+            'amount' => round($amount, 2), 'currency_code' => $currency, 'status' => 'success', 'gateway' => 'Manual: ' . $methodLabel, 'payment_id' => $ref,
+            'type_transaccition_courier' => $label, 'date' => $when, 'order_track' => implode(', ', array_map(fn($r) => $r->track, $rows)), 'order_track_customer_id' => $customerId,
+        ]);
+        if (!$ok) throw new RuntimeException('Could not save the payment');
+    }
     $full = $amountUsd + 0.005 >= $total; // paid in full: mark invoices paid (19), keep 23 otherwise
     foreach ($rows as $r) {
         if ($full) {

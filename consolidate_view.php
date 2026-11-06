@@ -1,48 +1,14 @@
 <?php
-// *************************************************************************
-// *                                                                       *
-// * Swiftlane - Integrated Web Shipping System                            *
-// * Copyright (c) iSolveAfrica Ltd. All rights reserved.                  *
-// *                                                                       *
-// *************************************************************************
-// *                                                                       *
-// * This software and its source code are proprietary and confidential    *
-// * property of iSolveAfrica Ltd. and were developed specifically for     *
-// * Swiftlane.                                                            *
-// *                                                                       *
-// * The software may not be copied, reproduced, modified, distributed,    *
-// * sublicensed, published, or used in whole or in part except as         *
-// * expressly permitted under the applicable license or written           *
-// * agreement with iSolveAfrica Ltd. Any permitted copies or derivative   *
-// * works must retain this copyright notice and all applicable            *
-// * proprietary notices.                                                  *
-// *                                                                       *
-// *************************************************************************
-
-
-
-    require_once("loader.php");
-
-    $user = new User();
-    $core = new Core();
-    // ... ask if we are logged in here:
-    if ($user->cdp_loginCheck() == true) 
-    {
-
-        $permissions = $user->cdp_getUserPermissions();
-
-        if (!$user->cdp_hasPermission('view_consolidate')) {
-            header("location: error403.php");
-            exit;
-        }
-
-       
-      include('views/consolidate/consolidate_view.php');     
-           
-
-    } else{
-        
-        header("location: login.php");
-        exit;       
-    }
-?>
+// Consolidation detail, air or sea (ConsolidationDetail / ConsolidationAir artboards): consolidate_view.php?id=&type=sea|air.
+// Legacy views kept at ?legacy=1: views/consolidate/consolidate_view.php, views/consolidate_packages/consolidate_view.php.
+require_once 'loader.php';
+$user = new User(); $core = new Core();
+require_once 'helpers/sl_view.php';
+$type = ($_GET['type'] ?? 'air') === 'sea' ? 'sea' : 'air';
+sl_gate($type === 'sea' ? ['view_consolidate_package', 'view_consolidate_package_list'] : ['view_consolidate', 'view_consolidate_list']);
+if (!empty($_GET['legacy'])) { $permissions = $user->cdp_getUserPermissions(); include $type === 'sea' ? 'views/consolidate_packages/consolidate_view.php' : 'views/consolidate/consolidate_view.php'; exit; }
+require_once 'views/sl/data/consolidations.php';
+$d = sl_consolidationDetailData($user, $core, (int) ($_GET['id'] ?? 0), $type);
+if (!$d) { header('Location: ' . sl_route('Consolidations', ['mode' => $type])); exit; }
+$board = $type === 'sea' ? 'ConsolidationDetail' : 'ConsolidationAir';
+sl_render($board, ['id' => 'consol', 'title' => $d['code'], 'board' => $board, 'styles' => ['assets/swiftlane/pages/ops.css']], $d);

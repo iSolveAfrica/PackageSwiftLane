@@ -1,46 +1,21 @@
 <?php
-// *************************************************************************
-// *                                                                       *
-// * Swiftlane - Integrated Web Shipping System                            *
-// * Copyright (c) iSolveAfrica Ltd. All rights reserved.                  *
-// *                                                                       *
-// *************************************************************************
-// *                                                                       *
-// * This software and its source code are proprietary and confidential    *
-// * property of iSolveAfrica Ltd. and were developed specifically for     *
-// * Swiftlane.                                                            *
-// *                                                                       *
-// * The software may not be copied, reproduced, modified, distributed,    *
-// * sublicensed, published, or used in whole or in part except as         *
-// * expressly permitted under the applicable license or written           *
-// * agreement with iSolveAfrica Ltd. Any permitted copies or derivative   *
-// * works must retain this copyright notice and all applicable            *
-// * proprietary notices.                                                  *
-// *                                                                       *
-// *************************************************************************
-
-
-
-require_once("loader.php");
-require_once("helpers/finance_switch.php");
-cdp_financeGuardPage(); // financial module switched off: back to the dashboard
-
+/** Accounts Receivable (AccountsReceivable.dc.html): aging of unpaid invoices (status_invoice 23, due_date). */
+require_once 'loader.php';
+require_once 'helpers/finance_switch.php';
 $user = new User();
 $core = new Core();
-// ... ask if we are logged in here:
-if ($user->cdp_loginCheck() == true) {
-
-  $permissions = $user->cdp_getUserPermissions();
-
-    if (!$user->cdp_hasPermission('view_receivable_accounts')) {
-        header("location: error403.php");
-        exit;
-    }
-
-
-  include('views/accounts_receivable/accounts_receivable.php');
-} else {
-
-  header("location: login.php");
-  exit;
+require_once 'helpers/sl_view.php';
+sl_gate('view_receivable_accounts');
+cdp_financeGuardPage();
+require_once 'views/sl/data/finance.php';
+$d = sl_arData($user, $core);
+if (($_GET['export'] ?? '') === 'csv') {
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="receivables-' . date('Ymd') . '.csv"');
+    $out = fopen('php://output', 'w');
+    fputcsv($out, ['Invoice', 'Type', 'Customer', 'Issued', 'Due', 'Amount', 'Balance', 'Status']);
+    foreach ($d['rows'] as $r) fputcsv($out, [$r['inv'], $r['kind'], $r['name'], $r['issued'], $r['due'], $r['amt'], $r['bal'], $r['st']]);
+    fclose($out);
+    exit;
 }
+sl_render('AccountsReceivable', ['id' => 'ar', 'title' => 'Accounts Receivable', 'board' => 'AccountsReceivable'], $d);

@@ -133,6 +133,15 @@ if (empty($errors)) {
 
         cdp_insertCourierShipmentTrack($dataTrack);
 
+        // Automations (helpers/automations.php): "when shipment status changes".
+        @include_once __DIR__ . '/../../helpers/automations.php';
+        if (function_exists('cdp_automationsFire')) {
+            cdp_automationsFire('shipment.status', ['entity_type' => 'shipment', 'entity_id' => $shipment_id, 'entity_label' => $order_track,
+                'tracking' => $order_track, 'user_id' => (int) ($shipment->sender_id ?? 0), 'status_id' => $status, 'mode' => 'air',
+                'amount' => (float) ($shipment->total_order ?? 0), 'is_pickup' => (int) ($shipment->is_pickup ?? 0) === 1,
+                'unpaid' => (int) ($shipment->status_invoice ?? 0) === 23]);
+        }
+
         $dataHistory = array(
             'user_id' =>  $_SESSION['userid'],
             'order_id' =>  $shipment_id,
