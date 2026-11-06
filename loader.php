@@ -76,6 +76,17 @@ if (PHP_SAPI !== 'cli' && session_status() === PHP_SESSION_NONE) {
     unset($cdpSecure);
 }
 
+// Security headers for every web response (the API sets its own in api/v1/bootstrap.php).
+if (PHP_SAPI !== 'cli' && !headers_sent() && strpos($_SERVER['SCRIPT_NAME'] ?? '', '/api/') === false) {
+    header('X-Content-Type-Options: nosniff');
+    header('X-Frame-Options: SAMEORIGIN');
+    header('Referrer-Policy: strict-origin-when-cross-origin');
+    header('Permissions-Policy: camera=(self), microphone=(), geolocation=(self)');
+    if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+        header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+    }
+}
+
 // ── 3. Core classes ────────────────────────────────────────────────────────────
 require_once CDP_ROOT . '/lib/Conexion.php';
 require_once CDP_ROOT . '/lib/Core.php';

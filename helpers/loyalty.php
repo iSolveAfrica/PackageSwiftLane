@@ -124,7 +124,7 @@ function sl_loyaltyAward(int $userId, int $points, string $kind, ?string $entity
     if ($db->cdp_execute() === false) {
         return 0;
     }
-    $id = (int) $db->cdp_lastInsertId();
+    $id = (int) $db->dbh->lastInsertId();
     $db->cdp_query('UPDATE cdb_loyalty_accounts SET points_balance = points_balance + :p, lifetime_points = lifetime_points + :lp, updated_at = NOW() WHERE user_id = :u');
     $db->bind(':p', $points); $db->bind(':lp', max(0, $points)); $db->bind(':u', $userId);
     $db->cdp_execute();
