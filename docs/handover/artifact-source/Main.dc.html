@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Swift Lane Overview</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./swiftlane.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}.dk-desk{display:flex;flex-wrap:wrap;gap:20px;padding:20px}
+.dk-me{flex:0 1 260px;min-width:0;display:flex;flex-direction:column;gap:14px;padding-right:20px;border-right:1px solid var(--line)}
+.dk-qs{flex:1 1 480px;min-width:0}
+.dk-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));column-gap:20px}
+.dk-q{display:flex;align-items:center;gap:12px;min-height:60px;border-bottom:1px solid var(--line);color:var(--ink)}
+.dk-q:hover{background:var(--hover)}
+.dk-q b{font-size:20px;font-weight:500}
+.sl-ticks.n{--c:var(--muted)}
+@media (max-width:720px){.dk-me{border-right:0;padding-right:0;flex-basis:100%}}
+
+.up7-pipe{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:0;border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.up7-st{display:flex;flex-direction:column;gap:2px;padding:14px;border-left:1px solid var(--line);position:relative;background:var(--card)}
+.up7-st:first-child{border-left:0}
+.up7-st:not(:last-child)::after{content:"";position:absolute;right:-7px;top:22px;width:12px;height:12px;border-top:1px solid var(--line-2);border-right:1px solid var(--line-2);background:var(--card);transform:rotate(45deg);z-index:1}
+.up7-st b{font-size:24px;font-weight:500;letter-spacing:-.02em}
+.up7-ic{width:28px;height:28px;border-radius:8px;background:var(--active);display:grid;place-items:center;margin-bottom:6px}
+.up7-b{height:8px;border-radius:99px;background:var(--active);overflow:hidden}.up7-b i{display:block;height:100%;background:#A9A59C;border-radius:99px}
+.up7-dep{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px}
+@media (max-width:1100px){.up7-pipe{grid-template-columns:repeat(4,minmax(0,1fr))}.up7-st:nth-child(5){border-left:0}.up7-st:nth-child(-n+4){border-bottom:1px solid var(--line)}.up7-st:nth-child(4)::after{display:none}}
+.mn-brief{display:flex;flex-direction:column;gap:12px;padding:16px;border:1px solid var(--line-2);border-radius:20px;background:var(--card)}
+.mn-bh{display:flex;align-items:center;gap:12px}
+.mn-ai{width:40px;height:40px;border-radius:12px;background:var(--ink);color:var(--inverse);display:grid;place-items:center;flex:none}
+.mn-sum{display:flex;gap:8px;flex-wrap:wrap}
+.mn-chip{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 14px;border-radius:999px;border:1px solid var(--line-2);background:var(--card);font:500 13px var(--font);color:var(--ink);cursor:pointer}
+.mn-chip.on{background:var(--ink);color:var(--inverse);border-color:var(--ink)}
+.mn-dot{width:8px;height:8px;border-radius:50%;background:#A9A59C;flex:none}
+.hi .mn-dot{background:var(--red)}.md .mn-dot{background:var(--yellow)}.ok .mn-dot{background:var(--green)}
+.mn-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(230px,100%),1fr));gap:12px}
+.mn-c{display:flex;flex-direction:column;gap:12px;padding:16px;border:1px solid var(--line);border-radius:18px;background:var(--card);color:var(--ink);position:relative;overflow:hidden;transition:transform .15s,box-shadow .15s,border-color .15s}
+.mn-c::after{content:"";position:absolute;right:-30px;top:-30px;width:110px;height:110px;border-radius:50%;background:var(--active);opacity:.6;pointer-events:none}
+.mn-c.hi::after{background:var(--red-bg);opacity:1}.mn-c.md::after{background:#FBF0D9;opacity:1}.mn-c.ok::after{background:var(--green-bg);opacity:1}
+.mn-c:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(30,29,26,.10);border-color:var(--line-2)}
+.mn-ch{display:flex;align-items:center;gap:10px;position:relative;z-index:1}
+.mn-ic{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:var(--field);border:1px solid var(--line);flex:none}
+.mn-c.hi .mn-ic{background:var(--red-bg);color:var(--red-ink);border-color:transparent}.mn-c.md .mn-ic{background:#FBF0D9;color:#8A6410;border-color:transparent}.mn-c.ok .mn-ic{background:var(--green-bg);color:var(--green-ink);border-color:transparent}
+.mn-tag{font:600 11.5px var(--font);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);flex:1}
+.mn-sev{font:600 11px var(--font);padding:3px 8px;border-radius:999px;background:var(--active);color:var(--ink)}
+.mn-c.hi .mn-sev{background:var(--red);color:#fff}.mn-c.md .mn-sev{background:#E9B949;color:#3A2A05}.mn-c.ok .mn-sev{background:var(--green);color:#fff}
+.mn-fig{display:flex;align-items:baseline;gap:8px;position:relative;z-index:1}.mn-fig b{font:600 30px/1 var(--font);letter-spacing:-.02em;font-variant-numeric:tabular-nums}.mn-fig span{font-size:12.5px;color:var(--muted)}
+.mn-t{font-weight:500;font-size:14px;line-height:1.35}.mn-d{font-size:12.5px;color:var(--muted);line-height:1.45}
+.mn-go{margin-top:auto;display:inline-flex;align-items:center;justify-content:space-between;gap:6px;height:38px;padding:0 12px;border-radius:11px;background:var(--field);border:1px solid var(--line);font:500 13px var(--font)}
+.mn-c:hover .mn-go{background:var(--ink);color:var(--inverse);border-color:var(--ink)}
+.mn-c.hi .mn-go{background:var(--ink);color:var(--inverse);border-color:var(--ink)}
+.mn-live{display:flex;flex-direction:column;gap:10px;padding:14px 16px;border-radius:20px;background:var(--ink);color:var(--inverse)}
+.mn-lh{display:flex;justify-content:space-between;align-items:center}.mn-live .mut{color:rgba(255,255,255,.6)!important}
+.mn-pulse{width:9px;height:9px;border-radius:50%;background:#5BD08A;animation:mnP 1.4s infinite}@keyframes mnP{50%{opacity:.3}}
+.mn-lk{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(140px,100%),1fr));gap:8px}
+.mn-k{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.07);color:inherit}
+.mn-k small{opacity:.7;font-size:12px}.mn-k b{font:600 24px var(--font);font-variant-numeric:tabular-nums}.mn-k b.bump{animation:mnB .9s}@keyframes mnB{from{color:#F5A47A}}
+.mn-ticker{display:flex;gap:18px;overflow:hidden;white-space:nowrap;font-size:13px;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)}
+.mn-ti{display:inline-flex;align-items:center;gap:6px}.mn-ti.new{animation:mnN 1.2s}@keyframes mnN{from{opacity:0;transform:translateX(-12px)}}
+.mn-fc{position:relative;display:flex;align-items:flex-end;gap:6px;height:170px;padding-top:10px}
+.mn-fd{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px}
+.mn-fd i{display:block;width:100%;border-radius:5px 5px 2px 2px;background:#D6D2CA}.mn-fd i.over{background:#E2632A}.mn-fd i.today{background:#8E8A82}
+.mn-fd small{font-size:11px;color:var(--muted)}
+.mn-cap{position:absolute;left:0;right:0;border-top:1.5px dashed var(--ink);font-size:11px}.mn-cap b{position:absolute;right:0;top:-18px;font-weight:500;background:var(--card);padding:0 4px}
+</style>
+</helmet>
+<div class="sl-app">
+  <input type="checkbox" id="navtg" class="nav-tg" aria-hidden="true" tabindex="-1">
+  <header class="sl-top">
+    <label class="sl-ib nav-open" for="navtg" aria-label="Open or close the menu" role="button" tabindex="0"><i class="ic i-sidebar" aria-hidden="true"></i></label>
+    <a class="sl-switch" href="Main.dc.html"><small>SL</small> Swift Lane · Accra Hub <i class="ic ic-sm i-down" aria-hidden="true"></i></a>
+    <a class="fx-chip" href="SettingsHub.dc.html" title="Exchange rate · set in Settings › General"><i class="ic ic-sm i-dollar" aria-hidden="true"></i><span class="mono">USD 1 = GHS 12.40</span><span class="fx-d">▲ 0.4%</span></a>
+    <span class="grow"></span>
+    <details class="aitop"><summary aria-label="Help with Swift Lane AI"><span class="o"><i class="ic i-ai" aria-hidden="true"></i></span>Help</summary><div class="pop" role="menu">
+<div class="me"><span class="sl-av sm dark">HC</span><div class="grow"><div class="fw5 sm">Henry Cobblah</div><div class="mut" style="font-size:12px">Operations manager · Accra Hub</div></div><a class="sl-btn sm ghost" href="AiStudio.dc.html">Edit</a></div>
+<a class="ask" href="StaffAI.dc.html"><i class="ic ic-sm i-spark" aria-hidden="true"></i>Ask AI for help on this page<b><i class="ic ic-sm i-send" aria-hidden="true"></i></b></a>
+<div class="hd">Your profile with AI</div>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-wand" aria-hidden="true"></i></span><span>Retouch my photo<small>Light, skin and background</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-refresh" aria-hidden="true"></i></span><span>Reset images<small>Go back to the original photo</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-edit" aria-hidden="true"></i></span><span>Change my name<small>AI fixes spelling and capitals</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-user" aria-hidden="true"></i></span><span>Make my icon<small>Avatar from your photo or initials</small></span></a>
+<div class="hd">Help</div>
+<a class="it" role="menuitem" href="StaffAI.dc.html"><span class="t"><i class="ic ic-sm i-help" aria-hidden="true"></i></span><span>Explain this page</span></a>
+<a class="it" role="menuitem" href="CsInbox.dc.html"><span class="t"><i class="ic ic-sm i-message" aria-hidden="true"></i></span><span>Talk to a person</span></a>
+</div></details>
+    <a class="sl-ib" aria-label="Notifications" href="Notifications.dc.html"><i class="ic i-bell" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Switch theme" href="SettingsHub.dc.html"><i class="ic i-sun" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Documents" href="Documents.dc.html"><i class="ic i-file" aria-hidden="true"></i></a>
+    <a class="sl-btn" href="NewShipment.dc.html">New Shipment</a>
+    <details class="uptop"><summary aria-label="Your profile and settings, Henry Cobblah"><span class="me-pic hc" style="width:34px;height:34px"><i class="me-on" aria-hidden="true"></i></span><span class="up-nm">Henry</span><i class="ic ic-sm i-down" aria-hidden="true"></i></summary><div class="pop" role="menu">
+<a class="up-me" href="AiStudio.dc.html"><span class="me-pic hc" style="width:48px;height:48px"><i class="me-on" aria-hidden="true"></i></span><span class="col" style="min-width:0"><b>Henry Cobblah</b><small>Operations manager · Accra Hub</small><small class="mono">henry@swiftlane.com</small></span></a>
+<div class="up-st"><span class="row g6 sm"><span class="ld" style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span>Available</span><a class="sm fw5" href="AiStudio.dc.html">Edit profile</a></div>
+<div class="up-h">Short links</div><div class="up-g"><a class="up-l" role="menuitem" href="Main.dc.html"><i class="ic ic-sm i-grid" aria-hidden="true"></i>Overview</a><a class="up-l" role="menuitem" href="RiderDispatch.dc.html"><i class="ic ic-sm i-truck" aria-hidden="true"></i>Dispatch board</a><a class="up-l" role="menuitem" href="SendPrices.dc.html"><i class="ic ic-sm i-send" aria-hidden="true"></i>Send prices</a><a class="up-l" role="menuitem" href="Reports.dc.html"><i class="ic ic-sm i-chart" aria-hidden="true"></i>Reports</a><a class="up-l" role="menuitem" href="Documents.dc.html"><i class="ic ic-sm i-file" aria-hidden="true"></i>Documents</a><a class="up-l" role="menuitem" href="ActivityLogs.dc.html"><i class="ic ic-sm i-clock" aria-hidden="true"></i>My activity</a></div>
+<div class="up-h">Settings</div><a class="up-l" role="menuitem" href="AiStudio.dc.html"><i class="ic ic-sm i-ai" aria-hidden="true"></i>Profile and photo</a><a class="up-l" role="menuitem" href="SettingsHub.dc.html"><i class="ic ic-sm i-cog" aria-hidden="true"></i>Settings</a><a class="up-l" role="menuitem" href="ApiConnections.dc.html"><i class="ic ic-sm i-link" aria-hidden="true"></i>API connections</a><a class="up-l" role="menuitem" href="StaffPermissions.dc.html"><i class="ic ic-sm i-shield" aria-hidden="true"></i>Permissions</a>
+<div class="up-row"><span class="sm mut">Theme</span><span class="sl-seg boxed" style="height:30px"><a class="on" href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Light</a><a href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Dark</a></span></div>
+<a class="up-l" role="menuitem" href="CsInbox.dc.html"><i class="ic ic-sm i-help" aria-hidden="true"></i>Help and support</a>
+<a class="up-l out" role="menuitem" href="Login.dc.html"><i class="ic ic-sm i-logout" aria-hidden="true"></i>Sign out</a>
+</div></details>
+  </header>
+  <div class="sl-body">
+    <label class="nav-bd" for="navtg" aria-hidden="true"></label>
+    <div class="sl-rail">
+      <a class="is-on" href="NewShipment.dc.html" aria-label="New shipment"><i class="ic i-newdoc" aria-hidden="true"></i></a>
+      <a href="StaffAI.dc.html" aria-label="AI assistant" title="AI assistant"><i class="ic i-ai" aria-hidden="true"></i></a>
+      <a href="PublicTracking.dc.html" aria-label="Tracking" title="Tracking"><i class="ic i-track" aria-hidden="true"></i></a>
+      <a href="LockerSearch.dc.html" aria-label="Search tracking number" title="Search tracking number"><i class="ic i-tsearch" aria-hidden="true"></i></a>
+      <a href="Consolidations.dc.html" aria-label="Consolidation" title="Consolidation"><i class="ic i-layers" aria-hidden="true"></i></a>
+      <a href="Warehouse.dc.html" aria-label="Warehouse" title="Warehouse"><i class="ic i-warehouse" aria-hidden="true"></i></a>
+      <a class="me-pic hc" href="AiStudio.dc.html" aria-label="Your profile, Henry Cobblah" style="width:34px;height:34px;margin-top:auto"></a>
+    </div>
+    <aside class="sl-side" aria-label="Main navigation">
+      <div class="nav-x"><span class="fw5">Menu</span><label class="sl-ib" for="navtg" aria-label="Close the menu" role="button" tabindex="0"><i class="ic i-x" aria-hidden="true"></i></label></div>
+      <sc-for list="{{nav}}" as="g" hint-placeholder-count="5">
+        <div class="sl-gl">{{g.label}}</div>
+        <nav class="sl-nav">
+          <sc-for list="{{g.items}}" as="it" hint-placeholder-count="4">
+            <a href="{{it.href}}" class="{{it.cls}}"><i class="ic {{it.icon}}" aria-hidden="true"></i><span>{{it.label}}</span><span class="cnt {{it.ok}}">{{it.c1}} <em>{{it.c2}}</em></span></a>
+          </sc-for>
+        </nav>
+      </sc-for>
+      <div class="sl-gl">Other</div>
+      <nav class="sl-nav">
+        <a href="SettingsHub.dc.html"><i class="ic i-globe" aria-hidden="true"></i><span>Language</span></a>
+        <a href="CsInbox.dc.html"><i class="ic i-help" aria-hidden="true"></i><span>Get help</span></a>
+        <a href="Login.dc.html" class="danger"><i class="ic i-logout" aria-hidden="true"></i><span>Sign out</span></a>
+      </nav>
+      <a class="me-card" href="AiStudio.dc.html" aria-label="Signed in as Henry Cobblah, Operations manager. Open your profile">
+        <span class="me-pic hc" role="img" aria-label="Photo of Henry Cobblah"><i class="me-on" aria-hidden="true"></i></span>
+        <span class="grow col" style="min-width:0"><b>Henry Cobblah</b><small>Operations manager · Accra Hub</small></span>
+        <i class="ic ic-sm i-more mut" aria-hidden="true"></i>
+      </a>
+      <a class="me-sub" href="CsInbox.dc.html"><i class="ic ic-sm i-ticket" aria-hidden="true"></i>Customer service<span class="sl-tag">12 open</span></a>
+    </aside>
+
+    <main class="sl-main">
+      <div class="sl-wrap">
+        <h1 class="sl-title">Overview</h1>
+<section class="sl-card dk-desk" aria-label="Your desk">
+          <div class="dk-me">
+            <div class="row g12"><span class="sl-av lg dark">HC</span><div><div class="fw5" style="font-size:16px">Henry Cobblah</div><div class="mut sm">Operations manager · Accra Hub</div></div></div>
+            <div class="col g6"><div class="row between sm"><span class="mut">Shift 08:00–17:00</span><span class="mono">62%</span></div><div class="sl-ticks n"><i style="width:62%"></i></div></div>
+            <div class="row between sm"><span class="mut">Cleared today</span><span><b class="mono">38</b> <span class="mut">of 93 tasks</span></span></div>
+            <div class="col g8" style="margin-top:auto">
+              <a class="sl-btn sm" href="Warehouse.dc.html"><i class="ic ic-sm i-scan" aria-hidden="true"></i>Scan package</a>
+              <div class="row g8"><a class="sl-btn sm ghost grow" href="Pickups.dc.html"><i class="ic ic-sm i-truck" aria-hidden="true"></i>Dispatch</a><a class="sl-btn sm ghost grow" href="AirShipments.dc.html"><i class="ic ic-sm i-print" aria-hidden="true"></i>Print AWBs</a></div>
+              <div class="row g8"><a class="sl-btn sm ghost grow" href="StaffRoles.dc.html"><i class="ic ic-sm i-user" aria-hidden="true"></i>Approvals</a><a class="sl-btn sm ghost grow" href="Tariffs.dc.html"><i class="ic ic-sm i-file" aria-hidden="true"></i>Pricing sheet</a></div>
+            </div>
+          </div>
+          <div class="dk-qs">
+            <div class="row between" style="margin-bottom:6px"><div class="up row g8"><i class="ic ic-sm i-grid" aria-hidden="true"></i>Your desk · 55 items in your queues</div><span class="mut sm">Sorted by urgency</span></div>
+            <div class="dk-grid"><a class="dk-q" href="Customers.dc.html"><span class="sl-tile"><i class="ic ic-sm i-shield" aria-hidden="true"></i></span><span class="grow col"><span class="fw5">KYC to review</span><span class="sm" style="color:var(--amber-ink)">2 waiting over 24h</span></span><b class="mono">5</b><i class="ic ic-sm i-right mut" aria-hidden="true"></i></a><a class="dk-q" href="Warehouse.dc.html"><span class="sl-tile"><i class="ic ic-sm i-upload" aria-hidden="true"></i></span><span class="grow col"><span class="fw5">US intake to log</span><span class="sm" style="color:var(--muted)">Newark dock · 3 pallets</span></span><b class="mono">23</b><i class="ic ic-sm i-right mut" aria-hidden="true"></i></a><a class="dk-q" href="AirShipments.dc.html"><span class="sl-tile"><i class="ic ic-sm i-print" aria-hidden="true"></i></span><span class="grow col"><span class="fw5">USPS labels to print</span><span class="sm" style="color:var(--muted)">Next pickup 15:00</span></span><b class="mono">14</b><i class="ic ic-sm i-right mut" aria-hidden="true"></i></a><a class="dk-q" href="Warehouse.dc.html"><span class="sl-tile"><i class="ic ic-sm i-alert" aria-hidden="true"></i></span><span class="grow col"><span class="fw5">Warehouse exceptions</span><span class="sm" style="color:var(--red-ink)">1 damaged · 3 no label</span></span><b class="mono">4</b><i class="ic ic-sm i-right mut" aria-hidden="true"></i></a><a class="dk-q" href="Drivers.dc.html"><span class="sl-tile"><i class="ic ic-sm i-wheel" aria-hidden="true"></i></span><span class="grow col"><span class="fw5">Rider settlements</span><span class="sm" style="color:var(--muted)">GHS 4,820 cash to collect</span></span><b class="mono">3</b><i class="ic ic-sm i-right mut" aria-hidden="true"></i></a><a class="dk-q" href="LockerSearch.dc.html"><span class="sl-tile"><i class="ic ic-sm i-hourglass" aria-hidden="true"></i></span><span class="grow col"><span class="fw5">Unclaimed, near auction</span><span class="sm" style="color:var(--amber-ink)">Over 60 days in bay</span></span><b class="mono">6</b><i class="ic ic-sm i-right mut" aria-hidden="true"></i></a></div>
+          </div>
+        </section>
+
+        <div class="grid cols3">
+          <a class="sl-card sl-metric" href="FinancialOverview.dc.html">
+            <div class="sl-ml"><span><i class="ic ic-sm i-dollar" aria-hidden="true"></i>Revenue &amp; billing</span><i class="ic ic-sm i-right" aria-hidden="true"></i></div>
+            <div class="sl-mv">$48,200 <i>/ $60,000 target (3,412 parcels)</i></div>
+            <div class="sl-ticks" role="img" aria-label="80 percent of revenue target"><i style="width: 80%"></i></div>
+            <div class="sl-mf">Next settlement: Dec 1, 2026 <i class="ic ic-sm i-ext" aria-hidden="true"></i></div>
+          </a>
+          <a class="sl-card sl-metric" href="Pickups.dc.html">
+            <div class="sl-ml"><span><i class="ic ic-sm i-truck" aria-hidden="true"></i>Pickups</span><i class="ic ic-sm i-right" aria-hidden="true"></i></div>
+            <div class="sl-mv">12 / 20 <i>scheduled today</i></div>
+            <div class="sl-ticks y" role="img" aria-label="12 of 20 pickups scheduled"><i style="width: 60%"></i></div>
+            <div class="sl-mf">8 drivers on route · 3 unassigned <i class="ic ic-sm i-ext" aria-hidden="true"></i></div>
+          </a>
+          <a class="sl-card sl-metric" href="Warehouse.dc.html">
+            <div class="sl-ml"><span><i class="ic ic-sm i-warehouse" aria-hidden="true"></i>Warehouse</span><i class="ic ic-sm i-right" aria-hidden="true"></i></div>
+            <div class="sl-mv">46 / 50 <i>locker bays full (92%)</i></div>
+            <div class="sl-ticks r" role="img" aria-label="92 percent of bays used"><i style="width: 92%"></i></div>
+            <div class="sl-mf">2 arriving now · 5 awaiting pickup <i class="ic ic-sm i-ext" aria-hidden="true"></i></div>
+          </a>
+        </div>
+
+
+        <section class="mn-brief" aria-label="Smart briefing"><div class="mn-bh"><span class="mn-ai"><i class="ic i-ai" aria-hidden="true"></i></span><div class="col grow"><b class="fw5">Good morning, Henry. {{briefLead}}</b><span class="mut sm">Picked from shipments, payments, riders, messages and the warehouse · updated {{ago}}</span></div><a class="sl-btn ghost sm" href="StaffAI.dc.html"><i class="ic ic-sm i-spark" aria-hidden="true"></i>Ask AI</a></div>
+<div class="mn-sum"><sc-for list="{{bfil}}" as="f" hint-placeholder-count="4"><button class="mn-chip {{f.cls}} {{f.lvl}}" onClick="{{f.pick}}"><span class="mn-dot"></span>{{f.label}}</button></sc-for></div>
+<div class="mn-cards"><sc-for list="{{brief}}" as="b" hint-placeholder-count="5"><a class="mn-c {{b.lvl}}" href="{{b.href}}"><div class="mn-ch"><span class="mn-ic"><i class="ic {{b.icon}}" aria-hidden="true"></i></span><span class="mn-tag">{{b.tag}}</span><span class="mn-sev">{{b.sev}}</span></div><div class="mn-fig"><b>{{b.big}}</b><span>{{b.bigS}}</span></div><div class="col g4"><span class="mn-t">{{b.t}}</span><span class="mn-d">{{b.d}}</span></div><span class="mn-go">{{b.cta}}<i class="ic ic-sm i-right" aria-hidden="true"></i></span></a></sc-for></div></section>
+<section class="mn-live"><div class="mn-lh"><span class="row g8"><span class="mn-pulse"></span><b class="fw5">Live now</b></span><span class="mut sm">{{clock}}</span></div><div class="mn-lk"><sc-for list="{{pulse}}" as="p" hint-placeholder-count="6"><a class="mn-k" href="{{p.href}}"><small>{{p.l}}</small><b class="{{p.a}}">{{p.v}}</b><span class="mut" style="font-size:12px">{{p.s}}</span></a></sc-for></div>
+<div class="mn-ticker" aria-live="polite"><sc-for list="{{ticker}}" as="x" hint-placeholder-count="4"><span class="mn-ti {{x.cls}}"><span class="me-pic {{x.pic}}" style="width:22px;height:22px"></span><b class="fw5">{{x.who}}</b> {{x.what}} <span class="mono mut">{{x.at}}</span></span></sc-for></div></section>
+<section class="sl-card col g12"><div class="sl-ch" style="margin:0"><div><h2 class="sl-ct">Next 14 days</h2><span class="mut sm">Expected parcels at the hub vs room in the bays · Christmas rush starts Dec 1</span></div><span class="sl-pill {{fcPill}}">{{fcNote}}</span></div><div class="mn-fc" role="img" aria-label="Forecast of parcels for the next 14 days"><sc-for list="{{fc}}" as="d" hint-placeholder-count="14"><div class="mn-fd" title="{{d.tip}}"><i class="{{d.c}}" style="{{d.h}}"></i><small>{{d.l}}</small></div></sc-for><span class="mn-cap" style="{{capY}}"><b>Bay capacity 50</b></span></div><div class="row wrap g8 sm"><a class="chipbtn" href="Consolidations.dc.html">Plan an extra consolidation</a><a class="chipbtn" href="PickupAging.dc.html">Clear 6 unclaimed parcels</a><a class="chipbtn" href="Broadcast.dc.html">Remind customers to collect</a></div></section>
+
+        <section class="sl-card col g16" aria-label="US packages">
+<div class="sl-ch" style="margin:0"><div><h2 class="sl-ct">US packages</h2><div class="mut sm">From the Newark warehouse to customers in Ghana</div></div><div class="row g8"><div class="sl-seg boxed"><button>Today</button><button class="on">14 days</button><button>30 days</button></div><a class="sl-btn sm ghost" href="PackageIntake.dc.html"><i class="ic ic-sm i-plus" aria-hidden="true"></i>Input package</a></div></div>
+<div class="up7-pipe"><div class="up7-st"><span class="up7-ic"><i class="ic ic-sm i-bell" aria-hidden="true"></i></span><b class="mono">200</b><span class="fw5 sm">Pre-alerted</span><span class="mut" style="font-size:12px">64 matched today</span></div><div class="up7-st"><span class="up7-ic"><i class="ic ic-sm i-warehouse" aria-hidden="true"></i></span><b class="mono">142</b><span class="fw5 sm">Collected US</span><span class="mut" style="font-size:12px">38 today · Newark</span></div><div class="up7-st"><span class="up7-ic"><i class="ic ic-sm i-upload" aria-hidden="true"></i></span><b class="mono">131</b><span class="fw5 sm">Input</span><span class="mut" style="font-size:12px">11 still to log</span></div><div class="up7-st"><span class="up7-ic"><i class="ic ic-sm i-layers" aria-hidden="true"></i></span><b class="mono">46</b><span class="fw5 sm">Consolidated</span><span class="mut" style="font-size:12px">4 boxes open</span></div><div class="up7-st"><span class="up7-ic"><i class="ic ic-sm i-plane" aria-hidden="true"></i></span><b class="mono">312</b><span class="fw5 sm">On the way</span><span class="mut" style="font-size:12px">248 air · 64 sea</span></div><div class="up7-st"><span class="up7-ic"><i class="ic ic-sm i-pin" aria-hidden="true"></i></span><b class="mono">58</b><span class="fw5 sm">Arrived Accra</span><span class="mut" style="font-size:12px">Today 2 trucks</span></div><div class="up7-st"><span class="up7-ic"><i class="ic ic-sm i-check" aria-hidden="true"></i></span><b class="mono">91</b><span class="fw5 sm">Ready for pickup</span><span class="mut" style="font-size:12px">codes sent</span></div><div class="up7-st"><span class="up7-ic"><i class="ic ic-sm i-user" aria-hidden="true"></i></span><b class="mono">37</b><span class="fw5 sm">Picked up</span><span class="mut" style="font-size:12px">today</span></div></div>
+<div class="split"><div class="a col g8"><div class="row between"><span class="fw5">Collected vs input per day</span><span class="row g16 sm mut"><span class="row g6"><i style="width:10px;height:10px;border-radius:3px;background:#D6D2CA;display:inline-block"></i>Collected at US warehouse</span><span class="row g6"><i style="width:14px;height:2px;background:#E08A3C;display:inline-block"></i>Input into Swift Lane</span></span></div><svg viewBox="0 0 640 174" preserveAspectRatio="none" style="width:100%;height:190px;display:block" role="img" aria-label="Packages collected and input per day for 14 days"><rect x="6.0" y="74.0" width="33.7" height="96" rx="4" fill="#D6D2CA"/><rect x="51.7" y="58.0" width="33.7" height="112" rx="4" fill="#D6D2CA"/><rect x="97.4" y="82.0" width="33.7" height="88" rx="4" fill="#D6D2CA"/><rect x="143.1" y="36.0" width="33.7" height="134" rx="4" fill="#D6D2CA"/><rect x="188.9" y="49.0" width="33.7" height="121" rx="4" fill="#D6D2CA"/><rect x="234.6" y="30.0" width="33.7" height="140" rx="4" fill="#D6D2CA"/><rect x="280.3" y="98.0" width="33.7" height="72" rx="4" fill="#D6D2CA"/><rect x="326.0" y="112.0" width="33.7" height="58" rx="4" fill="#D6D2CA"/><rect x="371.7" y="52.0" width="33.7" height="118" rx="4" fill="#D6D2CA"/><rect x="417.4" y="28.0" width="33.7" height="142" rx="4" fill="#D6D2CA"/><rect x="463.1" y="39.0" width="33.7" height="131" rx="4" fill="#D6D2CA"/><rect x="508.9" y="44.0" width="33.7" height="126" rx="4" fill="#D6D2CA"/><rect x="554.6" y="21.0" width="33.7" height="149" rx="4" fill="#D6D2CA"/><rect x="600.3" y="28.0" width="33.7" height="142" rx="4" fill="#8E8A82"/><polyline points="22.9,80.0 68.6,62.0 114.3,84.0 160.0,50.0 205.7,52.0 251.4,38.0 297.1,100.0 342.9,110.0 388.6,60.0 434.3,39.0 480.0,43.0 525.7,50.0 571.4,30.0 617.1,39.0" fill="none" stroke="#E08A3C" stroke-width="2.4" vector-effect="non-scaling-stroke"/><circle cx="22.9" cy="80.0" r="3" fill="#E08A3C"/><circle cx="68.6" cy="62.0" r="3" fill="#E08A3C"/><circle cx="114.3" cy="84.0" r="3" fill="#E08A3C"/><circle cx="160.0" cy="50.0" r="3" fill="#E08A3C"/><circle cx="205.7" cy="52.0" r="3" fill="#E08A3C"/><circle cx="251.4" cy="38.0" r="3" fill="#E08A3C"/><circle cx="297.1" cy="100.0" r="3" fill="#E08A3C"/><circle cx="342.9" cy="110.0" r="3" fill="#E08A3C"/><circle cx="388.6" cy="60.0" r="3" fill="#E08A3C"/><circle cx="434.3" cy="39.0" r="3" fill="#E08A3C"/><circle cx="480.0" cy="43.0" r="3" fill="#E08A3C"/><circle cx="525.7" cy="50.0" r="3" fill="#E08A3C"/><circle cx="571.4" cy="30.0" r="3" fill="#E08A3C"/><circle cx="617.1" cy="39.0" r="3" fill="#E08A3C"/></svg><div class="row between mut sm"><span>Oct 23</span><span></span><span></span><span></span><span></span><span></span><span>Oct 29</span><span></span><span></span><span></span><span></span><span></span><span></span><span>Nov 5</span></div>
+<div class="row g24 wrap sm"><span><b class="mono">1,729</b> <span class="mut">collected</span></span><span><b class="mono">1,643</b> <span class="mut">input</span></span><span><b class="mono">95%</b> <span class="mut">input same day</span></span><span><b class="mono">4.1 lb</b> <span class="mut">average weight</span></span></div></div>
+<div class="b col g12"><span class="fw5">Collected by carrier</span><div class="col g4"><div class="row between sm"><span>UPS</span><span class="mono">34%</span></div><div class="up7-b"><i style="width:88%"></i></div></div><div class="col g4"><div class="row between sm"><span>Amazon</span><span class="mono">27%</span></div><div class="up7-b"><i style="width:70%"></i></div></div><div class="col g4"><div class="row between sm"><span>FedEx</span><span class="mono">18%</span></div><div class="up7-b"><i style="width:47%"></i></div></div><div class="col g4"><div class="row between sm"><span>USPS</span><span class="mono">14%</span></div><div class="up7-b"><i style="width:36%"></i></div></div><div class="col g4"><div class="row between sm"><span>DHL</span><span class="mono">7%</span></div><div class="up7-b"><i style="width:18%"></i></div></div>
+<div class="col g8" style="margin-top:6px"><div class="up7-dep"><i class="ic ic-sm i-plane" aria-hidden="true"></i><div class="grow"><div class="fw5 sm">Next air · JFK → ACC</div><div class="mut" style="font-size:12px">Fri Nov 7 · cut-off 18:00</div></div><span class="mono sm">96 pkgs</span></div>
+<div class="up7-dep"><i class="ic ic-sm i-ship" aria-hidden="true"></i><div class="grow"><div class="fw5 sm">Next sea · Newark → Tema</div><div class="mut" style="font-size:12px">Nov 20 · container 62% full</div></div><span class="mono sm">64 pkgs</span></div></div></div></div>
+</section>
+<section class="sl-card" aria-label="Shipment activity">
+          <div class="sl-ch" style="margin-bottom: 4px">
+            <h2 class="sl-ct">Activity</h2>
+            <div class="row g12 mut"><i class="ic i-left" aria-hidden="true"></i><span>Jun – Nov 2026</span><i class="ic i-right" aria-hidden="true"></i></div>
+          </div>
+          <div class="sl-peak">Peak: <b>86 shipments (Oct 14)</b> <i class="ic ic-sm i-info" aria-hidden="true"></i></div>
+          <div class="sl-heatbox">
+            <div class="sl-heatdays" aria-hidden="true"><span></span><span>Mon</span><span></span><span>Wed</span><span></span><span>Fri</span><span></span></div>
+            <div class="sl-heatcol">
+              <div class="sl-heatmonths" aria-hidden="true"><span>Jun</span><span>Jul</span><span>Aug</span><span>Sep</span><span>Oct</span><span>Nov</span></div>
+              <div class="sl-heat" role="img" aria-label="Daily shipments registered from June to November 2026">
+                <sc-for list="{{heat}}" as="c" hint-placeholder-count="182"><b class="{{c.c}}"></b></sc-for>
+              </div>
+            </div>
+          </div>
+          <div class="sl-legend"><i class="ic ic-sm i-info" aria-hidden="true"></i><span>Less</span><b style="background: var(--heat-1)"></b><b style="background: var(--heat-2)"></b><b style="background: var(--heat-3)"></b><span>More</span></div>
+        </section>
+
+        <div class="grid cols2">
+          <section class="sl-card" aria-label="Weekly volume">
+            <div class="sl-ch" style="margin-bottom: 4px">
+              <h2 class="sl-ct">Parcels Received</h2>
+              <div class="sl-seg"><button>All</button><button class="on">7d</button><button>1m</button><button>6m</button><button>1y</button></div>
+            </div>
+            <p class="mut" style="margin-bottom: 14px">Avg 142 / day <span class="nw">(1,988 kg)</span></p>
+            <div class="row top g8">
+              <div class="sl-axis" aria-hidden="true"><span>400</span><span>300</span><span>200</span><span>100</span><span>0</span></div>
+              <div class="grow">
+                <svg viewBox="0 0 400 190" preserveAspectRatio="none" width="100%" height="190" role="img" aria-label="Parcels received per day, rising toward the weekend" style="display: block">
+                  <g stroke="#E7E5DF" stroke-width="1"><line x1="0" y1="2" x2="400" y2="2" stroke-dasharray="4 4"></line><line x1="0" y1="50" x2="400" y2="50"></line><line x1="0" y1="98" x2="400" y2="98"></line><line x1="0" y1="146" x2="400" y2="146"></line><line x1="0" y1="188" x2="400" y2="188"></line></g>
+                  <path d="M0,176 C40,174 62,150 100,122 S150,104 176,104 S226,112 256,140 S300,150 320,124 S372,64 400,50" fill="none" stroke="#D9792B" stroke-width="1.6"></path>
+                  <circle cx="176" cy="104" r="3.5" fill="#FBFAF8" stroke="#161615" stroke-width="1.2"></circle>
+                </svg>
+                <div class="row between mut sm" style="margin-top: 6px"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="sl-card" aria-label="Volume by destination">
+            <div class="sl-ch" style="margin-bottom: 4px">
+              <h2 class="sl-ct">Volume by Destination</h2>
+              <div class="sl-seg"><button>All</button><button class="on">7d</button><button>1m</button><button>6m</button><button>1y</button></div>
+            </div>
+            <p class="mut" style="margin-bottom: 14px">Avg 142 / day <span class="nw">(1,988 kg)</span></p>
+            <div class="sl-bars">
+              <div class="sl-bar"><span style="height: 36%"></span><em>TM</em></div>
+              <div class="sl-bar hi"><span style="height: 100%"></span><em>AC</em></div>
+              <div class="sl-bar"><span style="height: 46%"></span><em>KS</em></div>
+              <div class="sl-bar"><span style="height: 66%"></span><em>TK</em></div>
+              <div class="sl-bar"><span style="height: 32%"></span><em>TL</em></div>
+              <div class="sl-bar"><span style="height: 24%"></span><em>CC</em></div>
+              <div class="sl-bar"><span style="height: 70%"></span><em>HO</em></div>
+              <div class="sl-bar"><span style="height: 22%"></span><em>SU</em></div>
+            </div>
+            <p class="mut sm" style="margin-top: 10px"><span style="color: var(--orange)">●</span> Accra: 1,214 parcels (46% of total volume)</p>
+          </section>
+        </div>
+
+
+        <section class="sl-card" aria-label="Monthly volume">
+          <div class="sl-ch" style="margin-bottom: 4px"><h2 class="sl-ct">Monthly Volume</h2><div class="sl-seg"><button class="on">2026</button><button>2025</button></div></div>
+          <p class="mut" style="margin-bottom: 10px">Shipments, pickups and consolidations — 2026</p>
+          <svg viewBox="0 0 760 250" width="100%" height="250" role="img" aria-label="Monthly shipments, pickups and consolidations in 2026" style="display: block">
+            <g stroke="#E7E5DF" stroke-width="1" stroke-dasharray="4 4"><line x1="50" y1="20" x2="750" y2="20"></line><line x1="50" y1="70" x2="750" y2="70"></line><line x1="50" y1="120" x2="750" y2="120"></line><line x1="50" y1="170" x2="750" y2="170"></line></g>
+            <line x1="50" y1="220" x2="750" y2="220" stroke="#D9D7D0"></line>
+            <g fill="#6B6A65" font-size="11" text-anchor="end"><text x="42" y="24">1,500</text><text x="42" y="74">1,000</text><text x="42" y="124">500</text><text x="42" y="174">250</text><text x="42" y="224">0</text></g>
+            <g fill="#6B6A65" font-size="11" text-anchor="middle"><text x="50" y="240">Jan</text><text x="108" y="240">Feb</text><text x="167" y="240">Mar</text><text x="225" y="240">Apr</text><text x="283" y="240">May</text><text x="342" y="240">Jun</text><text x="400" y="240">Jul</text><text x="458" y="240">Aug</text><text x="517" y="240">Sep</text><text x="575" y="240">Oct</text><text x="633" y="240">Nov</text><text x="692" y="240">Dec</text></g>
+            <path d="{{areaShip}}" fill="rgba(217,121,43,.10)"></path>
+            <path d="{{lineShip}}" fill="none" stroke="#D9792B" stroke-width="2"></path>
+            <path d="{{linePick}}" fill="none" stroke="#6C4BDD" stroke-width="2"></path>
+            <path d="{{lineCons}}" fill="none" stroke="#0EAD78" stroke-width="2"></path>
+          </svg>
+          <div class="row g16 wrap" style="justify-content: center; margin-top: 6px"><span class="row g6 sm"><span style="color: #D9792B">●</span>Shipments</span><span class="row g6 sm"><span style="color: #6C4BDD">●</span>Pickups</span><span class="row g6 sm"><span style="color: #0EAD78">●</span>Consolidations</span></div>
+        </section>
+
+        <section class="sl-card" aria-label="Daily intake">
+          <div class="sl-ch" style="margin-bottom: 2px"><h2 class="sl-ct">Daily Intake</h2><div class="sl-peak" style="margin: 0">Peak <b>161 a day</b></div></div>
+          <p class="mut" style="margin-bottom: 12px">Shipments registered per day — rolling year</p>
+          <div class="sl-heatbox">
+            <div class="sl-heatdays" aria-hidden="true"><span></span><span>Mon</span><span></span><span>Wed</span><span></span><span>Fri</span><span></span></div>
+            <div class="sl-heatcol">
+              <div class="sl-heatmonths" aria-hidden="true"><span>Nov</span><span>Dec</span><span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span><span>Jul</span><span>Aug</span><span>Sep</span><span>Oct</span></div>
+              <div class="sl-heat" style="grid-template-columns: repeat(52, minmax(0, 1fr))" role="img" aria-label="Shipments registered per day over the last year">
+                <sc-for list="{{year}}" as="c" hint-placeholder-count="364"><b class="{{c.c}}"></b></sc-for>
+              </div>
+            </div>
+          </div>
+          <div class="sl-legend" style="justify-content: space-between"><span class="row g6">Quiet <b style="background: var(--heat-0)"></b><b style="background: var(--heat-1)"></b><b style="background: var(--heat-2)"></b><b style="background: var(--heat-3)"></b> Busy</span><span>Busiest day: Oct 14</span></div>
+        </section>
+
+        <div class="grid cols2">
+          <section class="sl-card" aria-label="Shipment status mix">
+            <div class="sl-ch" style="margin-bottom: 4px"><h2 class="sl-ct">Status Mix</h2><span class="mut sm">All open shipments</span></div>
+            <div class="row g24 wrap" style="margin-top: 10px">
+              <div class="donut" style="background: conic-gradient(#2F7FC8 0 38%, #6C4BDD 38% 62%, #F2C400 62% 76%, #0EAD78 76% 96%, #E5484D 96% 100%)"><b>3,412<small>parcels</small></b></div>
+              <div class="col g10 grow">
+                <span class="lgd"><i style="background: #2F7FC8"></i>In transit<span class="mut" style="margin-left: auto">38%</span></span>
+                <span class="lgd"><i style="background: #6C4BDD"></i>At warehouse<span class="mut" style="margin-left: auto">24%</span></span>
+                <span class="lgd"><i style="background: #F2C400"></i>Out for delivery<span class="mut" style="margin-left: auto">14%</span></span>
+                <span class="lgd"><i style="background: #0EAD78"></i>Delivered<span class="mut" style="margin-left: auto">20%</span></span>
+                <span class="lgd"><i style="background: #E5484D"></i>Exceptions<span class="mut" style="margin-left: auto">4%</span></span>
+              </div>
+            </div>
+          </section>
+          <section class="sl-card" aria-label="On-time delivery">
+            <div class="sl-ch" style="margin-bottom: 4px"><h2 class="sl-ct">On-time Delivery</h2><span class="sl-pill delivered">94.2%</span></div>
+            <p class="mut" style="margin-bottom: 10px">Last 12 weeks against the 95% target</p>
+            <svg viewBox="0 0 400 170" preserveAspectRatio="none" width="100%" height="170" role="img" aria-label="On-time delivery rate trending up to 94 percent" style="display: block">
+              <g stroke="#E7E5DF"><line x1="0" y1="20" x2="400" y2="20"></line><line x1="0" y1="80" x2="400" y2="80"></line><line x1="0" y1="140" x2="400" y2="140"></line></g>
+              <line x1="0" y1="34" x2="400" y2="34" stroke="#0EAD78" stroke-dasharray="5 5"></line>
+              <path d="M0,120 C30,112 50,128 80,100 S130,92 160,84 S210,96 240,70 S300,52 330,48 S380,42 400,40" fill="none" stroke="#161615" stroke-width="2"></path>
+              <circle cx="400" cy="40" r="4" fill="#FBFAF8" stroke="#161615" stroke-width="1.5"></circle>
+            </svg>
+            <div class="row between mut sm" style="margin-top: 6px"><span>Aug 17</span><span>Target 95%</span><span>Nov 2</span></div>
+          </section>
+        </div>
+
+        <section class="sl-card" aria-label="Quick actions">
+          <h2 class="sl-ct" style="margin-bottom: 12px">Quick Actions</h2>
+          <div class="row wrap g12">
+            <a class="sl-btn soft" href="PublicTracking.dc.html"><i class="ic ic-sm i-search" aria-hidden="true"></i>Track Shipment <i class="ic ic-sm i-right" aria-hidden="true"></i></a>
+            <a class="sl-btn ghost" style="border-color: transparent; background: transparent" href="Warehouse.dc.html"><i class="ic ic-sm i-scan" aria-hidden="true"></i>Scan Package <i class="ic ic-sm i-right" aria-hidden="true"></i></a>
+            <a class="sl-btn ghost" style="border-color: transparent; background: transparent" href="Notifications.dc.html"><i class="ic ic-sm i-send" aria-hidden="true"></i>Send Update <i class="ic ic-sm i-right" aria-hidden="true"></i></a>
+            <span class="grow"></span>
+            <a class="sl-btn" href="NewShipment.dc.html"><i class="ic ic-sm i-plus" aria-hidden="true"></i>New Shipment</a>
+          </div>
+        </section>
+
+        <div class="grid cols2">
+          <section class="sl-card flush">
+            <div style="padding: 18px 20px 14px"><div class="row g8"><i class="ic i-card" aria-hidden="true"></i><h2 class="sl-ct">Paystack</h2></div><p class="mut" style="margin-top: 6px">Collect card and mobile money payments in GHS</p></div>
+            <hr class="hr">
+            <div class="row between" style="padding: 14px 20px; background: var(--hover)"><div><div class="fw5">Live account</div><div class="mut sm">2 webhooks · settles to GCB ****4471</div></div><i class="ic i-right mut" aria-hidden="true"></i></div>
+            <div class="row between" style="padding: 14px 20px"><div><div class="fw5">Test account</div><div class="mut sm">Use sandbox keys for staging</div></div><a class="sl-btn ghost sm" href="NewIntegration.dc.html">Connect</a></div>
+          </section>
+          <section class="sl-card flush">
+            <div style="padding: 18px 20px 14px"><div class="row g8"><i class="ic i-globe" aria-hidden="true"></i><h2 class="sl-ct">Stripe</h2></div><p class="mut" style="margin-top: 6px">Accept USD card payments from US senders</p></div>
+            <hr class="hr">
+            <div class="row between" style="padding: 14px 20px"><div><div class="fw5">Live account</div><div class="mut sm">Sync checkout and refunds</div></div><a class="sl-btn ghost sm" href="NewIntegration.dc.html">Connect</a></div>
+            <div class="row between" style="padding: 14px 20px"><div><div class="fw5">Test account</div><div class="mut sm">Use sandbox keys for staging</div></div><a class="sl-btn ghost sm" href="NewIntegration.dc.html">Connect</a></div>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":3150}}'>
+class Component extends DCLogic {
+constructor(p) { super(p); this.state = { t: 0 }; if (typeof window !== 'undefined') this._iv = setInterval(() => this.setState({ t: this.state.t + 1 }), 2500); }
+componentWillUnmount() { clearInterval(this._iv); }
+renderVals() {
+const A = 'dash';
+const N = 'Operations|dash~Overview~grid~~~Main;panels~Control Panels~gauge~~~ControlPanels;air~Air Shipments~plane~128~~AirShipments;sea~Sea Packages~ship~64~~SeaPackages;prealert~Pre-Alerts~inbox~9~~PreAlerts;pickup~Pickups~truck~12~/ 20~Pickups;dtrack~Delivery Tracking~route~5~~DeliveryTracking;shiptrack~Shipment Tracking~track~~~ShipmentTracking;consol~Consolidations~layers~7~~Consolidations;warehouse~Warehouse~warehouse~~~Warehouse;handout~Hand Out Packages~box~5~~HandOut;locker~Locker Search~lock~~~LockerSearch#Hubs|execdash~Management Dashboard~chart~~~ExecDashboard;billhub~Billing & Finance~dollar~~~BillingHub;lastmile~Last-Mile Delivery~truck~~~LastMile;aicenter~AI Centre~ai~~~AiCenter;commshub~Messages & Automation~message~~~CommsHub;supporthub~Support & CRM~ticket~~~SupportHub;loyalty~Loyalty & Referrals~star~~~LoyaltyRewards;security~Security & Reliability~shield~~~SecurityCenter#Freight|frhub~Freight Hub~plane~~~FreightHub;frsched~Departures & Arrivals~calendar~5~~FreightSchedule;frwb~Waybills & Manifests~file~~~Waybills;frex~Cargo Exceptions~alert~6~~CargoExceptions;frins~Insurance & Claims~shield~4~~InsuranceClaims;frpart~Freight Partners~users~~~FreightPartners#People|cust~Customers~users~1,284~~Customers;recip~Recipients~pin~~~Recipients;drivers~Drivers~wheel~8~/ 14~Drivers;drvapp~Rider App~phone~~~DriverApp;staff~Staff &amp; Roles~shield~~~StaffRoles#Finance|pay~Payments~card~~~Payments;ar~Accounts Receivable~receipt~~~AccountsReceivable;fin~Financial Overview~dollar~$48,200~~FinancialOverview#Insights|reports~Reports~chart~~~Reports;activity~Activity Logs~clock~~~ActivityLogs;messages~Message Logs~archive~~~MessageLogs#Customer Service|tickets~Support Inbox~ticket~1,482~~CsInbox;csrules~Ticket Rules~filter~~~CsRules;playbook~Playbook~book~~~CsPlaybook;csrep~Support Reports~star~~~CsReports;cschan~Channels & Teams~message~~~CsChannels;csai~AI Assistant~ai~~~StaffAI;cssupai~AI for Customers~spark~~~CsAI#Developer|devov~Dev Overview~terminal~~~DevOverview;devsvc~Services~server~12~~DevServices;devlogs~Logs~activity~~~DevLogs;devmet~Metrics~cpu~~~DevMetrics;devinfra~Infrastructure~cloud~~~DevInfrastructure;devdep~Deployments~rocket~~~DevDeployments;devalert~Alerts~alert~3~~DevAlerts;devissues~Issues & Change Log~bug~8~~DevIssues;devint~Integrations~puzzle~~~DevIntegrations#Settings|general~General~cog~~~SettingsHub;apis~API Connections~link~16~~ApiConnections;apitraffic~Live API Traffic~activity~~~ApiTraffic;tariffs~Shipping Tariffs~tag~~~Tariffs;notifc~Notifications~bell~3~~NotificationCenter;ebuild~Email Builder~mail~~~EmailBuilder;msgtpl~SMS & WhatsApp~message~~~MessageTemplates;bcast~Push Notifications~send~~~Broadcast;costs~Operating Costs~dollar~~~CostSettings;addr~Shipping Addresses~pin~~~ShippingAddresses;rfees~Rider Fees~truck~~~RiderSettings;loginpg~Login Page~image~~~LoginSettings;devmod~Modules~sliders~~~ModuleController;perm~Permissions~key~~~StaffPermissions;lblstudio~Label Printing~print~~~LabelStudio;auto~Automations~bolt~~~Automations';
+const nav = N.split('#').map(g => { const p = g.split('|'); return { label: p[0], items: p[1].split(';').map(i => { const f = i.split('~'); return { href: f[5] + '.dc.html', label: f[1].replace('&amp;', '&'), icon: 'i-' + f[2], c1: f[3], c2: f[4], cls: f[0] === A ? 'is-active' : '', ok: f[0] === 'fin' ? 'ok' : '' }; }) }; });
+let s = 7; const r = () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
+const heat = [];
+for (let w = 0; w < 26; w++) for (let d = 0; d < 7; d++) { const wk = d >= 5 ? 0.35 : 1; const v = r() * wk * (w < 3 ? 0.5 : 1); heat.push({ c: v > 0.78 ? 'h3' : v > 0.5 ? 'h2' : v > 0.3 ? 'h1' : 'h0' }); }
+
+let q=11; const rr=()=>{q=(q*16807)%2147483647;return q/2147483647;};
+const bars=(arr)=>arr.map(v=>({sty:'height: '+Math.max(v,0)+'%'+(v===0?'; opacity: .35':'')}));
+const held=bars([0,0,60,0,100,0,0,0,0,0,0,100,0,0]);
+const appr=bars([0,0,0,0,0,0,0,0,0,0,0,0,0,0]);
+const pre=bars([30,30,100,40,100,0,0,0,40,100,60,0,50,0]);
+const pricing=bars([0,0,0,0,0,0,0,0,0,0,0,0,0,0]);
+const year=[]; for(let w=0;w<52;w++)for(let d=0;d<7;d++){const rec=w>38?1:w>30?0.55:0.25;const wk=d>=5?0.4:1;const v=rr()*wk*rec;year.push({c:v>0.7?'h3':v>0.45?'h2':v>0.22?'h1':'h0'});}
+const smooth=(vals,max)=>{const x0=50,dx=58.2,yb=220,h=200;const pts=vals.map((v,i)=>[x0+i*dx,yb-v/max*h]);let d='M'+pts[0][0]+','+pts[0][1];for(let i=1;i<pts.length;i++){const p=pts[i-1],c=pts[i],mx=(p[0]+c[0])/2;d+=' C'+mx+','+p[1]+' '+mx+','+c[1]+' '+c[0]+','+c[1];}return {d,pts};};
+const sh=smooth([310,420,380,520,610,580,720,860,1010,1240,1180,640],1500);
+const pk=smooth([120,160,150,210,240,230,290,330,390,450,430,250],1500);
+const cs=smooth([30,41,38,52,60,55,70,82,95,110,104,60],1500);
+const areaShip=sh.d+' L'+sh.pts[11][0]+',220 L50,220 Z';
+const T = this.state.t;
+const TK = [['Adwoa', 'p-as', 'scanned in SL-1005'], ['Kwesi', 'p-kb', 'delivered SL-100482 · code matched'], ['Nii', 'p-nl', 'recorded ₵372.48 MoMo payment'], ['Efia', 'em', 'solved ticket T-4821'], ['Mavis', 'p-ma', 'handed over SL-100455'], ['System', 'hc', 'sent 18 ready-for-pickup WhatsApps'], ['Henry', 'hc', 'approved 2 KYC checks']];
+const clk = (b) => { const m = 10 * 60 + 41 + Math.floor((T - b * 2) / 2); return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(((m % 60) + 60) % 60).padStart(2, '0'); };
+const FC = [92, 104, 118, 96, 88, 140, 61, 98, 112, 126, 133, 149, 162, 70], CAP = 140;
+const brief = [['hi', 'Money', '23 invoices unpaid over 14 days', '₵4,131 · Kwame Mensah owes the most (3 parcels)', 'Send reminders', 'ComposeMessage', 'i-receipt', '₵4,131', 'overdue', 'Needs you'], ['md', 'Air cut-off', 'Friday 18:00 · 96 packages booked', '11 still to log at Newark · flight KQ 8102 lands Nov 7', 'Open intake', 'PackageIntake', 'i-plane', '11', 'to log', 'Watch'], ['hi', 'Warehouse', 'Bays 92% full, 6 parcels near auction', 'Over 60 days in the bay · storage fees started', 'Pickup aging', 'PickupAging', 'i-warehouse', '92%', 'bays full', 'Needs you'], ['md', 'Messages', 'Hubtel SMS is slow · 12 failed', 'Retrying automatically · WhatsApp is fine', 'Live API traffic', 'ApiTraffic', 'i-message', '12', 'SMS failed', 'Watch'], ['ok', 'Riders', '6 of 9 deliveries done before 11:00', 'Kwesi is 42 min from SL-100482 · ₵4,820 cash to hand in', 'Delivery tracking', 'DeliveryTracking', 'i-truck', '6 / 9', 'delivered', 'On track']];
+const BF = this.state.bf || 'all';
+const out = { brief: brief.filter(b => BF === 'all' || b[0] === BF).map(b => ({ lvl: b[0], tag: b[1], t: b[2], d: b[3], cta: b[4], href: b[5] + '.dc.html', icon: b[6], big: b[7], bigS: b[8], sev: b[9] })),
+  bfil: [['all', 'All 5', ''], ['hi', '2 need you', 'hi'], ['md', '2 to watch', 'md'], ['ok', '1 going well', 'ok']].map(f => ({ label: f[1], lvl: f[2], cls: BF === f[0] ? 'on' : '', pick: () => this.setState({ bf: f[0] }) })), briefLead: '2 things need you today, 2 to watch, 1 going well.', ago: T % 3 === 0 ? 'just now' : (T % 3) * 2 + ' min ago', clock: 'Accra ' + clk(0),
+  pulse: [['Staff on shift', 9, '2 idle · 3 off', 'StaffProductivity'], ['Riders on route', 8, '40 parcels today', 'DeliveryTracking'], ['Parcels scanned today', 131 + T, 'Newark + Accra', 'PackageIntake', 1], ['Payments today', '₵' + (12480 + T * 35).toLocaleString('en-US'), (46 + Math.floor(T / 2)) + ' payments', 'Payments', 1], ['Open tickets', 18 - (T % 3), 'Avg reply 9 min', 'CsInbox'], ['Messages sent', (1846 + T * 4).toLocaleString('en-US'), 'WhatsApp · SMS · e-mail', 'MessageLogs', 1]].map(p => ({ l: p[0], v: p[1], s: p[2], href: p[3] + '.dc.html', a: p[4] && T % 2 ? 'bump' : '' })),
+  ticker: Array.from({ length: 4 }, (_, i) => { const x = TK[(T - i + 70) % TK.length]; return { who: x[0], pic: x[1], what: x[2], at: clk(i), cls: i === 0 ? 'new' : '' }; }),
+  fc: FC.map((v, i) => ({ h: 'height:' + Math.round(v / 170 * 100) + '%', c: i === 0 ? 'today' : v > CAP ? 'over' : '', l: i === 0 ? 'Today' : ['Fri', 'Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu'][(i + 4) % 7], tip: v + ' parcels expected' })),
+  capY: 'bottom:' + Math.round(CAP / 170 * 100) + '%', fcNote: FC.filter(v => v > CAP).length + ' days over capacity', fcPill: 'pending' };
+return { ...out, nav, heat, held, appr, pre, pricing, year, areaShip, lineShip: sh.d, linePick: pk.d, lineCons: cs.d };
+}
+}
+</script>
+</body>
+</html>

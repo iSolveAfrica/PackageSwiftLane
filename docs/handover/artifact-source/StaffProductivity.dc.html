@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Swift Lane Staff Productivity</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./swiftlane.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}
+.pr-k{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:var(--card);position:relative;overflow:hidden}
+.pr-k b{font:600 26px var(--font);letter-spacing:-.015em;font-variant-numeric:tabular-nums;line-height:1.15}
+.pr-k b.bump{animation:prB .8s}@keyframes prB{from{color:#E2632A}to{color:var(--ink)}}
+.pr-k small{color:var(--muted);font-size:12.5px}
+.pr-k .sp{display:flex;align-items:flex-end;gap:2px;height:22px;margin-top:4px}.pr-k .sp i{flex:1;background:#D6D2CA;border-radius:2px}.pr-k .sp i:last-child{background:#E2632A}
+.pr-live{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px}
+.pr-p{flex:0 0 190px;display:flex;flex-direction:column;gap:8px;padding:12px;border:1px solid var(--line);border-radius:16px;background:var(--card);cursor:pointer;text-align:left;font:inherit;color:inherit}
+.pr-p.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.pr-p .now{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pr-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}
+.pr-dot.a{background:var(--green);animation:prP 1.6s infinite}.pr-dot.i{background:var(--yellow)}.pr-dot.o{background:#B9B4AA}
+@keyframes prP{50%{opacity:.35}}
+.pr-chart{position:relative;height:240px}
+.pr-chart svg{width:100%;height:100%;display:block;overflow:visible}
+.pr-hm{display:grid;grid-template-columns:44px repeat(14,minmax(0,1fr));gap:3px;align-items:center;font-size:11.5px;color:var(--muted)}
+.pr-hm i{display:block;height:20px;border-radius:4px;background:var(--active)}
+.pr-hm i.h1{background:#F6D3BF}.pr-hm i.h2{background:#EE9C6E}.pr-hm i.h3{background:#E2632A}
+.pr-tl{position:relative;height:14px;border-radius:7px;background:var(--active);overflow:hidden;min-width:140px}
+.pr-tl i{position:absolute;top:0;bottom:0;border-radius:3px}
+.pr-tl i.a{background:#8E8A82}.pr-tl i.i{background:#E5D9A8}
+.pr-tl.big{height:30px;border-radius:10px}
+.pr-th{cursor:pointer;user-select:none;white-space:nowrap}.pr-th.on{color:var(--ink)}
+.pr-tr{cursor:pointer}.pr-tr.on td{background:var(--active)}
+.pr-feed{display:flex;flex-direction:column;gap:2px;max-height:300px;overflow:hidden}
+.pr-fi{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:13px}
+.pr-fi.new{animation:prN 1s}@keyframes prN{from{background:#FBE3D6}to{background:transparent}}
+.pr-ins{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line)}
+.pr-ins:first-of-type{border-top:0}
+.pr-goal{height:10px;border-radius:9px;background:var(--active);overflow:hidden}.pr-goal i{display:block;height:100%;background:#E2632A;transition:width .6s}
+.pr-set{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));gap:12px}
+.pr-bar{display:grid;grid-template-columns:110px 1fr 40px;gap:8px;align-items:center;font-size:12.5px}.pr-bar i{display:block;height:8px;border-radius:9px;background:#A9A59C}
+</style>
+</helmet>
+<div class="sl-app">
+  <input type="checkbox" id="navtg" class="nav-tg" aria-hidden="true" tabindex="-1">
+  <header class="sl-top">
+    <label class="sl-ib nav-open" for="navtg" aria-label="Open or close the menu" role="button" tabindex="0"><i class="ic i-sidebar" aria-hidden="true"></i></label>
+    <a class="sl-switch" href="Main.dc.html"><small>SL</small> Swift Lane · Accra Hub <i class="ic ic-sm i-down" aria-hidden="true"></i></a>
+    <a class="fx-chip" href="SettingsHub.dc.html" title="Exchange rate · set in Settings › General"><i class="ic ic-sm i-dollar" aria-hidden="true"></i><span class="mono">USD 1 = GHS 12.40</span><span class="fx-d">▲ 0.4%</span></a>
+    <span class="grow"></span>
+    <details class="aitop"><summary aria-label="Help with Swift Lane AI"><span class="o"><i class="ic i-ai" aria-hidden="true"></i></span>Help</summary><div class="pop" role="menu">
+<div class="me"><span class="sl-av sm dark">HC</span><div class="grow"><div class="fw5 sm">Henry Cobblah</div><div class="mut" style="font-size:12px">Operations manager · Accra Hub</div></div><a class="sl-btn sm ghost" href="AiStudio.dc.html">Edit</a></div>
+<a class="ask" href="StaffAI.dc.html"><i class="ic ic-sm i-spark" aria-hidden="true"></i>Ask AI for help on this page<b><i class="ic ic-sm i-send" aria-hidden="true"></i></b></a>
+<div class="hd">Your profile with AI</div>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-wand" aria-hidden="true"></i></span><span>Retouch my photo<small>Light, skin and background</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-refresh" aria-hidden="true"></i></span><span>Reset images<small>Go back to the original photo</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-edit" aria-hidden="true"></i></span><span>Change my name<small>AI fixes spelling and capitals</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-user" aria-hidden="true"></i></span><span>Make my icon<small>Avatar from your photo or initials</small></span></a>
+<div class="hd">Help</div>
+<a class="it" role="menuitem" href="StaffAI.dc.html"><span class="t"><i class="ic ic-sm i-help" aria-hidden="true"></i></span><span>Explain this page</span></a>
+<a class="it" role="menuitem" href="CsInbox.dc.html"><span class="t"><i class="ic ic-sm i-message" aria-hidden="true"></i></span><span>Talk to a person</span></a>
+</div></details>
+    <a class="sl-ib" aria-label="Notifications" href="Notifications.dc.html"><i class="ic i-bell" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Switch theme" href="SettingsHub.dc.html"><i class="ic i-sun" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Documents" href="Documents.dc.html"><i class="ic i-file" aria-hidden="true"></i></a>
+    <a class="sl-btn" href="NewShipment.dc.html">New Shipment</a>
+    <details class="uptop"><summary aria-label="Your profile and settings, Henry Cobblah"><span class="me-pic hc" style="width:34px;height:34px"><i class="me-on" aria-hidden="true"></i></span><span class="up-nm">Henry</span><i class="ic ic-sm i-down" aria-hidden="true"></i></summary><div class="pop" role="menu">
+<a class="up-me" href="AiStudio.dc.html"><span class="me-pic hc" style="width:48px;height:48px"><i class="me-on" aria-hidden="true"></i></span><span class="col" style="min-width:0"><b>Henry Cobblah</b><small>Operations manager · Accra Hub</small><small class="mono">henry@swiftlane.com</small></span></a>
+<div class="up-st"><span class="row g6 sm"><span class="ld" style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span>Available</span><a class="sm fw5" href="AiStudio.dc.html">Edit profile</a></div>
+<div class="up-h">Short links</div><div class="up-g"><a class="up-l" role="menuitem" href="Main.dc.html"><i class="ic ic-sm i-grid" aria-hidden="true"></i>Overview</a><a class="up-l" role="menuitem" href="RiderDispatch.dc.html"><i class="ic ic-sm i-truck" aria-hidden="true"></i>Dispatch board</a><a class="up-l" role="menuitem" href="SendPrices.dc.html"><i class="ic ic-sm i-send" aria-hidden="true"></i>Send prices</a><a class="up-l" role="menuitem" href="Reports.dc.html"><i class="ic ic-sm i-chart" aria-hidden="true"></i>Reports</a><a class="up-l" role="menuitem" href="Documents.dc.html"><i class="ic ic-sm i-file" aria-hidden="true"></i>Documents</a><a class="up-l" role="menuitem" href="ActivityLogs.dc.html"><i class="ic ic-sm i-clock" aria-hidden="true"></i>My activity</a></div>
+<div class="up-h">Settings</div><a class="up-l" role="menuitem" href="AiStudio.dc.html"><i class="ic ic-sm i-ai" aria-hidden="true"></i>Profile and photo</a><a class="up-l" role="menuitem" href="SettingsHub.dc.html"><i class="ic ic-sm i-cog" aria-hidden="true"></i>Settings</a><a class="up-l" role="menuitem" href="ApiConnections.dc.html"><i class="ic ic-sm i-link" aria-hidden="true"></i>API connections</a><a class="up-l" role="menuitem" href="StaffPermissions.dc.html"><i class="ic ic-sm i-shield" aria-hidden="true"></i>Permissions</a>
+<div class="up-row"><span class="sm mut">Theme</span><span class="sl-seg boxed" style="height:30px"><a class="on" href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Light</a><a href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Dark</a></span></div>
+<a class="up-l" role="menuitem" href="CsInbox.dc.html"><i class="ic ic-sm i-help" aria-hidden="true"></i>Help and support</a>
+<a class="up-l out" role="menuitem" href="Login.dc.html"><i class="ic ic-sm i-logout" aria-hidden="true"></i>Sign out</a>
+</div></details>
+  </header>
+  <div class="sl-body">
+    <label class="nav-bd" for="navtg" aria-hidden="true"></label>
+    <div class="sl-rail">
+      <a class="is-on" href="NewShipment.dc.html" aria-label="New shipment"><i class="ic i-newdoc" aria-hidden="true"></i></a>
+      <a href="StaffAI.dc.html" aria-label="AI assistant" title="AI assistant"><i class="ic i-ai" aria-hidden="true"></i></a>
+      <a href="PublicTracking.dc.html" aria-label="Tracking" title="Tracking"><i class="ic i-track" aria-hidden="true"></i></a>
+      <a href="LockerSearch.dc.html" aria-label="Search tracking number" title="Search tracking number"><i class="ic i-tsearch" aria-hidden="true"></i></a>
+      <a href="Consolidations.dc.html" aria-label="Consolidation" title="Consolidation"><i class="ic i-layers" aria-hidden="true"></i></a>
+      <a href="Warehouse.dc.html" aria-label="Warehouse" title="Warehouse"><i class="ic i-warehouse" aria-hidden="true"></i></a>
+      <a class="me-pic hc" href="AiStudio.dc.html" aria-label="Your profile, Henry Cobblah" style="width:34px;height:34px;margin-top:auto"></a>
+    </div>
+    <aside class="sl-side" aria-label="Main navigation">
+      <div class="nav-x"><span class="fw5">Menu</span><label class="sl-ib" for="navtg" aria-label="Close the menu" role="button" tabindex="0"><i class="ic i-x" aria-hidden="true"></i></label></div>
+      <sc-for list="{{nav}}" as="g" hint-placeholder-count="5">
+        <div class="sl-gl">{{g.label}}</div>
+        <nav class="sl-nav">
+          <sc-for list="{{g.items}}" as="it" hint-placeholder-count="4">
+            <a href="{{it.href}}" class="{{it.cls}}"><i class="ic {{it.icon}}" aria-hidden="true"></i><span>{{it.label}}</span><span class="cnt {{it.ok}}">{{it.c1}} <em>{{it.c2}}</em></span></a>
+          </sc-for>
+        </nav>
+      </sc-for>
+      <div class="sl-gl">Other</div>
+      <nav class="sl-nav">
+        <a href="SettingsHub.dc.html"><i class="ic i-globe" aria-hidden="true"></i><span>Language</span></a>
+        <a href="CsInbox.dc.html"><i class="ic i-help" aria-hidden="true"></i><span>Get help</span></a>
+        <a href="Login.dc.html" class="danger"><i class="ic i-logout" aria-hidden="true"></i><span>Sign out</span></a>
+      </nav>
+      <a class="me-card" href="AiStudio.dc.html" aria-label="Signed in as Henry Cobblah, Operations manager. Open your profile">
+        <span class="me-pic hc" role="img" aria-label="Photo of Henry Cobblah"><i class="me-on" aria-hidden="true"></i></span>
+        <span class="grow col" style="min-width:0"><b>Henry Cobblah</b><small>Operations manager · Accra Hub</small></span>
+        <i class="ic ic-sm i-more mut" aria-hidden="true"></i>
+      </a>
+      <a class="me-sub" href="CsInbox.dc.html"><i class="ic ic-sm i-ticket" aria-hidden="true"></i>Customer service<span class="sl-tag">12 open</span></a>
+    </aside>
+
+    <main class="sl-main"><div class="sl-wrap" style="max-width:1400px">
+<div class="sl-head"><div><h1 class="sl-title" style="font-size:20px">Staff productivity</h1><p class="sl-lede">Check-ins, working time, idle time and packages registered, per staff member · Accra Hub · <span class="row g6" style="display:inline-flex"><span class="pr-dot a"></span>live</span></p></div><div class="row g8 wrap"><div class="sl-seg boxed"><sc-for list="{{periods}}" as="p" hint-placeholder-count="5"><button class="{{p.cls}}" onClick="{{p.pick}}">{{p.label}}</button></sc-for></div><button class="sl-btn ghost" onClick="{{toggleSet}}"><i class="ic ic-sm i-cog" aria-hidden="true"></i>Settings</button><a class="sl-btn ghost" href="Documents.dc.html"><i class="ic ic-sm i-download" aria-hidden="true"></i>Export</a></div></div>
+<sc-if value="{{showSet}}" hint-placeholder-val="{{ false }}"><section class="sl-card col g12"><div class="sl-ch" style="margin:0"><h2 class="sl-ct">Staff productivity settings</h2><span class="row g8 sm"><button class="sl-toggle {{presCls}}" role="switch" aria-checked="{{presAria}}" aria-label="Presence tracking" onClick="{{togglePres}}"></button>Presence tracking</span></div><div class="pr-set"><div class="sl-field"><span class="sl-lab">Check-in starts with</span><div class="sl-seg boxed"><sc-for list="{{ciOpts}}" as="o" hint-placeholder-count="2"><button class="{{o.cls}}" onClick="{{o.pick}}">{{o.label}}</button></sc-for></div></div><label class="sl-field"><span class="sl-lab">Idle after (minutes)</span><input class="sl-in mono" value="{{idleMin}}" onChange="{{setIdle}}"></label><label class="sl-field"><span class="sl-lab">Legacy gap (minutes)</span><input class="sl-in mono" value="15" aria-label="Legacy gap"></label><label class="sl-field"><span class="sl-lab">Presence report interval (seconds)</span><input class="sl-in mono" value="30" aria-label="Presence interval"></label></div><span class="mut sm">Same rules as the system: a day starts with the first package {{ciWord}}; no activity for {{idleMin}} minutes counts as idle.</span></section></sc-if>
+<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(170px,100%),1fr));gap:12px"><sc-for list="{{kpis}}" as="k" hint-placeholder-count="8"><div class="pr-k"><small>{{k.l}}</small><b class="{{k.anim}}">{{k.v}}</b><small>{{k.s}}</small><div class="sp" aria-hidden="true"><sc-for list="{{k.sp}}" as="h" hint-placeholder-count="10"><i style="{{h}}"></i></sc-for></div></div></sc-for></div>
+<section class="sl-card col g12"><div class="sl-ch" style="margin:0"><div><h2 class="sl-ct">On shift right now</h2><span class="mut sm">{{liveSum}}</span></div><div class="sl-seg boxed"><sc-for list="{{roles}}" as="r" hint-placeholder-count="5"><button class="{{r.cls}}" onClick="{{r.pick}}">{{r.label}}</button></sc-for></div></div>
+<div class="pr-live"><sc-for list="{{live}}" as="p" hint-placeholder-count="7"><button class="pr-p {{p.cls}}" onClick="{{p.pick}}"><span class="row g8"><span class="me-pic {{p.pic}}" style="width:34px;height:34px"></span><span class="col grow" style="min-width:0"><b class="fw5 sm">{{p.name}}</b><span class="mut" style="font-size:11.5px">{{p.role}}</span></span><span class="pr-dot {{p.dot}}" title="{{p.stl}}"></span></span><span class="now">{{p.now}}</span><div class="pr-tl" aria-label="Today's timeline"><sc-for list="{{p.segs}}" as="g" hint-placeholder-count="5"><i class="{{g.c}}" style="{{g.s}}"></i></sc-for></div><span class="row between" style="font-size:12px"><span class="mono">{{p.act}}</span><span class="mut">{{p.cnt}} actions</span></span></button></sc-for></div></section>
+<div class="split"><section class="a sl-card col g12"><div class="sl-ch" style="margin:0"><div><h2 class="sl-ct">Active, idle and packages created, by day</h2><span class="mut sm">{{chartSub}}</span></div><div class="row g12 sm mut"><span class="row g6"><i style="width:10px;height:10px;border-radius:3px;background:#8E8A82;display:inline-block"></i>Active hours</span><span class="row g6"><i style="width:10px;height:10px;border-radius:3px;background:#E5D9A8;display:inline-block"></i>Idle hours</span><span class="row g6"><i style="width:14px;height:3px;border-radius:2px;background:#E2632A;display:inline-block"></i>Packages created</span></div></div>
+<div class="pr-chart" role="img" aria-label="{{chartSub}}"><svg viewBox="0 0 1000 240" preserveAspectRatio="none"><g stroke="#E7E1D8" stroke-width="1"><path d="M0 40H1000M0 100H1000M0 160H1000M0 220H1000"/></g><sc-for list="{{bars}}" as="b" hint-placeholder-count="14"><rect x="{{b.x}}" y="{{b.ya}}" width="{{b.w}}" height="{{b.ha}}" rx="3" fill="#8E8A82"/><rect x="{{b.x}}" y="{{b.yi}}" width="{{b.w}}" height="{{b.hi}}" rx="3" fill="#E5D9A8"/></sc-for><polyline points="{{line}}" fill="none" stroke="#E2632A" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg></div><div class="row between mut" style="font-size:11.5px"><span>{{x0}}</span><span>{{x1}}</span></div></section>
+<aside class="b sl-card col g8"><h2 class="sl-ct">Insights</h2><sc-for list="{{insights}}" as="n" hint-placeholder-count="4"><div class="pr-ins"><span class="sl-tile"><i class="ic ic-sm {{n.icon}}" aria-hidden="true"></i></span><span class="col"><b class="fw5 sm">{{n.t}}</b><span class="mut" style="font-size:12.5px">{{n.d}}</span></span></div></sc-for><div class="col g6" style="padding-top:10px;border-top:1px solid var(--line)"><div class="row between sm"><span>Team goal · packages today</span><b class="mono fw5">{{goalTxt}}</b></div><div class="pr-goal"><i style="{{goalW}}"></i></div></div></aside></div>
+<div class="split"><section class="a sl-card flush"><div class="row between wrap g8" style="padding:16px 18px"><div><h2 class="sl-ct">Staff</h2><span class="mut sm">Click a column to sort, a person to see their day</span></div><a class="sl-btn ghost sm" href="StaffActivity.dc.html">Activity log →</a></div>
+<div class="sl-tw"><table class="sl-table"><thead><tr><sc-for list="{{cols}}" as="c" hint-placeholder-count="11"><th class="pr-th {{c.cls}} {{c.num}}" onClick="{{c.sort}}">{{c.label}}{{c.arrow}}</th></sc-for></tr></thead><tbody>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="8"><tr class="pr-tr {{r.cls}}" onClick="{{r.pick}}"><td><div class="sl-cell"><span class="me-pic {{r.pic}}" style="width:30px;height:30px"></span><span class="col"><span class="fw5">{{r.name}}</span><span class="mut" style="font-size:12px">{{r.role}}</span></span></div></td><td class="mono sm">{{r.first}}</td><td class="mono sm">{{r.last}}</td><td class="num mono">{{r.active}}</td><td class="num mono mut">{{r.idle}}</td><td class="num mono">{{r.created}}</td><td class="num mono">{{r.edited}}</td><td class="num mono">{{r.used}}</td><td class="num mono">{{r.ph}}</td><td class="num mono">{{r.days}}</td><td style="width:160px"><div class="pr-tl"><sc-for list="{{r.segs}}" as="g" hint-placeholder-count="5"><i class="{{g.c}}" style="{{g.s}}"></i></sc-for></div></td></tr></sc-for>
+</tbody></table></div></section>
+<aside class="b col g12"><section class="sl-card col g12"><div class="row g12"><span class="me-pic {{who.pic}}" style="width:48px;height:48px"></span><span class="col grow"><b class="fw5">{{who.name}}</b><span class="mut sm">{{who.role}} · {{who.stl}}</span></span><a class="sl-ib" href="StaffActivity.dc.html" aria-label="Open activity"><i class="ic ic-sm i-right" aria-hidden="true"></i></a></div>
+<div class="pr-tl big"><sc-for list="{{who.segs}}" as="g" hint-placeholder-count="5"><i class="{{g.c}}" style="{{g.s}}"></i></sc-for></div><div class="row between mut" style="font-size:11.5px"><span>07:00</span><span>12:00</span><span>18:00</span></div>
+<div class="sl-kv"><div><span>Checked in</span><span class="mono">{{who.first}}</span></div><div><span>Active / idle</span><span class="mono">{{who.active}} / {{who.idle}}</span></div><div><span>Packages per active hour</span><span class="mono">{{who.ph}}</span></div><div><span>Created · edited · used</span><span class="mono">{{who.ced}}</span></div></div>
+<span class="up">Where the time went</span><sc-for list="{{who.mods}}" as="m" hint-placeholder-count="4"><div class="pr-bar"><span>{{m.n}}</span><i style="{{m.w}}"></i><b class="mono fw5" style="text-align:right">{{m.p}}</b></div></sc-for></section>
+<section class="sl-card col"><h2 class="sl-ct" style="margin-bottom:4px">Live activity</h2><div class="pr-feed" aria-live="polite"><sc-for list="{{feed}}" as="f" hint-placeholder-count="6"><div class="pr-fi {{f.cls}}"><span class="me-pic {{f.pic}}" style="width:26px;height:26px"></span><span class="grow"><b class="fw5">{{f.who}}</b> {{f.what}}</span><span class="mono mut" style="font-size:12px">{{f.at}}</span></div></sc-for></div></section></aside></div>
+<section class="sl-card col g8"><div class="sl-ch" style="margin:0"><div><h2 class="sl-ct">When the work happens</h2><span class="mut sm">Actions per hour across the week · {{hmWho}}</span></div><div class="row g6 sm mut"><span>Less</span><i style="width:14px;height:14px;border-radius:3px;background:var(--active);display:inline-block"></i><i style="width:14px;height:14px;border-radius:3px;background:#F6D3BF;display:inline-block"></i><i style="width:14px;height:14px;border-radius:3px;background:#EE9C6E;display:inline-block"></i><i style="width:14px;height:14px;border-radius:3px;background:#E2632A;display:inline-block"></i><span>More</span></div></div>
+<div class="pr-hm"><span></span><sc-for list="{{hours}}" as="h" hint-placeholder-count="14"><span style="text-align:center">{{h}}</span></sc-for></div><sc-for list="{{heat}}" as="r" hint-placeholder-count="6"><div class="pr-hm"><span>{{r.d}}</span><sc-for list="{{r.c}}" as="c" hint-placeholder-count="14"><i class="{{c.c}}" title="{{c.t}}"></i></sc-for></div></sc-for></section>
+</div></main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2300}}'>
+const ST = [['Adwoa Sarpong', 'Warehouse lead', 'warehouse', 'p-as', '07:52', '', 401, 24, 142, 61, 38, 'a', 'Scanning in SL-1005', [['Package intake', 54], ['Warehouse', 28], ['Labels', 12], ['Other', 6]]], ['Kwesi Bonsu', 'Rider', 'rider', 'p-kb', '08:05', '', 358, 51, 12, 9, 74, 'a', 'Delivering SL-100482', [['Deliveries', 71], ['Rider app', 20], ['Other', 9]]], ['Nii Lamptey', 'Finance', 'finance', 'p-nl', '08:30', '', 312, 66, 48, 35, 22, 'i', 'Idle 7 min · on Payments', [['Payments', 61], ['Send prices', 22], ['Reports', 17]]], ['Efia Manu', 'Customer service', 'support', 'em', '08:12', '', 363, 37, 96, 14, 51, 'a', 'Replying to ticket T-4821', [['Support inbox', 66], ['Customers', 21], ['AI assistant', 13]]], ['Henry Cobblah', 'Ops manager', 'admin', 'hc', '07:40', '', 415, 18, 64, 80, 27, 'a', 'Editing air tariffs', [['Settings', 34], ['Reports', 30], ['Dispatch', 22], ['Other', 14]]], ['Samuel Ofori', 'Rider', 'rider', 'p-so', '09:10', '16:02', 271, 141, 8, 6, 40, 'o', 'Checked out 16:02', [['Deliveries', 80], ['Rider app', 20]]], ['Mavis Owusu', 'Front desk', 'warehouse', 'p-ma', '08:45', '', 320, 42, 71, 22, 19, 'a', 'Handing over SL-100455', [['Pickups', 58], ['Package intake', 30], ['Other', 12]]], ['Kofi Asante', 'Rider', 'rider', 'p-ka', '', '', 0, 0, 0, 0, 0, 'o', 'Off today', [['—', 0]]]];
+const WHAT = ['scanned in SL-1005', 'created package SL-1006', 'recorded a payment', 'replied to a ticket', 'printed 4 labels', 'delivered SL-100471 · code matched', 'edited a tariff', 'handed over SL-100455', 'sent prices to 3 customers', 'created a pickup'];
+const hm = (m) => Math.floor(m / 60) + 'h ' + String(m % 60).padStart(2, '0') + 'm';
+const segs = (k, st) => { if (!ST[k][4]) return []; const s0 = (parseInt(ST[k][4]) - 7) * 60 + parseInt(ST[k][4].slice(3)); const out = []; let x = s0; for (let i = 0; i < 6; i++) { const a = 50 + ((k * 31 + i * 17) % 60), id = 6 + ((k * 13 + i * 7) % 22); out.push({ c: 'a', s: 'left:' + (x / 660 * 100).toFixed(1) + '%;width:' + (a / 660 * 100).toFixed(1) + '%' }); x += a; if (i < 5) { out.push({ c: 'i', s: 'left:' + (x / 660 * 100).toFixed(1) + '%;width:' + (id / 660 * 100).toFixed(1) + '%' }); x += id; } if (x > 600 + st) break; } return out; };
+class Component extends DCLogic {
+constructor(p) { super(p); this.state = { per: 'today', role: 'all', sel: 0, sort: 'created', dir: -1, t: 0, extra: ST.map(() => 0), feed: [[0, 0, '10:41'], [3, 3, '10:40'], [1, 5, '10:38'], [4, 6, '10:36'], [6, 7, '10:33'], [2, 2, '10:31']], set: false, pres: true, ci: 'edit', idle: '5' };
+  if (typeof window !== 'undefined') this._iv = setInterval(() => { const s = this.state, act = ST.map((x, i) => i).filter(i => ST[i][11] === 'a'); const k = act[(s.t * 7 + 3) % act.length]; const ex = s.extra.slice(); ex[k] += 1; const m = 41 + Math.floor((s.t + 1) / 2); const at = '10:' + String(Math.min(59, m)).padStart(2, '0'); this.setState({ t: s.t + 1, extra: ex, feed: [[k, (s.t * 3 + k) % WHAT.length, at, 1]].concat(s.feed.slice(0, 7).map(f => [f[0], f[1], f[2]])) }); }, 2500); }
+componentWillUnmount() { clearInterval(this._iv); }
+renderVals() {
+const A = 'staffprod';
+const N = 'Operations|dash~Overview~grid~~~Main;panels~Control Panels~gauge~~~ControlPanels;air~Air Shipments~plane~128~~AirShipments;sea~Sea Packages~ship~64~~SeaPackages;prealert~Pre-Alerts~inbox~9~~PreAlerts;pickup~Pickups~truck~12~/ 20~Pickups;dtrack~Delivery Tracking~route~5~~DeliveryTracking;shiptrack~Shipment Tracking~track~~~ShipmentTracking;aging~Pickup Aging~hourglass~9~~PickupAging;handover~Warehouse Delivery~arrow~~~WarehouseDelivery;consol~Consolidations~layers~7~~Consolidations;warehouse~Warehouse~warehouse~~~Warehouse;handout~Hand Out Packages~box~5~~HandOut;locker~Locker Search~lock~~~LockerSearch#Hubs|execdash~Management Dashboard~chart~~~ExecDashboard;billhub~Billing & Finance~dollar~~~BillingHub;lastmile~Last-Mile Delivery~truck~~~LastMile;aicenter~AI Centre~ai~~~AiCenter;commshub~Messages & Automation~message~~~CommsHub;supporthub~Support & CRM~ticket~~~SupportHub;loyalty~Loyalty & Referrals~star~~~LoyaltyRewards;security~Security & Reliability~shield~~~SecurityCenter#Freight|frhub~Freight Hub~plane~~~FreightHub;frsched~Departures & Arrivals~calendar~5~~FreightSchedule;frwb~Waybills & Manifests~file~~~Waybills;frex~Cargo Exceptions~alert~6~~CargoExceptions;frins~Insurance & Claims~shield~4~~InsuranceClaims;frpart~Freight Partners~users~~~FreightPartners#People|cust~Customers~users~1,284~~Customers;recip~Recipients~pin~~~Recipients;drivers~Drivers~wheel~8~/ 14~Drivers;drvapp~Rider App~phone~~~DriverApp;staff~Staff & Roles~shield~~~StaffRoles#Finance|pay~Payments~card~~~Payments;ar~Accounts Receivable~receipt~~~AccountsReceivable;fin~Financial Overview~dollar~$48,200~~FinancialOverview#Insights|reports~Reports~chart~~~Reports;activity~Activity Logs~clock~~~ActivityLogs;messages~Message Logs~archive~~~MessageLogs;msgcost~Message Costs~trend~~~MessageCosts;staffprod~Staff Productivity~trendup~~~StaffProductivity;txn~Transactions~refresh~~~Transactions;syslog~System Logs~note~~~SystemLogs#Customer Service|tickets~Support Inbox~ticket~1,482~~CsInbox;csrules~Ticket Rules~filter~~~CsRules;playbook~Playbook~book~~~CsPlaybook;csrep~Support Reports~star~~~CsReports;cschan~Channels & Teams~message~~~CsChannels;csai~AI Assistant~ai~~~StaffAI;cssupai~AI for Customers~spark~~~CsAI#Developer|devov~Dev Overview~terminal~~~DevOverview;devsvc~Services~server~12~~DevServices;devlogs~Logs~activity~~~DevLogs;devmet~Metrics~cpu~~~DevMetrics;devinfra~Infrastructure~cloud~~~DevInfrastructure;devdep~Deployments~rocket~~~DevDeployments;devalert~Alerts~alert~3~~DevAlerts;devissues~Issues & Change Log~bug~8~~DevIssues;devint~Integrations~puzzle~~~DevIntegrations#Settings|general~General~cog~~~SettingsHub;apis~API Connections~link~16~~ApiConnections;apitraffic~Live API Traffic~activity~~~ApiTraffic;tariffs~Shipping Tariffs~tag~~~Tariffs;notifc~Notifications~bell~3~~NotificationCenter;ebuild~Email Builder~mail~~~EmailBuilder;msgtpl~SMS & WhatsApp~message~~~MessageTemplates;bcast~Push Notifications~send~~~Broadcast;costs~Operating Costs~dollar~~~CostSettings;addr~Shipping Addresses~pin~~~ShippingAddresses;rfees~Rider Fees~truck~~~RiderSettings;loginpg~Login Page~image~~~LoginSettings;devmod~Modules~sliders~~~ModuleController;perm~Permissions~key~~~StaffPermissions;lblstudio~Label Printing~print~~~LabelStudio;auto~Automations~bolt~~~Automations';
+const nav = N.split('#').map(g => { const p = g.split('|'); return { label: p[0], items: p[1].split(';').map(i => { const f = i.split('~'); return { href: f[5] + '.dc.html', label: f[1], icon: 'i-' + f[2], c1: f[3], c2: f[4], cls: f[0] === A ? 'is-active' : '', ok: f[0] === 'fin' ? 'ok' : '' }; }) }; });
+  const s = this.state, mul = { today: 1, d7: 6.2, month: 24, last: 26, all: 410 }[s.per], days = { today: 1, d7: 7, month: 22, last: 26, all: 410 }[s.per];
+  const R = ST.map((x, i) => ({ i, name: x[0], role: x[1], grp: x[2], pic: x[3], first: x[4] || '—', last: x[5] || (x[4] ? 'on shift' : '—'), a: Math.round(x[6] * mul), id: Math.round(x[7] * mul), c: Math.round(x[8] * mul) + (s.per === 'today' ? s.extra[i] : 0), e: Math.round(x[9] * mul), u: Math.round(x[10] * mul), st: x[11], now: x[12], mods: x[13] }));
+  R.forEach(r => { r.ph = r.a ? +(r.c / (r.a / 60)).toFixed(1) : 0; r.days = r.a ? Math.min(days, Math.round(days * (r.i === 5 ? .8 : 1))) : 0; });
+  const vis = R.filter(r => s.role === 'all' || r.grp === s.role);
+  const key = { name: 'name', first: 'first', active: 'a', idle: 'id', created: 'c', edited: 'e', used: 'u', ph: 'ph', days: 'days' }[s.sort] || 'c';
+  const rows = vis.slice().sort((x, y) => (x[key] > y[key] ? 1 : x[key] < y[key] ? -1 : 0) * s.dir);
+  const tot = (f) => vis.reduce((a, r) => a + r[f], 0);
+  const on = vis.filter(r => r.st !== 'o' || r.a).length, aT = tot('a'), iT = tot('id'), cT = tot('c');
+  const sp = (seed) => Array.from({ length: 10 }, (_, i) => 'height:' + (30 + ((seed * 13 + i * 29) % 70)) + '%');
+  const NB = s.per === 'today' ? 11 : s.per === 'd7' ? 7 : 14;
+  const bw = 1000 / NB;
+  const dayv = Array.from({ length: NB }, (_, i) => { const a = s.per === 'today' ? 20 + ((i * 37) % 30) + (i > 1 && i < 5 ? 15 : 0) : 30 + ((i * 41) % 25); const id = 4 + ((i * 17) % 9); const c = s.per === 'today' ? 28 + ((i * 53) % 40) + (i === NB - 1 ? s.extra.reduce((a, b) => a + b, 0) : 0) : 260 + ((i * 71) % 220); return { a, id, c }; });
+  const mxh = Math.max(...dayv.map(d => d.a + d.id)), mxc = Math.max(...dayv.map(d => d.c));
+  const W = R[s.sel];
+  const hmRow = (d, r) => Array.from({ length: 14 }, (_, c) => { const v = ((r * 5 + c * 7 + s.sel * 3) % 13) + (c >= 2 && c <= 5 ? 5 : 0) + (c >= 8 && c <= 10 ? 3 : 0) - (r === 6 ? 8 : 0); return { c: v > 15 ? 'h3' : v > 11 ? 'h2' : v > 7 ? 'h1' : '', t: d + ' ' + (7 + c) + ':00 · ' + Math.max(0, v * 3) + ' actions' }; });
+  const best = rows.slice().sort((x, y) => y.ph - x.ph)[0] || R[0], idlest = vis.slice().sort((x, y) => y.id - x.id)[0] || R[0];
+  const goal = 520 * (s.per === 'today' ? 1 : mul), pct = Math.min(100, Math.round(cT / goal * 100));
+  const C = [['name', 'Staff', ''], ['first', 'First check-in', ''], ['last', 'Last check-out', ''], ['active', 'Active', 'num'], ['idle', 'Idle', 'num'], ['created', 'Created', 'num'], ['edited', 'Edited', 'num'], ['used', 'Used', 'num'], ['ph', 'Per hour', 'num'], ['days', 'Days', 'num'], ['tl', 'Today', '']];
+  return { nav,
+    periods: [['today', 'Today'], ['d7', '7 days'], ['month', 'This month'], ['last', 'Last month'], ['all', 'All time']].map(p => ({ label: p[1], cls: s.per === p[0] ? 'on' : '', pick: () => this.setState({ per: p[0] }) })),
+    showSet: s.set, toggleSet: () => this.setState({ set: !s.set }), presCls: s.pres ? 'on' : '', presAria: s.pres ? 'true' : 'false', togglePres: () => this.setState({ pres: !s.pres }),
+    ciOpts: [['edit', 'First package created or edited'], ['create', 'First package created']].map(o => ({ label: o[1], cls: s.ci === o[0] ? 'on' : '', pick: () => this.setState({ ci: o[0] }) })), ciWord: s.ci === 'edit' ? 'created or edited' : 'created', idleMin: s.idle, setIdle: (e) => this.setState({ idle: e.target.value }),
+    kpis: [['Staff on shift', on + ' / ' + vis.length, (vis.length - on) + ' off today', 1], ['Active time', hm(aT), 'Avg ' + hm(Math.round(aT / Math.max(1, on))) + ' each', 2], ['Idle time', hm(iT), Math.round(iT / Math.max(1, aT + iT) * 100) + '% of logged time', 3], ['Packages created', cT.toLocaleString(), 'Edited ' + tot('e').toLocaleString() + ' · used ' + tot('u').toLocaleString(), 4, 'bump'], ['Per active hour', (cT / Math.max(1, aT / 60)).toFixed(1), 'Packages per hour, team', 5], ['Check-ins', (on * days).toLocaleString(), (on * days / Math.max(1, days)).toFixed(1) + ' a day', 6]].map(k => ({ l: k[0], v: k[1], s: k[2], sp: sp(k[3] + s.t % 3), anim: k[4] && s.t % 2 ? 'bump' : '' })),
+    liveSum: R.filter(r => r.st === 'a').length + ' active · ' + R.filter(r => r.st === 'i').length + ' idle · ' + R.filter(r => r.st === 'o').length + ' checked out or off',
+    roles: [['all', 'All'], ['warehouse', 'Warehouse'], ['rider', 'Riders'], ['finance', 'Finance'], ['support', 'Support']].map(r => ({ label: r[1], cls: s.role === r[0] ? 'on' : '', pick: () => this.setState({ role: r[0] }) })),
+    live: vis.map(r => ({ name: r.name, role: r.role, pic: r.pic, dot: r.st, stl: { a: 'Active', i: 'Idle', o: 'Off' }[r.st], now: r.now, segs: segs(r.i, s.t), act: hm(Math.round(ST[r.i][6])), cnt: ST[r.i][8] + ST[r.i][9] + ST[r.i][10] + s.extra[r.i], cls: s.sel === r.i ? 'on' : '', pick: () => this.setState({ sel: r.i }) })),
+    chartSub: { today: 'Today by hour, 07:00–18:00', d7: 'Last 7 days', month: 'This month, by day', last: 'Last month, by day', all: 'All time, by month' }[s.per],
+    bars: dayv.map((d, i) => { const ha = d.a / mxh * 200, hi = d.id / mxh * 200; return { x: (i * bw + bw * .2).toFixed(1), w: (bw * .6).toFixed(1), ya: (220 - ha).toFixed(1), ha: ha.toFixed(1), yi: (220 - ha - hi).toFixed(1), hi: hi.toFixed(1) }; }),
+    line: dayv.map((d, i) => (i * bw + bw / 2).toFixed(1) + ',' + (220 - d.c / mxc * 190).toFixed(1)).join(' '), x0: s.per === 'today' ? '07:00' : 'Start', x1: s.per === 'today' ? 'Now' : 'Today',
+    insights: [['i-bolt', best.name + ' is the most productive', best.ph + ' packages per active hour'], ['i-clock', 'Busiest hour is 11:00', 'Plan breaks after 13:00 when it gets quiet'], ['i-alert', idlest.name + ' has the most idle time', hm(idlest.id) + ' idle · check if they need work'], ['i-users', 'Saturday mornings need one more person', 'Pickups peak 09:00–12:00 on Saturdays']].map(n => ({ icon: n[0], t: n[1], d: n[2] })),
+    goalTxt: cT.toLocaleString() + ' / ' + Math.round(goal).toLocaleString(), goalW: 'width:' + pct + '%',
+    cols: C.map(c => ({ label: c[1], num: c[2], cls: s.sort === c[0] ? 'on' : '', arrow: s.sort === c[0] ? (s.dir < 0 ? ' ↓' : ' ↑') : '', sort: () => c[0] === 'tl' ? null : this.setState({ sort: c[0], dir: s.sort === c[0] ? -s.dir : -1 }) })),
+    rows: rows.map(r => ({ name: r.name, role: r.role, pic: r.pic, first: r.first, last: r.last, active: hm(r.a), idle: hm(r.id), created: r.c.toLocaleString(), edited: r.e.toLocaleString(), used: r.u.toLocaleString(), ph: r.ph, days: r.days, segs: segs(r.i, s.t), cls: s.sel === r.i ? 'on' : '', pick: () => this.setState({ sel: r.i }) })),
+    who: { name: W.name, role: W.role, pic: W.pic, stl: { a: 'Active now', i: 'Idle now', o: 'Not on shift' }[W.st], segs: segs(W.i, s.t), first: W.first, active: hm(W.a), idle: hm(W.id), ph: W.ph, ced: W.c + ' · ' + W.e + ' · ' + W.u, mods: W.mods.map(m => ({ n: m[0], p: m[1] + '%', w: 'width:' + m[1] + '%' })) },
+    feed: s.feed.map(f => ({ who: ST[f[0]][0].split(' ')[0], pic: ST[f[0]][3], what: WHAT[f[1]], at: f[2], cls: f[3] ? 'new' : '' })),
+    hmWho: W.name, hours: Array.from({ length: 14 }, (_, i) => String(7 + i)), heat: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d, r) => ({ d, c: hmRow(d, r) })) };
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Swift Lane New Consolidation</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./swiftlane.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}
+.cd-k{display:flex;flex-direction:column;gap:6px;padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
+.cd-k b{font:600 24px var(--font);font-variant-numeric:tabular-nums;letter-spacing:-.015em}.cd-k small{color:var(--muted);font-size:12.5px}
+.cd-bar{height:8px;border-radius:9px;background:var(--active);overflow:hidden}.cd-bar i{display:block;height:100%;background:#8E8A82;transition:width .5s}.cd-bar i.hi{background:#E2632A}
+.cd-info{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(170px,100%),1fr));gap:0;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--card)}
+.cd-info div{padding:12px 14px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.cd-info small{display:block;color:var(--muted);font-size:12px}.cd-info b{font:500 14px var(--font)}
+.cd-tbl td{vertical-align:middle}
+.cd-tbl tr.new td{animation:cdN 1.4s}@keyframes cdN{from{background:#FBE3D6}}
+.cd-add{display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid var(--line-2);border-radius:16px;background:var(--field)}
+.cd-av{display:grid;grid-template-columns:28px minmax(0,1.3fr) 1fr 1fr 70px;gap:10px;align-items:center;padding:8px 10px;border-radius:10px;background:var(--card);border:1px solid var(--line);font-size:13px;cursor:pointer;text-align:left;width:100%;font-family:var(--font);color:var(--ink)}
+.cd-av.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.cd-tl{display:flex;flex-direction:column}
+.cd-st{display:grid;grid-template-columns:22px 1fr;gap:10px;position:relative;padding-bottom:14px}
+.cd-st::before{content:"";position:absolute;left:10px;top:22px;bottom:0;border-left:2px dashed var(--line-2)}.cd-st.done::before{border-left:2px solid #8E8A82}.cd-st:last-child::before{display:none}
+.cd-st .d{width:22px;height:22px;border-radius:50%;background:var(--card);border:1.5px solid var(--line-2)}.cd-st.done .d{background:#8E8A82;border-color:#8E8A82}.cd-st.now .d{background:#E2632A;border-color:#E2632A;box-shadow:0 0 0 5px rgba(226,99,42,.18)}
+.cd-st small{display:block;color:var(--muted);font-size:12px}
+.cd-ok{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;background:var(--green-bg);color:var(--green-ink);font-size:13.5px}
+.cd-tabs{display:flex;gap:6px}
+.nc-mode{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.nc-m{display:flex;align-items:center;gap:12px;padding:14px;border:1px solid var(--line);border-radius:16px;background:var(--card);cursor:pointer;text-align:left;font:inherit;color:var(--ink)}
+.nc-m.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.nc-sum{position:sticky;top:12px}
+</style>
+</helmet>
+<div class="sl-app">
+  <input type="checkbox" id="navtg" class="nav-tg" aria-hidden="true" tabindex="-1">
+  <header class="sl-top">
+    <label class="sl-ib nav-open" for="navtg" aria-label="Open or close the menu" role="button" tabindex="0"><i class="ic i-sidebar" aria-hidden="true"></i></label>
+    <a class="sl-switch" href="Main.dc.html"><small>SL</small> Swift Lane · Accra Hub <i class="ic ic-sm i-down" aria-hidden="true"></i></a>
+    <a class="fx-chip" href="SettingsHub.dc.html" title="Exchange rate · set in Settings › General"><i class="ic ic-sm i-dollar" aria-hidden="true"></i><span class="mono">USD 1 = GHS 12.40</span><span class="fx-d">▲ 0.4%</span></a>
+    <span class="grow"></span>
+    <details class="aitop"><summary aria-label="Help with Swift Lane AI"><span class="o"><i class="ic i-ai" aria-hidden="true"></i></span>Help</summary><div class="pop" role="menu">
+<div class="me"><span class="sl-av sm dark">HC</span><div class="grow"><div class="fw5 sm">Henry Cobblah</div><div class="mut" style="font-size:12px">Operations manager · Accra Hub</div></div><a class="sl-btn sm ghost" href="AiStudio.dc.html">Edit</a></div>
+<a class="ask" href="StaffAI.dc.html"><i class="ic ic-sm i-spark" aria-hidden="true"></i>Ask AI for help on this page<b><i class="ic ic-sm i-send" aria-hidden="true"></i></b></a>
+<div class="hd">Your profile with AI</div>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-wand" aria-hidden="true"></i></span><span>Retouch my photo<small>Light, skin and background</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-refresh" aria-hidden="true"></i></span><span>Reset images<small>Go back to the original photo</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-edit" aria-hidden="true"></i></span><span>Change my name<small>AI fixes spelling and capitals</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-user" aria-hidden="true"></i></span><span>Make my icon<small>Avatar from your photo or initials</small></span></a>
+<div class="hd">Help</div>
+<a class="it" role="menuitem" href="StaffAI.dc.html"><span class="t"><i class="ic ic-sm i-help" aria-hidden="true"></i></span><span>Explain this page</span></a>
+<a class="it" role="menuitem" href="CsInbox.dc.html"><span class="t"><i class="ic ic-sm i-message" aria-hidden="true"></i></span><span>Talk to a person</span></a>
+</div></details>
+    <a class="sl-ib" aria-label="Notifications" href="Notifications.dc.html"><i class="ic i-bell" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Switch theme" href="SettingsHub.dc.html"><i class="ic i-sun" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Documents" href="Documents.dc.html"><i class="ic i-file" aria-hidden="true"></i></a>
+    <a class="sl-btn" href="Consolidations.dc.html">All consolidations</a>
+    <details class="uptop"><summary aria-label="Your profile and settings, Henry Cobblah"><span class="me-pic hc" style="width:34px;height:34px"><i class="me-on" aria-hidden="true"></i></span><span class="up-nm">Henry</span><i class="ic ic-sm i-down" aria-hidden="true"></i></summary><div class="pop" role="menu">
+<a class="up-me" href="AiStudio.dc.html"><span class="me-pic hc" style="width:48px;height:48px"><i class="me-on" aria-hidden="true"></i></span><span class="col" style="min-width:0"><b>Henry Cobblah</b><small>Operations manager · Accra Hub</small><small class="mono">henry@swiftlane.com</small></span></a>
+<div class="up-st"><span class="row g6 sm"><span class="ld" style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span>Available</span><a class="sm fw5" href="AiStudio.dc.html">Edit profile</a></div>
+<div class="up-h">Short links</div><div class="up-g"><a class="up-l" role="menuitem" href="Main.dc.html"><i class="ic ic-sm i-grid" aria-hidden="true"></i>Overview</a><a class="up-l" role="menuitem" href="RiderDispatch.dc.html"><i class="ic ic-sm i-truck" aria-hidden="true"></i>Dispatch board</a><a class="up-l" role="menuitem" href="SendPrices.dc.html"><i class="ic ic-sm i-send" aria-hidden="true"></i>Send prices</a><a class="up-l" role="menuitem" href="Reports.dc.html"><i class="ic ic-sm i-chart" aria-hidden="true"></i>Reports</a><a class="up-l" role="menuitem" href="Documents.dc.html"><i class="ic ic-sm i-file" aria-hidden="true"></i>Documents</a><a class="up-l" role="menuitem" href="ActivityLogs.dc.html"><i class="ic ic-sm i-clock" aria-hidden="true"></i>My activity</a></div>
+<div class="up-h">Settings</div><a class="up-l" role="menuitem" href="AiStudio.dc.html"><i class="ic ic-sm i-ai" aria-hidden="true"></i>Profile and photo</a><a class="up-l" role="menuitem" href="SettingsHub.dc.html"><i class="ic ic-sm i-cog" aria-hidden="true"></i>Settings</a><a class="up-l" role="menuitem" href="ApiConnections.dc.html"><i class="ic ic-sm i-link" aria-hidden="true"></i>API connections</a><a class="up-l" role="menuitem" href="StaffPermissions.dc.html"><i class="ic ic-sm i-shield" aria-hidden="true"></i>Permissions</a>
+<div class="up-row"><span class="sm mut">Theme</span><span class="sl-seg boxed" style="height:30px"><a class="on" href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Light</a><a href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Dark</a></span></div>
+<a class="up-l" role="menuitem" href="CsInbox.dc.html"><i class="ic ic-sm i-help" aria-hidden="true"></i>Help and support</a>
+<a class="up-l out" role="menuitem" href="Login.dc.html"><i class="ic ic-sm i-logout" aria-hidden="true"></i>Sign out</a>
+</div></details>
+  </header>
+  <div class="sl-body">
+    <label class="nav-bd" for="navtg" aria-hidden="true"></label>
+    <div class="sl-rail">
+      <a class="is-on" href="NewShipment.dc.html" aria-label="New shipment"><i class="ic i-newdoc" aria-hidden="true"></i></a>
+      <a href="StaffAI.dc.html" aria-label="AI assistant" title="AI assistant"><i class="ic i-ai" aria-hidden="true"></i></a>
+      <a href="PublicTracking.dc.html" aria-label="Tracking" title="Tracking"><i class="ic i-track" aria-hidden="true"></i></a>
+      <a href="LockerSearch.dc.html" aria-label="Search tracking number" title="Search tracking number"><i class="ic i-tsearch" aria-hidden="true"></i></a>
+      <a href="Consolidations.dc.html" aria-label="Consolidation" title="Consolidation"><i class="ic i-layers" aria-hidden="true"></i></a>
+      <a href="Warehouse.dc.html" aria-label="Warehouse" title="Warehouse"><i class="ic i-warehouse" aria-hidden="true"></i></a>
+      <a class="me-pic hc" href="AiStudio.dc.html" aria-label="Your profile, Henry Cobblah" style="width:34px;height:34px;margin-top:auto"></a>
+    </div>
+    <aside class="sl-side" aria-label="Main navigation">
+      <div class="nav-x"><span class="fw5">Menu</span><label class="sl-ib" for="navtg" aria-label="Close the menu" role="button" tabindex="0"><i class="ic i-x" aria-hidden="true"></i></label></div>
+      <sc-for list="{{nav}}" as="g" hint-placeholder-count="5">
+        <div class="sl-gl">{{g.label}}</div>
+        <nav class="sl-nav">
+          <sc-for list="{{g.items}}" as="it" hint-placeholder-count="4">
+            <a href="{{it.href}}" class="{{it.cls}}"><i class="ic {{it.icon}}" aria-hidden="true"></i><span>{{it.label}}</span><span class="cnt {{it.ok}}">{{it.c1}} <em>{{it.c2}}</em></span></a>
+          </sc-for>
+        </nav>
+      </sc-for>
+      <div class="sl-gl">Other</div>
+      <nav class="sl-nav">
+        <a href="SettingsHub.dc.html"><i class="ic i-globe" aria-hidden="true"></i><span>Language</span></a>
+        <a href="CsInbox.dc.html"><i class="ic i-help" aria-hidden="true"></i><span>Get help</span></a>
+        <a href="Login.dc.html" class="danger"><i class="ic i-logout" aria-hidden="true"></i><span>Sign out</span></a>
+      </nav>
+      <a class="me-card" href="AiStudio.dc.html" aria-label="Signed in as Henry Cobblah, Operations manager. Open your profile">
+        <span class="me-pic hc" role="img" aria-label="Photo of Henry Cobblah"><i class="me-on" aria-hidden="true"></i></span>
+        <span class="grow col" style="min-width:0"><b>Henry Cobblah</b><small>Operations manager · Accra Hub</small></span>
+        <i class="ic ic-sm i-more mut" aria-hidden="true"></i>
+      </a>
+      <a class="me-sub" href="CsInbox.dc.html"><i class="ic ic-sm i-ticket" aria-hidden="true"></i>Customer service<span class="sl-tag">12 open</span></a>
+    </aside>
+
+    <main class="sl-main"><div class="sl-wrap" style="max-width:1400px">
+<div class="row g8 mut sm"><a href="Consolidations.dc.html">Consolidations</a><i class="ic ic-sm i-right" aria-hidden="true"></i><span style="color:var(--ink)">New consolidation</span></div>
+<div class="sl-head"><div><h1 class="sl-title" style="font-size:22px">New consolidation</h1><p class="sl-lede">Group packages into one air or sea shipment, same steps as Consolidation Process in the system.</p></div><div class="row g8"><a class="sl-btn ghost" href="Consolidations.dc.html">Cancel</a><button class="sl-btn" onClick="{{save}}"><i class="ic ic-sm i-check" aria-hidden="true"></i>{{saveLabel}}</button></div></div>
+<sc-if value="{{flash}}" hint-placeholder-val="{{ false }}"><div class="cd-ok" role="status"><i class="ic ic-sm i-check" aria-hidden="true"></i><span class="grow">{{flash}}</span><a class="fw5" href="{{openHref}}">Open it →</a></div></sc-if>
+<div class="split"><div class="a col g16">
+<section class="sl-card col g12"><h2 class="sl-ct">1 · Air or sea</h2><div class="nc-mode"><sc-for list="{{modes}}" as="m" hint-placeholder-count="2"><button class="nc-m {{m.cls}}" onClick="{{m.pick}}"><span class="sl-tile"><i class="ic {{m.icon}}" aria-hidden="true"></i></span><span class="col"><b class="fw5">{{m.label}}</b><span class="mut sm">{{m.d}}</span></span></button></sc-for></div></section>
+<section class="sl-card col g12"><h2 class="sl-ct">2 · Consolidation details</h2>
+<div class="grid cols4" style="gap:12px"><label class="sl-field"><span class="sl-lab">Shipping prefix</span><input class="sl-in mono" value="{{prefix}}" aria-label="Shipping prefix"></label><label class="sl-field"><span class="sl-lab">Country code</span><input class="sl-in mono" value="GH" aria-label="Country code"></label><label class="sl-field"><span class="sl-lab">Number (tracking)</span><input class="sl-in mono" value="{{num}}" aria-label="Tracking number"><span class="sl-hint">Next free number</span></label><label class="sl-field"><span class="sl-lab">Consolidation identifier</span><input class="sl-in mono" value="{{ident}}" aria-label="Identifier"></label></div>
+<div class="grid cols3" style="gap:12px"><div class="sl-field"><span class="sl-lab">Agency</span><div class="sl-sel"><span>Newark NJ warehouse</span><i class="ic ic-sm i-down" aria-hidden="true"></i></div></div><div class="sl-field"><span class="sl-lab">Office of origin</span><div class="sl-sel"><span>Newark · 1200 Commerce Dr</span><i class="ic ic-sm i-down" aria-hidden="true"></i></div></div><div class="sl-field"><span class="sl-lab">Consolidation status</span><div class="sl-sel"><span>Pending · being packed</span><i class="ic ic-sm i-down" aria-hidden="true"></i></div></div></div>
+<div class="grid cols3" style="gap:12px"><sc-for list="{{carrier}}" as="c" hint-placeholder-count="3"><label class="sl-field"><span class="sl-lab">{{c.l}}</span><input class="sl-in mono" value="{{c.v}}" aria-label="{{c.l}}"></label></sc-for></div></section>
+<section class="sl-card col g12"><h2 class="sl-ct">3 · Shipping information</h2><div class="grid cols3" style="gap:12px"><label class="sl-field"><span class="sl-lab">Ship date</span><input class="sl-in" value="{{shipDate}}" aria-label="Ship date"></label><label class="sl-field"><span class="sl-lab">Shipment pickup date</span><input class="sl-in" value="Nov 6, 2026" aria-label="Pickup date"></label><label class="sl-field"><span class="sl-lab">Estimated delivery date</span><input class="sl-in" value="{{eta}}" aria-label="Estimated delivery"></label></div>
+<div class="grid cols2" style="gap:12px"><div class="sl-field"><span class="sl-lab">Payment method</span><div class="sl-seg boxed"><sc-for list="{{pays}}" as="p" hint-placeholder-count="3"><button class="{{p.cls}}" onClick="{{p.pick}}">{{p.label}}</button></sc-for></div></div><div class="sl-field"><span class="sl-lab">Assign driver</span><div class="sl-sel"><span class="row g8"><span class="me-pic p-kb" style="width:22px;height:22px"></span>Kwesi Bonsu · van to the port</span><i class="ic ic-sm i-down" aria-hidden="true"></i></div></div></div>
+<label class="sl-field"><span class="sl-lab">Attach files</span><span class="row g8 wrap"><span class="sl-btn ghost sm"><i class="ic ic-sm i-upload" aria-hidden="true"></i>Upload files</span><span class="sl-badge">{{doc}}</span></span></label></section>
+<section class="sl-card col g12"><div class="sl-ch" style="margin:0"><div><h2 class="sl-ct">4 · Find shipments</h2><span class="mut sm">Packages at the Newark warehouse not in any consolidation</span></div><div class="sl-search" style="min-width:240px"><i class="ic ic-sm i-search" aria-hidden="true"></i><input aria-label="Find shipments" placeholder="Name, tracking or locker" value="{{q}}" onInput="{{onQ}}"></div></div>
+<div class="row between sm"><button class="sl-btn ghost sm" onClick="{{all}}">{{allLabel}}</button><span class="mut">{{selNote}}</span></div>
+<sc-for list="{{avail}}" as="a" hint-placeholder-count="10"><button class="cd-av {{a.cls}}" onClick="{{a.pick}}"><span class="sl-chk {{a.chk}}" aria-hidden="true"></span><span class="col" style="min-width:0"><b class="fw5">{{a.name}}</b><span class="mut" style="font-size:11.5px">{{a.lock}} · {{a.what}}</span></span><span class="mono" style="font-size:12px">{{a.id}}</span><span class="mono mut" style="font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{a.post}}</span><span class="mono" style="text-align:right">{{a.w}}</span></button></sc-for></section>
+</div>
+<aside class="b col g16 nc-sum"><section class="sl-card col g10"><div class="row g10"><span class="sl-tile"><i class="ic {{mIcon}}" aria-hidden="true"></i></span><span class="col grow"><b class="fw5 mono">{{ident}}</b><span class="mut sm">{{mLabel}} · Newark → {{dest}}</span></span></div><div class="cd-bar"><i class="{{capCls}}" style="{{capW}}"></i></div><div class="row between sm"><span>{{capTxt}}</span><span class="mono">{{capPct}}</span></div>
+<div class="sl-kv"><div><span>Packages</span><span class="mono">{{n}}</span></div><div><span>Customers</span><span class="mono">{{custN}}</span></div><div><span>Weight</span><span class="mono">{{wt}}</span></div><div><span>Weight vol.</span><span class="mono">{{wv}}</span></div></div></section>
+<section class="sl-card col g8"><h2 class="sl-ct">Price list calculation</h2><div class="sl-kv"><div><span>Price per lb</span><span class="mono">{{rate}}</span></div><div><span>Subtotal</span><span class="mono">{{sub}}</span></div><div><span>Discount</span><span class="row g6"><input class="sl-in mono" style="width:56px;height:30px" value="{{disc}}" onInput="{{setDisc}}" aria-label="Discount percent">%</span></div><div><span>Value assured</span><span class="mono">{{assured}}</span></div><div><span>Shipping insurance 2%</span><span class="mono">{{ins}}</span></div><div><span>Customs duties</span><span class="mono">{{duty}}</span></div><div><span>Tax</span><span class="mono">{{tax}}</span></div><div><span>Reissue</span><span class="mono">$0.00</span></div><div><span class="fw5">TOTAL</span><span class="mono fw5">{{tot}}</span></div></div>
+<button class="sl-btn block" style="height:46px;opacity:{{op}}" onClick="{{save}}"><i class="ic ic-sm i-check" aria-hidden="true"></i>Save consolidated shipments</button></section></aside></div>
+</div></main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1800}}'>
+const PK = [['Kwame Mensah', 'SL-100482', 'USPS 9400 1118 9922 3344 51', 'Laptop, chargers', 1, 4.2, 'Paid', 'SL-2041'], ['Ama Boateng', 'SL-100471', 'UPS 1Z 999 AA1 0123 4567 84', 'Clothing', 2, 9.8, 'Paid', 'SL-1187'], ['Yaw Darko', 'SL-100455', 'Amazon TBA 3021 4455 9001', 'Shoes', 1, 3.1, 'Unpaid', 'SL-0988'], ['Efua Owusu', 'SL-100431', 'FedEx 7712 4410 9921', 'Phone, case', 1, 1.4, 'Paid', 'SL-3318'], ['Abena Frimpong', 'SL-100398', 'USPS 9205 5000 1234 5678 90', 'Food items', 3, 22.0, 'Paid', 'SL-3270'], ['Nana Adjei', 'SL-100392', 'DHL 4471 2290 11', 'Car parts', 2, 18.6, 'Unpaid', 'SL-3262'], ['Esi Quaye', 'SL-100388', 'Amazon TBA 3021 4401 7720', 'Cosmetics', 1, 2.2, 'Paid', 'SL-3251'], ['Kojo Appiah', 'SL-100380', 'UPS 1Z 999 AA1 0198 2211 07', 'TV 43 inch', 1, 31.0, 'Paid', 'SL-3244']];
+const AV = [['Mavis Owusu', 'SL-100501', 'USPS 9400 1118 2299 0012 33', 'Books', 1, 6.4, 'SL-3290'], ['Samuel Ofori', 'SL-100503', 'Amazon TBA 3021 5512 0091', 'Blender', 1, 8.1, 'SL-3301'], ['Akosua Tetteh', 'SL-100506', 'UPS 1Z 999 AA1 0222 8890 12', 'Baby clothes', 2, 5.5, 'SL-3311'], ['Kofi Asante', 'SL-100509', 'FedEx 7712 4499 1100', 'Printer', 1, 14.2, 'SL-3320'], ['Adjoa Mensah', 'SL-100512', 'DHL 4471 2311 07', 'Hair products', 1, 3.9, 'SL-3325']];
+class Component extends DCLogic {
+constructor(p) { super(p); this.state = { mode: 'air', sel: { 'SL-100482': true, 'SL-100471': true, 'SL-100431': true }, q: '', pay: 'collect', disc: '5', saved: false, flash: '' }; }
+renderVals() {
+const A = 'consol';
+const N = 'Operations|dash~Overview~grid~~~Main;panels~Control Panels~gauge~~~ControlPanels;air~Air Shipments~plane~128~~AirShipments;sea~Sea Packages~ship~64~~SeaPackages;prealert~Pre-Alerts~inbox~9~~PreAlerts;pickup~Pickups~truck~12~/ 20~Pickups;dtrack~Delivery Tracking~route~5~~DeliveryTracking;shiptrack~Shipment Tracking~track~~~ShipmentTracking;consol~Consolidations~layers~7~~Consolidations;warehouse~Warehouse~warehouse~~~Warehouse;handout~Hand Out Packages~box~5~~HandOut;locker~Locker Search~lock~~~LockerSearch#Hubs|execdash~Management Dashboard~chart~~~ExecDashboard;billhub~Billing & Finance~dollar~~~BillingHub;lastmile~Last-Mile Delivery~truck~~~LastMile;aicenter~AI Centre~ai~~~AiCenter;commshub~Messages & Automation~message~~~CommsHub;supporthub~Support & CRM~ticket~~~SupportHub;loyalty~Loyalty & Referrals~star~~~LoyaltyRewards;security~Security & Reliability~shield~~~SecurityCenter#Freight|frhub~Freight Hub~plane~~~FreightHub;frsched~Departures & Arrivals~calendar~5~~FreightSchedule;frwb~Waybills & Manifests~file~~~Waybills;frex~Cargo Exceptions~alert~6~~CargoExceptions;frins~Insurance & Claims~shield~4~~InsuranceClaims;frpart~Freight Partners~users~~~FreightPartners#People|cust~Customers~users~1,284~~Customers;recip~Recipients~pin~~~Recipients;drivers~Drivers~wheel~8~/ 14~Drivers;drvapp~Rider App~phone~~~DriverApp;staff~Staff & Roles~shield~~~StaffRoles#Finance|pay~Payments~card~~~Payments;ar~Accounts Receivable~receipt~~~AccountsReceivable;fin~Financial Overview~dollar~$48,200~~FinancialOverview#Insights|reports~Reports~chart~~~Reports;activity~Activity Logs~clock~~~ActivityLogs;messages~Message Logs~archive~~~MessageLogs#Customer Service|tickets~Support Inbox~ticket~1,482~~CsInbox;csrules~Ticket Rules~filter~~~CsRules;playbook~Playbook~book~~~CsPlaybook;csrep~Support Reports~star~~~CsReports;cschan~Channels & Teams~message~~~CsChannels;csai~AI Assistant~ai~~~StaffAI;cssupai~AI for Customers~spark~~~CsAI#Developer|devov~Dev Overview~terminal~~~DevOverview;devsvc~Services~server~12~~DevServices;devlogs~Logs~activity~~~DevLogs;devmet~Metrics~cpu~~~DevMetrics;devinfra~Infrastructure~cloud~~~DevInfrastructure;devdep~Deployments~rocket~~~DevDeployments;devalert~Alerts~alert~3~~DevAlerts;devissues~Issues & Change Log~bug~8~~DevIssues;devint~Integrations~puzzle~~~DevIntegrations#Settings|general~General~cog~~~SettingsHub;apis~API Connections~link~16~~ApiConnections;apitraffic~Live API Traffic~activity~~~ApiTraffic;tariffs~Shipping Tariffs~tag~~~Tariffs;notifc~Notifications~bell~3~~NotificationCenter;ebuild~Email Builder~mail~~~EmailBuilder;msgtpl~SMS & WhatsApp~message~~~MessageTemplates;bcast~Push Notifications~send~~~Broadcast;costs~Operating Costs~dollar~~~CostSettings;addr~Shipping Addresses~pin~~~ShippingAddresses;rfees~Rider Fees~truck~~~RiderSettings;loginpg~Login Page~image~~~LoginSettings;devmod~Modules~sliders~~~ModuleController;perm~Permissions~key~~~StaffPermissions;lblstudio~Label Printing~print~~~LabelStudio;auto~Automations~bolt~~~Automations';
+const nav = N.split('#').map(g => { const p = g.split('|'); return { label: p[0], items: p[1].split(';').map(i => { const f = i.split('~'); return { href: f[5] + '.dc.html', label: f[1], icon: 'i-' + f[2], c1: f[3], c2: f[4], cls: f[0] === A ? 'is-active' : '', ok: f[0] === 'fin' ? 'ok' : '' }; }) }; });
+  const s = this.state, AIR = s.mode === 'air';
+  const ALL = PK.map(x => [x[0], x[1], x[2], x[3], x[4], x[5], x[7]]).concat(AV);
+  const pick = ALL.filter(a => s.sel[a[1]]), W = pick.reduce((x, a) => x + a[5], 0), WV = pick.reduce((x, a) => x + (AIR ? a[5] * 0.62 : a[5] * 0.42 + 1.1), 0);
+  const rate = AIR ? 6 : 3.2, sub = W * rate, d = (parseFloat(s.disc) || 0) / 100, ass = sub * 3, ins = sub * .02, duty = sub * .08, tax = sub * (1 - d) * .045, tot = sub * (1 - d) + ins + duty + tax, $ = (x) => '$' + x.toFixed(2);
+  const cap = AIR ? 1588 : 2000, used = AIR ? W * .4536 : WV, pct = Math.min(100, Math.round(used / cap * 100));
+  const av = ALL.filter(a => (a[0] + a[1] + a[2] + a[6]).toLowerCase().includes(s.q.toLowerCase()));
+  const ident = (AIR ? 'AIR-' : 'SLC-') + (AIR ? '1188' : '4472');
+  return { nav,
+    modes: [['air', 'Air', 'i-plane', '5–7 days · priced per lb · ULD limit 1,588 kg'], ['sea', 'Sea', 'i-ship', '3–6 weeks · priced per ft³ · 40 ft container 2,000 ft³']].map(m => ({ label: m[1], icon: m[2], d: m[3], cls: s.mode === m[0] ? 'on' : '', pick: () => this.setState({ mode: m[0] }) })),
+    prefix: AIR ? 'AIR' : 'SLC', num: AIR ? '1188' : '4472', ident, mIcon: AIR ? 'i-plane' : 'i-ship', mLabel: AIR ? 'Air consolidation' : 'Sea consolidation', dest: AIR ? 'Accra (ACC)' : 'Tema',
+    carrier: (AIR ? [['Airline and flight', 'Kenya Airways · KQ 8102'], ['Master air waybill', '706-4412 9902'], ['ULD number', 'AKE 12399 KQ']] : [['Shipping line and vessel', 'Maersk · Seletar 451E'], ['Container number', 'MSKU 501882-1 · 40 ft'], ['Bill of lading', 'MAEU 2290 4471']]).map(c => ({ l: c[0], v: c[1] })),
+    shipDate: AIR ? 'Fri Nov 7, 2026' : 'Nov 20, 2026', eta: AIR ? 'Sun Nov 9, 2026' : 'Dec 28, 2026',
+    pays: [['collect', 'Customer pays at pickup'], ['prepaid', 'Prepaid'], ['account', 'On account']].map(p => ({ label: p[1], cls: s.pay === p[0] ? 'on' : '', pick: () => this.setState({ pay: p[0] }) })), doc: AIR ? 'MAWB draft.pdf' : 'Booking confirmation.pdf',
+    q: s.q, onQ: (e) => this.setState({ q: e.target.value }),
+    avail: av.map(a => ({ name: a[0], id: a[1], post: a[2], what: a[3], w: a[5] + ' lb', lock: a[6], chk: s.sel[a[1]] ? 'on' : '', cls: s.sel[a[1]] ? 'on' : '', pick: () => this.setState({ sel: { ...s.sel, [a[1]]: !s.sel[a[1]] } }) })),
+    all: () => { const all = pick.length === ALL.length; const n = {}; if (!all) ALL.forEach(a => n[a[1]] = true); this.setState({ sel: n }); }, allLabel: pick.length === ALL.length ? 'Clear all' : 'Select all ' + ALL.length,
+    selNote: pick.length + ' of ' + ALL.length + ' selected · ' + W.toFixed(1) + ' lb',
+    n: pick.length, custN: new Set(pick.map(a => a[0])).size, wt: W.toFixed(1) + ' lb (' + (W * .4536).toFixed(1) + ' kg)', wv: WV.toFixed(1) + (AIR ? ' kg' : ' ft³'),
+    capW: 'width:' + pct + '%', capCls: pct > 90 ? 'hi' : '', capTxt: AIR ? (W * .4536).toFixed(0) + ' / 1,588 kg in the ULD' : WV.toFixed(0) + ' / 2,000 ft³ in the container', capPct: pct + '%',
+    rate: '$' + rate.toFixed(2) + (AIR ? ' / lb' : ' / lb eq.'), sub: $(sub), disc: s.disc, setDisc: (e) => this.setState({ disc: e.target.value }), assured: $(ass), ins: $(ins), duty: $(duty), tax: $(tax), tot: $(tot),
+    op: pick.length ? '1' : '.5', save: () => pick.length && this.setState({ saved: true, flash: ident + ' created with ' + pick.length + ' packages. Customers get a WhatsApp and the packing list is ready.' }), saveLabel: s.saved ? 'Saved' : 'Save consolidation',
+    flash: s.flash, openHref: AIR ? 'ConsolidationAir.dc.html' : 'ConsolidationDetail.dc.html' };
+}
+}
+</script>
+</body>
+</html>

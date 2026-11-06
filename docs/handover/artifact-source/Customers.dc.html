@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Swift Lane Customers</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./swiftlane.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}
+.cx-k{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:var(--card);color:inherit}
+.cx-k b{font:600 26px/1.15 var(--font);letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--ink)}.cx-k small{color:var(--muted);font-size:12.5px;font-family:var(--font)}.cx-k small:first-child{font-size:13px;font-weight:500;color:var(--ink-2)}
+.cx-k b.va{animation:cxA .9s}.cx-k b.vb{animation:cxB .9s}@keyframes cxA{from{color:var(--green-ink)}to{color:var(--ink)}}@keyframes cxB{from{color:var(--green-ink)}to{color:var(--ink)}}
+.cx-ch{position:relative;height:190px;display:flex;align-items:flex-end;gap:10px;padding-top:10px}
+.cx-col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px;height:100%}
+.cx-col i{display:block;width:100%;border-radius:6px 6px 0 0;background:#D6D2CA;transform-origin:bottom;animation:cxg 1s cubic-bezier(.2,.8,.2,1) both;transition:height .8s ease}
+.cx-col.now i{background:#8E8A82}.cx-col b{font:500 11.5px var(--font);color:var(--muted)}.cx-col.now b{color:var(--ink)}
+@keyframes cxg{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+.cx-line{position:absolute;inset:10px 0 22px 0;pointer-events:none}
+.cx-dot{animation:cxp 1.6s infinite}@keyframes cxp{0%{r:4}50%{r:8;opacity:.35}100%{r:4}}
+.live{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:999px;background:var(--green-bg);color:var(--green-ink);font-size:12px;font-weight:500}.ld{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;animation:cxp2 1.6s infinite}@keyframes cxp2{0%{box-shadow:0 0 0 0 rgba(14,173,120,.5)}100%{box-shadow:0 0 0 8px rgba(14,173,120,0)}}
+.cx-feed{display:flex;flex-direction:column}.cx-fi{display:grid;grid-template-columns:32px 1fr auto;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line);font-size:13px}.cx-fi:first-child{border-top:0}.cx-fi.ev-a{animation:cxi .7s}.cx-fi.ev-b{animation:cxj .7s}@keyframes cxi{from{opacity:0;transform:translateY(-8px);background:var(--green-bg)}to{opacity:1;transform:none}}@keyframes cxj{from{opacity:0;transform:translateY(-8px);background:var(--green-bg)}to{opacity:1;transform:none}}
+.cx-bar{display:grid;grid-template-columns:120px 1fr 52px;gap:10px;align-items:center;font-size:13px}
+.cx-bar i{display:block;height:10px;border-radius:99px;background:#A9A59C}
+.cx-st{display:flex;height:12px;border-radius:99px;overflow:hidden;gap:2px}.cx-st i{display:block}
+.cb-dlg{display:flex;flex-direction:column;gap:12px;margin:0 16px 14px;padding:16px;border:1px solid var(--line-2);border-radius:16px;background:var(--field)}
+.cb-r{height:34px;padding:0 12px;border-radius:999px;border:1px solid var(--line-2);background:var(--card);font:13px var(--font);color:var(--ink);cursor:pointer}
+.cb-r.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.cb-danger{background:var(--red)!important;border-color:var(--red)!important;color:#fff!important}
+.cb-b{color:var(--red-ink)}
+tr.cb-blocked td{opacity:.62}tr.cb-blocked td:nth-last-child(-n+2){opacity:1}
+.cb-ok{display:flex;align-items:center;gap:8px;margin:0 16px 12px;padding:10px 14px;border-radius:12px;background:var(--green-bg);color:var(--green-ink);font-size:13.5px}
+.cx-eq{align-items:stretch!important}
+.cx-eq>*{align-self:stretch;height:auto}
+.cx-sep{height:1px;background:var(--line);margin:4px 0}
+.cx-st2{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink);padding:4px 0}
+.cx-d{width:9px;height:9px;border-radius:50%;flex:none}
+.cx-bar{display:grid;grid-template-columns:minmax(0,130px) 1fr 44px!important;gap:10px;align-items:center;font-size:13px;min-height:24px}
+.cx-bar>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cx-bar i{min-width:6px}
+</style>
+</helmet>
+<div class="sl-app">
+  <input type="checkbox" id="navtg" class="nav-tg" aria-hidden="true" tabindex="-1">
+  <header class="sl-top">
+    <label class="sl-ib nav-open" for="navtg" aria-label="Open or close the menu" role="button" tabindex="0"><i class="ic i-sidebar" aria-hidden="true"></i></label>
+    <a class="sl-switch" href="Main.dc.html"><small>SL</small> Swift Lane · Accra Hub <i class="ic ic-sm i-down" aria-hidden="true"></i></a>
+    <a class="fx-chip" href="SettingsHub.dc.html" title="Exchange rate · set in Settings › General"><i class="ic ic-sm i-dollar" aria-hidden="true"></i><span class="mono">USD 1 = GHS 12.40</span><span class="fx-d">▲ 0.4%</span></a>
+    <span class="grow"></span>
+    <details class="aitop"><summary aria-label="Help with Swift Lane AI"><span class="o"><i class="ic i-ai" aria-hidden="true"></i></span>Help</summary><div class="pop" role="menu">
+<div class="me"><span class="sl-av sm dark">HC</span><div class="grow"><div class="fw5 sm">Henry Cobblah</div><div class="mut" style="font-size:12px">Operations manager · Accra Hub</div></div><a class="sl-btn sm ghost" href="AiStudio.dc.html">Edit</a></div>
+<a class="ask" href="StaffAI.dc.html"><i class="ic ic-sm i-spark" aria-hidden="true"></i>Ask AI for help on this page<b><i class="ic ic-sm i-send" aria-hidden="true"></i></b></a>
+<div class="hd">Your profile with AI</div>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-wand" aria-hidden="true"></i></span><span>Retouch my photo<small>Light, skin and background</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-refresh" aria-hidden="true"></i></span><span>Reset images<small>Go back to the original photo</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-edit" aria-hidden="true"></i></span><span>Change my name<small>AI fixes spelling and capitals</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-user" aria-hidden="true"></i></span><span>Make my icon<small>Avatar from your photo or initials</small></span></a>
+<div class="hd">Help</div>
+<a class="it" role="menuitem" href="StaffAI.dc.html"><span class="t"><i class="ic ic-sm i-help" aria-hidden="true"></i></span><span>Explain this page</span></a>
+<a class="it" role="menuitem" href="CsInbox.dc.html"><span class="t"><i class="ic ic-sm i-message" aria-hidden="true"></i></span><span>Talk to a person</span></a>
+</div></details>
+    <a class="sl-ib" aria-label="Notifications" href="Notifications.dc.html"><i class="ic i-bell" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Switch theme" href="SettingsHub.dc.html"><i class="ic i-sun" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Documents" href="Documents.dc.html"><i class="ic i-file" aria-hidden="true"></i></a>
+    <a class="sl-btn" href="AddCustomer.dc.html">Add Customer</a>
+    <details class="uptop"><summary aria-label="Your profile and settings, Henry Cobblah"><span class="me-pic hc" style="width:34px;height:34px"><i class="me-on" aria-hidden="true"></i></span><span class="up-nm">Henry</span><i class="ic ic-sm i-down" aria-hidden="true"></i></summary><div class="pop" role="menu">
+<a class="up-me" href="AiStudio.dc.html"><span class="me-pic hc" style="width:48px;height:48px"><i class="me-on" aria-hidden="true"></i></span><span class="col" style="min-width:0"><b>Henry Cobblah</b><small>Operations manager · Accra Hub</small><small class="mono">henry@swiftlane.com</small></span></a>
+<div class="up-st"><span class="row g6 sm"><span class="ld" style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span>Available</span><a class="sm fw5" href="AiStudio.dc.html">Edit profile</a></div>
+<div class="up-h">Short links</div><div class="up-g"><a class="up-l" role="menuitem" href="Main.dc.html"><i class="ic ic-sm i-grid" aria-hidden="true"></i>Overview</a><a class="up-l" role="menuitem" href="RiderDispatch.dc.html"><i class="ic ic-sm i-truck" aria-hidden="true"></i>Dispatch board</a><a class="up-l" role="menuitem" href="SendPrices.dc.html"><i class="ic ic-sm i-send" aria-hidden="true"></i>Send prices</a><a class="up-l" role="menuitem" href="Reports.dc.html"><i class="ic ic-sm i-chart" aria-hidden="true"></i>Reports</a><a class="up-l" role="menuitem" href="Documents.dc.html"><i class="ic ic-sm i-file" aria-hidden="true"></i>Documents</a><a class="up-l" role="menuitem" href="ActivityLogs.dc.html"><i class="ic ic-sm i-clock" aria-hidden="true"></i>My activity</a></div>
+<div class="up-h">Settings</div><a class="up-l" role="menuitem" href="AiStudio.dc.html"><i class="ic ic-sm i-ai" aria-hidden="true"></i>Profile and photo</a><a class="up-l" role="menuitem" href="SettingsHub.dc.html"><i class="ic ic-sm i-cog" aria-hidden="true"></i>Settings</a><a class="up-l" role="menuitem" href="ApiConnections.dc.html"><i class="ic ic-sm i-link" aria-hidden="true"></i>API connections</a><a class="up-l" role="menuitem" href="StaffPermissions.dc.html"><i class="ic ic-sm i-shield" aria-hidden="true"></i>Permissions</a>
+<div class="up-row"><span class="sm mut">Theme</span><span class="sl-seg boxed" style="height:30px"><a class="on" href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Light</a><a href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Dark</a></span></div>
+<a class="up-l" role="menuitem" href="CsInbox.dc.html"><i class="ic ic-sm i-help" aria-hidden="true"></i>Help and support</a>
+<a class="up-l out" role="menuitem" href="Login.dc.html"><i class="ic ic-sm i-logout" aria-hidden="true"></i>Sign out</a>
+</div></details>
+  </header>
+  <div class="sl-body">
+    <label class="nav-bd" for="navtg" aria-hidden="true"></label>
+    <div class="sl-rail">
+      <a class="is-on" href="NewShipment.dc.html" aria-label="New shipment"><i class="ic i-newdoc" aria-hidden="true"></i></a>
+      <a href="StaffAI.dc.html" aria-label="AI assistant" title="AI assistant"><i class="ic i-ai" aria-hidden="true"></i></a>
+      <a href="PublicTracking.dc.html" aria-label="Tracking" title="Tracking"><i class="ic i-track" aria-hidden="true"></i></a>
+      <a href="LockerSearch.dc.html" aria-label="Search tracking number" title="Search tracking number"><i class="ic i-tsearch" aria-hidden="true"></i></a>
+      <a href="Consolidations.dc.html" aria-label="Consolidation" title="Consolidation"><i class="ic i-layers" aria-hidden="true"></i></a>
+      <a href="Warehouse.dc.html" aria-label="Warehouse" title="Warehouse"><i class="ic i-warehouse" aria-hidden="true"></i></a>
+      <a class="me-pic hc" href="AiStudio.dc.html" aria-label="Your profile, Henry Cobblah" style="width:34px;height:34px;margin-top:auto"></a>
+    </div>
+    <aside class="sl-side" aria-label="Main navigation">
+      <div class="nav-x"><span class="fw5">Menu</span><label class="sl-ib" for="navtg" aria-label="Close the menu" role="button" tabindex="0"><i class="ic i-x" aria-hidden="true"></i></label></div>
+      <sc-for list="{{nav}}" as="g" hint-placeholder-count="5">
+        <div class="sl-gl">{{g.label}}</div>
+        <nav class="sl-nav">
+          <sc-for list="{{g.items}}" as="it" hint-placeholder-count="4">
+            <a href="{{it.href}}" class="{{it.cls}}"><i class="ic {{it.icon}}" aria-hidden="true"></i><span>{{it.label}}</span><span class="cnt {{it.ok}}">{{it.c1}} <em>{{it.c2}}</em></span></a>
+          </sc-for>
+        </nav>
+      </sc-for>
+      <div class="sl-gl">Other</div>
+      <nav class="sl-nav">
+        <a href="SettingsHub.dc.html"><i class="ic i-globe" aria-hidden="true"></i><span>Language</span></a>
+        <a href="CsInbox.dc.html"><i class="ic i-help" aria-hidden="true"></i><span>Get help</span></a>
+        <a href="Login.dc.html" class="danger"><i class="ic i-logout" aria-hidden="true"></i><span>Sign out</span></a>
+      </nav>
+      <a class="me-card" href="AiStudio.dc.html" aria-label="Signed in as Henry Cobblah, Operations manager. Open your profile">
+        <span class="me-pic hc" role="img" aria-label="Photo of Henry Cobblah"><i class="me-on" aria-hidden="true"></i></span>
+        <span class="grow col" style="min-width:0"><b>Henry Cobblah</b><small>Operations manager · Accra Hub</small></span>
+        <i class="ic ic-sm i-more mut" aria-hidden="true"></i>
+      </a>
+      <a class="me-sub" href="CsInbox.dc.html"><i class="ic ic-sm i-ticket" aria-hidden="true"></i>Customer service<span class="sl-tag">12 open</span></a>
+    </aside>
+
+    <main class="sl-main">
+      <div class="sl-wrap">
+        <div class="sl-head">
+          <div><h1 class="sl-title">Customers</h1><p class="sl-lede">1,284 accounts · 38 joined this month</p></div>
+          <div class="row g8 wrap"><a class="sl-btn ghost" href="ImportData.dc.html"><i class="ic ic-sm i-upload" aria-hidden="true"></i>Import</a><a class="sl-btn ghost" href="Documents.dc.html"><i class="ic ic-sm i-download" aria-hidden="true"></i>Export</a><a class="sl-btn" href="AddCustomer.dc.html"><i class="ic ic-sm i-plus" aria-hidden="true"></i>Add Customer</a></div>
+        </div>
+        <div class="grid cols4" style="grid-template-columns:repeat(auto-fit,minmax(min(170px,100%),1fr))"><a class="cx-k" href="Customers.dc.html"><small>Total customers</small><b class="{{flash}}">{{total}}</b><small>▲ 38 this month</small></a><a class="cx-k" href="Customers.dc.html"><small>Active (90 days)</small><b class="{{flash}}">{{active}}</b><small>86% of all</small></a><a class="cx-k" href="Customers.dc.html"><small>New this month</small><b class="{{flash}}">{{newM}}</b><small>▲ 12% vs Oct</small></a><a class="cx-k" href="Customers.dc.html"><small>Verified phone</small><b>968</b><small>75% · WhatsApp OTP</small></a><a class="cx-k" href="Customers.dc.html"><small>ID verified</small><b>812</b><small>63% · Ghana card / passport</small></a><a class="cx-k" href="Reports.dc.html"><small>Repeat customers</small><b>71%</b><small>shipped 2+ times</small></a><a class="cx-k" href="Reports.dc.html"><small>Avg parcels each</small><b>6.4</b><small>per customer this year</small></a><a class="cx-k" href="AccountsReceivable.dc.html"><small>With balance due</small><b>47</b><small>$6,840 owed</small></a><a class="cx-k" href="ComposeMessage.dc.html"><small>Inactive 90 days</small><b>135</b><small>win-back list ready</small></a><a class="cx-k" href="CsReports.dc.html"><small>Satisfaction</small><b>4.7 ★</b><small>from 412 ratings</small></a></div>
+<div class="split cx-eq"><section class="a sl-card col g10"><div class="sl-ch" style="margin:0"><div><h2 class="sl-ct row g8">Customer growth <span class="live"><span class="ld"></span>Live</span></h2><div class="mut sm">New sign-ups per month, and how many customers are active</div></div><span class="row g16 sm mut"><span class="row g6"><i style="width:10px;height:10px;border-radius:3px;background:#D6D2CA;display:inline-block"></i>New per month</span><span class="row g6"><i style="width:14px;height:2px;background:#E08A3C;display:inline-block"></i>Active customers</span></span></div>
+<div class="cx-ch" role="img" aria-label="New customers per month and active customers, last 12 months"><sc-for list="{{months}}" as="m" hint-placeholder-count="12"><div class="cx-col {{m.now}}" title="{{m.tip}}"><span class="mono" style="font-size:11px;color:var(--muted)">{{m.v}}</span><i style="{{m.h}}"></i><b>{{m.l}}</b></div></sc-for>
+<svg class="cx-line" viewBox="0 0 1200 160" preserveAspectRatio="none" aria-hidden="true"><polyline points="{{line}}" fill="none" stroke="#E08A3C" stroke-width="2.4" vector-effect="non-scaling-stroke"></polyline><circle class="cx-dot" cx="{{dotX}}" cy="{{dotY}}" r="5" fill="#E08A3C"></circle></svg></div>
+<div class="row between wrap g8"><span class="sm"><b class="fw5">{{activeNow}}</b> <span class="mut">active right now</span> · <b class="fw5">{{today}}</b> <span class="mut">signed up today</span></span><span class="mut sm">Updated {{clock}}</span></div>
+<div class="cx-feed"><sc-for list="{{feed}}" as="f" hint-placeholder-count="4"><div class="cx-fi {{f.anim}}"><span class="sl-av sm">{{f.ini}}</span><span class="col"><span><b class="fw5">{{f.name}}</b> {{f.what}}</span><span class="mut" style="font-size:12px">{{f.city}} · {{f.src}}</span></span><span class="mono mut" style="font-size:12px">{{f.at}}</span></div></sc-for></div></section>
+<aside class="b sl-card col g10"><h2 class="sl-ct">Ship by</h2><div class="cx-st"><i style="flex:68;background:var(--ink)"></i><i style="flex:22;background:#A9A59C"></i><i style="flex:10;background:#D6D2CA"></i></div><div class="col g6 sm"><span class="row between"><span class="row g6"><i style="width:10px;height:10px;border-radius:3px;background:var(--ink);display:inline-block"></i>Air only</span><b class="mono fw5">68%</b></span><span class="row between"><span class="row g6"><i style="width:10px;height:10px;border-radius:3px;background:#A9A59C;display:inline-block"></i>Air and sea</span><b class="mono fw5">22%</b></span><span class="row between"><span class="row g6"><i style="width:10px;height:10px;border-radius:3px;background:#D6D2CA;display:inline-block"></i>Sea only</span><b class="mono fw5">10%</b></span></div>
+<div class="cx-sep"></div><h2 class="sl-ct">Customer status</h2><div class="col g8"><a class="cx-st2" href="Customers.dc.html"><span class="cx-d" style="background:var(--green)"></span><span class="grow">Active (90 days)</span><b class="mono fw5">1,102</b></a><a class="cx-st2" href="LoyaltyRewards.dc.html"><span class="cx-d" style="background:var(--yellow)"></span><span class="grow">Gone quiet</span><b class="mono fw5">135</b></a><a class="cx-st2" href="AddCustomer.dc.html"><span class="cx-d" style="background:#A9A59C"></span><span class="grow">New this month</span><b class="mono fw5">38</b></a><a class="cx-st2" href="Customers.dc.html"><span class="cx-d" style="background:var(--red)"></span><span class="grow">Blocked</span><b class="mono fw5">2</b></a></div><div class="cx-sep"></div><div class="sl-kv"><div><span>Average customer for</span><span>1 yr 8 mo</span></div><div><span>Ships every</span><span>23 days</span></div></div><a class="sl-btn ghost sm" href="LoyaltyRewards.dc.html" style="margin-top:auto">Win back quiet customers</a></aside></div>
+<div class="grid cols3 cx-eq"><section class="sl-card col g10"><h2 class="sl-ct">Where customers live</h2><div class="cx-bar"><span>Accra</span><i style="width:100%"></i><b class="mono fw5" style="text-align:right">612</b></div><div class="cx-bar"><span>Kumasi</span><i style="width:35%"></i><b class="mono fw5" style="text-align:right">214</b></div><div class="cx-bar"><span>Takoradi</span><i style="width:20%"></i><b class="mono fw5" style="text-align:right">121</b></div><div class="cx-bar"><span>Tema</span><i style="width:16%"></i><b class="mono fw5" style="text-align:right">98</b></div><div class="cx-bar"><span>Cape Coast</span><i style="width:12%"></i><b class="mono fw5" style="text-align:right">72</b></div><div class="cx-bar"><span>Others</span><i style="width:27%"></i><b class="mono fw5" style="text-align:right">167</b></div></section><section class="sl-card col g10"><h2 class="sl-ct">How they found us</h2><div class="cx-bar"><span>WhatsApp referral</span><i style="width:100%"></i><b class="mono fw5" style="text-align:right">412</b></div><div class="cx-bar"><span>Google search</span><i style="width:73%"></i><b class="mono fw5" style="text-align:right">301</b></div><div class="cx-bar"><span title="Facebook / Instagram">Facebook / IG</span><i style="width:62%"></i><b class="mono fw5" style="text-align:right">254</b></div><div class="cx-bar"><span>Walk-in at hub</span><i style="width:43%"></i><b class="mono fw5" style="text-align:right">178</b></div><div class="cx-bar"><span>Partner stores</span><i style="width:34%"></i><b class="mono fw5" style="text-align:right">139</b></div></section><section class="sl-card col"><div class="sl-ch" style="margin:0 0 4px"><h2 class="sl-ct">Top customers this year</h2><a class="sm fw5" href="Reports.dc.html">Report →</a></div><a class="row g10" href="CustomerProfile.dc.html" style="padding:8px 0;border-top:1px solid var(--line);color:inherit"><span class="sl-av sm">KM</span><span class="col grow"><span class="fw5 sm">Kwame Mensah</span><span class="mut" style="font-size:12px">88 parcels</span></span><b class="mono fw5 sm">$4,210</b></a><a class="row g10" href="CustomerProfile.dc.html" style="padding:8px 0;border-top:1px solid var(--line);color:inherit"><span class="sl-av sm">EO</span><span class="col grow"><span class="fw5 sm">Efua Owusu</span><span class="mut" style="font-size:12px">42 parcels</span></span><b class="mono fw5 sm">$2,880</b></a><a class="row g10" href="CustomerProfile.dc.html" style="padding:8px 0;border-top:1px solid var(--line);color:inherit"><span class="sl-av sm">NA</span><span class="col grow"><span class="fw5 sm">Nana Adjei</span><span class="mut" style="font-size:12px">31 parcels</span></span><b class="mono fw5 sm">$1,940</b></a><a class="row g10" href="CustomerProfile.dc.html" style="padding:8px 0;border-top:1px solid var(--line);color:inherit"><span class="sl-av sm">AF</span><span class="col grow"><span class="fw5 sm">Abena Frimpong</span><span class="mut" style="font-size:12px">23 parcels</span></span><b class="mono fw5 sm">$1,512</b></a><a class="row g10" href="CustomerProfile.dc.html" style="padding:8px 0;border-top:1px solid var(--line);color:inherit"><span class="sl-av sm">AB</span><span class="col grow"><span class="fw5 sm">Ama Boateng</span><span class="mut" style="font-size:12px">17 parcels</span></span><b class="mono fw5 sm">$1,108</b></a></section></div>
+<div class="sl-card flush">
+          <div class="row wrap g12" style="padding: 14px 16px">
+            <div class="sl-search"><i class="ic ic-sm i-search" aria-hidden="true"></i><input aria-label="Search customers" placeholder="Search name, email, phone or ID"></div>
+            <div class="sl-seg boxed"><sc-for list="{{sts}}" as="x" hint-placeholder-count="4"><button class="{{x.cls}}" onClick="{{x.pick}}">{{x.label}}</button></sc-for></div>
+            <div class="sl-sel" style="width: 150px"><span>All cities</span><i class="ic ic-sm i-down" aria-hidden="true"></i></div>
+          </div>
+          <sc-if value="{{blkOpen}}" hint-placeholder-val="{{ false }}"><div class="cb-dlg" role="dialog" aria-label="Block customer"><div class="row g10"><span class="sl-tile" style="background:var(--red-bg);color:var(--red-ink)"><i class="ic i-ban" aria-hidden="true"></i></span><div class="col grow"><b class="fw5">Block {{blkName}}?</b><span class="mut sm">They can't log in, book pickups or receive offers. Parcels already in the system stay on hold until you unblock them.</span></div></div>
+<div class="row wrap g6"><sc-for list="{{reasons}}" as="r" hint-placeholder-count="5"><button class="cb-r {{r.cls}}" onClick="{{r.pick}}">{{r.label}}</button></sc-for></div>
+<div class="grid cols2" style="gap:10px"><div class="row g8 sm"><button class="sl-toggle {{holdCls}}" role="switch" aria-checked="{{holdAria}}" aria-label="Hold parcels" onClick="{{toggleHold}}"></button>Hold their parcels at the warehouse</div><div class="row g8 sm"><button class="sl-toggle {{tellCls}}" role="switch" aria-checked="{{tellAria}}" aria-label="Tell the customer" onClick="{{toggleTell}}"></button>Tell them by e-mail why</div></div>
+<div class="row g8"><button class="sl-btn cb-danger" onClick="{{confirmBlk}}"><i class="ic ic-sm i-ban" aria-hidden="true"></i>Block customer</button><button class="sl-btn ghost" onClick="{{cancelBlk}}">Cancel</button></div></div></sc-if>
+          <sc-if value="{{cbFlash}}" hint-placeholder-val="{{ false }}"><div class="cb-ok" role="status"><i class="ic ic-sm i-check" aria-hidden="true"></i>{{cbFlash}}</div></sc-if>
+          <div class="sl-tw"><table class="sl-table">
+            <thead><tr><th style="width: 40px"><span class="sl-chk"></span></th><th>Customer</th><th>ID</th><th>Phone</th><th>City</th><th class="num">Parcels</th><th class="num">Balance</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+              <sc-for list="{{rows}}" as="r" hint-placeholder-count="9">
+                <tr class="{{r.rowCls}}"><td><span class="sl-chk"></span></td><td><a href="CustomerProfile.dc.html" class="sl-cell"><span class="sl-av sm">{{r.ini}}</span><span><span class="fw5">{{r.name}}</span><span class="sub">{{r.mail}}</span></span></a></td><td class="mono sm">{{r.id}}</td><td>{{r.phone}}</td><td>{{r.city}}</td><td class="num">{{r.n}}</td><td class="num">{{r.bal}}</td><td><span class="col"><span class="sl-pill {{r.cls}}">{{r.st}}</span><span class="mut" style="font-size:11.5px">{{r.why}}</span></span></td><td><span class="row g4"><button class="sl-btn ghost sm {{r.bCls}}" onClick="{{r.blk}}"><i class="ic ic-sm {{r.bIcon}}" aria-hidden="true"></i>{{r.bLabel}}</button><a class="sl-ib sm" href="CustomerProfile.dc.html" aria-label="Open customer"><i class="ic i-more" aria-hidden="true"></i></a></span></td></tr>
+              </sc-for>
+            </tbody>
+          </table></div>
+          <div class="sl-pager"><span>Showing 1–9 of 1,284 customers</span><div class="sl-pg"><a class="on" href="Customers.dc.html">1</a><a href="Customers.dc.html">2</a><a href="Customers.dc.html">3</a><a href="Customers.dc.html">…</a><a href="Customers.dc.html">143</a></div></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2550}}'>
+const NEWC = [['Kwabena Ofori','signed up','Kumasi','WhatsApp referral'],['Adjoa Nyarko','verified her phone','Accra','Google'],['Selorm Agbeko','added a pre-alert','Ho','Instagram'],['Mawuli Dzah','signed up','Tema','Walk-in'],['Akua Serwaa','shipped her first parcel','Accra','Facebook'],['Fiifi Mensah','signed up','Cape Coast','WhatsApp referral'],['Naa Dedei','uploaded her Ghana card','Accra','Partner store']];
+class Component extends DCLogic {
+constructor(p) { super(p); this.state = { t: 0, blk: { 'SL-3244': 'Fake payment receipt' }, sf: 'all', dlg: null, reason: 'Fake payment receipt', hold: true, tell: false, cbf: '' }; if (typeof window !== 'undefined') { this._iv = setInterval(() => this.setState({ t: this.state.t + 1 }), 2000); } }
+componentWillUnmount() { clearInterval(this._iv); }
+renderVals() {
+const A = 'cust';
+const N = 'Operations|dash~Overview~grid~~~Main;panels~Control Panels~gauge~~~ControlPanels;air~Air Shipments~plane~128~~AirShipments;sea~Sea Packages~ship~64~~SeaPackages;prealert~Pre-Alerts~inbox~9~~PreAlerts;pickup~Pickups~truck~12~/ 20~Pickups;dtrack~Delivery Tracking~route~5~~DeliveryTracking;shiptrack~Shipment Tracking~track~~~ShipmentTracking;consol~Consolidations~layers~7~~Consolidations;warehouse~Warehouse~warehouse~~~Warehouse;handout~Hand Out Packages~box~5~~HandOut;locker~Locker Search~lock~~~LockerSearch#Hubs|execdash~Management Dashboard~chart~~~ExecDashboard;billhub~Billing & Finance~dollar~~~BillingHub;lastmile~Last-Mile Delivery~truck~~~LastMile;aicenter~AI Centre~ai~~~AiCenter;commshub~Messages & Automation~message~~~CommsHub;supporthub~Support & CRM~ticket~~~SupportHub;loyalty~Loyalty & Referrals~star~~~LoyaltyRewards;security~Security & Reliability~shield~~~SecurityCenter#Freight|frhub~Freight Hub~plane~~~FreightHub;frsched~Departures & Arrivals~calendar~5~~FreightSchedule;frwb~Waybills & Manifests~file~~~Waybills;frex~Cargo Exceptions~alert~6~~CargoExceptions;frins~Insurance & Claims~shield~4~~InsuranceClaims;frpart~Freight Partners~users~~~FreightPartners#People|cust~Customers~users~1,284~~Customers;recip~Recipients~pin~~~Recipients;drivers~Drivers~wheel~8~/ 14~Drivers;drvapp~Rider App~phone~~~DriverApp;staff~Staff & Roles~shield~~~StaffRoles#Finance|pay~Payments~card~~~Payments;ar~Accounts Receivable~receipt~~~AccountsReceivable;fin~Financial Overview~dollar~$48,200~~FinancialOverview#Insights|reports~Reports~chart~~~Reports;activity~Activity Logs~clock~~~ActivityLogs;messages~Message Logs~archive~~~MessageLogs#Customer Service|tickets~Support Inbox~ticket~1,482~~CsInbox;csrules~Ticket Rules~filter~~~CsRules;playbook~Playbook~book~~~CsPlaybook;csrep~Support Reports~star~~~CsReports;cschan~Channels & Teams~message~~~CsChannels;csai~AI Assistant~ai~~~StaffAI;cssupai~AI for Customers~spark~~~CsAI#Developer|devov~Dev Overview~terminal~~~DevOverview;devsvc~Services~server~12~~DevServices;devlogs~Logs~activity~~~DevLogs;devmet~Metrics~cpu~~~DevMetrics;devinfra~Infrastructure~cloud~~~DevInfrastructure;devdep~Deployments~rocket~~~DevDeployments;devalert~Alerts~alert~3~~DevAlerts;devissues~Issues & Change Log~bug~8~~DevIssues;devint~Integrations~puzzle~~~DevIntegrations#Settings|general~General~cog~~~SettingsHub;apis~API Connections~link~16~~ApiConnections;apitraffic~Live API Traffic~activity~~~ApiTraffic;tariffs~Shipping Tariffs~tag~~~Tariffs;notifc~Notifications~bell~3~~NotificationCenter;ebuild~Email Builder~mail~~~EmailBuilder;msgtpl~SMS & WhatsApp~message~~~MessageTemplates;bcast~Push Notifications~send~~~Broadcast;costs~Operating Costs~dollar~~~CostSettings;addr~Shipping Addresses~pin~~~ShippingAddresses;rfees~Rider Fees~truck~~~RiderSettings;loginpg~Login Page~image~~~LoginSettings;devmod~Modules~sliders~~~ModuleController;perm~Permissions~key~~~StaffPermissions;lblstudio~Label Printing~print~~~LabelStudio;auto~Automations~bolt~~~Automations';
+const nav = N.split('#').map(g => { const p = g.split('|'); return { label: p[0], items: p[1].split(';').map(i => { const f = i.split('~'); return { href: f[5] + '.dc.html', label: f[1], icon: 'i-' + f[2], c1: f[3], c2: f[4], cls: f[0] === A ? 'is-active' : '', ok: f[0] === 'fin' ? 'ok' : '' }; }) }; });
+const raw = [
+ ['Efua Owusu','efua@example.com','SL-3318','+233 20 111 2233','Takoradi',42,'$0.00',1],['Kwame Mensah','kwame@example.com','SL-3301','+1 201 555 0142','Newark, NJ',88,'$0.00',1],
+ ['Ama Boateng','ama.boateng@example.com','SL-3295','+233 24 000 0000','Accra',17,'$51.63',1],['Yaw Darko','yaw.darko@example.com','SL-3288','+233 27 450 9981','Accra',9,'$0.00',1],
+ ['Abena Frimpong','abena.f@example.com','SL-3270','+233 55 302 7745','Tema',23,'$124.00',2],['Nana Adjei','nana.adjei@example.com','SL-3262','+233 50 880 1290','Cape Coast',31,'$0.00',1],
+ ['Esi Quaye','esi.quaye@example.com','SL-3251','+233 24 732 5510','Accra',12,'$0.00',1],['Kojo Appiah','kojo.a@example.com','SL-3244','+233 26 118 6670','Tamale',5,'$0.00',3],['Akosua Tetteh','akosua.t@example.com','SL-3230','+233 20 905 4412','Ho',14,'$38.40',1]
+];
+const ST = { 1: ['Active', 'delivered'], 2: ['Balance due', 'pending'], 3: ['Inactive', ''], 9: ['Blocked', 'overdue'] };
+const RS = ['Fake payment receipt', 'Abusive to staff', 'Unpaid over 90 days', 'Prohibited items', 'Duplicate account'];
+const B = this.state.blk || {}, SF = this.state.sf || 'all';
+const rows = raw.filter(r => SF === 'all' || (SF === 'blocked' ? B[r[2]] : SF === 'due' ? r[7] === 2 && !B[r[2]] : r[7] === 1 && !B[r[2]])).map(r => { const b = B[r[2]], k = b ? 9 : r[7]; return { name: r[0], mail: r[1], ini: r[0].split(' ').map(x => x[0]).join(''), id: r[2], phone: r[3], city: r[4], n: r[5], bal: r[6], st: ST[k][0], cls: ST[k][1], why: b || '', rowCls: b ? 'cb-blocked' : '', bLabel: b ? 'Unblock' : 'Block', bIcon: b ? 'i-check' : 'i-ban', bCls: b ? '' : 'cb-b',
+  blk: () => { if (b) { const n = { ...B }; delete n[r[2]]; this.setState({ blk: n, cbf: r[0] + ' is unblocked and can log in again.' }); } else this.setState({ dlg: { id: r[2], name: r[0] }, reason: RS[0], cbf: '' }); } }; });
+const nBlk = Object.keys(B).length, D = this.state.dlg;
+const t = this.state.t, add = Math.floor(t / 4);
+const MON = ['Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov'], NEW = [22, 25, 24, 28, 31, 29, 33, 30, 36, 34, 34, 38 + add], ACT = [880, 905, 921, 950, 972, 990, 1010, 1030, 1052, 1071, 1088, 1102 + add];
+const mx = 50, lo = 850, hi = 1150;
+const months = MON.map((l, i) => ({ l, v: NEW[i], h: 'height:' + (NEW[i] / mx * 78).toFixed(1) + '%', now: i === 11 ? 'now' : '', tip: NEW[i] + ' new, ' + ACT[i] + ' active' }));
+const pts = ACT.map((v, i) => [((i + 0.5) / 12 * 1200), (160 - (v - lo) / (hi - lo) * 150)]);
+const clk = (b) => new Date(Date.UTC(2026, 10, 5, 22, 35, 0) + (t * 2 - b * 37) * 1000).toISOString().slice(11, 16);
+const feed = Array.from({ length: 4 }, (_, i) => { const n = NEWC[(Math.floor(t / 2) - i + 700) % NEWC.length]; return { name: n[0], ini: n[0].split(' ').map(x => x[0]).join(''), what: n[1], city: n[2], src: n[3], at: clk(i), anim: i === 0 && t % 2 === 0 ? (t % 4 ? 'ev-a' : 'ev-b') : '' }; });
+return { nav, rows, months,
+sts: [['all', 'All'], ['active', 'Active'], ['due', 'Balance due'], ['blocked', 'Blocked ' + nBlk]].map(x => ({ label: x[1], cls: SF === x[0] ? 'on' : '', pick: () => this.setState({ sf: x[0] }) })),
+blkOpen: !!D, blkName: D ? D.name : '', reasons: RS.map(x => ({ label: x, cls: this.state.reason === x ? 'on' : '', pick: () => this.setState({ reason: x }) })),
+holdCls: this.state.hold !== false ? 'on' : '', holdAria: this.state.hold !== false ? 'true' : 'false', toggleHold: () => this.setState({ hold: this.state.hold === false }),
+tellCls: this.state.tell ? 'on' : '', tellAria: this.state.tell ? 'true' : 'false', toggleTell: () => this.setState({ tell: !this.state.tell }),
+confirmBlk: () => this.setState({ blk: { ...B, [D.id]: this.state.reason }, dlg: null, cbf: D.name + ' is blocked: ' + this.state.reason + '. Logged in Activity Logs.' }), cancelBlk: () => this.setState({ dlg: null }), cbFlash: this.state.cbf || '', line: pts.map(p => p[0].toFixed(0) + ',' + p[1].toFixed(1)).join(' '), dotX: pts[11][0].toFixed(0), dotY: pts[11][1].toFixed(1), feed,
+  total: (1284 + add).toLocaleString('en-US'), newM: 38 + add, active: (1102 + add).toLocaleString('en-US'), activeNow: 46 + ((t * 7) % 9), today: 3 + Math.floor(add / 2), clock: clk(0), flash: t % 2 ? 'va' : 'vb' };
+}
+}
+</script>
+</body>
+</html>

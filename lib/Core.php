@@ -21,6 +21,7 @@
 
 
 
+#[\AllowDynamicProperties]
 class Core
 {
 
@@ -204,7 +205,7 @@ class Core
     $this->units = $settings->units;
     $this->c_tariffs = $settings->c_tariffs;
     $this->currency = $settings->currency;
-    $this->exchange_rate = $settings->exchange_rate;
+    $this->exchange_rate = isset($settings->exchange_rate) ? (float) $settings->exchange_rate : 0;
     $this->for_currency = $settings->for_currency;
     $this->for_symbol = $settings->for_symbol;
     $this->for_decimal = $settings->for_decimal;

@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Swift Lane Riders</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./swiftlane.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}
+.rd-k{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
+.rd-k b{font:600 26px var(--font);letter-spacing:-.015em;font-variant-numeric:tabular-nums;line-height:1.15}.rd-k small{color:var(--muted);font-size:12.5px}
+.rd-split{display:flex;height:12px;border-radius:99px;overflow:hidden;gap:2px}.rd-split i{display:block}.rd-split .r{background:#A9A59C}.rd-split .s{background:var(--ink)}
+.rd-code{display:inline-flex;align-items:center;height:26px;padding:0 9px;border-radius:7px;background:var(--active);font:600 13px var(--mono);letter-spacing:.12em}
+.rd-col{display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid var(--line);border-radius:16px;background:var(--card);min-width:0}
+.rd-pk{display:grid;grid-template-columns:1fr auto;gap:4px 10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--field);font-size:13px}
+.rd-chip{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 10px;border-radius:999px;border:1px solid var(--line-2);background:var(--card);font:500 12.5px var(--font);color:var(--ink);cursor:pointer}
+.rd-chip.on{background:var(--ink);color:var(--inverse);border-color:var(--ink)}
+.rd-fee{width:84px;height:32px;border:1px solid var(--line-2);border-radius:8px;background:var(--field);font:500 13px var(--mono);text-align:right;padding:0 8px;color:var(--ink)}
+.rd-tl{display:flex;flex-direction:column}
+.rd-ev{display:grid;grid-template-columns:56px 28px 1fr;gap:10px;padding:9px 0;position:relative;font-size:13.5px}
+.rd-ev:not(:last-child)::after{content:"";position:absolute;left:69px;top:36px;bottom:-6px;width:2px;background:var(--line)}
+.rd-ev .t{font:12px var(--mono);color:var(--muted);padding-top:6px}
+.rd-ev .d{width:28px;height:28px;border-radius:50%;background:var(--active);display:grid;place-items:center;position:relative;z-index:1}
+.rd-ev .d.g{background:var(--green-bg);color:var(--green-ink)}.rd-ev .d.y{background:var(--amber-bg);color:var(--amber-ink)}.rd-ev .d.r{background:var(--red-bg);color:var(--red-ink)}
+.rd-map{position:relative;height:230px;border-radius:16px;overflow:hidden;background:var(--active)}
+@keyframes rdmv{0%{offset-distance:0%}100%{offset-distance:100%}}
+.rd-bars{display:flex;align-items:flex-end;gap:5px;height:120px}.rd-bars i{flex:1;background:#D6D2CA;border-radius:4px 4px 0 0}.rd-bars i.hi{background:#8E8A82}
+</style>
+</helmet>
+<div class="sl-app">
+  <input type="checkbox" id="navtg" class="nav-tg" aria-hidden="true" tabindex="-1">
+  <header class="sl-top">
+    <label class="sl-ib nav-open" for="navtg" aria-label="Open or close the menu" role="button" tabindex="0"><i class="ic i-sidebar" aria-hidden="true"></i></label>
+    <a class="sl-switch" href="Main.dc.html"><small>SL</small> Swift Lane · Accra Hub <i class="ic ic-sm i-down" aria-hidden="true"></i></a>
+    <a class="fx-chip" href="SettingsHub.dc.html" title="Exchange rate · set in Settings › General"><i class="ic ic-sm i-dollar" aria-hidden="true"></i><span class="mono">USD 1 = GHS 12.40</span><span class="fx-d">▲ 0.4%</span></a>
+    <span class="grow"></span>
+    <details class="aitop"><summary aria-label="Help with Swift Lane AI"><span class="o"><i class="ic i-ai" aria-hidden="true"></i></span>Help</summary><div class="pop" role="menu">
+<div class="me"><span class="sl-av sm dark">HC</span><div class="grow"><div class="fw5 sm">Henry Cobblah</div><div class="mut" style="font-size:12px">Operations manager · Accra Hub</div></div><a class="sl-btn sm ghost" href="AiStudio.dc.html">Edit</a></div>
+<a class="ask" href="StaffAI.dc.html"><i class="ic ic-sm i-spark" aria-hidden="true"></i>Ask AI for help on this page<b><i class="ic ic-sm i-send" aria-hidden="true"></i></b></a>
+<div class="hd">Your profile with AI</div>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-wand" aria-hidden="true"></i></span><span>Retouch my photo<small>Light, skin and background</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-refresh" aria-hidden="true"></i></span><span>Reset images<small>Go back to the original photo</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-edit" aria-hidden="true"></i></span><span>Change my name<small>AI fixes spelling and capitals</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-user" aria-hidden="true"></i></span><span>Make my icon<small>Avatar from your photo or initials</small></span></a>
+<div class="hd">Help</div>
+<a class="it" role="menuitem" href="StaffAI.dc.html"><span class="t"><i class="ic ic-sm i-help" aria-hidden="true"></i></span><span>Explain this page</span></a>
+<a class="it" role="menuitem" href="CsInbox.dc.html"><span class="t"><i class="ic ic-sm i-message" aria-hidden="true"></i></span><span>Talk to a person</span></a>
+</div></details>
+    <a class="sl-ib" aria-label="Notifications" href="Notifications.dc.html"><i class="ic i-bell" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Switch theme" href="SettingsHub.dc.html"><i class="ic i-sun" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Documents" href="Documents.dc.html"><i class="ic i-file" aria-hidden="true"></i></a>
+    <a class="sl-btn" href="RiderDispatch.dc.html">Dispatch board</a>
+    <details class="uptop"><summary aria-label="Your profile and settings, Henry Cobblah"><span class="me-pic hc" style="width:34px;height:34px"><i class="me-on" aria-hidden="true"></i></span><span class="up-nm">Henry</span><i class="ic ic-sm i-down" aria-hidden="true"></i></summary><div class="pop" role="menu">
+<a class="up-me" href="AiStudio.dc.html"><span class="me-pic hc" style="width:48px;height:48px"><i class="me-on" aria-hidden="true"></i></span><span class="col" style="min-width:0"><b>Henry Cobblah</b><small>Operations manager · Accra Hub</small><small class="mono">henry@swiftlane.com</small></span></a>
+<div class="up-st"><span class="row g6 sm"><span class="ld" style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span>Available</span><a class="sm fw5" href="AiStudio.dc.html">Edit profile</a></div>
+<div class="up-h">Short links</div><div class="up-g"><a class="up-l" role="menuitem" href="Main.dc.html"><i class="ic ic-sm i-grid" aria-hidden="true"></i>Overview</a><a class="up-l" role="menuitem" href="RiderDispatch.dc.html"><i class="ic ic-sm i-truck" aria-hidden="true"></i>Dispatch board</a><a class="up-l" role="menuitem" href="SendPrices.dc.html"><i class="ic ic-sm i-send" aria-hidden="true"></i>Send prices</a><a class="up-l" role="menuitem" href="Reports.dc.html"><i class="ic ic-sm i-chart" aria-hidden="true"></i>Reports</a><a class="up-l" role="menuitem" href="Documents.dc.html"><i class="ic ic-sm i-file" aria-hidden="true"></i>Documents</a><a class="up-l" role="menuitem" href="ActivityLogs.dc.html"><i class="ic ic-sm i-clock" aria-hidden="true"></i>My activity</a></div>
+<div class="up-h">Settings</div><a class="up-l" role="menuitem" href="AiStudio.dc.html"><i class="ic ic-sm i-ai" aria-hidden="true"></i>Profile and photo</a><a class="up-l" role="menuitem" href="SettingsHub.dc.html"><i class="ic ic-sm i-cog" aria-hidden="true"></i>Settings</a><a class="up-l" role="menuitem" href="ApiConnections.dc.html"><i class="ic ic-sm i-link" aria-hidden="true"></i>API connections</a><a class="up-l" role="menuitem" href="StaffPermissions.dc.html"><i class="ic ic-sm i-shield" aria-hidden="true"></i>Permissions</a>
+<div class="up-row"><span class="sm mut">Theme</span><span class="sl-seg boxed" style="height:30px"><a class="on" href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Light</a><a href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Dark</a></span></div>
+<a class="up-l" role="menuitem" href="CsInbox.dc.html"><i class="ic ic-sm i-help" aria-hidden="true"></i>Help and support</a>
+<a class="up-l out" role="menuitem" href="Login.dc.html"><i class="ic ic-sm i-logout" aria-hidden="true"></i>Sign out</a>
+</div></details>
+  </header>
+  <div class="sl-body">
+    <label class="nav-bd" for="navtg" aria-hidden="true"></label>
+    <div class="sl-rail">
+      <a class="is-on" href="NewShipment.dc.html" aria-label="New shipment"><i class="ic i-newdoc" aria-hidden="true"></i></a>
+      <a href="StaffAI.dc.html" aria-label="AI assistant" title="AI assistant"><i class="ic i-ai" aria-hidden="true"></i></a>
+      <a href="PublicTracking.dc.html" aria-label="Tracking" title="Tracking"><i class="ic i-track" aria-hidden="true"></i></a>
+      <a href="LockerSearch.dc.html" aria-label="Search tracking number" title="Search tracking number"><i class="ic i-tsearch" aria-hidden="true"></i></a>
+      <a href="Consolidations.dc.html" aria-label="Consolidation" title="Consolidation"><i class="ic i-layers" aria-hidden="true"></i></a>
+      <a href="Warehouse.dc.html" aria-label="Warehouse" title="Warehouse"><i class="ic i-warehouse" aria-hidden="true"></i></a>
+      <a class="me-pic hc" href="AiStudio.dc.html" aria-label="Your profile, Henry Cobblah" style="width:34px;height:34px;margin-top:auto"></a>
+    </div>
+    <aside class="sl-side" aria-label="Main navigation">
+      <div class="nav-x"><span class="fw5">Menu</span><label class="sl-ib" for="navtg" aria-label="Close the menu" role="button" tabindex="0"><i class="ic i-x" aria-hidden="true"></i></label></div>
+      <sc-for list="{{nav}}" as="g" hint-placeholder-count="5">
+        <div class="sl-gl">{{g.label}}</div>
+        <nav class="sl-nav">
+          <sc-for list="{{g.items}}" as="it" hint-placeholder-count="4">
+            <a href="{{it.href}}" class="{{it.cls}}"><i class="ic {{it.icon}}" aria-hidden="true"></i><span>{{it.label}}</span><span class="cnt {{it.ok}}">{{it.c1}} <em>{{it.c2}}</em></span></a>
+          </sc-for>
+        </nav>
+      </sc-for>
+      <div class="sl-gl">Other</div>
+      <nav class="sl-nav">
+        <a href="SettingsHub.dc.html"><i class="ic i-globe" aria-hidden="true"></i><span>Language</span></a>
+        <a href="CsInbox.dc.html"><i class="ic i-help" aria-hidden="true"></i><span>Get help</span></a>
+        <a href="Login.dc.html" class="danger"><i class="ic i-logout" aria-hidden="true"></i><span>Sign out</span></a>
+      </nav>
+      <a class="me-card" href="AiStudio.dc.html" aria-label="Signed in as Henry Cobblah, Operations manager. Open your profile">
+        <span class="me-pic hc" role="img" aria-label="Photo of Henry Cobblah"><i class="me-on" aria-hidden="true"></i></span>
+        <span class="grow col" style="min-width:0"><b>Henry Cobblah</b><small>Operations manager · Accra Hub</small></span>
+        <i class="ic ic-sm i-more mut" aria-hidden="true"></i>
+      </a>
+      <a class="me-sub" href="CsInbox.dc.html"><i class="ic ic-sm i-ticket" aria-hidden="true"></i>Customer service<span class="sl-tag">12 open</span></a>
+    </aside>
+
+    <main class="sl-main"><div class="sl-wrap">
+<div class="sl-head"><div><h1 class="sl-title">Riders</h1><p class="sl-lede">8 of 14 riders are on route · every assigned package carries a delivery fee split between the rider and Swift Lane</p></div><div class="row g8 wrap"><a class="sl-btn ghost" href="DriverApp.dc.html"><i class="ic ic-sm i-phone" aria-hidden="true"></i>Rider app</a><a class="sl-btn ghost" href="DeliveryTracking.dc.html"><i class="ic ic-sm i-route" aria-hidden="true"></i>Live tracking</a><div class="sl-seg boxed"><button class="on">Today</button><button>This week</button><button>This month</button></div><a class="sl-btn ghost" href="InviteStaff.dc.html"><i class="ic ic-sm i-plus" aria-hidden="true"></i>Add rider</a><a class="sl-btn" href="RiderDispatch.dc.html"><i class="ic ic-sm i-truck" aria-hidden="true"></i>Assign packages</a></div></div>
+<div class="grid cols4" style="grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr))">
+<div class="rd-k"><small>Riders on route</small><b>8 / 14</b><small>2 available · 4 off duty</small></div>
+<div class="rd-k"><small>Packages assigned</small><b>40</b><small>24 delivered · 2 failed attempts</small></div>
+<div class="rd-k"><small>Delivery fees today</small><b>₵1,410.00</b><small>Average ₵35.25 per package</small></div>
+<div class="rd-k"><small>Riders get</small><b>₵897.25</b><small>64% of fees</small></div>
+<div class="rd-k"><small>Swift Lane keeps</small><b>₵512.75</b><small>36% of fees</small></div>
+<div class="rd-k"><small>Cash to hand in</small><b>₵4,820.00</b><small>Collected from customers</small></div></div>
+<section class="sl-card flush"><div class="row between wrap g8" style="padding:14px 16px"><div><h2 class="sl-ct">Split sheet</h2><div class="mut sm">How much of each delivery fee goes to the rider and how much to Swift Lane. Seen by admins and staff with finance access.</div></div><div class="row g8"><span class="row g6 sm mut"><i style="width:10px;height:10px;border-radius:3px;background:#A9A59C;display:inline-block"></i>Rider</span><span class="row g6 sm mut"><i style="width:10px;height:10px;border-radius:3px;background:var(--ink);display:inline-block"></i>Swift Lane</span><a class="sl-btn ghost sm" href="Documents.dc.html"><i class="ic ic-sm i-download" aria-hidden="true"></i>Export</a><a class="sl-btn ghost sm" href="RiderDispatch.dc.html"><i class="ic ic-sm i-sliders" aria-hidden="true"></i>Split rules</a></div></div>
+<div class="sl-tw"><table class="sl-table"><thead><tr><th>Rider</th><th class="num">Assigned</th><th class="num">Delivered</th><th class="num">Fees</th><th class="num">Rider %</th><th class="num">Rider gets</th><th class="num">Swift gets</th><th>Split</th><th class="num">Cash collected</th><th>Hand-in</th></tr></thead><tbody><tr><td><a class="sl-cell" href="RiderDetail.dc.html" style="color:inherit"><span class="sl-av sm dark">YA</span><span class="col"><span class="fw5">Yaw Antwi</span><span class="mut sm">Van</span></span></a></td><td class="num">9</td><td class="num">6</td><td class="num">₵315.00</td><td class="num">65%</td><td class="num fw5">₵204.75</td><td class="num fw5">₵110.25</td><td><div class="rd-split" style="width:110px"><i class="r" style="flex:65"></i><i class="s" style="flex:35"></i></div></td><td class="num">₵1,420.00</td><td><span class="sl-pill pending">Due</span></td></tr><tr><td><a class="sl-cell" href="RiderDetail.dc.html" style="color:inherit"><span class="sl-av sm dark">KB</span><span class="col"><span class="fw5">Kwesi Bonsu</span><span class="mut sm">Van</span></span></a></td><td class="num">8</td><td class="num">4</td><td class="num">₵290.00</td><td class="num">65%</td><td class="num fw5">₵188.50</td><td class="num fw5">₵101.50</td><td><div class="rd-split" style="width:110px"><i class="r" style="flex:65"></i><i class="s" style="flex:35"></i></div></td><td class="num">₵1,240.00</td><td><span class="sl-pill pending">Due</span></td></tr><tr><td><a class="sl-cell" href="RiderDetail.dc.html" style="color:inherit"><span class="sl-av sm dark">AS</span><span class="col"><span class="fw5">Adwoa Sarpong</span><span class="mut sm">Bike</span></span></a></td><td class="num">7</td><td class="num">7</td><td class="num">₵210.00</td><td class="num">60%</td><td class="num fw5">₵126.00</td><td class="num fw5">₵84.00</td><td><div class="rd-split" style="width:110px"><i class="r" style="flex:60"></i><i class="s" style="flex:40"></i></div></td><td class="num">₵860.00</td><td><span class="sl-pill delivered">Settled</span></td></tr><tr><td><a class="sl-cell" href="RiderDetail.dc.html" style="color:inherit"><span class="sl-av sm dark">KM</span><span class="col"><span class="fw5">Kojo Mensah</span><span class="mut sm">Van</span></span></a></td><td class="num">10</td><td class="num">2</td><td class="num">₵420.00</td><td class="num">65%</td><td class="num fw5">₵273.00</td><td class="num fw5">₵147.00</td><td><div class="rd-split" style="width:110px"><i class="r" style="flex:65"></i><i class="s" style="flex:35"></i></div></td><td class="num">₵980.00</td><td><span class="sl-pill onway">Part</span></td></tr><tr><td><a class="sl-cell" href="RiderDetail.dc.html" style="color:inherit"><span class="sl-av sm dark">AD</span><span class="col"><span class="fw5">Akua Danso</span><span class="mut sm">Van</span></span></a></td><td class="num">0</td><td class="num">0</td><td class="num">₵0.00</td><td class="num">65%</td><td class="num fw5">₵0.00</td><td class="num fw5">₵0.00</td><td><div class="rd-split" style="width:110px"><i class="r" style="flex:65"></i><i class="s" style="flex:35"></i></div></td><td class="num">₵0.00</td><td><span class=mut>—</span></td></tr><tr><td><a class="sl-cell" href="RiderDetail.dc.html" style="color:inherit"><span class="sl-av sm dark">SO</span><span class="col"><span class="fw5">Samuel Ofori</span><span class="mut sm">Bike</span></span></a></td><td class="num">6</td><td class="num">5</td><td class="num">₵175.00</td><td class="num">60%</td><td class="num fw5">₵105.00</td><td class="num fw5">₵70.00</td><td><div class="rd-split" style="width:110px"><i class="r" style="flex:60"></i><i class="s" style="flex:40"></i></div></td><td class="num">₵320.00</td><td><span class="sl-pill delivered">Settled</span></td></tr><tr style="font-weight:600"><td>Total</td><td class="num">40</td><td class="num">24</td><td class="num">₵1,410.00</td><td></td><td class="num">₵897.25</td><td class="num">₵512.75</td><td></td><td class="num">₵4,820.00</td><td></td></tr></tbody></table></div>
+<div class="row between wrap g8 mut sm" style="padding:12px 16px;border-top:1px solid var(--line)"><span>Rule: vans 65% to rider, bikes 60% to rider. Riders are paid every Friday by mobile money.</span><a class="fw5" href="RecordPayment.dc.html">Record a hand-in →</a></div></section>
+<div class="row between"><h2 class="sl-ct">All riders</h2><span class="mut sm">Click a rider to see every package, code and activity</span></div>
+<div class="grid cols3"><a class="sl-card col g12" href="RiderDetail.dc.html" style="color:inherit"><div class="row g12"><span class="sl-av dark">YA</span><div class="grow"><div class="fw5">Yaw Antwi</div><div class="mut sm">Van GR-2210-21 · ★ 4.9</div></div><span class="sl-pill onway">On route</span></div>
+<div class="col g6"><div class="row between sm"><span class="mut">Delivered today</span><span class="fw5">6 / 9</span></div><div class="sl-ticks n"><i style="width:67%"></i></div></div>
+<div class="grid cols3" style="gap:8px"><div class="col"><span class="mut" style="font-size:11.5px">FEES</span><b class="mono fw5">₵315.00</b></div><div class="col"><span class="mut" style="font-size:11.5px">RIDER 65%</span><b class="mono fw5">₵204.75</b></div><div class="col"><span class="mut" style="font-size:11.5px">SWIFT</span><b class="mono fw5">₵110.25</b></div></div>
+<div class="row between sm"><span class="row g6 mut"><i class="ic ic-sm i-phone" aria-hidden="true"></i>+233 24 555 0101</span><span class="fw5 row g6">Open <i class="ic ic-sm i-right" aria-hidden="true"></i></span></div></a><a class="sl-card col g12" href="RiderDetail.dc.html" style="color:inherit"><div class="row g12"><span class="sl-av dark">KB</span><div class="grow"><div class="fw5">Kwesi Bonsu</div><div class="mut sm">Van GR-1184-22 · ★ 4.8</div></div><span class="sl-pill onway">On route</span></div>
+<div class="col g6"><div class="row between sm"><span class="mut">Delivered today</span><span class="fw5">4 / 8</span></div><div class="sl-ticks n"><i style="width:50%"></i></div></div>
+<div class="grid cols3" style="gap:8px"><div class="col"><span class="mut" style="font-size:11.5px">FEES</span><b class="mono fw5">₵290.00</b></div><div class="col"><span class="mut" style="font-size:11.5px">RIDER 65%</span><b class="mono fw5">₵188.50</b></div><div class="col"><span class="mut" style="font-size:11.5px">SWIFT</span><b class="mono fw5">₵101.50</b></div></div>
+<div class="row between sm"><span class="row g6 mut"><i class="ic ic-sm i-phone" aria-hidden="true"></i>+233 20 555 0182</span><span class="fw5 row g6">Open <i class="ic ic-sm i-right" aria-hidden="true"></i></span></div></a><a class="sl-card col g12" href="RiderDetail.dc.html" style="color:inherit"><div class="row g12"><span class="sl-av dark">AS</span><div class="grow"><div class="fw5">Adwoa Sarpong</div><div class="mut sm">Bike GW-409-23 · ★ 4.9</div></div><span class="sl-pill delivered">Available</span></div>
+<div class="col g6"><div class="row between sm"><span class="mut">Delivered today</span><span class="fw5">7 / 7</span></div><div class="sl-ticks n"><i style="width:100%"></i></div></div>
+<div class="grid cols3" style="gap:8px"><div class="col"><span class="mut" style="font-size:11.5px">FEES</span><b class="mono fw5">₵210.00</b></div><div class="col"><span class="mut" style="font-size:11.5px">RIDER 60%</span><b class="mono fw5">₵126.00</b></div><div class="col"><span class="mut" style="font-size:11.5px">SWIFT</span><b class="mono fw5">₵84.00</b></div></div>
+<div class="row between sm"><span class="row g6 mut"><i class="ic ic-sm i-phone" aria-hidden="true"></i>+233 26 555 0145</span><span class="fw5 row g6">Open <i class="ic ic-sm i-right" aria-hidden="true"></i></span></div></a><a class="sl-card col g12" href="RiderDetail.dc.html" style="color:inherit"><div class="row g12"><span class="sl-av dark">KM</span><div class="grow"><div class="fw5">Kojo Mensah</div><div class="mut sm">Van GN-770-20 · ★ 4.4</div></div><span class="sl-pill onway">On route</span></div>
+<div class="col g6"><div class="row between sm"><span class="mut">Delivered today</span><span class="fw5">2 / 10</span></div><div class="sl-ticks n"><i style="width:20%"></i></div></div>
+<div class="grid cols3" style="gap:8px"><div class="col"><span class="mut" style="font-size:11.5px">FEES</span><b class="mono fw5">₵420.00</b></div><div class="col"><span class="mut" style="font-size:11.5px">RIDER 65%</span><b class="mono fw5">₵273.00</b></div><div class="col"><span class="mut" style="font-size:11.5px">SWIFT</span><b class="mono fw5">₵147.00</b></div></div>
+<div class="row between sm"><span class="row g6 mut"><i class="ic ic-sm i-phone" aria-hidden="true"></i>+233 55 555 0167</span><span class="fw5 row g6">Open <i class="ic ic-sm i-right" aria-hidden="true"></i></span></div></a><a class="sl-card col g12" href="RiderDetail.dc.html" style="color:inherit"><div class="row g12"><span class="sl-av dark">AD</span><div class="grow"><div class="fw5">Akua Danso</div><div class="mut sm">Van GR-5521-22 · ★ 4.7</div></div><span class="sl-pill ">Off duty</span></div>
+<div class="col g6"><div class="row between sm"><span class="mut">Delivered today</span><span class="fw5">0 / 0</span></div><div class="sl-ticks n"><i style="width:0%"></i></div></div>
+<div class="grid cols3" style="gap:8px"><div class="col"><span class="mut" style="font-size:11.5px">FEES</span><b class="mono fw5">₵0.00</b></div><div class="col"><span class="mut" style="font-size:11.5px">RIDER 65%</span><b class="mono fw5">₵0.00</b></div><div class="col"><span class="mut" style="font-size:11.5px">SWIFT</span><b class="mono fw5">₵0.00</b></div></div>
+<div class="row between sm"><span class="row g6 mut"><i class="ic ic-sm i-phone" aria-hidden="true"></i>+233 27 555 0120</span><span class="fw5 row g6">Open <i class="ic ic-sm i-right" aria-hidden="true"></i></span></div></a><a class="sl-card col g12" href="RiderDetail.dc.html" style="color:inherit"><div class="row g12"><span class="sl-av dark">SO</span><div class="grow"><div class="fw5">Samuel Ofori</div><div class="mut sm">Bike GT-318-23 · ★ 4.6</div></div><span class="sl-pill onway">On route</span></div>
+<div class="col g6"><div class="row between sm"><span class="mut">Delivered today</span><span class="fw5">5 / 6</span></div><div class="sl-ticks n"><i style="width:83%"></i></div></div>
+<div class="grid cols3" style="gap:8px"><div class="col"><span class="mut" style="font-size:11.5px">FEES</span><b class="mono fw5">₵175.00</b></div><div class="col"><span class="mut" style="font-size:11.5px">RIDER 60%</span><b class="mono fw5">₵105.00</b></div><div class="col"><span class="mut" style="font-size:11.5px">SWIFT</span><b class="mono fw5">₵70.00</b></div></div>
+<div class="row between sm"><span class="row g6 mut"><i class="ic ic-sm i-phone" aria-hidden="true"></i>+233 54 555 0133</span><span class="fw5 row g6">Open <i class="ic ic-sm i-right" aria-hidden="true"></i></span></div></a></div>
+</div></main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1950}}'>
+class Component extends DCLogic {
+renderVals() {
+const A = 'drivers';
+const N = 'Operations|dash~Overview~grid~~~Main;panels~Control Panels~gauge~~~ControlPanels;air~Air Shipments~plane~128~~AirShipments;sea~Sea Packages~ship~64~~SeaPackages;prealert~Pre-Alerts~inbox~9~~PreAlerts;pickup~Pickups~truck~12~/ 20~Pickups;dtrack~Delivery Tracking~route~5~~DeliveryTracking;shiptrack~Shipment Tracking~track~~~ShipmentTracking;consol~Consolidations~layers~7~~Consolidations;warehouse~Warehouse~warehouse~~~Warehouse;handout~Hand Out Packages~box~5~~HandOut;locker~Locker Search~lock~~~LockerSearch#Hubs|execdash~Management Dashboard~chart~~~ExecDashboard;billhub~Billing & Finance~dollar~~~BillingHub;lastmile~Last-Mile Delivery~truck~~~LastMile;aicenter~AI Centre~ai~~~AiCenter;commshub~Messages & Automation~message~~~CommsHub;supporthub~Support & CRM~ticket~~~SupportHub;loyalty~Loyalty & Referrals~star~~~LoyaltyRewards;security~Security & Reliability~shield~~~SecurityCenter#Freight|frhub~Freight Hub~plane~~~FreightHub;frsched~Departures & Arrivals~calendar~5~~FreightSchedule;frwb~Waybills & Manifests~file~~~Waybills;frex~Cargo Exceptions~alert~6~~CargoExceptions;frins~Insurance & Claims~shield~4~~InsuranceClaims;frpart~Freight Partners~users~~~FreightPartners#People|cust~Customers~users~1,284~~Customers;recip~Recipients~pin~~~Recipients;drivers~Drivers~wheel~8~/ 14~Drivers;drvapp~Rider App~phone~~~DriverApp;staff~Staff & Roles~shield~~~StaffRoles#Finance|pay~Payments~card~~~Payments;ar~Accounts Receivable~receipt~~~AccountsReceivable;fin~Financial Overview~dollar~$48,200~~FinancialOverview#Insights|reports~Reports~chart~~~Reports;activity~Activity Logs~clock~~~ActivityLogs;messages~Message Logs~archive~~~MessageLogs#Customer Service|tickets~Support Inbox~ticket~1,482~~CsInbox;csrules~Ticket Rules~filter~~~CsRules;playbook~Playbook~book~~~CsPlaybook;csrep~Support Reports~star~~~CsReports;cschan~Channels & Teams~message~~~CsChannels;csai~AI Assistant~ai~~~StaffAI;cssupai~AI for Customers~spark~~~CsAI#Developer|devov~Dev Overview~terminal~~~DevOverview;devsvc~Services~server~12~~DevServices;devlogs~Logs~activity~~~DevLogs;devmet~Metrics~cpu~~~DevMetrics;devinfra~Infrastructure~cloud~~~DevInfrastructure;devdep~Deployments~rocket~~~DevDeployments;devalert~Alerts~alert~3~~DevAlerts;devissues~Issues & Change Log~bug~8~~DevIssues;devint~Integrations~puzzle~~~DevIntegrations#Settings|general~General~cog~~~SettingsHub;apis~API Connections~link~16~~ApiConnections;apitraffic~Live API Traffic~activity~~~ApiTraffic;tariffs~Shipping Tariffs~tag~~~Tariffs;notifc~Notifications~bell~3~~NotificationCenter;ebuild~Email Builder~mail~~~EmailBuilder;msgtpl~SMS & WhatsApp~message~~~MessageTemplates;bcast~Push Notifications~send~~~Broadcast;costs~Operating Costs~dollar~~~CostSettings;addr~Shipping Addresses~pin~~~ShippingAddresses;rfees~Rider Fees~truck~~~RiderSettings;loginpg~Login Page~image~~~LoginSettings;devmod~Modules~sliders~~~ModuleController;perm~Permissions~key~~~StaffPermissions;lblstudio~Label Printing~print~~~LabelStudio;auto~Automations~bolt~~~Automations';
+const nav = N.split('#').map(g => { const p = g.split('|'); return { label: p[0], items: p[1].split(';').map(i => { const f = i.split('~'); return { href: f[5] + '.dc.html', label: f[1], icon: 'i-' + f[2], c1: f[3], c2: f[4], cls: f[0] === A ? 'is-active' : '', ok: f[0] === 'fin' ? 'ok' : '' }; }) }; });
+return { nav };
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+/* Page styles of DeliveryTracking.dc.html (from the approved design) */
+.dt{display:grid;grid-template-columns:380px minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:1100px){.dt{grid-template-columns:1fr}}
+.dt-list{display:flex;flex-direction:column;gap:10px}
+.dt-c{display:flex;flex-direction:column;gap:14px;padding:16px;border:1px solid var(--line);border-radius:20px;background:var(--card);cursor:pointer;text-align:left;font:inherit;color:inherit;width:100%}
+.dt-c:hover{border-color:var(--line-2)}
+.dt-c.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.dt-id{display:flex;align-items:center;gap:12px}
+.dt-id .bx{width:44px;height:44px;border-radius:50%;border:1px solid var(--line-2);display:grid;place-items:center;flex:none}
+.dt-id b{font:600 19px var(--font);letter-spacing:-.01em}
+.dt-eta{display:flex;justify-content:space-between;align-items:flex-end;padding-top:14px;border-top:1px solid var(--line)}
+.dt-eta big{font:600 38px/1 var(--font);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.dt-eta big small{font-size:14px;font-weight:400;color:var(--muted);margin-left:6px}
+.dt-prog{display:flex;align-items:center;gap:0;padding:14px 0 6px}
+.dt-prog .n{width:22px;height:22px;border-radius:50%;background:#E2632A;display:grid;place-items:center;flex:none;position:relative;z-index:1}
+.dt-prog .n::after{content:"";width:8px;height:8px;border-radius:50%;background:#fff}
+.dt-prog .n.end{background:var(--card);border:1.5px solid var(--line-2)}
+.dt-prog .n.end::after{background:var(--muted);width:6px;height:6px}
+.dt-prog.done .n.end{background:var(--green);border-color:var(--green)}.dt-prog.done .n.end::after{background:#fff;width:8px;height:8px}
+.dt-prog .ln{flex:1;height:4px;margin:0 -2px;border-radius:4px;background:repeating-linear-gradient(90deg,var(--line-2) 0 6px,transparent 6px 11px);position:relative}
+.dt-prog .ln>i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:repeating-linear-gradient(115deg,#E2632A 0 8px,#EE8A55 8px 16px);background-size:32px 100%;transition:width 1.5s linear}
+.dt-prog.moving .ln>i{animation:dtRoad .8s linear infinite}
+@keyframes dtRoad{to{background-position:32px 0}}
+.dt-prog .tk{position:absolute;top:50%;width:32px;height:32px;margin:-16px 0 0 -16px;border-radius:50%;background:var(--card);border:2px solid #E2632A;display:grid;place-items:center;color:#E2632A;transition:left 1.5s linear;z-index:2;box-shadow:0 4px 10px rgba(226,99,42,.25)}
+.dt-prog .tk .ic{width:16px;height:16px}
+.dt-prog.moving .tk .ic{animation:dtBob .6s ease-in-out infinite alternate}
+.dt-prog.moving .tk::before{content:"";position:absolute;inset:-6px;border-radius:50%;border:2px solid #E2632A;opacity:0;animation:dtPing 1.8s ease-out infinite}
+@keyframes dtBob{from{transform:translateY(1px)}to{transform:translateY(-2px)}}
+@keyframes dtPing{0%{transform:scale(.7);opacity:.6}100%{transform:scale(1.25);opacity:0}}
+.dt-prog.idle .tk{border-color:var(--line-2);color:var(--muted);box-shadow:none}
+.dt-prog.done .tk{border-color:var(--green);color:var(--green-ink);box-shadow:none}
+.dt-prog.done .ln>i{background:var(--green)}
+@media (prefers-reduced-motion:reduce){.dt-prog .ln>i,.dt-prog .tk,.dt-prog .tk .ic,.dt-prog .tk::before{animation:none!important;transition:none!important}}
+.dt-ends{display:flex;justify-content:space-between;gap:12px;font-size:13.5px}
+.dt-ends small{display:block;color:var(--muted);font-size:12px}
+.dt-who{display:flex;align-items:center;gap:12px;padding-top:12px;border-top:1px solid var(--line)}
+.dt-act{width:44px;height:44px;border-radius:50%;border:1px solid var(--line-2);background:var(--card);display:grid;place-items:center;color:var(--ink)}
+.dt-act.pri{background:var(--ink);color:var(--inverse);border-color:var(--ink)}
+.dt-map{position:relative;border-radius:20px;overflow:hidden;border:1px solid var(--line);height:420px;background:#EAE6DF}
+.dt-map svg{display:block;width:100%;height:100%}
+.dt-ctl{position:absolute;right:14px;display:flex;flex-direction:column;border-radius:12px;background:var(--card);border:1px solid var(--line);overflow:hidden}
+.dt-ctl button,.dt-ctl a{width:44px;height:44px;border:0;background:none;display:grid;place-items:center;color:var(--ink);cursor:pointer}
+.dt-ctl button+button{border-top:1px solid var(--line)}
+.dt-live{position:absolute;left:14px;top:14px;display:flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-size:12.5px}
+.dt-live i{width:8px;height:8px;border-radius:50%;background:var(--green);animation:dtP 1.4s infinite}@keyframes dtP{50%{opacity:.3}}
+.dt-chip{position:absolute;left:14px;bottom:14px;display:flex;gap:16px;padding:10px 14px;border-radius:14px;background:var(--card);border:1px solid var(--line);font-size:12.5px}
+.dt-chip b{display:block;font:600 15px var(--font);font-variant-numeric:tabular-nums}
+.dt-g{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:900px){.dt-g{grid-template-columns:1fr}}
+.dt-kv{display:grid;grid-template-columns:repeat(3,1fr)}
+.dt-kv div{padding:10px 14px 10px 0;border-left:1px solid var(--line);padding-left:14px}
+.dt-kv div:nth-child(3n+1){border-left:0;padding-left:0}
+.dt-kv div:nth-child(n+4){border-top:1px solid var(--line)}
+.dt-kv small{display:block;color:var(--muted);font-size:12px}
+.dt-kv b{font:500 14px var(--font)}
+.dt-tl{display:flex;flex-direction:column}
+.dt-st{display:grid;grid-template-columns:34px 110px 1fr;gap:12px;position:relative;padding-bottom:20px}
+.dt-st:last-child{padding-bottom:0}
+.dt-st::before{content:"";position:absolute;left:16px;top:34px;bottom:0;border-left:2px dashed var(--line-2)}
+.dt-st.done::before{border-left:2px solid #E2632A}
+.dt-st:last-child::before{display:none}
+.dt-st .d{width:34px;height:34px;border-radius:50%;background:#E2632A;color:#fff;display:grid;place-items:center;position:relative}
+.dt-st .d .ic{width:16px;height:16px}
+.dt-st.todo .d{background:var(--card);border:1.5px dashed var(--line-2);color:var(--muted)}
+.dt-st.now .d{box-shadow:0 0 0 6px rgba(226,99,42,.18)}
+.dt-st.now .d::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:2px solid #E2632A;animation:dtPing 1.8s ease-out infinite}
+.dt-st.last.done .d{background:var(--green)}
+@media (prefers-reduced-motion:reduce){.dt-st.now .d::after{animation:none}}
+.dt-st small{display:block;color:var(--muted);font-size:12.5px}
+.dt-tabs{display:flex;gap:6px;flex-wrap:wrap}

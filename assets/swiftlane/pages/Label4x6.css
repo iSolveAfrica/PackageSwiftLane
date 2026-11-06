@@ -1,0 +1,10 @@
+/* Page styles of Label4x6.dc.html (from the approved design) */
+body{margin:0;background:#fff}.lb{background:#fff;color:#000;font-family:Figtree,Arial,sans-serif;box-sizing:border-box;overflow:hidden}
+.lb46{width:384px;height:576px;padding:14px;display:flex;flex-direction:column;gap:8px;border:1px solid #000}
+.lb46 .bx{border:2px solid #000;border-radius:6px;padding:8px 10px}
+.lb46 .k{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.lb12{width:192px;height:96px;padding:5px 7px;display:flex;flex-direction:column;justify-content:space-between;border:1px solid #000}
+.rc{width:302px;background:#fff;color:#161615;font-family:Figtree,Arial,sans-serif;padding:20px 18px 24px;box-sizing:border-box;display:flex;flex-direction:column;gap:10px;font-size:12px}
+.rc .dash{border-top:1px dashed #A9A8A2}
+.rc .r{display:flex;justify-content:space-between;gap:10px}
+.rc .m{font-family:JetBrains Mono,monospace}

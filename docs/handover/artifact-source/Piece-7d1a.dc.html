@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Swift Lane Settings</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./swiftlane.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+html,body{margin:0}
+.sx{padding:40px 48px 56px;display:flex;flex-direction:column;gap:28px;min-height:100%;box-sizing:border-box}
+.sx-top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.sx-crumb{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13.5px}
+.sx-hero{display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;padding:28px 0 8px}
+.sx-hero h1{font-size:40px;font-weight:600;letter-spacing:-.025em;line-height:1.1}
+.sx-hero p{color:var(--muted);font-size:16px;max-width:560px}
+.sx-find{display:flex;align-items:center;gap:12px;width:100%;max-width:640px;height:56px;padding:0 18px;border-radius:16px;border:1px solid var(--line-2);background:var(--field);color:var(--muted);margin-top:8px}
+.sx-find input{flex:1;min-width:0;border:0;background:transparent;color:var(--ink);font:16px var(--font);outline:0}
+.sx-find kbd{font:12px var(--mono);padding:3px 7px;border-radius:6px;border:1px solid var(--line-2)}
+.sx-sugg{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;font-size:13px;color:var(--muted);align-items:center}
+.sx-sugg a{height:30px;padding:0 12px;border-radius:100px;border:1px solid var(--line);display:inline-flex;align-items:center;gap:6px;color:var(--ink-2)}
+.sx-sugg a:hover{background:var(--hover);color:var(--ink)}
+.sx-strip{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px}
+@media (max-width:900px){.sx-strip{grid-template-columns:minmax(0,1fr)}}
+.sx-box{border:1px solid var(--line);border-radius:20px;background:var(--card);padding:22px 24px;display:flex;flex-direction:column;gap:14px}
+.sx-step{display:flex;align-items:center;gap:12px;font-size:14px;padding:10px 0;border-top:1px solid var(--line)}
+.sx-step .ck{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--line-2);display:grid;place-items:center;flex:none;color:var(--inverse)}
+.sx-step .ck.on{background:var(--green);border-color:var(--green)}
+.sx-step.todo b{font-weight:500}
+.sx-log{display:flex;gap:12px;font-size:13.5px;padding:10px 0;border-top:1px solid var(--line);align-items:flex-start}
+.sx-tabs{display:flex;gap:4px;overflow-x:auto;padding:5px;border-radius:14px;background:var(--panel);border:1px solid var(--line)}
+.sx-tabs a{white-space:nowrap;padding:8px 14px;border-radius:10px;font-size:13.5px;color:var(--muted);font-weight:500}
+.sx-tabs a.on,.sx-tabs a:hover{background:var(--active);color:var(--ink)}
+.sx-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr));gap:16px}
+.sx-tile{display:flex;flex-direction:column;gap:14px;border:1px solid var(--line);border-radius:20px;background:var(--card);padding:22px;transition:border-color .15s}
+.sx-tile:hover{border-color:var(--line-2)}
+.sx-th{display:flex;align-items:flex-start;gap:14px}
+.sx-th .tl{width:46px;height:46px;border-radius:14px;background:var(--active);display:grid;place-items:center;color:var(--ink);flex:none}
+.sx-th b{display:block;font-size:17px;font-weight:600;letter-spacing:-.005em}
+.sx-th small{display:block;color:var(--muted);font-size:13px;line-height:1.45;margin-top:3px}
+.sx-links{display:flex;flex-direction:column}
+.sx-links a{display:flex;align-items:center;gap:10px;min-height:50px;padding:6px 0;font-size:14px;color:var(--ink-2);border-top:1px dashed var(--line)}
+.sx-links a:hover{color:var(--ink)}
+.sx-links a .v{margin-left:auto;color:var(--muted);font-size:12px;font-family:var(--mono);white-space:nowrap}
+.sx-ft{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;color:var(--muted);margin-top:auto}
+.sx-ft a{display:inline-flex;align-items:center;gap:6px;color:var(--ink);font-weight:500;font-size:13px}
+</style>
+</helmet>
+<div class="sl-app dk" style="position: absolute; left: 0px; top: 0px; right: auto; bottom: auto; margin: 0px; box-sizing: border-box; width: 1440px;">
+<div class="sx">
+  <div class="sx-top">
+    <div class="sx-crumb"><a href="ControlPanels.dc.html">Control panels</a><i class="ic ic-sm i-right" aria-hidden="true"></i><span style="color:var(--ink)">Settings</span></div>
+    <div class="row g8 wrap"><a class="sl-btn ghost" href="ActivityLogs.dc.html"><i class="ic ic-sm i-clock" aria-hidden="true"></i>Change history</a><a class="sl-btn" href="Main.dc.html"><i class="ic ic-sm i-left" aria-hidden="true"></i>Back to app</a></div>
+  </div>
+
+  <section class="sx-hero">
+    <span class="sl-tile" style="width:52px;height:52px;border-radius:16px"><i class="ic i-cog" aria-hidden="true"></i></span>
+    <h1>How can we set things up?</h1>
+    <p>Everything Swift Lane is configured by — company, money, operations, messaging and access — in one place.</p>
+    <label class="sx-find"><i class="ic i-search" aria-hidden="true"></i><input aria-label="Search settings" placeholder="Search 81 settings, e.g. exchange rate or SMS"><kbd>⌘K</kbd></label>
+    <div class="sx-sugg"><span>Popular:</span><a href="FinancialOverview.dc.html"><i class="ic ic-sm i-dollar" aria-hidden="true"></i>Exchange rate</a><a href="Tariffs.dc.html"><i class="ic ic-sm i-receipt" aria-hidden="true"></i>Shipping rates</a><a href="Notifications.dc.html"><i class="ic ic-sm i-message" aria-hidden="true"></i>WhatsApp API</a><a href="StaffRoles.dc.html"><i class="ic ic-sm i-key" aria-hidden="true"></i>Roles</a><a href="DevInfrastructure.dc.html"><i class="ic ic-sm i-database" aria-hidden="true"></i>Backup</a></div>
+  </section>
+
+  <div class="sx-strip">
+    <section class="sx-box">
+      <div class="row between wrap g8"><div><h2 class="sl-ct" style="font-size:16px">Finish setting up</h2><div class="mut sm">7 of 10 steps done</div></div><span class="mono sm">70%</span></div>
+      <div class="sl-ticks" role="img" aria-label="70% complete"><i style="width:70%"></i></div>
+      <div>
+        <div class="sx-step"><span class="ck on"><i class="ic ic-sm i-check" aria-hidden="true"></i></span><span class="grow mut">Company profile and logo</span></div>
+        <div class="sx-step todo"><span class="ck" aria-hidden="true"></span><b class="grow">Add your US warehouse address</b><a class="sl-btn sm" href="ShippingAddresses.dc.html">Set address</a></div>
+        <div class="sx-step todo"><span class="ck" aria-hidden="true"></span><b class="grow">Connect an SMS sender ID</b><a class="sl-btn sm ghost" href="NewIntegration.dc.html">Connect</a></div>
+        <div class="sx-step todo"><span class="ck" aria-hidden="true"></span><b class="grow">Turn on daily backups off-site</b><a class="sl-btn sm ghost" href="DevInfrastructure.dc.html">Set up</a></div>
+      </div>
+    </section>
+    <section class="sx-box">
+      <div class="row between"><h2 class="sl-ct" style="font-size:16px">Recently changed</h2><a class="sm fw5" href="ActivityLogs.dc.html">View log</a></div>
+      <div>
+        <div class="sx-log"><span class="sl-av sm">HC</span><div class="grow"><b class="fw5">Henry</b> changed <b class="fw5">Air express rate</b> to $6.00 / lb<div class="mut sm">Today, 09:38</div></div></div>
+        <div class="sx-log"><span class="sl-av sm">NL</span><div class="grow"><b class="fw5">Nii</b> set exchange rate to <span class="mono">USD 1 = GHS 12.40</span><div class="mut sm">Yesterday, 17:02</div></div></div>
+        <div class="sx-log"><span class="sl-av sm">AS</span><div class="grow"><b class="fw5">Adwoa</b> edited the <b class="fw5">Arrived at warehouse</b> WhatsApp template<div class="mut sm">Nov 3, 11:15</div></div></div>
+        <div class="sx-log"><span class="sl-av sm">HC</span><div class="grow"><b class="fw5">Henry</b> added the role <b class="fw5">Night shift lead</b><div class="mut sm">Nov 2, 20:40</div></div></div>
+      </div>
+    </section>
+  </div>
+
+  <nav class="sx-tabs" aria-label="Setting categories"><a class="on" href="#st-all">All</a><sc-for list="{{groups}}" as="g" hint-placeholder-count="10"><a href="{{g.anchor}}">{{g.title}}</a></sc-for></nav>
+
+  <div class="sx-grid" id="st-all">
+    <sc-for list="{{groups}}" as="g" hint-placeholder-count="10">
+      <section class="sx-tile">
+        <div class="sx-th"><span class="tl"><i class="ic {{g.icon}}" aria-hidden="true"></i></span><div><b>{{g.title}}</b><small>{{g.desc}}</small></div></div>
+        <div class="sx-links"><sc-for list="{{g.top}}" as="it" hint-placeholder-count="7"><a href="{{it.href}}"><i class="ic ic-sm {{it.icon}}" aria-hidden="true"></i><span class="col" style="min-width:0"><span>{{it.label}}</span><small class="mut" style="font-size:12px">{{it.sub}}</small></span><span class="v">{{it.val}}</span></a></sc-for></div>
+        <div class="sx-ft"><span>{{g.count}} · {{g.more}}</span><a href="{{g.anchor}}">Open<i class="ic ic-sm i-right" aria-hidden="true"></i></a></div>
+      </section>
+    </sc-for>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+renderVals() {
+// group: title|icon|description ; items: label~icon~page~value
+const spec = [
+['Company And Brand|warehouse|Who the business is, how it reads, and what the public sees',
+ 'Company Profile~folder~SettingsHub~Swift Lane Logistics~Name, legal name, support contacts','Logo And Favicon~image~SettingsHub~SVG · 2 files~On labels, receipts, e-mails','Regional And Format~globe~SettingsHub~GMT · en-GH~Time zone, date and number format','Languages~globe~SettingsHub~4 on~English, French, Spanish, Arabic','Shipping Addresses~pin~ShippingAddresses~5 addresses~US, UK, China, Dubai warehouses','Login Page~image~LoginSettings~3 pictures · 50% blur~Slides behind sign-in','SEO Meta Tags~search~SettingsHub~Set~Title and description for search','FAQs And Public Site~help~PublicTracking~24 FAQs~Public tracking and help'],
+['Money And Pricing|dollar|What a shipment costs, and how it is paid for',
+ 'Exchange Rate~dollar~SettingsHub~USD 1 = GHS 12.40~Updated daily by Nii','Shipping Rates~receipt~Tariffs~Air · Sea~By lb and by cubic foot','Package Categories~box~Tariffs~10 categories~Extra cost, duty, insurance','Taxes And Measures~tag~Tariffs~VAT 15%~Tax rules and units (lb, cu ft)','Rate Editor~gauge~RateEditor~6 air · 6 sea~Bands, minimums, divisors','Payment Gateways~card~Payments~4 connected~Paystack, Stripe, Hubtel, bank','Payment API Keys~link~ApiConnections~Paystack live~Keys, webhooks and live checks','Send Package Prices~send~SendPrices~8 waiting~Price packages, send by SMS, WhatsApp, e-mail','Rider Fees And Split~truck~RiderSettings~65% / 60%~Split rule, zone fees, payouts, cash','Operating Costs~server~CostSettings~₵38,130 / mo~Servers, SMS, WhatsApp, e-mail'],
+['Operations|sliders|The clocks, gates and reference numbers the operation runs on',
+ 'References And Numbering~hash~SettingsHub~SL-100482~Shipment, invoice, consolidation prefixes','Default Shipping Info~newdoc~NewShipment~Air express~Default mode, branch, status','Carrier Settings~truck~NewIntegration~UPS · FedEx · DHL~Tracking pull every 30 min','Courier APIs~link~ApiConnections~FedEx failing~UPS, FedEx, DHL, USPS keys and checks','Rider Dispatch~truck~RiderDispatch~9 waiting~Assign packages and fees to riders','Pickup Codes~key~WarehouseDelivery~4 digits · 7 days~How codes are made and expire','Storage Rules~hourglass~PickupAging~Free 14 days~When storage fees start','Label Printing~print~LabelStudio~4×6 and 1×2~Label fields and printers','Automations~bolt~Automations~12 on~When this happens, do that'],
+['Catalogues|box|The lists every shipment form chooses from',
+ 'Office Groups~warehouse~SettingsHub~6 branches~Accra, Kumasi, Takoradi, Tema, Newark','Agency Groups~users~SettingsHub~3~Partner agents','Shipping Companies~truck~SettingsHub~9~Carriers that bring parcels in','Type Of Packages~box~SettingsHub~7~Box, envelope, barrel, pallet','Shipping Modes~route~Tariffs~Air · Sea~Modes customers can choose','Shipping Time~clock~SettingsHub~5 options~Delivery time options','Styles And Statuses~flag~SettingsHub~14 statuses~Names and colours of statuses','Logistics Service~grid~SettingsHub~4~Express, economy, LCL, FCL','Incoterms~receipt~SettingsHub~DAP · DDP~Trade terms','Shipping Lines~ship~SettingsHub~3~Maersk, MSC, CMA CGM'],
+['Locations|pin|Countries, states and cities',
+ 'Countries~globe~SettingsHub~12 on~Where you ship from and to','States And Regions~folder~SettingsHub~16 in Ghana~Regions for addresses','Cities~pin~SettingsHub~142~Cities for addresses','Delivery Zones~route~RiderDispatch~9 zones~Areas riders cover and their fees'],
+['Notifications|send|The channels messages leave by, and what they say',
+ 'All Notifications~bell~NotificationCenter~38 events~Edit every message the system sends','Email Delivery (SMTP)~mail~NewIntegration~Postmark · OK~Sending server','WhatsApp API~message~NewIntegration~Connected~Business number +233 30 255 0142','SMS API~phone~NewIntegration~Hubtel · OK~Sender ID SWIFTLANE','Email Templates~mail~NotificationCenter~14~Design and text','WhatsApp Templates~message~NotificationCenter~12 approved~Meta-approved messages','SMS Templates~message~NotificationCenter~12~Short messages','Newsletter~inbox~ComposeMessage~2,140 subscribers~News to customers'],
+['Access And Permissions|shield|Who may get in, who may do what, and which features exist at all',
+ 'Sign-In And Registration~logout~SignUp~WhatsApp OTP on~Sign-up fields and checks','Two-Step Sign-In~lock~SettingsHub~91% of staff~Codes by WhatsApp or SMS','Roles~key~StaffPermissions~6 roles~What each role can do','Staff~users~StaffRoles~46 of 50 seats~Everyone with an account','Modules~puzzle~ModuleController~24 on · 2 off~Switch features on or off','Money Visibility~eye~FinancialOverviewRestricted~Hidden for 30~Blur amounts for some roles','Profile Photos And Names~ai~AiStudio~AI studio~Retouch photos, fix names, icons','Access Requests~user~StaffPermissions~3 pending~People asking for more access','API Keys~key~ApiAccess~12 keys~Partner and developer access'],
+['Customer Service|ticket|Inbox, routing rules, automation and AI for support',
+ 'Channels And Teams~message~CsChannels~5 channels~WhatsApp, e-mail, chat, phone','Ticket Rules~sliders~CsRules~18 rules~Who gets which ticket','Playbook Skills~spark~CsPlaybook~9 skills~What the AI can do','AI API And Model~ai~ApiConnections~claude-sonnet-5-5~Key, model, monthly limit','AI Assistant~spark~CsAI~On~Answers and drafts','SLA Targets~clock~CsTicket~2 h first reply~Reply and solve times','Support Reports~chart~CsReports~Weekly~Volume and satisfaction'],
+['Developer|terminal|Services, environments, webhooks and release tooling',
+ 'Services~server~DevServices~12 · 2 degraded~Health of each service','Infrastructure~cloud~DevInfrastructure~Live~Servers, databases, overrides','Webhooks And Integrations~puzzle~DevIntegrations~14~Outside services','API Connections~link~ApiConnections~16 · 1 failing~Every outside API with live checks','Deployments~rocket~DevDeployments~v3.8.0~Releases and change log','Alert Rules~bell~DevAlerts~3 firing~When to page someone','Logs And Metrics~activity~DevLogs~7 days~Logs, traces, metrics','Usage And Billing~bolt~DevBilling~2 unpaid~Platform invoices'],
+['System|server|The installation itself',
+ 'Application Settings~folder~SettingsHub~v3.8.0~Version and environment','Configuration Log~clock~ActivityLogs~312 changes~Who changed what','System Logs~bug~SystemLogs~17 errors~Errors and cron jobs','Backup~database~DevInfrastructure~Daily 02:00~Database and files','Documents And Exports~file~Documents~1,204 files~Every file the system made','Design System~grid~DesignSystem~Warm Ledger~Colours, type, components']
+];
+const groups = spec.map(g => { const h = g[0].split('|'); return { title: h[0], icon: 'i-' + h[1], desc: h[2], items: g.slice(1).map(s => { const f = s.split('~'); return { label: f[0], icon: 'i-' + f[1], href: f[2] + '.dc.html', val: f[3], sub: f[4] || '' }; }) }; }).map(g => ({ ...g, top: g.items, more: 'all shown', count: g.items.length + ' settings', anchor: '#st-' + g.title.split(' ')[0].toLowerCase() }));
+return { groups };
+}
+}
+</script>
+</body>
+</html>

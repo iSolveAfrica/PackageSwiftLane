@@ -46,7 +46,14 @@ class Conexion
             $this->dbh = self::$sharedDbh;
             return;
         }
-        $dsn = 'mysql:host=' . $this->db_host . ';dbname=' . $this->db_name;
+        // CDP_DB_HOST may carry a port ("db.example.com:3307"); CDP_DB_PORT is also honoured.
+        $host = $this->db_host;
+        $port = defined('CDP_DB_PORT') ? (int) CDP_DB_PORT : 0;
+        if (strpos($host, ':') !== false && strpos($host, '/') === false) {
+            [$host, $p] = explode(':', $host, 2);
+            $port = (int) $p;
+        }
+        $dsn = 'mysql:host=' . $host . ($port > 0 ? ';port=' . $port : '') . ';dbname=' . $this->db_name . ';charset=utf8mb4';
         $options = array(
             PDO::ATTR_PERSISTENT => true,
             PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT

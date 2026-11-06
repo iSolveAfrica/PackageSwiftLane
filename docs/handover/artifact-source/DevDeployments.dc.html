@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Swift Lane Deployments</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./swiftlane.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}
+@keyframes lvp{0%{box-shadow:0 0 0 0 rgba(63,208,143,.55)}100%{box-shadow:0 0 0 9px rgba(63,208,143,0)}}
+@keyframes lvpy{0%{box-shadow:0 0 0 0 rgba(235,180,60,.55)}100%{box-shadow:0 0 0 9px rgba(235,180,60,0)}}
+@keyframes inA{from{opacity:0;transform:translateY(-10px);background:rgba(63,208,143,.16)}to{opacity:1;transform:none}}
+@keyframes inB{from{opacity:0;transform:translateY(-10px);background:rgba(63,208,143,.16)}to{opacity:1;transform:none}}
+@keyframes flow{to{stroke-dashoffset:-20}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes stripes{to{background-position:28px 0}}
+@keyframes blink{50%{opacity:.35}}
+@keyframes popA{from{color:#5BE0A5}to{color:inherit}}@keyframes popB{from{color:#5BE0A5}to{color:inherit}}
+.live{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 12px;border-radius:999px;background:var(--green-bg);color:var(--green-ink);font-size:13px;font-weight:500}
+.live.off{background:var(--active);color:var(--muted)}
+.ld{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;flex:none;animation:lvp 1.6s infinite}
+.ld.y{background:var(--yellow);animation-name:lvpy}.ld.r{background:var(--red);animation:blink 1s infinite}.ld.g{background:var(--faint);animation:none}
+.off .ld{animation:none;background:var(--faint)}
+.ik{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border-radius:16px;border:1px solid var(--line);background:var(--card);min-width:0}
+.ik .t{font-size:13px;color:var(--ink-2);display:flex;align-items:center;gap:8px}.ik .v{font:500 26px var(--mono);letter-spacing:-.02em}.ik .v small{font:400 13px var(--font);color:var(--muted);margin-left:4px}
+.ik svg{width:100%;height:40px;display:block}.ik path{transition:d .9s ease}
+.va{animation:popA .9s}.vb{animation:popB .9s}
+.topo{width:100%;height:auto;display:block}
+.topo .e{fill:none;stroke:#343849;stroke-width:1.4}
+.topo .e.f{stroke:#4A4F66;stroke-dasharray:3 7;animation:flow 1.1s linear infinite}
+.topo .e.w{stroke:#8A6A24;stroke-dasharray:3 7;animation:flow 2.4s linear infinite}
+.topo .n rect{fill:#242735;stroke:#3B3F52;stroke-width:1}.topo .n.w rect{stroke:#EBB43C;stroke-dasharray:4 3}
+.topo .n text{fill:#F3F2EE;font:500 12px Figtree,sans-serif}.topo .n text.s{fill:#8F91A2;font:400 10.5px 'JetBrains Mono',monospace}
+.topo .col{fill:#8F91A2;font:500 10.5px Figtree,sans-serif;letter-spacing:.06em;text-transform:uppercase}
+.nodeg{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(200px,100%),1fr));gap:12px}
+.nd{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--field)}
+.nd.w{border-color:rgba(235,180,60,.5)}
+.mt{display:grid;grid-template-columns:38px 1fr 40px;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.mt b{font:500 12px var(--mono);color:var(--ink-2);text-align:right}
+.hb{height:6px;border-radius:99px;background:var(--active);overflow:hidden}.hb span{display:block;height:100%;border-radius:99px;background:#6B6F86;transition:width .9s ease}
+.hb.y span{background:var(--yellow)}.hb.r span{background:var(--red)}.hb.g span{background:var(--green)}
+.prog{height:8px;border-radius:99px;background:var(--active);overflow:hidden}.prog span{display:block;height:100%;border-radius:99px;background:var(--green);transition:width 1s ease}
+.prog.run span{background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.2) 0 7px,transparent 7px 14px);background-size:28px 100%;animation:stripes .8s linear infinite}
+.feed{display:flex;flex-direction:column}
+.fe{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:start;padding:10px 4px;border-top:1px solid var(--line);font-size:13.5px}
+.fe:first-child{border-top:0}.fe.ev-a{animation:inA .8s ease}.fe.ev-b{animation:inB .8s ease}
+.fe .ico{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;background:var(--active)}
+.fe .ico.g{background:var(--green-bg);color:var(--green-ink)}.fe .ico.y{background:var(--amber-bg);color:var(--amber-ink)}.fe .ico.b{background:var(--sky-bg);color:var(--sky-ink)}.fe .ico.r{background:var(--red-bg);color:var(--red-ink)}
+.kvr{display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:38px;border-top:1px solid var(--line);font-size:13.5px}.kvr:first-of-type{border-top:0}
+.spin{animation:spin 1s linear infinite;display:inline-block}
+.cron{display:grid;grid-template-columns:1fr 92px 120px;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line);font-size:13.5px}.cron:first-of-type{border-top:0}
+.reg{display:grid;grid-template-columns:auto 1fr auto auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line);font-size:13.5px}.reg:first-of-type{border-top:0}
+.tail{background:#0E1017;border:1px solid var(--line);border-radius:12px;padding:10px 14px;font:12px/1.75 var(--mono);color:var(--ink-2);height:168px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end}
+.tail .ln{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tail .ln.ev-a{animation:inA .6s}.tail .ln.ev-b{animation:inB .6s}
+.tail .k{color:#86B1FA}.tail .ok{color:#5BE0A5}.tail .w{color:#F0C25A}
+.cl{display:flex;flex-direction:column;gap:0}
+.cv{border-top:1px solid var(--line);padding:14px 0}.cv:first-child{border-top:0}
+.cvh{display:flex;align-items:center;gap:10px;flex-wrap:wrap;cursor:pointer;background:none;border:0;color:inherit;font:inherit;padding:0;width:100%;text-align:left}
+.ce{display:grid;grid-template-columns:86px 1fr auto;gap:10px;align-items:center;padding:7px 0 7px 34px;font-size:13.5px}
+.ct{display:inline-flex;justify-content:center;height:22px;align-items:center;border-radius:6px;font-size:11.5px;font-weight:500;padding:0 8px}
+.ct.add{background:var(--green-bg);color:var(--green-ink)}.ct.chg{background:var(--sky-bg);color:var(--sky-ink)}.ct.fix{background:var(--amber-bg);color:var(--amber-ink)}.ct.rem{background:var(--red-bg);color:var(--red-ink)}.ct.sec{background:var(--violet-bg);color:var(--violet-ink)}
+.envc{display:flex;flex-direction:column;gap:10px;padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
+.mx td.dr{color:var(--amber-ink)}
+.stp{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;font-size:13px;text-align:center;position:relative}
+.stp .dot{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--green);color:#0C1A12}
+.stp.run .dot{background:var(--yellow);color:#1A1405;animation:lvpy 1.4s infinite}.stp.todo .dot{background:var(--active);color:var(--muted)}
+.stp::after{content:"";position:absolute;top:15px;left:calc(50% + 20px);right:calc(-50% + 20px);height:2px;background:var(--green)}
+.stp.run::after,.stp.todo::after{background:var(--line-2)}.stp:last-child::after{display:none}
+.tl{display:flex;flex-direction:column}
+.tlr{display:grid;grid-template-columns:22px 150px 1fr 120px 110px 90px;gap:12px;align-items:center;padding:11px 16px;border-top:1px solid var(--line);font-size:13.5px}
+.tlr .dt{width:10px;height:10px;border-radius:50%;background:var(--green);justify-self:center}
+.tlr .dt.y{background:var(--yellow)}.tlr .dt.r{background:var(--red)}.tlr .dt.b{background:var(--sky)}
+
+.al-row{display:grid;grid-template-columns:28px 1fr 170px 90px 110px;gap:12px;align-items:center;padding:12px 4px;border-top:1px solid var(--line)}
+.al-row:first-child{border-top:0}.al-row.ev-a{animation:inA .8s}.al-row.ev-b{animation:inB .8s}
+.al-sev{width:28px;height:28px;border-radius:50%;display:grid;place-items:center}
+.al-sev.c{background:var(--red-bg);color:var(--red-ink);animation:blink 1.2s infinite}.al-sev.w{background:var(--amber-bg);color:var(--amber-ink)}.al-sev.k{background:var(--active);color:var(--muted)}
+.al-meter{position:relative;height:8px;border-radius:99px;background:var(--active)}.al-meter span{position:absolute;left:0;top:0;bottom:0;border-radius:99px;transition:width .9s ease}.al-meter i{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink-2)}
+.mon{display:flex;flex-direction:column;gap:6px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+.mon svg{width:100%;height:46px;display:block}
+.hs{display:grid;grid-template-columns:repeat(48,1fr);gap:2px}.hs i{height:22px;border-radius:3px;background:var(--active)}.hs i.w{background:var(--amber-bg)}.hs i.c{background:var(--red-bg)}.hs i.now{outline:1.5px solid var(--ink-2)}
+@keyframes grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+.sl-card .grow[style*="height"]{transform-origin:bottom;animation:grow 1s cubic-bezier(.2,.8,.2,1) both}
+.dl-bar{animation:none}
+</style>
+</helmet>
+<div class="sl-app dk">
+  <input type="checkbox" id="navtg" class="nav-tg" aria-hidden="true" tabindex="-1">
+  <header class="sl-top">
+    <label class="sl-ib nav-open" for="navtg" aria-label="Open or close the menu" role="button" tabindex="0"><i class="ic i-sidebar" aria-hidden="true"></i></label>
+    <a class="sl-switch" href="Main.dc.html"><small>SL</small> Swift Lane · Accra Hub <i class="ic ic-sm i-down" aria-hidden="true"></i></a>
+    <a class="fx-chip" href="SettingsHub.dc.html" title="Exchange rate · set in Settings › General"><i class="ic ic-sm i-dollar" aria-hidden="true"></i><span class="mono">USD 1 = GHS 12.40</span><span class="fx-d">▲ 0.4%</span></a>
+    <span class="grow"></span>
+    <details class="aitop"><summary aria-label="Help with Swift Lane AI"><span class="o"><i class="ic i-ai" aria-hidden="true"></i></span>Help</summary><div class="pop" role="menu">
+<div class="me"><span class="sl-av sm dark">HC</span><div class="grow"><div class="fw5 sm">Henry Cobblah</div><div class="mut" style="font-size:12px">Operations manager · Accra Hub</div></div><a class="sl-btn sm ghost" href="AiStudio.dc.html">Edit</a></div>
+<a class="ask" href="StaffAI.dc.html"><i class="ic ic-sm i-spark" aria-hidden="true"></i>Ask AI for help on this page<b><i class="ic ic-sm i-send" aria-hidden="true"></i></b></a>
+<div class="hd">Your profile with AI</div>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-wand" aria-hidden="true"></i></span><span>Retouch my photo<small>Light, skin and background</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-refresh" aria-hidden="true"></i></span><span>Reset images<small>Go back to the original photo</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-edit" aria-hidden="true"></i></span><span>Change my name<small>AI fixes spelling and capitals</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-user" aria-hidden="true"></i></span><span>Make my icon<small>Avatar from your photo or initials</small></span></a>
+<div class="hd">Help</div>
+<a class="it" role="menuitem" href="StaffAI.dc.html"><span class="t"><i class="ic ic-sm i-help" aria-hidden="true"></i></span><span>Explain this page</span></a>
+<a class="it" role="menuitem" href="CsInbox.dc.html"><span class="t"><i class="ic ic-sm i-message" aria-hidden="true"></i></span><span>Talk to a person</span></a>
+</div></details>
+    <a class="sl-ib" aria-label="Notifications" href="Notifications.dc.html"><i class="ic i-bell" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Switch theme" href="SettingsHub.dc.html"><i class="ic i-sun" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Documents" href="Documents.dc.html"><i class="ic i-file" aria-hidden="true"></i></a>
+    <a class="sl-btn" href="DevDeployments.dc.html">Deploy</a>
+    <details class="uptop"><summary aria-label="Your profile and settings, Henry Cobblah"><span class="me-pic hc" style="width:34px;height:34px"><i class="me-on" aria-hidden="true"></i></span><span class="up-nm">Henry</span><i class="ic ic-sm i-down" aria-hidden="true"></i></summary><div class="pop" role="menu">
+<a class="up-me" href="AiStudio.dc.html"><span class="me-pic hc" style="width:48px;height:48px"><i class="me-on" aria-hidden="true"></i></span><span class="col" style="min-width:0"><b>Henry Cobblah</b><small>Operations manager · Accra Hub</small><small class="mono">henry@swiftlane.com</small></span></a>
+<div class="up-st"><span class="row g6 sm"><span class="ld" style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span>Available</span><a class="sm fw5" href="AiStudio.dc.html">Edit profile</a></div>
+<div class="up-h">Short links</div><div class="up-g"><a class="up-l" role="menuitem" href="Main.dc.html"><i class="ic ic-sm i-grid" aria-hidden="true"></i>Overview</a><a class="up-l" role="menuitem" href="RiderDispatch.dc.html"><i class="ic ic-sm i-truck" aria-hidden="true"></i>Dispatch board</a><a class="up-l" role="menuitem" href="SendPrices.dc.html"><i class="ic ic-sm i-send" aria-hidden="true"></i>Send prices</a><a class="up-l" role="menuitem" href="Reports.dc.html"><i class="ic ic-sm i-chart" aria-hidden="true"></i>Reports</a><a class="up-l" role="menuitem" href="Documents.dc.html"><i class="ic ic-sm i-file" aria-hidden="true"></i>Documents</a><a class="up-l" role="menuitem" href="ActivityLogs.dc.html"><i class="ic ic-sm i-clock" aria-hidden="true"></i>My activity</a></div>
+<div class="up-h">Settings</div><a class="up-l" role="menuitem" href="AiStudio.dc.html"><i class="ic ic-sm i-ai" aria-hidden="true"></i>Profile and photo</a><a class="up-l" role="menuitem" href="SettingsHub.dc.html"><i class="ic ic-sm i-cog" aria-hidden="true"></i>Settings</a><a class="up-l" role="menuitem" href="ApiConnections.dc.html"><i class="ic ic-sm i-link" aria-hidden="true"></i>API connections</a><a class="up-l" role="menuitem" href="StaffPermissions.dc.html"><i class="ic ic-sm i-shield" aria-hidden="true"></i>Permissions</a>
+<div class="up-row"><span class="sm mut">Theme</span><span class="sl-seg boxed" style="height:30px"><a class="on" href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Light</a><a href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Dark</a></span></div>
+<a class="up-l" role="menuitem" href="CsInbox.dc.html"><i class="ic ic-sm i-help" aria-hidden="true"></i>Help and support</a>
+<a class="up-l out" role="menuitem" href="Login.dc.html"><i class="ic ic-sm i-logout" aria-hidden="true"></i>Sign out</a>
+</div></details>
+  </header>
+  <div class="sl-body">
+    <label class="nav-bd" for="navtg" aria-hidden="true"></label>
+    <div class="sl-rail">
+      <a class="is-on" href="NewShipment.dc.html" aria-label="New shipment"><i class="ic i-newdoc" aria-hidden="true"></i></a>
+      <a href="StaffAI.dc.html" aria-label="AI assistant" title="AI assistant"><i class="ic i-ai" aria-hidden="true"></i></a>
+      <a href="PublicTracking.dc.html" aria-label="Tracking" title="Tracking"><i class="ic i-track" aria-hidden="true"></i></a>
+      <a href="LockerSearch.dc.html" aria-label="Search tracking number" title="Search tracking number"><i class="ic i-tsearch" aria-hidden="true"></i></a>
+      <a href="Consolidations.dc.html" aria-label="Consolidation" title="Consolidation"><i class="ic i-layers" aria-hidden="true"></i></a>
+      <a href="Warehouse.dc.html" aria-label="Warehouse" title="Warehouse"><i class="ic i-warehouse" aria-hidden="true"></i></a>
+      <a class="me-pic hc" href="AiStudio.dc.html" aria-label="Your profile, Henry Cobblah" style="width:34px;height:34px;margin-top:auto"></a>
+    </div>
+    <aside class="sl-side" aria-label="Main navigation">
+      <div class="nav-x"><span class="fw5">Menu</span><label class="sl-ib" for="navtg" aria-label="Close the menu" role="button" tabindex="0"><i class="ic i-x" aria-hidden="true"></i></label></div>
+      <sc-for list="{{nav}}" as="g" hint-placeholder-count="5">
+        <div class="sl-gl">{{g.label}}</div>
+        <nav class="sl-nav">
+          <sc-for list="{{g.items}}" as="it" hint-placeholder-count="4">
+            <a href="{{it.href}}" class="{{it.cls}}"><i class="ic {{it.icon}}" aria-hidden="true"></i><span>{{it.label}}</span><span class="cnt {{it.ok}}">{{it.c1}} <em>{{it.c2}}</em></span></a>
+          </sc-for>
+        </nav>
+      </sc-for>
+      <div class="sl-gl">Other</div>
+      <nav class="sl-nav">
+        <a href="SettingsHub.dc.html"><i class="ic i-globe" aria-hidden="true"></i><span>Language</span></a>
+        <a href="CsInbox.dc.html"><i class="ic i-help" aria-hidden="true"></i><span>Get help</span></a>
+        <a href="Login.dc.html" class="danger"><i class="ic i-logout" aria-hidden="true"></i><span>Sign out</span></a>
+      </nav>
+      <a class="me-card" href="AiStudio.dc.html" aria-label="Signed in as Henry Cobblah, Operations manager. Open your profile">
+        <span class="me-pic hc" role="img" aria-label="Photo of Henry Cobblah"><i class="me-on" aria-hidden="true"></i></span>
+        <span class="grow col" style="min-width:0"><b>Henry Cobblah</b><small>Operations manager · Accra Hub</small></span>
+        <i class="ic ic-sm i-more mut" aria-hidden="true"></i>
+      </a>
+      <a class="me-sub" href="CsInbox.dc.html"><i class="ic ic-sm i-ticket" aria-hidden="true"></i>Customer service<span class="sl-tag">12 open</span></a>
+    </aside>
+
+    <main class="sl-main">
+<div class="sl-wrap">
+<div class="sl-head"><div><h1 class="sl-title">Deployments</h1><p class="sl-lede">Every release tracked from commit to production, with a full change log</p></div><div class="row g8 wrap"><span class="live"><span class="ld"></span>Live · 1 deploy running · {{clockNow}}</span><span class="chipbtn"><i class="ic ic-sm i-cloud" aria-hidden="true"></i>All environments<i class="ic ic-sm i-down" aria-hidden="true"></i></span><button class="sl-btn ghost"><i class="ic ic-sm i-reply" aria-hidden="true"></i>Rollback</button><button class="sl-btn"><i class="ic ic-sm i-rocket" aria-hidden="true"></i>Deploy</button></div></div>
+<section class="sl-card col g16"><div class="sl-ch" style="margin:0"><div><h2 class="sl-ct row g8"><span class="ld y"></span>Now deploying · payments v2.9.4</h2><div class="mut sm">Commit 71c8e5a · “Retry Paystack webhooks with backoff” · Henry Cobblah · started {{started}}</div></div><span class="sl-pill onway">Canary {{canary}}</span></div>
+<div class="row" style="align-items:flex-start"><sc-for list="{{steps}}" as="s" hint-placeholder-count="6"><div class="stp {{s.cls}}"><span class="dot"><i class="ic ic-sm {{s.icon}}" aria-hidden="true"></i></span><b class="fw5">{{s.label}}</b><span class="mut sm">{{s.sub}}</span></div></sc-for></div>
+<div class="col g6"><div class="row between sm"><span class="mut">Traffic on new version</span><b class="mono">{{canary}}</b></div><div class="prog run"><span style="{{canaryW}}"></span></div><div class="row between mut sm"><span>Error rate on canary <b class="dv-ok mono">0.21%</b> · old version 0.40%</span><span>Auto-promote at 100% if errors stay under 1%</span></div></div>
+<div class="tail" aria-label="Deploy log"><sc-for list="{{tail}}" as="l" hint-placeholder-count="7"><div class="ln {{l.anim}}"><span class="mut">{{l.at}}</span> <span class="{{l.c}}">{{l.tag}}</span> {{l.t}}</div></sc-for></div>
+<div class="row g8 wrap"><button class="sl-btn sm">Promote to 100%</button><button class="sl-btn ghost sm">Pause rollout</button><button class="sl-btn ghost sm">View diff</button><button class="sl-btn ghost sm">Abort and roll back</button></div></section>
+<div class="grid cols4"><sc-for list="{{kpis}}" as="k" hint-placeholder-count="4"><div class="ik"><div class="t">{{k.label}}</div><div class="v {{k.flash}}">{{k.v}}<small>{{k.unit}}</small></div><div class="sm {{k.dc}}">{{k.d}}</div><svg viewBox="0 0 200 40" preserveAspectRatio="none" aria-hidden="true"><path d="{{k.area}}" fill="#E08A3C" opacity=".12"></path><path d="{{k.path}}" fill="none" stroke="#E08A3C" stroke-width="1.8" vector-effect="non-scaling-stroke"></path></svg></div></sc-for></div><div class="grid cols3"><sc-for list="{{envs}}" as="e" hint-placeholder-count="3"><div class="envc"><div class="row between"><span class="row g8"><span class="ld {{e.dot}}"></span><b class="fw5">{{e.name}}</b></span><span class="mut sm">{{e.url}}</span></div><div class="row between sm"><span class="mut">Last deploy</span><span>{{e.last}}</span></div><div class="row between sm"><span class="mut">Deploys this week</span><span class="mono">{{e.week}}</span></div><div class="row between sm"><span class="mut">Health</span><span class="{{e.hc}}">{{e.health}}</span></div></div></sc-for></div>
+<section class="sl-card flush"><div class="row between" style="padding:14px 16px"><div><h2 class="sl-ct">What is running where</h2><div class="mut sm">Versions per environment. Yellow means staging is ahead of production.</div></div></div><div class="sl-tw"><table class="sl-table mx"><thead><tr><th>Service</th><th>Production</th><th>Staging</th><th>Development</th><th>Last change</th></tr></thead><tbody>
+<sc-for list="{{matrix}}" as="m" hint-placeholder-count="8"><tr><td class="fw5">{{m.svc}}</td><td class="mono sm">{{m.p}}</td><td class="mono sm {{m.dr}}">{{m.s}}</td><td class="mono sm mut">{{m.d}}</td><td class="mut">{{m.last}}</td></tr></sc-for></tbody></table></div></section>
+<div class="split"><section class="a sl-card flush"><div class="row between wrap g8" style="padding:14px 16px"><div><h2 class="sl-ct">Deployment tracker</h2><div class="mut sm">{{depCount}} deployments shown · all services</div></div><div class="sl-seg boxed"><sc-for list="{{filters}}" as="f" hint-placeholder-count="5"><button class="{{f.cls}}" onClick="{{f.pick}}">{{f.label}}</button></sc-for></div></div>
+<div class="tl"><div class="tlr mut sm" style="border-top:0;padding-top:0"><span></span><span>Service</span><span>Change</span><span>By</span><span>Env · status</span><span>When</span></div>
+<sc-for list="{{deps}}" as="d" hint-placeholder-count="10"><div class="tlr"><span class="dt {{d.dc}}"></span><span class="col"><b class="fw5">{{d.svc}}</b><span class="mono sm mut">{{d.ver}} · {{d.sha}}</span></span><span class="col"><span>{{d.msg}}</span><span class="mut sm">{{d.dur}}</span></span><span class="row g6 sm"><span class="sl-av sm">{{d.ini}}</span>{{d.by}}</span><span class="col g4"><span class="sm">{{d.env}}</span><span class="sl-pill {{d.pc}}" style="align-self:flex-start">{{d.status}}</span></span><span class="mut sm">{{d.when}}</span></div></sc-for></div></section>
+<aside class="b col g16"><section class="sl-card col g12"><h2 class="sl-ct">Deploy frequency</h2><div class="row g6" style="align-items:flex-end;height:110px"><div class="grow" style="height:37%;background:var(--green);border-radius:4px 4px 0 0;opacity:.55"></div><div class="grow" style="height:62%;background:var(--green);border-radius:4px 4px 0 0;opacity:.55"></div><div class="grow" style="height:25%;background:var(--green);border-radius:4px 4px 0 0;opacity:.55"></div><div class="grow" style="height:50%;background:var(--green);border-radius:4px 4px 0 0;opacity:.55"></div><div class="grow" style="height:75%;background:var(--green);border-radius:4px 4px 0 0;opacity:.55"></div><div class="grow" style="height:50%;background:var(--green);border-radius:4px 4px 0 0;opacity:.55"></div><div class="grow" style="height:25%;background:var(--green);border-radius:4px 4px 0 0;opacity:.55"></div><div class="grow" style="height:62%;background:var(--green);border-radius:4px 4px 0 0;opacity:.55"></div><div class="grow" style="height:87%;background:var(--green);border-radius:4px 4px 0 0;opacity:.55"></div><div class="grow" style="height:37%;background:var(--green);border-radius:4px 4px 0 0;opacity:.55"></div><div class="grow" style="height:50%;background:var(--green);border-radius:4px 4px 0 0;opacity:.55"></div><div class="grow" style="height:75%;background:var(--green);border-radius:4px 4px 0 0;opacity:.55"></div><div class="grow" style="height:62%;background:var(--green);border-radius:4px 4px 0 0;opacity:.55"></div><div class="grow" style="height:100%;background:var(--green);border-radius:4px 4px 0 0;opacity:1"></div></div><div class="row between mbf"><span>Oct 22</span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span>Nov 4</span></div></section><section class="sl-card col g8"><h2 class="sl-ct">Rollbacks</h2><div class="kvr"><span>auth v2.14.1 → v2.14.0</span><span class="mut">Yesterday</span></div><div class="kvr"><span>tracking v1.39.0 → v1.38.4</span><span class="mut">Oct 28</span></div><div class="mut sm">Both rolled back within 4 minutes. No data lost.</div></section></aside></div>
+<section class="sl-card col g12"><div class="sl-ch" style="margin:0"><div><h2 class="sl-ct">Change log</h2><div class="mut sm">Every change in every release, newest first. {{changeCount}} changes.</div></div><div class="row g6 wrap"><sc-for list="{{types}}" as="ty" hint-placeholder-count="6"><button class="chipbtn" style="height:32px;{{ty.sty}}" onClick="{{ty.pick}}">{{ty.label}}</button></sc-for></div></div>
+<div class="cl"><sc-for list="{{log}}" as="v" hint-placeholder-count="6"><div class="cv"><button class="cvh" onClick="{{v.toggle}}"><i class="ic ic-sm {{v.chev}}" aria-hidden="true"></i><b class="fw5">{{v.svc}} {{v.ver}}</b><span class="sl-pill {{v.pc}}">{{v.env}}</span><span class="mut sm">{{v.date}} · {{v.by}} · {{v.n}} changes</span></button>
+<sc-if value="{{v.open}}" hint-placeholder-val="{{ true }}"><sc-for list="{{v.items}}" as="c" hint-placeholder-count="3"><div class="ce"><span class="ct {{c.cls}}">{{c.type}}</span><span>{{c.text}}</span><span class="mono sm mut">{{c.ref}}</span></div></sc-for></sc-if></div></sc-for></div></section>
+</div>
+</main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":3300}}'>
+const DEPS = [['payments','v2.9.4','71c8e5a','Retry Paystack webhooks with backoff','Henry Cobblah','HC','Production','Canary','onway','y','5m 44s · running','Now'],
+['shipments','v3.8.0','a4f91c2','Pre-alert matching by tracking number','Henry Cobblah','HC','Production','Success','delivered','','4m 02s','12 min ago'],
+['payments','v2.9.4','71c8e5a','Retry Paystack webhooks with backoff','Henry Cobblah','HC','Staging','Success','delivered','','3m 10s','1 h ago'],
+['api-gateway','v1.31.2','9be03d1','Rate limits per API key','Adwoa Sarpong','AS','Production','Success','delivered','','3m 18s','2 h ago'],
+['notifications','v1.22.0','2d6a8f0','WhatsApp templates editable','Nii Lamptey','NL','Staging','Success','delivered','','2m 51s','5 h ago'],
+['tracking','v1.40.2','c05b1e7','UPS and DHL status mapping','Adwoa Sarpong','AS','Production','Success','delivered','','3m 06s','Yesterday'],
+['auth','v2.14.1','e83f4b9','Session timeout 12 h','Henry Cobblah','HC','Production','Rolled back','pending','r','2m 29s','Yesterday'],
+['customer-service','v0.9.0','5a1d7c3','Ticket SLA timers and side conversations','Efia Manu','EM','Staging','Success','delivered','','3m 33s','2 days ago'],
+['warehouse','v2.3.1','b71e02a','Pickup codes on 1×2 labels','Kojo Appiah','KA','Production','Success','delivered','','2m 40s','2 days ago'],
+['ai-assistant','v0.6.2','f1c9a44','Package lookup from tracking number','Kojo Appiah','KA','Development','Failed','pending','r','1m 12s','3 days ago'],
+['shipments','v3.7.2','8d03b5e','Fix consolidation weight rounding','Nii Lamptey','NL','Production','Success','delivered','','3m 58s','Nov 1'],
+['tracking','v1.39.0','44a0d7c','New carrier poller','Adwoa Sarpong','AS','Production','Rolled back','pending','r','3m 01s','Oct 28']];
+const LOG = [['payments','v2.9.4','Production canary','onway','Nov 5','Henry Cobblah',[['fix','Fixed','Paystack webhooks retried with backoff instead of dropped','#482'],['add','Added','Mobile money payment links for customs duty','#479'],['chg','Changed','Receipts show Paid or Not paid in the header','#476']]],
+['shipments','v3.8.0','Production','delivered','Nov 5','Henry Cobblah',[['add','Added','Pre-alert matching by tracking number','#471'],['add','Added','Consolidation manifest PDF','#468'],['chg','Changed','Faster locker search (420 ms → 90 ms)','#466'],['rem','Removed','Legacy tariff v1 API','#460']]],
+['api-gateway','v1.31.2','Production','delivered','Nov 5','Adwoa Sarpong',[['add','Added','Rate limits per API key','#458'],['sec','Security','API keys hashed at rest','#457']]],
+['notifications','v1.22.0','Staging','transit','Nov 5','Nii Lamptey',[['add','Added','Edit SMS, e-mail and WhatsApp templates in Notification Center','#455'],['fix','Fixed','Duplicate pickup reminders','#452']]],
+['tracking','v1.40.2','Production','delivered','Nov 4','Adwoa Sarpong',[['chg','Changed','UPS and DHL statuses mapped to Swift Lane stages','#449'],['fix','Fixed','Tracking page timeout for FedEx numbers','#447']]],
+['auth','v2.14.1','Rolled back','pending','Nov 4','Henry Cobblah',[['chg','Changed','Session timeout from 8 h to 12 h','#445'],['sec','Security','OTP codes expire after 5 minutes','#444']]],
+['customer-service','v0.9.0','Staging','transit','Nov 3','Efia Manu',[['add','Added','SLA timers, collision notice and side conversations on tickets','#440'],['add','Added','Customer 360 page','#438']]],
+['warehouse','v2.3.1','Production','delivered','Nov 3','Kojo Appiah',[['add','Added','Pickup codes on 1×2 labels','#433'],['fix','Fixed','Shelf scan double counting','#431']]]];
+const MATRIX = [['shipments','v3.8.0','v3.8.0','v3.9.0-dev','12 min ago'],['payments','v2.9.3 + canary v2.9.4','v2.9.4','v2.10.0-dev','Now'],['tracking','v1.40.2','v1.40.2','v1.41.0-dev','Yesterday'],['notifications','v1.21.4','v1.22.0','v1.22.0','5 h ago'],['auth','v2.14.0','v2.14.1','v2.15.0-dev','Yesterday'],['api-gateway','v1.31.2','v1.31.2','v1.32.0-dev','2 h ago'],['customer-service','v0.8.3','v0.9.0','v0.9.1-dev','2 days ago'],['warehouse','v2.3.1','v2.3.1','v2.4.0-dev','2 days ago']];
+const TAIL = [['k','build','Pulled image payments:2.9.4'],['ok','health','Pod payments-7f9c ready (3/3)'],['k','canary','Traffic split updated'],['ok','check','Error rate 0.21% under 1% budget'],['ok','check','p95 latency 176 ms under 300 ms'],['w','webhook','Paystack retry #2 succeeded for evt_8812'],['k','canary','Watching for 5 more minutes'],['ok','db','No migrations in this release']];
+class Component extends DCLogic {
+constructor(p) { super(p); this.state = { t: 0, f: 'all', ty: 'all', open: { 0: true, 1: true } }; if (typeof window !== 'undefined') { this._iv = setInterval(() => this.setState({ t: this.state.t + 1 }), 2000); } }
+componentWillUnmount() { clearInterval(this._iv); }
+renderVals() {
+const A = 'devdep';
+const N = 'Operations|dash~Overview~grid~~~Main;panels~Control Panels~gauge~~~ControlPanels;air~Air Shipments~plane~128~~AirShipments;sea~Sea Packages~ship~64~~SeaPackages;prealert~Pre-Alerts~inbox~9~~PreAlerts;pickup~Pickups~truck~12~/ 20~Pickups;dtrack~Delivery Tracking~route~5~~DeliveryTracking;shiptrack~Shipment Tracking~track~~~ShipmentTracking;consol~Consolidations~layers~7~~Consolidations;warehouse~Warehouse~warehouse~~~Warehouse;handout~Hand Out Packages~box~5~~HandOut;locker~Locker Search~lock~~~LockerSearch#Hubs|execdash~Management Dashboard~chart~~~ExecDashboard;billhub~Billing & Finance~dollar~~~BillingHub;lastmile~Last-Mile Delivery~truck~~~LastMile;aicenter~AI Centre~ai~~~AiCenter;commshub~Messages & Automation~message~~~CommsHub;supporthub~Support & CRM~ticket~~~SupportHub;loyalty~Loyalty & Referrals~star~~~LoyaltyRewards;security~Security & Reliability~shield~~~SecurityCenter#Freight|frhub~Freight Hub~plane~~~FreightHub;frsched~Departures & Arrivals~calendar~5~~FreightSchedule;frwb~Waybills & Manifests~file~~~Waybills;frex~Cargo Exceptions~alert~6~~CargoExceptions;frins~Insurance & Claims~shield~4~~InsuranceClaims;frpart~Freight Partners~users~~~FreightPartners#People|cust~Customers~users~1,284~~Customers;recip~Recipients~pin~~~Recipients;drivers~Drivers~wheel~8~/ 14~Drivers;drvapp~Rider App~phone~~~DriverApp;staff~Staff & Roles~shield~~~StaffRoles#Finance|pay~Payments~card~~~Payments;ar~Accounts Receivable~receipt~~~AccountsReceivable;fin~Financial Overview~dollar~$48,200~~FinancialOverview#Insights|reports~Reports~chart~~~Reports;activity~Activity Logs~clock~~~ActivityLogs;messages~Message Logs~archive~~~MessageLogs#Customer Service|tickets~Support Inbox~ticket~1,482~~CsInbox;csrules~Ticket Rules~filter~~~CsRules;playbook~Playbook~book~~~CsPlaybook;csrep~Support Reports~star~~~CsReports;cschan~Channels & Teams~message~~~CsChannels;csai~AI Assistant~ai~~~StaffAI;cssupai~AI for Customers~spark~~~CsAI#Developer|devov~Dev Overview~terminal~~~DevOverview;devsvc~Services~server~12~~DevServices;devlogs~Logs~activity~~~DevLogs;devmet~Metrics~cpu~~~DevMetrics;devinfra~Infrastructure~cloud~~~DevInfrastructure;devdep~Deployments~rocket~~~DevDeployments;devalert~Alerts~alert~3~~DevAlerts;devissues~Issues & Change Log~bug~8~~DevIssues;devint~Integrations~puzzle~~~DevIntegrations#Settings|general~General~cog~~~SettingsHub;apis~API Connections~link~16~~ApiConnections;apitraffic~Live API Traffic~activity~~~ApiTraffic;tariffs~Shipping Tariffs~tag~~~Tariffs;notifc~Notifications~bell~3~~NotificationCenter;ebuild~Email Builder~mail~~~EmailBuilder;msgtpl~SMS & WhatsApp~message~~~MessageTemplates;bcast~Push Notifications~send~~~Broadcast;costs~Operating Costs~dollar~~~CostSettings;addr~Shipping Addresses~pin~~~ShippingAddresses;rfees~Rider Fees~truck~~~RiderSettings;loginpg~Login Page~image~~~LoginSettings;devmod~Modules~sliders~~~ModuleController;perm~Permissions~key~~~StaffPermissions;lblstudio~Label Printing~print~~~LabelStudio;auto~Automations~bolt~~~Automations';
+const nav = N.split('#').map(g => { const p = g.split('|'); return { label: p[0], items: p[1].split(';').map(i => { const f = i.split('~'); return { href: f[5] + '.dc.html', label: f[1], icon: 'i-' + f[2], c1: f[3], c2: f[4], cls: f[0] === A ? 'is-active' : '', ok: f[0] === 'fin' ? 'ok' : '' }; }) }; });
+  const s = this.state, t = s.t;
+  const wave = (x, i, a) => Math.sin(x * 0.9 + i * 1.7) * a + Math.sin(x * 0.37 + i) * a * 0.6;
+  const sp = (arr) => { const lo = Math.min(...arr) - 1, hi = Math.max(...arr) + 1; const p = arr.map((v, i) => (i ? 'L' : 'M') + (i * 200 / (arr.length - 1)).toFixed(1) + ',' + (38 - (v - lo) / (hi - lo) * 34).toFixed(1)).join(' '); return { p, a: p + ' L200,40 L0,40 Z' }; };
+  const KD = [['Deploys this week', '', 14 + Math.floor(t / 15), 3, 'dv-ok', '▲ 3 vs last week'], ['Success rate', '%', 96, 1.5, 'dv-ok', '1 rollback this week'], ['Lead time', 'min', 38, 5, 'dv-ok', '▼ 6 min'], ['Time to restore', 'min', 12, 3, 'dv-info', 'Last incident Nov 2']];
+  const kpis = KD.map((k, i) => { const arr = Array.from({ length: 24 }, (_, j) => k[2] + wave(t - 23 + j, i, k[3])); const q = sp(arr); return { label: k[0], unit: k[1], v: i === 0 ? k[2] : arr[23].toFixed(i === 1 ? 1 : 0), dc: k[4], d: k[5], path: q.p, area: q.a, flash: t % 2 ? 'va' : 'vb' }; });
+  const clockNow = new Date(Date.UTC(2026, 10, 5, 21, 30, 0) + t * 2000).toISOString().slice(11, 19);
+  const can = 20 + (t % 40) * 2;
+  const st = [['i-git', 'Commit', '71c8e5a'], ['i-cog', 'Build', '1m 12s'], ['i-check', 'Tests', '412 passed'], ['i-cloud', 'Staging', 'Healthy'], ['i-user', 'Approval', 'Adwoa Sarpong'], ['i-rocket', 'Production', 'Canary ' + can + '%']];
+  const steps = st.map((x, i) => ({ icon: x[0], label: x[1], sub: x[2], cls: i === 5 ? 'run' : '' }));
+  const clock = (back) => { const d = new Date(Date.UTC(2026, 10, 5, 21, 30, 0) + (t * 2 - back * 3) * 1000); return d.toISOString().slice(11, 19); };
+  const tail = Array.from({ length: 7 }, (_, i) => { const l = TAIL[(t + 6 - i + 800) % TAIL.length]; return { c: l[0], tag: '[' + l[1] + ']', t: l[2].replace('Traffic split updated', 'Traffic split ' + Math.max(20, can - i * 2) + '% new / ' + (100 - Math.max(20, can - i * 2)) + '% old'), at: clock(i), anim: i === 0 ? (t % 2 ? 'ev-a' : 'ev-b') : '' }; }).reverse();
+  const F = [['all', 'All'], ['Production', 'Production'], ['Staging', 'Staging'], ['Rolled back', 'Rolled back'], ['Failed', 'Failed']];
+  const shown = DEPS.filter(d => s.f === 'all' || d[6] === s.f || d[7] === s.f);
+  const deps = shown.map(d => ({ svc: d[0], ver: d[1], sha: d[2], msg: d[3], by: d[4], ini: d[5], env: d[6], status: d[7] === 'Canary' ? 'Canary ' + can + '%' : d[7], pc: d[8], dc: d[9], dur: d[10], when: d[11] }));
+  const TY = [['all', 'All'], ['add', 'Added'], ['chg', 'Changed'], ['fix', 'Fixed'], ['rem', 'Removed'], ['sec', 'Security']];
+  const log = LOG.map((v, i) => { const items = v[6].filter(c => s.ty === 'all' || c[0] === s.ty); return { v, i, items }; }).filter(x => x.items.length).map(({ v, i, items }) => ({ svc: v[0], ver: v[1], env: v[2], pc: v[3], date: v[4], by: v[5], n: items.length, open: !!s.open[i], chev: s.open[i] ? 'i-down' : 'i-right', toggle: () => this.setState({ open: { ...this.state.open, [i]: !this.state.open[i] } }), items: items.map(c => ({ cls: c[0], type: c[1], text: c[2], ref: c[3] })) }));
+  return { nav, kpis, clockNow, steps, tail, canary: can + '%', canaryW: 'width:' + can + '%', started: '6 min ago',
+    envs: [{ name: 'Production', url: 'swiftlane.com', last: 'payments · now', week: '9', health: 'Healthy', hc: 'dv-ok', dot: '' }, { name: 'Staging', url: 'staging.swiftlane.com', last: 'payments · 1 h ago', week: '17', health: 'Healthy', hc: 'dv-ok', dot: '' }, { name: 'Development', url: 'dev.swiftlane.com', last: 'ai-assistant · failed', week: '31', health: '1 failed build', hc: 'dv-warn', dot: 'y' }],
+    matrix: MATRIX.map(m => ({ svc: m[0], p: m[1], s: m[2], d: m[3], last: m[4], dr: m[1] !== m[2] ? 'dr' : '' })),
+    filters: F.map(f => ({ label: f[1], cls: s.f === f[0] ? 'on' : '', pick: () => this.setState({ f: f[0] }) })), deps, depCount: deps.length,
+    types: TY.map(x => ({ label: x[1], sty: s.ty === x[0] ? 'background:var(--active);border-color:var(--ink-2)' : '', pick: () => this.setState({ ty: x[0] }) })),
+    log, changeCount: LOG.reduce((a, v) => a + v[6].length, 0) };
+}
+}
+</script>
+</body>
+</html>

@@ -38,7 +38,13 @@
         }
 
        
-      include('views/customers/customers_list.php');     
+      require_once 'helpers/sl_view.php';
+      require_once 'views/sl/data/customers.php';
+      if (($_GET['export'] ?? '') === 'csv') {
+          require 'views/sl/export/customers_csv.php';
+          exit;
+      }
+      sl_render('Customers', ['id' => 'cust', 'title' => 'Customers', 'board' => 'Customers'], sl_customersData($user, $core));     
            
 
     } else{

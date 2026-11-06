@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Swift Lane Dispatch Board</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./swiftlane.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}
+.rd-k{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
+.rd-k b{font:600 24px/1.15 var(--font);letter-spacing:-.02em;font-variant-numeric:tabular-nums}.rd-k b.va{animation:rdA .9s}.rd-k b.vb{animation:rdB .9s}@keyframes rdA{from{color:var(--green-ink)}to{color:var(--ink)}}@keyframes rdB{from{color:var(--green-ink)}to{color:var(--ink)}}
+.rd-new{animation:rdIn .8s ease}@keyframes rdIn{from{opacity:0;transform:translateY(-10px);background:var(--green-bg)}to{opacity:1;transform:none}}
+.rd-live{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:999px;background:var(--green-bg);color:var(--green-ink);font-size:12.5px;font-weight:500}.rd-ld{width:8px;height:8px;border-radius:50%;background:var(--green);animation:rdP 1.6s infinite}@keyframes rdP{0%{box-shadow:0 0 0 0 rgba(14,173,120,.5)}100%{box-shadow:0 0 0 8px rgba(14,173,120,0)}}
+.rd-st{font-size:11.5px;font-weight:500;padding:2px 7px;border-radius:6px;background:var(--active)}.rd-st.go{background:var(--amber-bg);color:var(--amber-ink)}.rd-st.ok{background:var(--green-bg);color:var(--green-ink)}
+.rd-pb{height:6px;border-radius:99px;background:var(--active);overflow:hidden}.rd-pb i{display:block;height:100%;background:var(--ink);transition:width .8s ease}.rd-k small{color:var(--muted);font-size:12.5px}
+.rd-split{display:flex;height:12px;border-radius:99px;overflow:hidden;gap:2px}.rd-split i{display:block}.rd-split .r{background:#A9A59C}.rd-split .s{background:var(--ink)}
+.rd-code{display:inline-flex;align-items:center;height:26px;padding:0 9px;border-radius:7px;background:var(--active);font:600 13px var(--mono);letter-spacing:.12em}
+.rd-col{display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid var(--line);border-radius:16px;background:var(--card);min-width:0}
+.rd-pk{display:grid;grid-template-columns:1fr auto;gap:4px 10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--field);font-size:13px}
+.rd-chip{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 10px;border-radius:999px;border:1px solid var(--line-2);background:var(--card);font:500 12.5px var(--font);color:var(--ink);cursor:pointer}
+.rd-chip.on{background:var(--ink);color:var(--inverse);border-color:var(--ink)}
+.rd-fee{width:84px;height:32px;border:1px solid var(--line-2);border-radius:8px;background:var(--field);font:500 13px var(--mono);text-align:right;padding:0 8px;color:var(--ink)}
+.rd-tl{display:flex;flex-direction:column}
+.rd-ev{display:grid;grid-template-columns:56px 28px 1fr;gap:10px;padding:9px 0;position:relative;font-size:13.5px}
+.rd-ev:not(:last-child)::after{content:"";position:absolute;left:69px;top:36px;bottom:-6px;width:2px;background:var(--line)}
+.rd-ev .t{font:12px var(--mono);color:var(--muted);padding-top:6px}
+.rd-ev .d{width:28px;height:28px;border-radius:50%;background:var(--active);display:grid;place-items:center;position:relative;z-index:1}
+.rd-ev .d.g{background:var(--green-bg);color:var(--green-ink)}.rd-ev .d.y{background:var(--amber-bg);color:var(--amber-ink)}.rd-ev .d.r{background:var(--red-bg);color:var(--red-ink)}
+.rd-map{position:relative;height:230px;border-radius:16px;overflow:hidden;background:var(--active)}
+@keyframes rdmv{0%{offset-distance:0%}100%{offset-distance:100%}}
+.rd-bars{display:flex;align-items:flex-end;gap:5px;height:120px}.rd-bars i{flex:1;background:#D6D2CA;border-radius:4px 4px 0 0}.rd-bars i.hi{background:#8E8A82}
+</style>
+</helmet>
+<div class="sl-app">
+  <input type="checkbox" id="navtg" class="nav-tg" aria-hidden="true" tabindex="-1">
+  <header class="sl-top">
+    <label class="sl-ib nav-open" for="navtg" aria-label="Open or close the menu" role="button" tabindex="0"><i class="ic i-sidebar" aria-hidden="true"></i></label>
+    <a class="sl-switch" href="Main.dc.html"><small>SL</small> Swift Lane · Accra Hub <i class="ic ic-sm i-down" aria-hidden="true"></i></a>
+    <a class="fx-chip" href="SettingsHub.dc.html" title="Exchange rate · set in Settings › General"><i class="ic ic-sm i-dollar" aria-hidden="true"></i><span class="mono">USD 1 = GHS 12.40</span><span class="fx-d">▲ 0.4%</span></a>
+    <span class="grow"></span>
+    <details class="aitop"><summary aria-label="Help with Swift Lane AI"><span class="o"><i class="ic i-ai" aria-hidden="true"></i></span>Help</summary><div class="pop" role="menu">
+<div class="me"><span class="sl-av sm dark">HC</span><div class="grow"><div class="fw5 sm">Henry Cobblah</div><div class="mut" style="font-size:12px">Operations manager · Accra Hub</div></div><a class="sl-btn sm ghost" href="AiStudio.dc.html">Edit</a></div>
+<a class="ask" href="StaffAI.dc.html"><i class="ic ic-sm i-spark" aria-hidden="true"></i>Ask AI for help on this page<b><i class="ic ic-sm i-send" aria-hidden="true"></i></b></a>
+<div class="hd">Your profile with AI</div>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-wand" aria-hidden="true"></i></span><span>Retouch my photo<small>Light, skin and background</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-refresh" aria-hidden="true"></i></span><span>Reset images<small>Go back to the original photo</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-edit" aria-hidden="true"></i></span><span>Change my name<small>AI fixes spelling and capitals</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-user" aria-hidden="true"></i></span><span>Make my icon<small>Avatar from your photo or initials</small></span></a>
+<div class="hd">Help</div>
+<a class="it" role="menuitem" href="StaffAI.dc.html"><span class="t"><i class="ic ic-sm i-help" aria-hidden="true"></i></span><span>Explain this page</span></a>
+<a class="it" role="menuitem" href="CsInbox.dc.html"><span class="t"><i class="ic ic-sm i-message" aria-hidden="true"></i></span><span>Talk to a person</span></a>
+</div></details>
+    <a class="sl-ib" aria-label="Notifications" href="Notifications.dc.html"><i class="ic i-bell" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Switch theme" href="SettingsHub.dc.html"><i class="ic i-sun" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Documents" href="Documents.dc.html"><i class="ic i-file" aria-hidden="true"></i></a>
+    <a class="sl-btn" href="RiderDispatch.dc.html">Dispatch board</a>
+    <details class="uptop"><summary aria-label="Your profile and settings, Henry Cobblah"><span class="me-pic hc" style="width:34px;height:34px"><i class="me-on" aria-hidden="true"></i></span><span class="up-nm">Henry</span><i class="ic ic-sm i-down" aria-hidden="true"></i></summary><div class="pop" role="menu">
+<a class="up-me" href="AiStudio.dc.html"><span class="me-pic hc" style="width:48px;height:48px"><i class="me-on" aria-hidden="true"></i></span><span class="col" style="min-width:0"><b>Henry Cobblah</b><small>Operations manager · Accra Hub</small><small class="mono">henry@swiftlane.com</small></span></a>
+<div class="up-st"><span class="row g6 sm"><span class="ld" style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span>Available</span><a class="sm fw5" href="AiStudio.dc.html">Edit profile</a></div>
+<div class="up-h">Short links</div><div class="up-g"><a class="up-l" role="menuitem" href="Main.dc.html"><i class="ic ic-sm i-grid" aria-hidden="true"></i>Overview</a><a class="up-l" role="menuitem" href="RiderDispatch.dc.html"><i class="ic ic-sm i-truck" aria-hidden="true"></i>Dispatch board</a><a class="up-l" role="menuitem" href="SendPrices.dc.html"><i class="ic ic-sm i-send" aria-hidden="true"></i>Send prices</a><a class="up-l" role="menuitem" href="Reports.dc.html"><i class="ic ic-sm i-chart" aria-hidden="true"></i>Reports</a><a class="up-l" role="menuitem" href="Documents.dc.html"><i class="ic ic-sm i-file" aria-hidden="true"></i>Documents</a><a class="up-l" role="menuitem" href="ActivityLogs.dc.html"><i class="ic ic-sm i-clock" aria-hidden="true"></i>My activity</a></div>
+<div class="up-h">Settings</div><a class="up-l" role="menuitem" href="AiStudio.dc.html"><i class="ic ic-sm i-ai" aria-hidden="true"></i>Profile and photo</a><a class="up-l" role="menuitem" href="SettingsHub.dc.html"><i class="ic ic-sm i-cog" aria-hidden="true"></i>Settings</a><a class="up-l" role="menuitem" href="ApiConnections.dc.html"><i class="ic ic-sm i-link" aria-hidden="true"></i>API connections</a><a class="up-l" role="menuitem" href="StaffPermissions.dc.html"><i class="ic ic-sm i-shield" aria-hidden="true"></i>Permissions</a>
+<div class="up-row"><span class="sm mut">Theme</span><span class="sl-seg boxed" style="height:30px"><a class="on" href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Light</a><a href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Dark</a></span></div>
+<a class="up-l" role="menuitem" href="CsInbox.dc.html"><i class="ic ic-sm i-help" aria-hidden="true"></i>Help and support</a>
+<a class="up-l out" role="menuitem" href="Login.dc.html"><i class="ic ic-sm i-logout" aria-hidden="true"></i>Sign out</a>
+</div></details>
+  </header>
+  <div class="sl-body">
+    <label class="nav-bd" for="navtg" aria-hidden="true"></label>
+    <div class="sl-rail">
+      <a class="is-on" href="NewShipment.dc.html" aria-label="New shipment"><i class="ic i-newdoc" aria-hidden="true"></i></a>
+      <a href="StaffAI.dc.html" aria-label="AI assistant" title="AI assistant"><i class="ic i-ai" aria-hidden="true"></i></a>
+      <a href="PublicTracking.dc.html" aria-label="Tracking" title="Tracking"><i class="ic i-track" aria-hidden="true"></i></a>
+      <a href="LockerSearch.dc.html" aria-label="Search tracking number" title="Search tracking number"><i class="ic i-tsearch" aria-hidden="true"></i></a>
+      <a href="Consolidations.dc.html" aria-label="Consolidation" title="Consolidation"><i class="ic i-layers" aria-hidden="true"></i></a>
+      <a href="Warehouse.dc.html" aria-label="Warehouse" title="Warehouse"><i class="ic i-warehouse" aria-hidden="true"></i></a>
+      <a class="me-pic hc" href="AiStudio.dc.html" aria-label="Your profile, Henry Cobblah" style="width:34px;height:34px;margin-top:auto"></a>
+    </div>
+    <aside class="sl-side" aria-label="Main navigation">
+      <div class="nav-x"><span class="fw5">Menu</span><label class="sl-ib" for="navtg" aria-label="Close the menu" role="button" tabindex="0"><i class="ic i-x" aria-hidden="true"></i></label></div>
+      <sc-for list="{{nav}}" as="g" hint-placeholder-count="5">
+        <div class="sl-gl">{{g.label}}</div>
+        <nav class="sl-nav">
+          <sc-for list="{{g.items}}" as="it" hint-placeholder-count="4">
+            <a href="{{it.href}}" class="{{it.cls}}"><i class="ic {{it.icon}}" aria-hidden="true"></i><span>{{it.label}}</span><span class="cnt {{it.ok}}">{{it.c1}} <em>{{it.c2}}</em></span></a>
+          </sc-for>
+        </nav>
+      </sc-for>
+      <div class="sl-gl">Other</div>
+      <nav class="sl-nav">
+        <a href="SettingsHub.dc.html"><i class="ic i-globe" aria-hidden="true"></i><span>Language</span></a>
+        <a href="CsInbox.dc.html"><i class="ic i-help" aria-hidden="true"></i><span>Get help</span></a>
+        <a href="Login.dc.html" class="danger"><i class="ic i-logout" aria-hidden="true"></i><span>Sign out</span></a>
+      </nav>
+      <a class="me-card" href="AiStudio.dc.html" aria-label="Signed in as Henry Cobblah, Operations manager. Open your profile">
+        <span class="me-pic hc" role="img" aria-label="Photo of Henry Cobblah"><i class="me-on" aria-hidden="true"></i></span>
+        <span class="grow col" style="min-width:0"><b>Henry Cobblah</b><small>Operations manager · Accra Hub</small></span>
+        <i class="ic ic-sm i-more mut" aria-hidden="true"></i>
+      </a>
+      <a class="me-sub" href="CsInbox.dc.html"><i class="ic ic-sm i-ticket" aria-hidden="true"></i>Customer service<span class="sl-tag">12 open</span></a>
+    </aside>
+
+    <main class="sl-main"><div class="sl-wrap">
+<div class="row g8 mut sm"><a href="Drivers.dc.html">Riders</a><i class="ic ic-sm i-right" aria-hidden="true"></i><span style="color:var(--ink)">Dispatch board</span></div>
+<div class="sl-head"><div><h1 class="sl-title">Dispatch board</h1><p class="sl-lede">Assign packages to riders, set the delivery fee and see the split. Each package gets a pickup code the customer gives the rider.</p></div><div class="row g8 wrap"><a class="sl-btn ghost" href="DeliveryTracking.dc.html"><i class="ic ic-sm i-route" aria-hidden="true"></i>Live tracking</a><a class="sl-btn ghost" href="DriverApp.dc.html"><i class="ic ic-sm i-phone" aria-hidden="true"></i>Rider app</a><a class="sl-btn ghost" href="Documents.dc.html"><i class="ic ic-sm i-print" aria-hidden="true"></i>Print run sheets</a><a class="sl-btn" href="ComposeMessage.dc.html"><i class="ic ic-sm i-send" aria-hidden="true"></i>Send codes to customers</a></div></div>
+<section class="sl-card col g12"><div class="row between wrap g12"><div class="col g4"><b class="fw5">Split rule · vans 65% · bikes 60% to the rider</b><span class="mut sm">Set by admins in Settings › Rider fees and split. Zone fees are filled in automatically.</span></div><a class="sl-btn ghost sm" href="RiderSettings.dc.html"><i class="ic ic-sm i-cog" aria-hidden="true"></i>Manage in Settings</a></div>
+<div class="row between wrap g8"><span class="rd-live"><span class="rd-ld"></span>Live · updates every 2 s · {{clock}}</span><span class="mut sm">{{lastEvent}}</span></div><div class="grid cols4" style="gap:10px"><div class="rd-k"><small>Assigned</small><b class="{{flash}}">{{asgN}}</b><small>{{unN}} waiting</small></div><div class="rd-k"><small>Fees</small><b class="{{flash}}">{{fees}}</b><small>on assigned packages</small></div><div class="rd-k"><small>Riders get</small><b class="{{flash}}">{{rid}}</b><small>{{pct}}%</small></div><div class="rd-k"><small>Swift keeps</small><b class="{{flash}}">{{sw}}</b><small>{{spct}}%</small></div></div>
+<div class="rd-split"><i class="r" style="{{rFlex}}"></i><i class="s" style="{{sFlex}}"></i></div></section>
+<div class="split"><section class="a col g12"><div class="row between"><h2 class="sl-ct">Waiting to be assigned · {{unN}}</h2><span class="mut sm">Tap a rider to assign</span></div>
+<sc-for list="{{waiting}}" as="p" hint-placeholder-count="4"><div class="sl-card col g10 {{p.anim}}" style="padding:14px 16px"><div class="row between wrap g8"><span class="row g8"><a class="id" href="PackageDetail.dc.html">{{p.id}}</a><span class="rd-code">{{p.code}}</span></span><span class="row g8 sm"><span class="mut">Fee</span><span class="mono">₵</span><input class="rd-fee" aria-label="Delivery fee for {{p.id}}" value="{{p.fee}}" onChange="{{p.setFee}}"></span></div><div class="row between wrap g8 sm"><span><b class="fw5">{{p.cust}}</b> <span class="mut">· {{p.area}} · {{p.w}}</span></span><span class="mut">Rider {{p.rShare}} · Swift {{p.sShare}}</span></div><div class="row g6 wrap"><sc-for list="{{p.opts}}" as="o" hint-placeholder-count="5"><button class="rd-chip" onClick="{{o.pick}}">{{o.label}}</button></sc-for></div></div></sc-for>
+<sc-if value="{{allDone}}" hint-placeholder-val="{{ false }}"><div class="sl-card row g8" style="justify-content:center;color:var(--green-ink)"><i class="ic ic-sm i-check" aria-hidden="true"></i>All packages are assigned</div></sc-if></section>
+<aside class="b col g12"><h2 class="sl-ct">Riders</h2>
+<sc-for list="{{riders}}" as="r" hint-placeholder-count="5"><div class="rd-col"><div class="row g10"><span class="sl-av sm dark">{{r.ini}}</span><div class="grow col"><b class="fw5">{{r.name}}</b><span class="mut sm">{{r.veh}} · {{r.n}} packages · {{r.done}} delivered</span></div><a class="sl-btn ghost sm" href="RiderDetail.dc.html">Open</a></div>
+<div class="rd-pb" aria-hidden="true"><i style="{{r.pw}}"></i></div><div class="row between sm"><span class="mut">Fees {{r.fees}} · earned so far <b class="mono fw5" style="color:var(--ink)">{{r.earned}}</b></span><span>Rider <b class="mono fw5">{{r.rid}}</b> · Swift <b class="mono fw5">{{r.sw}}</b></span></div>
+<sc-for list="{{r.pk}}" as="k" hint-placeholder-count="3"><div class="rd-pk"><span class="row g8"><span class="mono fw5">{{k.id}}</span><span class="rd-code">{{k.code}}</span></span><span class="mono">₵{{k.fee}}</span><span class="mut">{{k.cust}} · {{k.area}} · <span class="rd-st {{k.sc}}">{{k.st}}</span></span><button class="sl-btn ghost sm" style="height:26px" onClick="{{k.unassign}}">Unassign</button></div></sc-for></div></sc-for></aside></div>
+</div></main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1900}}'>
+const RID = [['Yaw Antwi','Van','YA',65],['Kwesi Bonsu','Van','KB',65],['Adwoa Sarpong','Bike','AS',60],['Kojo Mensah','Van','KM',65],['Samuel Ofori','Bike','SO',60]];
+const PK0 = [['SL-100480','Efua Owusu','East Legon','5.6 lb',35,'4821',1],['SL-100455','Kofi Asante','Osu','1.2 lb',25,'7394',1],['SL-100431','Ama Boateng','Spintex','2.8 lb',30,'1162',0],['SL-100419','Nana Adjei','Tema Comm. 9','12.9 lb',45,'5508',3],['SL-100476','Esi Quaye','Madina','2.3 lb',30,'9037',4],['SL-100488','Yaw Darko','Kasoa','8.1 lb',60,'3315',-1],['SL-100490','Abena Frimpong','Adenta','1.9 lb',30,'6620',-1],['SL-100492','Akosua Tetteh','Airport Res.','21.5 lb',50,'2471',-1],['SL-100493','Kojo Appiah','Dansoman','3.4 lb',35,'8806',-1]];
+const INC = [['Kwame Asare','Cantonments','3.2 lb',35],['Selorm Agbeko','Teshie','4.8 lb',35],['Naa Dedei','Labadi','1.4 lb',25],['Fiifi Mensah','Kasoa','9.6 lb',60]];
+const RULES = [['type','By vehicle (65% van / 60% bike)'],['60','60 / 40'],['70','70 / 30'],['50','50 / 50']];
+class Component extends DCLogic {
+constructor(p) { super(p); this.state = { pk: PK0.map((p, i) => ({ id: p[0], cust: p[1], area: p[2], w: p[3], fee: p[4], code: p[5], r: p[6], at: -i * 3 })), rule: 'type', t: 0, last: 'Board opened' }; if (typeof window !== 'undefined') { this._iv = setInterval(() => this.tick(), 2000); } }
+componentWillUnmount() { clearInterval(this._iv); }
+tick() { const s = this.state, t = s.t + 1; let pk = s.pk, last = s.last; if (t % 9 === 0) { const n = INC[(t / 9 - 1) % INC.length]; const id = 'SL-1005' + String(t / 9).padStart(2, '0'); pk = [...pk, { id, cust: n[0], area: n[1], w: n[2], fee: n[3], code: String(1000 + (t * 37) % 9000), r: -1, at: t }]; last = 'New package ' + id + ' ready for ' + n[0] + ' · ' + n[1]; } else if (t % 5 === 0) { const go = pk.filter(p => p.r >= 0); if (go.length) { const p = go[(t / 5) % go.length]; last = RID[p.r][0] + ' delivered ' + p.id + ' · code ' + p.code + ' matched'; } } this.setState({ t, pk, last }); }
+pctOf(i) { const r = this.state.rule; return r === 'type' ? RID[i][3] : +r; }
+calc() {
+  const s = this.state, T = s.t, g = (x) => '₵' + x.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const setP = (id, o) => this.setState({ pk: this.state.pk.map(p => p.id === id ? { ...p, ...o } : p) });
+  const as = s.pk.filter(p => p.r >= 0), wt = s.pk.filter(p => p.r < 0);
+  let fees = 0, rid = 0; as.forEach(p => { fees += +p.fee || 0; rid += (+p.fee || 0) * this.pctOf(p.r) / 100; });
+  const avgP = s.rule === 'type' ? 62 : +s.rule;
+  return { flash: T % 2 ? 'va' : 'vb', clock: new Date(Date.UTC(2026, 10, 5, 22, 42, 0) + T * 2000).toISOString().slice(11, 19), lastEvent: s.last, rules: RULES.map(r => ({ label: r[1], cls: s.rule === r[0] ? 'on' : '', pick: () => this.setState({ rule: r[0] }) })),
+    asgN: as.length, unN: wt.length, fees: g(fees), rid: g(rid), sw: g(fees - rid), pct: fees ? Math.round(rid / fees * 100) : 0, spct: fees ? 100 - Math.round(rid / fees * 100) : 0,
+    rFlex: 'flex:' + Math.max(1, Math.round(rid)), sFlex: 'flex:' + Math.max(1, Math.round(fees - rid)), allDone: wt.length === 0,
+    waiting: wt.map(p => ({ ...p, anim: T - p.at < 2 && p.at > 0 ? 'rd-new' : '', rShare: g(p.fee * avgP / 100), sShare: g(p.fee - p.fee * avgP / 100), setFee: (e) => setP(p.id, { fee: parseFloat(e.target.value) || 0 }), opts: RID.map((r, i) => ({ label: r[0] + ' · ' + r[1], pick: () => setP(p.id, { r: i }) })) })),
+    riders: RID.map((r, i) => { const mine = s.pk.filter(p => p.r === i), f = mine.reduce((a, p) => a + (+p.fee || 0), 0), pc = this.pctOf(i); const stOf = (p, j) => { const k = Math.floor((T + j * 3 + i * 2) / 5); return k >= 2 + j ? ['Delivered · code matched', 'ok'] : k >= j ? ['Out for delivery', 'go'] : ['Loaded', '']; }; const pks = mine.map((p, j) => ({ id: p.id, code: p.code, fee: p.fee, cust: p.cust, area: p.area, st: stOf(p, j)[0], sc: stOf(p, j)[1], unassign: () => setP(p.id, { r: -1 }) })); const dn = pks.filter(x => x.sc === 'ok'), earnedF = mine.filter((p, j) => stOf(p, j)[1] === 'ok').reduce((a, p) => a + (+p.fee || 0), 0); return { name: r[0], veh: r[1], ini: r[2], n: mine.length, done: dn.length, pw: 'width:' + (mine.length ? Math.round(dn.length / mine.length * 100) : 0) + '%', earned: g(earnedF * pc / 100), fees: g(f), rid: g(f * pc / 100), sw: g(f - f * pc / 100), pk: pks }; }) };
+}
+renderVals() {
+const A = 'drivers';
+const N = 'Operations|dash~Overview~grid~~~Main;panels~Control Panels~gauge~~~ControlPanels;air~Air Shipments~plane~128~~AirShipments;sea~Sea Packages~ship~64~~SeaPackages;prealert~Pre-Alerts~inbox~9~~PreAlerts;pickup~Pickups~truck~12~/ 20~Pickups;dtrack~Delivery Tracking~route~5~~DeliveryTracking;shiptrack~Shipment Tracking~track~~~ShipmentTracking;consol~Consolidations~layers~7~~Consolidations;warehouse~Warehouse~warehouse~~~Warehouse;handout~Hand Out Packages~box~5~~HandOut;locker~Locker Search~lock~~~LockerSearch#Hubs|execdash~Management Dashboard~chart~~~ExecDashboard;billhub~Billing & Finance~dollar~~~BillingHub;lastmile~Last-Mile Delivery~truck~~~LastMile;aicenter~AI Centre~ai~~~AiCenter;commshub~Messages & Automation~message~~~CommsHub;supporthub~Support & CRM~ticket~~~SupportHub;loyalty~Loyalty & Referrals~star~~~LoyaltyRewards;security~Security & Reliability~shield~~~SecurityCenter#Freight|frhub~Freight Hub~plane~~~FreightHub;frsched~Departures & Arrivals~calendar~5~~FreightSchedule;frwb~Waybills & Manifests~file~~~Waybills;frex~Cargo Exceptions~alert~6~~CargoExceptions;frins~Insurance & Claims~shield~4~~InsuranceClaims;frpart~Freight Partners~users~~~FreightPartners#People|cust~Customers~users~1,284~~Customers;recip~Recipients~pin~~~Recipients;drivers~Drivers~wheel~8~/ 14~Drivers;drvapp~Rider App~phone~~~DriverApp;staff~Staff & Roles~shield~~~StaffRoles#Finance|pay~Payments~card~~~Payments;ar~Accounts Receivable~receipt~~~AccountsReceivable;fin~Financial Overview~dollar~$48,200~~FinancialOverview#Insights|reports~Reports~chart~~~Reports;activity~Activity Logs~clock~~~ActivityLogs;messages~Message Logs~archive~~~MessageLogs#Customer Service|tickets~Support Inbox~ticket~1,482~~CsInbox;csrules~Ticket Rules~filter~~~CsRules;playbook~Playbook~book~~~CsPlaybook;csrep~Support Reports~star~~~CsReports;cschan~Channels & Teams~message~~~CsChannels;csai~AI Assistant~ai~~~StaffAI;cssupai~AI for Customers~spark~~~CsAI#Developer|devov~Dev Overview~terminal~~~DevOverview;devsvc~Services~server~12~~DevServices;devlogs~Logs~activity~~~DevLogs;devmet~Metrics~cpu~~~DevMetrics;devinfra~Infrastructure~cloud~~~DevInfrastructure;devdep~Deployments~rocket~~~DevDeployments;devalert~Alerts~alert~3~~DevAlerts;devissues~Issues & Change Log~bug~8~~DevIssues;devint~Integrations~puzzle~~~DevIntegrations#Settings|general~General~cog~~~SettingsHub;apis~API Connections~link~16~~ApiConnections;apitraffic~Live API Traffic~activity~~~ApiTraffic;tariffs~Shipping Tariffs~tag~~~Tariffs;notifc~Notifications~bell~3~~NotificationCenter;ebuild~Email Builder~mail~~~EmailBuilder;msgtpl~SMS & WhatsApp~message~~~MessageTemplates;bcast~Push Notifications~send~~~Broadcast;costs~Operating Costs~dollar~~~CostSettings;addr~Shipping Addresses~pin~~~ShippingAddresses;rfees~Rider Fees~truck~~~RiderSettings;loginpg~Login Page~image~~~LoginSettings;devmod~Modules~sliders~~~ModuleController;perm~Permissions~key~~~StaffPermissions;lblstudio~Label Printing~print~~~LabelStudio;auto~Automations~bolt~~~Automations';
+const nav = N.split('#').map(g => { const p = g.split('|'); return { label: p[0], items: p[1].split(';').map(i => { const f = i.split('~'); return { href: f[5] + '.dc.html', label: f[1], icon: 'i-' + f[2], c1: f[3], c2: f[4], cls: f[0] === A ? 'is-active' : '', ok: f[0] === 'fin' ? 'ok' : '' }; }) }; });
+return { nav, ...this.calc() };
+}
+}
+</script>
+</body>
+</html>

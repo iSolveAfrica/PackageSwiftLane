@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Swift Lane Module Controller</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./swiftlane.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}
+
+body{margin:0}
+.ov-card{display:flex;flex-direction:column;gap:10px;padding:16px 18px 14px;border:1px solid var(--line);border-radius:18px;background:var(--card);color:var(--ink)}
+.ov-card .hd{display:flex;align-items:center;justify-content:space-between;font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.ov-card .hd span{display:flex;align-items:center;gap:8px}
+.ov-card .fig{font-size:15.5px;margin-top:8px}
+.ov-card .fig i{font-style:normal;color:var(--muted)}
+.ov-card .ft{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted)}
+.ov-seg{display:flex;gap:2px;font-size:13px;color:var(--muted)}
+.ov-seg button{border:0;background:transparent;color:inherit;font:inherit;padding:5px 9px;border-radius:8px;cursor:pointer}
+.ov-seg button.on{background:var(--active);color:var(--ink)}
+.ov-avg{font-size:13.5px;color:var(--muted)}.ov-avg b{color:var(--ink);font-weight:500}
+.ov-chart text{font-size:11px;fill:var(--muted);font-family:var(--font)}
+.ov-qa{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.ov-qa a{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 12px;border-radius:10px;color:var(--ink-2);font-size:14px}
+.ov-qa a:first-child{background:var(--active);color:var(--ink)}
+.ov-qa a:hover{background:var(--hover)}
+.ov-row{display:flex;align-items:center;gap:12px;min-height:52px;border-top:1px solid var(--line);font-size:14px}
+.ov-row:first-child{border-top:0}
+.ov-pill{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:6px;font-size:12px;font-weight:500;background:var(--active);color:var(--ink-2)}
+.ov-pill.ok{background:var(--green-bg);color:var(--green-ink)}.ov-pill.warn{background:var(--amber-bg);color:var(--amber-ink)}.ov-pill.bad{background:var(--red-bg);color:var(--red-ink)}
+.ov-hm{display:grid;gap:4px;align-items:center}
+.ov-hm b{width:12px;height:12px;border-radius:3px;background:var(--heat-0);place-self:center}
+.ov-hm b.h0{width:3px;height:3px;border-radius:50%}
+.ov-hm b.h1{background:var(--heat-1)}.ov-hm b.h2{background:var(--heat-2)}.ov-hm b.h3{background:var(--heat-3)}
+.ov-hm span{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sl-ticks.n{--c:var(--muted)}
+.mc{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.mc-main{flex:999 1 640px;min-width:0;display:flex;flex-direction:column;gap:16px}
+.mc-side{flex:1 1 280px;min-width:0;display:flex;flex-direction:column;gap:16px;position:sticky;top:12px}
+.mc-grp{border:1px solid var(--line);border-radius:20px;background:var(--card);overflow:hidden}
+.mc-gh{display:flex;align-items:center;gap:12px;padding:14px 18px;background:var(--panel);border-bottom:1px solid var(--line)}
+.mc-gh .tl{width:38px;height:38px;border-radius:11px;background:var(--active);display:grid;place-items:center;flex:none}
+.mc-gh b{font-size:15.5px;font-weight:600}.mc-gh small{display:block;color:var(--muted);font-size:12.5px}
+.mc-row{display:flex;align-items:center;gap:14px;padding:12px 18px;border-top:1px solid var(--line)}
+.mc-row:first-of-type{border-top:0}
+.mc-row.off .nm b,.mc-row.off>.ic{opacity:.45}
+.mc-row .nm{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.mc-row .nm b{font-size:14.5px;font-weight:500}.mc-row .nm small{color:var(--muted);font-size:12.5px}
+.mc-tags{display:flex;gap:4px;flex-wrap:wrap}
+.mc-tags span{font-size:11px;padding:1px 7px;border-radius:5px;background:var(--active);color:var(--ink-2)}
+.mc-tags span.warn{background:var(--amber-bg);color:var(--amber-ink)}
+.mc-sw{width:44px;height:26px;border-radius:13px;border:0;background:var(--line-2);position:relative;cursor:pointer;flex:none;padding:0}
+.mc-sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .15s}
+.mc-sw.on{background:var(--green)}.mc-sw.on::after{left:21px}
+.mc-sw.lock{opacity:.5;cursor:not-allowed}
+.mc-prev{border:1px solid var(--line);border-radius:18px;background:var(--panel);padding:12px}
+.mc-prev a{display:flex;align-items:center;gap:10px;height:34px;padding:0 8px;border-radius:8px;font-size:13px;color:var(--ink-2)}
+.mc-prev .gl{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);padding:10px 8px 4px}
+.mc-toast{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:14px;background:var(--amber-bg);color:var(--amber-ink);font-size:13px}
+</style>
+</helmet>
+<div class="sl-app dk">
+  <input type="checkbox" id="navtg" class="nav-tg" aria-hidden="true" tabindex="-1">
+  <header class="sl-top">
+    <label class="sl-ib nav-open" for="navtg" aria-label="Open or close the menu" role="button" tabindex="0"><i class="ic i-sidebar" aria-hidden="true"></i></label>
+    <a class="sl-switch" href="Main.dc.html"><small>SL</small> Swift Lane · Accra Hub <i class="ic ic-sm i-down" aria-hidden="true"></i></a>
+    <a class="fx-chip" href="SettingsHub.dc.html" title="Exchange rate · set in Settings › General"><i class="ic ic-sm i-dollar" aria-hidden="true"></i><span class="mono">USD 1 = GHS 12.40</span><span class="fx-d">▲ 0.4%</span></a>
+    <span class="grow"></span>
+    <details class="aitop"><summary aria-label="Help with Swift Lane AI"><span class="o"><i class="ic i-ai" aria-hidden="true"></i></span>Help</summary><div class="pop" role="menu">
+<div class="me"><span class="sl-av sm dark">HC</span><div class="grow"><div class="fw5 sm">Henry Cobblah</div><div class="mut" style="font-size:12px">Operations manager · Accra Hub</div></div><a class="sl-btn sm ghost" href="AiStudio.dc.html">Edit</a></div>
+<a class="ask" href="StaffAI.dc.html"><i class="ic ic-sm i-spark" aria-hidden="true"></i>Ask AI for help on this page<b><i class="ic ic-sm i-send" aria-hidden="true"></i></b></a>
+<div class="hd">Your profile with AI</div>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-wand" aria-hidden="true"></i></span><span>Retouch my photo<small>Light, skin and background</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-refresh" aria-hidden="true"></i></span><span>Reset images<small>Go back to the original photo</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-edit" aria-hidden="true"></i></span><span>Change my name<small>AI fixes spelling and capitals</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-user" aria-hidden="true"></i></span><span>Make my icon<small>Avatar from your photo or initials</small></span></a>
+<div class="hd">Help</div>
+<a class="it" role="menuitem" href="StaffAI.dc.html"><span class="t"><i class="ic ic-sm i-help" aria-hidden="true"></i></span><span>Explain this page</span></a>
+<a class="it" role="menuitem" href="CsInbox.dc.html"><span class="t"><i class="ic ic-sm i-message" aria-hidden="true"></i></span><span>Talk to a person</span></a>
+</div></details>
+    <a class="sl-ib" aria-label="Notifications" href="Notifications.dc.html"><i class="ic i-bell" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Switch theme" href="SettingsHub.dc.html"><i class="ic i-sun" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Documents" href="Documents.dc.html"><i class="ic i-file" aria-hidden="true"></i></a>
+    <a class="sl-btn" href="DevDeployments.dc.html">Deploy</a>
+    <details class="uptop"><summary aria-label="Your profile and settings, Henry Cobblah"><span class="me-pic hc" style="width:34px;height:34px"><i class="me-on" aria-hidden="true"></i></span><span class="up-nm">Henry</span><i class="ic ic-sm i-down" aria-hidden="true"></i></summary><div class="pop" role="menu">
+<a class="up-me" href="AiStudio.dc.html"><span class="me-pic hc" style="width:48px;height:48px"><i class="me-on" aria-hidden="true"></i></span><span class="col" style="min-width:0"><b>Henry Cobblah</b><small>Operations manager · Accra Hub</small><small class="mono">henry@swiftlane.com</small></span></a>
+<div class="up-st"><span class="row g6 sm"><span class="ld" style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span>Available</span><a class="sm fw5" href="AiStudio.dc.html">Edit profile</a></div>
+<div class="up-h">Short links</div><div class="up-g"><a class="up-l" role="menuitem" href="Main.dc.html"><i class="ic ic-sm i-grid" aria-hidden="true"></i>Overview</a><a class="up-l" role="menuitem" href="RiderDispatch.dc.html"><i class="ic ic-sm i-truck" aria-hidden="true"></i>Dispatch board</a><a class="up-l" role="menuitem" href="SendPrices.dc.html"><i class="ic ic-sm i-send" aria-hidden="true"></i>Send prices</a><a class="up-l" role="menuitem" href="Reports.dc.html"><i class="ic ic-sm i-chart" aria-hidden="true"></i>Reports</a><a class="up-l" role="menuitem" href="Documents.dc.html"><i class="ic ic-sm i-file" aria-hidden="true"></i>Documents</a><a class="up-l" role="menuitem" href="ActivityLogs.dc.html"><i class="ic ic-sm i-clock" aria-hidden="true"></i>My activity</a></div>
+<div class="up-h">Settings</div><a class="up-l" role="menuitem" href="AiStudio.dc.html"><i class="ic ic-sm i-ai" aria-hidden="true"></i>Profile and photo</a><a class="up-l" role="menuitem" href="SettingsHub.dc.html"><i class="ic ic-sm i-cog" aria-hidden="true"></i>Settings</a><a class="up-l" role="menuitem" href="ApiConnections.dc.html"><i class="ic ic-sm i-link" aria-hidden="true"></i>API connections</a><a class="up-l" role="menuitem" href="StaffPermissions.dc.html"><i class="ic ic-sm i-shield" aria-hidden="true"></i>Permissions</a>
+<div class="up-row"><span class="sm mut">Theme</span><span class="sl-seg boxed" style="height:30px"><a class="on" href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Light</a><a href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Dark</a></span></div>
+<a class="up-l" role="menuitem" href="CsInbox.dc.html"><i class="ic ic-sm i-help" aria-hidden="true"></i>Help and support</a>
+<a class="up-l out" role="menuitem" href="Login.dc.html"><i class="ic ic-sm i-logout" aria-hidden="true"></i>Sign out</a>
+</div></details>
+  </header>
+  <div class="sl-body">
+    <label class="nav-bd" for="navtg" aria-hidden="true"></label>
+    <div class="sl-rail">
+      <a class="is-on" href="NewShipment.dc.html" aria-label="New shipment"><i class="ic i-newdoc" aria-hidden="true"></i></a>
+      <a href="StaffAI.dc.html" aria-label="AI assistant" title="AI assistant"><i class="ic i-ai" aria-hidden="true"></i></a>
+      <a href="PublicTracking.dc.html" aria-label="Tracking" title="Tracking"><i class="ic i-track" aria-hidden="true"></i></a>
+      <a href="LockerSearch.dc.html" aria-label="Search tracking number" title="Search tracking number"><i class="ic i-tsearch" aria-hidden="true"></i></a>
+      <a href="Consolidations.dc.html" aria-label="Consolidation" title="Consolidation"><i class="ic i-layers" aria-hidden="true"></i></a>
+      <a href="Warehouse.dc.html" aria-label="Warehouse" title="Warehouse"><i class="ic i-warehouse" aria-hidden="true"></i></a>
+      <a class="me-pic hc" href="AiStudio.dc.html" aria-label="Your profile, Henry Cobblah" style="width:34px;height:34px;margin-top:auto"></a>
+    </div>
+    <aside class="sl-side" aria-label="Main navigation">
+      <div class="nav-x"><span class="fw5">Menu</span><label class="sl-ib" for="navtg" aria-label="Close the menu" role="button" tabindex="0"><i class="ic i-x" aria-hidden="true"></i></label></div>
+      <sc-for list="{{nav}}" as="g" hint-placeholder-count="5">
+        <div class="sl-gl">{{g.label}}</div>
+        <nav class="sl-nav">
+          <sc-for list="{{g.items}}" as="it" hint-placeholder-count="4">
+            <a href="{{it.href}}" class="{{it.cls}}"><i class="ic {{it.icon}}" aria-hidden="true"></i><span>{{it.label}}</span><span class="cnt {{it.ok}}">{{it.c1}} <em>{{it.c2}}</em></span></a>
+          </sc-for>
+        </nav>
+      </sc-for>
+      <div class="sl-gl">Other</div>
+      <nav class="sl-nav">
+        <a href="SettingsHub.dc.html"><i class="ic i-globe" aria-hidden="true"></i><span>Language</span></a>
+        <a href="Notifications.dc.html"><i class="ic i-help" aria-hidden="true"></i><span>Get help</span></a>
+        <a href="Login.dc.html" class="danger"><i class="ic i-logout" aria-hidden="true"></i><span>Sign out</span></a>
+      </nav>
+      <a class="me-card" href="AiStudio.dc.html" aria-label="Signed in as Henry Cobblah, Operations manager. Open your profile">
+        <span class="me-pic hc" role="img" aria-label="Photo of Henry Cobblah"><i class="me-on" aria-hidden="true"></i></span>
+        <span class="grow col" style="min-width:0"><b>Henry Cobblah</b><small>Operations manager · Accra Hub</small></span>
+        <i class="ic ic-sm i-more mut" aria-hidden="true"></i>
+      </a>
+      <a class="me-sub" href="CsInbox.dc.html"><i class="ic ic-sm i-ticket" aria-hidden="true"></i>Customer service<span class="sl-tag">12 open</span></a>
+    </aside>
+
+    <main class="sl-main">
+<div class="sl-wrap" style="max-width:1180px">
+<div class="sl-head"><div><h1 class="sl-title" style="font-size:20px">Module Controller</h1><p class="sl-lede">Switch a module off and it disappears everywhere: menus, dashboards, search, API, customer portal and mobile app</p></div><div class="row g8 wrap"><span class="ov-pill">{{onCount}} of {{total}} modules on</span><button class="sl-btn ghost" onClick="{{allOn}}">Turn everything on</button><button class="sl-btn" onClick="{{apply}}"><i class="ic ic-sm i-check" aria-hidden="true"></i>{{applyLabel}}</button></div></div>
+<div class="grid cols4">
+<div class="ov-card"><div class="hd"><span><i class="ic ic-sm i-grid" aria-hidden="true"></i>Modules on</span></div><div class="fig">{{onCount}} <i>/ {{total}}</i></div><div class="sl-ticks" role="img" aria-label="Modules on"><i style="{{onW}}"></i></div><div class="ft">{{offCount}} switched off</div></div>
+<div class="ov-card"><div class="hd"><span><i class="ic ic-sm i-users" aria-hidden="true"></i>Staff affected</span></div><div class="fig">{{staffHit}} <i>/ 46 staff</i></div><div class="sl-ticks y" role="img" aria-label="Staff affected"><i style="{{staffW}}"></i></div><div class="ft">Lose a menu item on next page load</div></div>
+<div class="ov-card"><div class="hd"><span><i class="ic ic-sm i-user" aria-hidden="true"></i>Customer portal</span></div><div class="fig">{{custOn}} <i>/ {{custTotal}} features on</i></div><div class="sl-ticks" role="img" aria-label="Customer features"><i style="{{custW}}"></i></div><div class="ft">Hidden features show no trace</div></div>
+<div class="ov-card"><div class="hd"><span><i class="ic ic-sm i-link" aria-hidden="true"></i>API endpoints</span></div><div class="fig">{{apiOn}} <i>/ 64 active</i></div><div class="sl-ticks" role="img" aria-label="API endpoints"><i style="{{apiW}}"></i></div><div class="ft">Off modules return 404 module_disabled</div></div>
+</div>
+<div class="mc">
+<div class="mc-main">
+<div class="row between wrap g12"><div class="sl-search" style="max-width:340px"><i class="ic ic-sm i-search" aria-hidden="true"></i><input aria-label="Search modules" placeholder="Search modules" value="{{q}}" onChange="{{onQ}}"></div><div class="sl-seg boxed"><sc-for list="{{filters}}" as="f" hint-placeholder-count="3"><button class="{{f.cls}}" onClick="{{f.pick}}">{{f.label}}</button></sc-for></div></div>
+<sc-if value="{{warn}}" hint-placeholder-val="{{ false }}"><div class="mc-toast" role="status"><i class="ic ic-sm i-alert" aria-hidden="true"></i><span>{{warn}}</span></div></sc-if>
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="8">
+<section class="mc-grp"><div class="mc-gh"><span class="tl"><i class="ic {{g.icon}}" aria-hidden="true"></i></span><div class="grow"><b>{{g.label}}</b><small>{{g.desc}}</small></div><span class="ov-pill">{{g.count}}</span><button class="sl-btn sm ghost" onClick="{{g.toggleAll}}">{{g.allLabel}}</button></div>
+<sc-for list="{{g.items}}" as="m" hint-placeholder-count="4"><div class="mc-row {{m.cls}}"><i class="ic ic-sm {{m.icon}}" aria-hidden="true"></i><div class="nm"><b>{{m.name}}</b><small>{{m.desc}}</small><div class="mc-tags"><sc-for list="{{m.tags}}" as="t" hint-placeholder-count="3"><span class="{{t.cls}}">{{t.label}}</span></sc-for></div></div><span class="mut sm">{{m.state}}</span><button class="mc-sw {{m.sw}}" onClick="{{m.toggle}}" role="switch" aria-checked="{{m.checked}}" aria-label="{{m.name}}"></button></div></sc-for>
+</section>
+</sc-for>
+</div>
+<aside class="mc-side">
+<section class="sl-card col g8"><h2 class="sl-ct">What staff will see</h2><p class="mut sm">The sidebar after you apply, for an Ops manager</p><div class="mc-prev"><sc-for list="{{preview}}" as="g" hint-placeholder-count="5"><div class="gl">{{g.label}}</div><sc-for list="{{g.items}}" as="m" hint-placeholder-count="3"><a href="ModuleController.dc.html"><i class="ic ic-sm {{m.icon}}" aria-hidden="true"></i>{{m.name}}</a></sc-for></sc-for></div></section>
+<section class="sl-card col g8"><h2 class="sl-ct">Recent switches</h2><sc-for list="{{log}}" as="l" hint-placeholder-count="3"><div class="ov-row sm"><span class="sl-av sm">{{l.who}}</span><span class="grow">{{l.what}}</span><span class="mut">{{l.when}}</span></div></sc-for></section>
+</aside>
+</div>
+</div>
+</main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2600}}'>
+
+const G = [
+ ['ship','Shipping and freight','i-plane','Moving parcels from the US to Ghana',[['air','Air shipments','i-plane','Courier shipments by air','staff,portal,api'],['sea','Sea packages','i-ship','Container and LCL boxes','staff,portal,api'],['consol','Consolidations','i-layers','Shared flights and containers','staff,api'],['prealert','Pre-alerts','i-inbox','Customers tell us what is coming','staff,portal,api'],['tracking','Public tracking','i-route','Tracking page for anyone','public,api'],['quote','Rate calculator','i-tag','Public price estimates','public']]],
+ ['wh','Warehouse and dispatch','i-warehouse','Bays, lockers, pickups and drivers',[['warehouse','Warehouse','i-warehouse','Bays, scanning, stock','staff'],['intake','Package intake (AI)','i-scan','AI lookup from tracking numbers','staff'],['locker','Locker search','i-search','Find parcels by locker','staff'],['pickups','Pickups','i-truck','Schedule and assign pickups','staff,portal,api'],['handover','Warehouse delivery','i-key','Handover with pickup codes','staff'],['drivers','Drivers and rider app','i-wheel','Driver list, manifests, settlements','staff,mobile']]],
+ ['people','Customers and people','i-users','Customers, recipients and staff',[['customers','Customers','i-users','Profiles and shipping marks','staff,api'],['recipients','Recipients','i-user','People receiving parcels','staff,portal'],['kyc','KYC checks','i-shield','ID verification for customers','staff,portal'],['mailbox','Virtual mailbox','i-mail','US addresses for customers','portal']]],
+ ['money','Money','i-dollar','Billing, payments and reports on money',[['payments','Payments and gateways','i-card','Paystack, Stripe, Hubtel, MoMo','staff,portal,api'],['ar','Accounts receivable','i-receipt','Overdue invoices and reminders','staff'],['finance','Financial overview','i-chart','Revenue, cost and margin','staff'],['bills','My bills (portal)','i-receipt','Customers pay online','portal'],['tariffs','Tariffs and rate cards','i-tag','Rates per kg and CBM','staff']]],
+ ['msg','Messaging','i-send','Every message the system sends',[['notify','Notification center','i-send','E-mail, SMS and WhatsApp templates','staff'],['whatsapp','WhatsApp','i-message','WhatsApp API sending','staff,portal'],['sms','SMS','i-phone','Hubtel SMS sending','staff'],['newsletter','Newsletter and campaigns','i-inbox','Bulk marketing messages','staff']]],
+ ['cs','Customer service and AI','i-ticket','Support desk and the assistant',[['inbox','Support inbox','i-ticket','Tickets and replies','staff,portal'],['playbook','Playbooks and rules','i-sliders','Routing and automations','staff'],['ai','AI assistant','i-spark','AI chat, drafts, package lookup and insights','staff,portal,mobile,api']]],
+ ['ins','Insights','i-chart','Reports and logs',[['reports','Reports','i-folder','Exports and report library','staff'],['staffprod','Staff productivity','i-users','Check-ins and activity','staff'],['activity','Activity and audit logs','i-clock','Who did what','staff']]],
+ ['plat','Platform','i-terminal','Developer and system tools',[['api','Public API','i-link','REST API /api/v1 and keys','api'],['webhooks','Webhooks','i-puzzle','Outgoing events','api'],['mobileapp','Customer mobile app','i-phone','iOS and Android app','mobile'],['viewas','View as','i-eye','Staff can view as another user','staff']]]
+];
+const LOCK = { warehouse: 1, customers: 1 };
+const DEPS = { ai: 'Turning off AI also hides: AI lookup in Package intake, AI drafts in Support inbox, the Ask Swift Lane AI button in the mobile app and the AI assistant in the customer portal.', payments: 'Turning off payments also hides My bills in the portal and the Pay now buttons on invoices.', whatsapp: 'Messages that only go by WhatsApp will fall back to e-mail.', inbox: 'Customers will no longer see Get help or My tickets.', pickups: 'Pickup requests disappear from the portal and the rider app.' };
+const TAGN = { staff: 'Staff menus', portal: 'Customer portal', api: 'API', mobile: 'Mobile app', public: 'Public site' };
+class Component extends DCLogic {
+constructor(p) { super(p); const on = {}; G.forEach(g => g[4].forEach(m => on[m[0]] = !['newsletter', 'viewas', 'quote'].includes(m[0]))); this.state = { on, q: '', f: 'All', warn: '', dirty: false, log: [['HC', 'Newsletter switched off', '2 d ago'], ['NL', 'Rate calculator switched off', '1 w ago'], ['HC', 'Package intake (AI) switched on', '2 w ago']] }; }
+set(id, v) { if (LOCK[id]) { this.setState({ warn: 'This module is core and cannot be switched off.' }); return; } const on = { ...this.state.on, [id]: v }; this.setState({ on, dirty: true, warn: !v && DEPS[id] ? DEPS[id] : '' }); }
+renderVals() {
+  const A = 'devmod';
+const N = 'Operations|dash~Overview~grid~~~Main;panels~Control Panels~gauge~~~ControlPanels;air~Air Shipments~plane~128~~AirShipments;sea~Sea Packages~ship~64~~SeaPackages;prealert~Pre-Alerts~inbox~9~~PreAlerts;pickup~Pickups~truck~12~/ 20~Pickups;dtrack~Delivery Tracking~route~5~~DeliveryTracking;shiptrack~Shipment Tracking~track~~~ShipmentTracking;consol~Consolidations~layers~7~~Consolidations;warehouse~Warehouse~warehouse~~~Warehouse;handout~Hand Out Packages~box~5~~HandOut;locker~Locker Search~lock~~~LockerSearch#Hubs|execdash~Management Dashboard~chart~~~ExecDashboard;billhub~Billing & Finance~dollar~~~BillingHub;lastmile~Last-Mile Delivery~truck~~~LastMile;aicenter~AI Centre~ai~~~AiCenter;commshub~Messages & Automation~message~~~CommsHub;supporthub~Support & CRM~ticket~~~SupportHub;loyalty~Loyalty & Referrals~star~~~LoyaltyRewards;security~Security & Reliability~shield~~~SecurityCenter#Freight|frhub~Freight Hub~plane~~~FreightHub;frsched~Departures & Arrivals~calendar~5~~FreightSchedule;frwb~Waybills & Manifests~file~~~Waybills;frex~Cargo Exceptions~alert~6~~CargoExceptions;frins~Insurance & Claims~shield~4~~InsuranceClaims;frpart~Freight Partners~users~~~FreightPartners#People|cust~Customers~users~1,284~~Customers;recip~Recipients~pin~~~Recipients;drivers~Drivers~wheel~8~/ 14~Drivers;drvapp~Rider App~phone~~~DriverApp;staff~Staff & Roles~shield~~~StaffRoles#Finance|pay~Payments~card~~~Payments;ar~Accounts Receivable~receipt~~~AccountsReceivable;fin~Financial Overview~dollar~$48,200~~FinancialOverview#Insights|reports~Reports~chart~~~Reports;activity~Activity Logs~clock~~~ActivityLogs;messages~Message Logs~archive~~~MessageLogs#Customer Service|tickets~Support Inbox~ticket~1,482~~CsInbox;csrules~Ticket Rules~filter~~~CsRules;playbook~Playbook~book~~~CsPlaybook;csrep~Support Reports~star~~~CsReports;cschan~Channels & Teams~message~~~CsChannels;csai~AI Assistant~ai~~~StaffAI;cssupai~AI for Customers~spark~~~CsAI#Developer|devov~Dev Overview~terminal~~~DevOverview;devsvc~Services~server~12~~DevServices;devlogs~Logs~activity~~~DevLogs;devmet~Metrics~cpu~~~DevMetrics;devinfra~Infrastructure~cloud~~~DevInfrastructure;devdep~Deployments~rocket~~~DevDeployments;devalert~Alerts~alert~3~~DevAlerts;devissues~Issues & Change Log~bug~8~~DevIssues;devint~Integrations~puzzle~~~DevIntegrations;devmod~Module Controller~sliders~~~ModuleController;devapi~API Monitoring~network~~~ApiMonitor#Settings|general~General~cog~~~SettingsHub;apis~API Connections~link~16~~ApiConnections;apitraffic~Live API Traffic~activity~~~ApiTraffic;tariffs~Shipping Tariffs~tag~~~Tariffs;notifc~Notifications~bell~3~~NotificationCenter;ebuild~Email Builder~mail~~~EmailBuilder;msgtpl~SMS & WhatsApp~message~~~MessageTemplates;bcast~Push Notifications~send~~~Broadcast;costs~Operating Costs~dollar~~~CostSettings;addr~Shipping Addresses~pin~~~ShippingAddresses;rfees~Rider Fees~truck~~~RiderSettings;loginpg~Login Page~image~~~LoginSettings;devmod~Modules~sliders~~~ModuleController;perm~Permissions~key~~~StaffPermissions;lblstudio~Label Printing~print~~~LabelStudio;auto~Automations~bolt~~~Automations';
+const nav = N.split('#').map(g => { const p = g.split('|'); return { label: p[0], items: p[1].split(';').map(i => { const f = i.split('~'); return { href: f[5] + '.dc.html', label: f[1], icon: 'i-' + f[2], c1: f[3], c2: f[4], cls: f[0] === A ? 'is-active' : '', ok: f[0] === 'fin' ? 'ok' : '' }; }) }; });
+
+  const s = this.state, q = s.q.toLowerCase(), all = G.flatMap(g => g[4]);
+  const on = all.filter(m => s.on[m[0]]), pct = (a, b) => 'width: ' + Math.round(a * 100 / b) + '%';
+  const cust = all.filter(m => m[4].includes('portal')), custOn = cust.filter(m => s.on[m[0]]).length;
+  const staffHit = Math.min(46, all.filter(m => !s.on[m[0]] && m[4].includes('staff')).length * 7);
+  const apiOn = 64 - all.filter(m => !s.on[m[0]] && m[4].includes('api')).length * 6;
+  const groups = G.map(g => { const items = g[4].filter(m => (!q || m[1].toLowerCase().includes(q)) && (s.f === 'All' || (s.f === 'On') === !!s.on[m[0]])).map(m => { const o = !!s.on[m[0]]; return { name: m[1], icon: m[2], desc: m[3], cls: o ? '' : 'off', sw: (o ? 'on' : '') + (LOCK[m[0]] ? ' lock' : ''), checked: o ? 'true' : 'false', state: LOCK[m[0]] ? 'Core' : o ? 'On' : 'Hidden everywhere', toggle: () => this.set(m[0], !o), tags: m[4].split(',').map(t => ({ label: TAGN[t], cls: o ? '' : 'warn' })) }; }); const gOn = g[4].filter(m => s.on[m[0]]).length; return { label: g[1], icon: g[2], desc: g[3], items, count: gOn + ' / ' + g[4].length + ' on', allLabel: gOn ? 'Turn group off' : 'Turn group on', toggleAll: () => { const v = !gOn, n = { ...s.on }; g[4].forEach(m => { if (!LOCK[m[0]]) n[m[0]] = v; }); this.setState({ on: n, dirty: true, warn: v ? '' : g[1] + ' is now hidden everywhere it appeared.' }); } }; }).filter(g => g.items.length);
+  const preview = G.map(g => ({ label: g[1], items: g[4].filter(m => s.on[m[0]] && m[4].includes('staff')).map(m => ({ name: m[1], icon: m[2] })) })).filter(g => g.items.length);
+  return { nav, groups, preview, total: all.length, onCount: on.length, offCount: all.length - on.length, onW: pct(on.length, all.length), staffHit, staffW: pct(staffHit, 46), custOn, custTotal: cust.length, custW: pct(custOn, cust.length), apiOn, apiW: pct(apiOn, 64),
+    q: s.q, onQ: (e) => this.setState({ q: e.target.value }), filters: ['All', 'On', 'Off'].map(f => ({ label: f, cls: s.f === f ? 'on' : '', pick: () => this.setState({ f }) })),
+    warn: s.warn, applyLabel: s.dirty ? 'Apply changes' : 'All changes live', apply: () => this.setState({ dirty: false, warn: '', log: [['HC', 'Changes applied', 'just now'], ...s.log].slice(0, 5) }),
+    allOn: () => { const n = {}; all.forEach(m => n[m[0]] = true); this.setState({ on: n, dirty: true, warn: '' }); },
+    log: s.log.map(l => ({ who: l[0], what: l[1], when: l[2] })) };
+}
+}
+
+</script>
+</body>
+</html>

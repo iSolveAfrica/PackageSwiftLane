@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Swift Lane Control Panels mobile, modules</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./swiftlane.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;background:#0E1017}
+.m{width:390px;min-height:1560px;box-sizing:border-box;display:flex;flex-direction:column;font-family:var(--font)}
+.m-bar{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:10px;padding:14px 16px 12px;background:color-mix(in srgb,var(--bg) 92%,transparent);border-bottom:1px solid var(--line)}
+.m-bar .sw{display:flex;align-items:center;gap:8px;font-weight:600;font-size:15px}
+.m-bar .sw small{width:28px;height:28px;border-radius:8px;background:var(--ink);color:var(--inverse);display:grid;place-items:center;font-size:11px;font-weight:700}
+.m-body{flex:1;padding:18px 16px 110px;display:flex;flex-direction:column;gap:16px}
+.m-h1{font-size:26px;font-weight:600;letter-spacing:-.02em;line-height:1.15}
+.m-find{display:flex;align-items:center;gap:10px;height:48px;padding:0 14px;border-radius:14px;border:1px solid var(--line);background:var(--field);color:var(--muted)}
+.m-find input{flex:1;min-width:0;border:0;background:transparent;color:var(--ink);font:15px var(--font);outline:0}
+.m-pins{display:flex;gap:8px;overflow-x:auto;margin:0 -16px;padding:0 16px 2px;scrollbar-width:none}
+.m-pins a,.m-pins button{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;width:84px;height:84px;border-radius:18px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:500 12px var(--font);text-align:center;cursor:pointer}
+.m-pins .ico{width:36px;height:36px;border-radius:12px;background:var(--active);display:grid;place-items:center}
+.m-sec{display:flex;align-items:center;justify-content:space-between;margin-top:4px}
+.m-sec h2{font-size:16px;font-weight:600}
+.m-attns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.m-attn{display:flex;flex-direction:column;gap:3px;padding:14px;border-radius:18px;border:1px solid var(--line);background:var(--card);color:inherit}
+.m-attn b{font:500 28px var(--font);letter-spacing:-.01em;line-height:1.1}
+.m-attn .d{font-size:12px;color:var(--muted)}
+.m-mb{display:flex;align-items:flex-end;gap:3px;height:40px;margin-top:8px}
+.m-mb i{flex:1;border-radius:3px 3px 2px 2px;background:#32364A}
+.m-mb i:last-child{background:var(--ink-2)}
+.m-health{border-radius:18px;border:1px solid var(--line);background:var(--card);padding:6px 16px}
+.m-health div{display:flex;align-items:center;gap:10px;min-height:48px;font-size:14px;border-top:1px solid var(--line)}
+.m-health div:first-child{border-top:0}
+.m-dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex:none}.m-dot.w{background:var(--yellow)}
+.m-card{border:1px solid var(--line);border-radius:20px;background:var(--card);overflow:hidden}
+.m-ch{display:flex;gap:12px;align-items:flex-start;padding:16px;background:var(--panel);border-bottom:1px solid var(--line)}
+.m-ch .tl{width:42px;height:42px;border-radius:12px;background:var(--active);display:grid;place-items:center;flex:none}
+.m-ch b{display:block;font-size:16px;font-weight:600}
+.m-ch span{display:block;color:var(--muted);font-size:13px;margin-top:2px;line-height:1.4}
+.m-row{display:flex;align-items:center;gap:12px;padding:0 16px;min-height:60px;color:var(--ink);border-top:1px solid var(--line)}
+.m-row:first-of-type{border-top:0}
+.m-ri{width:32px;height:32px;border-radius:10px;background:var(--field);display:grid;place-items:center;color:var(--ink-2);flex:none}
+.m-row .nm{flex:1;min-width:0;display:flex;flex-direction:column;padding:10px 0;font-size:15px}
+.m-row .nm small{color:var(--muted);font-size:12.5px}
+.m-row .ch{color:var(--faint);flex:none}
+.m-tabs{position:sticky;bottom:0;margin-top:auto;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));padding:8px 6px 22px;background:var(--panel);border-top:1px solid var(--line)}
+.m-tabs a{display:flex;flex-direction:column;align-items:center;gap:4px;min-height:48px;justify-content:center;font-size:11px;color:var(--muted)}
+.m-tabs a.on{color:var(--ink)}
+.m-tabs a.fab span{width:48px;height:48px;border-radius:16px;background:var(--ink);color:var(--inverse);display:grid;place-items:center;margin-top:-26px;box-shadow:0 6px 18px rgba(0,0,0,.4)}
+.m-step{display:flex;align-items:center;justify-content:center;gap:6px;color:var(--muted);font-size:12px}
+.m-step i{width:6px;height:6px;border-radius:50%;background:var(--line-2)}.m-step i.on{background:var(--ink);width:18px;border-radius:3px}
+</style>
+</helmet>
+<div class="sl-app dk m">
+  <header class="m-bar">
+    <button class="sl-ib" aria-label="Open menu"><i class="ic i-sidebar" aria-hidden="true"></i></button>
+    <a class="sw" href="Main.dc.html"><small>SL</small>Accra Hub<i class="ic ic-sm i-down" aria-hidden="true"></i></a>
+    <a class="fx-chip" style="height:30px;padding:0 9px;font-size:11px;gap:4px" href="SettingsHub.dc.html" title="Exchange rate · set in Settings › General"><span class="mono">USD 1 = GHS 12.40</span></a>
+    <span class="grow"></span>
+    <a class="sl-ib" aria-label="Notifications" href="Notifications.dc.html"><i class="ic i-bell" aria-hidden="true"></i></a>
+    <span class="sl-av sm">H</span>
+  </header>
+  <main class="m-body">
+    <div class="m-sec" style="margin-top:0"><h2>All modules</h2><span class="mut sm">2 of 3</span></div>
+    <section class="m-card"><div class="m-ch"><span class="tl"><i class="ic i-warehouse" aria-hidden="true"></i></span><div><b>Warehouse &amp; dispatch</b><span>Bays, lockers, drivers and routes</span></div></div><a class="m-row" href="Warehouse.dc.html"><span class="m-ri"><i class="ic ic-sm i-warehouse" aria-hidden="true"></i></span><span class="nm"><span>Warehouse</span><small>Bays and scanning</small></span><span class="sl-badge mono">46 / 50</span><i class="ic ic-sm i-right ch" aria-hidden="true"></i></a><a class="m-row" href="LockerSearch.dc.html"><span class="m-ri"><i class="ic ic-sm i-search" aria-hidden="true"></i></span><span class="nm"><span>Locker search</span><small>Find a parcel by locker</small></span><i class="ic ic-sm i-right ch" aria-hidden="true"></i></a><a class="m-row" href="Pickups.dc.html"><span class="m-ri"><i class="ic ic-sm i-truck" aria-hidden="true"></i></span><span class="nm"><span>Pickups</span><small>Today’s pickup slots</small></span><span class="sl-badge mono">12 / 20</span><i class="ic ic-sm i-right ch" aria-hidden="true"></i></a><a class="m-row" href="Drivers.dc.html"><span class="m-ri"><i class="ic ic-sm i-wheel" aria-hidden="true"></i></span><span class="nm"><span>Drivers</span><small>On shift right now</small></span><span class="sl-badge mono">8 / 14</span><i class="ic ic-sm i-right ch" aria-hidden="true"></i></a></section><section class="m-card"><div class="m-ch"><span class="tl"><i class="ic i-users" aria-hidden="true"></i></span><div><b>Customers &amp; people</b><span>Who ships with us and who works here</span></div></div><a class="m-row" href="Customers.dc.html"><span class="m-ri"><i class="ic ic-sm i-users" aria-hidden="true"></i></span><span class="nm"><span>Customers</span><small>Profiles and shipping marks</small></span><span class="sl-badge mono">1,284</span><i class="ic ic-sm i-right ch" aria-hidden="true"></i></a><a class="m-row" href="Recipients.dc.html"><span class="m-ri"><i class="ic ic-sm i-user" aria-hidden="true"></i></span><span class="nm"><span>Recipients</span><small>People receiving parcels</small></span><i class="ic ic-sm i-right ch" aria-hidden="true"></i></a><a class="m-row" href="StaffRoles.dc.html"><span class="m-ri"><i class="ic ic-sm i-shield" aria-hidden="true"></i></span><span class="nm"><span>Staff &amp; roles</span><small>Permissions and access</small></span><span class="sl-badge mono">46</span><i class="ic ic-sm i-right ch" aria-hidden="true"></i></a></section><section class="m-card"><div class="m-ch"><span class="tl"><i class="ic i-dollar" aria-hidden="true"></i></span><div><b>Money</b><span>What comes in, what is owed, what it costs</span></div></div><a class="m-row" href="Payments.dc.html"><span class="m-ri"><i class="ic ic-sm i-card" aria-hidden="true"></i></span><span class="nm"><span>Payments</span><small>Gateway settlements</small></span><i class="ic ic-sm i-right ch" aria-hidden="true"></i></a><a class="m-row" href="AccountsReceivable.dc.html"><span class="m-ri"><i class="ic ic-sm i-receipt" aria-hidden="true"></i></span><span class="nm"><span>Accounts receivable</span><small>Overdue invoices</small></span><span class="sl-badge mono">23</span><i class="ic ic-sm i-right ch" aria-hidden="true"></i></a><a class="m-row" href="FinancialOverview.dc.html"><span class="m-ri"><i class="ic ic-sm i-chart" aria-hidden="true"></i></span><span class="nm"><span>Financial overview</span><small>Revenue and margin</small></span><i class="ic ic-sm i-right ch" aria-hidden="true"></i></a><a class="m-row" href="Tariffs.dc.html"><span class="m-ri"><i class="ic ic-sm i-tag" aria-hidden="true"></i></span><span class="nm"><span>Shipping tariffs</span><small>Rates per kg and CBM</small></span><i class="ic ic-sm i-right ch" aria-hidden="true"></i></a></section>
+    <div class="m-step" aria-label="Screen 2 of 3"><i class=""></i><i class="on"></i><i class=""></i></div>
+    <a class="sl-btn soft" href="ControlPanelsMobile3.dc.html" style="width:100%">More modules<i class="ic ic-sm i-right" aria-hidden="true"></i></a>
+  </main>
+  <nav class="m-tabs" aria-label="App navigation">
+    <a href="Main.dc.html"><i class="ic i-grid" aria-hidden="true"></i>Home</a>
+    <a href="AirShipments.dc.html"><i class="ic i-plane" aria-hidden="true"></i>Shipments</a>
+    <a class="fab" href="NewShipment.dc.html" aria-label="New shipment"><span><i class="ic i-plus" aria-hidden="true"></i></span></a>
+    <a href="CsInbox.dc.html"><i class="ic i-ticket" aria-hidden="true"></i>Inbox</a>
+    <a class="on" href="ControlPanelsMobile.dc.html"><i class="ic i-layers" aria-hidden="true"></i>Panels</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1560}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

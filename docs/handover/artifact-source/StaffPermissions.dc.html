@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Swift Lane Staff Permissions</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./swiftlane.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.ov-card{display:flex;flex-direction:column;gap:10px;padding:16px 18px 14px;border:1px solid var(--line);border-radius:18px;background:var(--card);color:var(--ink)}
+.ov-card .hd{display:flex;align-items:center;justify-content:space-between;font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.ov-card .hd span{display:flex;align-items:center;gap:8px}
+.ov-card .fig{font-size:15.5px;margin-top:8px}
+.ov-card .fig i{font-style:normal;color:var(--muted)}
+.ov-card .ft{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted)}
+.ov-seg{display:flex;gap:2px;font-size:13px;color:var(--muted)}
+.ov-seg button{border:0;background:transparent;color:inherit;font:inherit;padding:5px 9px;border-radius:8px;cursor:pointer}
+.ov-seg button.on{background:var(--active);color:var(--ink)}
+.ov-avg{font-size:13.5px;color:var(--muted)}.ov-avg b{color:var(--ink);font-weight:500}
+.ov-chart text{font-size:11px;fill:var(--muted);font-family:var(--font)}
+.ov-qa{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.ov-qa a{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 12px;border-radius:10px;color:var(--ink-2);font-size:14px}
+.ov-qa a:first-child{background:var(--active);color:var(--ink)}
+.ov-qa a:hover{background:var(--hover)}
+.ov-row{display:flex;align-items:center;gap:12px;min-height:52px;border-top:1px solid var(--line);font-size:14px}
+.ov-row:first-child{border-top:0}
+.ov-pill{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:6px;font-size:12px;font-weight:500;background:var(--active);color:var(--ink-2)}
+.ov-pill.ok{background:var(--green-bg);color:var(--green-ink)}.ov-pill.warn{background:var(--amber-bg);color:var(--amber-ink)}.ov-pill.bad{background:var(--red-bg);color:var(--red-ink)}
+.ov-hm{display:grid;gap:4px;align-items:center}
+.ov-hm b{width:12px;height:12px;border-radius:3px;background:var(--heat-0);place-self:center}
+.ov-hm b.h0{width:3px;height:3px;border-radius:50%}
+.ov-hm b.h1{background:var(--heat-1)}.ov-hm b.h2{background:var(--heat-2)}.ov-hm b.h3{background:var(--heat-3)}
+.ov-hm span{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sl-ticks.n{--c:var(--muted)}
+.pm{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.pm-roles{flex:0 1 280px;min-width:0;display:flex;flex-direction:column;gap:6px}
+.pm-main{flex:999 1 640px;min-width:0;display:flex;flex-direction:column;gap:16px}
+.pm-role{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:var(--card);text-align:left;font:inherit;color:var(--ink);cursor:pointer;width:100%}
+.pm-role.on{border:2px solid var(--ink);padding:11px 13px}
+.pm-role b{font-size:14px;font-weight:500;display:block}.pm-role small{color:var(--muted);font-size:12px}
+.pm-dot{width:10px;height:10px;border-radius:3px;flex:none}
+.pm-mx{width:100%;border-collapse:collapse;font-size:13.5px}
+.pm-mx th{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:500;padding:10px 6px;text-align:center;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--card)}
+.pm-mx th:first-child{text-align:left;padding-left:16px}
+.pm-mx td{padding:0 6px;height:46px;border-bottom:1px solid var(--line);text-align:center}
+.pm-mx td:first-child{text-align:left;padding-left:16px}
+.pm-mx tr.gh td{height:38px;background:var(--panel);font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.pm-c{width:26px;height:26px;border-radius:8px;border:1.5px solid var(--line-2);background:var(--field);display:inline-grid;place-items:center;cursor:pointer;color:var(--inverse);padding:0}
+.pm-c.on{background:var(--ink);border-color:var(--ink)}
+.pm-c.na{opacity:.25;cursor:default;border-style:dashed}
+.pm-row-all{border:0;background:transparent;color:var(--muted);font:12px var(--font);cursor:pointer;text-decoration:underline}
+.pm-sens{display:flex;align-items:center;gap:14px;padding:14px 0;border-top:1px solid var(--line)}
+.pm-sens:first-of-type{border-top:0}
+.pm-sens .nm{flex:1;min-width:0}.pm-sens b{font-weight:500;font-size:14px;display:block}.pm-sens small{color:var(--muted);font-size:12.5px}
+.pm-sw{width:44px;height:26px;border-radius:13px;border:0;background:var(--line-2);position:relative;cursor:pointer;flex:none;padding:0}
+.pm-sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .15s}
+.pm-sw.on{background:var(--green)}.pm-sw.on::after{left:21px}
+.pm-blur{filter:blur(7px);user-select:none}
+.pm-prev{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.pm-prev>div{border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--field)}
+.pm-lock{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.pm-mem{display:flex;align-items:center;gap:10px;min-height:48px;border-top:1px solid var(--line);font-size:13.5px}
+</style>
+</helmet>
+<div class="sl-app">
+  <input type="checkbox" id="navtg" class="nav-tg" aria-hidden="true" tabindex="-1">
+  <header class="sl-top">
+    <label class="sl-ib nav-open" for="navtg" aria-label="Open or close the menu" role="button" tabindex="0"><i class="ic i-sidebar" aria-hidden="true"></i></label>
+    <a class="sl-switch" href="Main.dc.html"><small>SL</small> Swift Lane · Accra Hub <i class="ic ic-sm i-down" aria-hidden="true"></i></a>
+    <a class="fx-chip" href="SettingsHub.dc.html" title="Exchange rate · set in Settings › General"><i class="ic ic-sm i-dollar" aria-hidden="true"></i><span class="mono">USD 1 = GHS 12.40</span><span class="fx-d">▲ 0.4%</span></a>
+    <span class="grow"></span>
+    <details class="aitop"><summary aria-label="Help with Swift Lane AI"><span class="o"><i class="ic i-ai" aria-hidden="true"></i></span>Help</summary><div class="pop" role="menu">
+<div class="me"><span class="sl-av sm dark">HC</span><div class="grow"><div class="fw5 sm">Henry Cobblah</div><div class="mut" style="font-size:12px">Operations manager · Accra Hub</div></div><a class="sl-btn sm ghost" href="AiStudio.dc.html">Edit</a></div>
+<a class="ask" href="StaffAI.dc.html"><i class="ic ic-sm i-spark" aria-hidden="true"></i>Ask AI for help on this page<b><i class="ic ic-sm i-send" aria-hidden="true"></i></b></a>
+<div class="hd">Your profile with AI</div>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-wand" aria-hidden="true"></i></span><span>Retouch my photo<small>Light, skin and background</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-refresh" aria-hidden="true"></i></span><span>Reset images<small>Go back to the original photo</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-edit" aria-hidden="true"></i></span><span>Change my name<small>AI fixes spelling and capitals</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-user" aria-hidden="true"></i></span><span>Make my icon<small>Avatar from your photo or initials</small></span></a>
+<div class="hd">Help</div>
+<a class="it" role="menuitem" href="StaffAI.dc.html"><span class="t"><i class="ic ic-sm i-help" aria-hidden="true"></i></span><span>Explain this page</span></a>
+<a class="it" role="menuitem" href="CsInbox.dc.html"><span class="t"><i class="ic ic-sm i-message" aria-hidden="true"></i></span><span>Talk to a person</span></a>
+</div></details>
+    <a class="sl-ib" aria-label="Notifications" href="Notifications.dc.html"><i class="ic i-bell" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Switch theme" href="SettingsHub.dc.html"><i class="ic i-sun" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Documents" href="Documents.dc.html"><i class="ic i-file" aria-hidden="true"></i></a>
+    <a class="sl-btn" href="Pickups.dc.html">Schedule Pickup</a>
+    <details class="uptop"><summary aria-label="Your profile and settings, Henry Cobblah"><span class="me-pic hc" style="width:34px;height:34px"><i class="me-on" aria-hidden="true"></i></span><span class="up-nm">Henry</span><i class="ic ic-sm i-down" aria-hidden="true"></i></summary><div class="pop" role="menu">
+<a class="up-me" href="AiStudio.dc.html"><span class="me-pic hc" style="width:48px;height:48px"><i class="me-on" aria-hidden="true"></i></span><span class="col" style="min-width:0"><b>Henry Cobblah</b><small>Operations manager · Accra Hub</small><small class="mono">henry@swiftlane.com</small></span></a>
+<div class="up-st"><span class="row g6 sm"><span class="ld" style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span>Available</span><a class="sm fw5" href="AiStudio.dc.html">Edit profile</a></div>
+<div class="up-h">Short links</div><div class="up-g"><a class="up-l" role="menuitem" href="Main.dc.html"><i class="ic ic-sm i-grid" aria-hidden="true"></i>Overview</a><a class="up-l" role="menuitem" href="RiderDispatch.dc.html"><i class="ic ic-sm i-truck" aria-hidden="true"></i>Dispatch board</a><a class="up-l" role="menuitem" href="SendPrices.dc.html"><i class="ic ic-sm i-send" aria-hidden="true"></i>Send prices</a><a class="up-l" role="menuitem" href="Reports.dc.html"><i class="ic ic-sm i-chart" aria-hidden="true"></i>Reports</a><a class="up-l" role="menuitem" href="Documents.dc.html"><i class="ic ic-sm i-file" aria-hidden="true"></i>Documents</a><a class="up-l" role="menuitem" href="ActivityLogs.dc.html"><i class="ic ic-sm i-clock" aria-hidden="true"></i>My activity</a></div>
+<div class="up-h">Settings</div><a class="up-l" role="menuitem" href="AiStudio.dc.html"><i class="ic ic-sm i-ai" aria-hidden="true"></i>Profile and photo</a><a class="up-l" role="menuitem" href="SettingsHub.dc.html"><i class="ic ic-sm i-cog" aria-hidden="true"></i>Settings</a><a class="up-l" role="menuitem" href="ApiConnections.dc.html"><i class="ic ic-sm i-link" aria-hidden="true"></i>API connections</a><a class="up-l" role="menuitem" href="StaffPermissions.dc.html"><i class="ic ic-sm i-shield" aria-hidden="true"></i>Permissions</a>
+<div class="up-row"><span class="sm mut">Theme</span><span class="sl-seg boxed" style="height:30px"><a class="on" href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Light</a><a href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Dark</a></span></div>
+<a class="up-l" role="menuitem" href="CsInbox.dc.html"><i class="ic ic-sm i-help" aria-hidden="true"></i>Help and support</a>
+<a class="up-l out" role="menuitem" href="Login.dc.html"><i class="ic ic-sm i-logout" aria-hidden="true"></i>Sign out</a>
+</div></details>
+  </header>
+  <div class="sl-body">
+    <label class="nav-bd" for="navtg" aria-hidden="true"></label>
+    <div class="sl-rail">
+      <a class="is-on" href="NewShipment.dc.html" aria-label="New shipment"><i class="ic i-newdoc" aria-hidden="true"></i></a>
+      <a href="StaffAI.dc.html" aria-label="AI assistant" title="AI assistant"><i class="ic i-ai" aria-hidden="true"></i></a>
+      <a href="PublicTracking.dc.html" aria-label="Tracking" title="Tracking"><i class="ic i-track" aria-hidden="true"></i></a>
+      <a href="LockerSearch.dc.html" aria-label="Search tracking number" title="Search tracking number"><i class="ic i-tsearch" aria-hidden="true"></i></a>
+      <a href="Consolidations.dc.html" aria-label="Consolidation" title="Consolidation"><i class="ic i-layers" aria-hidden="true"></i></a>
+      <a href="Warehouse.dc.html" aria-label="Warehouse" title="Warehouse"><i class="ic i-warehouse" aria-hidden="true"></i></a>
+      <a class="me-pic hc" href="AiStudio.dc.html" aria-label="Your profile, Henry Cobblah" style="width:34px;height:34px;margin-top:auto"></a>
+    </div>
+    <aside class="sl-side" aria-label="Main navigation">
+      <div class="nav-x"><span class="fw5">Menu</span><label class="sl-ib" for="navtg" aria-label="Close the menu" role="button" tabindex="0"><i class="ic i-x" aria-hidden="true"></i></label></div>
+      <sc-for list="{{nav}}" as="g" hint-placeholder-count="5">
+        <div class="sl-gl">{{g.label}}</div>
+        <nav class="sl-nav">
+          <sc-for list="{{g.items}}" as="it" hint-placeholder-count="4">
+            <a href="{{it.href}}" class="{{it.cls}}"><i class="ic {{it.icon}}" aria-hidden="true"></i><span>{{it.label}}</span><span class="cnt {{it.ok}}">{{it.c1}} <em>{{it.c2}}</em></span></a>
+          </sc-for>
+        </nav>
+      </sc-for>
+      <div class="sl-gl">Other</div>
+      <nav class="sl-nav">
+        <a href="SettingsHub.dc.html"><i class="ic i-globe" aria-hidden="true"></i><span>Language</span></a>
+        <a href="CsInbox.dc.html"><i class="ic i-help" aria-hidden="true"></i><span>Get help</span></a>
+        <a href="Login.dc.html" class="danger"><i class="ic i-logout" aria-hidden="true"></i><span>Sign out</span></a>
+      </nav>
+      <a class="me-card" href="AiStudio.dc.html" aria-label="Signed in as Henry Cobblah, Operations manager. Open your profile">
+        <span class="me-pic hc" role="img" aria-label="Photo of Henry Cobblah"><i class="me-on" aria-hidden="true"></i></span>
+        <span class="grow col" style="min-width:0"><b>Henry Cobblah</b><small>Operations manager · Accra Hub</small></span>
+        <i class="ic ic-sm i-more mut" aria-hidden="true"></i>
+      </a>
+      <a class="me-sub" href="CsInbox.dc.html"><i class="ic ic-sm i-ticket" aria-hidden="true"></i>Customer service<span class="sl-tag">12 open</span></a>
+    </aside>
+
+    <main class="sl-main">
+<div class="sl-wrap" style="max-width:1180px">
+<div class="sl-head"><div><h1 class="sl-title" style="font-size:20px">Staff Permissions</h1><p class="sl-lede">Roles decide what each person can see and do, module by module, down to who sees money</p></div><div class="row g8 wrap"><a class="sl-btn ghost" href="ModuleController.dc.html"><i class="ic ic-sm i-sliders" aria-hidden="true"></i>Module controller</a><button class="sl-btn ghost"><i class="ic ic-sm i-eye" aria-hidden="true"></i>View as {{role.name}}</button><button class="sl-btn" onClick="{{save}}"><i class="ic ic-sm i-check" aria-hidden="true"></i>{{saveLabel}}</button></div></div>
+<div class="grid cols4">
+<div class="ov-card"><div class="hd"><span><i class="ic ic-sm i-key" aria-hidden="true"></i>Roles</span></div><div class="fig">{{roleCount}} <i>roles · 46 staff</i></div><div class="sl-ticks n"><i style="width:60%"></i></div><div class="ft">2 custom roles</div></div>
+<div class="ov-card"><div class="hd"><span><i class="ic ic-sm i-shield" aria-hidden="true"></i>{{role.name}} can do</span></div><div class="fig">{{granted}} <i>/ {{possible}} actions</i></div><div class="sl-ticks" role="img" aria-label="Granted"><i style="{{grantW}}"></i></div><div class="ft">{{role.members}} people have this role</div></div>
+<div class="ov-card"><div class="hd"><span><i class="ic ic-sm i-dollar" aria-hidden="true"></i>See money</span></div><div class="fig">{{moneyLabel}}</div><div class="sl-ticks {{moneyTick}}"><i style="{{moneyW}}"></i></div><div class="ft">Amounts are blurred without it</div></div>
+<div class="ov-card"><div class="hd"><span><i class="ic ic-sm i-user" aria-hidden="true"></i>Access requests</span></div><div class="fig">3 <i>waiting</i></div><div class="sl-ticks r"><i style="width:30%"></i></div><div class="ft">Oldest 2 days</div></div>
+</div>
+<div class="pm">
+<aside class="pm-roles" aria-label="Roles">
+<div class="sl-search"><i class="ic ic-sm i-search" aria-hidden="true"></i><input aria-label="Search roles" placeholder="Search roles"></div>
+<sc-for list="{{roles}}" as="r" hint-placeholder-count="8"><button class="pm-role {{r.cls}}" onClick="{{r.pick}}" aria-pressed="{{r.sel}}"><span class="pm-dot" style="{{r.dot}}"></span><span class="grow"><b>{{r.name}}</b><small>{{r.members}} people · {{r.count}} actions</small></span><i class="ic ic-sm i-right mut" aria-hidden="true"></i></button></sc-for>
+<button class="sl-btn ghost" style="margin-top:6px"><i class="ic ic-sm i-plus" aria-hidden="true"></i>New role</button>
+</aside>
+<div class="pm-main">
+<section class="sl-card col g12"><div class="row between wrap g12"><div><div class="up">Role</div><h2 style="font-size:20px;font-weight:600;letter-spacing:-.01em">{{role.name}}</h2><p class="mut sm">{{role.desc}}</p></div><div class="sl-seg boxed"><sc-for list="{{tabs}}" as="t" hint-placeholder-count="3"><button class="{{t.cls}}" onClick="{{t.pick}}">{{t.label}}</button></sc-for></div></div>
+<div class="row g8 wrap sm"><span class="mut">Start from:</span><sc-for list="{{presets}}" as="p" hint-placeholder-count="4"><button class="sl-btn sm ghost" onClick="{{p.apply}}">{{p.label}}</button></sc-for></div></section>
+
+<sc-if value="{{tabPerm}}" hint-placeholder-val="{{ true }}">
+<section class="sl-card flush"><div class="row between wrap g8" style="padding:14px 16px"><h2 class="sl-ct">Module permissions</h2><div class="sl-search" style="max-width:260px"><i class="ic ic-sm i-search" aria-hidden="true"></i><input aria-label="Search permissions" placeholder="Search modules" value="{{q}}" onChange="{{onQ}}"></div></div>
+<div class="sl-tw"><table class="pm-mx"><thead><tr><th>Module</th><sc-for list="{{acts}}" as="a" hint-placeholder-count="6"><th>{{a}}</th></sc-for><th></th></tr></thead><tbody>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="20">
+<sc-if value="{{r.isGroup}}" hint-placeholder-val="{{ false }}"><tr class="gh"><td colspan="8">{{r.label}}</td></tr></sc-if>
+<sc-if value="{{r.isRow}}" hint-placeholder-val="{{ true }}"><tr><td><span class="row g10"><i class="ic ic-sm {{r.icon}} mut" aria-hidden="true"></i>{{r.label}}</span></td><sc-for list="{{r.cells}}" as="c" hint-placeholder-count="6"><td><button class="pm-c {{c.cls}}" onClick="{{c.toggle}}" aria-label="{{c.aria}}" aria-pressed="{{c.p}}"><i class="ic ic-sm i-check" aria-hidden="true"></i></button></td></sc-for><td><button class="pm-row-all" onClick="{{r.all}}">{{r.allLabel}}</button></td></tr></sc-if>
+</sc-for>
+</tbody></table></div></section>
+<section class="sl-card col"><div class="sl-ch"><div><h2 class="sl-ct">Sensitive data</h2><div class="mut sm">Fine controls that cut across every module</div></div></div>
+<sc-for list="{{sens}}" as="x" hint-placeholder-count="6"><div class="pm-sens"><i class="ic {{x.icon}} mut" aria-hidden="true"></i><div class="nm"><b>{{x.label}}</b><small>{{x.desc}}</small></div><button class="pm-sw {{x.cls}}" role="switch" aria-checked="{{x.p}}" aria-label="{{x.label}}" onClick="{{x.toggle}}"></button></div></sc-for>
+</section>
+<section class="sl-card col g12"><div class="row between wrap g8"><div><h2 class="sl-ct">Preview: what {{role.name}} sees on Financial Overview</h2><div class="mut sm">Live as you switch "See financial figures"</div></div><a class="sm fw5" href="FinancialOverviewRestricted.dc.html">Open full preview</a></div>
+<div class="pm-prev"><div><div class="up">Revenue</div><div class="big {{blur}}">$48,200</div></div><div><div class="up">Gross margin</div><div class="big {{blur}}">$18,560</div></div><div><div class="up">Outstanding</div><div class="big {{blur}}">$6,840</div></div></div>
+<sc-if value="{{isBlur}}" hint-placeholder-val="{{ false }}"><div class="pm-lock"><i class="ic ic-sm i-lock" aria-hidden="true"></i>Figures are blurred for this role. Shipments, weights and counts stay visible.</div></sc-if>
+</section>
+</sc-if>
+
+<sc-if value="{{tabMem}}" hint-placeholder-val="{{ false }}">
+<section class="sl-card col"><div class="sl-ch"><h2 class="sl-ct">People with this role</h2><a class="sl-btn sm" href="InviteStaff.dc.html"><i class="ic ic-sm i-plus" aria-hidden="true"></i>Add person</a></div>
+<sc-for list="{{members}}" as="m" hint-placeholder-count="4"><div class="pm-mem"><span class="sl-av sm">{{m.ini}}</span><span class="grow">{{m.name}} <span class="mut">· {{m.branch}}</span></span><span class="mut sm">Last seen {{m.seen}}</span><button class="sl-btn sm ghost">Change role</button></div></sc-for></section>
+</sc-if>
+
+<sc-if value="{{tabLog}}" hint-placeholder-val="{{ false }}">
+<section class="sl-card col"><h2 class="sl-ct">Permission changes</h2>
+<div class="pm-mem"><span class="sl-av sm">HC</span><span class="grow">Henry removed <b class="fw5">Delete</b> on Payments from Finance</span><span class="mut sm">Nov 3</span></div>
+<div class="pm-mem"><span class="sl-av sm">HC</span><span class="grow">Henry turned off <b class="fw5">See financial figures</b> for Support agent</span><span class="mut sm">Oct 30</span></div>
+<div class="pm-mem"><span class="sl-av sm">NL</span><span class="grow">Nii created role <b class="fw5">Night shift lead</b></span><span class="mut sm">Oct 21</span></div></section>
+</sc-if>
+</div>
+</div>
+</div>
+</main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2700}}'>
+
+const ACTS = ['View', 'Create', 'Edit', 'Delete', 'Export', 'Approve'];
+const MODS = [
+ ['Shipping and freight', [['air','Air shipments','i-plane','111110'],['sea','Sea packages','i-ship','111110'],['consol','Consolidations','i-layers','111111'],['prealert','Pre-alerts','i-inbox','111110'],['intake','Package intake','i-scan','111000']]],
+ ['Warehouse and dispatch', [['wh','Warehouse','i-warehouse','111010'],['handover','Warehouse delivery','i-key','111001'],['pickups','Pickups','i-truck','111110'],['drivers','Drivers and settlements','i-wheel','111111']]],
+ ['Customers', [['customers','Customers','i-users','111110'],['recipients','Recipients','i-user','111100'],['kyc','KYC checks','i-shield','100011']]],
+ ['Money', [['payments','Payments','i-card','111111'],['ar','Accounts receivable','i-receipt','111010'],['finance','Financial overview','i-chart','100010'],['tariffs','Tariffs and rate cards','i-tag','111101']]],
+ ['Messaging and support', [['notify','Notification center','i-send','101000'],['inbox','Support inbox','i-ticket','111110'],['ai','AI assistant','i-spark','100000']]],
+ ['Admin', [['staff','Staff and roles','i-shield','111101'],['modules','Module controller','i-sliders','101000'],['api','API keys','i-link','111100'],['logs','Logs and audit','i-clock','100010']]]
+];
+const ROLES = [
+ ['super','Super admin','Everything, everywhere. Keep this to 1–2 people.','#161615',2,'all'],
+ ['ops','Operations manager','Runs the hub day to day. No staff or module admin.','#44433F',4,'ops'],
+ ['wh','Warehouse lead','Intake, bays, handover and pickups.','#6B6A65',9,'wh'],
+ ['fin','Finance','Payments, invoices and money reports.','#8A8984',3,'fin'],
+ ['cs','Support agent','Tickets and customer info. No money.','#A9A8A2',8,'cs'],
+ ['driver','Driver','Their pickups and deliveries only.','#C2C1BB',14,'driver'],
+ ['desk','Front desk','Handover and simple lookups.','#D9D7D0',5,'desk'],
+ ['night','Night shift lead','Custom · warehouse plus approvals.','#E9E7E1',1,'wh']
+];
+const SENS = [['money','See financial figures','Revenue, costs, invoice amounts and margins. Off = blurred everywhere.','i-dollar'],['contact','See customer phone and e-mail','Off = masked like +233 24 *** 5678','i-phone'],['viewas','Use View as','Sign in as another user to help them','i-eye'],['export','Export to Excel and PDF','Download lists and reports','i-download'],['bulk','Bulk actions','Update status or delete many at once','i-layers'],['after','Work outside shift hours','Sign in outside 07:00–19:00','i-clock']];
+function preset(kind) {
+  const p = {};
+  MODS.forEach(g => g[1].forEach(m => { const mask = m[3].split('').map(Number); let on;
+    if (kind === 'all') on = mask;
+    else if (kind === 'none') on = mask.map(() => 0);
+    else if (kind === 'view') on = mask.map((v, i) => i === 0 ? v : 0);
+    else { const allow = { ops: ['air','sea','consol','prealert','intake','wh','handover','pickups','drivers','customers','recipients','kyc','ar','tariffs','notify','inbox','ai','logs'], wh: ['air','sea','consol','prealert','intake','wh','handover','pickups'], fin: ['payments','ar','finance','tariffs','customers','logs'], cs: ['air','sea','prealert','customers','recipients','inbox','ai','pickups'], driver: ['pickups','handover'], desk: ['handover','customers','air','sea'] }[kind] || [];
+      on = mask.map((v, i) => allow.includes(m[0]) ? (i === 3 || i === 5 ? (kind === 'ops' ? v : 0) : v) : 0); }
+    p[m[0]] = on; }));
+  const sens = { money: ['all','fin','ops'].includes(kind) ? 1 : 0, contact: kind === 'driver' ? 0 : 1, viewas: kind === 'all' ? 1 : 0, export: ['all','fin','ops'].includes(kind) ? 1 : 0, bulk: ['all','ops','wh'].includes(kind) ? 1 : 0, after: ['all','ops'].includes(kind) || kind === 'wh' ? 1 : 0 };
+  return { p, sens };
+}
+class Component extends DCLogic {
+constructor(p) { super(p); const data = {}; ROLES.forEach(r => data[r[0]] = preset(r[5])); data.night.sens.after = 1; this.state = { role: 'cs', data, tab: 'perm', q: '', saved: true }; }
+upd(fn) { const data = JSON.parse(JSON.stringify(this.state.data)); fn(data[this.state.role]); this.setState({ data, saved: false }); }
+renderVals() {
+  const A = 'perm';
+const N = 'Operations|dash~Overview~grid~~~Main;panels~Control Panels~gauge~~~ControlPanels;air~Air Shipments~plane~128~~AirShipments;sea~Sea Packages~ship~64~~SeaPackages;prealert~Pre-Alerts~inbox~9~~PreAlerts;pickup~Pickups~truck~12~/ 20~Pickups;dtrack~Delivery Tracking~route~5~~DeliveryTracking;shiptrack~Shipment Tracking~track~~~ShipmentTracking;aging~Pickup Aging~hourglass~9~~PickupAging;handover~Warehouse Delivery~arrow~~~WarehouseDelivery;consol~Consolidations~layers~7~~Consolidations;warehouse~Warehouse~warehouse~~~Warehouse;handout~Hand Out Packages~box~5~~HandOut;locker~Locker Search~lock~~~LockerSearch#Hubs|execdash~Management Dashboard~chart~~~ExecDashboard;billhub~Billing & Finance~dollar~~~BillingHub;lastmile~Last-Mile Delivery~truck~~~LastMile;aicenter~AI Centre~ai~~~AiCenter;commshub~Messages & Automation~message~~~CommsHub;supporthub~Support & CRM~ticket~~~SupportHub;loyalty~Loyalty & Referrals~star~~~LoyaltyRewards;security~Security & Reliability~shield~~~SecurityCenter#Freight|frhub~Freight Hub~plane~~~FreightHub;frsched~Departures & Arrivals~calendar~5~~FreightSchedule;frwb~Waybills & Manifests~file~~~Waybills;frex~Cargo Exceptions~alert~6~~CargoExceptions;frins~Insurance & Claims~shield~4~~InsuranceClaims;frpart~Freight Partners~users~~~FreightPartners#People|cust~Customers~users~1,284~~Customers;recip~Recipients~pin~~~Recipients;drivers~Drivers~wheel~8~/ 14~Drivers;drvapp~Rider App~phone~~~DriverApp;staff~Staff & Roles~shield~~~StaffRoles;perm~Staff Permissions~key~~~StaffPermissions#Finance|pay~Payments~card~~~Payments;ar~Accounts Receivable~receipt~~~AccountsReceivable;fin~Financial Overview~dollar~$48,200~~FinancialOverview#Insights|reports~Reports~chart~~~Reports;activity~Activity Logs~clock~~~ActivityLogs;messages~Message Logs~archive~~~MessageLogs;msgcost~Message Costs~trend~~~MessageCosts;staffprod~Staff Productivity~trendup~~~StaffProductivity;txn~Transactions~refresh~~~Transactions;syslog~System Logs~note~~~SystemLogs#Customer Service|tickets~Support Inbox~ticket~1,482~~CsInbox;csrules~Ticket Rules~filter~~~CsRules;playbook~Playbook~book~~~CsPlaybook;csrep~Support Reports~star~~~CsReports;cschan~Channels & Teams~message~~~CsChannels;csai~AI Assistant~ai~~~StaffAI;cssupai~AI for Customers~spark~~~CsAI#Developer|devov~Dev Overview~terminal~~~DevOverview;devsvc~Services~server~12~~DevServices;devlogs~Logs~activity~~~DevLogs;devmet~Metrics~cpu~~~DevMetrics;devinfra~Infrastructure~cloud~~~DevInfrastructure;devdep~Deployments~rocket~~~DevDeployments;devalert~Alerts~alert~3~~DevAlerts;devissues~Issues & Change Log~bug~8~~DevIssues;devint~Integrations~puzzle~~~DevIntegrations#Settings|general~General~cog~~~SettingsHub;apis~API Connections~link~16~~ApiConnections;apitraffic~Live API Traffic~activity~~~ApiTraffic;tariffs~Shipping Tariffs~tag~~~Tariffs;notifc~Notifications~bell~3~~NotificationCenter;ebuild~Email Builder~mail~~~EmailBuilder;msgtpl~SMS & WhatsApp~message~~~MessageTemplates;bcast~Push Notifications~send~~~Broadcast;costs~Operating Costs~dollar~~~CostSettings;addr~Shipping Addresses~pin~~~ShippingAddresses;rfees~Rider Fees~truck~~~RiderSettings;loginpg~Login Page~image~~~LoginSettings;devmod~Modules~sliders~~~ModuleController;perm~Permissions~key~~~StaffPermissions;lblstudio~Label Printing~print~~~LabelStudio;auto~Automations~bolt~~~Automations';
+const nav = N.split('#').map(g => { const p = g.split('|'); return { label: p[0], items: p[1].split(';').map(i => { const f = i.split('~'); return { href: f[5] + '.dc.html', label: f[1], icon: 'i-' + f[2], c1: f[3], c2: f[4], cls: f[0] === A ? 'is-active' : '', ok: f[0] === 'fin' ? 'ok' : '' }; }) }; });
+
+  const s = this.state, R = ROLES.find(r => r[0] === s.role), d = s.data[s.role], q = s.q.toLowerCase();
+  const count = (dd) => Object.values(dd.p).reduce((a, x) => a + x.reduce((b, y) => b + y, 0), 0);
+  const possible = MODS.reduce((a, g) => a + g[1].reduce((b, m) => b + m[3].split('').filter(c => c === '1').length, 0), 0);
+  const rows = [];
+  MODS.forEach(g => { const ms = g[1].filter(m => !q || m[1].toLowerCase().includes(q)); if (!ms.length) return; rows.push({ isGroup: true, isRow: false, label: g[0], cells: [] });
+    ms.forEach(m => { const mask = m[3].split('').map(Number), cur = d.p[m[0]], full = mask.every((v, i) => !v || cur[i]);
+      rows.push({ isGroup: false, isRow: true, label: m[1], icon: m[2], allLabel: full ? 'None' : 'All', all: () => this.upd(x => { x.p[m[0]] = mask.map(v => full ? 0 : v); }),
+        cells: ACTS.map((a, i) => ({ cls: !mask[i] ? 'na' : cur[i] ? 'on' : '', p: cur[i] ? 'true' : 'false', aria: a + ' ' + m[1], toggle: () => { if (mask[i]) this.upd(x => { x.p[m[0]][i] = x.p[m[0]][i] ? 0 : 1; if (i > 0 && x.p[m[0]][i]) x.p[m[0]][0] = 1; }); } })) }); }); });
+  const moneyRoles = ROLES.filter(r => s.data[r[0]].sens.money), blur = !d.sens.money;
+  const presets = [['Read only','view'],['Like Operations','ops'],['Like Support','cs'],['Nothing','none']].map(p => ({ label: p[0], apply: () => this.upd(x => { const n = preset(p[1]); x.p = n.p; x.sens = n.sens; }) }));
+  const ppl = { super: [['HC','Henry Cobblah','Accra Hub','now']], cs: [['EM','Efia Manu','Accra Hub','5 min ago'],['KA','Kojo Appiah','Kumasi','1 h ago'],['AB','Akua Boateng','Accra Hub','yesterday']], wh: [['AS','Adwoa Sarpong','Accra Hub','now'],['YD','Yaw Darko','Newark, NJ','20 min ago']], fin: [['NL','Nii Lamptey','Accra Hub','12 min ago']] }[s.role] || [['MO','Mavis Owusu','Accra Hub','3 h ago']];
+  return { nav, roleCount: ROLES.length,
+    roles: ROLES.map(r => ({ name: r[1], members: r[4], count: count(s.data[r[0]]), cls: r[0] === s.role ? 'on' : '', sel: r[0] === s.role ? 'true' : 'false', dot: 'background: ' + r[3] + ';box-shadow: inset 0 0 0 1px var(--line-2)', pick: () => this.setState({ role: r[0] }) })),
+    role: { name: R[1], desc: R[2], members: R[4] }, granted: count(d), possible, grantW: 'width: ' + Math.round(count(d) * 100 / possible) + '%',
+    moneyLabel: moneyRoles.length + ' of ' + ROLES.length + ' roles', moneyW: 'width: ' + Math.round(moneyRoles.length * 100 / ROLES.length) + '%', moneyTick: moneyRoles.length > 4 ? 'r' : 'y',
+    acts: ACTS, rows, q: s.q, onQ: (e) => this.setState({ q: e.target.value }),
+    sens: SENS.map(x => ({ label: x[1], desc: x[2], icon: x[3], cls: d.sens[x[0]] ? 'on' : '', p: d.sens[x[0]] ? 'true' : 'false', toggle: () => this.upd(y => { y.sens[x[0]] = y.sens[x[0]] ? 0 : 1; }) })),
+    blur: blur ? 'pm-blur' : '', isBlur: blur, presets,
+    tabs: [['perm','Permissions'],['mem','People'],['log','History']].map(t => ({ label: t[1], cls: s.tab === t[0] ? 'on' : '', pick: () => this.setState({ tab: t[0] }) })), tabPerm: s.tab === 'perm', tabMem: s.tab === 'mem', tabLog: s.tab === 'log',
+    members: ppl.map(m => ({ ini: m[0], name: m[1], branch: m[2], seen: m[3] })), save: () => this.setState({ saved: true }), saveLabel: s.saved ? 'Saved' : 'Save role' };
+}
+}
+
+</script>
+</body>
+</html>

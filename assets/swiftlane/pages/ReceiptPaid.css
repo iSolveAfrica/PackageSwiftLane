@@ -1,0 +1,30 @@
+/* Page styles of ReceiptPaid.dc.html (from the approved design) */
+body{margin:0;background:#fff}
+.rx{width:400px;background:#fff;color:#111;font-family:Figtree,Arial,sans-serif;box-sizing:border-box;padding:22px 20px 24px;display:flex;flex-direction:column;gap:14px;font-size:12.5px}
+.rx-hd{display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px}
+.rx-logo{display:flex;align-items:center;gap:8px}
+.rx-mark{width:40px;height:40px;border-radius:11px;background:#111;color:#fff;display:grid;place-items:center}
+.rx-name{font-size:20px;font-weight:800;letter-spacing:-.01em;line-height:1}
+.rx-sub{font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase}
+.rx-ct{font-size:10.5px;color:#444;line-height:1.45}
+.rx-stamp{display:flex;align-items:center;justify-content:space-between;gap:10px;border-radius:12px;padding:12px 14px}
+.rx-stamp.paid{background:#E3F6EE;border:2px solid #0A7C57;color:#0A7C57}
+.rx-stamp.due{background:#FCE9EA;border:2px solid #B3262F;color:#B3262F}
+.rx-stamp b{font-size:22px;font-weight:800;letter-spacing:.04em;display:block;line-height:1}
+.rx-stamp small{font-size:10.5px;font-weight:600}
+.rx-amt{text-align:right}.rx-amt b{font-size:20px}
+.rx-box{border:1.5px solid #111;border-radius:10px;overflow:hidden}
+.rx-bh{display:flex;justify-content:space-between;align-items:center;padding:7px 12px;background:#111;color:#fff;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.rx-kv{display:grid;grid-template-columns:86px minmax(0,1fr);gap:5px 10px;padding:10px 12px}
+.rx-kv span{color:#555}.rx-kv b{font-weight:600}
+.rx-mono{font-family:JetBrains Mono,monospace;word-break:break-all;font-size:11.5px}
+.rx-tb{width:100%;border-collapse:collapse}
+.rx-tb th{font-size:10px;text-transform:uppercase;letter-spacing:.06em;text-align:left;padding:7px 12px;background:#F3F2EF;color:#444}
+.rx-tb td{padding:8px 12px;border-top:1px solid #E7E5DF}
+.rx-tb .n{text-align:right;font-family:JetBrains Mono,monospace}
+.rx-tot{display:flex;justify-content:space-between;padding:8px 12px;border-top:1.5px solid #111;background:#F3F2EF;font-weight:600}
+.rx-r{display:flex;justify-content:space-between;padding:5px 12px}
+.rx-r.big{font-size:15px;font-weight:800;border-top:1.5px solid #111;padding-top:9px;margin-top:3px}
+.rx-pay{display:flex;gap:12px;align-items:center;padding:10px 12px}
+.rx-ft{text-align:center;font-size:10px;color:#555;line-height:1.5}
+.rx-cut{border-top:1.5px dashed #A9A8A2;position:relative;margin:2px 0}

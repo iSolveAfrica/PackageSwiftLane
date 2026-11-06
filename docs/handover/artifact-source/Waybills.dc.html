@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Swift Lane Waybills and Manifests</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./swiftlane.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}
+.fr-k{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
+.fr-k b{font:600 24px var(--font);font-variant-numeric:tabular-nums;letter-spacing:-.01em}.fr-k small{color:var(--muted);font-size:12.5px}
+.fr-ok{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;background:var(--green-bg);color:var(--green-ink);font-size:13.5px}
+.fr-bar{height:8px;border-radius:9px;background:var(--active);overflow:hidden}.fr-bar i{display:block;height:100%;background:#8E8A82}.fr-bar i.hi{background:#E2632A}
+.fr-tabs{display:flex;gap:6px;flex-wrap:wrap}
+.fr-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--card);cursor:pointer;width:100%;text-align:left;font:inherit;color:var(--ink)}
+.fr-row.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.fr-pre{margin:0;padding:16px;border-radius:12px;background:#fff;color:#111;font:12px/1.55 var(--mono);border:1px solid var(--line);white-space:pre;overflow:auto}
+.fr-split{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:16px;align-items:start}@media (max-width:1200px){.fr-split{grid-template-columns:1fr}}
+.wb-tree{display:flex;flex-direction:column;gap:6px}
+.wb-h{display:grid;grid-template-columns:24px minmax(0,1fr) 110px 70px 80px;gap:10px;align-items:center;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-size:13px;margin-left:22px}
+.ld{display:grid;grid-template-columns:repeat(12,1fr);grid-auto-rows:34px;gap:3px;padding:10px;border:2px solid #55524C;border-radius:8px;background:#F1EEE8;position:relative}
+.ld i{border-radius:4px;background:#C9C2B6;display:grid;place-items:center;font:600 10px var(--mono);color:#1E1D1A}
+.ld i.a{background:#A9A59C}.ld i.b{background:#8E8A82;color:#fff}.ld i.c{background:#E2632A;color:#fff}.ld i.e{background:transparent;border:1.5px dashed #C9C2B6}
+.ld .door{position:absolute;right:-12px;top:20%;bottom:20%;width:8px;border-radius:4px;background:#55524C}
+</style>
+</helmet>
+<div class="sl-app">
+  <input type="checkbox" id="navtg" class="nav-tg" aria-hidden="true" tabindex="-1">
+  <header class="sl-top">
+    <label class="sl-ib nav-open" for="navtg" aria-label="Open or close the menu" role="button" tabindex="0"><i class="ic i-sidebar" aria-hidden="true"></i></label>
+    <a class="sl-switch" href="Main.dc.html"><small>SL</small> Swift Lane · Accra Hub <i class="ic ic-sm i-down" aria-hidden="true"></i></a>
+    <a class="fx-chip" href="SettingsHub.dc.html" title="Exchange rate · set in Settings › General"><i class="ic ic-sm i-dollar" aria-hidden="true"></i><span class="mono">USD 1 = GHS 12.40</span><span class="fx-d">▲ 0.4%</span></a>
+    <span class="grow"></span>
+    <details class="aitop"><summary aria-label="Help with Swift Lane AI"><span class="o"><i class="ic i-ai" aria-hidden="true"></i></span>Help</summary><div class="pop" role="menu">
+<div class="me"><span class="sl-av sm dark">HC</span><div class="grow"><div class="fw5 sm">Henry Cobblah</div><div class="mut" style="font-size:12px">Operations manager · Accra Hub</div></div><a class="sl-btn sm ghost" href="AiStudio.dc.html">Edit</a></div>
+<a class="ask" href="StaffAI.dc.html"><i class="ic ic-sm i-spark" aria-hidden="true"></i>Ask AI for help on this page<b><i class="ic ic-sm i-send" aria-hidden="true"></i></b></a>
+<div class="hd">Your profile with AI</div>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-wand" aria-hidden="true"></i></span><span>Retouch my photo<small>Light, skin and background</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-refresh" aria-hidden="true"></i></span><span>Reset images<small>Go back to the original photo</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-edit" aria-hidden="true"></i></span><span>Change my name<small>AI fixes spelling and capitals</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-user" aria-hidden="true"></i></span><span>Make my icon<small>Avatar from your photo or initials</small></span></a>
+<div class="hd">Help</div>
+<a class="it" role="menuitem" href="StaffAI.dc.html"><span class="t"><i class="ic ic-sm i-help" aria-hidden="true"></i></span><span>Explain this page</span></a>
+<a class="it" role="menuitem" href="CsInbox.dc.html"><span class="t"><i class="ic ic-sm i-message" aria-hidden="true"></i></span><span>Talk to a person</span></a>
+</div></details>
+    <a class="sl-ib" aria-label="Notifications" href="Notifications.dc.html"><i class="ic i-bell" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Switch theme" href="SettingsHub.dc.html"><i class="ic i-sun" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Documents" href="Documents.dc.html"><i class="ic i-file" aria-hidden="true"></i></a>
+    <a class="sl-btn" href="FreightHub.dc.html">Freight hub</a>
+    <details class="uptop"><summary aria-label="Your profile and settings, Henry Cobblah"><span class="me-pic hc" style="width:34px;height:34px"><i class="me-on" aria-hidden="true"></i></span><span class="up-nm">Henry</span><i class="ic ic-sm i-down" aria-hidden="true"></i></summary><div class="pop" role="menu">
+<a class="up-me" href="AiStudio.dc.html"><span class="me-pic hc" style="width:48px;height:48px"><i class="me-on" aria-hidden="true"></i></span><span class="col" style="min-width:0"><b>Henry Cobblah</b><small>Operations manager · Accra Hub</small><small class="mono">henry@swiftlane.com</small></span></a>
+<div class="up-st"><span class="row g6 sm"><span class="ld" style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span>Available</span><a class="sm fw5" href="AiStudio.dc.html">Edit profile</a></div>
+<div class="up-h">Short links</div><div class="up-g"><a class="up-l" role="menuitem" href="Main.dc.html"><i class="ic ic-sm i-grid" aria-hidden="true"></i>Overview</a><a class="up-l" role="menuitem" href="RiderDispatch.dc.html"><i class="ic ic-sm i-truck" aria-hidden="true"></i>Dispatch board</a><a class="up-l" role="menuitem" href="SendPrices.dc.html"><i class="ic ic-sm i-send" aria-hidden="true"></i>Send prices</a><a class="up-l" role="menuitem" href="Reports.dc.html"><i class="ic ic-sm i-chart" aria-hidden="true"></i>Reports</a><a class="up-l" role="menuitem" href="Documents.dc.html"><i class="ic ic-sm i-file" aria-hidden="true"></i>Documents</a><a class="up-l" role="menuitem" href="ActivityLogs.dc.html"><i class="ic ic-sm i-clock" aria-hidden="true"></i>My activity</a></div>
+<div class="up-h">Settings</div><a class="up-l" role="menuitem" href="AiStudio.dc.html"><i class="ic ic-sm i-ai" aria-hidden="true"></i>Profile and photo</a><a class="up-l" role="menuitem" href="SettingsHub.dc.html"><i class="ic ic-sm i-cog" aria-hidden="true"></i>Settings</a><a class="up-l" role="menuitem" href="ApiConnections.dc.html"><i class="ic ic-sm i-link" aria-hidden="true"></i>API connections</a><a class="up-l" role="menuitem" href="StaffPermissions.dc.html"><i class="ic ic-sm i-shield" aria-hidden="true"></i>Permissions</a>
+<div class="up-row"><span class="sm mut">Theme</span><span class="sl-seg boxed" style="height:30px"><a class="on" href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Light</a><a href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Dark</a></span></div>
+<a class="up-l" role="menuitem" href="CsInbox.dc.html"><i class="ic ic-sm i-help" aria-hidden="true"></i>Help and support</a>
+<a class="up-l out" role="menuitem" href="Login.dc.html"><i class="ic ic-sm i-logout" aria-hidden="true"></i>Sign out</a>
+</div></details>
+  </header>
+  <div class="sl-body">
+    <label class="nav-bd" for="navtg" aria-hidden="true"></label>
+    <div class="sl-rail">
+      <a class="is-on" href="NewShipment.dc.html" aria-label="New shipment"><i class="ic i-newdoc" aria-hidden="true"></i></a>
+      <a href="StaffAI.dc.html" aria-label="AI assistant" title="AI assistant"><i class="ic i-ai" aria-hidden="true"></i></a>
+      <a href="PublicTracking.dc.html" aria-label="Tracking" title="Tracking"><i class="ic i-track" aria-hidden="true"></i></a>
+      <a href="LockerSearch.dc.html" aria-label="Search tracking number" title="Search tracking number"><i class="ic i-tsearch" aria-hidden="true"></i></a>
+      <a href="Consolidations.dc.html" aria-label="Consolidation" title="Consolidation"><i class="ic i-layers" aria-hidden="true"></i></a>
+      <a href="Warehouse.dc.html" aria-label="Warehouse" title="Warehouse"><i class="ic i-warehouse" aria-hidden="true"></i></a>
+      <a class="me-pic hc" href="AiStudio.dc.html" aria-label="Your profile, Henry Cobblah" style="width:34px;height:34px;margin-top:auto"></a>
+    </div>
+    <aside class="sl-side" aria-label="Main navigation">
+      <div class="nav-x"><span class="fw5">Menu</span><label class="sl-ib" for="navtg" aria-label="Close the menu" role="button" tabindex="0"><i class="ic i-x" aria-hidden="true"></i></label></div>
+      <sc-for list="{{nav}}" as="g" hint-placeholder-count="5">
+        <div class="sl-gl">{{g.label}}</div>
+        <nav class="sl-nav">
+          <sc-for list="{{g.items}}" as="it" hint-placeholder-count="4">
+            <a href="{{it.href}}" class="{{it.cls}}"><i class="ic {{it.icon}}" aria-hidden="true"></i><span>{{it.label}}</span><span class="cnt {{it.ok}}">{{it.c1}} <em>{{it.c2}}</em></span></a>
+          </sc-for>
+        </nav>
+      </sc-for>
+      <div class="sl-gl">Other</div>
+      <nav class="sl-nav">
+        <a href="SettingsHub.dc.html"><i class="ic i-globe" aria-hidden="true"></i><span>Language</span></a>
+        <a href="CsInbox.dc.html"><i class="ic i-help" aria-hidden="true"></i><span>Get help</span></a>
+        <a href="Login.dc.html" class="danger"><i class="ic i-logout" aria-hidden="true"></i><span>Sign out</span></a>
+      </nav>
+      <a class="me-card" href="AiStudio.dc.html" aria-label="Signed in as Henry Cobblah, Operations manager. Open your profile">
+        <span class="me-pic hc" role="img" aria-label="Photo of Henry Cobblah"><i class="me-on" aria-hidden="true"></i></span>
+        <span class="grow col" style="min-width:0"><b>Henry Cobblah</b><small>Operations manager · Accra Hub</small></span>
+        <i class="ic ic-sm i-more mut" aria-hidden="true"></i>
+      </a>
+      <a class="me-sub" href="CsInbox.dc.html"><i class="ic ic-sm i-ticket" aria-hidden="true"></i>Customer service<span class="sl-tag">12 open</span></a>
+    </aside>
+
+    <main class="sl-main"><div class="sl-wrap" style="max-width:1440px">
+<div class="row g8 mut sm"><a href="FreightHub.dc.html">Freight</a><i class="ic ic-sm i-right" aria-hidden="true"></i><span style="color:var(--ink)">Waybills, manifests and loading</span></div>
+<div class="sl-head"><div><h1 class="sl-title" style="font-size:22px">Waybills, manifests and loading</h1><p class="sl-lede">Master and house airway bills, cargo manifests for the airline, and the container load plan.</p></div><div class="row g8 wrap"><button class="sl-btn" onClick="{{issue}}"><i class="ic ic-sm i-file" aria-hidden="true"></i>{{issueLabel}}</button></div></div>
+<sc-if value="{{flash}}" hint-placeholder-val="{{ false }}"><div class="fr-ok" role="status"><i class="ic ic-sm i-check" aria-hidden="true"></i>{{flash}}</div></sc-if><div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(180px,100%),1fr));gap:12px"><sc-for list="{{kpis}}" as="k" hint-placeholder-count="5"><div class="fr-k"><small>{{k.l}}</small><b>{{k.v}}</b><small>{{k.s}}</small></div></sc-for></div>
+<div class="fr-tabs"><sc-for list="{{tabs}}" as="t" hint-placeholder-count="3"><button class="chipbtn {{t.cls}}" onClick="{{t.pick}}"><i class="ic ic-sm {{t.icon}}" aria-hidden="true"></i>{{t.label}}</button></sc-for></div>
+<sc-if value="{{tAwb}}" hint-placeholder-val="{{ true }}"><div class="fr-split"><section class="sl-card col g10"><div class="sl-ch" style="margin:0"><h2 class="sl-ct">Master airway bills</h2><span class="mut sm">Click one to see its house bills</span></div><sc-for list="{{mawbs}}" as="m" hint-placeholder-count="3"><div class="col g6"><button class="fr-row {{m.cls}}" onClick="{{m.pick}}"><span class="sl-tile"><i class="ic i-plane" aria-hidden="true"></i></span><span class="col grow"><b class="fw5 mono">{{m.no}}</b><span class="mut" style="font-size:12px">{{m.fl}} · {{m.route}} · {{m.cons}}</span></span><span class="col" style="align-items:flex-end"><span class="mono sm">{{m.n}} HAWB · {{m.kg}}</span><span class="sl-pill {{m.pc}}">{{m.st}}</span></span></button>
+<sc-if value="{{m.open}}" hint-placeholder-val="{{ false }}"><div class="wb-tree"><sc-for list="{{m.hawbs}}" as="h" hint-placeholder-count="5"><div class="wb-h"><i class="ic ic-sm i-file mut" aria-hidden="true"></i><span class="col" style="min-width:0"><b class="fw5 mono" style="font-size:12.5px">{{h.no}}</b><span class="mut" style="font-size:11.5px">{{h.cust}} · {{h.what}}</span></span><span class="mono" style="font-size:12px">{{h.trk}}</span><span class="mono" style="font-size:12px">{{h.kg}}</span><span class="mono" style="font-size:12px;text-align:right">{{h.chg}}</span></div></sc-for><span class="mut" style="font-size:12px;margin-left:22px">{{m.more}}</span></div></sc-if></div></sc-for></section>
+<aside class="sl-card col g10"><h2 class="sl-ct">Charges on {{cur.no}}</h2><div class="sl-kv"><div><span>Chargeable weight</span><span class="mono">{{cur.kg}}</span></div><div><span>Airline rate</span><span class="mono">$3.10 / kg</span></div><div><span>Fuel surcharge</span><span class="mono">$0.85 / kg</span></div><div><span>Security fee</span><span class="mono">$0.15 / kg</span></div><div><span>Airline total</span><span class="mono fw5">{{cur.cost}}</span></div><div><span>Billed to customers (HAWBs)</span><span class="mono fw5">{{cur.bill}}</span></div><div><span>Margin</span><span class="mono fw5">{{cur.margin}}</span></div></div><div class="row g8 wrap"><button class="sl-btn sm" onClick="{{printAwb}}"><i class="ic ic-sm i-print" aria-hidden="true"></i>Print MAWB</button><button class="sl-btn ghost sm" onClick="{{printH}}">Print all HAWBs</button></div></aside></div></sc-if>
+<sc-if value="{{tMan}}" hint-placeholder-val="{{ false }}"><div class="fr-split"><section class="sl-card col g10"><div class="sl-ch" style="margin:0"><div><h2 class="sl-ct">Cargo manifest · {{cur.no}}</h2><span class="mut sm">Generated from the HAWBs · {{cur.fl}}</span></div><div class="sl-seg boxed"><sc-for list="{{fmts}}" as="f" hint-placeholder-count="3"><button class="{{f.cls}}" onClick="{{f.pick}}">{{f.label}}</button></sc-for></div></div><pre class="fr-pre">{{manifest}}</pre></section>
+<aside class="sl-card col g10"><h2 class="sl-ct">Send the manifest</h2><sc-for list="{{sends}}" as="x" hint-placeholder-count="4"><button class="fr-row" onClick="{{x.go}}"><i class="ic ic-sm {{x.icon}}" aria-hidden="true"></i><span class="col grow"><b class="fw5 sm">{{x.t}}</b><span class="mut" style="font-size:12px">{{x.d}}</span></span><span class="sl-pill {{x.pc}}">{{x.st}}</span></button></sc-for></aside></div></sc-if>
+<sc-if value="{{tLoad}}" hint-placeholder-val="{{ false }}"><div class="fr-split"><section class="sl-card col g12"><div class="sl-ch" style="margin:0"><div><h2 class="sl-ct">Load plan · SLC-4472 · MSKU 501882-1 (40 ft)</h2><span class="mut sm">Heavy at the back, last delivered nearest the door</span></div><button class="sl-btn ghost sm" onClick="{{autoPlan}}">{{planLabel}}</button></div><div class="ld"><sc-for list="{{cells}}" as="c" hint-placeholder-count="72"><i class="{{c.c}}" title="{{c.t}}">{{c.l}}</i></sc-for><span class="door" aria-hidden="true"></span></div><div class="row g16 sm mut wrap"><span class="row g6"><i style="width:12px;height:12px;border-radius:3px;background:#8E8A82;display:inline-block"></i>Heavy (over 30 kg)</span><span class="row g6"><i style="width:12px;height:12px;border-radius:3px;background:#A9A59C;display:inline-block"></i>Medium</span><span class="row g6"><i style="width:12px;height:12px;border-radius:3px;background:#C9C2B6;display:inline-block"></i>Light</span><span class="row g6"><i style="width:12px;height:12px;border-radius:3px;background:#E2632A;display:inline-block"></i>Fragile, load last</span></div></section>
+<aside class="sl-card col g10"><h2 class="sl-ct">Container</h2><div class="sl-kv"><div><span>Volume used</span><span class="mono">{{ldVol}}</span></div><div><span>Weight</span><span class="mono">{{ldKg}}</span></div><div><span>Packages loaded</span><span class="mono">{{ldN}}</span></div><div><span>Seal number</span><span class="mono">ML-2231870</span></div><div><span>Loading starts</span><span>Nov 17 · Newark dock 3</span></div></div><div class="fr-bar"><i class="hi" style="{{ldW}}"></i></div><a class="sl-btn sm" href="ConsolidationDetail.dc.html">Open consolidation</a></aside></div></sc-if>
+</div></main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1600}}'>
+const MA = [['706-4412 9902', 'KQ 8102', 'JFK → ACC', 'AIR-1188', 96, 642.3, 'Not issued', 'pending'], ['706-4412 8831', 'KQ 8100', 'JFK → ACC', 'AIR-1187', 112, 701.8, 'Arrived', 'delivered'], ['071-3390 4412', 'ET 509', 'IAD → ACC', 'AIR-1189', 41, 266.0, 'Draft', 'transit']];
+const HW = [['Kwame Mensah', 'Laptop', 'SL-100482', 1.9, 38.4], ['Ama Boateng', 'Clothing', 'SL-100471', 4.4, 61.2], ['Efua Owusu', 'Phone', 'SL-100431', 0.6, 18.9], ['Abena Frimpong', 'Food items', 'SL-100398', 10.0, 132.0], ['Kojo Appiah', 'TV 43 inch', 'SL-100380', 14.1, 186.0]];
+class Component extends DCLogic {
+constructor(p) { super(p); this.state = { tab: 'awb', open: 0, fmt: 'iata', issued: false, sent: {}, plan: false, flash: '' }; }
+note(m) { this.setState({ flash: m }); if (typeof window !== 'undefined') { clearTimeout(this._f); this._f = setTimeout(() => this.setState({ flash: '' }), 3200); } }
+componentWillUnmount() { clearTimeout(this._f); clearInterval(this._iv); }
+renderVals() {
+const A = 'frwb';
+const N = 'Operations|dash~Overview~grid~~~Main;panels~Control Panels~gauge~~~ControlPanels;air~Air Shipments~plane~128~~AirShipments;sea~Sea Packages~ship~64~~SeaPackages;prealert~Pre-Alerts~inbox~9~~PreAlerts;pickup~Pickups~truck~12~/ 20~Pickups;dtrack~Delivery Tracking~route~5~~DeliveryTracking;shiptrack~Shipment Tracking~track~~~ShipmentTracking;consol~Consolidations~layers~7~~Consolidations;warehouse~Warehouse~warehouse~~~Warehouse;handout~Hand Out Packages~box~5~~HandOut;locker~Locker Search~lock~~~LockerSearch#Hubs|execdash~Management Dashboard~chart~~~ExecDashboard;billhub~Billing & Finance~dollar~~~BillingHub;lastmile~Last-Mile Delivery~truck~~~LastMile;aicenter~AI Centre~ai~~~AiCenter;commshub~Messages & Automation~message~~~CommsHub;supporthub~Support & CRM~ticket~~~SupportHub;loyalty~Loyalty & Referrals~star~~~LoyaltyRewards;security~Security & Reliability~shield~~~SecurityCenter#Freight|frhub~Freight Hub~plane~~~FreightHub;frsched~Departures & Arrivals~calendar~5~~FreightSchedule;frwb~Waybills & Manifests~file~~~Waybills;frex~Cargo Exceptions~alert~6~~CargoExceptions;frins~Insurance & Claims~shield~4~~InsuranceClaims;frpart~Freight Partners~users~~~FreightPartners#People|cust~Customers~users~1,284~~Customers;recip~Recipients~pin~~~Recipients;drivers~Drivers~wheel~8~/ 14~Drivers;drvapp~Rider App~phone~~~DriverApp;staff~Staff & Roles~shield~~~StaffRoles#Finance|pay~Payments~card~~~Payments;ar~Accounts Receivable~receipt~~~AccountsReceivable;fin~Financial Overview~dollar~$48,200~~FinancialOverview#Insights|reports~Reports~chart~~~Reports;activity~Activity Logs~clock~~~ActivityLogs;messages~Message Logs~archive~~~MessageLogs#Customer Service|tickets~Support Inbox~ticket~1,482~~CsInbox;csrules~Ticket Rules~filter~~~CsRules;playbook~Playbook~book~~~CsPlaybook;csrep~Support Reports~star~~~CsReports;cschan~Channels & Teams~message~~~CsChannels;csai~AI Assistant~ai~~~StaffAI;cssupai~AI for Customers~spark~~~CsAI#Developer|devov~Dev Overview~terminal~~~DevOverview;devsvc~Services~server~12~~DevServices;devlogs~Logs~activity~~~DevLogs;devmet~Metrics~cpu~~~DevMetrics;devinfra~Infrastructure~cloud~~~DevInfrastructure;devdep~Deployments~rocket~~~DevDeployments;devalert~Alerts~alert~3~~DevAlerts;devissues~Issues & Change Log~bug~8~~DevIssues;devint~Integrations~puzzle~~~DevIntegrations#Settings|general~General~cog~~~SettingsHub;apis~API Connections~link~16~~ApiConnections;apitraffic~Live API Traffic~activity~~~ApiTraffic;tariffs~Shipping Tariffs~tag~~~Tariffs;notifc~Notifications~bell~3~~NotificationCenter;ebuild~Email Builder~mail~~~EmailBuilder;msgtpl~SMS & WhatsApp~message~~~MessageTemplates;bcast~Push Notifications~send~~~Broadcast;costs~Operating Costs~dollar~~~CostSettings;addr~Shipping Addresses~pin~~~ShippingAddresses;rfees~Rider Fees~truck~~~RiderSettings;loginpg~Login Page~image~~~LoginSettings;devmod~Modules~sliders~~~ModuleController;perm~Permissions~key~~~StaffPermissions;lblstudio~Label Printing~print~~~LabelStudio;auto~Automations~bolt~~~Automations';
+const nav = N.split('#').map(g => { const p = g.split('|'); return { label: p[0], items: p[1].split(';').map(i => { const f = i.split('~'); return { href: f[5] + '.dc.html', label: f[1], icon: 'i-' + f[2], c1: f[3], c2: f[4], cls: f[0] === A ? 'is-active' : '', ok: f[0] === 'fin' ? 'ok' : '' }; }) }; });
+  const s = this.state, M = MA[s.open];
+  const K = [['MAWBs this month', '9', '7 air · 2 express'], ['HAWBs issued', '846', 'One per customer shipment'], ['Waiting for MAWB', s.issued ? '0' : '1', 'KQ 8102 Friday'], ['Manifests sent', '8', 'All accepted by airlines'], ['Container fill', '62%', 'SLC-4472 loads Nov 17']];
+  const cost = M[5] * 4.1, bill = M[5] * 6.6;
+  const man = (s.fmt === 'iata' ? 'CARGO MANIFEST · IATA FFM\n' : s.fmt === 'customs' ? 'GRA CUSTOMS MANIFEST\n' : 'SWIFT LANE LOADING LIST\n') + 'MAWB ' + M[0] + '  FLIGHT ' + M[1] + '  ' + M[2] + '\nSHIPPER  SWIFT LANE LOGISTICS · 1200 COMMERCE DR NEWARK NJ\nCONSIGNEE  SWIFT LANE ACCRA HUB · SPINTEX RD ACCRA\n' + '-'.repeat(64) + '\nHAWB            CONSIGNEE           PCS   KG     DESCRIPTION\n' + HW.map((h, i) => ('SLH-' + (88120 + i)).padEnd(16) + h[0].toUpperCase().padEnd(20) + String(1).padEnd(6) + h[3].toFixed(1).padEnd(7) + h[1].toUpperCase()).join('\n') + '\n... ' + (M[4] - 5) + ' more HAWBs\n' + '-'.repeat(64) + '\nTOTAL  ' + M[4] + ' HAWB   ' + M[4] + ' PCS   ' + M[5].toFixed(1) + ' KG   ULD AKE 12399 KQ';
+  const items = Array.from({ length: 72 }, (_, i) => { const col = i % 12, used = i < (s.plan ? 50 : 45); const c = !used ? 'e' : col < 4 ? 'b' : col < 9 ? 'a' : (i % 5 === 0 ? 'c' : ''); return { c, l: used ? String(i + 1) : '', t: used ? 'Package ' + (i + 1) : 'Empty' }; });
+  return { nav, flash: s.flash, kpis: K.map(k => ({ l: k[0], v: k[1], s: k[2] })),
+    tabs: [['awb', 'Master and house bills', 'i-layers'], ['man', 'Cargo manifest', 'i-file'], ['load', 'Container loading', 'i-box']].map(t => ({ label: t[1], icon: t[2], cls: s.tab === t[0] ? 'on' : '', pick: () => this.setState({ tab: t[0] }) })),
+    tAwb: s.tab === 'awb', tMan: s.tab === 'man', tLoad: s.tab === 'load',
+    issue: () => this.setState({ issued: true, flash: 'MAWB 706-4412 9902 issued for KQ 8102 with 96 house bills. Sent to Kenya Airways cargo.' }), issueLabel: s.issued ? 'MAWB issued' : 'Issue MAWB for KQ 8102',
+    mawbs: MA.map((m, i) => ({ no: m[0], fl: m[1], route: m[2], cons: m[3], n: m[4], kg: m[5].toFixed(1) + ' kg', st: i === 0 && s.issued ? 'Issued' : m[6], pc: i === 0 && s.issued ? 'delivered' : m[7], cls: s.open === i ? 'on' : '', open: s.open === i, pick: () => this.setState({ open: i }), more: '+ ' + (m[4] - 5) + ' more house bills', hawbs: HW.map((h, j) => ({ no: 'SLH-' + (88120 + j + i * 200), cust: h[0], what: h[1], trk: h[2], kg: h[3].toFixed(1) + ' kg', chg: '$' + h[4].toFixed(2) })) })),
+    cur: { no: M[0], fl: M[1] + ' · ' + M[2], kg: M[5].toFixed(1) + ' kg', cost: '$' + cost.toFixed(2), bill: '$' + bill.toFixed(2), margin: '$' + (bill - cost).toFixed(2) + ' (' + Math.round((bill - cost) / bill * 100) + '%)' },
+    printAwb: () => this.note('MAWB ' + M[0] + ' sent to the printer.'), printH: () => this.note(M[4] + ' house airway bills sent to the printer.'),
+    fmts: [['iata', 'IATA'], ['customs', 'Customs'], ['load', 'Loading list']].map(f => ({ label: f[1], cls: s.fmt === f[0] ? 'on' : '', pick: () => this.setState({ fmt: f[0] }) })), manifest: man,
+    sends: [['air', 'i-plane', 'Kenya Airways cargo', 'e-FFM over the cargo API'], ['gra', 'i-shield', 'GRA customs (Ghana)', 'Pre-arrival declaration'], ['hub', 'i-warehouse', 'Accra Hub', 'So they can prepare bays'], ['pdf', 'i-download', 'Download PDF', 'Signed copy for the file']].map(x => ({ icon: x[1], t: x[2], d: x[3], st: s.sent[x[0]] ? 'Sent' : 'Ready', pc: s.sent[x[0]] ? 'delivered' : '', go: () => { this.setState({ sent: { ...s.sent, [x[0]]: true } }); this.note('Manifest for ' + M[0] + ' sent: ' + x[2] + '.'); } })),
+    cells: items, autoPlan: () => this.setState({ plan: true, flash: 'Load plan updated: 5 more packages fit after re-stacking.' }), planLabel: s.plan ? 'Plan optimised' : 'Optimise plan',
+    ldVol: (s.plan ? 1310 : 1240) + ' / 2,000 ft³', ldKg: (s.plan ? 3920 : 3700).toLocaleString() + ' kg', ldN: s.plan ? 238 : 226, ldW: 'width:' + (s.plan ? 66 : 62) + '%' };
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Swift Lane Control Panels</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./swiftlane.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.cpx-hero{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px}
+.cpx-hero h1{font-size:28px;font-weight:600;letter-spacing:-.015em;display:flex;align-items:center;gap:12px}
+.cpx-find{display:flex;align-items:center;gap:10px;height:44px;flex:0 1 420px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:var(--field);color:var(--muted)}
+.cpx-find input{flex:1;min-width:0;border:0;background:transparent;color:var(--ink);font:14.5px var(--font);outline:0}
+.cpx-find kbd{font:12px var(--mono);padding:2px 6px;border-radius:6px;border:1px solid var(--line-2);color:var(--muted)}
+.cpx-attn{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(130px,100%),1fr));gap:0}
+.cpx-attn a{display:flex;flex-direction:column;gap:4px;padding:4px 16px;border-left:1px solid var(--line);color:inherit}
+.cpx-attn a:first-child{border-left:0;padding-left:0}
+.cpx-attn b{font:500 26px var(--font);letter-spacing:-.01em}
+.cpx-attn .d{font-size:12px;color:var(--muted)}
+.cpx-mb{display:flex;align-items:flex-end;gap:4px;height:44px;margin-top:8px}
+.cpx-mb i{flex:1;border-radius:4px 4px 2px 2px;background:#32364A}
+.cpx-mb i:last-child{background:var(--ink-2)}
+.cpx-hl{display:flex;justify-content:space-between;font-size:11px;color:var(--faint);margin-top:4px}
+.cpx-cols{columns:3 340px;column-gap:16px}
+.cpx-card{break-inside:avoid;margin-bottom:16px;border:1px solid var(--line);border-radius:20px;background:var(--card);overflow:hidden}
+.cpx-ch{display:flex;gap:14px;align-items:flex-start;padding:18px 18px 16px;background:var(--panel);border-bottom:1px solid var(--line)}
+.cpx-ch .tl{width:44px;height:44px;border-radius:12px;background:var(--active);display:grid;place-items:center;color:var(--ink);flex:none}
+.cpx-ch b{display:block;font-size:17px;font-weight:600;letter-spacing:-.005em}
+.cpx-ch span{display:block;color:var(--muted);font-size:13px;margin-top:2px;line-height:1.4}
+.cpx-row{display:flex;align-items:center;gap:12px;padding:0 18px;min-height:56px;color:var(--ink);border-top:1px solid var(--line)}
+.cpx-row:first-of-type{border-top:0}
+.cpx-row:hover{background:var(--hover)}
+.cpx-row>.ic{color:var(--ink-2);flex:none}
+.cpx-row .nm{flex:1;min-width:0;display:flex;flex-direction:column;padding:9px 0}
+.cpx-row .nm small{color:var(--muted);font-size:12.5px}
+.cpx-row .ch{color:var(--faint);flex:none}
+.cpx-dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex:none}
+.cpx-dot.w{background:var(--yellow)}
+@media (max-width:640px){
+.cpx-hero h1{font-size:24px}
+.cpx-pins{flex-wrap:nowrap!important;overflow-x:auto;margin:0 -16px;padding:0 16px 4px;scrollbar-width:none}
+.cpx-pins::-webkit-scrollbar{display:none}
+.cpx-pins>*{flex:none}
+.cpx-pins .grow{display:none}
+.cpx-attn{grid-template-columns:1fr 1fr;gap:10px}
+.cpx-attn a,.cpx-attn a:first-child{border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--field);min-height:44px}
+.cpx-attn .up{font-size:10.5px;line-height:1.3;min-height:2.6em}
+.cpx-attn b{font-size:24px}
+.cpx-mb{height:32px}
+.cpx-ch{padding:14px}
+.cpx-row{padding:0 14px}
+.cpx-cols{columns:1}
+}
+</style>
+</helmet>
+<div class="sl-app dk">
+  <input type="checkbox" id="navtg" class="nav-tg" aria-hidden="true" tabindex="-1">
+  <header class="sl-top">
+    <label class="sl-ib nav-open" for="navtg" aria-label="Open or close the menu" role="button" tabindex="0"><i class="ic i-sidebar" aria-hidden="true"></i></label>
+    <a class="sl-switch" href="Main.dc.html"><small>SL</small> Swift Lane · Accra Hub <i class="ic ic-sm i-down" aria-hidden="true"></i></a>
+    <a class="fx-chip" href="SettingsHub.dc.html" title="Exchange rate · set in Settings › General"><i class="ic ic-sm i-dollar" aria-hidden="true"></i><span class="mono">USD 1 = GHS 12.40</span><span class="fx-d">▲ 0.4%</span></a>
+    <span class="grow"></span>
+    <details class="aitop"><summary aria-label="Help with Swift Lane AI"><span class="o"><i class="ic i-ai" aria-hidden="true"></i></span>Help</summary><div class="pop" role="menu">
+<div class="me"><span class="sl-av sm dark">HC</span><div class="grow"><div class="fw5 sm">Henry Cobblah</div><div class="mut" style="font-size:12px">Operations manager · Accra Hub</div></div><a class="sl-btn sm ghost" href="AiStudio.dc.html">Edit</a></div>
+<a class="ask" href="StaffAI.dc.html"><i class="ic ic-sm i-spark" aria-hidden="true"></i>Ask AI for help on this page<b><i class="ic ic-sm i-send" aria-hidden="true"></i></b></a>
+<div class="hd">Your profile with AI</div>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-wand" aria-hidden="true"></i></span><span>Retouch my photo<small>Light, skin and background</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-refresh" aria-hidden="true"></i></span><span>Reset images<small>Go back to the original photo</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-edit" aria-hidden="true"></i></span><span>Change my name<small>AI fixes spelling and capitals</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-user" aria-hidden="true"></i></span><span>Make my icon<small>Avatar from your photo or initials</small></span></a>
+<div class="hd">Help</div>
+<a class="it" role="menuitem" href="StaffAI.dc.html"><span class="t"><i class="ic ic-sm i-help" aria-hidden="true"></i></span><span>Explain this page</span></a>
+<a class="it" role="menuitem" href="CsInbox.dc.html"><span class="t"><i class="ic ic-sm i-message" aria-hidden="true"></i></span><span>Talk to a person</span></a>
+</div></details>
+    <a class="sl-ib" aria-label="Notifications" href="Notifications.dc.html"><i class="ic i-bell" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Switch theme" href="SettingsHub.dc.html"><i class="ic i-sun" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Documents" href="Documents.dc.html"><i class="ic i-file" aria-hidden="true"></i></a>
+    <a class="sl-btn" href="NewShipment.dc.html">New Shipment</a>
+    <details class="uptop"><summary aria-label="Your profile and settings, Henry Cobblah"><span class="me-pic hc" style="width:34px;height:34px"><i class="me-on" aria-hidden="true"></i></span><span class="up-nm">Henry</span><i class="ic ic-sm i-down" aria-hidden="true"></i></summary><div class="pop" role="menu">
+<a class="up-me" href="AiStudio.dc.html"><span class="me-pic hc" style="width:48px;height:48px"><i class="me-on" aria-hidden="true"></i></span><span class="col" style="min-width:0"><b>Henry Cobblah</b><small>Operations manager · Accra Hub</small><small class="mono">henry@swiftlane.com</small></span></a>
+<div class="up-st"><span class="row g6 sm"><span class="ld" style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span>Available</span><a class="sm fw5" href="AiStudio.dc.html">Edit profile</a></div>
+<div class="up-h">Short links</div><div class="up-g"><a class="up-l" role="menuitem" href="Main.dc.html"><i class="ic ic-sm i-grid" aria-hidden="true"></i>Overview</a><a class="up-l" role="menuitem" href="RiderDispatch.dc.html"><i class="ic ic-sm i-truck" aria-hidden="true"></i>Dispatch board</a><a class="up-l" role="menuitem" href="SendPrices.dc.html"><i class="ic ic-sm i-send" aria-hidden="true"></i>Send prices</a><a class="up-l" role="menuitem" href="Reports.dc.html"><i class="ic ic-sm i-chart" aria-hidden="true"></i>Reports</a><a class="up-l" role="menuitem" href="Documents.dc.html"><i class="ic ic-sm i-file" aria-hidden="true"></i>Documents</a><a class="up-l" role="menuitem" href="ActivityLogs.dc.html"><i class="ic ic-sm i-clock" aria-hidden="true"></i>My activity</a></div>
+<div class="up-h">Settings</div><a class="up-l" role="menuitem" href="AiStudio.dc.html"><i class="ic ic-sm i-ai" aria-hidden="true"></i>Profile and photo</a><a class="up-l" role="menuitem" href="SettingsHub.dc.html"><i class="ic ic-sm i-cog" aria-hidden="true"></i>Settings</a><a class="up-l" role="menuitem" href="ApiConnections.dc.html"><i class="ic ic-sm i-link" aria-hidden="true"></i>API connections</a><a class="up-l" role="menuitem" href="StaffPermissions.dc.html"><i class="ic ic-sm i-shield" aria-hidden="true"></i>Permissions</a>
+<div class="up-row"><span class="sm mut">Theme</span><span class="sl-seg boxed" style="height:30px"><a class="on" href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Light</a><a href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Dark</a></span></div>
+<a class="up-l" role="menuitem" href="CsInbox.dc.html"><i class="ic ic-sm i-help" aria-hidden="true"></i>Help and support</a>
+<a class="up-l out" role="menuitem" href="Login.dc.html"><i class="ic ic-sm i-logout" aria-hidden="true"></i>Sign out</a>
+</div></details>
+  </header>
+  <div class="sl-body">
+    <label class="nav-bd" for="navtg" aria-hidden="true"></label>
+    <div class="sl-rail">
+      <a class="is-on" href="NewShipment.dc.html" aria-label="New shipment"><i class="ic i-newdoc" aria-hidden="true"></i></a>
+      <a href="StaffAI.dc.html" aria-label="AI assistant" title="AI assistant"><i class="ic i-ai" aria-hidden="true"></i></a>
+      <a href="PublicTracking.dc.html" aria-label="Tracking" title="Tracking"><i class="ic i-track" aria-hidden="true"></i></a>
+      <a href="LockerSearch.dc.html" aria-label="Search tracking number" title="Search tracking number"><i class="ic i-tsearch" aria-hidden="true"></i></a>
+      <a href="Consolidations.dc.html" aria-label="Consolidation" title="Consolidation"><i class="ic i-layers" aria-hidden="true"></i></a>
+      <a href="Warehouse.dc.html" aria-label="Warehouse" title="Warehouse"><i class="ic i-warehouse" aria-hidden="true"></i></a>
+      <a class="me-pic hc" href="AiStudio.dc.html" aria-label="Your profile, Henry Cobblah" style="width:34px;height:34px;margin-top:auto"></a>
+    </div>
+    <aside class="sl-side" aria-label="Main navigation">
+      <div class="nav-x"><span class="fw5">Menu</span><label class="sl-ib" for="navtg" aria-label="Close the menu" role="button" tabindex="0"><i class="ic i-x" aria-hidden="true"></i></label></div>
+      <sc-for list="{{nav}}" as="g" hint-placeholder-count="5">
+        <div class="sl-gl">{{g.label}}</div>
+        <nav class="sl-nav">
+          <sc-for list="{{g.items}}" as="it" hint-placeholder-count="4">
+            <a href="{{it.href}}" class="{{it.cls}}"><i class="ic {{it.icon}}" aria-hidden="true"></i><span>{{it.label}}</span><span class="cnt {{it.ok}}">{{it.c1}} <em>{{it.c2}}</em></span></a>
+          </sc-for>
+        </nav>
+      </sc-for>
+      <div class="sl-gl">Other</div>
+      <nav class="sl-nav">
+        <a href="SettingsHub.dc.html"><i class="ic i-globe" aria-hidden="true"></i><span>Language</span></a>
+        <a href="CsInbox.dc.html"><i class="ic i-help" aria-hidden="true"></i><span>Get help</span></a>
+        <a href="Login.dc.html" class="danger"><i class="ic i-logout" aria-hidden="true"></i><span>Sign out</span></a>
+      </nav>
+      <a class="me-card" href="AiStudio.dc.html" aria-label="Signed in as Henry Cobblah, Operations manager. Open your profile">
+        <span class="me-pic hc" role="img" aria-label="Photo of Henry Cobblah"><i class="me-on" aria-hidden="true"></i></span>
+        <span class="grow col" style="min-width:0"><b>Henry Cobblah</b><small>Operations manager · Accra Hub</small></span>
+        <i class="ic ic-sm i-more mut" aria-hidden="true"></i>
+      </a>
+      <a class="me-sub" href="CsInbox.dc.html"><i class="ic ic-sm i-ticket" aria-hidden="true"></i>Customer service<span class="sl-tag">12 open</span></a>
+    </aside>
+
+    <main class="sl-main">
+<div class="sl-wrap" style="max-width:1180px;gap:20px">
+<div class="cpx-hero"><div><h1><i class="ic i-grid" aria-hidden="true"></i>Control panels</h1><p class="sl-lede" style="font-size:14.5px;margin-top:6px">Every module in your workspace, grouped by the work it supports</p></div><label class="cpx-find"><i class="ic ic-sm i-search" aria-hidden="true"></i><input aria-label="Find a panel or action" placeholder="Find a panel or action"><kbd>⌘K</kbd></label></div>
+<div class="row wrap g8 cpx-pins"><span class="up" style="margin-right:4px">Pinned</span><a class="chipbtn" href="NewShipment.dc.html"><i class="ic ic-sm i-newdoc" aria-hidden="true"></i>New shipment</a><a class="chipbtn" href="Warehouse.dc.html"><i class="ic ic-sm i-scan" aria-hidden="true"></i>Scan package</a><a class="chipbtn" href="Payments.dc.html"><i class="ic ic-sm i-card" aria-hidden="true"></i>Record payment</a><a class="chipbtn" href="PublicTracking.dc.html"><i class="ic ic-sm i-route" aria-hidden="true"></i>Track</a><a class="chipbtn" href="CsInbox.dc.html"><i class="ic ic-sm i-ticket" aria-hidden="true"></i>New ticket</a><button class="chipbtn" style="border-style:dashed"><i class="ic ic-sm i-plus" aria-hidden="true"></i>Pin</button><span class="grow"></span><a class="chipbtn" href="SettingsHub.dc.html"><i class="ic ic-sm i-sliders" aria-hidden="true"></i>Customise</a></div>
+<div class="split">
+<section class="a sl-card col g12"><div class="row between"><h2 class="sl-ct">Needs attention</h2><span class="mut sm">Updated 2 min ago</span></div><div class="cpx-attn">
+<a href="StaffRoles.dc.html"><span class="up">Awaiting approval</span><b>4</b><span class="d">▼ 2 vs yesterday</span><div class="cpx-mb" role="img" aria-label="Last 7 days: 6, 5, 7, 4, 6, 6, 4"><i style="height:86%"></i><i style="height:71%"></i><i style="height:100%"></i><i style="height:57%"></i><i style="height:86%"></i><i style="height:86%"></i><i style="height:57%"></i></div><div class="cpx-hl"><span>7d ago</span><span>Today</span></div></a>
+<a href="Warehouse.dc.html"><span class="up">Held parcels</span><b>11</b><span class="d" style="color:var(--amber-ink)">▲ 3 vs yesterday</span><div class="cpx-mb" role="img" aria-label="Last 7 days: 5, 6, 4, 7, 8, 8, 11"><i style="height:45%"></i><i style="height:55%"></i><i style="height:36%"></i><i style="height:64%"></i><i style="height:73%"></i><i style="height:73%"></i><i style="height:100%"></i></div><div class="cpx-hl"><span>7d ago</span><span>Today</span></div></a>
+<a href="Pickups.dc.html"><span class="up">Unassigned pickups</span><b>3</b><span class="d">Same as yesterday</span><div class="cpx-mb" role="img" aria-label="Last 7 days: 4, 2, 5, 3, 1, 3, 3"><i style="height:80%"></i><i style="height:40%"></i><i style="height:100%"></i><i style="height:60%"></i><i style="height:20%"></i><i style="height:60%"></i><i style="height:60%"></i></div><div class="cpx-hl"><span>7d ago</span><span>Today</span></div></a>
+<a href="PreAlerts.dc.html"><span class="up">Open pre-alerts</span><b>200</b><span class="d">▲ 18 vs yesterday</span><div class="cpx-mb" role="img" aria-label="Last 7 days: 140, 152, 161, 158, 170, 182, 200"><i style="height:70%"></i><i style="height:76%"></i><i style="height:81%"></i><i style="height:79%"></i><i style="height:85%"></i><i style="height:91%"></i><i style="height:100%"></i></div><div class="cpx-hl"><span>7d ago</span><span>Today</span></div></a></div></section>
+<section class="b sl-card col g8"><h2 class="sl-ct">Workspace health</h2>
+<div class="row g10 sm"><span class="cpx-dot" aria-hidden="true"></span><span class="grow">API and web app</span><span class="mut">Operational</span></div>
+<div class="row g10 sm"><span class="cpx-dot" aria-hidden="true"></span><span class="grow">Payment gateways</span><span class="mut">Operational</span></div>
+<div class="row g10 sm"><span class="cpx-dot w" aria-hidden="true"></span><span class="grow">SMS delivery</span><span style="color:var(--amber-ink)">Degraded</span></div></section>
+</div>
+<div class="cpx-cols"><section class="cpx-card"><div class="cpx-ch"><span class="tl"><i class="ic i-plane" aria-hidden="true"></i></span><div><b>Shipping &amp; freight</b><span>Everything moving between the US and Ghana</span></div></div><a class="cpx-row" href="AirShipments.dc.html"><i class="ic ic-sm i-plane" aria-hidden="true"></i><span class="nm"><span>Air shipments</span><small>Parcels flying in</small></span><span class="sl-badge mono">128</span><i class="ic ic-sm i-right ch" aria-hidden="true"></i></a><a class="cpx-row" href="SeaPackages.dc.html"><i class="ic ic-sm i-ship" aria-hidden="true"></i><span class="nm"><span>Sea packages</span><small>Containers and LCL boxes</small></span><span class="sl-badge mono">64</span><i class="ic ic-sm i-right ch" aria-hidden="true"></i></a><a class="cpx-row" href="Consolidations.dc.html"><i class="ic ic-sm i-layers" aria-hidden="true"></i><span class="nm"><span>Consolidations</span><small>Shared flights and containers</small></span><span class="sl-badge mono">7</span><i class="ic ic-sm i-right ch" aria-hidden="true"></i></a><a class="cpx-row" href="PreAlerts.dc.html"><i class="ic ic-sm i-inbox" aria-hidden="true"></i><span class="nm"><span>Pre-alerts</span><small>Parcels customers told us about</small></span><span class="sl-badge mono">9</span><i class="ic ic-sm i-right ch" aria-hidden="true"></i></a><a class="cpx-row" href="PublicTracking.dc.html"><i class="ic ic-sm i-route" aria-hidden="true"></i><span class="nm"><span>Public tracking</span><small>What customers see</small></span><i class="ic ic-sm i-right ch" aria-hidden="true"></i></a></section><section class="cpx-card"><div class="cpx-ch"><span class="tl"><i class="ic i-warehouse" aria-hidden="true"></i></span><div><b>Warehouse &amp; dispatch</b><span>Bays, lockers, drivers and routes</span></div></div><a class="cpx-row" href="Warehouse.dc.html"><i class="ic ic-sm i-warehouse" aria-hidden="true"></i><span class="nm"><span>Warehouse</span><small>Bays and scanning</small></span><span class="sl-badge mono">46 / 50</span><i class="ic ic-sm i-right ch" aria-hidden="true"></i></a><a class="cpx-row" href="LockerSearch.dc.html"><i class="ic ic-sm i-search" aria-hidden="true"></i><span class="nm"><span>Locker search</span><small>Find a parcel by locker</small></span><i class="ic ic-sm i-right ch" aria-hidden="true"></i></a><a class="cpx-row" href="Pickups.dc.html"><i class="ic ic-sm i-truck" aria-hidden="true"></i><span class="nm"><span>Pickups</span><small>Today’s pickup slots</small></span><span class="sl-badge mono">12 / 20</span><i class="ic ic-sm i-right ch" aria-hidden="true"></i></a><a class="cpx-row" href="Drivers.dc.html"><i class="ic ic-sm i-wheel" aria-hidden="true"></i><span class="nm"><span>Drivers</span><small>On shift right now</small></span><span class="sl-badge mono">8 / 14</span><i class="ic ic-sm i-right ch" aria-hidden="true"></i></a></section><section class="cpx-card"><div class="cpx-ch"><span class="tl"><i class="ic i-users" aria-hidden="true"></i></span><div><b>Customers &amp; people</b><span>Who ships with us and who works here</span></div></div><a class="cpx-row" href="Customers.dc.html"><i class="ic ic-sm i-users" aria-hidden="true"></i><span class="nm"><span>Customers</span><small>Profiles and shipping marks</small></span><span class="sl-badge mono">1,284</span><i class="ic ic-sm i-right ch" aria-hidden="true"></i></a><a class="cpx-row" href="Recipients.dc.html"><i class="ic ic-sm i-user" aria-hidden="true"></i><span class="nm"><span>Recipients</span><small>People receiving parcels</small></span><i class="ic ic-sm i-right ch" aria-hidden="true"></i></a><a class="cpx-row" href="StaffRoles.dc.html"><i class="ic ic-sm i-shield" aria-hidden="true"></i><span class="nm"><span>Staff &amp; roles</span><small>Permissions and access</small></span><span class="sl-badge mono">46</span><i class="ic ic-sm i-right ch" aria-hidden="true"></i></a></section><section class="cpx-card"><div class="cpx-ch"><span class="tl"><i class="ic i-dollar" aria-hidden="true"></i></span><div><b>Money</b><span>What comes in, what is owed, what it costs</span></div></div><a class="cpx-row" href="Payments.dc.html"><i class="ic ic-sm i-card" aria-hidden="true"></i><span class="nm"><span>Payments</span><small>Gateway settlements</small></span><i class="ic ic-sm i-right ch" aria-hidden="true"></i></a><a class="cpx-row" href="AccountsReceivable.dc.html"><i class="ic ic-sm i-receipt" aria-hidden="true"></i><span class="nm"><span>Accounts receivable</span><small>Overdue invoices</small></span><span class="sl-badge mono">23</span><i class="ic ic-sm i-right ch" aria-hidden="true"></i></a><a class="cpx-row" href="FinancialOverview.dc.html"><i class="ic ic-sm i-chart" aria-hidden="true"></i><span class="nm"><span>Financial overview</span><small>Revenue and margin</small></span><i class="ic ic-sm i-right ch" aria-hidden="true"></i></a><a class="cpx-row" href="Tariffs.dc.html"><i class="ic ic-sm i-tag" aria-hidden="true"></i><span class="nm"><span>Shipping tariffs</span><small>Rates per kg and CBM</small></span><i class="ic ic-sm i-right ch" aria-hidden="true"></i></a></section><section class="cpx-card"><div class="cpx-ch"><span class="tl"><i class="ic i-message" aria-hidden="true"></i></span><div><b>Messages &amp; support</b><span>Every conversation with customers</span></div></div><a class="cpx-row" href="CsInbox.dc.html"><i class="ic ic-sm i-ticket" aria-hidden="true"></i><span class="nm"><span>Support inbox</span><small>Tickets and replies</small></span><span class="sl-badge mono">1,482</span><i class="ic ic-sm i-right ch" aria-hidden="true"></i></a><a class="cpx-row" href="Notifications.dc.html"><i class="ic ic-sm i-send" aria-hidden="true"></i><span class="nm"><span>Messaging</span><small>SMS, WhatsApp and email</small></span><i class="ic ic-sm i-right ch" aria-hidden="true"></i></a><a class="cpx-row" href="MessageLogs.dc.html"><i class="ic ic-sm i-clock" aria-hidden="true"></i><span class="nm"><span>Message logs</span><small>Delivery status of every message</small></span><i class="ic ic-sm i-right ch" aria-hidden="true"></i></a><a class="cpx-row" href="CsAI.dc.html"><i class="ic ic-sm i-spark" aria-hidden="true"></i><span class="nm"><span>AI assistant</span><small>Drafts and auto-replies</small></span><i class="ic ic-sm i-right ch" aria-hidden="true"></i></a></section><section class="cpx-card"><div class="cpx-ch"><span class="tl"><i class="ic i-activity" aria-hidden="true"></i></span><div><b>Insights &amp; audit</b><span>Reports and the record of who did what</span></div></div><a class="cpx-row" href="Reports.dc.html"><i class="ic ic-sm i-folder" aria-hidden="true"></i><span class="nm"><span>Reports</span><small>Revenue, volume and delivery</small></span><i class="ic ic-sm i-right ch" aria-hidden="true"></i></a><a class="cpx-row" href="ActivityLogs.dc.html"><i class="ic ic-sm i-activity" aria-hidden="true"></i><span class="nm"><span>Activity logs</span><small>Audit trail</small></span><span class="sl-badge mono">3.4k</span><i class="ic ic-sm i-right ch" aria-hidden="true"></i></a><a class="cpx-row" href="CsReports.dc.html"><i class="ic ic-sm i-chart" aria-hidden="true"></i><span class="nm"><span>Support reports</span><small>Resolution and satisfaction</small></span><i class="ic ic-sm i-right ch" aria-hidden="true"></i></a></section><section class="cpx-card"><div class="cpx-ch"><span class="tl"><i class="ic i-terminal" aria-hidden="true"></i></span><div><b>Platform</b><span>The system behind the workspace</span></div></div><a class="cpx-row" href="DevOverview.dc.html"><i class="ic ic-sm i-terminal" aria-hidden="true"></i><span class="nm"><span>Developer overview</span><small>Services, logs and deploys</small></span><span class="sl-badge mono">12</span><i class="ic ic-sm i-right ch" aria-hidden="true"></i></a><a class="cpx-row" href="DevBilling.dc.html"><i class="ic ic-sm i-card" aria-hidden="true"></i><span class="nm"><span>Usage &amp; billing</span><small>Credits and plan</small></span><i class="ic ic-sm i-right ch" aria-hidden="true"></i></a><a class="cpx-row" href="DevIntegrations.dc.html"><i class="ic ic-sm i-puzzle" aria-hidden="true"></i><span class="nm"><span>Integrations</span><small>Webhooks and API keys</small></span><i class="ic ic-sm i-right ch" aria-hidden="true"></i></a><a class="cpx-row" href="SettingsHub.dc.html"><i class="ic ic-sm i-cog" aria-hidden="true"></i><span class="nm"><span>Settings</span><small>Company, brand and system</small></span><i class="ic ic-sm i-right ch" aria-hidden="true"></i></a></section></div>
+</div>
+</main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1500}}'>
+class Component extends DCLogic {
+renderVals() {
+const A = 'panels';
+const N = 'Operations|dash~Overview~grid~~~Main;panels~Control Panels~gauge~~~ControlPanels;air~Air Shipments~plane~128~~AirShipments;sea~Sea Packages~ship~64~~SeaPackages;prealert~Pre-Alerts~inbox~9~~PreAlerts;pickup~Pickups~truck~12~/ 20~Pickups;dtrack~Delivery Tracking~route~5~~DeliveryTracking;shiptrack~Shipment Tracking~track~~~ShipmentTracking;consol~Consolidations~layers~7~~Consolidations;warehouse~Warehouse~warehouse~~~Warehouse;handout~Hand Out Packages~box~5~~HandOut;locker~Locker Search~lock~~~LockerSearch#Hubs|execdash~Management Dashboard~chart~~~ExecDashboard;billhub~Billing & Finance~dollar~~~BillingHub;lastmile~Last-Mile Delivery~truck~~~LastMile;aicenter~AI Centre~ai~~~AiCenter;commshub~Messages & Automation~message~~~CommsHub;supporthub~Support & CRM~ticket~~~SupportHub;loyalty~Loyalty & Referrals~star~~~LoyaltyRewards;security~Security & Reliability~shield~~~SecurityCenter#Freight|frhub~Freight Hub~plane~~~FreightHub;frsched~Departures & Arrivals~calendar~5~~FreightSchedule;frwb~Waybills & Manifests~file~~~Waybills;frex~Cargo Exceptions~alert~6~~CargoExceptions;frins~Insurance & Claims~shield~4~~InsuranceClaims;frpart~Freight Partners~users~~~FreightPartners#People|cust~Customers~users~1,284~~Customers;recip~Recipients~pin~~~Recipients;drivers~Drivers~wheel~8~/ 14~Drivers;drvapp~Rider App~phone~~~DriverApp;staff~Staff & Roles~shield~~~StaffRoles#Finance|pay~Payments~card~~~Payments;ar~Accounts Receivable~receipt~~~AccountsReceivable;fin~Financial Overview~dollar~$48,200~~FinancialOverview#Insights|reports~Reports~chart~~~Reports;activity~Activity Logs~clock~~~ActivityLogs;messages~Message Logs~archive~~~MessageLogs#Customer Service|tickets~Support Inbox~ticket~1,482~~CsInbox;csrules~Ticket Rules~filter~~~CsRules;playbook~Playbook~book~~~CsPlaybook;csrep~Support Reports~star~~~CsReports;cschan~Channels & Teams~message~~~CsChannels;csai~AI Assistant~ai~~~StaffAI;cssupai~AI for Customers~spark~~~CsAI#Developer|devov~Dev Overview~terminal~~~DevOverview;devsvc~Services~server~12~~DevServices;devlogs~Logs~activity~~~DevLogs;devmet~Metrics~cpu~~~DevMetrics;devinfra~Infrastructure~cloud~~~DevInfrastructure;devdep~Deployments~rocket~~~DevDeployments;devalert~Alerts~alert~3~~DevAlerts;devissues~Issues & Change Log~bug~8~~DevIssues;devint~Integrations~puzzle~~~DevIntegrations#Settings|general~General~cog~~~SettingsHub;apis~API Connections~link~16~~ApiConnections;apitraffic~Live API Traffic~activity~~~ApiTraffic;tariffs~Shipping Tariffs~tag~~~Tariffs;notifc~Notifications~bell~3~~NotificationCenter;ebuild~Email Builder~mail~~~EmailBuilder;msgtpl~SMS & WhatsApp~message~~~MessageTemplates;bcast~Push Notifications~send~~~Broadcast;costs~Operating Costs~dollar~~~CostSettings;addr~Shipping Addresses~pin~~~ShippingAddresses;rfees~Rider Fees~truck~~~RiderSettings;loginpg~Login Page~image~~~LoginSettings;devmod~Modules~sliders~~~ModuleController;perm~Permissions~key~~~StaffPermissions;lblstudio~Label Printing~print~~~LabelStudio;auto~Automations~bolt~~~Automations';
+const nav = N.split('#').map(g => { const p = g.split('|'); return { label: p[0], items: p[1].split(';').map(i => { const f = i.split('~'); return { href: f[5] + '.dc.html', label: f[1], icon: 'i-' + f[2], c1: f[3], c2: f[4], cls: f[0] === A ? 'is-active' : '', ok: f[0] === 'fin' ? 'ok' : '' }; }) }; });
+const mv = [38, 42, 40, 47, 52, 49, 58, 55, 63, 68, 74, 100];
+const months = mv.map((v, i) => ({ sty: 'height: ' + v + '%', hi: i === 11 ? 'hi' : '' }));
+const gw = [['Paystack','$22,540 (47%)',47,''],['Stripe','$13,870 (29%)',29,'v'],['Hubtel','$7,230 (15%)',15,'y'],['Bank transfer','$4,560 (9%)',9,'o']].map(g => ({ n: g[0], v: g[1], c: g[3], sty: 'width: ' + g[2] + '%' }));
+const svc = [['Air express','612','$27,300','$16,900','$10,400'],['Air economy','340','$11,700','$7,100','$4,600'],['Sea LCL','188','$6,900','$4,300','$2,600'],['Sea FCL','24','$2,300','$1,340','$960']].map(s => ({ n: s[0], p: s[1], r: s[2], c: s[3], m: s[4] }));
+return { nav, months, gw, svc };
+}
+}
+</script>
+</body>
+</html>

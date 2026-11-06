@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Swift Lane Notification Center</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./swiftlane.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.ov-card{display:flex;flex-direction:column;gap:10px;padding:16px 18px 14px;border:1px solid var(--line);border-radius:18px;background:var(--card);color:var(--ink)}
+.ov-card .hd{display:flex;align-items:center;justify-content:space-between;font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.ov-card .hd span{display:flex;align-items:center;gap:8px}
+.ov-card .fig{font-size:15.5px;margin-top:8px}
+.ov-card .fig i{font-style:normal;color:var(--muted)}
+.ov-card .ft{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted)}
+.ov-seg{display:flex;gap:2px;font-size:13px;color:var(--muted)}
+.ov-seg button{border:0;background:transparent;color:inherit;font:inherit;padding:5px 9px;border-radius:8px;cursor:pointer}
+.ov-seg button.on{background:var(--active);color:var(--ink)}
+.ov-avg{font-size:13.5px;color:var(--muted)}.ov-avg b{color:var(--ink);font-weight:500}
+.ov-chart text{font-size:11px;fill:var(--muted);font-family:var(--font)}
+.ov-qa{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.ov-qa a{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 12px;border-radius:10px;color:var(--ink-2);font-size:14px}
+.ov-qa a:first-child{background:var(--active);color:var(--ink)}
+.ov-qa a:hover{background:var(--hover)}
+.ov-row{display:flex;align-items:center;gap:12px;min-height:52px;border-top:1px solid var(--line);font-size:14px}
+.ov-row:first-child{border-top:0}
+.ov-pill{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:6px;font-size:12px;font-weight:500;background:var(--active);color:var(--ink-2)}
+.ov-pill.ok{background:var(--green-bg);color:var(--green-ink)}.ov-pill.warn{background:var(--amber-bg);color:var(--amber-ink)}.ov-pill.bad{background:var(--red-bg);color:var(--red-ink)}
+.ov-hm{display:grid;gap:4px;align-items:center}
+.ov-hm b{width:12px;height:12px;border-radius:3px;background:var(--heat-0);place-self:center}
+.ov-hm b.h0{width:3px;height:3px;border-radius:50%}
+.ov-hm b.h1{background:var(--heat-1)}.ov-hm b.h2{background:var(--heat-2)}.ov-hm b.h3{background:var(--heat-3)}
+.ov-hm span{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sl-ticks.n{--c:var(--muted)}
+.nc-wrap{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.nc-list{flex:1 1 340px;min-width:0;max-width:420px}
+.nc-ed{flex:999 1 520px;min-width:0}
+.nc-head,.nc-ev{display:grid;grid-template-columns:minmax(0,1fr) 44px 44px 44px;align-items:center;gap:0}
+.nc-head{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.nc-head span:not(:first-child){display:grid;place-items:center}
+.nc-scroll{max-height:1080px;overflow-y:auto}
+.nc-gl{display:flex;justify-content:space-between;padding:14px 16px 6px;font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.nc-ev{padding:0 6px 0 8px;border-top:1px solid var(--line)}
+.nc-ev.on{background:var(--active)}
+.nc-name{display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-height:52px;justify-content:center;padding:6px 8px;border:0;background:transparent;text-align:left;cursor:pointer;color:var(--ink);font:inherit;min-width:0}
+.nc-name b{font-size:14px;font-weight:500}
+.nc-name small{font-size:12px;color:var(--muted)}
+.nc-t{justify-self:center;width:30px;height:18px;border-radius:9px;border:0;background:var(--line-2);position:relative;cursor:pointer;padding:0}
+.nc-t::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:left .15s}
+.nc-t.on{background:var(--green)}.nc-t.on::after{left:14px}
+.nc-t.off{background:var(--line-2)}
+.nc-tabs{display:flex;gap:4px;padding:4px;border-radius:12px;background:var(--active);align-self:flex-start;flex-wrap:wrap}
+.nc-tabs button{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 14px;border-radius:9px;border:0;background:transparent;color:var(--muted);font:500 13.5px var(--font);cursor:pointer}
+.nc-tabs button.on{background:var(--field);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.nc-sw{width:7px;height:7px;border-radius:50%;background:var(--line-2)}.nc-sw.on{background:var(--green)}
+.nc-edit{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+.nc-ta{min-height:180px;padding:12px 14px;line-height:1.55;resize:vertical;font:14px var(--font);height:auto}
+.nc-var{height:30px;padding:0 10px;border-radius:8px;border:1px dashed var(--line-2);background:transparent;font:12.5px var(--mono);color:var(--ink-2);cursor:pointer}
+.nc-var:hover{background:var(--hover)}
+.nc-prev{flex:1 1 280px;min-width:0}
+.nc-mail{display:flex;flex-direction:column;gap:10px;padding:16px;border:1px solid var(--line);border-radius:14px;background:var(--field)}
+.nc-mh{display:flex;align-items:center;gap:10px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.nc-phone{border-radius:26px;border:1px solid var(--line-2);background:#ECE6DA;padding:0 0 18px;overflow:hidden;max-width:320px}
+.nc-ph{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--card);border-bottom:1px solid var(--line)}
+.nc-bubble{margin:16px 14px 0;padding:10px 12px 18px;border-radius:4px 14px 14px 14px;background:#fff;font-size:14px;line-height:1.5;position:relative;color:#161615;max-width:86%}
+.nc-bubble.sms{background:#E9E7E1;border-radius:14px}
+.nc-bubble small{position:absolute;right:10px;bottom:4px;font-size:10.5px;color:#6B6A65}
+</style>
+</helmet>
+<div class="sl-app">
+  <input type="checkbox" id="navtg" class="nav-tg" aria-hidden="true" tabindex="-1">
+  <header class="sl-top">
+    <label class="sl-ib nav-open" for="navtg" aria-label="Open or close the menu" role="button" tabindex="0"><i class="ic i-sidebar" aria-hidden="true"></i></label>
+    <a class="sl-switch" href="Main.dc.html"><small>SL</small> Swift Lane · Accra Hub <i class="ic ic-sm i-down" aria-hidden="true"></i></a>
+    <a class="fx-chip" href="SettingsHub.dc.html" title="Exchange rate · set in Settings › General"><i class="ic ic-sm i-dollar" aria-hidden="true"></i><span class="mono">USD 1 = GHS 12.40</span><span class="fx-d">▲ 0.4%</span></a>
+    <span class="grow"></span>
+    <details class="aitop"><summary aria-label="Help with Swift Lane AI"><span class="o"><i class="ic i-ai" aria-hidden="true"></i></span>Help</summary><div class="pop" role="menu">
+<div class="me"><span class="sl-av sm dark">HC</span><div class="grow"><div class="fw5 sm">Henry Cobblah</div><div class="mut" style="font-size:12px">Operations manager · Accra Hub</div></div><a class="sl-btn sm ghost" href="AiStudio.dc.html">Edit</a></div>
+<a class="ask" href="StaffAI.dc.html"><i class="ic ic-sm i-spark" aria-hidden="true"></i>Ask AI for help on this page<b><i class="ic ic-sm i-send" aria-hidden="true"></i></b></a>
+<div class="hd">Your profile with AI</div>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-wand" aria-hidden="true"></i></span><span>Retouch my photo<small>Light, skin and background</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-refresh" aria-hidden="true"></i></span><span>Reset images<small>Go back to the original photo</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-edit" aria-hidden="true"></i></span><span>Change my name<small>AI fixes spelling and capitals</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-user" aria-hidden="true"></i></span><span>Make my icon<small>Avatar from your photo or initials</small></span></a>
+<div class="hd">Help</div>
+<a class="it" role="menuitem" href="StaffAI.dc.html"><span class="t"><i class="ic ic-sm i-help" aria-hidden="true"></i></span><span>Explain this page</span></a>
+<a class="it" role="menuitem" href="CsInbox.dc.html"><span class="t"><i class="ic ic-sm i-message" aria-hidden="true"></i></span><span>Talk to a person</span></a>
+</div></details>
+    <a class="sl-ib" aria-label="Notifications" href="Notifications.dc.html"><i class="ic i-bell" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Switch theme" href="SettingsHub.dc.html"><i class="ic i-sun" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Documents" href="Documents.dc.html"><i class="ic i-file" aria-hidden="true"></i></a>
+    <a class="sl-btn" href="NewShipment.dc.html">New Shipment</a>
+    <details class="uptop"><summary aria-label="Your profile and settings, Henry Cobblah"><span class="me-pic hc" style="width:34px;height:34px"><i class="me-on" aria-hidden="true"></i></span><span class="up-nm">Henry</span><i class="ic ic-sm i-down" aria-hidden="true"></i></summary><div class="pop" role="menu">
+<a class="up-me" href="AiStudio.dc.html"><span class="me-pic hc" style="width:48px;height:48px"><i class="me-on" aria-hidden="true"></i></span><span class="col" style="min-width:0"><b>Henry Cobblah</b><small>Operations manager · Accra Hub</small><small class="mono">henry@swiftlane.com</small></span></a>
+<div class="up-st"><span class="row g6 sm"><span class="ld" style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span>Available</span><a class="sm fw5" href="AiStudio.dc.html">Edit profile</a></div>
+<div class="up-h">Short links</div><div class="up-g"><a class="up-l" role="menuitem" href="Main.dc.html"><i class="ic ic-sm i-grid" aria-hidden="true"></i>Overview</a><a class="up-l" role="menuitem" href="RiderDispatch.dc.html"><i class="ic ic-sm i-truck" aria-hidden="true"></i>Dispatch board</a><a class="up-l" role="menuitem" href="SendPrices.dc.html"><i class="ic ic-sm i-send" aria-hidden="true"></i>Send prices</a><a class="up-l" role="menuitem" href="Reports.dc.html"><i class="ic ic-sm i-chart" aria-hidden="true"></i>Reports</a><a class="up-l" role="menuitem" href="Documents.dc.html"><i class="ic ic-sm i-file" aria-hidden="true"></i>Documents</a><a class="up-l" role="menuitem" href="ActivityLogs.dc.html"><i class="ic ic-sm i-clock" aria-hidden="true"></i>My activity</a></div>
+<div class="up-h">Settings</div><a class="up-l" role="menuitem" href="AiStudio.dc.html"><i class="ic ic-sm i-ai" aria-hidden="true"></i>Profile and photo</a><a class="up-l" role="menuitem" href="SettingsHub.dc.html"><i class="ic ic-sm i-cog" aria-hidden="true"></i>Settings</a><a class="up-l" role="menuitem" href="ApiConnections.dc.html"><i class="ic ic-sm i-link" aria-hidden="true"></i>API connections</a><a class="up-l" role="menuitem" href="StaffPermissions.dc.html"><i class="ic ic-sm i-shield" aria-hidden="true"></i>Permissions</a>
+<div class="up-row"><span class="sm mut">Theme</span><span class="sl-seg boxed" style="height:30px"><a class="on" href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Light</a><a href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Dark</a></span></div>
+<a class="up-l" role="menuitem" href="CsInbox.dc.html"><i class="ic ic-sm i-help" aria-hidden="true"></i>Help and support</a>
+<a class="up-l out" role="menuitem" href="Login.dc.html"><i class="ic ic-sm i-logout" aria-hidden="true"></i>Sign out</a>
+</div></details>
+  </header>
+  <div class="sl-body">
+    <label class="nav-bd" for="navtg" aria-hidden="true"></label>
+    <div class="sl-rail">
+      <a class="is-on" href="NewShipment.dc.html" aria-label="New shipment"><i class="ic i-newdoc" aria-hidden="true"></i></a>
+      <a href="StaffAI.dc.html" aria-label="AI assistant" title="AI assistant"><i class="ic i-ai" aria-hidden="true"></i></a>
+      <a href="PublicTracking.dc.html" aria-label="Tracking" title="Tracking"><i class="ic i-track" aria-hidden="true"></i></a>
+      <a href="LockerSearch.dc.html" aria-label="Search tracking number" title="Search tracking number"><i class="ic i-tsearch" aria-hidden="true"></i></a>
+      <a href="Consolidations.dc.html" aria-label="Consolidation" title="Consolidation"><i class="ic i-layers" aria-hidden="true"></i></a>
+      <a href="Warehouse.dc.html" aria-label="Warehouse" title="Warehouse"><i class="ic i-warehouse" aria-hidden="true"></i></a>
+      <a class="me-pic hc" href="AiStudio.dc.html" aria-label="Your profile, Henry Cobblah" style="width:34px;height:34px;margin-top:auto"></a>
+    </div>
+    <aside class="sl-side" aria-label="Main navigation">
+      <div class="nav-x"><span class="fw5">Menu</span><label class="sl-ib" for="navtg" aria-label="Close the menu" role="button" tabindex="0"><i class="ic i-x" aria-hidden="true"></i></label></div>
+      <sc-for list="{{nav}}" as="g" hint-placeholder-count="5">
+        <div class="sl-gl">{{g.label}}</div>
+        <nav class="sl-nav">
+          <sc-for list="{{g.items}}" as="it" hint-placeholder-count="4">
+            <a href="{{it.href}}" class="{{it.cls}}"><i class="ic {{it.icon}}" aria-hidden="true"></i><span>{{it.label}}</span><span class="cnt {{it.ok}}">{{it.c1}} <em>{{it.c2}}</em></span></a>
+          </sc-for>
+        </nav>
+      </sc-for>
+      <div class="sl-gl">Other</div>
+      <nav class="sl-nav">
+        <a href="SettingsHub.dc.html"><i class="ic i-globe" aria-hidden="true"></i><span>Language</span></a>
+        <a href="CsInbox.dc.html"><i class="ic i-help" aria-hidden="true"></i><span>Get help</span></a>
+        <a href="Login.dc.html" class="danger"><i class="ic i-logout" aria-hidden="true"></i><span>Sign out</span></a>
+      </nav>
+      <a class="me-card" href="AiStudio.dc.html" aria-label="Signed in as Henry Cobblah, Operations manager. Open your profile">
+        <span class="me-pic hc" role="img" aria-label="Photo of Henry Cobblah"><i class="me-on" aria-hidden="true"></i></span>
+        <span class="grow col" style="min-width:0"><b>Henry Cobblah</b><small>Operations manager · Accra Hub</small></span>
+        <i class="ic ic-sm i-more mut" aria-hidden="true"></i>
+      </a>
+      <a class="me-sub" href="CsInbox.dc.html"><i class="ic ic-sm i-ticket" aria-hidden="true"></i>Customer service<span class="sl-tag">12 open</span></a>
+    </aside>
+
+    <main class="sl-main">
+<div class="sl-wrap" style="max-width:1120px">
+<div class="sl-head"><div><h1 class="sl-title" style="font-size:20px">Notification Center</h1><p class="sl-lede">Every message the system sends, by e-mail, SMS and WhatsApp, in one place you can edit</p></div><div class="row g8 wrap"><a class="sl-btn ghost" href="EmailBuilder.dc.html"><i class="ic ic-sm i-mail" aria-hidden="true"></i>E-mail builder</a><a class="sl-btn ghost" href="MessageTemplates.dc.html"><i class="ic ic-sm i-message" aria-hidden="true"></i>SMS &amp; WhatsApp</a><a class="sl-btn ghost" href="Broadcast.dc.html"><i class="ic ic-sm i-send" aria-hidden="true"></i>Send to customers</a><a class="sl-btn ghost" href="MessageCosts.dc.html"><i class="ic ic-sm i-dollar" aria-hidden="true"></i>Message costs</a><a class="sl-btn ghost" href="MessageLogs.dc.html"><i class="ic ic-sm i-clock" aria-hidden="true"></i>Message logs</a><button class="sl-btn" onClick="{{save}}"><i class="ic ic-sm i-check" aria-hidden="true"></i>{{saveLabel}}</button></div></div>
+
+<div class="grid cols3">
+  <div class="ov-card"><div class="hd"><span><i class="ic ic-sm i-mail" aria-hidden="true"></i>E-mail · SMTP</span><span class="ov-pill ok">Connected</span></div><div class="fig">{{onEmail}} <i>/ {{total}} notifications on</i></div><div class="sl-ticks" role="img" aria-label="{{onEmail}} on"><i style="{{wEmail}}"></i></div><div class="ft">23,100 sent this month · 99.2% delivered</div></div>
+  <div class="ov-card"><div class="hd"><span><i class="ic ic-sm i-phone" aria-hidden="true"></i>SMS · Hubtel</span><span class="ov-pill warn">Degraded</span></div><div class="fig">{{onSms}} <i>/ {{total}} notifications on</i></div><div class="sl-ticks y" role="img" aria-label="{{onSms}} on"><i style="{{wSms}}"></i></div><div class="ft">SMS only for registered, ready and handed over</div></div>
+  <div class="ov-card"><div class="hd"><span><i class="ic ic-sm i-message" aria-hidden="true"></i>WhatsApp API</span><span class="ov-pill ok">Connected</span></div><div class="fig">{{onWa}} <i>/ {{total}} notifications on</i></div><div class="sl-ticks" role="img" aria-label="{{onWa}} on"><i style="{{wWa}}"></i></div><div class="ft">19,320 sent this month · 97.8% read</div></div>
+</div>
+
+<div class="nc-wrap">
+  <section class="sl-card flush nc-list">
+    <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--line)">
+      <div class="sl-search"><i class="ic ic-sm i-search" aria-hidden="true"></i><input aria-label="Search notifications" placeholder="Search {{total}} notifications" value="{{q}}" onChange="{{onQ}}"></div>
+      <div class="nc-head"><span>Notification</span><span title="E-mail"><i class="ic ic-sm i-mail" aria-hidden="true"></i></span><span title="SMS"><i class="ic ic-sm i-phone" aria-hidden="true"></i></span><span title="WhatsApp"><i class="ic ic-sm i-message" aria-hidden="true"></i></span></div>
+    </div>
+    <div class="nc-scroll">
+      <sc-for list="{{groups}}" as="g" hint-placeholder-count="6">
+        <div class="nc-gl">{{g.label}} <span>{{g.count}}</span></div>
+        <sc-for list="{{g.items}}" as="e" hint-placeholder-count="4">
+          <div class="nc-ev {{e.cls}}">
+            <button class="nc-name" onClick="{{e.pick}}"><b>{{e.name}}</b><small>{{e.when}}</small></button>
+            <button class="nc-t {{e.em}}" onClick="{{e.tEm}}" aria-label="E-mail for {{e.name}}" aria-pressed="{{e.emP}}"></button>
+            <button class="nc-t {{e.sm}}" onClick="{{e.tSm}}" aria-label="SMS for {{e.name}}" aria-pressed="{{e.smP}}"></button>
+            <button class="nc-t {{e.wa}}" onClick="{{e.tWa}}" aria-label="WhatsApp for {{e.name}}" aria-pressed="{{e.waP}}"></button>
+          </div>
+        </sc-for>
+      </sc-for>
+    </div>
+  </section>
+
+  <section class="sl-card col g16 nc-ed">
+    <div class="row between wrap g12">
+      <div><div class="up">{{cur.group}} · sent {{cur.when}}</div><h2 style="font-size:20px;font-weight:600;letter-spacing:-.01em;margin-top:4px">{{cur.name}}</h2><p class="mut sm" style="margin-top:2px">{{cur.desc}}</p></div>
+      <div class="row g8"><span class="ov-pill">{{cur.audience}}</span><span class="ov-pill">{{cur.sent}} sent this month</span></div>
+    </div>
+    <div class="nc-tabs" role="tablist">
+      <sc-for list="{{tabs}}" as="t" hint-placeholder-count="3"><button role="tab" class="{{t.cls}}" aria-selected="{{t.sel}}" onClick="{{t.pick}}"><i class="ic ic-sm {{t.icon}}" aria-hidden="true"></i>{{t.label}}<span class="nc-sw {{t.on}}" aria-hidden="true"></span></button></sc-for>
+    </div>
+    <div class="nc-edit">
+      <div class="col g12" style="flex:1 1 360px;min-width:0">
+        <sc-if value="{{isEmail}}" hint-placeholder-val="{{ false }}">
+          <div class="sl-field"><label class="sl-lab" for="nc-subj">Subject</label><input id="nc-subj" class="sl-in" value="{{subject}}" onChange="{{onSubject}}"></div>
+        </sc-if>
+        <div class="sl-field"><label class="sl-lab" for="nc-body">Message</label><textarea id="nc-body" class="sl-in nc-ta" onChange="{{onBody}}" value="{{body}}"></textarea>
+          <div class="row between sm mut"><span>{{counter}}</span><span>{{channelNote}}</span></div></div>
+        <div><div class="up" style="margin-bottom:8px">Insert a field</div><div class="row g6 wrap"><sc-for list="{{vars}}" as="v" hint-placeholder-count="6"><button class="nc-var" onClick="{{v.add}}">{{v.label}}</button></sc-for></div></div>
+        <div class="row g8 wrap" style="margin-top:4px"><button class="sl-btn" onClick="{{save}}">{{saveLabel}}</button><button class="sl-btn ghost"><i class="ic ic-sm i-send" aria-hidden="true"></i>Send test to me</button><button class="sl-btn ghost" onClick="{{reset}}">Reset to default</button></div>
+      </div>
+      <div class="nc-prev">
+        <div class="up" style="margin-bottom:10px">Preview · {{tabLabel}}</div>
+        <sc-if value="{{isEmail}}" hint-placeholder-val="{{ false }}">
+          <div class="nc-mail"><div class="nc-mh"><span class="sl-av sm dark">SL</span><div class="grow"><b class="sm">Swift Lane</b><div class="mut" style="font-size:12px">to efua.owusu@[email]</div></div></div><b style="font-size:15px">{{subjectPrev}}</b><p style="white-space:pre-line;font-size:14px;line-height:1.55">{{bodyPrev}}</p><span class="sl-btn sm" style="align-self:flex-start">Track parcel</span></div>
+        </sc-if>
+        <sc-if value="{{isChat}}" hint-placeholder-val="{{ true }}">
+          <div class="nc-phone"><div class="nc-ph"><span class="sl-av sm dark">SL</span><b class="sm">Swift Lane</b></div><div class="nc-bubble {{bubbleCls}}" style="white-space:pre-line">{{bodyPrev}}<small>09:41</small></div></div>
+        </sc-if>
+        <p class="mut sm" style="margin-top:10px">Sample customer: Efua Owusu · SL-100480 · code 482193</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+</div>
+</main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1600}}'>
+
+const EV = [
+ ['Shipments','registered','Parcel registered','When a parcel is logged at the US warehouse','Customer',[1,1,1],'Your parcel is in, {name}','Hi {name}, we received your parcel {tracking} ({weight}) at our US warehouse. We will tell you when it flies.'],
+ ['Shipments','departed','Departed the US','When the flight or vessel leaves','Customer',[1,0,1],'{tracking} is on its way','Good news {name}: {tracking} left the US today. Expected in Accra {eta}.'],
+ ['Shipments','arrived','Arrived in Accra','When the consolidation lands','Customer',[1,0,1],'{tracking} has landed','{tracking} has arrived in Accra and is being sorted.'],
+ ['Shipments','customs','Held at customs','When customs needs more papers','Customer',[1,0,1],'Customs needs something for {tracking}','Hi {name}, customs is holding {tracking}. Please send the invoice for {value} so we can clear it.'],
+ ['Shipments','ready','Ready for pickup','With the pickup code, when parcels are ready','Customer',[1,1,1],'Ready for pickup: {tracking}','Hi {name}, {tracking} is ready at Swift Lane Accra. Your pickup code is {code}. Show it at the counter.'],
+ ['Shipments','onroute','On route to you','Ready for delivery, with the code','Customer',[1,0,1],'{tracking} is out for delivery','{driver} is bringing {tracking} today. Give them code {code} when it arrives.'],
+ ['Shipments','handed','Picked up or delivered','When the parcel is handed over','Customer',[1,1,1],'{tracking} handed over','{tracking} was handed over today. Thank you for shipping with Swift Lane, {name}.'],
+ ['Pickups and pre-alerts','prealert','Pre-alert received','When a customer tells us a parcel is coming','Customer',[1,0,1],'We have your pre-alert','Thanks {name}. We will look out for {tracking} and tell you when it arrives.'],
+ ['Pickups and pre-alerts','pickupbooked','Pickup booked','When a pickup is scheduled','Customer',[1,0,1],'Pickup booked for {date}','Your pickup is booked for {date}, {window}. {driver} will call before arriving.'],
+ ['Pickups and pre-alerts','aging','Pickup reminder','Day 7 of waiting at the warehouse','Customer',[1,0,1],'Your parcel is still waiting','Hi {name}, {tracking} has waited 7 days. Collect it with code {code} before storage fees start on {date}.'],
+ ['Pickups and pre-alerts','auction','Unclaimed notice','Day 60, before auction','Customer',[1,0,1],'Final notice for {tracking}','{tracking} has been unclaimed for 60 days. Collect it by {date} or it may be auctioned.'],
+ ['Billing','invoice','Invoice issued','When a bill is created','Customer',[1,0,1],'Invoice {invoice} · {amount}','Hi {name}, your invoice {invoice} for {amount} is ready. Pay by MoMo or card: {link}'],
+ ['Billing','paid','Payment received','Receipt after any payment','Customer',[1,0,1],'Payment received · {amount}','We received {amount} for {invoice}. Thank you, {name}.'],
+ ['Billing','reminder','Payment reminder','2 days before and on the due date','Customer',[1,0,1],'{invoice} is due {date}','Reminder: {invoice} for {amount} is due {date}. Pay here: {link}'],
+ ['Billing','fees','Storage fees started','When storage fees are added','Customer',[1,0,0],'Storage fees on {tracking}','Storage fees now apply to {tracking}. Collect it soon to keep costs down.'],
+ ['Account','otp','Sign-in code','Every sign-in with OTP','Customer and staff',[1,1,0],'Your Swift Lane code','Your Swift Lane code is {code}. It expires in 10 minutes. Never share it.'],
+ ['Account','reset','Password reset','When someone asks to reset','Customer and staff',[1,1,0],'Reset your password','Use code {code} to reset your password. If this was not you, ignore this message.'],
+ ['Account','welcome','Welcome and US address','After sign-up','Customer',[1,0,1],'Welcome to Swift Lane, {name}','Welcome {name}! Your US address is ready. Locker {locker}. Shop and ship today.'],
+ ['Account','kyc','ID check needed','When KYC documents are requested','Customer',[1,0,1],'We need to check your ID','Hi {name}, please upload your Ghana Card so we can release high-value parcels.'],
+ ['Support','ticket','Ticket reply','When support replies','Customer',[1,0,1],'Re: {ticket}','{agent} replied to your ticket {ticket}: {reply}'],
+ ['Staff alerts','approval','Approval needed','New account or price waiting','Staff',[1,0,0],'{count} items need approval','{count} items are waiting for your approval on the Approvals page.'],
+ ['Staff alerts','exception','Warehouse exception','Damaged or unlabelled parcel','Staff',[1,0,1],'Exception at bay {bay}','A parcel at bay {bay} was flagged: {reason}. Please check it.']
+];
+const VARS = ['{name}','{tracking}','{code}','{amount}','{invoice}','{date}','{eta}','{driver}','{link}','{locker}'];
+const SAMPLE = {name:'Efua',tracking:'SL-100480',code:'482193',weight:'5.6 kg',eta:'Nov 8',value:'$599.00',driver:'Kwesi',date:'Nov 8',window:'11:00–13:00',invoice:'INV-20931',amount:'₵2,300.00',link:'swl.gh/p/20931',locker:'SL-3318',ticket:'#4471',agent:'Adwoa',reply:'Your parcel is cleared.',count:'4',bay:'14',reason:'no label'};
+class Component extends DCLogic {
+constructor(p) { super(p); const on = {}, txt = {}; EV.forEach(e => { on[e[1]] = e[5].slice(); txt[e[1]] = { subject: e[6], email: e[7], sms: e[7].length > 150 ? e[7].slice(0, 147) + '…' : e[7], wa: e[7] }; }); this.state = { cur: 'ready', ch: 'wa', on, txt, q: '', saved: true }; }
+fill(s) { return s.replace(/\{(\w+)\}/g, (m, k) => SAMPLE[k] || m); }
+toggle(id, i) { const on = { ...this.state.on }; on[id] = on[id].slice(); on[id][i] = on[id][i] ? 0 : 1; this.setState({ on, saved: false }); }
+setTxt(field, v) { const id = this.state.cur, txt = { ...this.state.txt }; txt[id] = { ...txt[id], [field]: v }; this.setState({ txt, saved: false }); }
+renderVals() {
+const A = 'notifc';
+const N = 'Operations|dash~Overview~grid~~~Main;panels~Control Panels~gauge~~~ControlPanels;air~Air Shipments~plane~128~~AirShipments;sea~Sea Packages~ship~64~~SeaPackages;prealert~Pre-Alerts~inbox~9~~PreAlerts;pickup~Pickups~truck~12~/ 20~Pickups;dtrack~Delivery Tracking~route~5~~DeliveryTracking;shiptrack~Shipment Tracking~track~~~ShipmentTracking;aging~Pickup Aging~hourglass~9~~PickupAging;handover~Warehouse Delivery~arrow~~~WarehouseDelivery;consol~Consolidations~layers~7~~Consolidations;warehouse~Warehouse~warehouse~~~Warehouse;handout~Hand Out Packages~box~5~~HandOut;locker~Locker Search~lock~~~LockerSearch#Hubs|execdash~Management Dashboard~chart~~~ExecDashboard;billhub~Billing & Finance~dollar~~~BillingHub;lastmile~Last-Mile Delivery~truck~~~LastMile;aicenter~AI Centre~ai~~~AiCenter;commshub~Messages & Automation~message~~~CommsHub;supporthub~Support & CRM~ticket~~~SupportHub;loyalty~Loyalty & Referrals~star~~~LoyaltyRewards;security~Security & Reliability~shield~~~SecurityCenter#Freight|frhub~Freight Hub~plane~~~FreightHub;frsched~Departures & Arrivals~calendar~5~~FreightSchedule;frwb~Waybills & Manifests~file~~~Waybills;frex~Cargo Exceptions~alert~6~~CargoExceptions;frins~Insurance & Claims~shield~4~~InsuranceClaims;frpart~Freight Partners~users~~~FreightPartners#People|cust~Customers~users~1,284~~Customers;recip~Recipients~pin~~~Recipients;drivers~Drivers~wheel~8~/ 14~Drivers;drvapp~Rider App~phone~~~DriverApp;staff~Staff & Roles~shield~~~StaffRoles#Finance|pay~Payments~card~~~Payments;ar~Accounts Receivable~receipt~~~AccountsReceivable;fin~Financial Overview~dollar~$48,200~~FinancialOverview#Insights|reports~Reports~chart~~~Reports;activity~Activity Logs~clock~~~ActivityLogs;messages~Message Logs~archive~~~MessageLogs;msgcost~Message Costs~trend~~~MessageCosts;staffprod~Staff Productivity~trendup~~~StaffProductivity;txn~Transactions~refresh~~~Transactions;syslog~System Logs~note~~~SystemLogs#Customer Service|tickets~Support Inbox~ticket~1,482~~CsInbox;csrules~Ticket Rules~filter~~~CsRules;playbook~Playbook~book~~~CsPlaybook;csrep~Support Reports~star~~~CsReports;cschan~Channels & Teams~message~~~CsChannels;csai~AI Assistant~ai~~~StaffAI;cssupai~AI for Customers~spark~~~CsAI#Developer|devov~Dev Overview~terminal~~~DevOverview;devsvc~Services~server~12~~DevServices;devlogs~Logs~activity~~~DevLogs;devmet~Metrics~cpu~~~DevMetrics;devinfra~Infrastructure~cloud~~~DevInfrastructure;devdep~Deployments~rocket~~~DevDeployments;devalert~Alerts~alert~3~~DevAlerts;devissues~Issues & Change Log~bug~8~~DevIssues;devint~Integrations~puzzle~~~DevIntegrations#Settings|general~General~cog~~~SettingsHub;apis~API Connections~link~16~~ApiConnections;apitraffic~Live API Traffic~activity~~~ApiTraffic;tariffs~Shipping Tariffs~tag~~~Tariffs;notifc~Notifications~bell~3~~NotificationCenter;ebuild~Email Builder~mail~~~EmailBuilder;msgtpl~SMS & WhatsApp~message~~~MessageTemplates;bcast~Push Notifications~send~~~Broadcast;costs~Operating Costs~dollar~~~CostSettings;addr~Shipping Addresses~pin~~~ShippingAddresses;rfees~Rider Fees~truck~~~RiderSettings;loginpg~Login Page~image~~~LoginSettings;devmod~Modules~sliders~~~ModuleController;perm~Permissions~key~~~StaffPermissions;lblstudio~Label Printing~print~~~LabelStudio;auto~Automations~bolt~~~Automations';
+const nav = N.split('#').map(g => { const p = g.split('|'); return { label: p[0], items: p[1].split(';').map(i => { const f = i.split('~'); return { href: f[5] + '.dc.html', label: f[1], icon: 'i-' + f[2], c1: f[3], c2: f[4], cls: f[0] === A ? 'is-active' : '', ok: f[0] === 'fin' ? 'ok' : '' }; }) }; });
+  const s = this.state, q = s.q.toLowerCase(), chIdx = { email: 0, sms: 1, wa: 2 }[s.ch];
+  const labels = [...new Set(EV.map(e => e[0]))];
+  const groups = labels.map(l => { const items = EV.filter(e => e[0] === l && (!q || e[2].toLowerCase().includes(q))).map(e => { const o = s.on[e[1]]; return { name: e[2], when: e[3], cls: e[1] === s.cur ? 'on' : '', em: o[0] ? 'on' : 'off', sm: o[1] ? 'on' : 'off', wa: o[2] ? 'on' : 'off', emP: o[0] ? 'true' : 'false', smP: o[1] ? 'true' : 'false', waP: o[2] ? 'true' : 'false', pick: () => this.setState({ cur: e[1] }), tEm: () => this.toggle(e[1], 0), tSm: () => this.toggle(e[1], 1), tWa: () => this.toggle(e[1], 2) }; }); return { label: l, count: items.length, items }; }).filter(g => g.items.length);
+  const e = EV.find(x => x[1] === s.cur), o = s.on[s.cur], t = s.txt[s.cur];
+  const body = s.ch === 'email' ? t.email : s.ch === 'sms' ? t.sms : t.wa;
+  const count = (i) => EV.filter(x => s.on[x[1]][i]).length, pct = (i) => 'width: ' + Math.round(count(i) * 100 / EV.length) + '%';
+  const tabs = [['email','E-mail','i-mail'],['sms','SMS','i-phone'],['wa','WhatsApp','i-message']].map((c, i) => ({ label: c[1], icon: c[2], cls: s.ch === c[0] ? 'on' : '', sel: s.ch === c[0] ? 'true' : 'false', on: o[i] ? 'on' : '', pick: () => this.setState({ ch: c[0] }) }));
+  const sms = s.ch === 'sms', segs = Math.max(1, Math.ceil(body.length / 160));
+  return { nav, groups, tabs, total: EV.length, q: s.q, onQ: (ev) => this.setState({ q: ev.target.value }),
+    onEmail: count(0), onSms: count(1), onWa: count(2), wEmail: pct(0), wSms: pct(1), wWa: pct(2),
+    cur: { name: e[2], group: e[0], when: e[3].charAt(0).toLowerCase() + e[3].slice(1), desc: o[chIdx] ? 'This channel is on. Edit the message below.' : 'This channel is off for this notification. Switch it on in the list.', audience: e[4], sent: (e[1].length * 431 % 4000 + 120).toLocaleString() },
+    isEmail: s.ch === 'email', isChat: s.ch !== 'email', tabLabel: { email: 'E-mail', sms: 'SMS', wa: 'WhatsApp' }[s.ch], bubbleCls: sms ? 'sms' : '',
+    subject: t.subject, body, subjectPrev: this.fill(t.subject), bodyPrev: this.fill(body),
+    counter: sms ? body.length + ' characters · ' + segs + ' SMS' : body.length + ' characters',
+    channelNote: sms ? 'Over 160 characters costs more' : s.ch === 'wa' ? 'Approved template · Meta' : 'Sent from no-reply@swiftlane',
+    onSubject: (ev) => this.setTxt('subject', ev.target.value), onBody: (ev) => this.setTxt(s.ch, ev.target.value),
+    vars: VARS.map(v => ({ label: v, add: () => this.setTxt(s.ch, body + ' ' + v) })),
+    save: () => this.setState({ saved: true }), saveLabel: s.saved ? 'Saved' : 'Save changes',
+    reset: () => { const txt = { ...s.txt }; txt[s.cur] = { subject: e[6], email: e[7], sms: e[7], wa: e[7] }; this.setState({ txt, saved: false }); } };
+}
+}
+</script>
+</body>
+</html>

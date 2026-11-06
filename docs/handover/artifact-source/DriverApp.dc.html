@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Swift Lane Rider App</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./swiftlane.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:var(--bg)}
+.da{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;background:var(--bg);font-family:var(--font);color:var(--ink);position:relative}
+.da-top{display:flex;align-items:center;gap:10px;padding:14px 16px 10px;position:sticky;top:0;background:var(--bg);z-index:5}
+.da-top h1{margin:0;font-size:20px;font-weight:600;letter-spacing:-.01em;flex:1}
+.da-ib{width:44px;height:44px;border-radius:14px;border:1px solid var(--line);background:var(--card);display:grid;place-items:center;color:var(--ink);position:relative;cursor:pointer}
+.da-ib b{position:absolute;top:6px;right:6px;min-width:16px;height:16px;border-radius:8px;background:#E2632A;color:#fff;font-size:10px;display:grid;place-items:center;padding:0 3px}
+.da-body{flex:1;padding:0 16px 110px;display:flex;flex-direction:column;gap:14px}
+.da-on{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:18px;background:var(--ink);color:var(--inverse)}
+.da-on .t{flex:1}.da-on small{display:block;opacity:.7;font-size:12px}
+.da-sw{width:52px;height:30px;border-radius:15px;border:0;background:rgba(255,255,255,.25);position:relative;cursor:pointer;flex:none}
+.da-sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:left .15s}
+.da-sw.on{background:var(--green)}.da-sw.on::after{left:25px}
+.da-k{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.da-k div{padding:12px;border-radius:16px;background:var(--card);border:1px solid var(--line)}
+.da-k b{display:block;font:600 22px var(--font);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.da-k small{color:var(--muted);font-size:12px}
+.da-next{border-radius:22px;background:var(--card);border:1px solid var(--line);overflow:hidden}
+.da-mini{height:130px;background:#EAE6DF;position:relative}
+.da-mini svg{width:100%;height:100%;display:block}
+.da-next .in{padding:14px;display:flex;flex-direction:column;gap:10px}
+.da-row{display:flex;align-items:center;gap:10px}
+.da-pri{display:flex;align-items:center;justify-content:center;gap:8px;height:52px;border-radius:16px;border:0;background:var(--ink);color:var(--inverse);font:600 15px var(--font);cursor:pointer;width:100%}
+.da-sec{display:flex;align-items:center;justify-content:center;gap:8px;height:48px;border-radius:14px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);font:500 14px var(--font);cursor:pointer;flex:1}
+.da-seg{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+.da-seg button{flex:none;height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--line-2);background:var(--card);font:500 13.5px var(--font);color:var(--ink);cursor:pointer}
+.da-seg button.on{background:var(--ink);color:var(--inverse);border-color:var(--ink)}
+.da-pk{display:flex;gap:12px;align-items:center;padding:14px;border-radius:18px;background:var(--card);border:1px solid var(--line);width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer}
+.da-pk.new{animation:daN 1.2s}@keyframes daN{from{background:#FBE3D6}to{background:var(--card)}}
+.da-n{width:34px;height:34px;border-radius:50%;background:var(--active);display:grid;place-items:center;font:600 13px var(--font);flex:none}
+.da-n.done{background:var(--green);color:#fff}
+.da-pk .m{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.da-pk .m small{color:var(--muted);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.da-fee{font:600 14px var(--font);text-align:right}.da-fee small{display:block;font-weight:400;color:var(--muted);font-size:11.5px}
+.da-tab{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;display:grid;grid-template-columns:repeat(4,1fr);padding:8px 8px 18px;background:var(--card);border-top:1px solid var(--line);z-index:6;box-sizing:border-box}
+.da-tab button{display:flex;flex-direction:column;align-items:center;gap:3px;height:54px;border:0;background:none;font:500 11.5px var(--font);color:var(--muted);cursor:pointer;border-radius:14px}
+.da-tab button.on{color:var(--ink)}.da-tab button.on .ic{color:#E2632A}
+.da-sheet{border-radius:22px;background:var(--card);border:1px solid var(--line);padding:16px;display:flex;flex-direction:column;gap:12px}
+.da-kv{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.da-kv div{padding:10px 12px;border-radius:12px;background:var(--field)}
+.da-kv small{display:block;color:var(--muted);font-size:11.5px}
+.da-kv b{font:500 14px var(--font)}
+.da-code{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.da-code span{height:60px;border-radius:14px;border:1.5px solid var(--line-2);background:var(--field);display:grid;place-items:center;font:600 26px var(--mono)}
+.da-code span.cur{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.da-code.ok span{border-color:var(--green);background:var(--green-bg);color:var(--green-ink)}
+.da-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.da-pad button{height:52px;border-radius:14px;border:1px solid var(--line);background:var(--card);font:500 20px var(--font);color:var(--ink);cursor:pointer}
+.da-ok{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:var(--green-bg);color:var(--green-ink);font-size:14px}
+.da-bad{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:var(--red-bg);color:var(--red-ink);font-size:14px}
+.da-toast{position:fixed;top:12px;left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:448px;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:16px;background:var(--ink);color:var(--inverse);z-index:9;box-sizing:border-box;animation:daT .4s}@keyframes daT{from{transform:translate(-50%,-20px);opacity:0}}
+.da-bars{display:flex;align-items:flex-end;gap:6px;height:110px}
+.da-bars i{flex:1;border-radius:6px 6px 2px 2px;background:#A9A59C}.da-bars i.now{background:#E2632A}
+.da-li{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line);color:var(--ink)}
+.da-li:first-child{border-top:0}
+.da-photo{height:120px;border-radius:14px;border:1.5px dashed var(--line-2);background:var(--field);display:grid;place-items:center;color:var(--muted);font-size:13px}
+.da-photo.on{border-style:solid;background:linear-gradient(135deg,#5B5348,#9A8670);color:#fff}
+</style>
+</helmet>
+<div class="da">
+<sc-if value="{{toast}}" hint-placeholder-val="{{ false }}"><div class="da-toast" role="status"><i class="ic i-box" aria-hidden="true"></i><span class="grow">{{toast}}</span><button class="da-ib" style="width:36px;height:36px;background:transparent;border-color:rgba(255,255,255,.2);color:#fff" aria-label="Dismiss" onClick="{{dismiss}}"><i class="ic ic-sm i-x" aria-hidden="true"></i></button></div></sc-if>
+<header class="da-top"><sc-if value="{{inDetail}}" hint-placeholder-val="{{ false }}"><button class="da-ib" aria-label="Back" onClick="{{back}}"><i class="ic i-left" aria-hidden="true"></i></button></sc-if><sc-if value="{{notDetail}}" hint-placeholder-val="{{ true }}"><span class="me-pic p-kb" style="width:44px;height:44px"><i class="me-on" aria-hidden="true"></i></span></sc-if><h1>{{title}}</h1><a class="da-ib" href="Notifications.dc.html" aria-label="Alerts"><i class="ic i-bell" aria-hidden="true"></i><b>{{alerts}}</b></a></header>
+<div class="da-body">
+<sc-if value="{{scrHome}}" hint-placeholder-val="{{ true }}">
+<div class="da-on"><span class="t"><b class="fw5">{{onLabel}}</b><small>{{onSub}}</small></span><button class="da-sw {{onCls}}" role="switch" aria-checked="{{onAria}}" aria-label="Online" onClick="{{toggleOn}}"></button></div>
+<div class="da-k"><div><b>{{left}}</b><small>To deliver</small></div><div><b>{{done}}</b><small>Delivered</small></div><div><b>{{earned}}</b><small>Earned today</small></div></div>
+<sc-if value="{{hasNext}}" hint-placeholder-val="{{ true }}"><section class="da-next"><div class="da-mini"><svg viewBox="0 0 360 130" preserveAspectRatio="xMidYMid slice"><rect width="360" height="130" fill="#EAE6DF"/><path d="M0 95 C 80 70, 140 115, 220 90 S 320 60, 360 80 L 360 110 C 300 100, 250 125, 200 118 S 70 100, 0 125Z" fill="#D5DEE3"/><g stroke="#F7F5F1" stroke-width="7"><path d="M0 40H360M0 75H360M70 0V130M180 0V130M280 0V130"/></g><polyline points="40,110 70,75 180,75 180,40 280,40" fill="none" stroke="#E2632A" stroke-width="4" stroke-linecap="round"/><circle cx="70" cy="75" r="9" fill="#E2632A" stroke="#fff" stroke-width="3"/><path d="M280 18c-6 0-11 5-11 11 0 8 11 18 11 18s11-10 11-18c0-6-5-11-11-11z" fill="#1E1D1A"/></svg></div>
+<div class="in"><div class="da-row"><span class="up grow">Next stop · {{next.eta}}</span><span class="sl-pill onway">{{next.km}} km</span></div><div class="da-row"><span class="col grow"><b class="fw5" style="font-size:17px">{{next.name}}</b><span class="mut sm">{{next.addr}}</span></span><span class="da-fee">{{next.fee}}<small>you get {{next.cut}}</small></span></div>
+<div class="da-row" style="gap:8px"><a class="da-sec" href="tel:+233245510921"><i class="ic ic-sm i-phone" aria-hidden="true"></i>Call</a><a class="da-sec" href="ComposeMessage.dc.html"><i class="ic ic-sm i-message" aria-hidden="true"></i>WhatsApp</a><button class="da-sec" onClick="{{openNext}}"><i class="ic ic-sm i-route" aria-hidden="true"></i>Details</button></div>
+<button class="da-pri" onClick="{{openNext}}"><i class="ic ic-sm i-key" aria-hidden="true"></i>Deliver with pickup code</button></div></section></sc-if>
+<div class="da-row"><b class="fw5 grow">My packages</b><span class="mut sm">{{total}} assigned</span></div>
+<div class="da-seg"><sc-for list="{{segs}}" as="g" hint-placeholder-count="4"><button class="{{g.cls}}" onClick="{{g.pick}}">{{g.label}}</button></sc-for></div>
+<sc-for list="{{pkgs}}" as="p" hint-placeholder-count="6"><button class="da-pk {{p.anim}}" onClick="{{p.open}}"><span class="da-n {{p.nCls}}">{{p.n}}</span><span class="m"><b class="fw5">{{p.name}}</b><small>{{p.addr}}</small><small class="mono">{{p.id}} · {{p.pcs}}</small></span><span class="col" style="align-items:flex-end;gap:6px"><span class="sl-pill {{p.pc}}">{{p.st}}</span><span class="da-fee">{{p.fee}}</span></span></button></sc-for>
+</sc-if>
+<sc-if value="{{scrDetail}}" hint-placeholder-val="{{ false }}">
+<section class="da-sheet"><div class="da-row"><span class="me-pic {{d.pic}}" style="width:52px;height:52px"></span><span class="col grow"><b class="fw5" style="font-size:17px">{{d.name}}</b><span class="mut sm">{{d.locker}} · {{d.phone}}</span></span><span class="sl-pill {{d.pc}}">{{d.st}}</span></div>
+<div class="da-row"><i class="ic i-pin" aria-hidden="true"></i><span class="grow">{{d.addr}}</span></div>
+<div class="da-row" style="gap:8px"><a class="da-sec" href="tel:+233245510921"><i class="ic ic-sm i-phone" aria-hidden="true"></i>Call</a><a class="da-sec" href="ComposeMessage.dc.html"><i class="ic ic-sm i-message" aria-hidden="true"></i>WhatsApp</a><a class="da-sec" href="DeliveryTracking.dc.html"><i class="ic ic-sm i-route" aria-hidden="true"></i>Navigate</a></div>
+<div class="da-kv"><div><small>Tracking</small><b class="mono">{{d.id}}</b></div><div><small>Pieces</small><b>{{d.pcs}}</b></div><div><small>Weight</small><b>{{d.kg}}</b></div><div><small>Collect cash</small><b>{{d.cash}}</b></div><div><small>Delivery fee</small><b>{{d.fee}}</b></div><div><small>You get (64%)</small><b>{{d.cut}}</b></div></div>
+<sc-if value="{{d.note}}" hint-placeholder-val="{{ false }}"><div class="sl-banner info"><i class="ic i-info" aria-hidden="true"></i><span>{{d.note}}</span></div></sc-if></section>
+<sc-if value="{{canDeliver}}" hint-placeholder-val="{{ true }}"><section class="da-sheet"><b class="fw5">Ask the customer for their 4-digit pickup code</b><div class="da-code {{codeCls}}"><sc-for list="{{boxes}}" as="b" hint-placeholder-count="4"><span class="{{b.cls}}">{{b.d}}</span></sc-for></div>
+<sc-if value="{{codeBad}}" hint-placeholder-val="{{ false }}"><div class="da-bad"><i class="ic ic-sm i-x" aria-hidden="true"></i>That code doesn't match. Check with the customer.</div></sc-if>
+<div class="da-pad"><sc-for list="{{keys}}" as="k" hint-placeholder-count="12"><button aria-label="{{k.l}}" onClick="{{k.press}}">{{k.l}}</button></sc-for></div>
+<button class="da-photo {{photoCls}}" onClick="{{takePhoto}}"><span><i class="ic i-image" aria-hidden="true"></i> {{photoLabel}}</span></button>
+<button class="da-pri" style="opacity:{{confOp}}" onClick="{{confirm}}"><i class="ic ic-sm i-check" aria-hidden="true"></i>Confirm delivery</button>
+<button class="da-sec" style="flex:none" onClick="{{fail}}">Customer not home · try later</button></section></sc-if>
+<sc-if value="{{delivered}}" hint-placeholder-val="{{ false }}"><div class="da-ok"><i class="ic i-check" aria-hidden="true"></i><span>Delivered and code matched. {{d.cut}} added to today's earnings.</span></div><button class="da-pri" onClick="{{back}}">Next package</button></sc-if>
+</sc-if>
+<sc-if value="{{scrMap}}" hint-placeholder-val="{{ false }}">
+<section class="da-next"><div class="da-mini" style="height:300px"><svg viewBox="0 0 360 300" preserveAspectRatio="xMidYMid slice"><rect width="360" height="300" fill="#EAE6DF"/><path d="M0 200 C 90 170, 150 230, 230 200 S 330 160, 360 180 L 360 220 C 300 210, 240 250, 200 240 S 60 220, 0 250Z" fill="#D5DEE3"/><g stroke="#F7F5F1" stroke-width="8"><path d="M0 60H360M0 130H360M0 270H360M60 0V300M170 0V300M290 0V300"/></g><polyline points="30,280 60,130 170,130 170,60 290,60 290,130 330,130" fill="none" stroke="#E2632A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><sc-for list="{{stops}}" as="s" hint-placeholder-count="5"><g transform="translate({{s.x}} {{s.y}})"><circle r="13" fill="{{s.fill}}" stroke="#fff" stroke-width="3"/><text y="4" text-anchor="middle" font-size="11" font-weight="600" fill="#fff" font-family="Figtree">{{s.n}}</text></g></sc-for><circle cx="{{me.x}}" cy="{{me.y}}" r="9" fill="#2F6FB5" stroke="#fff" stroke-width="3"/></svg></div>
+<div class="in"><div class="da-row"><b class="fw5 grow">Today's route</b><span class="mut sm">{{routeInfo}}</span></div><a class="da-pri" href="DeliveryTracking.dc.html"><i class="ic ic-sm i-route" aria-hidden="true"></i>Start navigation</a></div></section>
+<section class="da-sheet"><sc-for list="{{pkgsAll}}" as="p" hint-placeholder-count="6"><div class="da-li"><span class="da-n {{p.nCls}}">{{p.n}}</span><span class="col grow" style="min-width:0"><span class="fw5">{{p.name}}</span><span class="mut sm">{{p.addr}}</span></span><span class="sl-pill {{p.pc}}">{{p.st}}</span></div></sc-for></section>
+</sc-if>
+<sc-if value="{{scrPay}}" hint-placeholder-val="{{ false }}">
+<section class="da-sheet"><span class="up">Earned today</span><b style="font:600 38px var(--font);letter-spacing:-.02em">{{earned}}</b><span class="mut sm">{{done}} deliveries · 64% of {{feesToday}} in delivery fees</span><div class="da-bars"><sc-for list="{{week}}" as="w" hint-placeholder-count="7"><i class="{{w.cls}}" style="{{w.h}}" title="{{w.t}}"></i></sc-for></div><div class="row between mut" style="font-size:11.5px"><span>Fri</span><span>Sat</span><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span></div></section>
+<div class="da-k"><div><b>₵1,284</b><small>This week</small></div><div><b>₵4,820</b><small>Cash to hand in</small></div><div><b>Fri</b><small>Next payout</small></div></div>
+<section class="da-sheet"><b class="fw5">Payouts</b><sc-for list="{{payouts}}" as="p" hint-placeholder-count="3"><div class="da-li"><i class="ic i-card" aria-hidden="true"></i><span class="col grow"><span class="fw5">{{p.a}}</span><span class="mut sm">{{p.d}}</span></span><span class="sl-pill {{p.c}}">{{p.s}}</span></div></sc-for></section>
+</sc-if>
+<sc-if value="{{scrMe}}" hint-placeholder-val="{{ false }}">
+<section class="da-sheet" style="align-items:center;text-align:center"><span class="me-pic p-kb" style="width:84px;height:84px"><i class="me-on" aria-hidden="true"></i></span><b style="font-size:19px">Kwesi Bonsu</b><span class="mut sm">Rider · Accra Hub · ★ 4.9 · 1,204 deliveries</span></section>
+<section class="da-sheet"><a class="da-li" href="RiderDetail.dc.html"><i class="ic i-truck" aria-hidden="true"></i><span class="grow">Motorbike · GR 4471-24</span><i class="ic ic-sm i-right mut" aria-hidden="true"></i></a><a class="da-li" href="Documents.dc.html"><i class="ic i-file" aria-hidden="true"></i><span class="grow">Licence and insurance</span><span class="sl-pill delivered">Valid</span></a><a class="da-li" href="CustomerNotifications.dc.html"><i class="ic i-bell" aria-hidden="true"></i><span class="grow">Notifications</span><i class="ic ic-sm i-right mut" aria-hidden="true"></i></a><a class="da-li" href="RiderSettings.dc.html"><i class="ic i-dollar" aria-hidden="true"></i><span class="grow">My fee split · 64%</span><i class="ic ic-sm i-right mut" aria-hidden="true"></i></a><a class="da-li" href="CsInbox.dc.html"><i class="ic i-help" aria-hidden="true"></i><span class="grow">Help from the hub</span><i class="ic ic-sm i-right mut" aria-hidden="true"></i></a><a class="da-li" href="Login.dc.html" style="color:var(--red-ink)"><i class="ic i-logout" aria-hidden="true"></i><span class="grow">Sign out</span></a></section>
+<a class="da-sec" style="flex:none" href="RiderDispatch.dc.html"><i class="ic ic-sm i-monitor" aria-hidden="true"></i>Open the desktop view</a>
+</sc-if>
+</div>
+<nav class="da-tab" aria-label="Rider app"><sc-for list="{{tabs}}" as="t" hint-placeholder-count="4"><button class="{{t.cls}}" onClick="{{t.pick}}" aria-current="{{t.cur}}"><i class="ic {{t.icon}}" aria-hidden="true"></i>{{t.label}}</button></sc-for></nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1500}}'>
+const PK = [['SL-100482', 'Kwame Mensah', '14 Palm Close, East Legon', 'p-kb', 'SL-2041', '+233 24 551 0921', '1 box', '4.2 lb', '₵0 · paid', 35, '4821', 'Call before arriving. Gate code 1180.', 'onway', 2.4, '10:46'], ['SL-100477', 'Abena Frimpong', '5 Harbour Rd, Tema', 'p-ad', 'SL-3270', '+233 55 302 7745', '3 boxes', '22 lb', '₵372.48', 50, '0042', '', 'next', 6.1, '11:20'], ['SL-100466', 'Yaw Darko', '22 Ridge Rd, Cantonments', 'p-ym', 'SL-0988', '+233 27 450 9981', '1 envelope', '0.4 lb', '₵0 · paid', 25, '1194', 'Leave with security if not home.', 'next', 8.0, '11:45'], ['SL-100459', 'Esi Quaye', '9 Labone Cres, Labone', 'em', 'SL-3251', '+233 24 732 5510', '2 boxes', '11 lb', '₵140.00', 40, '6620', '', 'next', 9.3, '12:10'], ['SL-100441', 'Nana Adjei', '3 Castle Rd, Osu', 'p-nl', 'SL-3262', '+233 50 880 1290', '1 box', '6 lb', '₵0 · paid', 35, '3301', '', 'done', 0, '09:20'], ['SL-100436', 'Ama Boateng', '7 Oxford St, Osu', 'p-as', 'SL-1187', '+233 24 000 0000', '1 box', '3 lb', '₵0 · paid', 30, '7310', '', 'done', 0, '08:55']];
+const NEWPK = ['SL-100490', 'Kojo Appiah', '18 Spintex Rd, Baatsona', 'p-ka', 'SL-3244', '+233 26 118 6670', '1 box', '2.2 lb', '₵0 · paid', 30, '5151', 'New from dispatch', 'next', 4.4, '12:30'];
+class Component extends DCLogic {
+constructor(p) { super(p); this.state = { tab: 'home', on: true, seg: 'todo', pk: PK.map(x => x.slice()), open: -1, code: '', bad: false, photo: false, toast: '', fresh: '' }; if (typeof window !== 'undefined') this._t = setTimeout(() => { if (!this.state.pk.find(x => x[0] === NEWPK[0])) this.setState({ pk: this.state.pk.concat([NEWPK.slice()]), toast: 'New package assigned: ' + NEWPK[1] + ' · ₵30', fresh: NEWPK[0] }); }, 6000); }
+componentWillUnmount() { clearTimeout(this._t); }
+renderVals() {
+  const s = this.state, P = s.pk, cut = (f) => '₵' + (f * 0.64).toFixed(2);
+  const done = P.filter(x => x[12] === 'done'), todo = P.filter(x => x[12] !== 'done');
+  const earned = done.reduce((a, x) => a + x[9] * 0.64, 0);
+  const ST = { onway: ['On the way', 'onway'], next: ['To deliver', 'pending'], done: ['Delivered', 'delivered'], fail: ['Try later', 'overdue'] };
+  const nextI = P.findIndex(x => x[12] === 'onway') >= 0 ? P.findIndex(x => x[12] === 'onway') : P.findIndex(x => x[12] === 'next');
+  const nx = P[nextI];
+  const view = (x, i) => ({ id: x[0], name: x[1], addr: x[2], pcs: x[6], fee: '₵' + x[9], st: ST[x[12]][0], pc: ST[x[12]][1], n: x[12] === 'done' ? '✓' : String(todo.indexOf(x) + 1), nCls: x[12] === 'done' ? 'done' : '', anim: s.fresh === x[0] ? 'new' : '', open: () => this.setState({ open: i, code: '', bad: false, photo: false, fresh: '' }) });
+  const d = s.open >= 0 ? P[s.open] : null;
+  const press = (k) => () => { if (k === '⌫') return this.setState({ code: s.code.slice(0, -1), bad: false }); if (k === '' || s.code.length >= 4) return; const c = s.code + k; this.setState({ code: c, bad: c.length === 4 && c !== d[10] }); };
+  const T = [['home', 'Today', 'i-box'], ['map', 'Route', 'i-route'], ['pay', 'Earnings', 'i-dollar'], ['me', 'Me', 'i-user']];
+  const inD = s.tab === 'home' && !!d;
+  return {
+    title: inD ? d[0] : { home: 'Good morning, Kwesi', map: 'Route', pay: 'Earnings', me: 'My profile' }[s.tab], alerts: s.toast ? 2 : 1, inDetail: inD, notDetail: !inD,
+    toast: s.toast, dismiss: () => this.setState({ toast: '' }),
+    scrHome: s.tab === 'home' && !d, scrDetail: inD, scrMap: s.tab === 'map', scrPay: s.tab === 'pay', scrMe: s.tab === 'me',
+    onLabel: s.on ? 'You are online' : 'You are offline', onSub: s.on ? 'Dispatch can send you packages' : 'Go online to get packages', onCls: s.on ? 'on' : '', onAria: s.on ? 'true' : 'false', toggleOn: () => this.setState({ on: !s.on }),
+    left: todo.length, done: done.length, earned: '₵' + earned.toFixed(2), feesToday: '₵' + done.reduce((a, x) => a + x[9], 0).toFixed(2), total: P.length,
+    hasNext: !!nx && s.on, next: nx ? { name: nx[1], addr: nx[2], fee: '₵' + nx[9], cut: cut(nx[9]), km: nx[13], eta: nx[14] } : {}, openNext: () => this.setState({ open: nextI, code: '', bad: false, photo: false }),
+    segs: [['todo', 'To deliver ' + todo.length], ['done', 'Delivered ' + done.length], ['all', 'All ' + P.length]].map(g => ({ label: g[1], cls: s.seg === g[0] ? 'on' : '', pick: () => this.setState({ seg: g[0] }) })),
+    pkgs: P.map((x, i) => [x, i]).filter(([x]) => s.seg === 'all' || (s.seg === 'done' ? x[12] === 'done' : x[12] !== 'done')).map(([x, i]) => view(x, i)),
+    pkgsAll: P.map((x, i) => view(x, i)),
+    d: d ? { id: d[0], name: d[1], addr: d[2], pic: d[3], locker: d[4], phone: d[5], pcs: d[6], kg: d[7], cash: d[8], fee: '₵' + d[9], cut: cut(d[9]), note: d[11], st: ST[d[12]][0], pc: ST[d[12]][1] } : {},
+    canDeliver: !!d && d[12] !== 'done', delivered: !!d && d[12] === 'done',
+    boxes: [0, 1, 2, 3].map(i => ({ d: s.code[i] || '', cls: i === s.code.length ? 'cur' : '' })), codeCls: d && s.code === d[10] ? 'ok' : '', codeBad: s.bad,
+    keys: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '⌫'].map(k => ({ l: k, press: press(k) })),
+    photoCls: s.photo ? 'on' : '', photoLabel: s.photo ? 'Proof photo taken · tap to retake' : 'Take a proof-of-delivery photo', takePhoto: () => this.setState({ photo: true }),
+    confOp: d && s.code === d[10] ? '1' : '.5', confirm: () => { if (!d || s.code !== d[10]) return this.setState({ bad: s.code.length === 4 }); const n = P.map(x => x.slice()); n[s.open][12] = 'done'; const nxt = n.findIndex(x => x[12] === 'next'); if (nxt >= 0 && !n.find(x => x[12] === 'onway')) n[nxt][12] = 'onway'; this.setState({ pk: n }); },
+    fail: () => { const n = P.map(x => x.slice()); n[s.open][12] = 'fail'; this.setState({ pk: n, open: -1 }); },
+    back: () => this.setState({ open: -1 }),
+    stops: [[60, 130], [170, 60], [290, 60], [290, 130], [330, 130]].map((p, i) => ({ x: p[0], y: p[1], n: i + 1, fill: i < 1 ? '#2F8F5B' : '#E2632A' })), me: { x: 100, y: 130 }, routeInfo: todo.length + ' stops · ' + (todo.reduce((a, x) => a + x[13], 0)).toFixed(1) + ' km',
+    week: [62, 88, 40, 95, 120, 104, Math.round(earned)].map((v, i) => ({ h: 'height:' + Math.max(8, Math.round(v / 130 * 100)) + '%', cls: i === 6 ? 'now' : '', t: '₵' + v })),
+    payouts: [['₵1,140.80 to MTN MoMo', 'Fri Oct 31', 'Paid', 'delivered'], ['₵986.40 to MTN MoMo', 'Fri Oct 24', 'Paid', 'delivered'], ['₵1,284.00 to MTN MoMo', 'Fri Nov 7', 'Next', 'pending']].map(p => ({ a: p[0], d: p[1], s: p[2], c: p[3] })),
+    tabs: T.map(t => ({ label: t[1], icon: t[2], cls: s.tab === t[0] ? 'on' : '', cur: s.tab === t[0] ? 'page' : 'false', pick: () => this.setState({ tab: t[0], open: -1 }) })) };
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Swift Lane Live API Traffic</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./swiftlane.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}
+.at-k{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
+.at-k b{font:600 26px var(--font);font-variant-numeric:tabular-nums;letter-spacing:-.015em;line-height:1.15}.at-k b.bump{animation:atB .9s}@keyframes atB{from{color:#E2632A}}
+.at-k small{color:var(--muted);font-size:12.5px}
+.at-two{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media (max-width:1100px){.at-two{grid-template-columns:1fr}}
+.at-s{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:18px;background:var(--card);overflow:hidden}
+.at-sh{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.at-dir{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--active)}
+.at-list{height:380px;overflow:hidden}
+.at-l{display:grid;grid-template-columns:70px 120px minmax(0,1fr) 54px 60px;gap:10px;align-items:center;width:100%;padding:9px 16px;border:0;border-top:1px solid var(--line);background:none;font:12.5px var(--font);color:var(--ink);text-align:left;cursor:pointer}
+.at-l:first-child{border-top:0}.at-l:hover{background:var(--hover)}.at-l.on{background:var(--active)}
+.at-l.new{animation:atN 1.2s}@keyframes atN{from{background:#FBE3D6}}
+.at-l .t{font-family:var(--mono);color:var(--muted);font-size:11.5px}.at-l .p{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.at-l .e{font-family:var(--mono);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.at-l .ms{font-family:var(--mono);color:var(--muted);text-align:right;font-size:11.5px}
+.at-c{display:inline-flex;justify-content:center;height:22px;align-items:center;border-radius:6px;font:600 11.5px var(--mono);background:var(--green-bg);color:var(--green-ink)}
+.at-c.w{background:#FBF0D9;color:#8A6410}.at-c.e{background:var(--red-bg);color:var(--red-ink)}
+.at-dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block}.at-dot.live{animation:atP 1.4s infinite}.at-dot.off{background:#B9B4AA}.at-dot.w{background:var(--yellow)}.at-dot.e{background:var(--red)}@keyframes atP{50%{opacity:.3}}
+.at-pv{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(230px,100%),1fr));gap:10px}
+.at-p{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border:1px solid var(--line);border-radius:16px;background:var(--card);cursor:pointer;text-align:left;font:inherit;color:inherit}
+.at-p.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.at-sp{display:flex;align-items:flex-end;gap:2px;height:28px}.at-sp i{flex:1;border-radius:2px 2px 0 0;background:#D6D2CA}.at-sp i.e{background:#D7664F}.at-sp i:last-child{background:#E2632A}
+.at-json{margin:0;padding:12px 14px;border-radius:12px;background:#171614;color:#E9E5DE;font:12px/1.6 var(--mono);white-space:pre-wrap;word-break:break-word;max-height:260px;overflow:auto}
+.at-tabs{display:flex;gap:4px}.at-tabs button{height:34px;padding:0 12px;border-radius:9px;border:0;background:none;font:500 13px var(--font);color:var(--muted);cursor:pointer}.at-tabs button.on{background:var(--active);color:var(--ink)}
+</style>
+</helmet>
+<div class="sl-app">
+  <input type="checkbox" id="navtg" class="nav-tg" aria-hidden="true" tabindex="-1">
+  <header class="sl-top">
+    <label class="sl-ib nav-open" for="navtg" aria-label="Open or close the menu" role="button" tabindex="0"><i class="ic i-sidebar" aria-hidden="true"></i></label>
+    <a class="sl-switch" href="Main.dc.html"><small>SL</small> Swift Lane · Accra Hub <i class="ic ic-sm i-down" aria-hidden="true"></i></a>
+    <a class="fx-chip" href="SettingsHub.dc.html" title="Exchange rate · set in Settings › General"><i class="ic ic-sm i-dollar" aria-hidden="true"></i><span class="mono">USD 1 = GHS 12.40</span><span class="fx-d">▲ 0.4%</span></a>
+    <span class="grow"></span>
+    <details class="aitop"><summary aria-label="Help with Swift Lane AI"><span class="o"><i class="ic i-ai" aria-hidden="true"></i></span>Help</summary><div class="pop" role="menu">
+<div class="me"><span class="sl-av sm dark">HC</span><div class="grow"><div class="fw5 sm">Henry Cobblah</div><div class="mut" style="font-size:12px">Operations manager · Accra Hub</div></div><a class="sl-btn sm ghost" href="AiStudio.dc.html">Edit</a></div>
+<a class="ask" href="StaffAI.dc.html"><i class="ic ic-sm i-spark" aria-hidden="true"></i>Ask AI for help on this page<b><i class="ic ic-sm i-send" aria-hidden="true"></i></b></a>
+<div class="hd">Your profile with AI</div>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-wand" aria-hidden="true"></i></span><span>Retouch my photo<small>Light, skin and background</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-refresh" aria-hidden="true"></i></span><span>Reset images<small>Go back to the original photo</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-edit" aria-hidden="true"></i></span><span>Change my name<small>AI fixes spelling and capitals</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-user" aria-hidden="true"></i></span><span>Make my icon<small>Avatar from your photo or initials</small></span></a>
+<div class="hd">Help</div>
+<a class="it" role="menuitem" href="StaffAI.dc.html"><span class="t"><i class="ic ic-sm i-help" aria-hidden="true"></i></span><span>Explain this page</span></a>
+<a class="it" role="menuitem" href="CsInbox.dc.html"><span class="t"><i class="ic ic-sm i-message" aria-hidden="true"></i></span><span>Talk to a person</span></a>
+</div></details>
+    <a class="sl-ib" aria-label="Notifications" href="Notifications.dc.html"><i class="ic i-bell" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Switch theme" href="SettingsHub.dc.html"><i class="ic i-sun" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Documents" href="Documents.dc.html"><i class="ic i-file" aria-hidden="true"></i></a>
+    <a class="sl-btn" href="ApiConnections.dc.html">API connections</a>
+    <details class="uptop"><summary aria-label="Your profile and settings, Henry Cobblah"><span class="me-pic hc" style="width:34px;height:34px"><i class="me-on" aria-hidden="true"></i></span><span class="up-nm">Henry</span><i class="ic ic-sm i-down" aria-hidden="true"></i></summary><div class="pop" role="menu">
+<a class="up-me" href="AiStudio.dc.html"><span class="me-pic hc" style="width:48px;height:48px"><i class="me-on" aria-hidden="true"></i></span><span class="col" style="min-width:0"><b>Henry Cobblah</b><small>Operations manager · Accra Hub</small><small class="mono">henry@swiftlane.com</small></span></a>
+<div class="up-st"><span class="row g6 sm"><span class="ld" style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span>Available</span><a class="sm fw5" href="AiStudio.dc.html">Edit profile</a></div>
+<div class="up-h">Short links</div><div class="up-g"><a class="up-l" role="menuitem" href="Main.dc.html"><i class="ic ic-sm i-grid" aria-hidden="true"></i>Overview</a><a class="up-l" role="menuitem" href="RiderDispatch.dc.html"><i class="ic ic-sm i-truck" aria-hidden="true"></i>Dispatch board</a><a class="up-l" role="menuitem" href="SendPrices.dc.html"><i class="ic ic-sm i-send" aria-hidden="true"></i>Send prices</a><a class="up-l" role="menuitem" href="Reports.dc.html"><i class="ic ic-sm i-chart" aria-hidden="true"></i>Reports</a><a class="up-l" role="menuitem" href="Documents.dc.html"><i class="ic ic-sm i-file" aria-hidden="true"></i>Documents</a><a class="up-l" role="menuitem" href="ActivityLogs.dc.html"><i class="ic ic-sm i-clock" aria-hidden="true"></i>My activity</a></div>
+<div class="up-h">Settings</div><a class="up-l" role="menuitem" href="AiStudio.dc.html"><i class="ic ic-sm i-ai" aria-hidden="true"></i>Profile and photo</a><a class="up-l" role="menuitem" href="SettingsHub.dc.html"><i class="ic ic-sm i-cog" aria-hidden="true"></i>Settings</a><a class="up-l" role="menuitem" href="ApiConnections.dc.html"><i class="ic ic-sm i-link" aria-hidden="true"></i>API connections</a><a class="up-l" role="menuitem" href="StaffPermissions.dc.html"><i class="ic ic-sm i-shield" aria-hidden="true"></i>Permissions</a>
+<div class="up-row"><span class="sm mut">Theme</span><span class="sl-seg boxed" style="height:30px"><a class="on" href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Light</a><a href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Dark</a></span></div>
+<a class="up-l" role="menuitem" href="CsInbox.dc.html"><i class="ic ic-sm i-help" aria-hidden="true"></i>Help and support</a>
+<a class="up-l out" role="menuitem" href="Login.dc.html"><i class="ic ic-sm i-logout" aria-hidden="true"></i>Sign out</a>
+</div></details>
+  </header>
+  <div class="sl-body">
+    <label class="nav-bd" for="navtg" aria-hidden="true"></label>
+    <div class="sl-rail">
+      <a class="is-on" href="NewShipment.dc.html" aria-label="New shipment"><i class="ic i-newdoc" aria-hidden="true"></i></a>
+      <a href="StaffAI.dc.html" aria-label="AI assistant" title="AI assistant"><i class="ic i-ai" aria-hidden="true"></i></a>
+      <a href="PublicTracking.dc.html" aria-label="Tracking" title="Tracking"><i class="ic i-track" aria-hidden="true"></i></a>
+      <a href="LockerSearch.dc.html" aria-label="Search tracking number" title="Search tracking number"><i class="ic i-tsearch" aria-hidden="true"></i></a>
+      <a href="Consolidations.dc.html" aria-label="Consolidation" title="Consolidation"><i class="ic i-layers" aria-hidden="true"></i></a>
+      <a href="Warehouse.dc.html" aria-label="Warehouse" title="Warehouse"><i class="ic i-warehouse" aria-hidden="true"></i></a>
+      <a class="me-pic hc" href="AiStudio.dc.html" aria-label="Your profile, Henry Cobblah" style="width:34px;height:34px;margin-top:auto"></a>
+    </div>
+    <aside class="sl-side" aria-label="Main navigation">
+      <div class="nav-x"><span class="fw5">Menu</span><label class="sl-ib" for="navtg" aria-label="Close the menu" role="button" tabindex="0"><i class="ic i-x" aria-hidden="true"></i></label></div>
+      <sc-for list="{{nav}}" as="g" hint-placeholder-count="5">
+        <div class="sl-gl">{{g.label}}</div>
+        <nav class="sl-nav">
+          <sc-for list="{{g.items}}" as="it" hint-placeholder-count="4">
+            <a href="{{it.href}}" class="{{it.cls}}"><i class="ic {{it.icon}}" aria-hidden="true"></i><span>{{it.label}}</span><span class="cnt {{it.ok}}">{{it.c1}} <em>{{it.c2}}</em></span></a>
+          </sc-for>
+        </nav>
+      </sc-for>
+      <div class="sl-gl">Other</div>
+      <nav class="sl-nav">
+        <a href="SettingsHub.dc.html"><i class="ic i-globe" aria-hidden="true"></i><span>Language</span></a>
+        <a href="CsInbox.dc.html"><i class="ic i-help" aria-hidden="true"></i><span>Get help</span></a>
+        <a href="Login.dc.html" class="danger"><i class="ic i-logout" aria-hidden="true"></i><span>Sign out</span></a>
+      </nav>
+      <a class="me-card" href="AiStudio.dc.html" aria-label="Signed in as Henry Cobblah, Operations manager. Open your profile">
+        <span class="me-pic hc" role="img" aria-label="Photo of Henry Cobblah"><i class="me-on" aria-hidden="true"></i></span>
+        <span class="grow col" style="min-width:0"><b>Henry Cobblah</b><small>Operations manager · Accra Hub</small></span>
+        <i class="ic ic-sm i-more mut" aria-hidden="true"></i>
+      </a>
+      <a class="me-sub" href="CsInbox.dc.html"><i class="ic ic-sm i-ticket" aria-hidden="true"></i>Customer service<span class="sl-tag">12 open</span></a>
+    </aside>
+
+    <main class="sl-main"><div class="sl-wrap" style="max-width:1440px">
+<div class="row g8 mut sm"><a href="SettingsHub.dc.html">Settings</a><i class="ic ic-sm i-right" aria-hidden="true"></i><a href="ApiConnections.dc.html">API connections</a><i class="ic ic-sm i-right" aria-hidden="true"></i><span style="color:var(--ink)">Live traffic</span></div>
+<div class="sl-head"><div><h1 class="sl-title row g8" style="font-size:20px">Live API traffic <span class="sl-badge row g6"><span class="at-dot {{liveCls}}"></span>{{liveLabel}}</span></h1><p class="sl-lede">Every call Swift Lane makes (pull) and every webhook it receives (push), as it happens. Click a line to see the request and response.</p></div><div class="row g8 wrap"><div class="sl-seg boxed"><sc-for list="{{dirs}}" as="d" hint-placeholder-count="3"><button class="{{d.cls}}" onClick="{{d.pick}}">{{d.label}}</button></sc-for></div><button class="sl-btn ghost" onClick="{{togglePause}}"><i class="ic ic-sm {{pIcon}}" aria-hidden="true"></i>{{pLabel}}</button><a class="sl-btn ghost" href="ApiConnections.dc.html"><i class="ic ic-sm i-link" aria-hidden="true"></i>Connections</a></div></div>
+<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(170px,100%),1fr));gap:12px"><sc-for list="{{kpis}}" as="k" hint-placeholder-count="6"><div class="at-k"><small>{{k.l}}</small><b class="{{k.a}}">{{k.v}}</b><small>{{k.s}}</small></div></sc-for></div>
+<div class="at-pv"><sc-for list="{{provs}}" as="p" hint-placeholder-count="12"><button class="at-p {{p.cls}}" onClick="{{p.pick}}"><span class="row g8"><span class="at-dot {{p.dot}}"></span><b class="fw5 sm grow">{{p.n}}</b><span class="mono mut" style="font-size:11.5px">{{p.ms}}</span></span><span class="mut" style="font-size:12px">{{p.kind}} · {{p.rate}}</span><div class="at-sp" aria-hidden="true"><sc-for list="{{p.sp}}" as="h" hint-placeholder-count="20"><i class="{{h.c}}" style="{{h.s}}"></i></sc-for></div></button></sc-for></div>
+<div class="at-two">
+<sc-if value="{{showPull}}" hint-placeholder-val="{{ true }}"><section class="at-s"><div class="at-sh"><span class="at-dir"><i class="ic ic-sm i-upload" aria-hidden="true"></i></span><div class="col grow"><b class="fw5">Pull · calls we make</b><span class="mut sm">Tracking, rates, messages, payments, AI</span></div><span class="mono sm">{{pullN}}/min</span></div><div class="at-list" role="log"><sc-for list="{{pull}}" as="l" hint-placeholder-count="10"><button class="at-l {{l.cls}}" onClick="{{l.pick}}"><span class="t">{{l.t}}</span><span class="p">{{l.p}}</span><span class="e">{{l.e}}</span><span class="at-c {{l.cc}}">{{l.code}}</span><span class="ms">{{l.ms}}</span></button></sc-for></div></section></sc-if>
+<sc-if value="{{showPush}}" hint-placeholder-val="{{ true }}"><section class="at-s"><div class="at-sh"><span class="at-dir"><i class="ic ic-sm i-download" aria-hidden="true"></i></span><div class="col grow"><b class="fw5">Push · webhooks we receive</b><span class="mut sm">Payment confirmations, delivery receipts, carrier events</span></div><span class="mono sm">{{pushN}}/min</span></div><div class="at-list" role="log"><sc-for list="{{push}}" as="l" hint-placeholder-count="10"><button class="at-l {{l.cls}}" onClick="{{l.pick}}"><span class="t">{{l.t}}</span><span class="p">{{l.p}}</span><span class="e">{{l.e}}</span><span class="at-c {{l.cc}}">{{l.code}}</span><span class="ms">{{l.ms}}</span></button></sc-for></div></section></sc-if>
+</div>
+<div class="split"><section class="a sl-card col g12"><div class="sl-ch" style="margin:0"><div><h2 class="sl-ct">{{sel.title}}</h2><span class="mut sm mono">{{sel.sub}}</span></div><div class="row g8"><span class="at-c {{sel.cc}}" style="padding:0 8px">{{sel.code}}</span><button class="sl-btn ghost sm" onClick="{{replay}}"><i class="ic ic-sm i-refresh" aria-hidden="true"></i>{{replayLabel}}</button></div></div>
+<div class="at-tabs"><sc-for list="{{tabs}}" as="t" hint-placeholder-count="3"><button class="{{t.cls}}" onClick="{{t.pick}}">{{t.label}}</button></sc-for></div><pre class="at-json">{{json}}</pre>
+<div class="sl-kv"><div><span>Direction</span><span>{{sel.dir}}</span></div><div><span>Time taken</span><span class="mono">{{sel.ms}}</span></div><div><span>Signature</span><span>{{sel.sig}}</span></div><div><span>Linked to</span><span class="mono">{{sel.link}}</span></div></div></section>
+<aside class="b sl-card col g10"><div class="sl-ch" style="margin:0"><h2 class="sl-ct">Failed and retrying</h2><span class="sl-badge">{{failN}}</span></div><sc-for list="{{fails}}" as="f" hint-placeholder-count="4"><div class="row g10" style="padding:8px 0;border-top:1px solid var(--line)"><span class="at-dot e"></span><span class="col grow" style="min-width:0"><b class="fw5 sm">{{f.p}}</b><span class="mut" style="font-size:12px">{{f.e}} · {{f.why}}</span></span><button class="sl-btn ghost sm" onClick="{{f.retry}}">{{f.rl}}</button></div></sc-for><a class="sm fw5" href="SystemLogs.dc.html">All errors in System Logs →</a></aside></div>
+</div></main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1900}}'>
+const PR = [['Paystack', 'Payments', 'pull', 220], ['Hubtel SMS', 'Messages', 'pull', 410], ['WhatsApp · Twilio', 'Messages', 'pull', 380], ['SMTP e-mail', 'Messages', 'pull', 160], ['DHL tracking', 'Courier', 'pull', 540], ['FedEx tracking', 'Courier', 'pull', 610], ['Maersk', 'Sea freight', 'pull', 890], ['Claude AI', 'AI assistant', 'pull', 1240], ['Exchange rates', 'Money', 'pull', 120], ['Google Maps', 'Maps', 'pull', 95], ['Hubtel payments', 'Payments', 'push', 80], ['Stripe', 'Payments', 'push', 60]];
+const PULL = [[4, 'GET /track/SHIP4419{n}', 200], [1, 'POST /v1/messages/send', 200], [2, 'POST /Messages.json', 201], [0, 'GET /transaction/verify/PSK-88{n}', 200], [7, 'POST /v1/messages', 200], [5, 'GET /track/v1/trackingnumbers', 200], [3, 'SMTP send · kwame@gmail.com', 250], [8, 'GET /latest?base=USD', 200], [9, 'GET /directions/json', 200], [1, 'POST /v1/messages/send', 504], [6, 'GET /track/MAEU22{n}', 200], [4, 'GET /track/SHIP4420{n}', 429]];
+const PUSH = [[0, 'charge.success · PSK-88{n}', 200], [2, 'MessageStatus · delivered', 200], [1, 'sms.delivery_report · DELIVRD', 200], [10, 'payment.callback · MoMo', 200], [4, 'shipment.event · Arrived ACC', 200], [2, 'MessageStatus · read', 200], [11, 'payment_intent.succeeded', 200], [0, 'charge.success · signature mismatch', 401], [6, 'vessel.eta.update · MSC Lorena', 200], [1, 'sms.delivery_report · UNDELIV', 200]];
+class Component extends DCLogic {
+constructor(p) { super(p); this.state = { t: 0, paused: false, dir: 'both', prov: -1, sel: ['pull', 0], tab: 'res', replayed: false, retried: {} }; if (typeof window !== 'undefined') this._iv = setInterval(() => { if (!this.state.paused) this.setState({ t: this.state.t + 1 }); }, 1300); }
+componentWillUnmount() { clearInterval(this._iv); }
+renderVals() {
+const A = 'apitraffic';
+const N = 'Operations|dash~Overview~grid~~~Main;panels~Control Panels~gauge~~~ControlPanels;air~Air Shipments~plane~128~~AirShipments;sea~Sea Packages~ship~64~~SeaPackages;prealert~Pre-Alerts~inbox~9~~PreAlerts;pickup~Pickups~truck~12~/ 20~Pickups;dtrack~Delivery Tracking~route~5~~DeliveryTracking;shiptrack~Shipment Tracking~track~~~ShipmentTracking;consol~Consolidations~layers~7~~Consolidations;warehouse~Warehouse~warehouse~~~Warehouse;handout~Hand Out Packages~box~5~~HandOut;locker~Locker Search~lock~~~LockerSearch#Hubs|execdash~Management Dashboard~chart~~~ExecDashboard;billhub~Billing & Finance~dollar~~~BillingHub;lastmile~Last-Mile Delivery~truck~~~LastMile;aicenter~AI Centre~ai~~~AiCenter;commshub~Messages & Automation~message~~~CommsHub;supporthub~Support & CRM~ticket~~~SupportHub;loyalty~Loyalty & Referrals~star~~~LoyaltyRewards;security~Security & Reliability~shield~~~SecurityCenter#Freight|frhub~Freight Hub~plane~~~FreightHub;frsched~Departures & Arrivals~calendar~5~~FreightSchedule;frwb~Waybills & Manifests~file~~~Waybills;frex~Cargo Exceptions~alert~6~~CargoExceptions;frins~Insurance & Claims~shield~4~~InsuranceClaims;frpart~Freight Partners~users~~~FreightPartners#People|cust~Customers~users~1,284~~Customers;recip~Recipients~pin~~~Recipients;drivers~Drivers~wheel~8~/ 14~Drivers;drvapp~Rider App~phone~~~DriverApp;staff~Staff & Roles~shield~~~StaffRoles#Finance|pay~Payments~card~~~Payments;ar~Accounts Receivable~receipt~~~AccountsReceivable;fin~Financial Overview~dollar~$48,200~~FinancialOverview#Insights|reports~Reports~chart~~~Reports;activity~Activity Logs~clock~~~ActivityLogs;messages~Message Logs~archive~~~MessageLogs#Customer Service|tickets~Support Inbox~ticket~1,482~~CsInbox;csrules~Ticket Rules~filter~~~CsRules;playbook~Playbook~book~~~CsPlaybook;csrep~Support Reports~star~~~CsReports;cschan~Channels & Teams~message~~~CsChannels;csai~AI Assistant~ai~~~StaffAI;cssupai~AI for Customers~spark~~~CsAI#Developer|devov~Dev Overview~terminal~~~DevOverview;devsvc~Services~server~12~~DevServices;devlogs~Logs~activity~~~DevLogs;devmet~Metrics~cpu~~~DevMetrics;devinfra~Infrastructure~cloud~~~DevInfrastructure;devdep~Deployments~rocket~~~DevDeployments;devalert~Alerts~alert~3~~DevAlerts;devissues~Issues & Change Log~bug~8~~DevIssues;devint~Integrations~puzzle~~~DevIntegrations#Settings|general~General~cog~~~SettingsHub;apis~API Connections~link~16~~ApiConnections;apitraffic~Live API Traffic~activity~~~ApiTraffic;tariffs~Shipping Tariffs~tag~~~Tariffs;notifc~Notifications~bell~3~~NotificationCenter;ebuild~Email Builder~mail~~~EmailBuilder;msgtpl~SMS & WhatsApp~message~~~MessageTemplates;bcast~Push Notifications~send~~~Broadcast;costs~Operating Costs~dollar~~~CostSettings;addr~Shipping Addresses~pin~~~ShippingAddresses;rfees~Rider Fees~truck~~~RiderSettings;loginpg~Login Page~image~~~LoginSettings;devmod~Modules~sliders~~~ModuleController;perm~Permissions~key~~~StaffPermissions;lblstudio~Label Printing~print~~~LabelStudio;auto~Automations~bolt~~~Automations';
+const nav = N.split('#').map(g => { const p = g.split('|'); return { label: p[0], items: p[1].split(';').map(i => { const f = i.split('~'); return { href: f[5] + '.dc.html', label: f[1], icon: 'i-' + f[2], c1: f[3], c2: f[4], cls: f[0] === A ? 'is-active' : '', ok: f[0] === 'fin' ? 'ok' : '' }; }) }; });
+  const s = this.state, t = s.t;
+  const clk = (k) => { const x = 10 * 3600 + 42 * 60 + 5 + k * 2; return String(Math.floor(x / 3600)).padStart(2, '0') + ':' + String(Math.floor(x / 60) % 60).padStart(2, '0') + ':' + String(x % 60).padStart(2, '0'); };
+  const mkl = (src, k, dir) => { const r = src[((k % src.length) + src.length) % src.length], p = PR[r[0]]; const n = String((k * 17) % 90 + 10); return { k, dir, pi: r[0], t: clk(k), p: p[0], e: r[1].replace('{n}', n), code: r[2], ms: (dir === 'pull' ? Math.round(p[3] * (0.7 + ((k * 37) % 60) / 100)) : 20 + (k * 13) % 80) + ' ms' }; };
+  const stream = (src, dir, off) => Array.from({ length: 12 }, (_, i) => mkl(src, t * 2 + off - i, dir)).filter(l => s.prov < 0 || l.pi === s.prov);
+  const cc = (c) => c >= 500 || c === 401 ? 'e' : c >= 400 ? 'w' : '';
+  const view = (l, i) => ({ t: l.t, p: l.p, e: l.e, code: l.code, cc: cc(l.code), ms: l.ms, cls: (s.sel[0] === l.dir && s.sel[1] === l.k ? 'on' : '') + (i === 0 && !s.paused ? ' new' : ''), pick: () => this.setState({ sel: [l.dir, l.k], replayed: false }) });
+  const pl = stream(PULL, 'pull', 0), ps = stream(PUSH, 'push', 1);
+  const cur = (s.sel[0] === 'pull' ? mkl(PULL, s.sel[1], 'pull') : mkl(PUSH, s.sel[1], 'push'));
+  const req = cur.dir === 'pull' ? { method: cur.e.split(' ')[0], url: 'https://api.' + cur.p.toLowerCase().split(' ')[0] + '.com' + (cur.e.split(' ')[1] || ''), headers: { Authorization: 'Bearer sk_live_••••4f2a', 'Content-Type': 'application/json' }, body: cur.p.includes('SMS') || cur.p.includes('WhatsApp') ? { to: '+233 24 551 0921', message: 'Swift Lane: your parcel SL-100482 is ready. Code 4821.' } : undefined } : { event: cur.e.split(' · ')[0], received_from: cur.p, headers: { 'X-Signature': cur.code === 401 ? 'sha512=•••• (does not match)' : 'sha512=•••• ✓' } };
+  const res = cur.dir === 'pull' ? { status: cur.code, time_ms: parseInt(cur.ms), data: cur.code === 504 ? { error: 'Gateway timeout', retry_in: '30s' } : cur.code === 429 ? { error: 'Too many requests', limit: '60/min' } : { status: 'ok', reference: 'SL-1004' + (cur.k % 90 + 10) } } : { status: cur.code, our_reply: cur.code === 401 ? 'Rejected: bad signature' : 'Accepted', updated: cur.code === 401 ? 'nothing' : 'Payment INV-21' + (cur.k % 90 + 10) + ' marked paid' };
+  const failSrc = [['Hubtel SMS', 'POST /v1/messages/send', '504 gateway timeout'], ['Paystack webhook', 'charge.success', '401 signature mismatch'], ['DHL tracking', 'GET /track/SHIP4420', '429 rate limited'], ['SMTP e-mail', 'mail to yaw.darko@…', 'Mailbox full']];
+  return { nav, liveCls: s.paused ? 'off' : 'live', liveLabel: s.paused ? 'Paused' : 'Live',
+    dirs: [['both', 'Both'], ['pull', 'Pull'], ['push', 'Push']].map(d => ({ label: d[1], cls: s.dir === d[0] ? 'on' : '', pick: () => this.setState({ dir: d[0] }) })),
+    togglePause: () => this.setState({ paused: !s.paused }), pLabel: s.paused ? 'Resume' : 'Pause', pIcon: s.paused ? 'i-play' : 'i-clock',
+    kpis: [['Requests a minute', 312 + (t * 7) % 30, 'Pull and push together', 1], ['Success', (99.2 + ((t % 5) / 10)).toFixed(1) + '%', 'Last 15 minutes'], ['Average time', 284 + (t * 13) % 60 + ' ms', 'Pull calls'], ['Webhooks today', (1846 + t * 2).toLocaleString(), 'Push received', 1], ['Failed', 4 - Object.keys(s.retried).length, 'Retrying automatically'], ['Connections', '12 / 12', 'All reachable']].map(k => ({ l: k[0], v: k[1], s: k[2], a: k[3] && t % 2 ? 'bump' : '' })),
+    provs: PR.map((p, i) => ({ n: p[0], kind: p[1], ms: p[3] + ' ms', rate: (p[2] === 'push' ? 'push · ' : '') + (20 + (i * 17 + t * 3) % 40) + '/min', dot: i === 1 && t % 6 < 2 ? 'w' : '', cls: s.prov === i ? 'on' : '', pick: () => this.setState({ prov: s.prov === i ? -1 : i }), sp: Array.from({ length: 20 }, (_, j) => ({ s: 'height:' + (25 + ((i * 7 + j + t) * 29) % 75) + '%', c: (j + t + i) % 17 === 0 ? 'e' : '' })) })),
+    showPull: s.dir !== 'push', showPush: s.dir !== 'pull', pullN: 240 + (t * 5) % 20, pushN: 70 + (t * 3) % 12,
+    pull: pl.map(view), push: ps.map(view),
+    sel: { title: cur.p + ' · ' + cur.e, sub: cur.t + ' · ' + (cur.dir === 'pull' ? 'outgoing call' : 'incoming webhook'), code: cur.code, cc: cc(cur.code), dir: cur.dir === 'pull' ? 'Pull · Swift Lane → ' + cur.p : 'Push · ' + cur.p + ' → Swift Lane', ms: cur.ms, sig: cur.dir === 'push' ? (cur.code === 401 ? 'Does not match · rejected' : 'Verified') : 'API key', link: 'SL-1004' + (cur.k % 90 + 10) },
+    tabs: [['req', 'Request'], ['res', 'Response'], ['hdr', 'Headers']].map(x => ({ label: x[1], cls: s.tab === x[0] ? 'on' : '', pick: () => this.setState({ tab: x[0] }) })),
+    json: JSON.stringify(s.tab === 'req' ? req : s.tab === 'res' ? res : (req.headers || {}), null, 2),
+    replay: () => this.setState({ replayed: true }), replayLabel: s.replayed ? 'Sent again · 200 OK' : cur.dir === 'pull' ? 'Send again' : 'Replay webhook',
+    failN: 4 - Object.keys(s.retried).length, fails: failSrc.map((f, i) => ({ p: f[0], e: f[1], why: s.retried[i] ? 'retried · 200 OK' : f[2], rl: s.retried[i] ? 'Done' : 'Retry now', retry: () => this.setState({ retried: { ...s.retried, [i]: true } }) })) };
+}
+}
+</script>
+</body>
+</html>

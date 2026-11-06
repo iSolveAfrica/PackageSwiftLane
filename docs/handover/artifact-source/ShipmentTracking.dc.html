@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Swift Lane Shipment Tracking</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./swiftlane.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}
+.at2{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:16px;align-items:start}@media (max-width:1200px){.at2{grid-template-columns:1fr}}
+.tk-pk{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.tk-p{flex:0 0 auto;display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--line);border-radius:14px;background:var(--card);cursor:pointer;font:inherit;color:var(--ink);text-align:left;min-height:48px}
+.tk-p.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.tk-hero{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(180px,100%),1fr));gap:12px}
+.tk-k{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
+.tk-k b{font:600 22px var(--font);letter-spacing:-.01em}.tk-k small{color:var(--muted);font-size:12.5px}
+.tk-conf{height:6px;border-radius:9px;background:var(--active);overflow:hidden}.tk-conf i{display:block;height:100%;background:#8E8A82}
+.tk-map{position:relative;height:360px;border-radius:20px;overflow:hidden;border:1px solid var(--line);background:#EAE6DF}
+.tk-map svg{width:100%;height:100%;display:block}
+.tk-chip{position:absolute;display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:12px;background:var(--card);border:1px solid var(--line);font-size:12.5px;box-shadow:0 6px 16px rgba(0,0,0,.08)}
+.tk-legs{display:flex;gap:6px;flex-wrap:wrap}
+.tk-ms{display:flex;flex-direction:column}
+.tk-m{display:grid;grid-template-columns:26px 120px minmax(0,1fr) auto;gap:12px;position:relative;padding-bottom:16px}
+.tk-m::before{content:"";position:absolute;left:12px;top:24px;bottom:0;border-left:2px dashed var(--line-2)}.tk-m.done::before{border-left:2px solid #8E8A82}.tk-m:last-child::before{display:none}
+.tk-m .d{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--line-2);background:var(--card);display:grid;place-items:center}
+.tk-m.done .d{background:#8E8A82;border-color:#8E8A82;color:#fff}.tk-m.now .d{background:#E2632A;border-color:#E2632A;color:#fff;box-shadow:0 0 0 6px rgba(226,99,42,.18)}.tk-m.warn .d{background:var(--yellow);border-color:var(--yellow)}
+.tk-m small{display:block;color:var(--muted);font-size:12px}
+.tk-src{font:11px var(--mono);color:var(--muted);padding:2px 6px;border-radius:5px;background:var(--active);height:fit-content}
+.tk-al{display:flex;gap:10px;padding:12px;border-radius:14px;border:1px solid var(--line);background:var(--card)}
+.tk-al.hi{border-color:var(--red);background:var(--red-bg)}.tk-al.md{border-color:#D9B062;background:#FBF4E4}
+.tk-cus{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+.tk-cus div{display:flex;flex-direction:column;gap:6px;align-items:center;text-align:center;font-size:11.5px}
+.tk-cus i{display:block;width:100%;height:8px;border-radius:9px;background:var(--active)}.tk-cus .ok i{background:#8E8A82}.tk-cus .now i{background:#E2632A}
+.tk-pod{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.tk-pod>div{display:flex;flex-direction:column;gap:6px;padding:10px;border:1px solid var(--line);border-radius:14px;background:var(--field);align-items:center;text-align:center}
+.tk-ph{width:100%;height:96px;border-radius:10px;background:linear-gradient(135deg,#5B5348,#9A8670);display:grid;place-items:center;color:#fff;font-size:12px}
+.tk-sig{width:100%;height:96px;border-radius:10px;background:#fff;display:grid;place-items:center}
+.tk-qr{width:96px;height:96px;background:conic-gradient(from 90deg at 2px 2px,#000 90deg,#fff 0) 0 0/12px 12px;border:6px solid #fff;outline:1px solid var(--line);image-rendering:pixelated}
+.tk-feed{display:flex;flex-direction:column;max-height:260px;overflow:hidden}
+.tk-fi{display:flex;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:13px}.tk-fi.new{animation:tkN 1.2s}@keyframes tkN{from{background:#FBE3D6}}
+.tk-ok{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;background:var(--green-bg);color:var(--green-ink);font-size:13.5px}
+.tk-cov{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.tk-cov span{display:flex;align-items:center;gap:6px;font-size:12px;padding:6px 8px;border-radius:8px;background:var(--field)}
+@media (max-width:900px){.tk-cov{grid-template-columns:repeat(2,1fr)}.tk-m{grid-template-columns:26px 1fr}.tk-m .tk-src{display:none}.tk-pod{grid-template-columns:1fr}}
+</style>
+</helmet>
+<div class="sl-app">
+  <input type="checkbox" id="navtg" class="nav-tg" aria-hidden="true" tabindex="-1">
+  <header class="sl-top">
+    <label class="sl-ib nav-open" for="navtg" aria-label="Open or close the menu" role="button" tabindex="0"><i class="ic i-sidebar" aria-hidden="true"></i></label>
+    <a class="sl-switch" href="Main.dc.html"><small>SL</small> Swift Lane · Accra Hub <i class="ic ic-sm i-down" aria-hidden="true"></i></a>
+    <a class="fx-chip" href="SettingsHub.dc.html" title="Exchange rate · set in Settings › General"><i class="ic ic-sm i-dollar" aria-hidden="true"></i><span class="mono">USD 1 = GHS 12.40</span><span class="fx-d">▲ 0.4%</span></a>
+    <span class="grow"></span>
+    <details class="aitop"><summary aria-label="Help with Swift Lane AI"><span class="o"><i class="ic i-ai" aria-hidden="true"></i></span>Help</summary><div class="pop" role="menu">
+<div class="me"><span class="sl-av sm dark">HC</span><div class="grow"><div class="fw5 sm">Henry Cobblah</div><div class="mut" style="font-size:12px">Operations manager · Accra Hub</div></div><a class="sl-btn sm ghost" href="AiStudio.dc.html">Edit</a></div>
+<a class="ask" href="StaffAI.dc.html"><i class="ic ic-sm i-spark" aria-hidden="true"></i>Ask AI for help on this page<b><i class="ic ic-sm i-send" aria-hidden="true"></i></b></a>
+<div class="hd">Your profile with AI</div>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-wand" aria-hidden="true"></i></span><span>Retouch my photo<small>Light, skin and background</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-refresh" aria-hidden="true"></i></span><span>Reset images<small>Go back to the original photo</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-edit" aria-hidden="true"></i></span><span>Change my name<small>AI fixes spelling and capitals</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-user" aria-hidden="true"></i></span><span>Make my icon<small>Avatar from your photo or initials</small></span></a>
+<div class="hd">Help</div>
+<a class="it" role="menuitem" href="StaffAI.dc.html"><span class="t"><i class="ic ic-sm i-help" aria-hidden="true"></i></span><span>Explain this page</span></a>
+<a class="it" role="menuitem" href="CsInbox.dc.html"><span class="t"><i class="ic ic-sm i-message" aria-hidden="true"></i></span><span>Talk to a person</span></a>
+</div></details>
+    <a class="sl-ib" aria-label="Notifications" href="Notifications.dc.html"><i class="ic i-bell" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Switch theme" href="SettingsHub.dc.html"><i class="ic i-sun" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Documents" href="Documents.dc.html"><i class="ic i-file" aria-hidden="true"></i></a>
+    <a class="sl-btn" href="PublicTracking.dc.html">Customer view</a>
+    <details class="uptop"><summary aria-label="Your profile and settings, Henry Cobblah"><span class="me-pic hc" style="width:34px;height:34px"><i class="me-on" aria-hidden="true"></i></span><span class="up-nm">Henry</span><i class="ic ic-sm i-down" aria-hidden="true"></i></summary><div class="pop" role="menu">
+<a class="up-me" href="AiStudio.dc.html"><span class="me-pic hc" style="width:48px;height:48px"><i class="me-on" aria-hidden="true"></i></span><span class="col" style="min-width:0"><b>Henry Cobblah</b><small>Operations manager · Accra Hub</small><small class="mono">henry@swiftlane.com</small></span></a>
+<div class="up-st"><span class="row g6 sm"><span class="ld" style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span>Available</span><a class="sm fw5" href="AiStudio.dc.html">Edit profile</a></div>
+<div class="up-h">Short links</div><div class="up-g"><a class="up-l" role="menuitem" href="Main.dc.html"><i class="ic ic-sm i-grid" aria-hidden="true"></i>Overview</a><a class="up-l" role="menuitem" href="RiderDispatch.dc.html"><i class="ic ic-sm i-truck" aria-hidden="true"></i>Dispatch board</a><a class="up-l" role="menuitem" href="SendPrices.dc.html"><i class="ic ic-sm i-send" aria-hidden="true"></i>Send prices</a><a class="up-l" role="menuitem" href="Reports.dc.html"><i class="ic ic-sm i-chart" aria-hidden="true"></i>Reports</a><a class="up-l" role="menuitem" href="Documents.dc.html"><i class="ic ic-sm i-file" aria-hidden="true"></i>Documents</a><a class="up-l" role="menuitem" href="ActivityLogs.dc.html"><i class="ic ic-sm i-clock" aria-hidden="true"></i>My activity</a></div>
+<div class="up-h">Settings</div><a class="up-l" role="menuitem" href="AiStudio.dc.html"><i class="ic ic-sm i-ai" aria-hidden="true"></i>Profile and photo</a><a class="up-l" role="menuitem" href="SettingsHub.dc.html"><i class="ic ic-sm i-cog" aria-hidden="true"></i>Settings</a><a class="up-l" role="menuitem" href="ApiConnections.dc.html"><i class="ic ic-sm i-link" aria-hidden="true"></i>API connections</a><a class="up-l" role="menuitem" href="StaffPermissions.dc.html"><i class="ic ic-sm i-shield" aria-hidden="true"></i>Permissions</a>
+<div class="up-row"><span class="sm mut">Theme</span><span class="sl-seg boxed" style="height:30px"><a class="on" href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Light</a><a href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Dark</a></span></div>
+<a class="up-l" role="menuitem" href="CsInbox.dc.html"><i class="ic ic-sm i-help" aria-hidden="true"></i>Help and support</a>
+<a class="up-l out" role="menuitem" href="Login.dc.html"><i class="ic ic-sm i-logout" aria-hidden="true"></i>Sign out</a>
+</div></details>
+  </header>
+  <div class="sl-body">
+    <label class="nav-bd" for="navtg" aria-hidden="true"></label>
+    <div class="sl-rail">
+      <a class="is-on" href="NewShipment.dc.html" aria-label="New shipment"><i class="ic i-newdoc" aria-hidden="true"></i></a>
+      <a href="StaffAI.dc.html" aria-label="AI assistant" title="AI assistant"><i class="ic i-ai" aria-hidden="true"></i></a>
+      <a href="PublicTracking.dc.html" aria-label="Tracking" title="Tracking"><i class="ic i-track" aria-hidden="true"></i></a>
+      <a href="LockerSearch.dc.html" aria-label="Search tracking number" title="Search tracking number"><i class="ic i-tsearch" aria-hidden="true"></i></a>
+      <a href="Consolidations.dc.html" aria-label="Consolidation" title="Consolidation"><i class="ic i-layers" aria-hidden="true"></i></a>
+      <a href="Warehouse.dc.html" aria-label="Warehouse" title="Warehouse"><i class="ic i-warehouse" aria-hidden="true"></i></a>
+      <a class="me-pic hc" href="AiStudio.dc.html" aria-label="Your profile, Henry Cobblah" style="width:34px;height:34px;margin-top:auto"></a>
+    </div>
+    <aside class="sl-side" aria-label="Main navigation">
+      <div class="nav-x"><span class="fw5">Menu</span><label class="sl-ib" for="navtg" aria-label="Close the menu" role="button" tabindex="0"><i class="ic i-x" aria-hidden="true"></i></label></div>
+      <sc-for list="{{nav}}" as="g" hint-placeholder-count="5">
+        <div class="sl-gl">{{g.label}}</div>
+        <nav class="sl-nav">
+          <sc-for list="{{g.items}}" as="it" hint-placeholder-count="4">
+            <a href="{{it.href}}" class="{{it.cls}}"><i class="ic {{it.icon}}" aria-hidden="true"></i><span>{{it.label}}</span><span class="cnt {{it.ok}}">{{it.c1}} <em>{{it.c2}}</em></span></a>
+          </sc-for>
+        </nav>
+      </sc-for>
+      <div class="sl-gl">Other</div>
+      <nav class="sl-nav">
+        <a href="SettingsHub.dc.html"><i class="ic i-globe" aria-hidden="true"></i><span>Language</span></a>
+        <a href="CsInbox.dc.html"><i class="ic i-help" aria-hidden="true"></i><span>Get help</span></a>
+        <a href="Login.dc.html" class="danger"><i class="ic i-logout" aria-hidden="true"></i><span>Sign out</span></a>
+      </nav>
+      <a class="me-card" href="AiStudio.dc.html" aria-label="Signed in as Henry Cobblah, Operations manager. Open your profile">
+        <span class="me-pic hc" role="img" aria-label="Photo of Henry Cobblah"><i class="me-on" aria-hidden="true"></i></span>
+        <span class="grow col" style="min-width:0"><b>Henry Cobblah</b><small>Operations manager · Accra Hub</small></span>
+        <i class="ic ic-sm i-more mut" aria-hidden="true"></i>
+      </a>
+      <a class="me-sub" href="CsInbox.dc.html"><i class="ic ic-sm i-ticket" aria-hidden="true"></i>Customer service<span class="sl-tag">12 open</span></a>
+    </aside>
+
+    <main class="sl-main"><div class="sl-wrap" style="max-width:1460px">
+<div class="sl-head"><div><h1 class="sl-title row g8" style="font-size:22px"><i class="ic i-route" aria-hidden="true"></i>Shipment tracking</h1><p class="sl-lede">One timeline from the US store to the customer's door: warehouse, flight or vessel, customs, hub and rider, updated automatically.</p></div><div class="row g8 wrap"><div class="sl-search" style="min-width:280px"><i class="ic ic-sm i-search" aria-hidden="true"></i><input aria-label="Track" placeholder="Tracking, carrier number, container, AWB" value="{{q}}" onInput="{{onQ}}"></div><a class="sl-btn ghost" href="PublicTracking.dc.html"><i class="ic ic-sm i-eye" aria-hidden="true"></i>Customer view</a></div></div>
+<sc-if value="{{flash}}" hint-placeholder-val="{{ false }}"><div class="tk-ok" role="status"><i class="ic ic-sm i-check" aria-hidden="true"></i>{{flash}}</div></sc-if>
+<div class="col g6"><span class="up">Consolidated shipment SLC-4471 · {{pkN}} packages for {{cust}}</span><div class="tk-pk"><sc-for list="{{pkgs}}" as="p" hint-placeholder-count="3"><button class="tk-p {{p.cls}}" onClick="{{p.pick}}"><span class="sl-tile" style="width:32px;height:32px"><i class="ic ic-sm i-box" aria-hidden="true"></i></span><span class="col"><b class="fw5 sm mono">{{p.id}}</b><span class="mut" style="font-size:12px">{{p.what}}</span></span><span class="sl-pill {{p.pc}}">{{p.st}}</span></button></sc-for></div></div>
+<div class="tk-hero"><div class="tk-k"><small>Status</small><b>{{status}}</b><small>Updated automatically {{ago}}</small></div><div class="tk-k"><small>Predicted delivery</small><b>{{eta}}</b><div class="tk-conf"><i style="{{confW}}"></i></div><small>{{conf}}% likely · from 1,284 past shipments on this lane</small></div><div class="tk-k"><small>Delay risk</small><b style="{{riskSty}}">{{risk}}</b><small>{{riskWhy}}</small></div><div class="tk-k"><small>Carrier sync</small><b class="row g6"><span class="pr-dot" style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span>{{syncN}} sources</b><small>DHL, KQ cargo, Maersk, customs, rider app · last {{syncAgo}}</small></div></div>
+<div class="at2"><div class="col g16">
+<section class="col g8"><div class="row between wrap g8"><div class="tk-legs"><sc-for list="{{legs}}" as="l" hint-placeholder-count="5"><span class="sl-badge {{l.cls}}"><i class="ic ic-sm {{l.icon}}" aria-hidden="true"></i>{{l.t}}</span></sc-for></div><span class="mut sm">{{legNote}}</span></div>
+<div class="tk-map" role="img" aria-label="Map of the package journey"><svg viewBox="0 0 1000 360" preserveAspectRatio="xMidYMid slice"><rect width="1000" height="360" fill="#E3E8EB"/><path d="M0 40 C 120 60 180 30 260 70 L 300 160 C 240 220 160 240 60 220 L 0 230 Z" fill="#EAE6DF"/><path d="M520 120 C 600 90 700 110 760 160 L 800 260 C 740 330 640 340 560 300 C 520 250 500 190 520 120Z" fill="#EAE6DF"/><path d="M760 40 C 820 30 900 60 960 50 L 1000 60 L 1000 140 C 940 150 870 130 800 120Z" fill="#EAE6DF"/>
+<path d="{{arc}}" fill="none" stroke="#1E1D1A" stroke-width="2.5" stroke-dasharray="6 7" opacity=".45"/><path d="{{arcDone}}" fill="none" stroke="#E2632A" stroke-width="4" stroke-linecap="round"/>
+<sc-for list="{{pins}}" as="p" hint-placeholder-count="6"><g transform="translate({{p.x}} {{p.y}})"><circle r="{{p.r}}" fill="{{p.f}}" stroke="#fff" stroke-width="3"/><text y="-16" text-anchor="middle" font-size="12" font-family="Figtree" font-weight="600" fill="#1E1D1A">{{p.l}}</text></g></sc-for>
+<g transform="translate({{vx}} {{vy}})"><circle r="22" fill="#E2632A" opacity=".18"><animate attributeName="r" values="14;26;14" dur="2s" repeatCount="indefinite"/></circle><circle r="13" fill="#E2632A" stroke="#fff" stroke-width="3"/></g></svg>
+<div class="tk-chip" style="left:14px;top:14px"><i class="ic ic-sm {{vIcon}}" aria-hidden="true"></i><span class="col"><b class="fw5">{{vName}}</b><span class="mut" style="font-size:11.5px">{{vSub}}</span></span></div>
+<div class="tk-chip" style="right:14px;bottom:14px"><span class="col"><span class="mut" style="font-size:11.5px">Now</span><b class="fw5">{{vNow}}</b></span></div></div></section>
+<section class="sl-card col g12"><div class="sl-ch" style="margin:0"><div><h2 class="sl-ct">Milestones and location history</h2><span class="mut sm">Every scan, flight event and hand-over, with where it came from</span></div><span class="sl-badge">{{msN}} events</span></div><div class="tk-ms"><sc-for list="{{ms}}" as="m" hint-placeholder-count="10"><div class="tk-m {{m.cls}}"><span class="d"><i class="ic ic-sm {{m.icon}}" aria-hidden="true"></i></span><span class="col"><b class="fw5 sm">{{m.date}}</b><small>{{m.time}}</small></span><span class="col"><b class="fw5 sm">{{m.t}}</b><small>{{m.where}}</small></span><span class="tk-src">{{m.src}}</span></div></sc-for></div></section>
+<section class="sl-card col g12"><div class="sl-ch" style="margin:0"><div><h2 class="sl-ct">Customs clearance</h2><span class="mut sm">Shown to the customer on their tracking page</span></div><span class="row g8 sm"><button class="sl-toggle {{cusVisCls}}" role="switch" aria-checked="{{cusVisAria}}" aria-label="Visible to customer" onClick="{{flipCusVis}}"></button>Visible to customer</span></div><div class="tk-cus"><sc-for list="{{cus}}" as="c" hint-placeholder-count="5"><div class="{{c.cls}}"><i></i><span>{{c.t}}</span></div></sc-for></div><span class="sm">{{cusNote}}</span></section>
+<section class="sl-card col g12"><div class="sl-ch" style="margin:0"><h2 class="sl-ct">Proof of delivery</h2><span class="sl-pill {{podPc}}">{{podSt}}</span></div><div class="tk-pod"><div><span class="up">Signature</span><div class="tk-sig"><svg width="160" height="60" viewBox="0 0 160 60" aria-hidden="true"><path d="M8 40 C 20 10 30 50 44 26 S 64 46 78 22 S 98 44 112 30 S 140 18 152 34" fill="none" stroke="#1E1D1A" stroke-width="2.4" stroke-linecap="round"/></svg></div><span class="mut" style="font-size:12px">{{podWho}}</span></div><div><span class="up">Photo at the door</span><div class="tk-ph">14 Palm Close · 10:52</div><span class="mut" style="font-size:12px">GPS matched · 8 m from address</span></div><div><span class="up">QR confirmation</span><div class="tk-qr" aria-label="QR code"></div><span class="mut" style="font-size:12px">{{qrNote}}</span></div></div></section>
+</div>
+<aside class="col g16">
+<section class="sl-card col g10"><h2 class="sl-ct">Alerts and exceptions</h2><sc-for list="{{alerts}}" as="a" hint-placeholder-count="3"><div class="tk-al {{a.lvl}}"><i class="ic ic-sm {{a.icon}}" aria-hidden="true"></i><span class="col grow"><b class="fw5 sm">{{a.t}}</b><span class="mut" style="font-size:12px">{{a.d}}</span></span></div></sc-for></section>
+<section class="sl-card col g10"><h2 class="sl-ct">Delivery attempts</h2><sc-for list="{{tries}}" as="t" hint-placeholder-count="2"><div class="row g10 sm" style="padding:6px 0;border-top:1px solid var(--line)"><span class="sl-pill {{t.pc}}">{{t.st}}</span><span class="col grow"><span>{{t.t}}</span><span class="mut" style="font-size:12px">{{t.d}}</span></span></div></sc-for><div class="row g8"><button class="sl-btn ghost sm" onClick="{{resched}}"><i class="ic ic-sm i-calendar" aria-hidden="true"></i>{{reschedLabel}}</button><a class="sl-btn ghost sm" href="DeliveryTracking.dc.html"><i class="ic ic-sm i-truck" aria-hidden="true"></i>Live rider</a></div></section>
+<section class="sl-card col"><h2 class="sl-ct" style="margin-bottom:6px">Notifications sent</h2><div class="tk-feed"><sc-for list="{{notifs}}" as="n" hint-placeholder-count="5"><div class="tk-fi {{n.cls}}"><i class="ic ic-sm {{n.icon}}" aria-hidden="true"></i><span class="grow">{{n.t}}</span><span class="mono mut" style="font-size:11.5px">{{n.at}}</span></div></sc-for></div></section>
+<section class="sl-card col g10"><h2 class="sl-ct">Public tracking link</h2><div class="row g8"><input class="sl-in mono grow" value="swiftlane.com/t/{{pubId}}" aria-label="Public link"><button class="sl-btn ghost sm" onClick="{{copy}}">{{copyLabel}}</button></div><span class="mut" style="font-size:12px">No login needed. Choose what strangers can see:</span><sc-for list="{{priv}}" as="p" hint-placeholder-count="5"><div class="row g10 sm"><button class="sl-toggle {{p.cls}}" role="switch" aria-checked="{{p.aria}}" aria-label="{{p.t}}" onClick="{{p.flip}}"></button><span>{{p.t}}</span></div></sc-for><div class="row between sm"><span class="mut">Link expires</span><div class="sl-seg boxed" style="height:32px"><sc-for list="{{exps}}" as="e" hint-placeholder-count="3"><button class="{{e.cls}}" onClick="{{e.pick}}">{{e.label}}</button></sc-for></div></div></section>
+<section class="sl-card col g10"><h2 class="sl-ct">Dispute a status</h2><span class="mut" style="font-size:12px">Customer says it isn't right? Log it here or they can from their tracking page.</span><div class="row wrap g6"><sc-for list="{{dis}}" as="d" hint-placeholder-count="4"><button class="chipbtn {{d.cls}}" onClick="{{d.pick}}">{{d.label}}</button></sc-for></div><button class="sl-btn" onClick="{{sendDis}}">{{disLabel}}</button></section>
+</aside></div>
+<section class="sl-card col g10"><h2 class="sl-ct">Tracking features on this page</h2><div class="tk-cov"><sc-for list="{{cov}}" as="c" hint-placeholder-count="25"><span><i class="ic ic-sm i-check" aria-hidden="true" style="color:var(--green-ink)"></i>{{c}}</span></sc-for></div></section>
+</div></main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2600}}'>
+const PK = [['SL-100482', 'Laptop and charger', 'At Accra Hub', 'sorting', 0], ['SL-100483', 'Phone case', 'Out for delivery', 'onway', 1], ['SL-100484', 'Shoes', 'Delivered', 'delivered', 2]];
+const PTS = [[120, 200, 'Newark'], [210, 110, 'JFK'], [600, 150, 'Nairobi'], [640, 230, 'Accra ACC'], [690, 250, 'Accra Hub'], [720, 280, 'East Legon']];
+const MS = [['Oct 28', '14:12', 'Ordered from Amazon', 'Seattle, WA', 'i-file', 'Amazon API'], ['Oct 30', '09:41', 'Delivered to US warehouse', 'Newark NJ · USPS 9400 1118 9922', 'i-warehouse', 'USPS sync'], ['Oct 30', '10:05', 'Scanned in · 4.2 lb · photo taken', 'Newark NJ · bay N-12', 'i-scan', 'Warehouse scan'], ['Nov 1', '16:30', 'Added to consolidation SLC-4471', 'Packing list line 1', 'i-layers', 'System'], ['Nov 3', '22:40', 'Flew out on KQ 8102 · MAWB 706-4412 8831', 'JFK, New York', 'i-plane', 'KQ cargo API'], ['Nov 4', '18:05', 'Transit at Nairobi · ULD AKE 12345 KQ', 'NBO', 'i-plane', 'KQ cargo API'], ['Nov 5', '06:40', 'Landed in Accra', 'Kotoka ACC', 'i-plane', 'KQ cargo API'], ['Nov 5', '09:10', 'Customs cleared · duty ₵0', 'GRA customs', 'i-shield', 'Customs API'], ['Nov 5', '13:20', 'At Accra Hub · bay B-14', 'Spintex Rd, Accra', 'i-warehouse', 'Hub scan'], ['Nov 6', '08:30', 'Out for delivery with Kwesi B.', 'Motorbike GR 4471-24', 'i-truck', 'Rider app'], ['Nov 6', '10:52', 'Delivered · code matched · signed', '14 Palm Close, East Legon', 'i-check', 'Rider app']];
+class Component extends DCLogic {
+constructor(p) { super(p); this.state = { pk: 1, q: '', t: 0, cusVis: true, priv: { name: false, addr: false, items: true, photo: false, rider: true }, exp: '30d', copied: false, dis: 'Not delivered', disSent: false, resched: false, flash: '' }; if (typeof window !== 'undefined') this._iv = setInterval(() => this.setState({ t: this.state.t + 1 }), 2000); }
+componentWillUnmount() { clearInterval(this._iv); }
+renderVals() {
+const A = 'shiptrack';
+const N = 'Operations|dash~Overview~grid~~~Main;panels~Control Panels~gauge~~~ControlPanels;air~Air Shipments~plane~128~~AirShipments;sea~Sea Packages~ship~64~~SeaPackages;prealert~Pre-Alerts~inbox~9~~PreAlerts;pickup~Pickups~truck~12~/ 20~Pickups;dtrack~Delivery Tracking~route~5~~DeliveryTracking;shiptrack~Shipment Tracking~track~~~ShipmentTracking;consol~Consolidations~layers~7~~Consolidations;warehouse~Warehouse~warehouse~~~Warehouse;handout~Hand Out Packages~box~5~~HandOut;locker~Locker Search~lock~~~LockerSearch#Hubs|execdash~Management Dashboard~chart~~~ExecDashboard;billhub~Billing & Finance~dollar~~~BillingHub;lastmile~Last-Mile Delivery~truck~~~LastMile;aicenter~AI Centre~ai~~~AiCenter;commshub~Messages & Automation~message~~~CommsHub;supporthub~Support & CRM~ticket~~~SupportHub;loyalty~Loyalty & Referrals~star~~~LoyaltyRewards;security~Security & Reliability~shield~~~SecurityCenter#Freight|frhub~Freight Hub~plane~~~FreightHub;frsched~Departures & Arrivals~calendar~5~~FreightSchedule;frwb~Waybills & Manifests~file~~~Waybills;frex~Cargo Exceptions~alert~6~~CargoExceptions;frins~Insurance & Claims~shield~4~~InsuranceClaims;frpart~Freight Partners~users~~~FreightPartners#People|cust~Customers~users~1,284~~Customers;recip~Recipients~pin~~~Recipients;drivers~Drivers~wheel~8~/ 14~Drivers;drvapp~Rider App~phone~~~DriverApp;staff~Staff & Roles~shield~~~StaffRoles#Finance|pay~Payments~card~~~Payments;ar~Accounts Receivable~receipt~~~AccountsReceivable;fin~Financial Overview~dollar~$48,200~~FinancialOverview#Insights|reports~Reports~chart~~~Reports;activity~Activity Logs~clock~~~ActivityLogs;messages~Message Logs~archive~~~MessageLogs#Customer Service|tickets~Support Inbox~ticket~1,482~~CsInbox;csrules~Ticket Rules~filter~~~CsRules;playbook~Playbook~book~~~CsPlaybook;csrep~Support Reports~star~~~CsReports;cschan~Channels & Teams~message~~~CsChannels;csai~AI Assistant~ai~~~StaffAI;cssupai~AI for Customers~spark~~~CsAI#Developer|devov~Dev Overview~terminal~~~DevOverview;devsvc~Services~server~12~~DevServices;devlogs~Logs~activity~~~DevLogs;devmet~Metrics~cpu~~~DevMetrics;devinfra~Infrastructure~cloud~~~DevInfrastructure;devdep~Deployments~rocket~~~DevDeployments;devalert~Alerts~alert~3~~DevAlerts;devissues~Issues & Change Log~bug~8~~DevIssues;devint~Integrations~puzzle~~~DevIntegrations#Settings|general~General~cog~~~SettingsHub;apis~API Connections~link~16~~ApiConnections;apitraffic~Live API Traffic~activity~~~ApiTraffic;tariffs~Shipping Tariffs~tag~~~Tariffs;notifc~Notifications~bell~3~~NotificationCenter;ebuild~Email Builder~mail~~~EmailBuilder;msgtpl~SMS & WhatsApp~message~~~MessageTemplates;bcast~Push Notifications~send~~~Broadcast;costs~Operating Costs~dollar~~~CostSettings;addr~Shipping Addresses~pin~~~ShippingAddresses;rfees~Rider Fees~truck~~~RiderSettings;loginpg~Login Page~image~~~LoginSettings;devmod~Modules~sliders~~~ModuleController;perm~Permissions~key~~~StaffPermissions;lblstudio~Label Printing~print~~~LabelStudio;auto~Automations~bolt~~~Automations';
+const nav = N.split('#').map(g => { const p = g.split('|'); return { label: p[0], items: p[1].split(';').map(i => { const f = i.split('~'); return { href: f[5] + '.dc.html', label: f[1], icon: 'i-' + f[2], c1: f[3], c2: f[4], cls: f[0] === A ? 'is-active' : '', ok: f[0] === 'fin' ? 'ok' : '' }; }) }; });
+  const s = this.state, t = s.t, P = PK[s.pk], stage = [8, 9, 10][s.pk];
+  const prog = s.pk === 2 ? 1 : s.pk === 1 ? Math.min(.97, .8 + t * .006) : .75;
+  const seg = (a, b) => 'M' + a[0] + ' ' + a[1] + ' Q ' + ((a[0] + b[0]) / 2) + ' ' + (Math.min(a[1], b[1]) - 60) + ' ' + b[0] + ' ' + b[1];
+  const arc = PTS.slice(1).map((p, i) => seg(PTS[i], p)).join(' ');
+  const nDone = s.pk === 2 ? 5 : s.pk === 1 ? 4 : 4, arcDone = PTS.slice(1, nDone + 1).map((p, i) => seg(PTS[i], p)).join(' ');
+  const last = PTS[Math.min(nDone, PTS.length - 1)], prev = PTS[Math.max(0, nDone - 1)];
+  const f = s.pk === 1 ? Math.min(1, (t % 30) / 30) : 1, vx = s.pk === 1 ? prev[0] + (PTS[5][0] - prev[0]) * f : last[0], vy = s.pk === 1 ? prev[1] + (PTS[5][1] - prev[1]) * f : last[1];
+  const flip = (k) => () => this.setState({ priv: { ...s.priv, [k]: !s.priv[k] } });
+  const DIS = ['Not delivered', 'Wrong status', 'Damaged', 'Missing item'];
+  return { nav, q: s.q, onQ: (e) => this.setState({ q: e.target.value }), flash: s.flash,
+    pkN: PK.length, cust: 'Kwame Mensah · SL-2041',
+    pkgs: PK.map((p, i) => ({ id: p[0], what: p[1], st: p[2], pc: p[3], cls: s.pk === i ? 'on' : '', pick: () => this.setState({ pk: i }) })),
+    status: P[2], ago: t % 3 === 0 ? 'just now' : (t % 3) * 20 + ' s ago',
+    eta: s.pk === 2 ? 'Delivered 10:52' : s.pk === 1 ? 'Today ' + (10 + Math.floor((40 - Math.min(38, t)) / 60)) + ':' + String(46 - Math.min(20, Math.floor(t / 2))).padStart(2, '0') : 'Tomorrow 10:00–13:00', conf: s.pk === 2 ? 100 : s.pk === 1 ? 92 : 81, confW: 'width:' + (s.pk === 2 ? 100 : s.pk === 1 ? 92 : 81) + '%',
+    risk: s.pk === 0 ? 'Medium' : 'Low', riskSty: s.pk === 0 ? 'color:#B7791F' : 'color:var(--green-ink)', riskWhy: s.pk === 0 ? 'Hub at 92% · Friday rush · usually +1 day' : 'On time on this lane 96% of the time',
+    syncN: 5, syncAgo: (t % 4) * 15 + ' s ago',
+    legs: [['Warehouse', 'i-warehouse', 'delivered'], ['Flight KQ 8102', 'i-plane', 'delivered'], ['Customs', 'i-shield', 'delivered'], ['Accra Hub', 'i-warehouse', s.pk === 0 ? 'onway' : 'delivered'], ['Last mile', 'i-truck', s.pk === 1 ? 'onway' : s.pk === 2 ? 'delivered' : '']].map(l => ({ t: l[0], icon: l[1], cls: l[2] === 'delivered' ? 'ok' : l[2] === 'onway' ? 'warn' : '' })), legNote: 'Newark → JFK → Nairobi → Accra → door · 8,240 km',
+    arc, arcDone, pins: PTS.map((p, i) => ({ x: p[0], y: p[1], l: p[2], r: i === 0 || i === 5 ? 9 : 7, f: i <= nDone ? '#8E8A82' : '#C9C2B6' })),
+    vx: vx.toFixed(1), vy: vy.toFixed(1), vIcon: s.pk === 1 ? 'i-truck' : 'i-warehouse', vName: s.pk === 1 ? 'Kwesi B. · motorbike' : s.pk === 2 ? 'Delivered' : 'Accra Hub · bay B-14', vSub: s.pk === 1 ? (4.8 * (1 - f)).toFixed(1) + ' km away · live GPS' : s.pk === 2 ? 'Signed by Kwame M.' : 'Waiting for dispatch at 13:00', vNow: s.pk === 1 ? 'Spintex Rd → East Legon' : s.pk === 2 ? '14 Palm Close' : 'Spintex Rd, Accra',
+    msN: stage + 1, ms: MS.slice(0, stage + 1).reverse().map((m, i) => ({ date: m[0], time: m[1], t: m[2], where: m[3], icon: m[4], src: m[5], cls: i === 0 ? 'now' : 'done' })).concat(MS.slice(stage + 1).map(m => ({ date: 'Expected', time: '', t: m[2], where: m[3], icon: m[4], src: 'Predicted', cls: '' }))),
+    cusVisCls: s.cusVis ? 'on' : '', cusVisAria: s.cusVis ? 'true' : 'false', flipCusVis: () => this.setState({ cusVis: !s.cusVis }),
+    cus: ['Documents received', 'Declared to GRA', 'Duty assessed', 'Duty paid', 'Released'].map((c, i) => ({ t: c, cls: 'ok' })), cusNote: 'Released Nov 5 09:10 · duty ₵0 (under ₵1,800 personal allowance) · entry GRA-ACC-2026-114420',
+    podSt: s.pk === 2 ? 'Delivered' : 'Collected at delivery', podPc: s.pk === 2 ? 'delivered' : 'pending', podWho: s.pk === 2 ? 'Kwame Mensah · Nov 6 10:52' : 'Captured on the rider app', qrNote: s.pk === 2 ? 'Scanned by Kwesi · matched' : 'Customer shows this at the door',
+    alerts: (s.pk === 0 ? [['md', 'i-alert', 'Possible 1-day delay', 'Hub nearly full and Friday rush. Customer told by WhatsApp.'], ['', 'i-info', 'Weather: rain expected 14:00–16:00', 'Rider routes may be slower']] : s.pk === 1 ? [['', 'i-truck', 'Rider 2 stops away', 'Customer notified · ETA updates every minute'], ['md', 'i-alert', 'Customer did not answer the first call', 'Rider will try again on arrival']] : [['', 'i-check', 'No issues', 'Delivered on the predicted day']]).map(a => ({ lvl: a[0], icon: a[1], t: a[2], d: a[3] })),
+    tries: (s.resched ? [['Rescheduled', 'pending', 'Tomorrow 10:00–13:00', 'Customer picked a new slot on WhatsApp']] : []).concat(s.pk === 2 ? [['Delivered', 'delivered', 'Nov 6 · 10:52', 'Code matched, signed, photo']] : [['Failed', 'overdue', 'Nov 5 · 17:40', 'Customer not home · ₵10 second-attempt fee waived'], ['On the way', 'onway', 'Nov 6 · now', 'Kwesi B.']]).map(x => ({ st: x[0], pc: x[1], t: x[2], d: x[3] })),
+    resched: () => this.setState({ resched: true, flash: 'Delivery rescheduled to tomorrow 10:00–13:00. Customer and rider notified.' }), reschedLabel: s.resched ? 'Rescheduled' : 'Reschedule delivery',
+    notifs: [['i-message', 'WhatsApp: Out for delivery with Kwesi · ETA 10:46', '08:31'], ['i-phone', 'SMS: Your pickup code is 4821', '08:31'], ['i-mail', 'E-mail: Customs cleared, no duty', 'Nov 5 09:12'], ['i-message', 'WhatsApp: Landed in Accra', 'Nov 5 06:45'], ['i-message', 'WhatsApp: On flight KQ 8102', 'Nov 3 22:45']].map((n, i) => ({ icon: n[0], t: n[1], at: n[2], cls: i === 0 && t % 5 === 0 ? 'new' : '' })),
+    pubId: P[0].replace('SL-', 'x7') + 'Q', copy: () => this.setState({ copied: true }), copyLabel: s.copied ? 'Copied' : 'Copy',
+    priv: [['items', 'Show what is inside'], ['rider', 'Show rider on map'], ['name', 'Show customer name'], ['addr', 'Show full address'], ['photo', 'Show delivery photo']].map(p => ({ t: p[1], cls: s.priv[p[0]] ? 'on' : '', aria: s.priv[p[0]] ? 'true' : 'false', flip: flip(p[0]) })),
+    exps: [['7d', '7 days'], ['30d', '30 days'], ['never', 'Never']].map(e => ({ label: e[1], cls: s.exp === e[0] ? 'on' : '', pick: () => this.setState({ exp: e[0] }) })),
+    dis: DIS.map(d => ({ label: d, cls: s.dis === d ? 'on' : '', pick: () => this.setState({ dis: d }) })), sendDis: () => this.setState({ disSent: true, flash: 'Dispute "' + s.dis + '" opened as ticket T-4830. Support and the rider were notified.' }), disLabel: s.disSent ? 'Dispute sent · T-4830' : 'Open dispute',
+    cov: ['Unified warehouse + delivery', 'End-to-end journey', 'Automatic status updates', 'Live rider location', 'Interactive map', 'ETA calculation', 'Delay prediction', 'Milestones with times', 'Status notifications', 'Flight and vessel', 'Container and manifest', 'Carrier sync', 'Location history', 'Proof of delivery', 'Digital signature', 'Delivery photo', 'QR confirmation', 'Exception alerts', 'Failed delivery', 'Rescheduling', 'Multi-package tracking', 'Public link + privacy', 'Status disputes', 'Customs progress', 'Predictive delivery date'] };
+}
+}
+</script>
+</body>
+</html>

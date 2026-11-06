@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Swift Lane Financial Overview, restricted</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./swiftlane.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}
+.fx .sl-mv,.fx .sl-mf,.fx td.num:not(:nth-child(2)),.fx aside .mut{filter:blur(7px);user-select:none}
+.me-card{display:flex;align-items:center;gap:12px;margin-top:20px;padding:12px;border-radius:16px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+.me-card:hover{background:var(--hover)}
+.me-card b{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.me-card small{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.me-pic{position:relative;width:44px;height:44px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:600;font-size:15px;color:#fff;background:radial-gradient(circle at 35% 30%,#8A8984,#44433F 70%);box-shadow:0 0 0 2px var(--card),0 0 0 3px var(--line-2)}
+.me-on{position:absolute;right:0;bottom:1px;width:11px;height:11px;border-radius:50%;background:var(--green);border:2px solid var(--card)}
+.fx-bn{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:14px;background:var(--active);font-size:13.5px}
+.fr-k{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
+.fr-k b{font:600 26px var(--font);letter-spacing:-.015em;font-variant-numeric:tabular-nums;line-height:1.15}.fr-k b.bump{animation:frB .9s}@keyframes frB{from{color:#E2632A}}
+.fr-k small{color:var(--muted);font-size:12.5px}
+.fr-hid{display:inline-block;padding:3px 8px;border-radius:6px;background:var(--active);font:12.5px var(--mono);color:var(--muted);filter:blur(.4px)}
+.fr-ok{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;background:var(--green-bg);color:var(--green-ink)}.fr-ok.no{background:var(--red-bg);color:var(--red-ink)}
+.fr-dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;animation:frP 1.4s infinite}@keyframes frP{50%{opacity:.3}}
+.fr-fi{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line)}.fr-fi.new{animation:frN 1.2s}@keyframes frN{from{background:#FBE3D6}}
+.fr-bar{display:grid;grid-template-columns:110px 1fr 44px;gap:8px;align-items:center;font-size:12.5px}.fr-bar i{display:block;height:8px;border-radius:9px;background:#A9A59C}.fr-bar b{text-align:right}
+</style>
+</helmet>
+<div class="sl-app">
+  <input type="checkbox" id="navtg" class="nav-tg" aria-hidden="true" tabindex="-1">
+  <header class="sl-top">
+    <label class="sl-ib nav-open" for="navtg" aria-label="Open or close the menu" role="button" tabindex="0"><i class="ic i-sidebar" aria-hidden="true"></i></label>
+    <a class="sl-switch" href="Main.dc.html"><small>SL</small> Swift Lane · Accra Hub <i class="ic ic-sm i-down" aria-hidden="true"></i></a>
+    <a class="fx-chip" href="SettingsHub.dc.html" title="Exchange rate · set in Settings › General"><i class="ic ic-sm i-dollar" aria-hidden="true"></i><span class="mono">USD 1 = GHS 12.40</span><span class="fx-d">▲ 0.4%</span></a>
+    <span class="grow"></span>
+    <details class="aitop"><summary aria-label="Help with Swift Lane AI"><span class="o"><i class="ic i-ai" aria-hidden="true"></i></span>Help</summary><div class="pop" role="menu">
+<div class="me"><span class="sl-av sm dark">HC</span><div class="grow"><div class="fw5 sm">Henry Cobblah</div><div class="mut" style="font-size:12px">Operations manager · Accra Hub</div></div><a class="sl-btn sm ghost" href="AiStudio.dc.html">Edit</a></div>
+<a class="ask" href="StaffAI.dc.html"><i class="ic ic-sm i-spark" aria-hidden="true"></i>Ask AI for help on this page<b><i class="ic ic-sm i-send" aria-hidden="true"></i></b></a>
+<div class="hd">Your profile with AI</div>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-wand" aria-hidden="true"></i></span><span>Retouch my photo<small>Light, skin and background</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-refresh" aria-hidden="true"></i></span><span>Reset images<small>Go back to the original photo</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-edit" aria-hidden="true"></i></span><span>Change my name<small>AI fixes spelling and capitals</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-user" aria-hidden="true"></i></span><span>Make my icon<small>Avatar from your photo or initials</small></span></a>
+<div class="hd">Help</div>
+<a class="it" role="menuitem" href="StaffAI.dc.html"><span class="t"><i class="ic ic-sm i-help" aria-hidden="true"></i></span><span>Explain this page</span></a>
+<a class="it" role="menuitem" href="CsInbox.dc.html"><span class="t"><i class="ic ic-sm i-message" aria-hidden="true"></i></span><span>Talk to a person</span></a>
+</div></details>
+    <a class="sl-ib" aria-label="Notifications" href="Notifications.dc.html"><i class="ic i-bell" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Switch theme" href="SettingsHub.dc.html"><i class="ic i-sun" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Documents" href="Documents.dc.html"><i class="ic i-file" aria-hidden="true"></i></a>
+    <a class="sl-btn" href="Reports.dc.html">Export Report</a>
+    <details class="uptop"><summary aria-label="Your profile and settings, Henry Cobblah"><span class="me-pic hc" style="width:34px;height:34px"><i class="me-on" aria-hidden="true"></i></span><span class="up-nm">Henry</span><i class="ic ic-sm i-down" aria-hidden="true"></i></summary><div class="pop" role="menu">
+<a class="up-me" href="AiStudio.dc.html"><span class="me-pic hc" style="width:48px;height:48px"><i class="me-on" aria-hidden="true"></i></span><span class="col" style="min-width:0"><b>Henry Cobblah</b><small>Operations manager · Accra Hub</small><small class="mono">henry@swiftlane.com</small></span></a>
+<div class="up-st"><span class="row g6 sm"><span class="ld" style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span>Available</span><a class="sm fw5" href="AiStudio.dc.html">Edit profile</a></div>
+<div class="up-h">Short links</div><div class="up-g"><a class="up-l" role="menuitem" href="Main.dc.html"><i class="ic ic-sm i-grid" aria-hidden="true"></i>Overview</a><a class="up-l" role="menuitem" href="RiderDispatch.dc.html"><i class="ic ic-sm i-truck" aria-hidden="true"></i>Dispatch board</a><a class="up-l" role="menuitem" href="SendPrices.dc.html"><i class="ic ic-sm i-send" aria-hidden="true"></i>Send prices</a><a class="up-l" role="menuitem" href="Reports.dc.html"><i class="ic ic-sm i-chart" aria-hidden="true"></i>Reports</a><a class="up-l" role="menuitem" href="Documents.dc.html"><i class="ic ic-sm i-file" aria-hidden="true"></i>Documents</a><a class="up-l" role="menuitem" href="ActivityLogs.dc.html"><i class="ic ic-sm i-clock" aria-hidden="true"></i>My activity</a></div>
+<div class="up-h">Settings</div><a class="up-l" role="menuitem" href="AiStudio.dc.html"><i class="ic ic-sm i-ai" aria-hidden="true"></i>Profile and photo</a><a class="up-l" role="menuitem" href="SettingsHub.dc.html"><i class="ic ic-sm i-cog" aria-hidden="true"></i>Settings</a><a class="up-l" role="menuitem" href="ApiConnections.dc.html"><i class="ic ic-sm i-link" aria-hidden="true"></i>API connections</a><a class="up-l" role="menuitem" href="StaffPermissions.dc.html"><i class="ic ic-sm i-shield" aria-hidden="true"></i>Permissions</a>
+<div class="up-row"><span class="sm mut">Theme</span><span class="sl-seg boxed" style="height:30px"><a class="on" href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Light</a><a href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Dark</a></span></div>
+<a class="up-l" role="menuitem" href="CsInbox.dc.html"><i class="ic ic-sm i-help" aria-hidden="true"></i>Help and support</a>
+<a class="up-l out" role="menuitem" href="Login.dc.html"><i class="ic ic-sm i-logout" aria-hidden="true"></i>Sign out</a>
+</div></details>
+  </header>
+  <div class="sl-body">
+    <label class="nav-bd" for="navtg" aria-hidden="true"></label>
+    <div class="sl-rail">
+      <a class="is-on" href="NewShipment.dc.html" aria-label="New shipment"><i class="ic i-newdoc" aria-hidden="true"></i></a>
+      <a href="StaffAI.dc.html" aria-label="AI assistant" title="AI assistant"><i class="ic i-ai" aria-hidden="true"></i></a>
+      <a href="PublicTracking.dc.html" aria-label="Tracking" title="Tracking"><i class="ic i-track" aria-hidden="true"></i></a>
+      <a href="LockerSearch.dc.html" aria-label="Search tracking number" title="Search tracking number"><i class="ic i-tsearch" aria-hidden="true"></i></a>
+      <a href="Consolidations.dc.html" aria-label="Consolidation" title="Consolidation"><i class="ic i-layers" aria-hidden="true"></i></a>
+      <a href="Warehouse.dc.html" aria-label="Warehouse" title="Warehouse"><i class="ic i-warehouse" aria-hidden="true"></i></a>
+      <span class="sl-av">EM</span>
+    </div>
+    <aside class="sl-side" aria-label="Main navigation">
+      <div class="nav-x"><span class="fw5">Menu</span><label class="sl-ib" for="navtg" aria-label="Close the menu" role="button" tabindex="0"><i class="ic i-x" aria-hidden="true"></i></label></div>
+      <sc-for list="{{nav}}" as="g" hint-placeholder-count="5">
+        <div class="sl-gl">{{g.label}}</div>
+        <nav class="sl-nav">
+          <sc-for list="{{g.items}}" as="it" hint-placeholder-count="4">
+            <a href="{{it.href}}" class="{{it.cls}}"><i class="ic {{it.icon}}" aria-hidden="true"></i><span>{{it.label}}</span><span class="cnt {{it.ok}}">{{it.c1}} <em>{{it.c2}}</em></span></a>
+          </sc-for>
+        </nav>
+      </sc-for>
+      <div class="sl-gl">Other</div>
+      <nav class="sl-nav">
+        <a href="SettingsHub.dc.html"><i class="ic i-globe" aria-hidden="true"></i><span>Language</span></a>
+        <a href="CsInbox.dc.html"><i class="ic i-help" aria-hidden="true"></i><span>Get help</span></a>
+        <a href="Login.dc.html" class="danger"><i class="ic i-logout" aria-hidden="true"></i><span>Sign out</span></a>
+      </nav>
+      <a class="me-card" href="AiStudio.dc.html" aria-label="Signed in as Efia Manu, Support agent. Open your profile">
+        <span class="me-pic em" role="img" aria-label="Profile photo of Efia Manu"><i class="me-on" aria-hidden="true"></i></span>
+        <span class="grow col" style="min-width:0"><b>Efia Manu</b><small>Support agent · Accra Hub</small></span>
+        <i class="ic ic-sm i-more mut" aria-hidden="true"></i>
+      </a>
+    </aside>
+
+    <main class="sl-main">
+      <div class="sl-wrap fx">
+<div class="fx-bn" role="note"><i class="ic i-lock" aria-hidden="true"></i><span class="grow"><b class="fw5">Viewing as Support agent.</b> This role cannot see financial figures, so amounts are blurred. Counts, names and charts stay readable.</span><a class="sl-btn sm ghost" href="StaffPermissions.dc.html">Request access</a></div>
+        <div class="sl-head">
+          <div><h1 class="sl-title">Financial Overview</h1><p class="sl-lede">Revenue, costs and margin for Accra Hub</p></div>
+          <div class="row g8 wrap"><div class="sl-seg boxed"><button>7d</button><button class="on">30d</button><button>90d</button><button>1y</button></div><a class="sl-btn ghost" href="Documents.dc.html"><i class="ic ic-sm i-download" aria-hidden="true"></i>Export</a></div>
+        </div>
+        <div class="grid cols3">
+          <div class="sl-card sl-metric"><div class="sl-ml"><span><i class="ic ic-sm i-dollar" aria-hidden="true"></i>Revenue</span></div><div class="sl-mv">$48,200 <i>/ $60,000 target</i></div><div class="sl-ticks"><i style="width: 80%"></i></div><div class="sl-mf">+12.4% vs last 30 days</div></div>
+          <div class="sl-card sl-metric"><div class="sl-ml"><span><i class="ic ic-sm i-truck" aria-hidden="true"></i>Carrier and delivery costs</span></div><div class="sl-mv">$29,640 <i>(61% of revenue)</i></div><div class="sl-ticks y"><i style="width: 61%"></i></div><div class="sl-mf">Air $19,210 · Sea $10,430</div></div>
+          <div class="sl-card sl-metric"><div class="sl-ml"><span><i class="ic ic-sm i-chart" aria-hidden="true"></i>Gross margin</span></div><div class="sl-mv">$18,560 <i>(39%)</i></div><div class="sl-ticks v"><i style="width: 39%"></i></div><div class="sl-mf">Target 42%</div></div>
+        </div>
+        <div class="split">
+          <section class="a sl-card"><div class="sl-ch"><h2 class="sl-ct">Revenue by month</h2><span class="mut sm">Last 12 months</span></div>
+            <div class="sl-bars" style="height: 200px"><sc-for list="{{months}}" as="m" hint-placeholder-count="12"><div class="sl-bar {{m.hi}}"><span style="{{m.sty}}"></span></div></sc-for></div>
+            <div class="row between mut sm" style="margin-top: 8px"><span>Dec</span><span>Feb</span><span>Apr</span><span>Jun</span><span>Aug</span><span>Oct</span></div>
+          </section>
+          <aside class="b sl-card col g12"><h2 class="sl-ct">Revenue by gateway</h2>
+            <sc-for list="{{gw}}" as="g" hint-placeholder-count="4"><div class="col g6"><div class="row between sm"><span class="fw5">{{g.n}}</span><span class="mut">{{g.v}}</span></div><div class="sl-ticks {{g.c}}"><i style="{{g.sty}}"></i></div></div></sc-for>
+          </aside>
+        </div>
+        <section class="sl-card flush">
+          <div class="row between" style="padding: 14px 16px"><h2 class="sl-ct">Profit by service</h2><a href="Reports.dc.html" class="sm fw5 row g6">Full report <i class="ic ic-sm i-right" aria-hidden="true"></i></a></div>
+          <div class="sl-tw"><table class="sl-table"><thead><tr><th>Service</th><th class="num">Parcels</th><th class="num">Revenue</th><th class="num">Cost</th><th class="num">Margin</th></tr></thead><tbody>
+            <sc-for list="{{svc}}" as="s" hint-placeholder-count="4"><tr><td class="fw5">{{s.n}}</td><td class="num">{{s.p}}</td><td class="num">{{s.r}}</td><td class="num">{{s.c}}</td><td class="num fw5">{{s.m}}</td></tr></sc-for>
+          </tbody></table></div>
+        </section>
+      <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(170px,100%),1fr));gap:12px"><sc-for list="{{counts}}" as="k" hint-placeholder-count="6"><div class="fr-k"><small>{{k.l}}</small><b class="{{k.anim}}">{{k.v}}</b><small>{{k.s}}</small></div></sc-for></div>
+<div class="split"><section class="a sl-card flush"><div class="row between wrap g8" style="padding:16px 18px"><div><h2 class="sl-ct">Invoices to follow up</h2><span class="mut sm">You can see who owes and how long, and send reminders. Amounts stay hidden.</span></div><div class="sl-seg boxed"><sc-for list="{{invF}}" as="x" hint-placeholder-count="3"><button class="{{x.cls}}" onClick="{{x.pick}}">{{x.label}}</button></sc-for></div></div>
+<div class="sl-tw"><table class="sl-table"><thead><tr><th>Customer</th><th>Invoice</th><th>Parcels</th><th>Status</th><th>Days open</th><th>Amount</th><th></th></tr></thead><tbody><sc-for list="{{invs}}" as="r" hint-placeholder-count="7"><tr><td><div class="sl-cell"><span class="sl-av sm">{{r.ini}}</span><span class="col"><span class="fw5">{{r.name}}</span><span class="mut" style="font-size:12px">{{r.lock}}</span></span></div></td><td class="mono sm">{{r.inv}}</td><td class="sm">{{r.p}}</td><td><span class="sl-pill {{r.pc}}">{{r.st}}</span></td><td class="mono sm">{{r.days}}</td><td><span class="fr-hid" title="Hidden for your role">₵ ••••</span></td><td><button class="sl-btn ghost sm" onClick="{{r.remind}}">{{r.rl}}</button></td></tr></sc-for></tbody></table></div></section>
+<aside class="b col g16"><section class="sl-card col g10"><h2 class="sl-ct">What this role can see</h2><sc-for list="{{perm}}" as="p" hint-placeholder-count="7"><div class="row g10 sm"><span class="fr-ok {{p.c}}"><i class="ic ic-sm {{p.i}}" aria-hidden="true"></i></span><span class="grow">{{p.t}}</span></div></sc-for>
+<div class="col g8" style="padding-top:10px;border-top:1px solid var(--line)"><b class="fw5 sm">Request access</b><div class="sl-seg boxed"><sc-for list="{{durs}}" as="d" hint-placeholder-count="3"><button class="{{d.cls}}" onClick="{{d.pick}}">{{d.label}}</button></sc-for></div><input class="sl-in" value="Need totals to answer billing tickets" aria-label="Reason"><button class="sl-btn" onClick="{{ask}}">{{askLabel}}</button><span class="mut sm">{{askNote}}</span></div></section>
+<section class="sl-card col"><h2 class="sl-ct row g8" style="margin-bottom:4px"><span class="fr-dot"></span>Payments coming in</h2><sc-for list="{{feed}}" as="f" hint-placeholder-count="5"><div class="fr-fi {{f.cls}}"><span class="sl-av sm">{{f.ini}}</span><span class="col grow"><span class="sm"><b class="fw5">{{f.name}}</b> paid {{f.inv}}</span><span class="mut" style="font-size:12px">{{f.how}} · amount hidden</span></span><span class="mono mut" style="font-size:12px">{{f.at}}</span></div></sc-for></section></aside></div>
+<div class="grid cols3" style="gap:16px;align-items:start"><section class="sl-card col g10"><h2 class="sl-ct">How customers pay</h2><span class="mut sm">Share of payments by count, this month</span><sc-for list="{{methods}}" as="m" hint-placeholder-count="5"><div class="fr-bar"><span>{{m.n}}</span><i style="{{m.w}}"></i><b class="mono fw5">{{m.v}}</b></div></sc-for></section>
+<section class="sl-card col g10"><h2 class="sl-ct">Parcels billed by service</h2><span class="mut sm">Count of parcels, this month</span><sc-for list="{{svcN}}" as="m" hint-placeholder-count="5"><div class="fr-bar"><span>{{m.n}}</span><i style="{{m.w}}"></i><b class="mono fw5">{{m.v}}</b></div></sc-for></section>
+<section class="sl-card col g10"><h2 class="sl-ct">Billing tickets</h2><span class="mut sm">Questions about bills in the support inbox</span><div class="sl-kv"><div><span>Open</span><span class="mono">18</span></div><div><span>Waiting on finance</span><span class="mono">5</span></div><div><span>Refund requests</span><span class="mono">4</span></div><div><span>Solved this week</span><span class="mono">63</span></div><div><span>Avg time to solve</span><span class="mono">3h 10m</span></div></div><a class="sm fw5" href="CsInbox.dc.html">Open billing tickets →</a></section></div>
+</div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2300}}'>
+const INV = [['Kwame Mensah', 'INV-2104', '3 parcels', 'o', 24, 'SL-2041'], ['Yaw Darko', 'INV-2098', '1 parcel', 'o', 16, 'SL-0988'], ['Nana Adjei', 'INV-2111', '2 parcels', 'o', 12, 'SL-3262'], ['Abena Frimpong', 'INV-2120', '3 parcels', 'p', 6, 'SL-3270'], ['Esi Quaye', 'INV-2126', '2 parcels', 'p', 3, 'SL-3251'], ['Kojo Appiah', 'INV-2131', '1 parcel', 'p', 1, 'SL-3244'], ['Efua Owusu', 'INV-2135', '1 parcel', 'd', 0, 'SL-3318']];
+const PAY = [['Ama Boateng', 'INV-2140', 'MTN MoMo'], ['Kofi Asante', 'INV-2138', 'Card · Paystack'], ['Efua Owusu', 'INV-2135', 'Vodafone Cash'], ['Mavis Owusu', 'INV-2133', 'Bank transfer'], ['Samuel Ofori', 'INV-2129', 'Cash at counter'], ['Esi Quaye', 'INV-2126', 'MTN MoMo']];
+class Component extends DCLogic {
+constructor(p) { super(p); this.state = { t: 0, f: 'all', sent: {}, dur: '1d', asked: false }; if (typeof window !== 'undefined') this._iv = setInterval(() => this.setState({ t: this.state.t + 1 }), 3000); }
+componentWillUnmount() { clearInterval(this._iv); }
+renderVals() {
+const A = 'fin';
+const N = 'Operations|dash~Overview~grid~~~Main;panels~Control Panels~gauge~~~ControlPanels;air~Air Shipments~plane~128~~AirShipments;sea~Sea Packages~ship~64~~SeaPackages;prealert~Pre-Alerts~inbox~9~~PreAlerts;pickup~Pickups~truck~12~/ 20~Pickups;dtrack~Delivery Tracking~route~5~~DeliveryTracking;shiptrack~Shipment Tracking~track~~~ShipmentTracking;consol~Consolidations~layers~7~~Consolidations;warehouse~Warehouse~warehouse~~~Warehouse;handout~Hand Out Packages~box~5~~HandOut;locker~Locker Search~lock~~~LockerSearch#Hubs|execdash~Management Dashboard~chart~~~ExecDashboard;billhub~Billing & Finance~dollar~~~BillingHub;lastmile~Last-Mile Delivery~truck~~~LastMile;aicenter~AI Centre~ai~~~AiCenter;commshub~Messages & Automation~message~~~CommsHub;supporthub~Support & CRM~ticket~~~SupportHub;loyalty~Loyalty & Referrals~star~~~LoyaltyRewards;security~Security & Reliability~shield~~~SecurityCenter#Freight|frhub~Freight Hub~plane~~~FreightHub;frsched~Departures & Arrivals~calendar~5~~FreightSchedule;frwb~Waybills & Manifests~file~~~Waybills;frex~Cargo Exceptions~alert~6~~CargoExceptions;frins~Insurance & Claims~shield~4~~InsuranceClaims;frpart~Freight Partners~users~~~FreightPartners#People|cust~Customers~users~1,284~~Customers;recip~Recipients~pin~~~Recipients;drivers~Drivers~wheel~8~/ 14~Drivers;drvapp~Rider App~phone~~~DriverApp;staff~Staff & Roles~shield~~~StaffRoles#Finance|pay~Payments~card~~~Payments;ar~Accounts Receivable~receipt~~~AccountsReceivable;fin~Financial Overview~dollar~$48,200~~FinancialOverview#Insights|reports~Reports~chart~~~Reports;activity~Activity Logs~clock~~~ActivityLogs;messages~Message Logs~archive~~~MessageLogs#Customer Service|tickets~Support Inbox~ticket~1,482~~CsInbox;csrules~Ticket Rules~filter~~~CsRules;playbook~Playbook~book~~~CsPlaybook;csrep~Support Reports~star~~~CsReports;cschan~Channels & Teams~message~~~CsChannels;csai~AI Assistant~ai~~~StaffAI;cssupai~AI for Customers~spark~~~CsAI#Developer|devov~Dev Overview~terminal~~~DevOverview;devsvc~Services~server~12~~DevServices;devlogs~Logs~activity~~~DevLogs;devmet~Metrics~cpu~~~DevMetrics;devinfra~Infrastructure~cloud~~~DevInfrastructure;devdep~Deployments~rocket~~~DevDeployments;devalert~Alerts~alert~3~~DevAlerts;devissues~Issues & Change Log~bug~8~~DevIssues;devint~Integrations~puzzle~~~DevIntegrations#Settings|general~General~cog~~~SettingsHub;apis~API Connections~link~16~~ApiConnections;apitraffic~Live API Traffic~activity~~~ApiTraffic;tariffs~Shipping Tariffs~tag~~~Tariffs;notifc~Notifications~bell~3~~NotificationCenter;ebuild~Email Builder~mail~~~EmailBuilder;msgtpl~SMS & WhatsApp~message~~~MessageTemplates;bcast~Push Notifications~send~~~Broadcast;costs~Operating Costs~dollar~~~CostSettings;addr~Shipping Addresses~pin~~~ShippingAddresses;rfees~Rider Fees~truck~~~RiderSettings;loginpg~Login Page~image~~~LoginSettings;devmod~Modules~sliders~~~ModuleController;perm~Permissions~key~~~StaffPermissions;lblstudio~Label Printing~print~~~LabelStudio;auto~Automations~bolt~~~Automations';
+const nav = N.split('#').map(g => { const p = g.split('|'); return { label: p[0], items: p[1].split(';').map(i => { const f = i.split('~'); return { href: f[5] + '.dc.html', label: f[1], icon: 'i-' + f[2], c1: f[3], c2: f[4], cls: f[0] === A ? 'is-active' : '', ok: f[0] === 'fin' ? 'ok' : '' }; }) }; });
+const mv = [38, 42, 40, 47, 52, 49, 58, 55, 63, 68, 74, 100];
+const months = mv.map((v, i) => ({ sty: 'height: ' + v + '%', hi: i === 11 ? 'hi' : '' }));
+const gw = [['Paystack','$22,540 (47%)',47,''],['Stripe','$13,870 (29%)',29,'v'],['Hubtel','$7,230 (15%)',15,'y'],['Bank transfer','$4,560 (9%)',9,'o']].map(g => ({ n: g[0], v: g[1], c: g[3], sty: 'width: ' + g[2] + '%' }));
+const svc = [['Air express','612','$27,300','$16,900','$10,400'],['Air economy','340','$11,700','$7,100','$4,600'],['Sea LCL','188','$6,900','$4,300','$2,600'],['Sea FCL','24','$2,300','$1,340','$960']].map(s => ({ n: s[0], p: s[1], r: s[2], c: s[3], m: s[4] }));
+const S = this.state, t = S.t, ST = { o: ['Overdue', 'overdue'], p: ['Unpaid', 'pending'], d: ['Paid', 'delivered'] };
+const ini = (n) => n.split(' ').map(x => x[0]).join('');
+const clk = (b) => { const m = 10 * 60 + 40 + t - b * 3; return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
+return { nav, months, gw, svc,
+  counts: [['Invoices this month', (1164 + t).toLocaleString(), '▲ 9% vs last month', 1], ['Paid', (1021 + t).toLocaleString(), Math.round((1021 + t) / (1164 + t) * 100) + '% of invoices', 1], ['Unpaid', '143', '23 overdue over 14 days'], ['Payment links sent', (312 + Math.floor(t / 2)).toLocaleString(), 'WhatsApp and SMS'], ['Refund requests', '4', '2 waiting on finance'], ['Paying customers', '846', '66% of active customers']].map(k => ({ l: k[0], v: k[1], s: k[2], anim: k[3] && t % 2 ? 'bump' : '' })),
+  invF: [['all', 'All'], ['o', 'Overdue'], ['p', 'Unpaid']].map(x => ({ label: x[1], cls: S.f === x[0] ? 'on' : '', pick: () => this.setState({ f: x[0] }) })),
+  invs: INV.filter(r => S.f === 'all' || r[3] === S.f).map(r => ({ name: r[0], ini: ini(r[0]), inv: r[1], p: r[2], st: ST[r[3]][0], pc: ST[r[3]][1], days: r[4] ? r[4] + ' days' : '—', lock: 'Locker ' + r[5], rl: S.sent[r[1]] ? 'Reminder sent' : r[3] === 'd' ? 'Receipt' : 'Remind', remind: () => this.setState({ sent: { ...S.sent, [r[1]]: true } }) })),
+  perm: [['ok', 'i-check', 'Customer names and lockers'], ['ok', 'i-check', 'Invoice numbers, status and days open'], ['ok', 'i-check', 'Counts and charts'], ['ok', 'i-check', 'Send payment reminders'], ['no', 'i-x', 'Amounts, totals and margins'], ['no', 'i-x', 'Export to Excel or PDF'], ['no', 'i-x', 'Record or refund payments']].map(p => ({ c: p[0] === 'no' ? 'no' : '', i: p[1], t: p[2] })),
+  durs: [['1d', 'Today only'], ['7d', '7 days'], ['perm', 'Always']].map(d => ({ label: d[1], cls: S.dur === d[0] ? 'on' : '', pick: () => this.setState({ dur: d[0] }) })),
+  ask: () => this.setState({ asked: true }), askLabel: S.asked ? 'Request sent' : 'Send request to Henry', askNote: S.asked ? 'Henry Cobblah gets it in Staff › Permissions. You will see a notice when it is approved.' : 'Goes to your manager for approval.',
+  feed: Array.from({ length: 5 }, (_, i) => { const p = PAY[(t + 6 - i) % PAY.length]; return { name: p[0], ini: ini(p[0]), inv: p[1], how: p[2], at: clk(i), cls: i === 0 ? 'new' : '' }; }),
+  methods: [['MTN MoMo', 46], ['Card', 21], ['Vodafone Cash', 14], ['Cash', 11], ['Bank transfer', 8]].map(m => ({ n: m[0], v: m[1] + '%', w: 'width:' + m[1] / 46 * 100 + '%' })),
+  svcN: [['Air express', 612], ['Air economy', 340], ['Sea LCL', 188], ['Sea FCL', 24], ['Door delivery', 294]].map(m => ({ n: m[0], v: m[1], w: 'width:' + Math.round(m[1] / 612 * 100) + '%' })) };
+}
+}
+</script>
+</body>
+</html>

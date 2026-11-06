@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Swift Lane Delivery Tracking</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./swiftlane.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}
+.dt{display:grid;grid-template-columns:380px minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:1100px){.dt{grid-template-columns:1fr}}
+.dt-list{display:flex;flex-direction:column;gap:10px}
+.dt-c{display:flex;flex-direction:column;gap:14px;padding:16px;border:1px solid var(--line);border-radius:20px;background:var(--card);cursor:pointer;text-align:left;font:inherit;color:inherit;width:100%}
+.dt-c:hover{border-color:var(--line-2)}
+.dt-c.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.dt-id{display:flex;align-items:center;gap:12px}
+.dt-id .bx{width:44px;height:44px;border-radius:50%;border:1px solid var(--line-2);display:grid;place-items:center;flex:none}
+.dt-id b{font:600 19px var(--font);letter-spacing:-.01em}
+.dt-eta{display:flex;justify-content:space-between;align-items:flex-end;padding-top:14px;border-top:1px solid var(--line)}
+.dt-eta big{font:600 38px/1 var(--font);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.dt-eta big small{font-size:14px;font-weight:400;color:var(--muted);margin-left:6px}
+.dt-prog{display:flex;align-items:center;gap:0;padding:14px 0 6px}
+.dt-prog .n{width:22px;height:22px;border-radius:50%;background:#E2632A;display:grid;place-items:center;flex:none;position:relative;z-index:1}
+.dt-prog .n::after{content:"";width:8px;height:8px;border-radius:50%;background:#fff}
+.dt-prog .n.end{background:var(--card);border:1.5px solid var(--line-2)}
+.dt-prog .n.end::after{background:var(--muted);width:6px;height:6px}
+.dt-prog.done .n.end{background:var(--green);border-color:var(--green)}.dt-prog.done .n.end::after{background:#fff;width:8px;height:8px}
+.dt-prog .ln{flex:1;height:4px;margin:0 -2px;border-radius:4px;background:repeating-linear-gradient(90deg,var(--line-2) 0 6px,transparent 6px 11px);position:relative}
+.dt-prog .ln>i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:repeating-linear-gradient(115deg,#E2632A 0 8px,#EE8A55 8px 16px);background-size:32px 100%;transition:width 1.5s linear}
+.dt-prog.moving .ln>i{animation:dtRoad .8s linear infinite}
+@keyframes dtRoad{to{background-position:32px 0}}
+.dt-prog .tk{position:absolute;top:50%;width:32px;height:32px;margin:-16px 0 0 -16px;border-radius:50%;background:var(--card);border:2px solid #E2632A;display:grid;place-items:center;color:#E2632A;transition:left 1.5s linear;z-index:2;box-shadow:0 4px 10px rgba(226,99,42,.25)}
+.dt-prog .tk .ic{width:16px;height:16px}
+.dt-prog.moving .tk .ic{animation:dtBob .6s ease-in-out infinite alternate}
+.dt-prog.moving .tk::before{content:"";position:absolute;inset:-6px;border-radius:50%;border:2px solid #E2632A;opacity:0;animation:dtPing 1.8s ease-out infinite}
+@keyframes dtBob{from{transform:translateY(1px)}to{transform:translateY(-2px)}}
+@keyframes dtPing{0%{transform:scale(.7);opacity:.6}100%{transform:scale(1.25);opacity:0}}
+.dt-prog.idle .tk{border-color:var(--line-2);color:var(--muted);box-shadow:none}
+.dt-prog.done .tk{border-color:var(--green);color:var(--green-ink);box-shadow:none}
+.dt-prog.done .ln>i{background:var(--green)}
+@media (prefers-reduced-motion:reduce){.dt-prog .ln>i,.dt-prog .tk,.dt-prog .tk .ic,.dt-prog .tk::before{animation:none!important;transition:none!important}}
+.dt-ends{display:flex;justify-content:space-between;gap:12px;font-size:13.5px}
+.dt-ends small{display:block;color:var(--muted);font-size:12px}
+.dt-who{display:flex;align-items:center;gap:12px;padding-top:12px;border-top:1px solid var(--line)}
+.dt-act{width:44px;height:44px;border-radius:50%;border:1px solid var(--line-2);background:var(--card);display:grid;place-items:center;color:var(--ink)}
+.dt-act.pri{background:var(--ink);color:var(--inverse);border-color:var(--ink)}
+.dt-map{position:relative;border-radius:20px;overflow:hidden;border:1px solid var(--line);height:420px;background:#EAE6DF}
+.dt-map svg{display:block;width:100%;height:100%}
+.dt-ctl{position:absolute;right:14px;display:flex;flex-direction:column;border-radius:12px;background:var(--card);border:1px solid var(--line);overflow:hidden}
+.dt-ctl button,.dt-ctl a{width:44px;height:44px;border:0;background:none;display:grid;place-items:center;color:var(--ink);cursor:pointer}
+.dt-ctl button+button{border-top:1px solid var(--line)}
+.dt-live{position:absolute;left:14px;top:14px;display:flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-size:12.5px}
+.dt-live i{width:8px;height:8px;border-radius:50%;background:var(--green);animation:dtP 1.4s infinite}@keyframes dtP{50%{opacity:.3}}
+.dt-chip{position:absolute;left:14px;bottom:14px;display:flex;gap:16px;padding:10px 14px;border-radius:14px;background:var(--card);border:1px solid var(--line);font-size:12.5px}
+.dt-chip b{display:block;font:600 15px var(--font);font-variant-numeric:tabular-nums}
+.dt-g{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:900px){.dt-g{grid-template-columns:1fr}}
+.dt-kv{display:grid;grid-template-columns:repeat(3,1fr)}
+.dt-kv div{padding:10px 14px 10px 0;border-left:1px solid var(--line);padding-left:14px}
+.dt-kv div:nth-child(3n+1){border-left:0;padding-left:0}
+.dt-kv div:nth-child(n+4){border-top:1px solid var(--line)}
+.dt-kv small{display:block;color:var(--muted);font-size:12px}
+.dt-kv b{font:500 14px var(--font)}
+.dt-tl{display:flex;flex-direction:column}
+.dt-st{display:grid;grid-template-columns:34px 110px 1fr;gap:12px;position:relative;padding-bottom:20px}
+.dt-st:last-child{padding-bottom:0}
+.dt-st::before{content:"";position:absolute;left:16px;top:34px;bottom:0;border-left:2px dashed var(--line-2)}
+.dt-st.done::before{border-left:2px solid #E2632A}
+.dt-st:last-child::before{display:none}
+.dt-st .d{width:34px;height:34px;border-radius:50%;background:#E2632A;color:#fff;display:grid;place-items:center;position:relative}
+.dt-st .d .ic{width:16px;height:16px}
+.dt-st.todo .d{background:var(--card);border:1.5px dashed var(--line-2);color:var(--muted)}
+.dt-st.now .d{box-shadow:0 0 0 6px rgba(226,99,42,.18)}
+.dt-st.now .d::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:2px solid #E2632A;animation:dtPing 1.8s ease-out infinite}
+.dt-st.last.done .d{background:var(--green)}
+@media (prefers-reduced-motion:reduce){.dt-st.now .d::after{animation:none}}
+.dt-st small{display:block;color:var(--muted);font-size:12.5px}
+.dt-tabs{display:flex;gap:6px;flex-wrap:wrap}
+</style>
+</helmet>
+<div class="sl-app">
+  <input type="checkbox" id="navtg" class="nav-tg" aria-hidden="true" tabindex="-1">
+  <header class="sl-top">
+    <label class="sl-ib nav-open" for="navtg" aria-label="Open or close the menu" role="button" tabindex="0"><i class="ic i-sidebar" aria-hidden="true"></i></label>
+    <a class="sl-switch" href="Main.dc.html"><small>SL</small> Swift Lane · Accra Hub <i class="ic ic-sm i-down" aria-hidden="true"></i></a>
+    <a class="fx-chip" href="SettingsHub.dc.html" title="Exchange rate · set in Settings › General"><i class="ic ic-sm i-dollar" aria-hidden="true"></i><span class="mono">USD 1 = GHS 12.40</span><span class="fx-d">▲ 0.4%</span></a>
+    <span class="grow"></span>
+    <details class="aitop"><summary aria-label="Help with Swift Lane AI"><span class="o"><i class="ic i-ai" aria-hidden="true"></i></span>Help</summary><div class="pop" role="menu">
+<div class="me"><span class="sl-av sm dark">HC</span><div class="grow"><div class="fw5 sm">Henry Cobblah</div><div class="mut" style="font-size:12px">Operations manager · Accra Hub</div></div><a class="sl-btn sm ghost" href="AiStudio.dc.html">Edit</a></div>
+<a class="ask" href="StaffAI.dc.html"><i class="ic ic-sm i-spark" aria-hidden="true"></i>Ask AI for help on this page<b><i class="ic ic-sm i-send" aria-hidden="true"></i></b></a>
+<div class="hd">Your profile with AI</div>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-wand" aria-hidden="true"></i></span><span>Retouch my photo<small>Light, skin and background</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-refresh" aria-hidden="true"></i></span><span>Reset images<small>Go back to the original photo</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-edit" aria-hidden="true"></i></span><span>Change my name<small>AI fixes spelling and capitals</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-user" aria-hidden="true"></i></span><span>Make my icon<small>Avatar from your photo or initials</small></span></a>
+<div class="hd">Help</div>
+<a class="it" role="menuitem" href="StaffAI.dc.html"><span class="t"><i class="ic ic-sm i-help" aria-hidden="true"></i></span><span>Explain this page</span></a>
+<a class="it" role="menuitem" href="CsInbox.dc.html"><span class="t"><i class="ic ic-sm i-message" aria-hidden="true"></i></span><span>Talk to a person</span></a>
+</div></details>
+    <a class="sl-ib" aria-label="Notifications" href="Notifications.dc.html"><i class="ic i-bell" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Switch theme" href="SettingsHub.dc.html"><i class="ic i-sun" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Documents" href="Documents.dc.html"><i class="ic i-file" aria-hidden="true"></i></a>
+    <a class="sl-btn" href="RiderDispatch.dc.html">Assign delivery</a>
+    <details class="uptop"><summary aria-label="Your profile and settings, Henry Cobblah"><span class="me-pic hc" style="width:34px;height:34px"><i class="me-on" aria-hidden="true"></i></span><span class="up-nm">Henry</span><i class="ic ic-sm i-down" aria-hidden="true"></i></summary><div class="pop" role="menu">
+<a class="up-me" href="AiStudio.dc.html"><span class="me-pic hc" style="width:48px;height:48px"><i class="me-on" aria-hidden="true"></i></span><span class="col" style="min-width:0"><b>Henry Cobblah</b><small>Operations manager · Accra Hub</small><small class="mono">henry@swiftlane.com</small></span></a>
+<div class="up-st"><span class="row g6 sm"><span class="ld" style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span>Available</span><a class="sm fw5" href="AiStudio.dc.html">Edit profile</a></div>
+<div class="up-h">Short links</div><div class="up-g"><a class="up-l" role="menuitem" href="Main.dc.html"><i class="ic ic-sm i-grid" aria-hidden="true"></i>Overview</a><a class="up-l" role="menuitem" href="RiderDispatch.dc.html"><i class="ic ic-sm i-truck" aria-hidden="true"></i>Dispatch board</a><a class="up-l" role="menuitem" href="SendPrices.dc.html"><i class="ic ic-sm i-send" aria-hidden="true"></i>Send prices</a><a class="up-l" role="menuitem" href="Reports.dc.html"><i class="ic ic-sm i-chart" aria-hidden="true"></i>Reports</a><a class="up-l" role="menuitem" href="Documents.dc.html"><i class="ic ic-sm i-file" aria-hidden="true"></i>Documents</a><a class="up-l" role="menuitem" href="ActivityLogs.dc.html"><i class="ic ic-sm i-clock" aria-hidden="true"></i>My activity</a></div>
+<div class="up-h">Settings</div><a class="up-l" role="menuitem" href="AiStudio.dc.html"><i class="ic ic-sm i-ai" aria-hidden="true"></i>Profile and photo</a><a class="up-l" role="menuitem" href="SettingsHub.dc.html"><i class="ic ic-sm i-cog" aria-hidden="true"></i>Settings</a><a class="up-l" role="menuitem" href="ApiConnections.dc.html"><i class="ic ic-sm i-link" aria-hidden="true"></i>API connections</a><a class="up-l" role="menuitem" href="StaffPermissions.dc.html"><i class="ic ic-sm i-shield" aria-hidden="true"></i>Permissions</a>
+<div class="up-row"><span class="sm mut">Theme</span><span class="sl-seg boxed" style="height:30px"><a class="on" href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Light</a><a href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Dark</a></span></div>
+<a class="up-l" role="menuitem" href="CsInbox.dc.html"><i class="ic ic-sm i-help" aria-hidden="true"></i>Help and support</a>
+<a class="up-l out" role="menuitem" href="Login.dc.html"><i class="ic ic-sm i-logout" aria-hidden="true"></i>Sign out</a>
+</div></details>
+  </header>
+  <div class="sl-body">
+    <label class="nav-bd" for="navtg" aria-hidden="true"></label>
+    <div class="sl-rail">
+      <a class="is-on" href="NewShipment.dc.html" aria-label="New shipment"><i class="ic i-newdoc" aria-hidden="true"></i></a>
+      <a href="StaffAI.dc.html" aria-label="AI assistant" title="AI assistant"><i class="ic i-ai" aria-hidden="true"></i></a>
+      <a href="PublicTracking.dc.html" aria-label="Tracking" title="Tracking"><i class="ic i-track" aria-hidden="true"></i></a>
+      <a href="LockerSearch.dc.html" aria-label="Search tracking number" title="Search tracking number"><i class="ic i-tsearch" aria-hidden="true"></i></a>
+      <a href="Consolidations.dc.html" aria-label="Consolidation" title="Consolidation"><i class="ic i-layers" aria-hidden="true"></i></a>
+      <a href="Warehouse.dc.html" aria-label="Warehouse" title="Warehouse"><i class="ic i-warehouse" aria-hidden="true"></i></a>
+      <a class="me-pic hc" href="AiStudio.dc.html" aria-label="Your profile, Henry Cobblah" style="width:34px;height:34px;margin-top:auto"></a>
+    </div>
+    <aside class="sl-side" aria-label="Main navigation">
+      <div class="nav-x"><span class="fw5">Menu</span><label class="sl-ib" for="navtg" aria-label="Close the menu" role="button" tabindex="0"><i class="ic i-x" aria-hidden="true"></i></label></div>
+      <sc-for list="{{nav}}" as="g" hint-placeholder-count="5">
+        <div class="sl-gl">{{g.label}}</div>
+        <nav class="sl-nav">
+          <sc-for list="{{g.items}}" as="it" hint-placeholder-count="4">
+            <a href="{{it.href}}" class="{{it.cls}}"><i class="ic {{it.icon}}" aria-hidden="true"></i><span>{{it.label}}</span><span class="cnt {{it.ok}}">{{it.c1}} <em>{{it.c2}}</em></span></a>
+          </sc-for>
+        </nav>
+      </sc-for>
+      <div class="sl-gl">Other</div>
+      <nav class="sl-nav">
+        <a href="SettingsHub.dc.html"><i class="ic i-globe" aria-hidden="true"></i><span>Language</span></a>
+        <a href="CsInbox.dc.html"><i class="ic i-help" aria-hidden="true"></i><span>Get help</span></a>
+        <a href="Login.dc.html" class="danger"><i class="ic i-logout" aria-hidden="true"></i><span>Sign out</span></a>
+      </nav>
+      <a class="me-card" href="AiStudio.dc.html" aria-label="Signed in as Henry Cobblah, Operations manager. Open your profile">
+        <span class="me-pic hc" role="img" aria-label="Photo of Henry Cobblah"><i class="me-on" aria-hidden="true"></i></span>
+        <span class="grow col" style="min-width:0"><b>Henry Cobblah</b><small>Operations manager · Accra Hub</small></span>
+        <i class="ic ic-sm i-more mut" aria-hidden="true"></i>
+      </a>
+      <a class="me-sub" href="CsInbox.dc.html"><i class="ic ic-sm i-ticket" aria-hidden="true"></i>Customer service<span class="sl-tag">12 open</span></a>
+    </aside>
+
+    <main class="sl-main"><div class="sl-wrap" style="max-width:1440px">
+<div class="sl-head"><div><h1 class="sl-title" style="font-size:20px">Delivery tracking</h1><p class="sl-lede">Every parcel on its way to a customer's door, live. {{outN}} out for delivery now.</p></div><div class="row g8 wrap"><a class="sl-btn ghost" href="ShipmentTracking.dc.html"><i class="ic ic-sm i-route" aria-hidden="true"></i>Full journey</a><a class="sl-btn ghost" href="RiderDispatch.dc.html"><i class="ic ic-sm i-truck" aria-hidden="true"></i>Dispatch board</a><a class="sl-btn" href="RiderDispatch.dc.html"><i class="ic ic-sm i-plus" aria-hidden="true"></i>Assign delivery</a></div></div>
+<div class="dt">
+<aside class="col g12"><div class="sl-search" style="max-width:none;min-width:0"><i class="ic ic-sm i-search" aria-hidden="true"></i><input aria-label="Search tracking number" placeholder="Search tracking number, customer or rider" value="{{q}}" onInput="{{onQ}}"></div>
+<div class="dt-tabs"><sc-for list="{{filters}}" as="f" hint-placeholder-count="4"><button class="chipbtn {{f.cls}}" onClick="{{f.pick}}">{{f.label}}</button></sc-for></div>
+<div class="dt-list"><sc-for list="{{cards}}" as="c" hint-placeholder-count="4"><div class="dt-c {{c.cls}}" role="button" tabindex="0" onClick="{{c.pick}}">
+<div class="dt-id"><span class="bx"><i class="ic i-box" aria-hidden="true"></i></span><b class="grow">{{c.id}}</b><span class="sl-pill {{c.pc}}">{{c.st}}</span></div>
+<sc-if value="{{c.open}}" hint-placeholder-val="{{ false }}"><div class="col g14" style="gap:14px"><div class="dt-eta"><div class="col"><span class="mut sm">Estimated arrival</span><big>{{c.eta}}<small>{{c.ampm}}</small></big></div><span class="fw5">{{c.left}}</span></div>
+<div class="dt-prog {{c.pcls}}" role="img" aria-label="{{c.pAria}}"><span class="n"></span><span class="ln"><i style="{{c.w}}"></i><span class="tk" style="{{c.l}}"><i class="ic {{c.tkIcon}}" aria-hidden="true"></i></span></span><span class="n end"></span></div>
+<div class="dt-ends"><span>{{c.from}}<small>{{c.fromSub}}</small></span><span style="text-align:right">{{c.to}}<small>{{c.toSub}}</small></span></div>
+<div class="dt-who"><span class="me-pic {{c.pic}}" style="width:44px;height:44px"></span><span class="col grow"><b class="fw5">{{c.cust}}</b><span class="mut sm">Recipient · {{c.locker}}</span></span><a class="dt-act" href="ComposeMessage.dc.html" aria-label="Call recipient"><i class="ic ic-sm i-phone" aria-hidden="true"></i></a><a class="dt-act pri" href="ComposeMessage.dc.html" aria-label="Message recipient"><i class="ic ic-sm i-message" aria-hidden="true"></i></a></div></div></sc-if>
+<sc-if value="{{c.closed}}" hint-placeholder-val="{{ true }}"><div class="row between sm"><span class="mut">{{c.cust}} · {{c.toShort}}</span><span class="mono">{{c.eta}} {{c.ampm}}</span></div></sc-if>
+</div></sc-for></div></aside>
+<section class="col g16">
+<div class="dt-map" role="img" aria-label="Map of the delivery route">
+<svg viewBox="0 0 900 420" preserveAspectRatio="xMidYMid slice"><rect width="900" height="420" fill="#EAE6DF"/>
+<path d="M-20 300 C 120 260, 200 330, 330 300 S 520 220, 640 260 S 820 330, 940 290 L 940 340 C 820 380, 700 310, 640 312 S 470 280, 340 350 S 120 320, -20 360 Z" fill="#D5DEE3"/>
+<g fill="#D9DFCF"><rect x="60" y="40" width="90" height="70" rx="6"/><rect x="420" y="70" width="70" height="90" rx="6"/><rect x="700" y="60" width="120" height="60" rx="6"/><rect x="150" y="360" width="110" height="50" rx="6"/><rect x="560" y="350" width="80" height="60" rx="6"/></g>
+<g stroke="#F7F5F1" stroke-width="10" fill="none"><path d="M0 130H900"/><path d="M0 220H900"/><path d="M180 0V420"/><path d="M380 0V420"/><path d="M600 0V420"/><path d="M780 0V420"/></g>
+<g stroke="#F7F5F1" stroke-width="4" fill="none" opacity=".9"><path d="M0 60H900M0 180H900M0 260H900M0 390H900M90 0V420M270 0V420M480 0V420M690 0V420M850 0V420"/></g>
+<g stroke="#FFFFFF" stroke-width="14" fill="none" opacity=".9"><path d="M-10 410 L 300 160 L 520 120 L 910 30"/></g>
+<polyline points="{{routeAll}}" fill="none" stroke="#1E1D1A" stroke-width="3" stroke-dasharray="7 7" stroke-linecap="round" opacity=".55"/>
+<polyline points="{{routeDone}}" fill="none" stroke="#E2632A" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="{{sx}}" cy="{{sy}}" r="9" fill="#fff" stroke="#1E1D1A" stroke-width="3"/>
+<g transform="translate({{ex}} {{ey}})"><path d="M0 -26c-9 0-16 7-16 16 0 12 16 26 16 26s16-14 16-26c0-9-7-16-16-16z" fill="#1E1D1A"/><circle cy="-10" r="6" fill="#fff"/></g>
+<g transform="translate({{rx}} {{ry}})"><circle r="26" fill="#E2632A" opacity=".18"><animate attributeName="r" values="18;30;18" dur="2s" repeatCount="indefinite"/></circle><circle r="18" fill="#E2632A" stroke="#fff" stroke-width="3"/><path d="M-8 -3h9v8h-9zM1 0h4l3 3v2h-7z" fill="#fff"/><circle cx="-5" cy="6" r="2" fill="#fff"/><circle cx="5" cy="6" r="2" fill="#fff"/></g>
+</svg>
+<span class="dt-live"><i aria-hidden="true"></i>Live · updated {{ago}}</span>
+<div class="dt-ctl" style="top:14px"><a href="DeliveryTracking.dc.html" aria-label="Full screen"><i class="ic ic-sm i-expand" aria-hidden="true"></i></a></div>
+<div class="dt-ctl" style="bottom:14px"><button aria-label="Zoom in"><i class="ic ic-sm i-plus" aria-hidden="true"></i></button><button aria-label="Zoom out"><i class="ic ic-sm i-minus" aria-hidden="true"></i></button><button aria-label="Centre on rider"><i class="ic ic-sm i-pin" aria-hidden="true"></i></button></div>
+<div class="dt-chip"><span><small class="mut">Distance left</small><b>{{km}} km</b></span><span><small class="mut">Speed</small><b>{{kmh}} km/h</b></span><span><small class="mut">Stops before</small><b>{{stops}}</b></span></div>
+</div>
+<div class="dt-g">
+<div class="col g16">
+<section class="sl-card col g12"><h2 class="sl-ct">Shipping info</h2><div class="dt-kv"><div><small>Tracking number</small><b class="mono">{{sel.id}}</b></div><div><small>Courier</small><b>{{sel.courier}}</b></div><div><small>Type</small><b>{{sel.type}}</b></div><div><small>Pieces</small><b>{{sel.pcs}}</b></div><div><small>Weight</small><b>{{sel.kg}}</b></div><div><small>Delivery fee</small><b>{{sel.fee}}</b></div></div><div class="row between sm" style="padding-top:10px;border-top:1px solid var(--line)"><span class="mut">Pickup code to collect at the door</span><b class="mono" style="letter-spacing:.18em">{{sel.code}}</b></div></section>
+<section class="sl-card col g12"><h2 class="sl-ct">Rider</h2><div class="row g12"><span class="me-pic {{sel.rpic}}" style="width:52px;height:52px"><i class="me-on" aria-hidden="true"></i></span><span class="col grow"><b class="fw5">{{sel.rider}}</b><span class="sm" style="color:var(--green-ink)">● Online · {{sel.rstat}}</span></span><a class="dt-act" href="RiderDetail.dc.html" aria-label="Call rider"><i class="ic ic-sm i-phone" aria-hidden="true"></i></a><a class="dt-act" href="RiderDetail.dc.html" aria-label="Message rider"><i class="ic ic-sm i-message" aria-hidden="true"></i></a></div><div class="dt-kv"><div><small>Vehicle</small><b>{{sel.veh}}</b></div><div><small>Plate</small><b class="mono">{{sel.plate}}</b></div><div><small>Today</small><b>{{sel.today}}</b></div></div><a class="sm fw5" href="RiderDetail.dc.html">Open rider page →</a></section>
+</div>
+<section class="sl-card col g16"><div class="sl-ch" style="margin:0"><h2 class="sl-ct">Route details</h2><span class="mut sm">{{sel.mode}}</span></div><div class="dt-tl"><sc-for list="{{steps}}" as="t" hint-placeholder-count="6"><div class="dt-st {{t.cls}}"><span class="d" title="{{t.what}}"><i class="ic ic-sm {{t.icon}}" aria-hidden="true"></i></span><span class="col"><b class="fw5 sm">{{t.date}}</b><small>{{t.time}}</small></span><span class="col"><b class="fw5 sm">{{t.what}}</b><small>{{t.where}}</small></span></div></sc-for></div></section>
+</div></section></div>
+</div></main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1350}}'>
+const ROUTE = [[120, 330], [180, 260], [180, 220], [300, 220], [380, 180], [380, 130], [520, 130], [600, 130], [600, 220], [700, 220], [780, 180]];
+const D = [
+ ['SL-100482', 'onway', 'Out for delivery', 'Kwame Mensah', 'SL-2041', 'p-kb', 'Accra Hub', 'Spintex Rd, Accra', '14 Palm Close', 'East Legon, Accra', 'DHL Express', 'Electronics', '1 box', '4.2 lb', '₵35.00', '4821', 'Kwesi Bonsu', 'p-kb', 'Motorbike', 'GR 4471-24', '6 of 9 delivered', 42, 0.58],
+ ['SL-100471', 'onway', 'Out for delivery', 'Ama Boateng', 'SL-1187', 'em', 'Accra Hub', 'Spintex Rd, Accra', '7 Oxford St', 'Osu, Accra', 'Swift Lane Air', 'Clothing', '2 boxes', '9.8 lb', '₵40.00', '7310', 'Samuel Ofori', 'p-so', 'Van', 'GT 2210-23', '3 of 7 delivered', 65, 0.31],
+ ['SL-100455', 'sorting', 'At hub', 'Yaw Darko', 'SL-0988', 'p-ym', 'Kumasi Branch', 'Adum, Kumasi', '22 Ridge Rd', 'Ahodwo, Kumasi', 'FedEx', 'Shoes', '1 box', '3.1 lb', '₵45.00', '1194', 'Kofi Asante', 'p-ka', 'Motorbike', 'AS 8812-22', 'Starts 13:00', 180, 0],
+ ['SL-100431', 'transit', 'In transit', 'Efua Owusu', 'SL-3318', 'eo', 'Newark NJ', 'Air · KQ 8102', '3 Beach Rd', 'Takoradi', 'Swift Lane Air', 'Laptop', '1 box', '5.6 lb', '₵60.00', '5520', 'Nii Lamptey', 'p-nl', 'Van', 'WR 1190-24', 'Assigned for Nov 7', 1440, 0],
+ ['SL-100398', 'delivered', 'Delivered', 'Abena Frimpong', 'SL-3270', 'p-ad', 'Accra Hub', 'Spintex Rd, Accra', '5 Harbour Rd', 'Tema', 'DHL Express', 'Food items', '3 boxes', '22 lb', '₵50.00', '0042', 'Kwesi Bonsu', 'p-kb', 'Motorbike', 'GR 4471-24', 'Code matched 10:12', 0, 1]];
+const pt = (f) => { const segs = []; let tot = 0; for (let i = 1; i < ROUTE.length; i++) { const a = ROUTE[i - 1], b = ROUTE[i], l = Math.hypot(b[0] - a[0], b[1] - a[1]); segs.push([a, b, l]); tot += l; } let d = f * tot; const done = [ROUTE[0]]; for (const [a, b, l] of segs) { if (d <= l) { const p = [a[0] + (b[0] - a[0]) * d / l, a[1] + (b[1] - a[1]) * d / l]; done.push(p); return { p, done }; } d -= l; done.push(b); } return { p: ROUTE[ROUTE.length - 1], done }; };
+class Component extends DCLogic {
+constructor(p) { super(p); this.state = { sel: 0, q: '', f: 'all', t: 0 }; if (typeof window !== 'undefined') this._iv = setInterval(() => this.setState({ t: this.state.t + 1 }), 1500); }
+componentWillUnmount() { clearInterval(this._iv); }
+renderVals() {
+const A = 'dtrack';
+const N = 'Operations|dash~Overview~grid~~~Main;panels~Control Panels~gauge~~~ControlPanels;air~Air Shipments~plane~128~~AirShipments;sea~Sea Packages~ship~64~~SeaPackages;prealert~Pre-Alerts~inbox~9~~PreAlerts;pickup~Pickups~truck~12~/ 20~Pickups;dtrack~Delivery Tracking~route~5~~DeliveryTracking;shiptrack~Shipment Tracking~track~~~ShipmentTracking;consol~Consolidations~layers~7~~Consolidations;warehouse~Warehouse~warehouse~~~Warehouse;handout~Hand Out Packages~box~5~~HandOut;locker~Locker Search~lock~~~LockerSearch#Hubs|execdash~Management Dashboard~chart~~~ExecDashboard;billhub~Billing & Finance~dollar~~~BillingHub;lastmile~Last-Mile Delivery~truck~~~LastMile;aicenter~AI Centre~ai~~~AiCenter;commshub~Messages & Automation~message~~~CommsHub;supporthub~Support & CRM~ticket~~~SupportHub;loyalty~Loyalty & Referrals~star~~~LoyaltyRewards;security~Security & Reliability~shield~~~SecurityCenter#Freight|frhub~Freight Hub~plane~~~FreightHub;frsched~Departures & Arrivals~calendar~5~~FreightSchedule;frwb~Waybills & Manifests~file~~~Waybills;frex~Cargo Exceptions~alert~6~~CargoExceptions;frins~Insurance & Claims~shield~4~~InsuranceClaims;frpart~Freight Partners~users~~~FreightPartners#People|cust~Customers~users~1,284~~Customers;recip~Recipients~pin~~~Recipients;drivers~Drivers~wheel~8~/ 14~Drivers;drvapp~Rider App~phone~~~DriverApp;staff~Staff & Roles~shield~~~StaffRoles#Finance|pay~Payments~card~~~Payments;ar~Accounts Receivable~receipt~~~AccountsReceivable;fin~Financial Overview~dollar~$48,200~~FinancialOverview#Insights|reports~Reports~chart~~~Reports;activity~Activity Logs~clock~~~ActivityLogs;messages~Message Logs~archive~~~MessageLogs#Customer Service|tickets~Support Inbox~ticket~1,482~~CsInbox;csrules~Ticket Rules~filter~~~CsRules;playbook~Playbook~book~~~CsPlaybook;csrep~Support Reports~star~~~CsReports;cschan~Channels & Teams~message~~~CsChannels;csai~AI Assistant~ai~~~StaffAI;cssupai~AI for Customers~spark~~~CsAI#Developer|devov~Dev Overview~terminal~~~DevOverview;devsvc~Services~server~12~~DevServices;devlogs~Logs~activity~~~DevLogs;devmet~Metrics~cpu~~~DevMetrics;devinfra~Infrastructure~cloud~~~DevInfrastructure;devdep~Deployments~rocket~~~DevDeployments;devalert~Alerts~alert~3~~DevAlerts;devissues~Issues & Change Log~bug~8~~DevIssues;devint~Integrations~puzzle~~~DevIntegrations#Settings|general~General~cog~~~SettingsHub;apis~API Connections~link~16~~ApiConnections;apitraffic~Live API Traffic~activity~~~ApiTraffic;tariffs~Shipping Tariffs~tag~~~Tariffs;notifc~Notifications~bell~3~~NotificationCenter;ebuild~Email Builder~mail~~~EmailBuilder;msgtpl~SMS & WhatsApp~message~~~MessageTemplates;bcast~Push Notifications~send~~~Broadcast;costs~Operating Costs~dollar~~~CostSettings;addr~Shipping Addresses~pin~~~ShippingAddresses;rfees~Rider Fees~truck~~~RiderSettings;loginpg~Login Page~image~~~LoginSettings;devmod~Modules~sliders~~~ModuleController;perm~Permissions~key~~~StaffPermissions;lblstudio~Label Printing~print~~~LabelStudio;auto~Automations~bolt~~~Automations';
+const nav = N.split('#').map(g => { const p = g.split('|'); return { label: p[0], items: p[1].split(';').map(i => { const f = i.split('~'); return { href: f[5] + '.dc.html', label: f[1], icon: 'i-' + f[2], c1: f[3], c2: f[4], cls: f[0] === A ? 'is-active' : '', ok: f[0] === 'fin' ? 'ok' : '' }; }) }; });
+  const s = this.state, t = s.t;
+  const prog = (r) => r[22] >= 1 || r[22] === 0 ? r[22] : Math.min(0.97, r[22] + t * 0.012);
+  const etaOf = (r) => { const m = r[1] === 'delivered' ? -1 : Math.max(1, Math.round(r[21] * (1 - prog(r)) / (1 - r[22] || 1))); const d = new Date(Date.UTC(2026, 10, 6, 10, 4) + Math.max(m, 0) * 60000); const h = d.getUTCHours(), mm = String(d.getUTCMinutes()).padStart(2, '0'); return { m, txt: (h % 12 || 12) + ':' + mm, ap: h < 12 ? 'AM' : 'PM' }; };
+  const F = [['all', 'All'], ['onway', 'Out for delivery'], ['sorting', 'At hub'], ['delivered', 'Delivered']];
+  const list = D.map((r, i) => [r, i]).filter(([r]) => (s.f === 'all' || r[1] === s.f || (s.f === 'sorting' && r[1] === 'transit')) && (r[0] + r[3] + r[16]).toLowerCase().includes(s.q.toLowerCase()));
+  const R = D[s.sel], pr = prog(R), e = etaOf(R), pos = pt(R[1] === 'delivered' ? 1 : pr);
+  const steps = [['Nov 2', '08:00', 'Received at US warehouse', 'Newark NJ, 1200 Commerce Dr'], ['Nov 3', '22:40', 'Flew out', 'KQ 8102 · Newark → Accra'], ['Nov 5', '06:50', 'Cleared at Accra Hub', 'Customs passed · Spintex Rd'], ['Nov 6', '08:30', 'Out for delivery', 'With ' + R[16] + ' · ' + R[18]], ['Nov 6', e.txt + ' ' + e.ap, 'Delivered', R[8] + ', ' + R[9]]];
+  const reached = R[1] === 'delivered' ? 5 : R[1] === 'onway' ? 4 : R[1] === 'sorting' ? 3 : 1;
+  return { nav, outN: D.filter(r => r[1] === 'onway').length, q: s.q, onQ: (ev) => this.setState({ q: ev.target.value }),
+    filters: F.map(f => ({ label: f[1], cls: s.f === f[0] ? 'on' : '', pick: () => this.setState({ f: f[0] }) })),
+    cards: list.map(([r, i]) => { const p = prog(r), et = etaOf(r); return { id: r[0], st: r[2], pc: r[1], cls: i === s.sel ? 'on' : '', open: i === s.sel, closed: i !== s.sel, pick: () => this.setState({ sel: i }),
+      eta: r[1] === 'delivered' ? 'Done' : et.txt, ampm: r[1] === 'delivered' ? '' : et.ap, left: r[1] === 'delivered' ? r[20] : r[1] === 'onway' ? et.m + ' min away' : r[20],
+      w: 'width:' + (p * 100).toFixed(1) + '%', l: 'left:' + (4 + p * 92).toFixed(1) + '%', pcls: r[1] === 'delivered' ? 'done' : r[1] === 'onway' ? 'moving' : 'idle', tkIcon: r[1] === 'delivered' ? 'i-check' : r[1] === 'onway' ? 'i-truck' : 'i-warehouse', pAria: r[1] === 'delivered' ? 'Delivered' : Math.round(p * 100) + '% of the way', from: r[6], fromSub: r[7], to: r[8], toSub: r[9], toShort: r[9], cust: r[3], locker: r[4], pic: r[5] }; }),
+    routeAll: ROUTE.map(p => p.join(',')).join(' '), routeDone: pos.done.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' '),
+    rx: pos.p[0].toFixed(1), ry: pos.p[1].toFixed(1), sx: ROUTE[0][0], sy: ROUTE[0][1], ex: ROUTE[ROUTE.length - 1][0], ey: ROUTE[ROUTE.length - 1][1],
+    ago: (t % 3 === 0 ? 'just now' : (t % 3) * 2 + ' s ago'), km: (R[1] === 'onway' ? (11.4 * (1 - pr)).toFixed(1) : R[1] === 'delivered' ? '0.0' : '—'), kmh: R[1] === 'onway' ? 24 + (t * 7) % 13 : 0, stops: R[1] === 'onway' ? Math.max(0, 2 - Math.floor(t / 12)) : 0,
+    sel: { id: R[0], courier: R[10], type: R[11], pcs: R[12], kg: R[13], fee: R[14], code: R[15], rider: R[16], rpic: R[17], veh: R[18], plate: R[19], today: R[20], rstat: R[1] === 'onway' ? 'on this route' : 'at the hub', mode: 'Air · Newark → Accra → door' },
+    steps: steps.map((x, i) => ({ date: x[0], time: x[1], what: x[2], where: x[3], icon: ['i-warehouse', 'i-plane', 'i-shield', 'i-truck', 'i-check'][i] || 'i-pin', cls: (i < reached - 1 ? 'done' : i === reached - 1 ? 'done now' : 'todo') + (i === steps.length - 1 ? ' last' : '') })) };
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Swift Lane Alerts</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./swiftlane.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}
+@keyframes lvp{0%{box-shadow:0 0 0 0 rgba(63,208,143,.55)}100%{box-shadow:0 0 0 9px rgba(63,208,143,0)}}
+@keyframes lvpy{0%{box-shadow:0 0 0 0 rgba(235,180,60,.55)}100%{box-shadow:0 0 0 9px rgba(235,180,60,0)}}
+@keyframes inA{from{opacity:0;transform:translateY(-10px);background:rgba(63,208,143,.16)}to{opacity:1;transform:none}}
+@keyframes inB{from{opacity:0;transform:translateY(-10px);background:rgba(63,208,143,.16)}to{opacity:1;transform:none}}
+@keyframes flow{to{stroke-dashoffset:-20}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes stripes{to{background-position:28px 0}}
+@keyframes blink{50%{opacity:.35}}
+@keyframes popA{from{color:#5BE0A5}to{color:inherit}}@keyframes popB{from{color:#5BE0A5}to{color:inherit}}
+.live{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 12px;border-radius:999px;background:var(--green-bg);color:var(--green-ink);font-size:13px;font-weight:500}
+.live.off{background:var(--active);color:var(--muted)}
+.ld{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;flex:none;animation:lvp 1.6s infinite}
+.ld.y{background:var(--yellow);animation-name:lvpy}.ld.r{background:var(--red);animation:blink 1s infinite}.ld.g{background:var(--faint);animation:none}
+.off .ld{animation:none;background:var(--faint)}
+.ik{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border-radius:16px;border:1px solid var(--line);background:var(--card);min-width:0}
+.ik .t{font-size:13px;color:var(--ink-2);display:flex;align-items:center;gap:8px}.ik .v{font:500 26px var(--mono);letter-spacing:-.02em}.ik .v small{font:400 13px var(--font);color:var(--muted);margin-left:4px}
+.ik svg{width:100%;height:40px;display:block}.ik path{transition:d .9s ease}
+.va{animation:popA .9s}.vb{animation:popB .9s}
+.topo{width:100%;height:auto;display:block}
+.topo .e{fill:none;stroke:#343849;stroke-width:1.4}
+.topo .e.f{stroke:#4A4F66;stroke-dasharray:3 7;animation:flow 1.1s linear infinite}
+.topo .e.w{stroke:#8A6A24;stroke-dasharray:3 7;animation:flow 2.4s linear infinite}
+.topo .n rect{fill:#242735;stroke:#3B3F52;stroke-width:1}.topo .n.w rect{stroke:#EBB43C;stroke-dasharray:4 3}
+.topo .n text{fill:#F3F2EE;font:500 12px Figtree,sans-serif}.topo .n text.s{fill:#8F91A2;font:400 10.5px 'JetBrains Mono',monospace}
+.topo .col{fill:#8F91A2;font:500 10.5px Figtree,sans-serif;letter-spacing:.06em;text-transform:uppercase}
+.nodeg{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(200px,100%),1fr));gap:12px}
+.nd{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--field)}
+.nd.w{border-color:rgba(235,180,60,.5)}
+.mt{display:grid;grid-template-columns:38px 1fr 40px;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.mt b{font:500 12px var(--mono);color:var(--ink-2);text-align:right}
+.hb{height:6px;border-radius:99px;background:var(--active);overflow:hidden}.hb span{display:block;height:100%;border-radius:99px;background:#6B6F86;transition:width .9s ease}
+.hb.y span{background:var(--yellow)}.hb.r span{background:var(--red)}.hb.g span{background:var(--green)}
+.prog{height:8px;border-radius:99px;background:var(--active);overflow:hidden}.prog span{display:block;height:100%;border-radius:99px;background:var(--green);transition:width 1s ease}
+.prog.run span{background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.2) 0 7px,transparent 7px 14px);background-size:28px 100%;animation:stripes .8s linear infinite}
+.feed{display:flex;flex-direction:column}
+.fe{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:start;padding:10px 4px;border-top:1px solid var(--line);font-size:13.5px}
+.fe:first-child{border-top:0}.fe.ev-a{animation:inA .8s ease}.fe.ev-b{animation:inB .8s ease}
+.fe .ico{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;background:var(--active)}
+.fe .ico.g{background:var(--green-bg);color:var(--green-ink)}.fe .ico.y{background:var(--amber-bg);color:var(--amber-ink)}.fe .ico.b{background:var(--sky-bg);color:var(--sky-ink)}.fe .ico.r{background:var(--red-bg);color:var(--red-ink)}
+.kvr{display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:38px;border-top:1px solid var(--line);font-size:13.5px}.kvr:first-of-type{border-top:0}
+.spin{animation:spin 1s linear infinite;display:inline-block}
+.cron{display:grid;grid-template-columns:1fr 92px 120px;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line);font-size:13.5px}.cron:first-of-type{border-top:0}
+.reg{display:grid;grid-template-columns:auto 1fr auto auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line);font-size:13.5px}.reg:first-of-type{border-top:0}
+.tail{background:#0E1017;border:1px solid var(--line);border-radius:12px;padding:10px 14px;font:12px/1.75 var(--mono);color:var(--ink-2);height:168px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end}
+.tail .ln{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tail .ln.ev-a{animation:inA .6s}.tail .ln.ev-b{animation:inB .6s}
+.tail .k{color:#86B1FA}.tail .ok{color:#5BE0A5}.tail .w{color:#F0C25A}
+.cl{display:flex;flex-direction:column;gap:0}
+.cv{border-top:1px solid var(--line);padding:14px 0}.cv:first-child{border-top:0}
+.cvh{display:flex;align-items:center;gap:10px;flex-wrap:wrap;cursor:pointer;background:none;border:0;color:inherit;font:inherit;padding:0;width:100%;text-align:left}
+.ce{display:grid;grid-template-columns:86px 1fr auto;gap:10px;align-items:center;padding:7px 0 7px 34px;font-size:13.5px}
+.ct{display:inline-flex;justify-content:center;height:22px;align-items:center;border-radius:6px;font-size:11.5px;font-weight:500;padding:0 8px}
+.ct.add{background:var(--green-bg);color:var(--green-ink)}.ct.chg{background:var(--sky-bg);color:var(--sky-ink)}.ct.fix{background:var(--amber-bg);color:var(--amber-ink)}.ct.rem{background:var(--red-bg);color:var(--red-ink)}.ct.sec{background:var(--violet-bg);color:var(--violet-ink)}
+.envc{display:flex;flex-direction:column;gap:10px;padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
+.mx td.dr{color:var(--amber-ink)}
+.stp{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;font-size:13px;text-align:center;position:relative}
+.stp .dot{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--green);color:#0C1A12}
+.stp.run .dot{background:var(--yellow);color:#1A1405;animation:lvpy 1.4s infinite}.stp.todo .dot{background:var(--active);color:var(--muted)}
+.stp::after{content:"";position:absolute;top:15px;left:calc(50% + 20px);right:calc(-50% + 20px);height:2px;background:var(--green)}
+.stp.run::after,.stp.todo::after{background:var(--line-2)}.stp:last-child::after{display:none}
+.tl{display:flex;flex-direction:column}
+.tlr{display:grid;grid-template-columns:22px 150px 1fr 120px 110px 90px;gap:12px;align-items:center;padding:11px 16px;border-top:1px solid var(--line);font-size:13.5px}
+.tlr .dt{width:10px;height:10px;border-radius:50%;background:var(--green);justify-self:center}
+.tlr .dt.y{background:var(--yellow)}.tlr .dt.r{background:var(--red)}.tlr .dt.b{background:var(--sky)}
+
+.al-row{display:grid;grid-template-columns:28px 1fr 170px 90px 110px;gap:12px;align-items:center;padding:12px 4px;border-top:1px solid var(--line)}
+.al-row:first-child{border-top:0}.al-row.ev-a{animation:inA .8s}.al-row.ev-b{animation:inB .8s}
+.al-sev{width:28px;height:28px;border-radius:50%;display:grid;place-items:center}
+.al-sev.c{background:var(--red-bg);color:var(--red-ink);animation:blink 1.2s infinite}.al-sev.w{background:var(--amber-bg);color:var(--amber-ink)}.al-sev.k{background:var(--active);color:var(--muted)}
+.al-meter{position:relative;height:8px;border-radius:99px;background:var(--active)}.al-meter span{position:absolute;left:0;top:0;bottom:0;border-radius:99px;transition:width .9s ease}.al-meter i{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink-2)}
+.mon{display:flex;flex-direction:column;gap:6px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+.mon svg{width:100%;height:46px;display:block}
+.hs{display:grid;grid-template-columns:repeat(48,1fr);gap:2px}.hs i{height:22px;border-radius:3px;background:var(--active)}.hs i.w{background:var(--amber-bg)}.hs i.c{background:var(--red-bg)}.hs i.now{outline:1.5px solid var(--ink-2)}
+</style>
+</helmet>
+<div class="sl-app dk">
+  <input type="checkbox" id="navtg" class="nav-tg" aria-hidden="true" tabindex="-1">
+  <header class="sl-top">
+    <label class="sl-ib nav-open" for="navtg" aria-label="Open or close the menu" role="button" tabindex="0"><i class="ic i-sidebar" aria-hidden="true"></i></label>
+    <a class="sl-switch" href="Main.dc.html"><small>SL</small> Swift Lane · Accra Hub <i class="ic ic-sm i-down" aria-hidden="true"></i></a>
+    <a class="fx-chip" href="SettingsHub.dc.html" title="Exchange rate · set in Settings › General"><i class="ic ic-sm i-dollar" aria-hidden="true"></i><span class="mono">USD 1 = GHS 12.40</span><span class="fx-d">▲ 0.4%</span></a>
+    <span class="grow"></span>
+    <details class="aitop"><summary aria-label="Help with Swift Lane AI"><span class="o"><i class="ic i-ai" aria-hidden="true"></i></span>Help</summary><div class="pop" role="menu">
+<div class="me"><span class="sl-av sm dark">HC</span><div class="grow"><div class="fw5 sm">Henry Cobblah</div><div class="mut" style="font-size:12px">Operations manager · Accra Hub</div></div><a class="sl-btn sm ghost" href="AiStudio.dc.html">Edit</a></div>
+<a class="ask" href="StaffAI.dc.html"><i class="ic ic-sm i-spark" aria-hidden="true"></i>Ask AI for help on this page<b><i class="ic ic-sm i-send" aria-hidden="true"></i></b></a>
+<div class="hd">Your profile with AI</div>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-wand" aria-hidden="true"></i></span><span>Retouch my photo<small>Light, skin and background</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-refresh" aria-hidden="true"></i></span><span>Reset images<small>Go back to the original photo</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-edit" aria-hidden="true"></i></span><span>Change my name<small>AI fixes spelling and capitals</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-user" aria-hidden="true"></i></span><span>Make my icon<small>Avatar from your photo or initials</small></span></a>
+<div class="hd">Help</div>
+<a class="it" role="menuitem" href="StaffAI.dc.html"><span class="t"><i class="ic ic-sm i-help" aria-hidden="true"></i></span><span>Explain this page</span></a>
+<a class="it" role="menuitem" href="CsInbox.dc.html"><span class="t"><i class="ic ic-sm i-message" aria-hidden="true"></i></span><span>Talk to a person</span></a>
+</div></details>
+    <a class="sl-ib" aria-label="Notifications" href="Notifications.dc.html"><i class="ic i-bell" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Switch theme" href="SettingsHub.dc.html"><i class="ic i-sun" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Documents" href="Documents.dc.html"><i class="ic i-file" aria-hidden="true"></i></a>
+    <a class="sl-btn" href="DevAlerts.dc.html">New Rule</a>
+    <details class="uptop"><summary aria-label="Your profile and settings, Henry Cobblah"><span class="me-pic hc" style="width:34px;height:34px"><i class="me-on" aria-hidden="true"></i></span><span class="up-nm">Henry</span><i class="ic ic-sm i-down" aria-hidden="true"></i></summary><div class="pop" role="menu">
+<a class="up-me" href="AiStudio.dc.html"><span class="me-pic hc" style="width:48px;height:48px"><i class="me-on" aria-hidden="true"></i></span><span class="col" style="min-width:0"><b>Henry Cobblah</b><small>Operations manager · Accra Hub</small><small class="mono">henry@swiftlane.com</small></span></a>
+<div class="up-st"><span class="row g6 sm"><span class="ld" style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span>Available</span><a class="sm fw5" href="AiStudio.dc.html">Edit profile</a></div>
+<div class="up-h">Short links</div><div class="up-g"><a class="up-l" role="menuitem" href="Main.dc.html"><i class="ic ic-sm i-grid" aria-hidden="true"></i>Overview</a><a class="up-l" role="menuitem" href="RiderDispatch.dc.html"><i class="ic ic-sm i-truck" aria-hidden="true"></i>Dispatch board</a><a class="up-l" role="menuitem" href="SendPrices.dc.html"><i class="ic ic-sm i-send" aria-hidden="true"></i>Send prices</a><a class="up-l" role="menuitem" href="Reports.dc.html"><i class="ic ic-sm i-chart" aria-hidden="true"></i>Reports</a><a class="up-l" role="menuitem" href="Documents.dc.html"><i class="ic ic-sm i-file" aria-hidden="true"></i>Documents</a><a class="up-l" role="menuitem" href="ActivityLogs.dc.html"><i class="ic ic-sm i-clock" aria-hidden="true"></i>My activity</a></div>
+<div class="up-h">Settings</div><a class="up-l" role="menuitem" href="AiStudio.dc.html"><i class="ic ic-sm i-ai" aria-hidden="true"></i>Profile and photo</a><a class="up-l" role="menuitem" href="SettingsHub.dc.html"><i class="ic ic-sm i-cog" aria-hidden="true"></i>Settings</a><a class="up-l" role="menuitem" href="ApiConnections.dc.html"><i class="ic ic-sm i-link" aria-hidden="true"></i>API connections</a><a class="up-l" role="menuitem" href="StaffPermissions.dc.html"><i class="ic ic-sm i-shield" aria-hidden="true"></i>Permissions</a>
+<div class="up-row"><span class="sm mut">Theme</span><span class="sl-seg boxed" style="height:30px"><a class="on" href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Light</a><a href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Dark</a></span></div>
+<a class="up-l" role="menuitem" href="CsInbox.dc.html"><i class="ic ic-sm i-help" aria-hidden="true"></i>Help and support</a>
+<a class="up-l out" role="menuitem" href="Login.dc.html"><i class="ic ic-sm i-logout" aria-hidden="true"></i>Sign out</a>
+</div></details>
+  </header>
+  <div class="sl-body">
+    <label class="nav-bd" for="navtg" aria-hidden="true"></label>
+    <div class="sl-rail">
+      <a class="is-on" href="NewShipment.dc.html" aria-label="New shipment"><i class="ic i-newdoc" aria-hidden="true"></i></a>
+      <a href="StaffAI.dc.html" aria-label="AI assistant" title="AI assistant"><i class="ic i-ai" aria-hidden="true"></i></a>
+      <a href="PublicTracking.dc.html" aria-label="Tracking" title="Tracking"><i class="ic i-track" aria-hidden="true"></i></a>
+      <a href="LockerSearch.dc.html" aria-label="Search tracking number" title="Search tracking number"><i class="ic i-tsearch" aria-hidden="true"></i></a>
+      <a href="Consolidations.dc.html" aria-label="Consolidation" title="Consolidation"><i class="ic i-layers" aria-hidden="true"></i></a>
+      <a href="Warehouse.dc.html" aria-label="Warehouse" title="Warehouse"><i class="ic i-warehouse" aria-hidden="true"></i></a>
+      <a class="me-pic hc" href="AiStudio.dc.html" aria-label="Your profile, Henry Cobblah" style="width:34px;height:34px;margin-top:auto"></a>
+    </div>
+    <aside class="sl-side" aria-label="Main navigation">
+      <div class="nav-x"><span class="fw5">Menu</span><label class="sl-ib" for="navtg" aria-label="Close the menu" role="button" tabindex="0"><i class="ic i-x" aria-hidden="true"></i></label></div>
+      <sc-for list="{{nav}}" as="g" hint-placeholder-count="5">
+        <div class="sl-gl">{{g.label}}</div>
+        <nav class="sl-nav">
+          <sc-for list="{{g.items}}" as="it" hint-placeholder-count="4">
+            <a href="{{it.href}}" class="{{it.cls}}"><i class="ic {{it.icon}}" aria-hidden="true"></i><span>{{it.label}}</span><span class="cnt {{it.ok}}">{{it.c1}} <em>{{it.c2}}</em></span></a>
+          </sc-for>
+        </nav>
+      </sc-for>
+      <div class="sl-gl">Other</div>
+      <nav class="sl-nav">
+        <a href="SettingsHub.dc.html"><i class="ic i-globe" aria-hidden="true"></i><span>Language</span></a>
+        <a href="CsInbox.dc.html"><i class="ic i-help" aria-hidden="true"></i><span>Get help</span></a>
+        <a href="Login.dc.html" class="danger"><i class="ic i-logout" aria-hidden="true"></i><span>Sign out</span></a>
+      </nav>
+      <a class="me-card" href="AiStudio.dc.html" aria-label="Signed in as Henry Cobblah, Operations manager. Open your profile">
+        <span class="me-pic hc" role="img" aria-label="Photo of Henry Cobblah"><i class="me-on" aria-hidden="true"></i></span>
+        <span class="grow col" style="min-width:0"><b>Henry Cobblah</b><small>Operations manager · Accra Hub</small></span>
+        <i class="ic ic-sm i-more mut" aria-hidden="true"></i>
+      </a>
+      <a class="me-sub" href="CsInbox.dc.html"><i class="ic ic-sm i-ticket" aria-hidden="true"></i>Customer service<span class="sl-tag">12 open</span></a>
+    </aside>
+
+    <main class="sl-main">
+<div class="sl-wrap">
+<div class="sl-head"><div><h1 class="sl-title">Alerts</h1><p class="sl-lede">{{openN}} open · {{critN}} critical · {{warnN}} warnings · watching 6 signals live</p></div><div class="row g8 wrap"><span class="live {{liveCls}}"><span class="ld"></span>{{liveLabel}}</span><span class="chipbtn"><i class="ic ic-sm i-cloud" aria-hidden="true"></i>Production<i class="ic ic-sm i-down" aria-hidden="true"></i></span><button class="sl-btn ghost" onClick="{{toggle}}"><i class="ic ic-sm {{toggleIcon}}" aria-hidden="true"></i>{{toggleLabel}}</button><a class="sl-btn" href="Automations.dc.html"><i class="ic ic-sm i-plus" aria-hidden="true"></i>New rule</a></div></div>
+<div class="grid cols4"><sc-for list="{{kpis}}" as="k" hint-placeholder-count="4"><div class="ik"><div class="t">{{k.label}}</div><div class="v {{k.flash}}">{{k.v}}<small>{{k.unit}}</small></div><div class="sm {{k.dc}}">{{k.d}}</div><svg viewBox="0 0 200 40" preserveAspectRatio="none" aria-hidden="true"><path d="{{k.area}}" fill="#E08A3C" opacity=".12"></path><path d="{{k.path}}" fill="none" stroke="#E08A3C" stroke-width="1.8" vector-effect="non-scaling-stroke"></path></svg></div></sc-for></div>
+<section class="sl-card col g4"><div class="sl-ch"><div><h2 class="sl-ct">Firing now</h2><div class="mut sm">Value right now against the rule's limit · timers count live</div></div><div class="sl-seg boxed"><sc-for list="{{tabs}}" as="t" hint-placeholder-count="3"><button class="{{t.cls}}" onClick="{{t.pick}}">{{t.label}}</button></sc-for></div></div>
+<sc-for list="{{alerts}}" as="a" hint-placeholder-count="4"><div class="al-row {{a.anim}}"><span class="al-sev {{a.sc}}"><i class="ic ic-sm {{a.icon}}" aria-hidden="true"></i></span><div class="col"><span class="fw5">{{a.t}}</span><span class="mut sm">{{a.sub}}</span></div><div class="col g4"><div class="al-meter"><span style="{{a.bar}}"></span><i style="{{a.lim}}"></i></div><span class="mono sm">{{a.val}} <span class="mut">/ limit {{a.limit}}</span></span></div><span class="mono sm {{a.tc}}">{{a.for}}</span><sc-if value="{{a.canAck}}" hint-placeholder-val="{{ true }}"><button class="sl-btn ghost sm" onClick="{{a.ack}}">Acknowledge</button></sc-if><sc-if value="{{a.acked}}" hint-placeholder-val="{{ false }}"><span class="sm mut">{{a.by}}</span></sc-if></div></sc-for>
+<sc-if value="{{none}}" hint-placeholder-val="{{ false }}"><div class="mut sm" style="padding:16px 4px">Nothing here.</div></sc-if></section>
+<div class="grid cols3"><sc-for list="{{mons}}" as="m" hint-placeholder-count="6"><div class="mon"><div class="row between"><span class="row g8 fw5 sm"><span class="ld {{m.dot}}"></span>{{m.name}}</span><b class="mono {{m.flash}}" style="font-weight:500">{{m.v}}</b></div><svg viewBox="0 0 200 46" preserveAspectRatio="none" aria-hidden="true"><line x1="0" x2="200" y1="{{m.ly}}" y2="{{m.ly}}" stroke="#E5545A" stroke-dasharray="4 4" stroke-width="1" vector-effect="non-scaling-stroke"></line><path d="{{m.path}}" fill="none" stroke="#E08A3C" stroke-width="1.8" vector-effect="non-scaling-stroke"></path></svg><span class="mut sm">{{m.rule}}</span></div></sc-for></div>
+<section class="sl-card col g8"><div class="sl-ch" style="margin:0"><h2 class="sl-ct">Last 24 hours</h2><span class="row g12 sm mut"><span class="row g6"><i style="width:10px;height:10px;border-radius:3px;background:var(--red-bg);display:inline-block"></i>Critical</span><span class="row g6"><i style="width:10px;height:10px;border-radius:3px;background:var(--amber-bg);display:inline-block"></i>Warning</span></span></div><div class="hs" aria-label="Alerts per half hour, last 24 hours"><sc-for list="{{heat}}" as="h" hint-placeholder-count="48"><i class="{{h}}"></i></sc-for></div><div class="row between mut sm"><span>Yesterday 22:00</span><span>Now</span></div></section>
+<div class="split"><section class="a sl-card flush"><div class="row between" style="padding:14px 16px"><h2 class="sl-ct">Alert rules</h2><span class="mut sm">6 rules</span></div><div class="sl-tw"><table class="sl-table"><thead><tr><th>Condition</th><th>Scope</th><th>Notify</th><th>On</th></tr></thead><tbody><tr><td class="fw5">Error rate above 1% for 5 min</td><td>All services</td><td>Slack + SMS</td><td><span class="sl-toggle on"></span></td></tr><tr><td class="fw5">p95 latency above 500 ms</td><td>API Gateway</td><td>Slack</td><td><span class="sl-toggle on"></span></td></tr><tr><td class="fw5">Webhook failures above 5 in 10 min</td><td>Payments</td><td>Slack + SMS</td><td><span class="sl-toggle on"></span></td></tr><tr><td class="fw5">Disk usage above 85%</td><td>Infrastructure</td><td>Email</td><td><span class="sl-toggle on"></span></td></tr><tr><td class="fw5">Queue depth above 200</td><td>Worker</td><td>Slack</td><td><span class="sl-toggle on"></span></td></tr><tr><td class="fw5">Failed sign-ins above 20 / min</td><td>Auth</td><td>SMS</td><td><span class="sl-toggle "></span></td></tr></tbody></table></div></section><aside class="b col g16"><section class="sl-card col g8"><h2 class="sl-ct">On call</h2><div class="dv-row"><span class="sl-av sm">H</span><div class="grow"><div class="fw5">Henry Cobblah</div><div class="mut sm">Primary · until Sun</div></div></div><div class="dv-row"><span class="sl-av sm">A</span><div class="grow"><div class="fw5">Adwoa Sarpong</div><div class="mut sm">Secondary</div></div></div><div class="mbf"><span>Rotation changes Monday 09:00</span></div></section><section class="sl-card col g8"><h2 class="sl-ct">Channels</h2><div class="dv-row"><span class="sl-tile"><i class="ic i-message" aria-hidden="true"></i></span><span class="grow">Slack #ops-alerts</span><span class="sl-pill paid">Connected</span></div><div class="dv-row"><span class="sl-tile"><i class="ic i-phone" aria-hidden="true"></i></span><span class="grow">SMS on-call</span><span class="sl-pill paid">Connected</span></div><div class="dv-row"><span class="sl-tile"><i class="ic i-at" aria-hidden="true"></i></span><span class="grow">Email dev@swiftlane</span><span class="sl-pill paid">Connected</span></div><div class="dv-row"><span class="sl-tile"><i class="ic i-bell" aria-hidden="true"></i></span><span class="grow">PagerDuty</span><span class="sl-pill onway">Not set</span></div></section></aside></div>
+
+</div>
+</main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2250}}'>
+const POOL = [['c','i-x','Payment webhook failures','payments · Paystack charge.success retried 5×',12,5,'events',96],['w','i-bell','SMS provider latency','notifications · Hubtel delivery p95',2.8,1.5,'s',22],['w','i-bell','Worker queue depth','worker · notifications queue',214,200,'jobs',10],['w','i-bell','WhatsApp API slow','notifications · reply time',1.9,1.5,'s',4],['c','i-alert','Disk almost full on worker-2','infrastructure · /var/lib',91,85,'%',2]];
+const wave = (t, i, a) => Math.sin(t * 0.9 + i * 1.7) * a + Math.sin(t * 0.37 + i) * a * 0.6;
+const spark = (arr, lo, hi, h) => { const n = arr.length; return arr.map((v, i) => (i ? 'L' : 'M') + (i * 200 / (n - 1)).toFixed(1) + ',' + (h - 2 - (Math.min(hi, Math.max(lo, v)) - lo) / (hi - lo) * (h - 6)).toFixed(1)).join(' '); };
+class Component extends DCLogic {
+constructor(p) { super(p); this.state = { t: 30, live: true, tab: 'open', ack: {} }; if (typeof window !== 'undefined') { this._iv = setInterval(() => { if (this.state.live) this.setState({ t: this.state.t + 1 }); }, 2000); } }
+componentWillUnmount() { clearInterval(this._iv); }
+renderVals() {
+const A = 'devalert';
+const N = 'Operations|dash~Overview~grid~~~Main;panels~Control Panels~gauge~~~ControlPanels;air~Air Shipments~plane~128~~AirShipments;sea~Sea Packages~ship~64~~SeaPackages;prealert~Pre-Alerts~inbox~9~~PreAlerts;pickup~Pickups~truck~12~/ 20~Pickups;dtrack~Delivery Tracking~route~5~~DeliveryTracking;shiptrack~Shipment Tracking~track~~~ShipmentTracking;consol~Consolidations~layers~7~~Consolidations;warehouse~Warehouse~warehouse~~~Warehouse;handout~Hand Out Packages~box~5~~HandOut;locker~Locker Search~lock~~~LockerSearch#Hubs|execdash~Management Dashboard~chart~~~ExecDashboard;billhub~Billing & Finance~dollar~~~BillingHub;lastmile~Last-Mile Delivery~truck~~~LastMile;aicenter~AI Centre~ai~~~AiCenter;commshub~Messages & Automation~message~~~CommsHub;supporthub~Support & CRM~ticket~~~SupportHub;loyalty~Loyalty & Referrals~star~~~LoyaltyRewards;security~Security & Reliability~shield~~~SecurityCenter#Freight|frhub~Freight Hub~plane~~~FreightHub;frsched~Departures & Arrivals~calendar~5~~FreightSchedule;frwb~Waybills & Manifests~file~~~Waybills;frex~Cargo Exceptions~alert~6~~CargoExceptions;frins~Insurance & Claims~shield~4~~InsuranceClaims;frpart~Freight Partners~users~~~FreightPartners#People|cust~Customers~users~1,284~~Customers;recip~Recipients~pin~~~Recipients;drivers~Drivers~wheel~8~/ 14~Drivers;drvapp~Rider App~phone~~~DriverApp;staff~Staff & Roles~shield~~~StaffRoles#Finance|pay~Payments~card~~~Payments;ar~Accounts Receivable~receipt~~~AccountsReceivable;fin~Financial Overview~dollar~$48,200~~FinancialOverview#Insights|reports~Reports~chart~~~Reports;activity~Activity Logs~clock~~~ActivityLogs;messages~Message Logs~archive~~~MessageLogs#Customer Service|tickets~Support Inbox~ticket~1,482~~CsInbox;csrules~Ticket Rules~filter~~~CsRules;playbook~Playbook~book~~~CsPlaybook;csrep~Support Reports~star~~~CsReports;cschan~Channels & Teams~message~~~CsChannels;csai~AI Assistant~ai~~~StaffAI;cssupai~AI for Customers~spark~~~CsAI#Developer|devov~Dev Overview~terminal~~~DevOverview;devsvc~Services~server~12~~DevServices;devlogs~Logs~activity~~~DevLogs;devmet~Metrics~cpu~~~DevMetrics;devinfra~Infrastructure~cloud~~~DevInfrastructure;devdep~Deployments~rocket~~~DevDeployments;devalert~Alerts~alert~3~~DevAlerts;devissues~Issues & Change Log~bug~8~~DevIssues;devint~Integrations~puzzle~~~DevIntegrations#Settings|general~General~cog~~~SettingsHub;apis~API Connections~link~16~~ApiConnections;apitraffic~Live API Traffic~activity~~~ApiTraffic;tariffs~Shipping Tariffs~tag~~~Tariffs;notifc~Notifications~bell~3~~NotificationCenter;ebuild~Email Builder~mail~~~EmailBuilder;msgtpl~SMS & WhatsApp~message~~~MessageTemplates;bcast~Push Notifications~send~~~Broadcast;costs~Operating Costs~dollar~~~CostSettings;addr~Shipping Addresses~pin~~~ShippingAddresses;rfees~Rider Fees~truck~~~RiderSettings;loginpg~Login Page~image~~~LoginSettings;devmod~Modules~sliders~~~ModuleController;perm~Permissions~key~~~StaffPermissions;lblstudio~Label Printing~print~~~LabelStudio;auto~Automations~bolt~~~Automations';
+const nav = N.split('#').map(g => { const p = g.split('|'); return { label: p[0], items: p[1].split(';').map(i => { const f = i.split('~'); return { href: f[5] + '.dc.html', label: f[1], icon: 'i-' + f[2], c1: f[3], c2: f[4], cls: f[0] === A ? 'is-active' : '', ok: f[0] === 'fin' ? 'ok' : '' }; }) }; });
+  const st = this.state, t = st.t, f = t % 2 ? 'va' : 'vb', live = st.live;
+  const shown = POOL.slice(0, 3 + Math.min(2, Math.floor((t - 30) / 10)));
+  const fmt = (sec) => Math.floor(sec / 60) + 'm ' + String(sec % 60).padStart(2, '0') + 's';
+  const all = shown.map((a, i) => { const v = a[4] * (1 + wave(t, i, 0.08)), acked = !!st.ack[a[2]]; return { sev: a[0], acked, t: a[2], sub: a[3], icon: a[1], sc: acked ? 'k' : a[0], val: (v < 10 ? v.toFixed(1) : Math.round(v)) + ' ' + a[6], limit: a[5] + ' ' + a[6], bar: 'width:' + Math.min(100, v / (a[5] * 1.6) * 100).toFixed(0) + '%;background:' + (acked ? '#8F91A2' : a[0] === 'c' ? 'var(--red)' : 'var(--yellow)'), lim: 'left:' + (100 / 1.6).toFixed(0) + '%', for: 'firing ' + fmt(a[7] * 60 + (t - 30) * 2), tc: a[0] === 'c' && !acked ? 'dv-bad' : '', canAck: !acked, by: acked ? 'Acked by Henry' : '', ack: () => this.setState({ ack: { ...this.state.ack, [a[2]]: true } }), anim: i === shown.length - 1 && shown.length > 3 && (t - 30) % 10 < 2 ? (t % 2 ? 'ev-a' : 'ev-b') : '' }; });
+  const alerts = all.filter(a => st.tab === 'open' ? !a.acked : st.tab === 'ack' ? a.acked : false);
+  const open = all.filter(a => !a.acked);
+  const ser = (b, a, i) => Array.from({ length: 24 }, (_, k) => b + wave(t - 23 + k, i, a));
+  const K = [['Open alerts', '', open.length, 0, 'dv-bad', open.filter(a => a.sev === 'c').length + ' critical'], ['Time to acknowledge', 'min', 4, 1, 'dv-ok', '▼ 2 min this week'], ['Alerts this week', '', 27 + Math.floor((t - 30) / 10), 0, 'dv-warn', '▲ 5 vs last week'], ['Noise ratio', '%', 8, 1.2, 'dv-info', 'Mostly auto-resolved']];
+  const kpis = K.map((k, i) => { const s2 = ser(+k[2], (+k[2] || 1) * 0.15, i); const p = spark(s2, Math.min(...s2) - 1, Math.max(...s2) + 1, 40); return { label: k[0], unit: k[1], v: k[3] ? s2[23].toFixed(0) : k[2], dc: k[4], d: k[5], path: p, area: p + ' L200,40 L0,40 Z', flash: live ? f : '' }; });
+  const M = [['Error rate', '%', 0.42, 0.12, 1, 'Above 1% for 5 min'], ['p95 latency', 'ms', 182, 30, 500, 'Above 500 ms'], ['Webhook failures', '/10m', 4, 3, 5, 'Above 5 in 10 min'], ['Disk usage', '%', 84, 4, 85, 'Above 85%'], ['Queue depth', 'jobs', 205, 30, 200, 'Above 200 for 10 min'], ['Failed sign-ins', '/min', 6, 4, 20, 'Above 20 a minute']];
+  const mons = M.map((m, i) => { const s2 = ser(m[2], m[3], i + 4), lo = 0, hi = Math.max(m[4] * 1.3, Math.max(...s2)), v = s2[23]; return { name: m[0], v: (v < 10 ? v.toFixed(2) : Math.round(v)) + ' ' + m[1], path: spark(s2, lo, hi, 46), ly: (44 - (m[4] - lo) / (hi - lo) * 40).toFixed(1), rule: m[5], dot: v > m[4] ? 'r' : v > m[4] * 0.85 ? 'y' : '', flash: live ? f : '' }; });
+  const heat = Array.from({ length: 48 }, (_, i) => { const v = (i * 37 + 11) % 23; return (v > 20 ? 'c' : v > 15 ? 'w' : '') + (i === 47 ? ' now' : ''); });
+  return { nav, kpis, mons, heat, alerts, none: alerts.length === 0, openN: open.length, critN: open.filter(a => a.sev === 'c').length, warnN: open.filter(a => a.sev === 'w').length,
+    tabs: [['open', 'Open'], ['ack', 'Acknowledged'], ['res', 'Resolved']].map(x => ({ label: x[1], cls: st.tab === x[0] ? 'on' : '', pick: () => this.setState({ tab: x[0] }) })),
+    liveCls: live ? '' : 'off', liveLabel: live ? 'Live' : 'Paused', toggle: () => this.setState({ live: !live }), toggleIcon: live ? 'i-hourglass' : 'i-play', toggleLabel: live ? 'Pause' : 'Resume' };
+}
+}
+</script>
+</body>
+</html>

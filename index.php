@@ -22,10 +22,8 @@
 
 
 // Verifica si el archivo de configuración existe
-if (!file_exists('config/config.php')) {
-    header("location: install");
-    exit;
-}
+// config/config.php is created from config/config.example.php (see README.md);
+// loader.php explains what is missing when it is absent.
 
 // Incluye el archivo loader.php
 require_once("loader.php");
@@ -46,7 +44,10 @@ if ($user->cdp_loginCheck() == true) {
     require_once("helpers/rbac.php");
     switch (cdp_dashboardType($_SESSION['userlevel'] ?? 0)) {
         case 'admin':
-            include('views/dashboard/index.php');
+            require_once 'helpers/sl_view.php';
+            require_once 'views/sl/data/overview.php';
+            $userData = $user->cdp_getUserData();
+            sl_render('Main', ['id' => 'dash', 'title' => 'Overview', 'board' => 'Main'], sl_overviewData($user, $core, $userData));
             break;
         case 'client':
             include('views/dashboard/dashboard_client.php');

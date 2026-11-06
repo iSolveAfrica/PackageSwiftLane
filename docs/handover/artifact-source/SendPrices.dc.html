@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Swift Lane Send Prices</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./swiftlane.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}
+.pk{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
+.pk b{font:600 23px var(--font);font-variant-numeric:tabular-nums;letter-spacing:-.02em}.pk small{color:var(--muted);font-size:12.5px}
+.pb{display:grid;grid-template-columns:150px 1fr 90px;gap:10px;align-items:center;font-size:13px}
+.pb i{display:block;height:10px;border-radius:99px;background:#A9A59C}
+.sp-sug{background:var(--card);color:var(--muted)}.sp-sug:focus{color:var(--ink)}
+.sp-in{width:96px;height:34px;border:1px solid var(--line-2);border-radius:8px;background:var(--field);font:500 13.5px var(--mono);text-align:right;padding:0 8px;color:var(--ink)}
+.sp-ch{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--card);cursor:pointer;font:inherit;color:inherit;text-align:left;width:100%}
+.sp-ch.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.sp-ph{border-radius:22px;background:var(--ink);padding:12px}
+.sp-ph .sc{background:#ECE5DD;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;min-height:220px}
+.sp-ph .bb{align-self:flex-start;max-width:94%;background:#fff;border-radius:12px 12px 12px 4px;padding:10px 12px;font-size:13px;line-height:1.55;color:#161615;white-space:pre-line}
+.sp-ok{display:flex;gap:10px;align-items:center;padding:12px 14px;border-radius:12px;background:var(--green-bg);color:var(--green-ink)}
+</style>
+</helmet>
+<div class="sl-app">
+  <input type="checkbox" id="navtg" class="nav-tg" aria-hidden="true" tabindex="-1">
+  <header class="sl-top">
+    <label class="sl-ib nav-open" for="navtg" aria-label="Open or close the menu" role="button" tabindex="0"><i class="ic i-sidebar" aria-hidden="true"></i></label>
+    <a class="sl-switch" href="Main.dc.html"><small>SL</small> Swift Lane · Accra Hub <i class="ic ic-sm i-down" aria-hidden="true"></i></a>
+    <a class="fx-chip" href="SettingsHub.dc.html" title="Exchange rate · set in Settings › General"><i class="ic ic-sm i-dollar" aria-hidden="true"></i><span class="mono">USD 1 = GHS 12.40</span><span class="fx-d">▲ 0.4%</span></a>
+    <span class="grow"></span>
+    <details class="aitop"><summary aria-label="Help with Swift Lane AI"><span class="o"><i class="ic i-ai" aria-hidden="true"></i></span>Help</summary><div class="pop" role="menu">
+<div class="me"><span class="sl-av sm dark">HC</span><div class="grow"><div class="fw5 sm">Henry Cobblah</div><div class="mut" style="font-size:12px">Operations manager · Accra Hub</div></div><a class="sl-btn sm ghost" href="AiStudio.dc.html">Edit</a></div>
+<a class="ask" href="StaffAI.dc.html"><i class="ic ic-sm i-spark" aria-hidden="true"></i>Ask AI for help on this page<b><i class="ic ic-sm i-send" aria-hidden="true"></i></b></a>
+<div class="hd">Your profile with AI</div>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-wand" aria-hidden="true"></i></span><span>Retouch my photo<small>Light, skin and background</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-refresh" aria-hidden="true"></i></span><span>Reset images<small>Go back to the original photo</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-edit" aria-hidden="true"></i></span><span>Change my name<small>AI fixes spelling and capitals</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-user" aria-hidden="true"></i></span><span>Make my icon<small>Avatar from your photo or initials</small></span></a>
+<div class="hd">Help</div>
+<a class="it" role="menuitem" href="StaffAI.dc.html"><span class="t"><i class="ic ic-sm i-help" aria-hidden="true"></i></span><span>Explain this page</span></a>
+<a class="it" role="menuitem" href="CsInbox.dc.html"><span class="t"><i class="ic ic-sm i-message" aria-hidden="true"></i></span><span>Talk to a person</span></a>
+</div></details>
+    <a class="sl-ib" aria-label="Notifications" href="Notifications.dc.html"><i class="ic i-bell" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Switch theme" href="SettingsHub.dc.html"><i class="ic i-sun" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Documents" href="Documents.dc.html"><i class="ic i-file" aria-hidden="true"></i></a>
+    <a class="sl-btn" href="SendPrices.dc.html">Send prices</a>
+    <details class="uptop"><summary aria-label="Your profile and settings, Henry Cobblah"><span class="me-pic hc" style="width:34px;height:34px"><i class="me-on" aria-hidden="true"></i></span><span class="up-nm">Henry</span><i class="ic ic-sm i-down" aria-hidden="true"></i></summary><div class="pop" role="menu">
+<a class="up-me" href="AiStudio.dc.html"><span class="me-pic hc" style="width:48px;height:48px"><i class="me-on" aria-hidden="true"></i></span><span class="col" style="min-width:0"><b>Henry Cobblah</b><small>Operations manager · Accra Hub</small><small class="mono">henry@swiftlane.com</small></span></a>
+<div class="up-st"><span class="row g6 sm"><span class="ld" style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span>Available</span><a class="sm fw5" href="AiStudio.dc.html">Edit profile</a></div>
+<div class="up-h">Short links</div><div class="up-g"><a class="up-l" role="menuitem" href="Main.dc.html"><i class="ic ic-sm i-grid" aria-hidden="true"></i>Overview</a><a class="up-l" role="menuitem" href="RiderDispatch.dc.html"><i class="ic ic-sm i-truck" aria-hidden="true"></i>Dispatch board</a><a class="up-l" role="menuitem" href="SendPrices.dc.html"><i class="ic ic-sm i-send" aria-hidden="true"></i>Send prices</a><a class="up-l" role="menuitem" href="Reports.dc.html"><i class="ic ic-sm i-chart" aria-hidden="true"></i>Reports</a><a class="up-l" role="menuitem" href="Documents.dc.html"><i class="ic ic-sm i-file" aria-hidden="true"></i>Documents</a><a class="up-l" role="menuitem" href="ActivityLogs.dc.html"><i class="ic ic-sm i-clock" aria-hidden="true"></i>My activity</a></div>
+<div class="up-h">Settings</div><a class="up-l" role="menuitem" href="AiStudio.dc.html"><i class="ic ic-sm i-ai" aria-hidden="true"></i>Profile and photo</a><a class="up-l" role="menuitem" href="SettingsHub.dc.html"><i class="ic ic-sm i-cog" aria-hidden="true"></i>Settings</a><a class="up-l" role="menuitem" href="ApiConnections.dc.html"><i class="ic ic-sm i-link" aria-hidden="true"></i>API connections</a><a class="up-l" role="menuitem" href="StaffPermissions.dc.html"><i class="ic ic-sm i-shield" aria-hidden="true"></i>Permissions</a>
+<div class="up-row"><span class="sm mut">Theme</span><span class="sl-seg boxed" style="height:30px"><a class="on" href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Light</a><a href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Dark</a></span></div>
+<a class="up-l" role="menuitem" href="CsInbox.dc.html"><i class="ic ic-sm i-help" aria-hidden="true"></i>Help and support</a>
+<a class="up-l out" role="menuitem" href="Login.dc.html"><i class="ic ic-sm i-logout" aria-hidden="true"></i>Sign out</a>
+</div></details>
+  </header>
+  <div class="sl-body">
+    <label class="nav-bd" for="navtg" aria-hidden="true"></label>
+    <div class="sl-rail">
+      <a class="is-on" href="NewShipment.dc.html" aria-label="New shipment"><i class="ic i-newdoc" aria-hidden="true"></i></a>
+      <a href="StaffAI.dc.html" aria-label="AI assistant" title="AI assistant"><i class="ic i-ai" aria-hidden="true"></i></a>
+      <a href="PublicTracking.dc.html" aria-label="Tracking" title="Tracking"><i class="ic i-track" aria-hidden="true"></i></a>
+      <a href="LockerSearch.dc.html" aria-label="Search tracking number" title="Search tracking number"><i class="ic i-tsearch" aria-hidden="true"></i></a>
+      <a href="Consolidations.dc.html" aria-label="Consolidation" title="Consolidation"><i class="ic i-layers" aria-hidden="true"></i></a>
+      <a href="Warehouse.dc.html" aria-label="Warehouse" title="Warehouse"><i class="ic i-warehouse" aria-hidden="true"></i></a>
+      <a class="me-pic hc" href="AiStudio.dc.html" aria-label="Your profile, Henry Cobblah" style="width:34px;height:34px;margin-top:auto"></a>
+    </div>
+    <aside class="sl-side" aria-label="Main navigation">
+      <div class="nav-x"><span class="fw5">Menu</span><label class="sl-ib" for="navtg" aria-label="Close the menu" role="button" tabindex="0"><i class="ic i-x" aria-hidden="true"></i></label></div>
+      <sc-for list="{{nav}}" as="g" hint-placeholder-count="5">
+        <div class="sl-gl">{{g.label}}</div>
+        <nav class="sl-nav">
+          <sc-for list="{{g.items}}" as="it" hint-placeholder-count="4">
+            <a href="{{it.href}}" class="{{it.cls}}"><i class="ic {{it.icon}}" aria-hidden="true"></i><span>{{it.label}}</span><span class="cnt {{it.ok}}">{{it.c1}} <em>{{it.c2}}</em></span></a>
+          </sc-for>
+        </nav>
+      </sc-for>
+      <div class="sl-gl">Other</div>
+      <nav class="sl-nav">
+        <a href="SettingsHub.dc.html"><i class="ic i-globe" aria-hidden="true"></i><span>Language</span></a>
+        <a href="CsInbox.dc.html"><i class="ic i-help" aria-hidden="true"></i><span>Get help</span></a>
+        <a href="Login.dc.html" class="danger"><i class="ic i-logout" aria-hidden="true"></i><span>Sign out</span></a>
+      </nav>
+      <a class="me-card" href="AiStudio.dc.html" aria-label="Signed in as Henry Cobblah, Operations manager. Open your profile">
+        <span class="me-pic hc" role="img" aria-label="Photo of Henry Cobblah"><i class="me-on" aria-hidden="true"></i></span>
+        <span class="grow col" style="min-width:0"><b>Henry Cobblah</b><small>Operations manager · Accra Hub</small></span>
+        <i class="ic ic-sm i-more mut" aria-hidden="true"></i>
+      </a>
+      <a class="me-sub" href="CsInbox.dc.html"><i class="ic ic-sm i-ticket" aria-hidden="true"></i>Customer service<span class="sl-tag">12 open</span></a>
+    </aside>
+
+    <main class="sl-main"><div class="sl-wrap">
+<div class="row g8 mut sm"><a href="Payments.dc.html">Payments</a><i class="ic ic-sm i-right" aria-hidden="true"></i><span style="color:var(--ink)">Send prices</span></div>
+<div class="sl-head"><div><h1 class="sl-title">Send package prices</h1><p class="sl-lede">Type or accept the price for each package, tick who to send to, and send by SMS, WhatsApp or e-mail in one go</p></div><div class="row g8"><button class="sl-btn ghost" onClick="{{fill}}"><i class="ic ic-sm i-wand" aria-hidden="true"></i>Use suggested prices</button></div></div>
+<sc-if value="{{done}}" hint-placeholder-val="{{ false }}"><div class="sp-ok" role="status"><i class="ic ic-sm i-check" aria-hidden="true"></i>{{doneMsg}}</div></sc-if>
+<div class="split"><section class="a sl-card flush"><div class="row between wrap g8" style="padding:14px 16px"><div><h2 class="sl-ct">Packages waiting for a price · {{waitN}}</h2><div class="mut sm">From today's intake. Suggested price uses the tariffs and the package category.</div></div><button class="sl-btn ghost sm" onClick="{{toggleAll}}">{{allLabel}}</button></div>
+<div class="row wrap g8 sm" style="padding:0 16px 12px"><span class="mut">Quick change suggested prices:</span><sc-for list="{{quick}}" as="q" hint-placeholder-count="6"><button class="chipbtn" onClick="{{q.go}}">{{q.label}}</button></sc-for><span class="grow"></span><button class="sl-btn ghost sm" onClick="{{useAll}}"><i class="ic ic-sm i-right" aria-hidden="true"></i>Use suggested for all</button></div>
+<div class="sl-tw"><table class="sl-table"><thead><tr><th style="width:36px"></th><th>Package</th><th>Customer</th><th>Size</th><th class="num">Suggested</th><th class="num">Price ($)</th><th>Status</th></tr></thead><tbody>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="8"><tr><td><button class="sl-chk {{r.chk}}" style="cursor:pointer;border:1.5px solid var(--line-2)" role="checkbox" aria-checked="{{r.aria}}" aria-label="Select {{r.id}}" onClick="{{r.toggle}}"></button></td><td><a class="id" href="PackageDetail.dc.html">{{r.id}}</a><span class="sub">{{r.what}}</span></td><td>{{r.cust}}<span class="sub">{{r.phone}}</span></td><td><span class="sl-badge">{{r.mode}}</span> <span class="mono sm">{{r.size}}</span><span class="sub">{{r.cat}}</span></td><td class="num"><span class="row g4" style="justify-content:flex-end"><input aria-label="Suggested price for {{r.id}}" class="sp-in sp-sug" onChange="{{r.setSug}}" value="{{r.sug}}"><button class="sl-ib" style="width:34px;height:34px" title="Use as price" aria-label="Use suggested as price for {{r.id}}" onClick="{{r.use}}"><i class="ic ic-sm i-right" aria-hidden="true"></i></button></span></td><td class="num"><input class="sp-in" aria-label="Price for {{r.id}}" value="{{r.price}}" onChange="{{r.setPrice}}"></td><td><span class="sl-pill {{r.pc}}">{{r.st}}</span></td></tr></sc-for></tbody></table></div></section>
+<aside class="b col g12"><section class="sl-card col g10"><h2 class="sl-ct">Send by</h2><sc-for list="{{chans}}" as="c" hint-placeholder-count="3"><button class="sp-ch {{c.cls}}" onClick="{{c.toggle}}" role="switch" aria-checked="{{c.aria}}"><span class="sl-tile"><i class="ic {{c.icon}}" aria-hidden="true"></i></span><span class="col grow"><b class="fw5">{{c.label}}</b><span class="mut sm">{{c.cost}}</span></span><span class="sl-toggle {{c.cls}}"></span></button></sc-for>
+<div class="row g8"><span class="sl-toggle {{payOn}}" onClick="{{togglePay}}" style="cursor:pointer"></span><span class="sm">Add a mobile money pay link</span></div></section>
+<section class="col g6"><span class="up">Preview · {{pvName}}</span><div class="sp-ph"><div class="sc"><div class="bb">{{preview}}</div></div></div></section>
+<section class="sl-card col g8"><div class="sl-kv"><div><span>Customers</span><span>{{custN}}</span></div><div><span>Packages</span><span>{{selN}}</span></div><div><span>Total priced</span><span>{{sum}}</span></div><div><span>Message cost</span><span>{{msgCost}}</span></div></div><button class="sl-btn block" style="height:46px" onClick="{{send}}"><i class="ic ic-sm i-send" aria-hidden="true"></i>{{sendLabel}}</button><a class="mut sm" href="NotificationCenter.dc.html" style="text-align:center">Edit the message template →</a></section></aside></div>
+</div></main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1500}}'>
+const PK = [['SL-100483','Apple iPad Air + accessories','Efua Owusu','+233 24 412 5678','Air','6.1 lb','Electronics',36.6+15.25],['SL-100484','Nike shoes','Efua Owusu','+233 24 412 5678','Air','3.1 lb','Clothing',18.6],['SL-100485','Vitamins and skincare','Kofi Asante','+233 20 118 4471','Air','2.4 lb','Cosmetics',18.0],['SL-100486','Ninja blender','Ama Boateng','+233 24 990 1123','Air','11.8 lb','Electronics',82.6],['SL-100487','Dining chairs (2)','Nana Adjei','+233 55 201 8890','Sea','14 cu ft','Furniture',266.0],['SL-100488','Laptop bag','Yaw Darko','+233 27 330 4412','Air','2.9 lb','Clothing',17.4],['SL-100489','Car parts','Kojo Appiah','+233 54 778 1029','Sea','6 cu ft','Auto parts',108.0],['SL-100490','Phone · iPhone 15','Abena Frimpong','+233 24 661 0034','Air','1.2 lb','Phones',15.0+3.0]];
+const CH = [['wa','WhatsApp','i-message',0.12],['sms','SMS','i-phone',0.03],['mail','E-mail','i-mail',0.002]];
+class Component extends DCLogic {
+constructor(p) { super(p); this.state = { rows: PK.map((p, i) => ({ id: p[0], what: p[1], cust: p[2], phone: p[3], mode: p[4], size: p[5], cat: p[6], sug: p[7], price: i < 3 ? p[7].toFixed(2) : '', sel: i < 4, st: 'w' })), ch: { wa: true, sms: true, mail: false }, pay: true, done: false, msg: '' }; }
+renderVals() {
+const A = 'pay';
+const N = 'Operations|dash~Overview~grid~~~Main;panels~Control Panels~gauge~~~ControlPanels;air~Air Shipments~plane~128~~AirShipments;sea~Sea Packages~ship~64~~SeaPackages;prealert~Pre-Alerts~inbox~9~~PreAlerts;pickup~Pickups~truck~12~/ 20~Pickups;dtrack~Delivery Tracking~route~5~~DeliveryTracking;shiptrack~Shipment Tracking~track~~~ShipmentTracking;consol~Consolidations~layers~7~~Consolidations;warehouse~Warehouse~warehouse~~~Warehouse;handout~Hand Out Packages~box~5~~HandOut;locker~Locker Search~lock~~~LockerSearch#Hubs|execdash~Management Dashboard~chart~~~ExecDashboard;billhub~Billing & Finance~dollar~~~BillingHub;lastmile~Last-Mile Delivery~truck~~~LastMile;aicenter~AI Centre~ai~~~AiCenter;commshub~Messages & Automation~message~~~CommsHub;supporthub~Support & CRM~ticket~~~SupportHub;loyalty~Loyalty & Referrals~star~~~LoyaltyRewards;security~Security & Reliability~shield~~~SecurityCenter#Freight|frhub~Freight Hub~plane~~~FreightHub;frsched~Departures & Arrivals~calendar~5~~FreightSchedule;frwb~Waybills & Manifests~file~~~Waybills;frex~Cargo Exceptions~alert~6~~CargoExceptions;frins~Insurance & Claims~shield~4~~InsuranceClaims;frpart~Freight Partners~users~~~FreightPartners#People|cust~Customers~users~1,284~~Customers;recip~Recipients~pin~~~Recipients;drivers~Drivers~wheel~8~/ 14~Drivers;drvapp~Rider App~phone~~~DriverApp;staff~Staff & Roles~shield~~~StaffRoles#Finance|pay~Payments~card~~~Payments;ar~Accounts Receivable~receipt~~~AccountsReceivable;fin~Financial Overview~dollar~$48,200~~FinancialOverview#Insights|reports~Reports~chart~~~Reports;activity~Activity Logs~clock~~~ActivityLogs;messages~Message Logs~archive~~~MessageLogs#Customer Service|tickets~Support Inbox~ticket~1,482~~CsInbox;csrules~Ticket Rules~filter~~~CsRules;playbook~Playbook~book~~~CsPlaybook;csrep~Support Reports~star~~~CsReports;cschan~Channels & Teams~message~~~CsChannels;csai~AI Assistant~ai~~~StaffAI;cssupai~AI for Customers~spark~~~CsAI#Developer|devov~Dev Overview~terminal~~~DevOverview;devsvc~Services~server~12~~DevServices;devlogs~Logs~activity~~~DevLogs;devmet~Metrics~cpu~~~DevMetrics;devinfra~Infrastructure~cloud~~~DevInfrastructure;devdep~Deployments~rocket~~~DevDeployments;devalert~Alerts~alert~3~~DevAlerts;devissues~Issues & Change Log~bug~8~~DevIssues;devint~Integrations~puzzle~~~DevIntegrations#Settings|general~General~cog~~~SettingsHub;apis~API Connections~link~16~~ApiConnections;apitraffic~Live API Traffic~activity~~~ApiTraffic;tariffs~Shipping Tariffs~tag~~~Tariffs;notifc~Notifications~bell~3~~NotificationCenter;ebuild~Email Builder~mail~~~EmailBuilder;msgtpl~SMS & WhatsApp~message~~~MessageTemplates;bcast~Push Notifications~send~~~Broadcast;costs~Operating Costs~dollar~~~CostSettings;addr~Shipping Addresses~pin~~~ShippingAddresses;rfees~Rider Fees~truck~~~RiderSettings;loginpg~Login Page~image~~~LoginSettings;devmod~Modules~sliders~~~ModuleController;perm~Permissions~key~~~StaffPermissions;lblstudio~Label Printing~print~~~LabelStudio;auto~Automations~bolt~~~Automations';
+const nav = N.split('#').map(g => { const p = g.split('|'); return { label: p[0], items: p[1].split(';').map(i => { const f = i.split('~'); return { href: f[5] + '.dc.html', label: f[1], icon: 'i-' + f[2], c1: f[3], c2: f[4], cls: f[0] === A ? 'is-active' : '', ok: f[0] === 'fin' ? 'ok' : '' }; }) }; });
+const s = this.state, m = (x) => '$' + (+x).toFixed(2);
+const upd = (id, o) => this.setState({ rows: this.state.rows.map(r => r.id === id ? { ...r, ...o } : r), done: false });
+const sel = s.rows.filter(r => r.sel), custs = [...new Set(sel.map(r => r.cust))];
+const chOn = CH.filter(c => s.ch[c[0]]);
+const sum = sel.reduce((a, r) => a + (parseFloat(r.price) || 0), 0);
+const first = sel[0] ? sel[0].cust : s.rows[0].cust, mine = (sel.length ? sel : s.rows).filter(r => r.cust === first);
+const tot = mine.reduce((a, r) => a + (parseFloat(r.price) || 0), 0);
+const preview = 'Hi ' + first.split(' ')[0] + ', your Swift Lane package' + (mine.length > 1 ? 's are' : ' is') + ' priced:\n' + mine.map(r => '• ' + r.id + ' · ' + r.what + ' · ' + (r.price ? m(r.price) : 'price pending')).join('\n') + '\nTotal: ' + m(tot) + ' (₵' + (tot * 12.4).toFixed(2) + ')' + (s.pay ? '\nPay by MoMo: pay.swiftlane.com/q7Kx' : '') + '\nThank you!';
+const ST = { w: ['Not sent', ''], s: ['Sent', 'delivered'] };
+const missing = sel.filter(r => !r.price).length;
+const send = () => { if (!sel.length || !chOn.length) return; if (missing) { this.setState({ done: true, msg: missing + ' selected package(s) still need a price.' }); return; } this.setState({ rows: s.rows.map(r => r.sel ? { ...r, st: 's', sel: false } : r), done: true, msg: 'Prices sent to ' + custs.length + ' customer(s) by ' + chOn.map(c => c[1]).join(', ') + '. Bills are now waiting for payment.' }); };
+const allSel = s.rows.filter(r => r.st === 'w').every(r => r.sel);
+return { nav,
+  rows: s.rows.map(r => ({ id: r.id, what: r.what, cust: r.cust, phone: r.phone, mode: r.mode, size: r.size, cat: r.cat, sug: (+r.sug).toFixed(2), price: r.price, setSug: (e) => { const v = parseFloat(String(e.target.value).replace(/[^0-9.]/g, '')); if (!isNaN(v)) upd(r.id, { sug: v }); }, use: () => upd(r.id, { price: (+r.sug).toFixed(2) }), chk: r.sel ? 'on' : '', aria: r.sel ? 'true' : 'false', st: ST[r.st][0] + (r.st === 's' ? ' · ' + chOn.map(c => c[1]).join(', ') : ''), pc: ST[r.st][1], toggle: () => upd(r.id, { sel: !r.sel }), setPrice: (e) => upd(r.id, { price: e.target.value }) })),
+  waitN: s.rows.filter(r => r.st === 'w').length,
+  quick: [['−10%', 0.9], ['−5%', 0.95], ['+5%', 1.05], ['+10%', 1.1], ['Round to $1', 'r'], ['Reset', 'x']].map(q => ({ label: q[0], go: () => this.setState({ rows: s.rows.map((r, i) => ({ ...r, sug: q[1] === 'x' ? PK[i][7] : q[1] === 'r' ? Math.round(r.sug) : Math.round(r.sug * q[1] * 100) / 100 })) }) })),
+  useAll: () => this.setState({ rows: s.rows.map(r => r.st === 'w' ? { ...r, price: (+r.sug).toFixed(2) } : r) }), fill: () => this.setState({ rows: s.rows.map(r => r.price ? r : { ...r, price: r.sug.toFixed(2) }) }),
+  toggleAll: () => this.setState({ rows: s.rows.map(r => r.st === 'w' ? { ...r, sel: !allSel } : r) }), allLabel: allSel ? 'Clear selection' : 'Select all',
+  chans: CH.map(c => ({ label: c[1], icon: c[2], cost: c[3] ? '₵' + c[3].toFixed(3) + ' per message' : '', cls: s.ch[c[0]] ? 'on' : '', aria: s.ch[c[0]] ? 'true' : 'false', toggle: () => this.setState({ ch: { ...s.ch, [c[0]]: !s.ch[c[0]] } }) })),
+  payOn: s.pay ? 'on' : '', togglePay: () => this.setState({ pay: !s.pay }), pvName: first, preview,
+  custN: custs.length, selN: sel.length, sum: m(sum), msgCost: '₵' + (custs.length * chOn.reduce((a, c) => a + c[3], 0)).toFixed(2),
+  send, sendLabel: 'Send to ' + custs.length + ' customer' + (custs.length === 1 ? '' : 's'), done: s.done, doneMsg: s.msg };
+}
+}
+</script>
+</body>
+</html>

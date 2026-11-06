@@ -1,0 +1,47 @@
+/* Page styles of ApiConnections.dc.html (from the approved design) */
+.cs-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));gap:16px}
+.cs-in{display:flex;align-items:center;gap:12px;padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
+.cs-in .tl{width:42px;height:42px;border-radius:12px;background:var(--active);display:grid;place-items:center;flex:none}
+.cs-in .nm{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.cs-in .nm b{font-weight:500;font-size:14.5px}.cs-in .nm small{color:var(--muted);font-size:12.5px}
+.cs-money{display:flex;align-items:center;height:44px;border:1px solid var(--line-2);border-radius:10px;background:var(--field);overflow:hidden;width:170px;flex:none}
+.cs-money span{padding:0 10px;color:var(--muted);font:13px var(--mono);border-right:1px solid var(--line);height:100%;display:grid;place-items:center;background:var(--active)}
+.cs-money input{flex:1;min-width:0;border:0;background:transparent;font:500 15px var(--mono);color:var(--ink);padding:0 10px;outline:0;text-align:right}
+.cs-tot{display:flex;justify-content:space-between;align-items:center;min-height:46px;border-top:1px solid var(--line);font-size:13.5px}
+.cs-tot:first-of-type{border-top:0}
+.cs-lock{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;background:var(--active);font-size:13.5px}
+.cs-ok{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;background:var(--green-bg);color:var(--green-ink);font-size:13.5px}
+@keyframes lvp{0%{box-shadow:0 0 0 0 rgba(63,208,143,.55)}100%{box-shadow:0 0 0 9px rgba(63,208,143,0)}}
+@keyframes lvpy{0%{box-shadow:0 0 0 0 rgba(235,180,60,.55)}100%{box-shadow:0 0 0 9px rgba(235,180,60,0)}}
+@keyframes inA{from{opacity:0;transform:translateY(-10px);background:rgba(63,208,143,.16)}to{opacity:1;transform:none}}
+@keyframes inB{from{opacity:0;transform:translateY(-10px);background:rgba(63,208,143,.16)}to{opacity:1;transform:none}}
+@keyframes flow{to{stroke-dashoffset:-20}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes stripes{to{background-position:28px 0}}
+@keyframes blink{50%{opacity:.35}}
+@keyframes popA{from{color:#5BE0A5}to{color:inherit}}@keyframes popB{from{color:#5BE0A5}to{color:inherit}}
+.live{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 12px;border-radius:999px;background:var(--green-bg);color:var(--green-ink);font-size:13px;font-weight:500}
+.live.off{background:var(--active);color:var(--muted)}
+.ld{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;flex:none;animation:lvp 1.6s infinite}
+.ld.y{background:var(--yellow);animation-name:lvpy}.ld.r{background:var(--red);animation:blink 1s infinite}.ld.g{background:var(--faint);animation:none}
+.off .ld{animation:none;background:var(--faint)}
+
+.ap-k{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
+.ap-k b{font:600 26px var(--font);letter-spacing:-.015em;font-variant-numeric:tabular-nums;line-height:1.15}.ap-k small{color:var(--muted);font-size:12.5px}
+.ap-l{display:flex;flex-direction:column;gap:2px}
+.ap-g{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:12px 10px 4px}
+.ap-p{display:grid;grid-template-columns:30px 1fr auto;gap:10px;align-items:center;padding:9px 10px;border-radius:12px;border:0;background:none;font:inherit;color:inherit;text-align:left;cursor:pointer;width:100%}
+.ap-p:hover{background:var(--hover)}.ap-p.on{background:var(--active)}
+.ap-lg{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--ink);color:var(--inverse);font:600 11.5px var(--mono)}
+.ap-f{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.ap-in{display:flex;align-items:center;height:42px;border:1px solid var(--line-2);border-radius:10px;background:var(--field);overflow:hidden}
+.ap-in input{flex:1;min-width:0;height:100%;border:0;background:transparent;padding:0 12px;font:13.5px var(--mono);color:var(--ink);outline:0}
+.ap-in button{height:100%;padding:0 12px;border:0;border-left:1px solid var(--line);background:transparent;color:var(--muted);font:500 12.5px var(--font);cursor:pointer}
+.ap-ck{display:grid;grid-template-columns:26px 1fr auto;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line);font-size:13.5px}
+.ap-ck:first-child{border-top:0}
+.ap-ic{width:26px;height:26px;border-radius:50%;display:grid;place-items:center}
+.ap-ic.ok{background:var(--green-bg);color:var(--green-ink)}.ap-ic.warn{background:var(--amber-bg);color:var(--amber-ink)}.ap-ic.bad{background:var(--red-bg);color:var(--red-ink)}.ap-ic.run{background:var(--active)}
+.ap-spin{width:12px;height:12px;border-radius:50%;border:2px solid var(--line-2);border-top-color:var(--ink);animation:spin .8s linear infinite}
+.ap-call{display:grid;grid-template-columns:70px 54px 1fr 60px;gap:10px;font:12.5px var(--mono);padding:6px 0;border-top:1px solid var(--line)}
+.ap-call.ev-a{animation:inA .6s}.ap-call.ev-b{animation:inB .6s}
+.ap-sw{display:flex;align-items:center;gap:10px;justify-content:space-between;padding:10px 0;border-top:1px solid var(--line);font-size:13.5px}

@@ -1,0 +1,31 @@
+/* Page styles of Automations.dc.html (from the approved design) */
+.au{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.au-main{flex:999 1 640px;min-width:0;display:flex;flex-direction:column;gap:16px}
+.au-side{flex:1 1 300px;min-width:0;display:flex;flex-direction:column;gap:16px}
+.au-sent{font-size:22px;line-height:1.9;letter-spacing:-.01em;color:var(--ink)}
+.au-tok{display:inline-flex;align-items:center;gap:6px;padding:2px 12px;border-radius:10px;font-size:18px;font-weight:500;vertical-align:baseline;border:1.5px dashed transparent}
+.au-tok.t{background:var(--green-bg);color:var(--green-ink)}.au-tok.c{background:var(--sky-bg);color:var(--sky-ink)}.au-tok.a{background:var(--violet-bg);color:var(--violet-ink)}
+.au-tok.empty{background:transparent;border-color:var(--line-2);color:var(--muted)}
+.au-step{display:flex;flex-direction:column;gap:12px}
+.au-sh{display:flex;align-items:center;gap:10px}
+.au-n{width:26px;height:26px;border-radius:50%;background:var(--ink);color:var(--inverse);display:grid;place-items:center;font-size:12.5px;font-weight:600;flex:none}
+.au-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(190px,100%),1fr));gap:8px}
+.au-opt{display:flex;align-items:center;gap:10px;min-height:52px;padding:8px 12px;border-radius:12px;border:1px solid var(--line-2);background:var(--field);text-align:left;font:500 13.5px var(--font);color:var(--ink);cursor:pointer}
+.au-opt:hover{background:var(--hover)}
+.au-opt.on{border:2px solid var(--ink);padding:7px 11px}
+.au-opt .ic{color:var(--ink-2)}
+.au-chip{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 6px 0 12px;border-radius:100px;background:var(--active);font-size:13.5px}
+.au-chip button{width:24px;height:24px;border-radius:50%;border:0;background:transparent;cursor:pointer;display:grid;place-items:center;color:var(--muted)}
+.au-add{height:34px;padding:0 12px;border-radius:100px;border:1px dashed var(--line-2);background:transparent;font:500 13px var(--font);color:var(--ink-2);cursor:pointer}
+.au-add:hover{background:var(--hover)}
+.au-row{display:flex;align-items:center;gap:12px;min-height:58px;border-top:1px solid var(--line)}
+.au-row:first-child{border-top:0}
+.au-sw{width:40px;height:24px;border-radius:12px;border:0;background:var(--line-2);position:relative;cursor:pointer;flex:none;padding:0}
+.au-sw::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .15s}
+.au-sw.on{background:var(--green)}.au-sw.on::after{left:19px}
+.au-ok{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;background:var(--green-bg);color:var(--green-ink);font-size:13.5px}
+.au-man .sl-table td{vertical-align:middle}
+.au-nm{border:0;background:none;padding:0;font:500 14px var(--font);color:var(--ink);cursor:pointer;text-align:left}
+.au-nm:hover{text-decoration:underline}
+tr.au-cur td{background:var(--active)}
+.au-acts .sl-ib{width:36px;height:36px}

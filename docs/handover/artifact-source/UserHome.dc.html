@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Swift Lane My Account</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./swiftlane.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.sl-ticks.n{--c:var(--muted)}
+.ur-ring{position:relative;width:58px;height:58px;border-radius:50%;flex:none;display:grid;place-items:center}
+.ur-ring::after{content:"";position:absolute;inset:5px;border-radius:50%;background:var(--card)}
+.ur-ring b{position:relative;z-index:1;font-size:16px;font-weight:600}
+.ur-dl>div{display:flex;gap:14px;padding:12px 0;border-bottom:1px solid var(--line);font-size:13.5px;align-items:flex-start}
+.ur-dl>div:last-child{border-bottom:0}
+.ur-dl .k{flex:0 0 150px;display:flex;align-items:center;gap:10px;color:var(--muted)}
+.ur-dl .v{flex:1;min-width:0;font-weight:500}
+.ur-chip{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:100px;background:var(--active);font-size:12.5px;color:var(--ink-2)}
+.ur-addr{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(180px,100%),1fr));gap:4px 16px}
+.ur-addr>div{display:flex;gap:12px;padding:12px 0;border-bottom:1px dashed var(--line-2)}
+.ur-addr small{display:block;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.ur-promo{display:flex;flex-wrap:wrap;align-items:center;gap:16px 24px;padding:18px 22px;border-radius:var(--r-lg);background:var(--ink);color:var(--inverse)}
+.ur-promo s{color:var(--faint);font-size:15px}
+.ur-stat{display:flex;flex-direction:column;gap:2px;padding:12px 0;border-bottom:1px solid var(--line)}
+.ur-stat:last-child{border-bottom:0}
+.ur-stat b{font-size:22px;font-weight:500;letter-spacing:-.01em}
+.ur-ev{display:flex;gap:14px}
+.ur-ev .ico{width:32px;height:32px;border-radius:50%;background:var(--active);display:grid;place-items:center;color:var(--ink-2);flex:none}
+.ur-ev .body{flex:1;min-width:0;border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--field)}
+.ur-tabs{display:flex;gap:22px;border-bottom:1px solid var(--line);overflow-x:auto}
+.ur-tabs a{padding:0 0 12px;font-size:14px;font-weight:500;color:var(--muted);white-space:nowrap;border-bottom:2px solid transparent}
+.ur-tabs a.on{color:var(--ink);border-bottom-color:var(--ink)}
+.ur-score{display:grid;grid-template-columns:150px minmax(0,1fr) 64px;gap:12px;align-items:center;font-size:13.5px}
+
+.ad-card{position:relative;display:grid;grid-template-columns:1fr 210px;border-radius:22px;overflow:hidden;background:var(--ink);color:var(--inverse)}
+.ad-main{padding:22px 24px;display:flex;flex-direction:column;gap:16px}
+.ad-tabs{display:flex;gap:6px;flex-wrap:wrap}
+.ad-tabs span{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:999px;border:1px solid rgba(255,255,255,.18);font-size:12.5px;color:rgba(255,255,255,.75)}
+.ad-tabs span.on{background:var(--inverse);color:var(--ink);border-color:var(--inverse);font-weight:500}
+.ad-lines{display:flex;flex-direction:column}
+.ad-ln{display:grid;grid-template-columns:110px 1fr 30px;align-items:center;gap:10px;min-height:40px;border-top:1px dashed rgba(255,255,255,.16);font-size:14px}
+.ad-ln:first-child{border-top:0}
+.ad-ln small{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.5)}
+.ad-ln button{width:30px;height:30px;border-radius:8px;border:0;background:rgba(255,255,255,.08);color:inherit;display:grid;place-items:center;cursor:pointer}
+.ad-side{position:relative;border-left:2px dashed rgba(255,255,255,.22);padding:22px 20px;display:flex;flex-direction:column;justify-content:space-between;gap:12px;background:rgba(255,255,255,.04)}
+.ad-side::before,.ad-side::after{content:"";position:absolute;left:-12px;width:22px;height:22px;border-radius:50%;background:var(--main)}
+.ad-side::before{top:-11px}.ad-side::after{bottom:-11px}
+.ad-suite{font:600 30px var(--mono);letter-spacing:.02em}
+.ad-bc{height:44px;background:repeating-linear-gradient(90deg,var(--inverse) 0 2px,transparent 2px 4px,var(--inverse) 4px 7px,transparent 7px 9px,var(--inverse) 9px 10px,transparent 10px 13px)}
+.ad-more{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr));gap:10px}
+.ad-m{display:flex;flex-direction:column;gap:6px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+.ad-m .cc{width:34px;height:34px;border-radius:50%;background:var(--active);display:grid;place-items:center;font:600 12px var(--mono)}
+@media (max-width:760px){.ad-card{grid-template-columns:1fr}.ad-side{border-left:0;border-top:2px dashed rgba(255,255,255,.22)}.ad-side::before,.ad-side::after{display:none}}
+.cp{display:grid;grid-template-columns:auto 1fr auto;align-items:stretch;border-radius:20px;background:var(--card);border:1px solid var(--line);overflow:hidden}
+.cp-l{position:relative;display:flex;flex-direction:column;justify-content:center;gap:2px;padding:18px 26px;background:var(--active);border-right:2px dashed var(--line-2)}
+.cp-l::before,.cp-l::after{content:"";position:absolute;right:-12px;width:22px;height:22px;border-radius:50%;background:var(--main);border:1px solid var(--line)}
+.cp-l::before{top:-12px}.cp-l::after{bottom:-12px}
+.cp-l b{font:600 40px var(--mono);letter-spacing:-.03em;line-height:1}
+.cp-m{display:flex;flex-direction:column;justify-content:center;gap:6px;padding:16px 24px}
+.cp-r{display:flex;align-items:center;gap:8px;padding:16px 22px}
+.cp-t{display:flex;flex-direction:column;align-items:center;justify-content:center;width:58px;height:58px;border-radius:14px;background:var(--active)}
+.cp-t b{font:600 20px var(--mono);line-height:1}.cp-t small{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+@media (max-width:760px){.cp{grid-template-columns:1fr}.cp-l{border-right:0;border-bottom:2px dashed var(--line-2)}.cp-l::before,.cp-l::after{display:none}}
+.pk-seg{display:flex;height:10px;border-radius:99px;overflow:hidden;gap:2px}
+.pk-seg i{display:block;background:#CFCBC2}.pk-seg i:nth-child(2){background:#A9A59C}.pk-seg i:nth-child(3){background:#7E7A72}.pk-seg i:nth-child(4){background:var(--ink)}
+.pk-tl{display:flex;flex-direction:column}
+.pk-st{display:grid;grid-template-columns:40px 1fr auto;gap:12px;align-items:center;position:relative;padding:8px 0}
+.pk-st:not(:last-child)::after{content:"";position:absolute;left:19px;top:44px;bottom:-8px;width:2px;background:var(--line-2)}
+.pk-dot{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--active);position:relative;z-index:1}
+.pk-st.now .pk-dot{background:var(--ink);color:var(--inverse)}
+.pk-st b.n{font:600 22px var(--mono)}
+</style>
+</helmet>
+<div class="sl-app">
+  <input type="checkbox" id="navtg" class="nav-tg" aria-hidden="true" tabindex="-1">
+  <header class="sl-top">
+    <label class="sl-ib nav-open" for="navtg" aria-label="Open or close the menu" role="button" tabindex="0"><i class="ic i-sidebar" aria-hidden="true"></i></label>
+    <a class="sl-switch" href="UserHome.dc.html"><small>SL</small> Swift Lane · My account <i class="ic ic-sm i-down" aria-hidden="true"></i></a>
+    <a class="fx-chip" href="SettingsHub.dc.html" title="Exchange rate · set in Settings › General"><i class="ic ic-sm i-dollar" aria-hidden="true"></i><span class="mono">USD 1 = GHS 12.40</span><span class="fx-d">▲ 0.4%</span></a>
+    <div class="sl-search" style="max-width:360px;flex:1"><i class="ic ic-sm i-search" aria-hidden="true"></i><input aria-label="Search tracking, AWB or locker" placeholder="Search tracking, AWB or locker"></div>
+    <span class="grow"></span>
+    <details class="aitop"><summary aria-label="Help with Swift Lane AI"><span class="o"><i class="ic i-ai" aria-hidden="true"></i></span>Help</summary><div class="pop" role="menu">
+<div class="me"><span class="sl-av sm dark">EO</span><div class="grow"><div class="fw5 sm">Efua Owusu</div><div class="mut" style="font-size:12px">Customer · Locker SL-3318</div></div><a class="sl-btn sm ghost" href="AiStudio.dc.html">Edit</a></div>
+<a class="ask" href="StaffAI.dc.html"><i class="ic ic-sm i-spark" aria-hidden="true"></i>Ask AI for help on this page<b><i class="ic ic-sm i-send" aria-hidden="true"></i></b></a>
+<div class="hd">Your profile with AI</div>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-wand" aria-hidden="true"></i></span><span>Retouch my photo<small>Light, skin and background</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-refresh" aria-hidden="true"></i></span><span>Reset images<small>Go back to the original photo</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-edit" aria-hidden="true"></i></span><span>Change my name<small>AI fixes spelling and capitals</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-user" aria-hidden="true"></i></span><span>Make my icon<small>Avatar from your photo or initials</small></span></a>
+<div class="hd">Help</div>
+<a class="it" role="menuitem" href="StaffAI.dc.html"><span class="t"><i class="ic ic-sm i-help" aria-hidden="true"></i></span><span>Explain this page</span></a>
+<a class="it" role="menuitem" href="CsInbox.dc.html"><span class="t"><i class="ic ic-sm i-message" aria-hidden="true"></i></span><span>Talk to a person</span></a>
+</div></details>
+    <div class="sl-seg boxed"><button class="on">GHS</button><button>USD</button></div>
+    <a class="sl-ib" aria-label="Notifications" href="Notifications.dc.html"><i class="ic i-bell" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Switch theme" href="SettingsHub.dc.html"><i class="ic i-sun" aria-hidden="true"></i></a>
+    <a class="sl-btn ghost" href="Notifications.dc.html"><i class="ic ic-sm i-file" aria-hidden="true"></i>Authorization form</a>
+    <details class="uptop"><summary aria-label="Your profile and settings, Efua Owusu"><span class="me-pic eo" style="width:34px;height:34px"><i class="me-on" aria-hidden="true"></i></span><span class="up-nm">Efua</span><i class="ic ic-sm i-down" aria-hidden="true"></i></summary><div class="pop" role="menu">
+<a class="up-me" href="AiStudio.dc.html"><span class="me-pic eo" style="width:48px;height:48px"><i class="me-on" aria-hidden="true"></i></span><span class="col" style="min-width:0"><b>Efua Owusu</b><small>Customer · Locker SL-3318</small><small class="mono">efua.owusu@gmail.com</small></span></a>
+<div class="up-st"><span class="row g6 sm"><span class="ld" style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span>Available</span><a class="sm fw5" href="AiStudio.dc.html">Edit profile</a></div>
+<div class="up-h">Short links</div><div class="up-g"><a class="up-l" role="menuitem" href="UserHome.dc.html"><i class="ic ic-sm i-grid" aria-hidden="true"></i>My account</a><a class="up-l" role="menuitem" href="PublicTracking.dc.html"><i class="ic ic-sm i-route" aria-hidden="true"></i>Track a parcel</a><a class="up-l" role="menuitem" href="MyBills.dc.html"><i class="ic ic-sm i-receipt" aria-hidden="true"></i>My bills</a><a class="up-l" role="menuitem" href="SchedulePickup.dc.html"><i class="ic ic-sm i-truck" aria-hidden="true"></i>Request pickup</a><a class="up-l" role="menuitem" href="UserHome.dc.html"><i class="ic ic-sm i-pin" aria-hidden="true"></i>My shipping addresses</a><a class="up-l" role="menuitem" href="Notifications.dc.html"><i class="ic ic-sm i-bell" aria-hidden="true"></i>Notifications</a></div>
+<div class="up-h">Settings</div><a class="up-l" role="menuitem" href="AiStudio.dc.html"><i class="ic ic-sm i-ai" aria-hidden="true"></i>Profile and photo</a><a class="up-l" role="menuitem" href="ForgotPassword.dc.html"><i class="ic ic-sm i-lock" aria-hidden="true"></i>Password and sign-in</a><a class="up-l" role="menuitem" href="UserHome.dc.html"><i class="ic ic-sm i-globe" aria-hidden="true"></i>Language and currency</a>
+<div class="up-row"><span class="sm mut">Theme</span><span class="sl-seg boxed" style="height:30px"><a class="on" href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Light</a><a href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Dark</a></span></div>
+<a class="up-l" role="menuitem" href="CsInbox.dc.html"><i class="ic ic-sm i-help" aria-hidden="true"></i>Help and support</a>
+<a class="up-l out" role="menuitem" href="Login.dc.html"><i class="ic ic-sm i-logout" aria-hidden="true"></i>Sign out</a>
+</div></details>
+  </header>
+  <div class="sl-body">
+    <label class="nav-bd" for="navtg" aria-hidden="true"></label>
+    <div class="sl-rail">
+      <a class="is-on" href="UserHome.dc.html" aria-label="My account"><i class="ic i-grid" aria-hidden="true"></i></a>
+      <a href="PreAlerts.dc.html" aria-label="Pre-alerts"><i class="ic i-inbox" aria-hidden="true"></i></a>
+      <a href="PublicTracking.dc.html" aria-label="Track"><i class="ic i-route" aria-hidden="true"></i></a>
+      <a href="Notifications.dc.html" aria-label="Messages"><i class="ic i-message" aria-hidden="true"></i></a>
+      <a class="me-pic eo" href="AiStudio.dc.html" aria-label="Your profile, Efua Owusu" style="width:34px;height:34px;margin-top:auto"></a>
+    </div>
+    <aside class="sl-side" aria-label="Customer navigation">
+      <div class="nav-x"><span class="fw5">Menu</span><label class="sl-ib" for="navtg" aria-label="Close the menu" role="button" tabindex="0"><i class="ic i-x" aria-hidden="true"></i></label></div>
+      <div class="sl-gl">My shipping</div>
+      <nav class="sl-nav">
+        <a href="UserHome.dc.html" class="is-active"><i class="ic i-grid" aria-hidden="true"></i><span>My account</span></a>
+        <a href="ClientDashboard.dc.html"><i class="ic i-route" aria-hidden="true"></i><span>Portal home</span></a>
+        <a href="AiStudio.dc.html"><i class="ic i-ai" aria-hidden="true"></i><span>AI profile studio</span></a>
+        <a href="AirShipments.dc.html"><i class="ic i-plane" aria-hidden="true"></i><span>My shipments</span><span class="cnt">4</span></a>
+        <a href="PreAlerts.dc.html"><i class="ic i-inbox" aria-hidden="true"></i><span>Pre-alerts</span><span class="cnt">2</span></a>
+        <a href="SeaPackages.dc.html"><i class="ic i-box" aria-hidden="true"></i><span>Registered packages</span><span class="cnt">6</span></a>
+        <a href="PublicTracking.dc.html"><i class="ic i-route" aria-hidden="true"></i><span>Track a parcel</span></a>
+        <a href="Pickups.dc.html"><i class="ic i-truck" aria-hidden="true"></i><span>Request pickup</span></a>
+      </nav>
+      <div class="sl-gl">Account</div>
+      <nav class="sl-nav">
+        <a href="Payments.dc.html"><i class="ic i-receipt" aria-hidden="true"></i><span>My bills</span><span class="cnt">1</span></a>
+        <a href="Recipients.dc.html"><i class="ic i-user" aria-hidden="true"></i><span>Recipients</span><span class="cnt">3</span></a>
+        <a href="Notifications.dc.html"><i class="ic i-bell" aria-hidden="true"></i><span>Notifications</span><span class="cnt">3</span></a>
+        <a href="CustomerNotifications.dc.html"><i class="ic i-sliders" aria-hidden="true"></i><span>Notification settings</span></a>
+        <a href="SettingsHub.dc.html"><i class="ic i-sliders" aria-hidden="true"></i><span>Profile settings</span></a>
+      </nav>
+      <div class="sl-gl">Other</div>
+      <nav class="sl-nav">
+        <a href="CsInbox.dc.html"><i class="ic i-help" aria-hidden="true"></i><span>Get help</span></a>
+        <a href="Login.dc.html" class="danger"><i class="ic i-logout" aria-hidden="true"></i><span>Sign out</span></a>
+      </nav>
+      <a class="me-card" href="AiStudio.dc.html" aria-label="Signed in as Efua Owusu. Open your profile">
+        <span class="me-pic eo" role="img" aria-label="Photo of Efua Owusu"><i class="me-on" aria-hidden="true"></i></span>
+        <span class="grow col" style="min-width:0"><b>Efua Owusu</b><small>Customer · Locker SL-3318</small></span>
+        <i class="ic ic-sm i-more mut" aria-hidden="true"></i>
+      </a>
+      <a class="me-sub" href="ControlPanelsMobile.dc.html"><i class="ic ic-sm i-phone" aria-hidden="true"></i>Get the Swift Lane app<span class="sl-tag">iOS · Android</span></a>
+    </aside>
+
+    <main class="sl-main">
+      <div class="sl-wrap" style="max-width:1240px">
+        <div class="row g8 sm mut"><i class="ic ic-sm i-user" aria-hidden="true"></i><span>My account</span><i class="ic ic-sm i-right" aria-hidden="true"></i><span style="color:var(--ink)">Overview</span></div>
+        <div class="sl-head">
+          <div><h1 class="sl-title" style="font-size:26px">Welcome back, Efua</h1><p class="sl-lede">Locker SL-3318 · Gold member · November 2026</p></div>
+          <div class="row g8 wrap"><a class="sl-btn ghost" href="Payments.dc.html"><i class="ic ic-sm i-receipt" aria-hidden="true"></i>My bills</a><a class="sl-btn ghost" href="PublicTracking.dc.html"><i class="ic ic-sm i-route" aria-hidden="true"></i>Track</a><a class="sl-btn" href="PreAlerts.dc.html"><i class="ic ic-sm i-plus" aria-hidden="true"></i>New pre-alert</a></div>
+        </div>
+
+        <section class="col g12" aria-label="My shipping addresses"><div class="row between wrap g8"><div><h2 class="sl-ct">My shipping addresses</h2><div class="mut sm">Paste one at checkout. Your suite number is the same in every country.</div></div><button class="sl-btn sm ghost"><i class="ic ic-sm i-copy" aria-hidden="true"></i>Copy full address</button></div>
+<div class="ad-card"><div class="ad-main"><div class="ad-tabs"><span class="on"><i class="ic ic-sm i-plane" aria-hidden="true"></i>US · Air</span><span class=""><i class="ic ic-sm i-ship" aria-hidden="true"></i>US · Sea</span><span class=""><i class="ic ic-sm i-plane" aria-hidden="true"></i>UK</span><span class=""><i class="ic ic-sm i-ship" aria-hidden="true"></i>China</span><span class=""><i class="ic ic-sm i-plane" aria-hidden="true"></i>Dubai</span></div><div class="ad-lines"><div class="ad-ln"><small>Recipient</small><span class="fw5">Efua Owusu</span><button aria-label="Copy Recipient"><i class="ic ic-sm i-copy" aria-hidden="true"></i></button></div><div class="ad-ln"><small>Address 1</small><span class="fw5">c/o Swift Lane · 410 Doremus Ave</span><button aria-label="Copy Address 1"><i class="ic ic-sm i-copy" aria-hidden="true"></i></button></div><div class="ad-ln"><small>Address 2</small><span class="fw5">Suite SL-3318</span><button aria-label="Copy Address 2"><i class="ic ic-sm i-copy" aria-hidden="true"></i></button></div><div class="ad-ln"><small>City</small><span class="fw5">Newark</span><button aria-label="Copy City"><i class="ic ic-sm i-copy" aria-hidden="true"></i></button></div><div class="ad-ln"><small>State / ZIP</small><span class="fw5">NJ 07105</span><button aria-label="Copy State / ZIP"><i class="ic ic-sm i-copy" aria-hidden="true"></i></button></div><div class="ad-ln"><small>Phone</small><span class="fw5">+1 (973) 555-0142</span><button aria-label="Copy Phone"><i class="ic ic-sm i-copy" aria-hidden="true"></i></button></div></div></div>
+<div class="ad-side"><div class="col g4"><small style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;opacity:.6">Your suite</small><span class="ad-suite">SL-3318</span><span class="sm" style="opacity:.7">Air to Accra in 5 to 7 days</span></div><div class="ad-bc" aria-hidden="true"></div><span class="mono sm" style="opacity:.7">US · AIR · EWR → ACC</span></div></div>
+<div class="ad-more"><div class="ad-m"><div class="row between"><span class="cc">US</span><button class="sl-ib" aria-label="Copy US · Sea address"><i class="ic ic-sm i-copy" aria-hidden="true"></i></button></div><b class="fw5">US · Sea</b><span class="mut sm">Newark, NJ · 6–8 weeks</span></div><div class="ad-m"><div class="row between"><span class="cc">UK</span><button class="sl-ib" aria-label="Copy United Kingdom address"><i class="ic ic-sm i-copy" aria-hidden="true"></i></button></div><b class="fw5">United Kingdom</b><span class="mut sm">London · 7–10 days</span></div><div class="ad-m"><div class="row between"><span class="cc">CN</span><button class="sl-ib" aria-label="Copy China address"><i class="ic ic-sm i-copy" aria-hidden="true"></i></button></div><b class="fw5">China</b><span class="mut sm">Guangzhou · 35–45 days</span></div><div class="ad-m"><div class="row between"><span class="cc">AE</span><button class="sl-ib" aria-label="Copy Dubai address"><i class="ic ic-sm i-copy" aria-hidden="true"></i></button></div><b class="fw5">Dubai</b><span class="mut sm">Dubai, UAE · 6–9 days</span></div></div><div class="mut sm">New addresses appear here as soon as Swift Lane adds them.</div></section>
+<div class="split">
+          <!-- Left: who I am -->
+          <div class="b col g16" style="flex:1 1 380px">
+            <section class="sl-card col g16">
+              <div class="row g16 top">
+                <span class="sl-av lg dark" style="width:72px;height:72px;font-size:22px">EO</span>
+                <div class="grow col g4">
+                  <div class="row g8 wrap"><h2 style="font-size:19px;font-weight:600">Efua Owusu</h2><span class="sl-badge">Gold</span></div>
+                  <div class="mut sm">Online shopper · Accra, Greater Accra</div>
+                  <div class="row g6 mut sm"><i class="ic ic-sm i-shield" aria-hidden="true"></i>ID verified</div>
+                </div>
+                <div class="ur-ring" style="background:conic-gradient(var(--green) 0 93%,var(--line) 93% 100%)" role="img" aria-label="Profile 93% complete"><b>93</b></div>
+              </div>
+              <div class="grid" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
+                <div><div class="up">Member since</div><div class="fw5 sm">17 Aug 2019</div></div>
+                <div><div class="up">Last active</div><div class="fw5 sm">2 hours ago</div></div>
+                <div><div class="up">Last shipment</div><div class="fw5 sm">Nov 3</div></div>
+              </div>
+              <div class="row g8 wrap">
+                <a class="sl-btn sm ghost grow" href="CsInbox.dc.html"><i class="ic ic-sm i-message" aria-hidden="true"></i>WhatsApp</a>
+                <a class="sl-btn sm ghost grow" href="CsInbox.dc.html"><i class="ic ic-sm i-mail" aria-hidden="true"></i>Email</a>
+                <a class="sl-btn sm ghost grow" href="CsInbox.dc.html"><i class="ic ic-sm i-phone" aria-hidden="true"></i>Call us</a>
+              </div>
+            </section>
+
+            <section class="sl-card">
+              <div class="sl-ch"><h2 class="sl-ct">My details</h2><a class="sl-ib" href="SettingsHub.dc.html" aria-label="Edit details"><i class="ic ic-sm i-edit" aria-hidden="true"></i></a></div>
+              <div class="ur-dl">
+                <div><span class="k"><i class="ic ic-sm i-key" aria-hidden="true"></i>Locker ID</span><span class="v mono">SL-3318</span></div>
+                <div><span class="k"><i class="ic ic-sm i-mail" aria-hidden="true"></i>Email</span><span class="v">efua.owusu@[email]</span></div>
+                <div><span class="k"><i class="ic ic-sm i-phone" aria-hidden="true"></i>Phone</span><span class="v">Mobile +233 24 *** 5678<br>WhatsApp same number</span></div>
+                <div><span class="k"><i class="ic ic-sm i-pin" aria-hidden="true"></i>Delivery address</span><span class="v">14 Palm Close<br>East Legon, Accra</span></div>
+                <div><span class="k"><i class="ic ic-sm i-plane" aria-hidden="true"></i>Preferred mode</span><span class="v">Air express</span></div>
+                <div><span class="k"><i class="ic ic-sm i-user" aria-hidden="true"></i>Account manager</span><span class="v row g8"><span class="sl-av sm">AS</span>Adwoa Sarpong</span></div>
+                <div><span class="k"><i class="ic ic-sm i-bell" aria-hidden="true"></i>Alerts</span><span class="v row g8"><span class="sl-toggle on" aria-hidden="true"></span>WhatsApp and SMS</span></div>
+                <div><span class="k"><i class="ic ic-sm i-tag" aria-hidden="true"></i>Interests</span><span class="v row g6 wrap"><span class="ur-chip">Electronics</span><span class="ur-chip">Fashion</span><span class="ur-chip">Beauty</span><a class="ur-chip" href="SettingsHub.dc.html" style="background:transparent;border:1px dashed var(--line-2)"><i class="ic ic-sm i-plus" aria-hidden="true"></i>Add</a></span></div>
+              </div>
+            </section>
+
+            <section class="sl-card col g16">
+              <div class="sl-ch" style="margin:0"><div><h2 class="sl-ct">My shipper standing</h2><div class="mut sm">Better standing unlocks lower rates</div></div><span class="sl-badge ok">Strong</span></div>
+              <div class="ur-score"><span>On-time payment</span><div class="sl-ticks" role="img" aria-label="96%"><i style="width:96%"></i></div><span class="mono sm" style="text-align:right">96%</span></div>
+              <div class="ur-score"><span>Value accuracy</span><div class="sl-ticks" role="img" aria-label="88%"><i style="width:88%"></i></div><span class="mono sm" style="text-align:right">88%</span></div>
+              <div class="ur-score"><span>Pickup on time</span><div class="sl-ticks y" role="img" aria-label="64%"><i style="width:64%"></i></div><span class="mono sm" style="text-align:right">64%</span></div>
+              <div class="ur-score"><span>Pre-alert rate</span><div class="sl-ticks" role="img" aria-label="81%"><i style="width:81%"></i></div><span class="mono sm" style="text-align:right">81%</span></div>
+              <p class="mut sm">Collect parcels within 3 days of arrival to reach Platinum.</p>
+            </section>
+          </div>
+
+          <!-- Right: what I am shipping -->
+          <div class="a col g16" style="flex:2 1 640px">
+            
+
+            <div class="cp" role="note" aria-label="Christmas air rate promotion"><div class="cp-l"><span class="up">Air rate</span><b>$6</b><span class="sm mut">per lb · <s>$9</s></span></div>
+<div class="cp-m"><div class="row g8"><span class="sl-pill delivered">Promo on now</span><span class="mut sm">12 Oct – 31 Dec 2026</span></div><b style="font-size:18px;font-weight:500">Christmas air rate, applied automatically</b><span class="mut sm">Every air package checked in before Dec 31 ships at $6 per lb. Nothing to enter.</span></div>
+<div class="cp-r" aria-label="Time left"><div class="cp-t"><b>55</b><small>days</small></div><div class="cp-t"><b>14</b><small>hours</small></div><div class="cp-t"><b>22</b><small>min</small></div></div></div>
+
+            <div class="grid cols4">
+              <div class="sl-card sl-metric"><div class="sl-ml"><span>My shipments</span></div><div class="big">12</div><div class="sl-ticks n"><i style="width:60%"></i></div><div class="sl-mf">▲ 3 vs last month</div></div>
+              <div class="sl-card sl-metric"><div class="sl-ml"><span>This month</span></div><div class="big">4</div><div class="sl-ticks n"><i style="width:33%"></i></div><div class="sl-mf">22.4 kg shipped</div></div>
+              <div class="sl-card sl-metric"><div class="sl-ml"><span>At warehouse</span></div><div class="big">2 <span class="mut" style="font-size:15px">/ 5 bays</span></div><div class="sl-ticks y"><i style="width:40%"></i></div><div class="sl-mf">14 free storage days left</div></div>
+              <div class="sl-card sl-metric"><div class="sl-ml"><span>Balance due</span></div><div class="big">GHS 2,300</div><div class="sl-ticks r"><i style="width:18%"></i></div><div class="sl-mf">1 invoice · due Nov 8</div></div>
+            </div>
+
+            <section class="sl-card">
+              <div class="sl-ch"><div><h2 class="sl-ct">My shipping rhythm</h2><div class="mut sm">Shipments per day, rolling year</div></div><div class="sl-peak" style="margin:0">Peak <b>3 a day (Mar 14)</b></div></div>
+              <div class="sl-heatbox">
+                <div class="sl-heatdays" style="padding-top:26px"><span></span><span>Mon</span><span></span><span>Wed</span><span></span><span>Fri</span><span></span></div>
+                <div class="sl-heatcol">
+                  <div class="sl-heatmonths"><span>Dec</span><span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span><span>Jul</span><span>Aug</span><span>Sep</span><span>Oct</span><span>Nov</span></div>
+                  <div class="sl-heat" style="grid-template-columns:repeat(52,minmax(0,1fr))" role="img" aria-label="Shipments per day over the last year"><sc-for list="{{heat}}" as="h" hint-placeholder-count="364"><b class="{{h.c}}"></b></sc-for></div>
+                </div>
+              </div>
+              <div class="sl-legend"><span>Quiet</span><b style="background:var(--heat-0)"></b><b style="background:var(--heat-1)"></b><b style="background:var(--heat-2)"></b><b style="background:var(--heat-3)"></b><span>Busy</span></div>
+            </section>
+
+            <div class="grid cols4">
+              <section class="sl-card col g12"><div class="row between"><div class="up row g6"><i class="ic ic-sm i-box" aria-hidden="true"></i>My packages</div><span class="mono fw5">12</span></div>
+<div class="pk-seg" role="img" aria-label="2 in warehouse, 1 ready, 1 invoiced, 8 delivered"><i style="flex:2"></i><i style="flex:1"></i><i style="flex:1"></i><i style="flex:8"></i></div>
+<div class="pk-tl"><a class="pk-st " href="PackageDetail.dc.html" style="color:inherit"><span class="pk-dot"><i class="ic ic-sm i-warehouse" aria-hidden="true"></i></span><span class="col"><span class="fw5">In warehouse</span><span class="mut sm">Newark · 2 bays</span></span><b class="n">2</b></a><a class="pk-st now" href="PackageDetail.dc.html" style="color:inherit"><span class="pk-dot"><i class="ic ic-sm i-check" aria-hidden="true"></i></span><span class="col"><span class="fw5">Ready for pickup</span><span class="mut sm">Accra Hub · code 4821</span></span><b class="n">1</b></a><a class="pk-st " href="PackageDetail.dc.html" style="color:inherit"><span class="pk-dot"><i class="ic ic-sm i-receipt" aria-hidden="true"></i></span><span class="col"><span class="fw5">Invoiced</span><span class="mut sm">Pay to release</span></span><b class="n">1</b></a><a class="pk-st " href="PackageDetail.dc.html" style="color:inherit"><span class="pk-dot"><i class="ic ic-sm i-box" aria-hidden="true"></i></span><span class="col"><span class="fw5">Delivered</span><span class="mut sm">Last on Oct 30</span></span><b class="n">8</b></a></div>
+<a class="sl-btn sm" href="LockerSearch.dc.html" style="align-self:flex-start"><i class="ic ic-sm i-check" aria-hidden="true"></i>Show my pickup code</a></section>
+              <section class="sl-card col"><div class="up row g6"><i class="ic ic-sm i-inbox" aria-hidden="true"></i>Pre-alerts &amp; pickups</div>
+                <div class="ur-stat"><span class="up">Shipment pre-alerts</span><b>2</b></div>
+                <div class="ur-stat"><span class="up">Package pre-alerts</span><b>3</b></div>
+                <div class="ur-stat"><span class="up">Pickup requests</span><b>1</b></div>
+              </section>
+              <section class="sl-card col"><div class="up row g6"><i class="ic ic-sm i-receipt" aria-hidden="true"></i>My account</div>
+                <div class="ur-stat"><span class="up">Billed to date</span><b>GHS 18,420</b></div>
+                <div class="ur-stat"><span class="up">Paid to date</span><b>GHS 16,120</b></div>
+                <div class="ur-stat"><span class="up">Balance owed</span><b style="color:var(--red-ink)">GHS 2,300</b></div>
+              </section>
+              <section class="sl-card col"><div class="up row g6"><i class="ic ic-sm i-grid" aria-hidden="true"></i>At a glance</div>
+                <div class="ur-stat"><span class="up">Total weight shipped</span><b>146.8 <span class="mut" style="font-size:13px">kg</span></b></div>
+                <div class="ur-stat"><span class="up">My recipients</span><b>3</b></div>
+                <div class="ur-stat"><span class="up">Saved with promos</span><b>GHS 640</b></div>
+              </section>
+            </div>
+          </div>
+        </div>
+
+        <div class="split">
+          <section class="a sl-card col g16">
+            <div class="ur-tabs" role="tablist"><a class="on" href="UserHome.dc.html">Activity</a><a href="AirShipments.dc.html">Shipments</a><a href="PreAlerts.dc.html">Pre-alerts</a><a href="Payments.dc.html">Invoices</a><a href="Pickups.dc.html">Pickups</a></div>
+            <div class="row between wrap g12">
+              <div class="dv-tabs"><button class="on">All</button><a href="AirShipments.dc.html">Shipments 4</a><a href="MyBills.dc.html">Payments 2</a><a href="Notifications.dc.html">Messages 3</a><a href="Pickups.dc.html">Pickups 1</a></div>
+              <div class="sl-sel" style="width:150px;height:34px"><span class="sm">Last 30 days</span><i class="ic ic-sm i-down" aria-hidden="true"></i></div>
+            </div>
+            <div class="col g16">
+              <div class="ur-ev"><span class="ico"><i class="ic ic-sm i-plane" aria-hidden="true"></i></span><div class="body col g6"><div class="row between wrap g8"><span class="sm"><a class="mono fw5" href="ShipmentDetail.dc.html">SL-100480</a> status changed to <span class="sl-pill sorting">At warehouse</span></span><span class="mut sm">Nov 3, 14:20</span></div><div class="mut sm">Amazon order · 5.6 kg · Accra warehouse, bay 14</div></div></div>
+              <div class="ur-ev"><span class="ico"><i class="ic ic-sm i-receipt" aria-hidden="true"></i></span><div class="body col g6"><div class="row between wrap g8"><span class="sm">Invoice <span class="mono fw5">INV-20931</span> issued for GHS 2,300</span><span class="mut sm">Nov 3, 14:25</span></div><div class="row g8"><span class="sl-pill overdue">Due Nov 8</span><a class="sl-btn sm" href="Payments.dc.html">Pay now</a></div></div></div>
+              <div class="ur-ev"><span class="ico"><i class="ic ic-sm i-route" aria-hidden="true"></i></span><div class="body col g6"><div class="row between wrap g8"><span class="sm"><a class="mono fw5" href="ShipmentDetail.dc.html">SL-100431</a> status changed to <span class="sl-pill transit">In transit</span></span><span class="mut sm">Nov 2, 22:40</span></div><div class="mut sm">Nike · Landed at Kotoka Airport</div></div></div>
+              <div class="ur-ev"><span class="ico"><i class="ic ic-sm i-check" aria-hidden="true"></i></span><div class="body col g6"><div class="row between wrap g8"><span class="sm">Payment received for <span class="mono fw5">INV-20877</span></span><span class="mut sm">Oct 30, 10:05</span></div><div class="row g8 sm"><span class="sl-pill paid">Paid</span><span class="mut">GHS 1,180 · MTN Mobile Money</span></div></div></div>
+              <div class="ur-ev"><span class="ico"><i class="ic ic-sm i-inbox" aria-hidden="true"></i></span><div class="body row g12"><span class="sl-tile"><i class="ic i-box" aria-hidden="true"></i></span><div class="grow col g4"><div class="row between wrap g8"><span class="sm fw5">New pre-alert · Apple iPad Air</span><span class="sm" style="color:var(--amber-ink)">Arrives Nov 9</span></div><span class="mut sm">Declared $599.00 · UPS 1Z999AA10123456784</span></div></div></div>
+              <div class="ur-ev"><span class="ico"><i class="ic ic-sm i-phone" aria-hidden="true"></i></span><div class="col g4" style="padding-top:4px"><span class="sm fw5">Adwoa Sarpong called you</span><span class="mut sm">1 outbound call · 03:26 · Oct 28, 16:31</span></div></div>
+            </div>
+          </section>
+
+          <section class="b sl-card col g12">
+            <div class="sl-ch" style="margin:0"><div class="row g12"><span class="sl-av dark">AS</span><div><h2 class="sl-ct">Swift Lane support</h2><div class="mut sm">Adwoa usually replies in 6 min</div></div></div><span class="sl-badge ok">Online</span></div>
+            <div class="thread">
+              <div class="bub"><small>Adwoa · 11:02</small>Hi Efua, your Amazon parcel SL-100480 is at the Accra warehouse. Would you like home delivery or pickup?</div>
+              <div class="bub me"><small>You · 11:20</small>Home delivery please, after 4pm if possible.</div>
+              <div class="bub"><small>Adwoa · 11:24</small>Done. Driver slot booked for Nov 5, 16:00–18:00. You'll get a WhatsApp alert when he leaves.</div>
+            </div>
+            <div class="composer"><textarea aria-label="Write a message" placeholder="Write a message"></textarea><div class="tb"><button class="ib" aria-label="Attach file"><i class="ic ic-sm i-paperclip" aria-hidden="true"></i></button><span class="grow"></span><button class="sl-btn sm soft"><i class="ic ic-sm i-send" aria-hidden="true"></i>Send</button></div></div>
+          </section>
+        </div>
+
+        <section class="sl-card flush">
+          <div class="row between wrap g12" style="padding:14px 16px">
+            <div class="sl-seg boxed"><button class="on">Shipments</button><a href="PreAlerts.dc.html">Pre-alert list</a><a href="AirShipments.dc.html">Registered packages</a></div>
+            <div class="sl-search" style="max-width:280px"><i class="ic ic-sm i-search" aria-hidden="true"></i><input aria-label="Search my shipments" placeholder="Search my shipments"></div>
+          </div>
+          <div class="sl-tw"><table class="sl-table">
+            <thead><tr><th>Tracking</th><th>Store</th><th>Mode</th><th class="num">Weight</th><th class="num">Cost</th><th>Progress</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+              <sc-for list="{{rows}}" as="r" hint-placeholder-count="5"><tr><td><a class="id" href="ShipmentDetail.dc.html">{{r.id}}</a></td><td>{{r.from}}</td><td><span class="sl-badge">{{r.mode}}</span></td><td class="num">{{r.w}}</td><td class="num">{{r.c}}</td><td style="min-width:120px"><div class="sl-ticks n"><i style="{{r.pg}}"></i></div></td><td><span class="sl-pill {{r.cls}}">{{r.st}}</span></td><td><a class="sl-btn sm ghost" href="ShipmentDetail.dc.html">View</a></td></tr></sc-for>
+            </tbody>
+          </table></div>
+          <div class="sl-pager"><span>Showing 1–5 of 12 shipments</span><div class="sl-pg"><a class="on" href="UserHome.dc.html">1</a><a href="UserHome.dc.html">2</a><a href="UserHome.dc.html">3</a></div></div>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":3300}}'>
+class Component extends DCLogic {
+renderVals() {
+const heat = Array.from({ length: 364 }, (_, i) => { const v = (i * 53 + (i % 7) * 17 + Math.floor(i / 30) * 7) % 23; return { c: v > 20 ? 'h3' : v > 17 ? 'h2' : v > 13 ? 'h1' : '' }; });
+const S = { w: ['At warehouse', 'sorting', 40], t: ['In transit', 'transit', 65], o: ['Out for delivery', 'onway', 85], d: ['Delivered', 'delivered', 100] };
+const raw = [['SL-100480','Amazon','Air','5.6 kg','GHS 694','w'],['SL-100455','Best Buy','Air','1.2 kg','GHS 180','w'],['SL-100431','Nike','Air','2.8 kg','GHS 384','t'],['SL-100419','eBay','Sea','12.9 kg','GHS 412','o'],['SL-100391','Apple','Air','8.4 kg','GHS 1,018','d']];
+const rows = raw.map(r => ({ id: r[0], from: r[1], mode: r[2], w: r[3], c: r[4], st: S[r[5]][0], cls: S[r[5]][1], pg: 'width: ' + S[r[5]][2] + '%' }));
+return { heat, rows };
+}
+}
+</script>
+</body>
+</html>

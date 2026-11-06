@@ -1,0 +1,1376 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "AccountsReceivable.dc.html": {
+      "expand": "fill",
+      "h": 1300,
+      "title": "Accounts Receivable",
+      "w": 1440,
+      "x": 1520,
+      "y": 17900
+    },
+    "ActivityLogs.dc.html": {
+      "expand": "fill",
+      "h": 1250,
+      "title": "Activity Logs",
+      "w": 1440,
+      "x": 6080,
+      "y": 17900
+    },
+    "AiChatMobile.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "AI Assistant \u00b7 Mobile pop-up",
+      "w": 390,
+      "x": 4560,
+      "y": 40370
+    },
+    "AirShipments.dc.html": {
+      "expand": "fill",
+      "h": 1300,
+      "title": "Air Shipments",
+      "w": 1440,
+      "x": 0,
+      "y": 7240
+    },
+    "ApiAccess.dc.html": {
+      "expand": "fill",
+      "h": 1700,
+      "is_interactive": true,
+      "title": "API Access (users)",
+      "w": 1440,
+      "x": 3040,
+      "y": 47570
+    },
+    "ApiMonitor.dc.html": {
+      "expand": "fill",
+      "h": 1800,
+      "title": "API Monitoring (admin)",
+      "w": 1440,
+      "x": 1520,
+      "y": 47570
+    },
+    "Automations.dc.html": {
+      "expand": "fill",
+      "h": 1800,
+      "is_interactive": true,
+      "title": "Automations (builder)",
+      "w": 1440,
+      "x": 6080,
+      "y": 37670
+    },
+    "ClientDashboard.dc.html": {
+      "expand": "fill",
+      "h": 2350,
+      "title": "Customer Portal Home",
+      "w": 1440,
+      "x": 3040,
+      "y": 0
+    },
+    "ConsolidationDetail.dc.html": {
+      "expand": "fill",
+      "h": 1900,
+      "title": "Consolidation Detail \u00b7 Sea (SLC-4471)",
+      "w": 1440,
+      "x": 3040,
+      "y": 12210,
+      "is_interactive": true
+    },
+    "Consolidations.dc.html": {
+      "expand": "fill",
+      "h": 1250,
+      "title": "Consolidations",
+      "w": 1440,
+      "x": 1520,
+      "y": 12210
+    },
+    "ControlPanels.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "title": "Control Panels",
+      "w": 1440,
+      "x": 0,
+      "y": 23530
+    },
+    "ControlPanelsMobile.dc.html": {
+      "h": 3400,
+      "is_interactive": true,
+      "title": "Control Panels \u00b7 Mobile (live page at phone width)",
+      "w": 390,
+      "x": 1520,
+      "y": 23530
+    },
+    "ControlPanelsMobile2.dc.html": {
+      "h": 1560,
+      "is_interactive": true,
+      "title": "Control Panels \u00b7 Mobile 2",
+      "w": 390,
+      "x": 1990,
+      "y": 23530
+    },
+    "ControlPanelsMobile3.dc.html": {
+      "h": 1560,
+      "is_interactive": true,
+      "title": "Control Panels \u00b7 Mobile 3",
+      "w": 390,
+      "x": 2460,
+      "y": 23530
+    },
+    "CostSettings.dc.html": {
+      "expand": "fill",
+      "h": 2000,
+      "is_interactive": true,
+      "title": "Operating Costs (super admin)",
+      "w": 1440,
+      "x": 7600,
+      "y": 47570
+    },
+    "CsAI.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "title": "AI Assistant",
+      "w": 1440,
+      "x": 1520,
+      "y": 40370
+    },
+    "CsChannels.dc.html": {
+      "expand": "fill",
+      "h": 1250,
+      "title": "Channels and Teams",
+      "w": 1440,
+      "x": 3040,
+      "y": 40370
+    },
+    "CsCustomer.dc.html": {
+      "expand": "fill",
+      "h": 1900,
+      "title": "Customer 360 (support)",
+      "w": 1440,
+      "x": 7600,
+      "y": 37670
+    },
+    "CsInbox.dc.html": {
+      "expand": "fill",
+      "h": 1250,
+      "title": "Support Inbox",
+      "w": 1440,
+      "x": 0,
+      "y": 37670
+    },
+    "CsPlaybook.dc.html": {
+      "expand": "fill",
+      "h": 1250,
+      "title": "Playbook",
+      "w": 1440,
+      "x": 4560,
+      "y": 37670
+    },
+    "CsReports.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "title": "Support Reports",
+      "w": 1440,
+      "x": 0,
+      "y": 40370
+    },
+    "CsRules.dc.html": {
+      "expand": "fill",
+      "h": 1250,
+      "title": "Ticket Rules",
+      "w": 1440,
+      "x": 3040,
+      "y": 37670
+    },
+    "CsTicket.dc.html": {
+      "expand": "fill",
+      "h": 2300,
+      "title": "Support Ticket",
+      "w": 1440,
+      "x": 1520,
+      "y": 37670
+    },
+    "CustomerProfile.dc.html": {
+      "expand": "fill",
+      "h": 1600,
+      "title": "Customer Profile",
+      "w": 1440,
+      "x": 1520,
+      "y": 14880,
+      "is_interactive": true
+    },
+    "Customers.dc.html": {
+      "expand": "fill",
+      "h": 2550,
+      "title": "Customers",
+      "w": 1440,
+      "x": 0,
+      "y": 14880,
+      "is_interactive": true
+    },
+    "DesignSystem.dc.html": {
+      "expand": "fill",
+      "h": 3000,
+      "title": "Design System",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "DevAlerts.dc.html": {
+      "expand": "fill",
+      "h": 2250,
+      "title": "Alerts",
+      "w": 1440,
+      "x": 3040,
+      "y": 32870,
+      "is_interactive": true
+    },
+    "DevBilling.dc.html": {
+      "expand": "fill",
+      "h": 2700,
+      "is_interactive": true,
+      "title": "Usage & Billing",
+      "w": 1440,
+      "x": 6080,
+      "y": 32870
+    },
+    "DevDeployments.dc.html": {
+      "expand": "fill",
+      "h": 3300,
+      "is_interactive": true,
+      "title": "Deployments",
+      "w": 1440,
+      "x": 1520,
+      "y": 32870
+    },
+    "DevInfrastructure.dc.html": {
+      "expand": "fill",
+      "h": 3500,
+      "is_interactive": true,
+      "title": "Infrastructure",
+      "w": 1440,
+      "x": 0,
+      "y": 32870
+    },
+    "DevIntegrations.dc.html": {
+      "expand": "fill",
+      "h": 1900,
+      "title": "Integrations",
+      "w": 1440,
+      "x": 4560,
+      "y": 32870
+    },
+    "DevLogs.dc.html": {
+      "expand": "fill",
+      "h": 1850,
+      "title": "Logs",
+      "w": 1440,
+      "x": 3040,
+      "y": 29370
+    },
+    "DevMetrics.dc.html": {
+      "expand": "fill",
+      "h": 2500,
+      "title": "Metrics and Traces",
+      "w": 1440,
+      "x": 4560,
+      "y": 29370
+    },
+    "DevOverview.dc.html": {
+      "expand": "fill",
+      "h": 2900,
+      "title": "Developer Overview",
+      "w": 1440,
+      "x": 0,
+      "y": 29370
+    },
+    "DevServices.dc.html": {
+      "expand": "fill",
+      "h": 1560,
+      "title": "Services",
+      "w": 1440,
+      "x": 1520,
+      "y": 29370
+    },
+    "Drivers.dc.html": {
+      "expand": "fill",
+      "h": 1950,
+      "title": "Drivers",
+      "w": 1440,
+      "x": 4560,
+      "y": 14880
+    },
+    "FinancialOverview.dc.html": {
+      "expand": "fill",
+      "h": 1600,
+      "title": "Financial Overview",
+      "w": 1440,
+      "x": 3040,
+      "y": 17900
+    },
+    "FinancialOverviewRestricted.dc.html": {
+      "expand": "fill",
+      "h": 2300,
+      "title": "Financial Overview \u00b7 no money permission",
+      "w": 1440,
+      "x": 6080,
+      "y": 47570
+    },
+    "ForgotPassword.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "title": "Forgot Password",
+      "w": 1440,
+      "x": 3040,
+      "y": 4320
+    },
+    "Label1x2.dc.html": {
+      "h": 96,
+      "title": "Label 1\u00d72 in",
+      "w": 192,
+      "x": 1984,
+      "y": 45570
+    },
+    "Label4x6.dc.html": {
+      "h": 576,
+      "title": "Label 4\u00d76 in",
+      "w": 384,
+      "x": 1520,
+      "y": 45570
+    },
+    "LabelStudio.dc.html": {
+      "expand": "fill",
+      "h": 1400,
+      "is_interactive": true,
+      "title": "Label Studio (label options)",
+      "w": 1440,
+      "x": 2640,
+      "y": 45570
+    },
+    "LockerSearch.dc.html": {
+      "expand": "fill",
+      "h": 1100,
+      "title": "Locker Search",
+      "w": 1440,
+      "x": 6080,
+      "y": 12210
+    },
+    "Login.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "title": "Log In",
+      "w": 1440,
+      "x": 0,
+      "y": 4320
+    },
+    "LoginOtp.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "title": "Login OTP",
+      "w": 1440,
+      "x": 6080,
+      "y": 4320
+    },
+    "Main.dc.html": {
+      "expand": "fill",
+      "h": 3900,
+      "title": "Overview (Admin)",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "MessageCosts.dc.html": {
+      "expand": "fill",
+      "h": 1700,
+      "title": "Message Costs",
+      "w": 1440,
+      "x": 6080,
+      "y": 42570
+    },
+    "MessageLogs.dc.html": {
+      "expand": "fill",
+      "h": 1250,
+      "title": "Message Logs",
+      "w": 1440,
+      "x": 7600,
+      "y": 17900
+    },
+    "ModuleController.dc.html": {
+      "expand": "fill",
+      "h": 2600,
+      "is_interactive": true,
+      "title": "Module Controller",
+      "w": 1440,
+      "x": 0,
+      "y": 47570
+    },
+    "MyBills.dc.html": {
+      "expand": "fill",
+      "h": 1400,
+      "title": "My Bills (Customer)",
+      "w": 1440,
+      "x": 10640,
+      "y": 42570
+    },
+    "NewPackage.dc.html": {
+      "expand": "fill",
+      "h": 1700,
+      "title": "New Package",
+      "w": 1440,
+      "x": 1520,
+      "y": 9990
+    },
+    "NewShipment.dc.html": {
+      "expand": "fill",
+      "h": 2150,
+      "title": "New Shipment",
+      "w": 1440,
+      "x": 1520,
+      "y": 7240
+    },
+    "NotificationCenter.dc.html": {
+      "expand": "fill",
+      "h": 1600,
+      "is_interactive": true,
+      "title": "Notification Center",
+      "w": 1440,
+      "x": 0,
+      "y": 42570
+    },
+    "Notifications.dc.html": {
+      "expand": "fill",
+      "h": 1150,
+      "title": "Notifications",
+      "w": 1440,
+      "x": 3040,
+      "y": 20940
+    },
+    "PackageDetail.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "title": "Package Detail",
+      "w": 1440,
+      "x": 3040,
+      "y": 9990
+    },
+    "PackageIntake.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "is_interactive": true,
+      "title": "Package Intake (AI lookup)",
+      "w": 1440,
+      "x": 0,
+      "y": 45570
+    },
+    "Payments.dc.html": {
+      "expand": "fill",
+      "h": 2700,
+      "title": "Payments",
+      "w": 1440,
+      "x": 0,
+      "y": 17900
+    },
+    "PickupAging.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "title": "Pickup Aging",
+      "w": 1440,
+      "x": 3040,
+      "y": 42570
+    },
+    "Pickups.dc.html": {
+      "expand": "fill",
+      "h": 2350,
+      "title": "Pickups",
+      "w": 1440,
+      "x": 0,
+      "y": 12210
+    },
+    "Piece-7d1a.dc.html": {
+      "frameless": true,
+      "h": 4200,
+      "title": "Box",
+      "w": 1440,
+      "x": -1604,
+      "y": 20940
+    },
+    "PreAlerts.dc.html": {
+      "expand": "fill",
+      "h": 1200,
+      "title": "Pre-Alerts",
+      "w": 1440,
+      "x": 4560,
+      "y": 9990
+    },
+    "PublicTracking.dc.html": {
+      "expand": "fill",
+      "h": 2150,
+      "title": "Public Tracking",
+      "w": 1440,
+      "x": 4560,
+      "y": 4320
+    },
+    "QuoteCalculator.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "title": "Rate Calculator (Public)",
+      "w": 1440,
+      "x": 12160,
+      "y": 42570
+    },
+    "ReceiptNotPaid.dc.html": {
+      "h": 1200,
+      "title": "Package receipt \u00b7 Not paid",
+      "w": 400,
+      "x": 4640,
+      "y": 45570
+    },
+    "ReceiptPaid.dc.html": {
+      "h": 1180,
+      "title": "Package receipt \u00b7 Paid",
+      "w": 400,
+      "x": 4160,
+      "y": 45570
+    },
+    "Recipients.dc.html": {
+      "expand": "fill",
+      "h": 1250,
+      "title": "Recipients",
+      "w": 1440,
+      "x": 3040,
+      "y": 14880
+    },
+    "Reports.dc.html": {
+      "expand": "fill",
+      "h": 8300,
+      "title": "Reports",
+      "w": 1440,
+      "x": 4560,
+      "y": 17900
+    },
+    "SeaPackages.dc.html": {
+      "expand": "fill",
+      "h": 1300,
+      "title": "Sea Packages",
+      "w": 1440,
+      "x": 0,
+      "y": 9990
+    },
+    "ShipmentDetail.dc.html": {
+      "expand": "fill",
+      "h": 1600,
+      "title": "Shipment Detail",
+      "w": 1440,
+      "x": 3040,
+      "y": 7240
+    },
+    "SignUp.dc.html": {
+      "expand": "fill",
+      "h": 2100,
+      "title": "Sign Up",
+      "w": 1440,
+      "x": 1520,
+      "y": 4320,
+      "is_interactive": true
+    },
+    "StaffPermissions.dc.html": {
+      "expand": "fill",
+      "h": 2700,
+      "is_interactive": true,
+      "title": "Staff Permissions",
+      "w": 1440,
+      "x": 4560,
+      "y": 47570
+    },
+    "StaffProductivity.dc.html": {
+      "expand": "fill",
+      "h": 2300,
+      "title": "Staff Productivity",
+      "w": 1440,
+      "x": 4560,
+      "y": 42570
+    },
+    "StaffRoles.dc.html": {
+      "expand": "fill",
+      "h": 1400,
+      "title": "Staff & Roles",
+      "w": 1440,
+      "x": 6080,
+      "y": 14880
+    },
+    "SystemLogs.dc.html": {
+      "expand": "fill",
+      "h": 2900,
+      "title": "System Logs",
+      "w": 1440,
+      "x": 9120,
+      "y": 42570
+    },
+    "Tariffs.dc.html": {
+      "expand": "fill",
+      "h": 2350,
+      "title": "Shipping Tariffs",
+      "w": 1440,
+      "x": 1520,
+      "y": 20940,
+      "is_interactive": true
+    },
+    "Transactions.dc.html": {
+      "expand": "fill",
+      "h": 1350,
+      "title": "Transactions",
+      "w": 1440,
+      "x": 7600,
+      "y": 42570
+    },
+    "UserHome.dc.html": {
+      "expand": "fill",
+      "h": 3300,
+      "title": "My Account (Customer)",
+      "w": 1440,
+      "x": 4560,
+      "y": 0
+    },
+    "Warehouse.dc.html": {
+      "expand": "fill",
+      "h": 1400,
+      "title": "Warehouse",
+      "w": 1440,
+      "x": 4560,
+      "y": 12210
+    },
+    "WarehouseDelivery.dc.html": {
+      "expand": "fill",
+      "h": 2700,
+      "title": "Warehouse Delivery (pickup codes)",
+      "w": 1440,
+      "x": 1520,
+      "y": 42570,
+      "is_interactive": true
+    },
+    "WarehousePickups.dc.html": {
+      "expand": "fill",
+      "h": 1600,
+      "title": "Warehouse Pickups (handed out)",
+      "w": 1440,
+      "x": 7600,
+      "y": 12210
+    },
+    "LoginSettings.dc.html": {
+      "expand": "fill",
+      "h": 2700,
+      "title": "Login Page (settings)",
+      "w": 1440,
+      "x": 9120,
+      "y": 47570,
+      "is_interactive": true
+    },
+    "ShippingAddresses.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "title": "Shipping Addresses (settings)",
+      "w": 1440,
+      "x": 10640,
+      "y": 47570,
+      "is_interactive": true
+    },
+    "AiStudio.dc.html": {
+      "expand": "fill",
+      "h": 1300,
+      "title": "AI Profile Studio",
+      "w": 1440,
+      "x": 12160,
+      "y": 47570,
+      "is_interactive": true
+    },
+    "Documents.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "title": "Documents & exports",
+      "w": 1440,
+      "x": 1520,
+      "y": 50670
+    },
+    "ComposeMessage.dc.html": {
+      "expand": "fill",
+      "h": 1400,
+      "title": "Compose message",
+      "w": 1440,
+      "x": 3040,
+      "y": 50670
+    },
+    "ImportData.dc.html": {
+      "expand": "fill",
+      "h": 1300,
+      "title": "Import from Excel",
+      "w": 1440,
+      "x": 4560,
+      "y": 50670
+    },
+    "AddCustomer.dc.html": {
+      "expand": "fill",
+      "h": 1600,
+      "title": "Add customer / recipient",
+      "w": 1440,
+      "x": 6080,
+      "y": 50670
+    },
+    "InviteStaff.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "title": "Invite staff",
+      "w": 1440,
+      "x": 7600,
+      "y": 50670
+    },
+    "RecordPayment.dc.html": {
+      "expand": "fill",
+      "h": 1300,
+      "title": "Record payment",
+      "w": 1440,
+      "x": 9120,
+      "y": 50670
+    },
+    "SchedulePickup.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "title": "Schedule pickup",
+      "w": 1440,
+      "x": 10640,
+      "y": 50670
+    },
+    "PayCheckout.dc.html": {
+      "expand": "fill",
+      "h": 1200,
+      "title": "Pay bills (customer)",
+      "w": 1440,
+      "x": 12160,
+      "y": 50670
+    },
+    "RateEditor.dc.html": {
+      "expand": "fill",
+      "h": 1300,
+      "title": "Rate editor",
+      "w": 1440,
+      "x": 13680,
+      "y": 50670
+    },
+    "NewIntegration.dc.html": {
+      "expand": "fill",
+      "h": 1400,
+      "title": "Add integration",
+      "w": 1440,
+      "x": 15200,
+      "y": 50670
+    },
+    "SettingsHub.dc.html": {
+      "expand": "fill",
+      "h": 3700,
+      "title": "Settings (hub + general)",
+      "w": 1440,
+      "x": 0,
+      "y": 50670
+    },
+    "RiderDispatch.dc.html": {
+      "expand": "fill",
+      "h": 1900,
+      "title": "Dispatch board (riders)",
+      "w": 1440,
+      "x": 7600,
+      "y": 14880,
+      "is_interactive": true
+    },
+    "RiderDetail.dc.html": {
+      "expand": "fill",
+      "h": 2350,
+      "title": "Rider detail",
+      "w": 1440,
+      "x": 9120,
+      "y": 14880
+    },
+    "SendPrices.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "title": "Send package prices",
+      "w": 1440,
+      "x": 9120,
+      "y": 17900,
+      "is_interactive": true
+    },
+    "ApiConnections.dc.html": {
+      "expand": "fill",
+      "h": 1900,
+      "title": "API connections (payments, couriers, AI\u2026)",
+      "w": 1440,
+      "x": 16720,
+      "y": 50670,
+      "is_interactive": true
+    },
+    "StaffActivity.dc.html": {
+      "expand": "fill",
+      "h": 3700,
+      "title": "Staff activity log",
+      "w": 1440,
+      "x": 10640,
+      "y": 14880,
+      "is_interactive": true
+    },
+    "RiderSettings.dc.html": {
+      "expand": "fill",
+      "h": 1700,
+      "title": "Rider fees and split (settings)",
+      "w": 1440,
+      "x": 13680,
+      "y": 47570,
+      "is_interactive": true
+    },
+    "StaffAI.dc.html": {
+      "expand": "fill",
+      "h": 1900,
+      "title": "AI Assistant (staff, from codebase)",
+      "w": 1440,
+      "x": 6080,
+      "y": 40370,
+      "is_interactive": true
+    },
+    "EmailBuilder.dc.html": {
+      "expand": "fill",
+      "h": 1700,
+      "title": "Email builder (drag and drop)",
+      "w": 1440,
+      "x": 13680,
+      "y": 42570,
+      "is_interactive": true
+    },
+    "MessageTemplates.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "title": "SMS and WhatsApp templates",
+      "w": 1440,
+      "x": 15200,
+      "y": 42570,
+      "is_interactive": true
+    },
+    "Broadcast.dc.html": {
+      "expand": "fill",
+      "h": 1700,
+      "title": "Push notifications (send with previews)",
+      "w": 1440,
+      "x": 16720,
+      "y": 42570,
+      "is_interactive": true
+    },
+    "CustomerNotifications.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "title": "My Notification Settings (Customer)",
+      "w": 1440,
+      "x": 6080,
+      "y": 0,
+      "is_interactive": true
+    },
+    "DeliveryTracking.dc.html": {
+      "expand": "fill",
+      "h": 1350,
+      "title": "Delivery Tracking (live)",
+      "w": 1440,
+      "x": 12160,
+      "y": 14880,
+      "is_interactive": true
+    },
+    "DriverApp.dc.html": {
+      "h": 1500,
+      "title": "Rider App \u00b7 Mobile",
+      "w": 390,
+      "x": 13680,
+      "y": 14880,
+      "is_interactive": true
+    },
+    "PasswordReset.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "title": "Password Reset (every 30 days)",
+      "w": 1440,
+      "x": 7600,
+      "y": 4320,
+      "is_interactive": true
+    },
+    "ApiTraffic.dc.html": {
+      "expand": "fill",
+      "h": 1900,
+      "title": "Live API traffic (push and pull)",
+      "w": 1440,
+      "x": 18240,
+      "y": 50670,
+      "is_interactive": true
+    },
+    "ConsolidationAir.dc.html": {
+      "expand": "fill",
+      "h": 1900,
+      "title": "Consolidation Detail \u00b7 Air (AIR-1187)",
+      "w": 1440,
+      "x": 9120,
+      "y": 12210,
+      "is_interactive": true
+    },
+    "NewConsolidation.dc.html": {
+      "expand": "fill",
+      "h": 1800,
+      "title": "New Consolidation (create)",
+      "w": 1440,
+      "x": 10640,
+      "y": 12210,
+      "is_interactive": true
+    },
+    "HandOut.dc.html": {
+      "expand": "fill",
+      "h": 1300,
+      "title": "Hand Out Packages (counter)",
+      "w": 1440,
+      "x": 12160,
+      "y": 12210,
+      "is_interactive": true
+    },
+    "DevIssues.dc.html": {
+      "expand": "fill",
+      "h": 2100,
+      "title": "Issues, Site Management and Change Log",
+      "w": 1440,
+      "x": 7600,
+      "y": 32870,
+      "is_interactive": true
+    },
+    "ShipmentTracking.dc.html": {
+      "expand": "fill",
+      "h": 2600,
+      "title": "Shipment Tracking (advanced, 25 features)",
+      "w": 1440,
+      "x": 14150,
+      "y": 14880,
+      "is_interactive": true
+    },
+    "FreightHub.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "title": "Freight Hub",
+      "w": 1440,
+      "x": 0,
+      "y": 54770,
+      "is_interactive": true
+    },
+    "FreightSchedule.dc.html": {
+      "expand": "fill",
+      "h": 1700,
+      "title": "Departures and Arrivals",
+      "w": 1440,
+      "x": 1520,
+      "y": 54770,
+      "is_interactive": true
+    },
+    "Waybills.dc.html": {
+      "expand": "fill",
+      "h": 1600,
+      "title": "Waybills, Manifests and Container Loading",
+      "w": 1440,
+      "x": 3040,
+      "y": 54770,
+      "is_interactive": true
+    },
+    "CargoExceptions.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "title": "Cargo Exceptions, Bulk Updates, Partial, Hand-overs",
+      "w": 1440,
+      "x": 4560,
+      "y": 54770,
+      "is_interactive": true
+    },
+    "InsuranceClaims.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "title": "Insurance and Claims",
+      "w": 1440,
+      "x": 6080,
+      "y": 54770,
+      "is_interactive": true
+    },
+    "FreightPartners.dc.html": {
+      "expand": "fill",
+      "h": 1400,
+      "title": "Freight Partners",
+      "w": 1440,
+      "x": 7600,
+      "y": 54770,
+      "is_interactive": true
+    },
+    "ExecDashboard.dc.html": {
+      "expand": "fill",
+      "h": 2200,
+      "title": "Management Dashboard (air first)",
+      "w": 1440,
+      "x": 0,
+      "y": 56870,
+      "is_interactive": true
+    },
+    "BillingHub.dc.html": {
+      "expand": "fill",
+      "h": 2300,
+      "title": "Billing and Finance (switch off finance)",
+      "w": 1440,
+      "x": 1520,
+      "y": 56870,
+      "is_interactive": true
+    },
+    "LastMile.dc.html": {
+      "expand": "fill",
+      "h": 2000,
+      "title": "Ghana Last-Mile Delivery",
+      "w": 1440,
+      "x": 3040,
+      "y": 56870,
+      "is_interactive": true
+    },
+    "AiCenter.dc.html": {
+      "expand": "fill",
+      "h": 2100,
+      "title": "AI Centre (air first)",
+      "w": 1440,
+      "x": 4560,
+      "y": 56870,
+      "is_interactive": true
+    },
+    "CommsHub.dc.html": {
+      "expand": "fill",
+      "h": 2100,
+      "title": "Messages and Automation",
+      "w": 1440,
+      "x": 6080,
+      "y": 56870,
+      "is_interactive": true
+    },
+    "SupportHub.dc.html": {
+      "expand": "fill",
+      "h": 1900,
+      "title": "Support and CRM",
+      "w": 1440,
+      "x": 7600,
+      "y": 56870,
+      "is_interactive": true
+    },
+    "LoyaltyRewards.dc.html": {
+      "expand": "fill",
+      "h": 1900,
+      "title": "Loyalty, Referrals and Rewards",
+      "w": 1440,
+      "x": 9120,
+      "y": 56870,
+      "is_interactive": true
+    },
+    "SecurityCenter.dc.html": {
+      "expand": "fill",
+      "h": 1900,
+      "title": "Security and Reliability",
+      "w": 1440,
+      "x": 10640,
+      "y": 56870,
+      "is_interactive": true
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-11-05T18:30:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "view": "canvas"
+  },
+  "noteOrder": [
+    "t1",
+    "t2",
+    "t3",
+    "t4",
+    "t5",
+    "t6",
+    "t7",
+    "t8",
+    "t9",
+    "t10",
+    "t11",
+    "t12",
+    "t13",
+    "t14",
+    "t15",
+    "fr-note",
+    "hub-note"
+  ],
+  "notes": {
+    "t1": {
+      "kind": "title1",
+      "maxW": 6000,
+      "text": "Foundation and dashboards",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "t10": {
+      "kind": "title1",
+      "maxW": 6000,
+      "text": "Developer",
+      "w": 240,
+      "x": 0,
+      "y": 29070
+    },
+    "t11": {
+      "kind": "title1",
+      "maxW": 6000,
+      "text": "Customer service",
+      "w": 240,
+      "x": 0,
+      "y": 37370
+    },
+    "t12": {
+      "kind": "title1",
+      "maxW": 8000,
+      "text": "From the codebase: new screens",
+      "w": 240,
+      "x": 0,
+      "y": 42270
+    },
+    "t13": {
+      "kind": "title1",
+      "maxW": 5040,
+      "text": "Package intake and printing",
+      "w": 240,
+      "x": 0,
+      "y": 45270
+    },
+    "t14": {
+      "kind": "title1",
+      "maxW": 13600,
+      "text": "Admin: modules, API and permissions",
+      "w": 240,
+      "x": 0,
+      "y": 47270
+    },
+    "t2": {
+      "kind": "title1",
+      "maxW": 6000,
+      "text": "Sign in and public tracking",
+      "w": 240,
+      "x": 0,
+      "y": 4020
+    },
+    "t3": {
+      "kind": "title1",
+      "maxW": 4480,
+      "text": "Air freight",
+      "w": 240,
+      "x": 0,
+      "y": 6940
+    },
+    "t4": {
+      "kind": "title1",
+      "maxW": 6000,
+      "text": "Sea freight and pre-alerts",
+      "w": 240,
+      "x": 0,
+      "y": 9690
+    },
+    "t5": {
+      "kind": "title1",
+      "maxW": 7520,
+      "text": "Pickups, consolidation and warehouse",
+      "w": 240,
+      "x": 0,
+      "y": 11910
+    },
+    "t6": {
+      "kind": "title1",
+      "maxW": 10560,
+      "text": "People",
+      "w": 240,
+      "x": 0,
+      "y": 14640
+    },
+    "t7": {
+      "kind": "title1",
+      "maxW": 8000,
+      "text": "Finance and insights",
+      "w": 240,
+      "x": 0,
+      "y": 17600
+    },
+    "t8": {
+      "kind": "title1",
+      "maxW": 4480,
+      "text": "Settings and notifications",
+      "w": 240,
+      "x": 0,
+      "y": 20640
+    },
+    "t9": {
+      "kind": "title1",
+      "maxW": 1440,
+      "text": "Control panels",
+      "w": 240,
+      "x": 0,
+      "y": 23230
+    },
+    "t15": {
+      "kind": "title1",
+      "maxW": 18160,
+      "text": "Linked pages: settings, documents and actions",
+      "w": 240,
+      "x": 0,
+      "y": 50370
+    },
+    "fr-note": {
+      "kind": "title1",
+      "maxW": 6000,
+      "text": "Freight: schedule, waybills, exceptions, insurance, partners",
+      "w": 240,
+      "x": 0,
+      "y": 54470
+    },
+    "hub-note": {
+      "kind": "title1",
+      "maxW": 6000,
+      "text": "Capability hubs: management, billing (switchable), last mile, AI, messages, support, loyalty, security",
+      "w": 240,
+      "x": 0,
+      "y": 56570
+    }
+  },
+  "order": [
+    "DesignSystem.dc.html",
+    "Main.dc.html",
+    "ClientDashboard.dc.html",
+    "UserHome.dc.html",
+    "CustomerNotifications.dc.html",
+    "Login.dc.html",
+    "SignUp.dc.html",
+    "ForgotPassword.dc.html",
+    "LoginOtp.dc.html",
+    "PasswordReset.dc.html",
+    "PublicTracking.dc.html",
+    "AirShipments.dc.html",
+    "NewShipment.dc.html",
+    "ShipmentDetail.dc.html",
+    "SeaPackages.dc.html",
+    "NewPackage.dc.html",
+    "PackageDetail.dc.html",
+    "PreAlerts.dc.html",
+    "Pickups.dc.html",
+    "WarehousePickups.dc.html",
+    "HandOut.dc.html",
+    "Consolidations.dc.html",
+    "ConsolidationDetail.dc.html",
+    "ConsolidationAir.dc.html",
+    "NewConsolidation.dc.html",
+    "Warehouse.dc.html",
+    "LockerSearch.dc.html",
+    "Customers.dc.html",
+    "CustomerProfile.dc.html",
+    "Recipients.dc.html",
+    "Drivers.dc.html",
+    "RiderDispatch.dc.html",
+    "DeliveryTracking.dc.html",
+    "DriverApp.dc.html",
+    "ShipmentTracking.dc.html",
+    "RiderDetail.dc.html",
+    "StaffRoles.dc.html",
+    "StaffActivity.dc.html",
+    "Payments.dc.html",
+    "SendPrices.dc.html",
+    "AccountsReceivable.dc.html",
+    "FinancialOverview.dc.html",
+    "Reports.dc.html",
+    "ActivityLogs.dc.html",
+    "MessageLogs.dc.html",
+    "Tariffs.dc.html",
+    "Notifications.dc.html",
+    "ControlPanels.dc.html",
+    "ControlPanelsMobile.dc.html",
+    "ControlPanelsMobile2.dc.html",
+    "ControlPanelsMobile3.dc.html",
+    "DevOverview.dc.html",
+    "DevServices.dc.html",
+    "DevLogs.dc.html",
+    "DevMetrics.dc.html",
+    "DevInfrastructure.dc.html",
+    "DevDeployments.dc.html",
+    "DevAlerts.dc.html",
+    "DevIssues.dc.html",
+    "DevIntegrations.dc.html",
+    "DevBilling.dc.html",
+    "CsInbox.dc.html",
+    "CsTicket.dc.html",
+    "CsCustomer.dc.html",
+    "CsRules.dc.html",
+    "CsPlaybook.dc.html",
+    "Automations.dc.html",
+    "CsReports.dc.html",
+    "StaffAI.dc.html",
+    "CsAI.dc.html",
+    "AiChatMobile.dc.html",
+    "CsChannels.dc.html",
+    "Piece-7d1a.dc.html",
+    "NotificationCenter.dc.html",
+    "Broadcast.dc.html",
+    "MessageTemplates.dc.html",
+    "EmailBuilder.dc.html",
+    "WarehouseDelivery.dc.html",
+    "PickupAging.dc.html",
+    "StaffProductivity.dc.html",
+    "MessageCosts.dc.html",
+    "Transactions.dc.html",
+    "SystemLogs.dc.html",
+    "MyBills.dc.html",
+    "QuoteCalculator.dc.html",
+    "PackageIntake.dc.html",
+    "Label4x6.dc.html",
+    "Label1x2.dc.html",
+    "LabelStudio.dc.html",
+    "ReceiptPaid.dc.html",
+    "ReceiptNotPaid.dc.html",
+    "ModuleController.dc.html",
+    "ApiMonitor.dc.html",
+    "ApiAccess.dc.html",
+    "StaffPermissions.dc.html",
+    "FinancialOverviewRestricted.dc.html",
+    "CostSettings.dc.html",
+    "LoginSettings.dc.html",
+    "ShippingAddresses.dc.html",
+    "AiStudio.dc.html",
+    "SettingsHub.dc.html",
+    "Documents.dc.html",
+    "ComposeMessage.dc.html",
+    "ImportData.dc.html",
+    "AddCustomer.dc.html",
+    "InviteStaff.dc.html",
+    "RecordPayment.dc.html",
+    "SchedulePickup.dc.html",
+    "PayCheckout.dc.html",
+    "RateEditor.dc.html",
+    "NewIntegration.dc.html",
+    "ApiConnections.dc.html",
+    "ApiTraffic.dc.html",
+    "RiderSettings.dc.html",
+    "FreightHub.dc.html",
+    "FreightSchedule.dc.html",
+    "Waybills.dc.html",
+    "CargoExceptions.dc.html",
+    "InsuranceClaims.dc.html",
+    "FreightPartners.dc.html",
+    "ExecDashboard.dc.html",
+    "BillingHub.dc.html",
+    "LastMile.dc.html",
+    "AiCenter.dc.html",
+    "CommsHub.dc.html",
+    "SupportHub.dc.html",
+    "LoyaltyRewards.dc.html",
+    "SecurityCenter.dc.html"
+  ],
+  "pages": [],
+  "title": "Swift Lane UI Redesign"
+}

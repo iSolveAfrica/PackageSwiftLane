@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Swift Lane AI assistant, mobile</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./swiftlane.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;background:#0E1017}
+.ai{position:relative;width:390px;height:844px;overflow:hidden;font-family:var(--font)}
+.ai-bg{position:absolute;inset:0;display:flex;flex-direction:column}
+.ai-top{display:flex;align-items:center;gap:10px;padding:14px 16px 12px;border-bottom:1px solid var(--line)}
+.ai-top .sw{display:flex;align-items:center;gap:8px;font-weight:600;font-size:15px}
+.ai-top .sw small{width:28px;height:28px;border-radius:8px;background:var(--ink);color:var(--inverse);display:grid;place-items:center;font-size:11px;font-weight:700}
+.ai-bgb{padding:18px 16px;display:flex;flex-direction:column;gap:14px}
+.ai-g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.ai-k{padding:14px;border-radius:18px;border:1px solid var(--line);background:var(--card);display:flex;flex-direction:column;gap:2px}
+.ai-k b{font-size:26px;font-weight:500}
+.ai-dim{position:absolute;inset:0;background:rgba(8,9,14,.62);backdrop-filter:blur(2px)}
+.ai-sheet{position:absolute;left:0;right:0;bottom:0;height:720px;display:flex;flex-direction:column;background:var(--panel);border-radius:26px 26px 0 0;border-top:1px solid var(--line-2);box-shadow:0 -20px 50px rgba(0,0,0,.45)}
+.ai-handle{width:40px;height:5px;border-radius:3px;background:var(--line-2);margin:10px auto 2px}
+.ai-head{display:flex;align-items:center;gap:12px;padding:10px 16px 14px;border-bottom:1px solid var(--line)}
+.ai-orb{width:42px;height:42px;border-radius:14px;background:var(--ink);color:var(--inverse);display:grid;place-items:center;flex:none}
+.ai-head b{display:block;font-size:16px;font-weight:600}
+.ai-head small{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12.5px}
+.ai-live{width:7px;height:7px;border-radius:50%;background:var(--green)}
+.ai-msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+.ai-day{align-self:center;font-size:11.5px;color:var(--faint);letter-spacing:.04em;text-transform:uppercase}
+.ai-row{display:flex;gap:8px;align-items:flex-end}
+.ai-row.me{justify-content:flex-end}
+.ai-av{width:26px;height:26px;border-radius:9px;background:var(--active);display:grid;place-items:center;color:var(--ink-2);flex:none}
+.ai-b{max-width:78%;padding:11px 14px;border-radius:18px 18px 18px 6px;background:var(--card);border:1px solid var(--line);font-size:14.5px;line-height:1.5;color:var(--ink)}
+.ai-row.me .ai-b{border-radius:18px 18px 6px 18px;background:var(--ink);color:var(--inverse);border-color:var(--ink)}
+.ai-t{font-size:11px;color:var(--faint);margin-top:4px}
+.ai-card{margin-top:10px;border:1px solid var(--line-2);border-radius:14px;background:var(--field);padding:12px;display:flex;flex-direction:column;gap:10px}
+.ai-steps{display:flex;gap:4px}
+.ai-steps i{flex:1;height:5px;border-radius:3px;background:var(--line-2)}
+.ai-steps i.on{background:var(--green)}
+.ai-typing{display:inline-flex;gap:4px;padding:14px 16px}
+.ai-typing i{width:6px;height:6px;border-radius:50%;background:var(--muted);opacity:.6}
+.ai-chips{display:flex;gap:8px;overflow-x:auto;padding:10px 16px 4px;scrollbar-width:none}
+.ai-chips button{flex:none;height:36px;padding:0 14px;border-radius:100px;border:1px solid var(--line-2);background:transparent;color:var(--ink-2);font:500 13px var(--font);display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.ai-chips button:hover{background:var(--hover);color:var(--ink)}
+.ai-comp{display:flex;align-items:flex-end;gap:8px;padding:10px 12px 26px}
+.ai-in{flex:1;display:flex;align-items:center;gap:6px;min-height:48px;padding:0 6px 0 14px;border-radius:24px;border:1px solid var(--line-2);background:var(--field)}
+.ai-in input{flex:1;min-width:0;border:0;background:transparent;color:var(--ink);font:15px var(--font);outline:0;height:46px}
+.ai-ib{width:36px;height:36px;border-radius:50%;border:0;background:transparent;color:var(--muted);display:grid;place-items:center;cursor:pointer}
+.ai-send{width:48px;height:48px;border-radius:50%;border:0;background:var(--ink);color:var(--inverse);display:grid;place-items:center;cursor:pointer;flex:none}
+.ai-fab{position:absolute;right:18px;bottom:104px;display:flex;align-items:center;gap:10px;height:56px;padding:0 20px 0 8px;border-radius:28px;border:0;background:var(--ink);color:var(--inverse);font:600 15px var(--font);box-shadow:0 10px 30px rgba(0,0,0,.45);cursor:pointer}
+.ai-fab span.o{width:40px;height:40px;border-radius:50%;background:var(--inverse);color:var(--ink);display:grid;place-items:center}
+.ai-fab em{position:absolute;top:6px;left:38px;width:12px;height:12px;border-radius:50%;background:var(--red);border:2px solid var(--ink)}
+.ai-tabs{position:absolute;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));padding:8px 6px 22px;background:var(--panel);border-top:1px solid var(--line)}
+.ai-tabs a{display:flex;flex-direction:column;align-items:center;gap:4px;min-height:48px;justify-content:center;font-size:11px;color:var(--muted)}
+.ai-tabs a.on{color:var(--ink)}
+</style>
+</helmet>
+<div class="sl-app dk ai">
+  <div class="ai-bg" aria-hidden="{{bgHidden}}">
+    <header class="ai-top">
+      <button class="sl-ib" aria-label="Open menu"><i class="ic i-sidebar" aria-hidden="true"></i></button>
+      <a class="sw" href="Main.dc.html"><small>SL</small>Accra Hub</a>
+    <a class="fx-chip" style="height:30px;padding:0 9px;font-size:11px;gap:4px" href="SettingsHub.dc.html" title="Exchange rate · set in Settings › General"><span class="mono">USD 1 = GHS 12.40</span></a>
+      <span class="grow"></span>
+      <a class="sl-ib" aria-label="Notifications" href="Notifications.dc.html"><i class="ic i-bell" aria-hidden="true"></i></a>
+      <span class="sl-av sm">H</span>
+    </header>
+    <div class="ai-bgb">
+      <div><div class="up">Good morning, Henry</div><div style="font-size:24px;font-weight:600;letter-spacing:-.02em">Today at Accra Hub</div></div>
+      <div class="ai-g">
+        <div class="ai-k"><span class="up">Held parcels</span><b>11</b><span class="sm" style="color:var(--amber-ink)">▲ 3 vs yesterday</span></div>
+        <div class="ai-k"><span class="up">Open tickets</span><b>186</b><span class="mut sm">▼ 22 this week</span></div>
+        <div class="ai-k"><span class="up">Pickups</span><b>12 / 20</b><span class="mut sm">3 unassigned</span></div>
+        <div class="ai-k"><span class="up">On time</span><b>94.2%</b><span class="mut sm">Target 95%</span></div>
+      </div>
+    </div>
+    <nav class="ai-tabs" aria-label="App navigation">
+      <a href="Main.dc.html"><i class="ic i-grid" aria-hidden="true"></i>Home</a>
+      <a href="AirShipments.dc.html"><i class="ic i-plane" aria-hidden="true"></i>Shipments</a>
+      <a href="CsInbox.dc.html"><i class="ic i-ticket" aria-hidden="true"></i>Inbox</a>
+      <a class="on" href="AiChatMobile.dc.html"><i class="ic i-spark" aria-hidden="true"></i>Assistant</a>
+      <a href="ControlPanelsMobile.dc.html"><i class="ic i-layers" aria-hidden="true"></i>Panels</a>
+    </nav>
+  </div>
+
+  <sc-if value="{{closed}}" hint-placeholder-val="{{ false }}">
+    <button class="ai-fab" onClick="{{open}}" aria-label="Open Swift Lane AI"><span class="o"><i class="ic i-spark" aria-hidden="true"></i></span>Ask Swift Lane AI<em aria-hidden="true"></em></button>
+  </sc-if>
+
+  <sc-if value="{{isOpen}}" hint-placeholder-val="{{ true }}">
+    <div class="ai-dim" onClick="{{close}}"></div>
+    <section class="ai-sheet" role="dialog" aria-label="Swift Lane AI assistant">
+      <div class="ai-handle" aria-hidden="true"></div>
+      <div class="ai-head">
+        <span class="ai-orb"><i class="ic i-spark" aria-hidden="true"></i></span>
+        <div class="grow"><b>Swift Lane AI</b><small><span class="ai-live"></span>Online · knows your shipments, tickets and rates</small></div>
+        <a class="sl-ib" href="CsAI.dc.html" aria-label="Open full assistant"><i class="ic ic-sm i-expand" aria-hidden="true"></i></a>
+        <button class="sl-ib" onClick="{{close}}" aria-label="Close assistant"><i class="ic ic-sm i-x" aria-hidden="true"></i></button>
+      </div>
+      <div class="ai-msgs" aria-live="polite">
+        <span class="ai-day">Today</span>
+        <sc-for list="{{msgs}}" as="m" hint-placeholder-count="4">
+          <sc-if value="{{m.ai}}" hint-placeholder-val="{{ true }}">
+            <div class="ai-row"><span class="ai-av"><i class="ic ic-sm i-spark" aria-hidden="true"></i></span><div><div class="ai-b">{{m.text}}
+              <sc-if value="{{m.card}}" hint-placeholder-val="{{ false }}">
+                <div class="ai-card">
+                  <div class="row between"><a class="mono fw5" href="ShipmentDetail.dc.html">SL-100480</a><span class="sl-pill sorting">At warehouse</span></div>
+                  <div class="ai-steps" aria-label="4 of 5 steps done"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></div>
+                  <div class="row between sm mut"><span>Efua Owusu · 5.6 kg</span><span>Bay 14</span></div>
+                  <div class="row g8"><a class="sl-btn sm" href="ShipmentDetail.dc.html" style="flex:1">Open shipment</a><a class="sl-btn sm ghost" style="flex:1" href="ComposeMessage.dc.html">Notify customer</a></div>
+                </div>
+              </sc-if>
+            </div><div class="ai-t">{{m.t}}</div></div></div>
+          </sc-if>
+          <sc-if value="{{m.me}}" hint-placeholder-val="{{ false }}">
+            <div class="ai-row me"><div style="display:flex;flex-direction:column;align-items:flex-end"><div class="ai-b">{{m.text}}</div><div class="ai-t">{{m.t}}</div></div></div>
+          </sc-if>
+        </sc-for>
+        <sc-if value="{{typing}}" hint-placeholder-val="{{ false }}">
+          <div class="ai-row"><span class="ai-av"><i class="ic ic-sm i-spark" aria-hidden="true"></i></span><div class="ai-b ai-typing" aria-label="Assistant is typing"><i></i><i></i><i></i></div></div>
+        </sc-if>
+      </div>
+      <div class="ai-chips" aria-label="Suggested questions">
+        <sc-for list="{{chips}}" as="c" hint-placeholder-count="4"><button onClick="{{c.ask}}"><i class="ic ic-sm {{c.icon}}" aria-hidden="true"></i>{{c.label}}</button></sc-for>
+      </div>
+      <div class="ai-comp">
+        <label class="ai-in"><input aria-label="Ask the assistant" placeholder="Ask about a parcel, rate or ticket" value="{{draft}}" onChange="{{onDraft}}"><button class="ai-ib" aria-label="Attach a photo or file"><i class="ic ic-sm i-paperclip" aria-hidden="true"></i></button></label>
+        <button class="ai-send" onClick="{{send}}" aria-label="Send"><i class="ic i-send" aria-hidden="true"></i></button>
+      </div>
+    </section>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+constructor(p) {
+  super(p);
+  this.state = { open: true, draft: '', typing: false, msgs: [
+    { ai: true, t: '09:41', text: 'Hi Henry. 11 parcels are on hold at Accra Hub this morning, 3 more than yesterday. Want me to go through them?' },
+    { me: true, t: '09:42', text: 'Where is SL-100480?' },
+    { ai: true, t: '09:42', card: true, text: 'It arrived at Accra Hub yesterday at 14:20 and is in bay 14. The invoice is unpaid, so it is on hold.' }
+  ] };
+}
+reply(q) {
+  const k = q.toLowerCase();
+  if (k.includes('held')) return 'Of the 11 held parcels: 6 are waiting for payment, 3 for customs papers and 2 have an address problem. The oldest has been held 4 days.';
+  if (k.includes('rate')) return 'Air express is $6.00 per lb until Dec 31 (normally $9). Sea LCL is $38 per cubic foot. Want a quote for a customer?';
+  if (k.includes('pickup')) return '3 pickups have no driver yet, all in the 11:00–13:00 window. Kwesi Bonsu has the most room today, with 4 of 8 stops done.';
+  if (k.includes('ticket')) return 'You have 12 open tickets. 5 are customs holds, the slowest topic at 2h 14m on average. I can draft replies to all 5.';
+  return 'I checked shipments, tickets and rates. I can open the matching record or draft a message to the customer. What would you like?';
+}
+ask(q) {
+  if (!q || !q.trim()) return;
+  const now = '09:' + String(43 + this.state.msgs.length).padStart(2, '0');
+  this.setState({ msgs: [...this.state.msgs, { me: true, t: now, text: q }], draft: '', typing: true });
+  setTimeout(() => this.setState({ typing: false, msgs: [...this.state.msgs, { ai: true, t: now, text: this.reply(q) }] }), 900);
+}
+renderVals() {
+  const chips = [['Explain held parcels','i-alert'],['Unassigned pickups','i-truck'],['Current air rate','i-tag'],['Draft ticket replies','i-ticket']]
+    .map(c => ({ label: c[0], icon: c[1], ask: () => this.ask(c[0]) }));
+  return {
+    isOpen: this.state.open, closed: !this.state.open, bgHidden: this.state.open ? 'true' : 'false',
+    msgs: this.state.msgs, typing: this.state.typing, draft: this.state.draft, chips,
+    open: () => this.setState({ open: true }), close: () => this.setState({ open: false }),
+    onDraft: (e) => this.setState({ draft: e.target.value }),
+    send: () => this.ask(this.state.draft)
+  };
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Swift Lane Push Notifications</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./swiftlane.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}
+.ph{width:300px;max-width:100%;border-radius:48px;background:linear-gradient(160deg,#3a3936,#121211 40%,#262523);padding:11px;box-shadow:0 0 0 1.5px #5a5853 inset,0 30px 60px rgba(30,29,26,.28),0 8px 18px rgba(30,29,26,.18);flex:none;position:relative;box-sizing:border-box}
+.ph::before{content:"";position:absolute;top:22px;left:50%;transform:translateX(-50%);width:92px;height:27px;border-radius:20px;background:#000;z-index:3}
+.ph::after{content:"";position:absolute;right:-3px;top:130px;width:3px;height:64px;border-radius:0 3px 3px 0;background:#2b2a28}
+.ph-sc{border-radius:38px;overflow:hidden;background:#fff;display:flex;flex-direction:column;min-height:600px;position:relative}
+.ph-sc::after{content:"";position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:110px;height:5px;border-radius:3px;background:#111;opacity:.85}
+.ph-st{display:flex;justify-content:space-between;align-items:center;padding:14px 24px 6px 30px;font:600 14px -apple-system,Figtree,sans-serif;color:#111;height:30px}
+.ph-ic{display:flex;align-items:center;gap:5px}
+.ph-ic .sig{display:flex;align-items:flex-end;gap:1.5px;height:11px}.ph-ic .sig b{width:3px;background:#111;border-radius:1px}.ph-ic .sig b:nth-child(1){height:4px}.ph-ic .sig b:nth-child(2){height:6px}.ph-ic .sig b:nth-child(3){height:8px}.ph-ic .sig b:nth-child(4){height:11px}
+.ph-ic .wifi{width:14px;height:10px;border-radius:14px 14px 0 0;background:radial-gradient(circle at 50% 100%,#111 0 2px,transparent 2.5px 4px,#111 4.5px 5.5px,transparent 6px 7.5px,#111 8px 9px,transparent 9.5px);clip-path:polygon(0 0,100% 0,50% 100%)}
+.ph-ic .bat{width:22px;height:11px;border:1.5px solid #111;border-radius:3.5px;padding:1px;box-sizing:border-box;position:relative;opacity:.9}.ph-ic .bat::after{content:"";position:absolute;right:-4px;top:2.5px;width:2px;height:4px;border-radius:0 2px 2px 0;background:#111}.ph-ic .bat b{display:block;height:100%;width:78%;background:#111;border-radius:1.5px}
+.ph-hd{display:flex;align-items:center;gap:10px;padding:14px 14px 10px;border-bottom:1px solid #eee;font:600 15px -apple-system,Figtree,sans-serif;color:#111}
+.ph-av{width:34px;height:34px;border-radius:50%;background:#1E1D1A;color:#fff;display:grid;place-items:center;font-size:11px;flex:none}
+.ph-bd{flex:1;padding:14px 12px 18px;display:flex;flex-direction:column;gap:8px}
+.ph-day{align-self:center;font:500 11px -apple-system,Figtree,sans-serif;color:#667;background:rgba(255,255,255,.85);padding:4px 10px;border-radius:8px;box-shadow:0 1px 1px rgba(0,0,0,.05)}
+.sms .ph-hd{flex-direction:column;gap:4px;font-size:12px;font-weight:500;background:#F7F7F8}
+.sms .ph-hd .ph-av{width:48px;height:48px;font-size:14px;background:linear-gradient(#A6A6AC,#86868C)}
+.sms .ph-bd{background:#fff}
+.sms .ph-day{background:none;box-shadow:none}
+.sms .bub{align-self:flex-start;max-width:80%;padding:9px 13px;border-radius:19px 19px 19px 6px;background:#E9E9EB;color:#111;font:15px/1.4 -apple-system,Figtree,sans-serif;white-space:pre-line;word-break:break-word}
+.wa .ph-st{background:#F6F5F3}
+.wa .ph-hd{background:#F6F5F3;color:#111;border-bottom:1px solid #E4E2DE}
+.wa .ph-hd .ph-av{background:#1E1D1A}
+.wa .ph-bd{background:#EFE7DD radial-gradient(rgba(0,0,0,.035) 1px,transparent 1.5px) 0 0/14px 14px}
+.wa .bub{align-self:flex-start;max-width:86%;background:#fff;border-radius:2px 14px 14px 14px;padding:8px 10px 6px;color:#111;font:14.5px/1.45 -apple-system,Figtree,sans-serif;white-space:pre-line;word-break:break-word;box-shadow:0 1px .5px rgba(0,0,0,.13);position:relative}
+.wa .bub .tm{display:block;text-align:right;font-size:10.5px;color:#8A8A8A;margin-top:2px}
+.wa .bub .hd{display:block;font-weight:700;margin-bottom:4px}
+.wa .bub .img{height:130px;border-radius:10px;background:linear-gradient(135deg,#3B3A36,#7A6A58);margin:-4px -6px 8px;display:grid;place-items:center;color:rgba(255,255,255,.8);font-size:12px}
+.wa .bub .doc{display:flex;align-items:center;gap:8px;padding:10px;border-radius:10px;background:#F3F1EE;margin:-4px -6px 8px;font-size:12.5px}
+.wa .btns{align-self:flex-start;width:86%;display:flex;flex-direction:column;gap:3px;margin-top:-5px}
+.wa .btns span{display:flex;justify-content:center;align-items:center;gap:6px;background:#fff;border-radius:10px;padding:9px;color:#0A84C6;font:500 13.5px -apple-system,Figtree,sans-serif;box-shadow:0 1px .5px rgba(0,0,0,.13)}
+.em .ph-bd{background:#F2F2F7;padding:10px}
+.em .card{background:#fff;border-radius:14px;padding:16px;font:14px/1.5 -apple-system,Figtree,sans-serif;color:#1E1D1A;white-space:pre-line;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.em .card b.s{display:block;font-size:16px;margin-bottom:6px}
+.em .card .cta{display:inline-block;margin-top:12px;padding:10px 16px;border-radius:10px;background:#E2632A;color:#fff;font-weight:600}
+.ph-in{display:flex;align-items:center;gap:8px;padding:8px 10px 26px;border-top:1px solid #eee;font:14px -apple-system,Figtree,sans-serif;color:#999;background:#fff}
+.ph-in span{flex:1;height:34px;border-radius:17px;border:1px solid #ddd;display:flex;align-items:center;padding:0 14px}
+.wa .ph-in{background:#F6F5F3;border-top:0}.wa .ph-in span{background:#fff;border-color:#fff}
+.ph-in .mic{flex:none;width:34px;height:34px;border-radius:50%;background:#1E1D1A;display:grid;place-items:center;color:#fff}
+.sms .ph-in .mic{background:#E9E9EB;color:#888}.wa .ph-in .mic{background:#1E1D1A;border:0;color:#fff;padding:0;justify-content:center}.ph-in .mic{padding:0!important;border:0!important}
+.mt-ta{width:100%;min-height:150px;padding:12px;border:1px solid var(--line-2);border-radius:12px;background:var(--field);font:14px/1.55 var(--font);color:var(--ink);box-sizing:border-box;resize:vertical}
+.mt-var{display:inline-flex;align-items:center;height:28px;padding:0 9px;border-radius:8px;background:var(--active);font:12px var(--mono);border:0;color:var(--ink);cursor:pointer}
+.mt-var:hover{background:var(--hover)}
+.mt-ok{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;background:var(--green-bg);color:var(--green-ink);font-size:13.5px}
+.mt-li{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border:0;border-top:1px solid var(--line);background:none;font:13.5px var(--font);color:var(--ink);text-align:left;cursor:pointer;min-height:52px}
+.mt-li:hover{background:var(--hover)}.mt-li.on{background:var(--active)}
+.mt-li small{display:block;color:var(--muted);font-size:12px}
+.mt-tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);flex-wrap:wrap}.mt-tabs button{height:44px;padding:0 14px;border:0;background:none;font:500 14px var(--font);color:var(--muted);border-bottom:2px solid transparent;cursor:pointer;display:inline-flex;align-items:center;gap:8px}.mt-tabs button.on{color:var(--ink);border-color:var(--ink)}
+.mt-meter{height:6px;border-radius:9px;background:var(--active);overflow:hidden}.mt-meter i{display:block;height:100%;background:#A9A59C;border-radius:9px}
+.bc{display:grid;grid-template-columns:minmax(0,1fr) 520px;gap:16px;align-items:start}
+@media (max-width:1180px){.bc{grid-template-columns:1fr}}
+.bc-pv{display:flex;gap:14px;overflow-x:auto;padding-bottom:6px}
+.bc-pv .ph{width:250px}.bc-pv .ph-sc{min-height:500px}.bc-pv .ph::before{width:76px;height:22px;top:20px}
+.bc-ch{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--card);cursor:pointer;font:14px var(--font);color:var(--ink);min-height:48px}
+.bc-ch.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.bc-ch small{display:block;color:var(--muted);font-size:12px}
+.bc-to{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(170px,100%),1fr));gap:8px}
+.bc-live{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.bc-live div{padding:12px;border-radius:12px;background:var(--field);border:1px solid var(--line)}
+.bc-live b{display:block;font:600 22px var(--font);font-variant-numeric:tabular-nums}
+.bc-live small{color:var(--muted);font-size:12px}
+.bc-bar{height:8px;border-radius:9px;background:var(--active);overflow:hidden}.bc-bar i{display:block;height:100%;background:#E2632A;transition:width .6s}
+.bc-row{display:grid;grid-template-columns:1.4fr 1fr .8fr 34px;gap:8px;align-items:center}
+</style>
+</helmet>
+<div class="sl-app">
+  <input type="checkbox" id="navtg" class="nav-tg" aria-hidden="true" tabindex="-1">
+  <header class="sl-top">
+    <label class="sl-ib nav-open" for="navtg" aria-label="Open or close the menu" role="button" tabindex="0"><i class="ic i-sidebar" aria-hidden="true"></i></label>
+    <a class="sl-switch" href="Main.dc.html"><small>SL</small> Swift Lane · Accra Hub <i class="ic ic-sm i-down" aria-hidden="true"></i></a>
+    <a class="fx-chip" href="SettingsHub.dc.html" title="Exchange rate · set in Settings › General"><i class="ic ic-sm i-dollar" aria-hidden="true"></i><span class="mono">USD 1 = GHS 12.40</span><span class="fx-d">▲ 0.4%</span></a>
+    <span class="grow"></span>
+    <details class="aitop"><summary aria-label="Help with Swift Lane AI"><span class="o"><i class="ic i-ai" aria-hidden="true"></i></span>Help</summary><div class="pop" role="menu">
+<div class="me"><span class="sl-av sm dark">HC</span><div class="grow"><div class="fw5 sm">Henry Cobblah</div><div class="mut" style="font-size:12px">Operations manager · Accra Hub</div></div><a class="sl-btn sm ghost" href="AiStudio.dc.html">Edit</a></div>
+<a class="ask" href="StaffAI.dc.html"><i class="ic ic-sm i-spark" aria-hidden="true"></i>Ask AI for help on this page<b><i class="ic ic-sm i-send" aria-hidden="true"></i></b></a>
+<div class="hd">Your profile with AI</div>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-wand" aria-hidden="true"></i></span><span>Retouch my photo<small>Light, skin and background</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-refresh" aria-hidden="true"></i></span><span>Reset images<small>Go back to the original photo</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-edit" aria-hidden="true"></i></span><span>Change my name<small>AI fixes spelling and capitals</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-user" aria-hidden="true"></i></span><span>Make my icon<small>Avatar from your photo or initials</small></span></a>
+<div class="hd">Help</div>
+<a class="it" role="menuitem" href="StaffAI.dc.html"><span class="t"><i class="ic ic-sm i-help" aria-hidden="true"></i></span><span>Explain this page</span></a>
+<a class="it" role="menuitem" href="CsInbox.dc.html"><span class="t"><i class="ic ic-sm i-message" aria-hidden="true"></i></span><span>Talk to a person</span></a>
+</div></details>
+    <a class="sl-ib" aria-label="Notifications" href="Notifications.dc.html"><i class="ic i-bell" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Switch theme" href="SettingsHub.dc.html"><i class="ic i-sun" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Documents" href="Documents.dc.html"><i class="ic i-file" aria-hidden="true"></i></a>
+    <a class="sl-btn" href="MessageLogs.dc.html">Sent history</a>
+    <details class="uptop"><summary aria-label="Your profile and settings, Henry Cobblah"><span class="me-pic hc" style="width:34px;height:34px"><i class="me-on" aria-hidden="true"></i></span><span class="up-nm">Henry</span><i class="ic ic-sm i-down" aria-hidden="true"></i></summary><div class="pop" role="menu">
+<a class="up-me" href="AiStudio.dc.html"><span class="me-pic hc" style="width:48px;height:48px"><i class="me-on" aria-hidden="true"></i></span><span class="col" style="min-width:0"><b>Henry Cobblah</b><small>Operations manager · Accra Hub</small><small class="mono">henry@swiftlane.com</small></span></a>
+<div class="up-st"><span class="row g6 sm"><span class="ld" style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span>Available</span><a class="sm fw5" href="AiStudio.dc.html">Edit profile</a></div>
+<div class="up-h">Short links</div><div class="up-g"><a class="up-l" role="menuitem" href="Main.dc.html"><i class="ic ic-sm i-grid" aria-hidden="true"></i>Overview</a><a class="up-l" role="menuitem" href="RiderDispatch.dc.html"><i class="ic ic-sm i-truck" aria-hidden="true"></i>Dispatch board</a><a class="up-l" role="menuitem" href="SendPrices.dc.html"><i class="ic ic-sm i-send" aria-hidden="true"></i>Send prices</a><a class="up-l" role="menuitem" href="Reports.dc.html"><i class="ic ic-sm i-chart" aria-hidden="true"></i>Reports</a><a class="up-l" role="menuitem" href="Documents.dc.html"><i class="ic ic-sm i-file" aria-hidden="true"></i>Documents</a><a class="up-l" role="menuitem" href="ActivityLogs.dc.html"><i class="ic ic-sm i-clock" aria-hidden="true"></i>My activity</a></div>
+<div class="up-h">Settings</div><a class="up-l" role="menuitem" href="AiStudio.dc.html"><i class="ic ic-sm i-ai" aria-hidden="true"></i>Profile and photo</a><a class="up-l" role="menuitem" href="SettingsHub.dc.html"><i class="ic ic-sm i-cog" aria-hidden="true"></i>Settings</a><a class="up-l" role="menuitem" href="ApiConnections.dc.html"><i class="ic ic-sm i-link" aria-hidden="true"></i>API connections</a><a class="up-l" role="menuitem" href="StaffPermissions.dc.html"><i class="ic ic-sm i-shield" aria-hidden="true"></i>Permissions</a>
+<div class="up-row"><span class="sm mut">Theme</span><span class="sl-seg boxed" style="height:30px"><a class="on" href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Light</a><a href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Dark</a></span></div>
+<a class="up-l" role="menuitem" href="CsInbox.dc.html"><i class="ic ic-sm i-help" aria-hidden="true"></i>Help and support</a>
+<a class="up-l out" role="menuitem" href="Login.dc.html"><i class="ic ic-sm i-logout" aria-hidden="true"></i>Sign out</a>
+</div></details>
+  </header>
+  <div class="sl-body">
+    <label class="nav-bd" for="navtg" aria-hidden="true"></label>
+    <div class="sl-rail">
+      <a class="is-on" href="NewShipment.dc.html" aria-label="New shipment"><i class="ic i-newdoc" aria-hidden="true"></i></a>
+      <a href="StaffAI.dc.html" aria-label="AI assistant" title="AI assistant"><i class="ic i-ai" aria-hidden="true"></i></a>
+      <a href="PublicTracking.dc.html" aria-label="Tracking" title="Tracking"><i class="ic i-track" aria-hidden="true"></i></a>
+      <a href="LockerSearch.dc.html" aria-label="Search tracking number" title="Search tracking number"><i class="ic i-tsearch" aria-hidden="true"></i></a>
+      <a href="Consolidations.dc.html" aria-label="Consolidation" title="Consolidation"><i class="ic i-layers" aria-hidden="true"></i></a>
+      <a href="Warehouse.dc.html" aria-label="Warehouse" title="Warehouse"><i class="ic i-warehouse" aria-hidden="true"></i></a>
+      <a class="me-pic hc" href="AiStudio.dc.html" aria-label="Your profile, Henry Cobblah" style="width:34px;height:34px;margin-top:auto"></a>
+    </div>
+    <aside class="sl-side" aria-label="Main navigation">
+      <div class="nav-x"><span class="fw5">Menu</span><label class="sl-ib" for="navtg" aria-label="Close the menu" role="button" tabindex="0"><i class="ic i-x" aria-hidden="true"></i></label></div>
+      <sc-for list="{{nav}}" as="g" hint-placeholder-count="5">
+        <div class="sl-gl">{{g.label}}</div>
+        <nav class="sl-nav">
+          <sc-for list="{{g.items}}" as="it" hint-placeholder-count="4">
+            <a href="{{it.href}}" class="{{it.cls}}"><i class="ic {{it.icon}}" aria-hidden="true"></i><span>{{it.label}}</span><span class="cnt {{it.ok}}">{{it.c1}} <em>{{it.c2}}</em></span></a>
+          </sc-for>
+        </nav>
+      </sc-for>
+      <div class="sl-gl">Other</div>
+      <nav class="sl-nav">
+        <a href="SettingsHub.dc.html"><i class="ic i-globe" aria-hidden="true"></i><span>Language</span></a>
+        <a href="CsInbox.dc.html"><i class="ic i-help" aria-hidden="true"></i><span>Get help</span></a>
+        <a href="Login.dc.html" class="danger"><i class="ic i-logout" aria-hidden="true"></i><span>Sign out</span></a>
+      </nav>
+      <a class="me-card" href="AiStudio.dc.html" aria-label="Signed in as Henry Cobblah, Operations manager. Open your profile">
+        <span class="me-pic hc" role="img" aria-label="Photo of Henry Cobblah"><i class="me-on" aria-hidden="true"></i></span>
+        <span class="grow col" style="min-width:0"><b>Henry Cobblah</b><small>Operations manager · Accra Hub</small></span>
+        <i class="ic ic-sm i-more mut" aria-hidden="true"></i>
+      </a>
+      <a class="me-sub" href="CsInbox.dc.html"><i class="ic ic-sm i-ticket" aria-hidden="true"></i>Customer service<span class="sl-tag">12 open</span></a>
+    </aside>
+
+    <main class="sl-main"><div class="sl-wrap" style="max-width:1440px">
+<div class="row g8 mut sm"><a href="NotificationCenter.dc.html">Notification Center</a><i class="ic ic-sm i-right" aria-hidden="true"></i><span style="color:var(--ink)">Send to customers</span></div>
+<div class="sl-head"><div><h1 class="sl-title" style="font-size:20px">Push notifications</h1><p class="sl-lede">Send one message to many customers by WhatsApp, SMS and e-mail, and see exactly what each one gets before you send.</p></div><div class="row g8 wrap"><a class="sl-btn ghost" href="MessageLogs.dc.html"><i class="ic ic-sm i-clock" aria-hidden="true"></i>Sent history</a><a class="sl-btn ghost" href="MessageTemplates.dc.html">Templates</a></div></div>
+<div class="bc"><div class="col g16">
+<section class="sl-card col g12"><h2 class="sl-ct">1 · Push type</h2><div class="sl-seg boxed"><sc-for list="{{types}}" as="t" hint-placeholder-count="4"><button class="{{t.cls}}" onClick="{{t.pick}}">{{t.label}}</button></sc-for></div><span class="mut sm">{{typeHint}}</span></section>
+<section class="sl-card col g12"><h2 class="sl-ct">2 · Send by</h2><div class="grid cols3" style="gap:8px"><sc-for list="{{chans}}" as="c" hint-placeholder-count="3"><button class="bc-ch {{c.cls}}" onClick="{{c.flip}}" aria-pressed="{{c.p}}"><span class="sl-chk {{c.chk}}" aria-hidden="true"></span><i class="ic {{c.icon}}" aria-hidden="true"></i><span class="col grow" style="text-align:left">{{c.label}}<small>{{c.sub}}</small></span></button></sc-for></div></section>
+<section class="sl-card col g12"><h2 class="sl-ct">3 · To</h2><div class="bc-to"><sc-for list="{{tos}}" as="t" hint-placeholder-count="4"><button class="bc-ch {{t.cls}}" onClick="{{t.pick}}"><i class="ic ic-sm {{t.icon}}" aria-hidden="true"></i><span class="col grow" style="text-align:left">{{t.label}}<small>{{t.n}}</small></span></button></sc-for></div>
+<sc-if value="{{pickUsers}}" hint-placeholder-val="{{ false }}"><div class="row wrap g6"><sc-for list="{{users}}" as="u" hint-placeholder-count="4"><span class="sl-badge">{{u}}</span></sc-for><a class="sl-btn ghost sm" href="Customers.dc.html"><i class="ic ic-sm i-plus" aria-hidden="true"></i>Choose customers</a></div></sc-if>
+<div class="sl-banner info"><i class="ic i-info" aria-hidden="true"></i><span>{{skipNote}}</span></div></section>
+<section class="sl-card col g12"><h2 class="sl-ct">4 · Message</h2><label class="sl-field"><span class="sl-lab">Notification's subject</span><input class="sl-in" value="{{subject}}" onInput="{{setSubject}}"></label><label class="sl-field"><span class="sl-lab">Notification content / message</span><textarea class="mt-ta" onInput="{{setMsg}}">{{msg}}</textarea></label>
+<div class="row wrap g6"><sc-for list="{{vars}}" as="v" hint-placeholder-count="8"><button class="mt-var" onClick="{{v.ins}}">{{v.k}}</button></sc-for></div>
+<div class="row between sm"><span class="mut">{{smsCount}}</span><label class="row g8" style="cursor:pointer"><i class="ic ic-sm i-file" aria-hidden="true"></i><span>WhatsApp attachment</span><span class="sl-badge">{{attach}}</span></label></div></section>
+<sc-if value="{{isInvoice}}" hint-placeholder-val="{{ false }}"><section class="sl-card col g12"><h2 class="sl-ct">Invoice push notification</h2><div class="grid cols3" style="gap:12px"><label class="sl-field"><span class="sl-lab">Shipment date: from</span><input class="sl-in" value="Oct 20, 2026" aria-label="From"></label><label class="sl-field"><span class="sl-lab">Shipment date: to</span><input class="sl-in" value="Nov 5, 2026" aria-label="To"></label><label class="sl-field"><span class="sl-lab">Date of pickup</span><input class="sl-in" value="Nov 8, 2026" aria-label="Pickup date"></label></div>
+<div class="col g8"><div class="bc-row up"><span>Item</span><span>Package</span><span>Amount</span><span></span></div><sc-for list="{{rows}}" as="r" hint-placeholder-count="3"><div class="bc-row"><input class="sl-in" value="{{r.item}}" aria-label="Item"><input class="sl-in mono" value="{{r.pkg}}" aria-label="Package"><input class="sl-in mono" value="{{r.amt}}" aria-label="Amount"><button class="sl-ib" aria-label="Remove row" onClick="{{r.del}}"><i class="ic ic-sm i-x" aria-hidden="true"></i></button></div></sc-for><div class="row between"><button class="sl-btn ghost sm" onClick="{{addRow}}"><i class="ic ic-sm i-plus" aria-hidden="true"></i>Add invoice row</button><span class="fw5">Total {{invTotal}}</span></div></div></section></sc-if>
+<section class="sl-card col g12"><h2 class="sl-ct">5 · When</h2><div class="sl-seg boxed"><sc-for list="{{whens}}" as="w" hint-placeholder-count="2"><button class="{{w.cls}}" onClick="{{w.pick}}">{{w.label}}</button></sc-for></div>
+<div class="row between wrap g8" style="padding-top:12px;border-top:1px solid var(--line)"><span class="col"><b class="fw5">{{costTotal}}</b><span class="mut sm">{{costBreak}}</span></span><button class="sl-btn" style="height:46px;padding:0 22px" onClick="{{send}}"><i class="ic ic-sm i-send" aria-hidden="true"></i>{{sendLabel}}</button></div>
+<sc-if value="{{sending}}" hint-placeholder-val="{{ false }}"><div class="col g8"><div class="bc-bar"><i style="{{progW}}"></i></div><div class="bc-live"><div><b>{{sent}}</b><small>Sent</small></div><div><b>{{deliv}}</b><small>Delivered</small></div><div><b>{{read}}</b><small>Read (WhatsApp)</small></div><div><b>{{failed}}</b><small>Failed</small></div></div><a class="sm fw5" href="MessageLogs.dc.html">Open in message logs →</a></div></sc-if></section>
+</div>
+<aside class="col g12" style="position:sticky;top:12px"><div class="row between"><h2 class="sl-ct">What customers get</h2><span class="mut sm">Sample: Kwame Mensah</span></div>
+<div class="bc-pv">
+<sc-if value="{{chWa}}" hint-placeholder-val="{{ true }}"><div class="ph wa"><div class="ph-sc"><div class="ph-st"><span>9:41</span><span class="ph-ic" aria-hidden="true"><i class="sig"><b></b><b></b><b></b><b></b></i><i class="wifi"></i><i class="bat"><b></b></i></span></div><div class="ph-hd"><span class="ph-av">SL</span><span class="col"><span>Swift Lane</span><span style="font:400 11px Figtree;opacity:.75">WhatsApp</span></span></div><div class="ph-bd"><span class="ph-day">Today</span><sc-if value="{{hasAttach}}" hint-placeholder-val="{{ false }}"><div class="bub"><span class="doc"><i class="ic ic-sm i-file" aria-hidden="true"></i>{{attach}}</span><span class="tm">09:41</span></div></sc-if><div class="bub"><span class="hd">{{subject}}</span>{{msgShown}}<span class="tm">09:41 ✓✓</span></div></div></div></div></sc-if>
+<sc-if value="{{chSms}}" hint-placeholder-val="{{ true }}"><div class="ph sms"><div class="ph-sc"><div class="ph-st"><span>9:41</span><span class="ph-ic" aria-hidden="true"><i class="sig"><b></b><b></b><b></b><b></b></i><i class="wifi"></i><i class="bat"><b></b></i></span></div><div class="ph-hd"><span class="ph-av">SL</span><span>SWIFTLANE</span></div><div class="ph-bd"><span class="ph-day">Text Message · Today</span><div class="bub">{{smsShown}}</div></div></div></div></sc-if>
+<sc-if value="{{chMail}}" hint-placeholder-val="{{ true }}"><div class="ph em"><div class="ph-sc"><div class="ph-st"><span>9:41</span><span class="ph-ic" aria-hidden="true"><i class="sig"><b></b><b></b><b></b><b></b></i><i class="wifi"></i><i class="bat"><b></b></i></span></div><div class="ph-hd"><span class="ph-av">SL</span><span class="col"><span>Swift Lane</span><span style="font:400 11px Figtree;color:#777">to kwame@gmail.com</span></span></div><div class="ph-bd"><div class="card"><b class="s">{{subject}}</b>{{msgShown}}<span class="cta">Open my account</span></div></div></div></div></sc-if>
+<sc-if value="{{noCh}}" hint-placeholder-val="{{ false }}"><span class="mut">Pick at least one channel.</span></sc-if>
+</div></aside></div>
+</div></main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1700}}'>
+const VARS = [['[CUSTOMER_FULLNAME]', 'Kwame Mensah'], ['[NAME]', 'Kwame'], ['[TRACKING_NUMBER]', 'SL-100482'], ['[STATUS]', 'Ready for pickup'], ['[LOCKER]', 'SL-2041'], ['[DELIVERY_TIME]', '5–7 days'], ['[COURIER]', 'DHL'], ['[URL_SHIP]', 'swiftlane.com/t/SL-100482'], ['[COMPANY_NAME]', 'Swift Lane'], ['[COMPANY_SITE_URL]', 'swiftlane.com'], ['[CPHONE]', '+233 30 290 1144'], ['[COMMENT]', 'Collect at bay 4']];
+const fill = (t) => { let o = t; VARS.forEach(v => { o = o.split(v[0]).join(v[1]); }); return o; };
+class Component extends DCLogic {
+constructor(p) { super(p); this.state = { type: 'broadcast', ch: { wa: true, sms: true, mail: true }, to: 'all', subject: 'Christmas air rate is here', msg: 'Hi [NAME], our Christmas air rate is now $6 per lb from Newark to Accra. Last cut-off is Dec 12. Your locker: [LOCKER].', when: 'now', rows: [['Air freight', 'SL-100482', '312.48'], ['Handling', 'SL-100482', '25.00']], go: 0, attach: 'Christmas-rates.pdf' }; }
+componentWillUnmount() { clearInterval(this._t); }
+send() { if (typeof window === 'undefined') { this.setState({ go: 1 }); return; } clearInterval(this._t); this.setState({ go: 1 }); this._t = setInterval(() => { const g = this.state.go; if (g >= 100) { clearInterval(this._t); return; } this.setState({ go: Math.min(100, g + 7 + Math.round(Math.random() * 6)) }); }, 450); }
+renderVals() {
+const A = 'bcast';
+const N = 'Operations|dash~Overview~grid~~~Main;panels~Control Panels~gauge~~~ControlPanels;air~Air Shipments~plane~128~~AirShipments;sea~Sea Packages~ship~64~~SeaPackages;prealert~Pre-Alerts~inbox~9~~PreAlerts;pickup~Pickups~truck~12~/ 20~Pickups;dtrack~Delivery Tracking~route~5~~DeliveryTracking;shiptrack~Shipment Tracking~track~~~ShipmentTracking;aging~Pickup Aging~hourglass~9~~PickupAging;handover~Warehouse Delivery~arrow~~~WarehouseDelivery;consol~Consolidations~layers~7~~Consolidations;warehouse~Warehouse~warehouse~~~Warehouse;handout~Hand Out Packages~box~5~~HandOut;locker~Locker Search~lock~~~LockerSearch#Hubs|execdash~Management Dashboard~chart~~~ExecDashboard;billhub~Billing & Finance~dollar~~~BillingHub;lastmile~Last-Mile Delivery~truck~~~LastMile;aicenter~AI Centre~ai~~~AiCenter;commshub~Messages & Automation~message~~~CommsHub;supporthub~Support & CRM~ticket~~~SupportHub;loyalty~Loyalty & Referrals~star~~~LoyaltyRewards;security~Security & Reliability~shield~~~SecurityCenter#Freight|frhub~Freight Hub~plane~~~FreightHub;frsched~Departures & Arrivals~calendar~5~~FreightSchedule;frwb~Waybills & Manifests~file~~~Waybills;frex~Cargo Exceptions~alert~6~~CargoExceptions;frins~Insurance & Claims~shield~4~~InsuranceClaims;frpart~Freight Partners~users~~~FreightPartners#People|cust~Customers~users~1,284~~Customers;recip~Recipients~pin~~~Recipients;drivers~Drivers~wheel~8~/ 14~Drivers;drvapp~Rider App~phone~~~DriverApp;staff~Staff & Roles~shield~~~StaffRoles#Finance|pay~Payments~card~~~Payments;ar~Accounts Receivable~receipt~~~AccountsReceivable;fin~Financial Overview~dollar~$48,200~~FinancialOverview#Insights|reports~Reports~chart~~~Reports;activity~Activity Logs~clock~~~ActivityLogs;messages~Message Logs~archive~~~MessageLogs;msgcost~Message Costs~trend~~~MessageCosts;staffprod~Staff Productivity~trendup~~~StaffProductivity;txn~Transactions~refresh~~~Transactions;syslog~System Logs~note~~~SystemLogs#Customer Service|tickets~Support Inbox~ticket~1,482~~CsInbox;csrules~Ticket Rules~filter~~~CsRules;playbook~Playbook~book~~~CsPlaybook;csrep~Support Reports~star~~~CsReports;cschan~Channels & Teams~message~~~CsChannels;csai~AI Assistant~ai~~~StaffAI;cssupai~AI for Customers~spark~~~CsAI#Developer|devov~Dev Overview~terminal~~~DevOverview;devsvc~Services~server~12~~DevServices;devlogs~Logs~activity~~~DevLogs;devmet~Metrics~cpu~~~DevMetrics;devinfra~Infrastructure~cloud~~~DevInfrastructure;devdep~Deployments~rocket~~~DevDeployments;devalert~Alerts~alert~3~~DevAlerts;devissues~Issues & Change Log~bug~8~~DevIssues;devint~Integrations~puzzle~~~DevIntegrations#Settings|general~General~cog~~~SettingsHub;apis~API Connections~link~16~~ApiConnections;apitraffic~Live API Traffic~activity~~~ApiTraffic;tariffs~Shipping Tariffs~tag~~~Tariffs;notifc~Notifications~bell~3~~NotificationCenter;ebuild~Email Builder~mail~~~EmailBuilder;msgtpl~SMS & WhatsApp~message~~~MessageTemplates;bcast~Push Notifications~send~~~Broadcast;costs~Operating Costs~dollar~~~CostSettings;addr~Shipping Addresses~pin~~~ShippingAddresses;rfees~Rider Fees~truck~~~RiderSettings;loginpg~Login Page~image~~~LoginSettings;devmod~Modules~sliders~~~ModuleController;perm~Permissions~key~~~StaffPermissions;lblstudio~Label Printing~print~~~LabelStudio;auto~Automations~bolt~~~Automations';
+const nav = N.split('#').map(g => { const p = g.split('|'); return { label: p[0], items: p[1].split(';').map(i => { const f = i.split('~'); return { href: f[5] + '.dc.html', label: f[1], icon: 'i-' + f[2], c1: f[3], c2: f[4], cls: f[0] === A ? 'is-active' : '', ok: f[0] === 'fin' ? 'ok' : '' }; }) }; });
+  const s = this.state, ch = s.ch, n = { all: 1272, branch: 418, users: 3, inv: 46 }[s.to] || 1272;
+  const pick = ['wa', 'sms', 'mail'].filter(k => ch[k]);
+  const msgShown = fill(s.msg), smsTxt = 'Swift Lane: ' + msgShown, segs = smsTxt.length <= 160 ? 1 : Math.ceil(smsTxt.length / 153);
+  const cost = (ch.wa ? n * 0.12 : 0) + (ch.sms ? n * 0.03 * segs : 0) + (ch.mail ? n * 0.002 : 0);
+  const sentN = Math.round(n * pick.length * s.go / 100);
+  const T = [['broadcast', 'Broadcast', 'Every active customer, or the group you pick below'], ['single_user', 'Single user', 'One customer, like a message from their profile'], ['consolidation', 'Consolidation', 'Every customer with a parcel in a chosen consolidation'], ['invoice', 'Invoice', 'Each customer gets their own invoice with rows and a pay link']];
+  const tt = T.find(t => t[0] === s.type);
+  const total = s.rows.reduce((a, r) => a + (parseFloat(r[2]) || 0), 0);
+  return { nav,
+    types: T.map(t => ({ label: t[1], cls: s.type === t[0] ? 'on' : '', pick: () => this.setState({ type: t[0], to: t[0] === 'single_user' ? 'users' : t[0] === 'invoice' ? 'inv' : s.to, go: 0 }) })), typeHint: tt[2], isInvoice: s.type === 'invoice',
+    chans: [['wa', 'WhatsApp', 'i-message', '₵0.12 each · read receipts'], ['sms', 'SMS', 'i-phone', '₵0.03 per 160 characters'], ['mail', 'E-mail', 'i-mail', '₵0.002 each']].map(c => ({ label: c[1], icon: c[2], sub: c[3], cls: ch[c[0]] ? 'on' : '', chk: ch[c[0]] ? 'on' : '', p: ch[c[0]] ? 'true' : 'false', flip: () => this.setState({ ch: { ...ch, [c[0]]: !ch[c[0]] }, go: 0 }) })),
+    tos: [['all', 'All customers', 'i-users', '1,272 people'], ['branch', 'One branch', 'i-pin', 'Kumasi · 418 people'], ['users', 'Select users', 'i-user', '3 chosen'], ['inv', 'Customers with parcels', 'i-layers', 'SLC-4471 · 46 people']].map(t => ({ label: t[1], icon: t[2], n: t[3], cls: s.to === t[0] ? 'on' : '', pick: () => this.setState({ to: t[0], go: 0 }) })),
+    pickUsers: s.to === 'users', users: ['Kwame Mensah · SL-2041', 'Ama Boateng · SL-1187', 'Yaw Darko · SL-0988'],
+    skipNote: '12 blocked customers and 31 who turned off ' + (ch.sms && !ch.wa ? 'SMS' : 'these messages') + ' in their notification settings are skipped automatically.',
+    subject: s.subject, setSubject: (e) => this.setState({ subject: e.target.value }), msg: s.msg, setMsg: (e) => this.setState({ msg: e.target.value }),
+    vars: VARS.slice(0, 8).map(v => ({ k: v[0], ins: () => this.setState({ msg: s.msg + ' ' + v[0] }) })),
+    smsCount: 'SMS: ' + smsTxt.length + ' characters · ' + segs + ' part' + (segs > 1 ? 's' : ''), attach: s.attach, hasAttach: !!s.attach && ch.wa,
+    rows: s.rows.map((r, i) => ({ item: r[0], pkg: r[1], amt: r[2], del: () => this.setState({ rows: s.rows.filter((_, k) => k !== i) }) })), addRow: () => this.setState({ rows: s.rows.concat([['Delivery to door', 'SL-100482', '35.00']]) }), invTotal: '₵' + total.toFixed(2),
+    whens: [['now', 'Send now'], ['later', 'Schedule · Fri 09:00']].map(w => ({ label: w[1], cls: s.when === w[0] ? 'on' : '', pick: () => this.setState({ when: w[0] }) })),
+    costTotal: 'About ₵' + cost.toFixed(2) + ' for ' + n.toLocaleString() + ' customers', costBreak: pick.map(k => ({ wa: 'WhatsApp', sms: 'SMS × ' + segs, mail: 'E-mail' })[k]).join(' + ') || 'No channel picked',
+    send: () => this.send(), sendLabel: s.go >= 100 ? 'Sent · send again' : s.go > 0 ? 'Sending…' : s.when === 'now' ? 'Send notification' : 'Schedule',
+    sending: s.go > 0, progW: 'width:' + s.go + '%', sent: sentN.toLocaleString(), deliv: Math.round(sentN * .96).toLocaleString(), read: ch.wa ? Math.round(n * s.go / 100 * .71).toLocaleString() : '—', failed: Math.round(sentN * .012).toLocaleString(),
+    chWa: ch.wa, chSms: ch.sms, chMail: ch.mail, noCh: pick.length === 0, msgShown, smsShown: smsTxt };
+}
+}
+</script>
+</body>
+</html>

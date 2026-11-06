@@ -1,0 +1,57 @@
+/* Page styles of DriverApp.dc.html (from the approved design) */
+body{margin:0;background:var(--bg)}
+.da{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;background:var(--bg);font-family:var(--font);color:var(--ink);position:relative}
+.da-top{display:flex;align-items:center;gap:10px;padding:14px 16px 10px;position:sticky;top:0;background:var(--bg);z-index:5}
+.da-top h1{margin:0;font-size:20px;font-weight:600;letter-spacing:-.01em;flex:1}
+.da-ib{width:44px;height:44px;border-radius:14px;border:1px solid var(--line);background:var(--card);display:grid;place-items:center;color:var(--ink);position:relative;cursor:pointer}
+.da-ib b{position:absolute;top:6px;right:6px;min-width:16px;height:16px;border-radius:8px;background:#E2632A;color:#fff;font-size:10px;display:grid;place-items:center;padding:0 3px}
+.da-body{flex:1;padding:0 16px 110px;display:flex;flex-direction:column;gap:14px}
+.da-on{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:18px;background:var(--ink);color:var(--inverse)}
+.da-on .t{flex:1}.da-on small{display:block;opacity:.7;font-size:12px}
+.da-sw{width:52px;height:30px;border-radius:15px;border:0;background:rgba(255,255,255,.25);position:relative;cursor:pointer;flex:none}
+.da-sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:left .15s}
+.da-sw.on{background:var(--green)}.da-sw.on::after{left:25px}
+.da-k{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.da-k div{padding:12px;border-radius:16px;background:var(--card);border:1px solid var(--line)}
+.da-k b{display:block;font:600 22px var(--font);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.da-k small{color:var(--muted);font-size:12px}
+.da-next{border-radius:22px;background:var(--card);border:1px solid var(--line);overflow:hidden}
+.da-mini{height:130px;background:#EAE6DF;position:relative}
+.da-mini svg{width:100%;height:100%;display:block}
+.da-next .in{padding:14px;display:flex;flex-direction:column;gap:10px}
+.da-row{display:flex;align-items:center;gap:10px}
+.da-pri{display:flex;align-items:center;justify-content:center;gap:8px;height:52px;border-radius:16px;border:0;background:var(--ink);color:var(--inverse);font:600 15px var(--font);cursor:pointer;width:100%}
+.da-sec{display:flex;align-items:center;justify-content:center;gap:8px;height:48px;border-radius:14px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);font:500 14px var(--font);cursor:pointer;flex:1}
+.da-seg{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+.da-seg button{flex:none;height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--line-2);background:var(--card);font:500 13.5px var(--font);color:var(--ink);cursor:pointer}
+.da-seg button.on{background:var(--ink);color:var(--inverse);border-color:var(--ink)}
+.da-pk{display:flex;gap:12px;align-items:center;padding:14px;border-radius:18px;background:var(--card);border:1px solid var(--line);width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer}
+.da-pk.new{animation:daN 1.2s}@keyframes daN{from{background:#FBE3D6}to{background:var(--card)}}
+.da-n{width:34px;height:34px;border-radius:50%;background:var(--active);display:grid;place-items:center;font:600 13px var(--font);flex:none}
+.da-n.done{background:var(--green);color:#fff}
+.da-pk .m{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.da-pk .m small{color:var(--muted);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.da-fee{font:600 14px var(--font);text-align:right}.da-fee small{display:block;font-weight:400;color:var(--muted);font-size:11.5px}
+.da-tab{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;display:grid;grid-template-columns:repeat(4,1fr);padding:8px 8px 18px;background:var(--card);border-top:1px solid var(--line);z-index:6;box-sizing:border-box}
+.da-tab button{display:flex;flex-direction:column;align-items:center;gap:3px;height:54px;border:0;background:none;font:500 11.5px var(--font);color:var(--muted);cursor:pointer;border-radius:14px}
+.da-tab button.on{color:var(--ink)}.da-tab button.on .ic{color:#E2632A}
+.da-sheet{border-radius:22px;background:var(--card);border:1px solid var(--line);padding:16px;display:flex;flex-direction:column;gap:12px}
+.da-kv{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.da-kv div{padding:10px 12px;border-radius:12px;background:var(--field)}
+.da-kv small{display:block;color:var(--muted);font-size:11.5px}
+.da-kv b{font:500 14px var(--font)}
+.da-code{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.da-code span{height:60px;border-radius:14px;border:1.5px solid var(--line-2);background:var(--field);display:grid;place-items:center;font:600 26px var(--mono)}
+.da-code span.cur{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.da-code.ok span{border-color:var(--green);background:var(--green-bg);color:var(--green-ink)}
+.da-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.da-pad button{height:52px;border-radius:14px;border:1px solid var(--line);background:var(--card);font:500 20px var(--font);color:var(--ink);cursor:pointer}
+.da-ok{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:var(--green-bg);color:var(--green-ink);font-size:14px}
+.da-bad{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:var(--red-bg);color:var(--red-ink);font-size:14px}
+.da-toast{position:fixed;top:12px;left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:448px;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:16px;background:var(--ink);color:var(--inverse);z-index:9;box-sizing:border-box;animation:daT .4s}@keyframes daT{from{transform:translate(-50%,-20px);opacity:0}}
+.da-bars{display:flex;align-items:flex-end;gap:6px;height:110px}
+.da-bars i{flex:1;border-radius:6px 6px 2px 2px;background:#A9A59C}.da-bars i.now{background:#E2632A}
+.da-li{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line);color:var(--ink)}
+.da-li:first-child{border-top:0}
+.da-photo{height:120px;border-radius:14px;border:1.5px dashed var(--line-2);background:var(--field);display:grid;place-items:center;color:var(--muted);font-size:13px}
+.da-photo.on{border-style:solid;background:linear-gradient(135deg,#5B5348,#9A8670);color:#fff}

@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Swift Lane My Notifications</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./swiftlane.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}
+.cn-t td{vertical-align:middle}
+.cn-ch{display:grid;place-items:center}
+.cn-pill{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:999px;background:var(--active);font-size:12.5px}
+.cn-ok{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;background:var(--green-bg);color:var(--green-ink);font-size:13.5px}
+.cn-c{display:flex;align-items:center;gap:12px;padding:14px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
+.cn-c.off{opacity:.6}
+</style>
+</helmet>
+<div class="sl-app">
+  <input type="checkbox" id="navtg" class="nav-tg" aria-hidden="true" tabindex="-1">
+  <header class="sl-top">
+    <label class="sl-ib nav-open" for="navtg" aria-label="Open or close the menu" role="button" tabindex="0"><i class="ic i-sidebar" aria-hidden="true"></i></label>
+    <a class="sl-switch" href="UserHome.dc.html"><small>SL</small> Swift Lane · My account <i class="ic ic-sm i-down" aria-hidden="true"></i></a>
+    <a class="fx-chip" href="SettingsHub.dc.html" title="Exchange rate · set in Settings › General"><i class="ic ic-sm i-dollar" aria-hidden="true"></i><span class="mono">USD 1 = GHS 12.40</span><span class="fx-d">▲ 0.4%</span></a>
+    <div class="sl-search" style="max-width:360px;flex:1"><i class="ic ic-sm i-search" aria-hidden="true"></i><input aria-label="Search tracking, AWB or locker" placeholder="Search tracking, AWB or locker"></div>
+    <span class="grow"></span>
+    <details class="aitop"><summary aria-label="Help with Swift Lane AI"><span class="o"><i class="ic i-ai" aria-hidden="true"></i></span>Help</summary><div class="pop" role="menu">
+<div class="me"><span class="sl-av sm dark">EO</span><div class="grow"><div class="fw5 sm">Efua Owusu</div><div class="mut" style="font-size:12px">Customer · Locker SL-3318</div></div><a class="sl-btn sm ghost" href="AiStudio.dc.html">Edit</a></div>
+<a class="ask" href="StaffAI.dc.html"><i class="ic ic-sm i-spark" aria-hidden="true"></i>Ask AI for help on this page<b><i class="ic ic-sm i-send" aria-hidden="true"></i></b></a>
+<div class="hd">Your profile with AI</div>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-wand" aria-hidden="true"></i></span><span>Retouch my photo<small>Light, skin and background</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-refresh" aria-hidden="true"></i></span><span>Reset images<small>Go back to the original photo</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-edit" aria-hidden="true"></i></span><span>Change my name<small>AI fixes spelling and capitals</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-user" aria-hidden="true"></i></span><span>Make my icon<small>Avatar from your photo or initials</small></span></a>
+<div class="hd">Help</div>
+<a class="it" role="menuitem" href="StaffAI.dc.html"><span class="t"><i class="ic ic-sm i-help" aria-hidden="true"></i></span><span>Explain this page</span></a>
+<a class="it" role="menuitem" href="CsInbox.dc.html"><span class="t"><i class="ic ic-sm i-message" aria-hidden="true"></i></span><span>Talk to a person</span></a>
+</div></details>
+    <div class="sl-seg boxed"><button class="on">GHS</button><button>USD</button></div>
+    <a class="sl-ib" aria-label="Notifications" href="Notifications.dc.html"><i class="ic i-bell" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Switch theme" href="SettingsHub.dc.html"><i class="ic i-sun" aria-hidden="true"></i></a>
+    <a class="sl-btn ghost" href="Notifications.dc.html"><i class="ic ic-sm i-file" aria-hidden="true"></i>Authorization form</a>
+    <details class="uptop"><summary aria-label="Your profile and settings, Efua Owusu"><span class="me-pic eo" style="width:34px;height:34px"><i class="me-on" aria-hidden="true"></i></span><span class="up-nm">Efua</span><i class="ic ic-sm i-down" aria-hidden="true"></i></summary><div class="pop" role="menu">
+<a class="up-me" href="AiStudio.dc.html"><span class="me-pic eo" style="width:48px;height:48px"><i class="me-on" aria-hidden="true"></i></span><span class="col" style="min-width:0"><b>Efua Owusu</b><small>Customer · Locker SL-3318</small><small class="mono">efua.owusu@gmail.com</small></span></a>
+<div class="up-st"><span class="row g6 sm"><span class="ld" style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span>Available</span><a class="sm fw5" href="AiStudio.dc.html">Edit profile</a></div>
+<div class="up-h">Short links</div><div class="up-g"><a class="up-l" role="menuitem" href="UserHome.dc.html"><i class="ic ic-sm i-grid" aria-hidden="true"></i>My account</a><a class="up-l" role="menuitem" href="PublicTracking.dc.html"><i class="ic ic-sm i-route" aria-hidden="true"></i>Track a parcel</a><a class="up-l" role="menuitem" href="MyBills.dc.html"><i class="ic ic-sm i-receipt" aria-hidden="true"></i>My bills</a><a class="up-l" role="menuitem" href="SchedulePickup.dc.html"><i class="ic ic-sm i-truck" aria-hidden="true"></i>Request pickup</a><a class="up-l" role="menuitem" href="UserHome.dc.html"><i class="ic ic-sm i-pin" aria-hidden="true"></i>My shipping addresses</a><a class="up-l" role="menuitem" href="Notifications.dc.html"><i class="ic ic-sm i-bell" aria-hidden="true"></i>Notifications</a></div>
+<div class="up-h">Settings</div><a class="up-l" role="menuitem" href="AiStudio.dc.html"><i class="ic ic-sm i-ai" aria-hidden="true"></i>Profile and photo</a><a class="up-l" role="menuitem" href="ForgotPassword.dc.html"><i class="ic ic-sm i-lock" aria-hidden="true"></i>Password and sign-in</a><a class="up-l" role="menuitem" href="UserHome.dc.html"><i class="ic ic-sm i-globe" aria-hidden="true"></i>Language and currency</a>
+<div class="up-row"><span class="sm mut">Theme</span><span class="sl-seg boxed" style="height:30px"><a class="on" href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Light</a><a href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Dark</a></span></div>
+<a class="up-l" role="menuitem" href="CsInbox.dc.html"><i class="ic ic-sm i-help" aria-hidden="true"></i>Help and support</a>
+<a class="up-l out" role="menuitem" href="Login.dc.html"><i class="ic ic-sm i-logout" aria-hidden="true"></i>Sign out</a>
+</div></details>
+  </header>
+  <div class="sl-body">
+    <label class="nav-bd" for="navtg" aria-hidden="true"></label>
+    <div class="sl-rail">
+      <a class="is-on" href="UserHome.dc.html" aria-label="My account"><i class="ic i-grid" aria-hidden="true"></i></a>
+      <a href="PreAlerts.dc.html" aria-label="Pre-alerts"><i class="ic i-inbox" aria-hidden="true"></i></a>
+      <a href="PublicTracking.dc.html" aria-label="Track"><i class="ic i-route" aria-hidden="true"></i></a>
+      <a href="Notifications.dc.html" aria-label="Messages"><i class="ic i-message" aria-hidden="true"></i></a>
+      <a class="me-pic eo" href="AiStudio.dc.html" aria-label="Your profile, Efua Owusu" style="width:34px;height:34px;margin-top:auto"></a>
+    </div>
+    <aside class="sl-side" aria-label="Customer navigation">
+      <div class="nav-x"><span class="fw5">Menu</span><label class="sl-ib" for="navtg" aria-label="Close the menu" role="button" tabindex="0"><i class="ic i-x" aria-hidden="true"></i></label></div>
+      <div class="sl-gl">My shipping</div>
+      <nav class="sl-nav">
+        <a href="UserHome.dc.html"><i class="ic i-grid" aria-hidden="true"></i><span>My account</span></a>
+        <a href="ClientDashboard.dc.html"><i class="ic i-route" aria-hidden="true"></i><span>Portal home</span></a>
+        <a href="AiStudio.dc.html"><i class="ic i-ai" aria-hidden="true"></i><span>AI profile studio</span></a>
+        <a href="AirShipments.dc.html"><i class="ic i-plane" aria-hidden="true"></i><span>My shipments</span><span class="cnt">4</span></a>
+        <a href="PreAlerts.dc.html"><i class="ic i-inbox" aria-hidden="true"></i><span>Pre-alerts</span><span class="cnt">2</span></a>
+        <a href="SeaPackages.dc.html"><i class="ic i-box" aria-hidden="true"></i><span>Registered packages</span><span class="cnt">6</span></a>
+        <a href="PublicTracking.dc.html"><i class="ic i-route" aria-hidden="true"></i><span>Track a parcel</span></a>
+        <a href="Pickups.dc.html"><i class="ic i-truck" aria-hidden="true"></i><span>Request pickup</span></a>
+      </nav>
+      <div class="sl-gl">Account</div>
+      <nav class="sl-nav">
+        <a href="Payments.dc.html"><i class="ic i-receipt" aria-hidden="true"></i><span>My bills</span><span class="cnt">1</span></a>
+        <a href="Recipients.dc.html"><i class="ic i-user" aria-hidden="true"></i><span>Recipients</span><span class="cnt">3</span></a>
+        <a href="Notifications.dc.html"><i class="ic i-bell" aria-hidden="true"></i><span>Notifications</span><span class="cnt">3</span></a>
+        <a href="CustomerNotifications.dc.html" class="is-active"><i class="ic i-sliders" aria-hidden="true"></i><span>Notification settings</span></a>
+        <a href="SettingsHub.dc.html"><i class="ic i-sliders" aria-hidden="true"></i><span>Profile settings</span></a>
+      </nav>
+      <div class="sl-gl">Other</div>
+      <nav class="sl-nav">
+        <a href="CsInbox.dc.html"><i class="ic i-help" aria-hidden="true"></i><span>Get help</span></a>
+        <a href="Login.dc.html" class="danger"><i class="ic i-logout" aria-hidden="true"></i><span>Sign out</span></a>
+      </nav>
+      <a class="me-card" href="AiStudio.dc.html" aria-label="Signed in as Efua Owusu. Open your profile">
+        <span class="me-pic eo" role="img" aria-label="Photo of Efua Owusu"><i class="me-on" aria-hidden="true"></i></span>
+        <span class="grow col" style="min-width:0"><b>Efua Owusu</b><small>Customer · Locker SL-3318</small></span>
+        <i class="ic ic-sm i-more mut" aria-hidden="true"></i>
+      </a>
+      <a class="me-sub" href="ControlPanelsMobile.dc.html"><i class="ic ic-sm i-phone" aria-hidden="true"></i>Get the Swift Lane app<span class="sl-tag">iOS · Android</span></a>
+    </aside>
+
+    <main class="sl-main"><div class="sl-wrap" style="max-width:1100px">
+<div class="sl-head"><div><h1 class="sl-title" style="font-size:20px">Notification settings</h1><p class="sl-lede">Choose how Swift Lane tells you about your parcels. Changes save straight away.</p></div><div class="row g8"><a class="sl-btn ghost" href="Notifications.dc.html"><i class="ic ic-sm i-bell" aria-hidden="true"></i>My messages</a><button class="sl-btn" onClick="{{testAll}}"><i class="ic ic-sm i-send" aria-hidden="true"></i>Send me a test</button></div></div>
+<sc-if value="{{flash}}" hint-placeholder-val="{{ false }}"><div class="cn-ok" role="status"><i class="ic ic-sm i-check" aria-hidden="true"></i>{{flash}}</div></sc-if>
+<div class="grid cols3" style="gap:12px"><sc-for list="{{chans}}" as="c" hint-placeholder-count="3"><div class="cn-c {{c.off}}"><span class="sl-tile"><i class="ic {{c.icon}}" aria-hidden="true"></i></span><span class="col grow" style="min-width:0"><b class="fw5">{{c.label}}</b><span class="mut sm mono" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{c.addr}}</span><span class="sm" style="color:var(--green-ink)">{{c.ver}}</span></span><button class="sl-toggle {{c.cls}}" role="switch" aria-checked="{{c.aria}}" aria-label="{{c.label}}" onClick="{{c.flip}}"></button></div></sc-for></div>
+<section class="sl-card flush cn-t"><div class="row between wrap g8" style="padding:16px 18px"><div><h2 class="sl-ct">What to tell me</h2><span class="mut sm">Tick the channels you want for each update</span></div><div class="sl-seg boxed"><sc-for list="{{presets}}" as="p" hint-placeholder-count="3"><button class="{{p.cls}}" onClick="{{p.pick}}">{{p.label}}</button></sc-for></div></div>
+<div class="sl-tw"><table class="sl-table"><thead><tr><th>Update</th><th style="text-align:center">WhatsApp</th><th style="text-align:center">SMS</th><th style="text-align:center">E-mail</th></tr></thead><tbody>
+<sc-for list="{{evs}}" as="e" hint-placeholder-count="9"><tr><td><span class="col"><span class="fw5">{{e.n}}</span><span class="mut" style="font-size:12.5px">{{e.d}}</span></span></td><td><span class="cn-ch"><button class="sl-chk {{e.wa}}" role="checkbox" aria-checked="{{e.waA}}" aria-label="WhatsApp" onClick="{{e.fWa}}"></button></span></td><td><span class="cn-ch"><button class="sl-chk {{e.sms}}" role="checkbox" aria-checked="{{e.smsA}}" aria-label="SMS" onClick="{{e.fSms}}"></button></span></td><td><span class="cn-ch"><button class="sl-chk {{e.em}}" role="checkbox" aria-checked="{{e.emA}}" aria-label="E-mail" onClick="{{e.fEm}}"></button></span></td></tr></sc-for>
+</tbody></table></div><div class="row between wrap g8 sm" style="padding:12px 18px;border-top:1px solid var(--line)"><span class="mut">Security codes (log-in and pickup codes) are always sent so nobody else can collect your parcel.</span><span class="mono">{{costNote}}</span></div></section>
+<div class="grid cols2" style="gap:16px">
+<section class="sl-card col g12"><h2 class="sl-ct">Quiet hours</h2><div class="row between"><span>No WhatsApp or SMS at night</span><button class="sl-toggle {{quietCls}}" role="switch" aria-checked="{{quietAria}}" aria-label="Quiet hours" onClick="{{toggleQuiet}}"></button></div><div class="grid cols2" style="gap:10px"><label class="sl-field"><span class="sl-lab">From</span><input class="sl-in mono" value="21:00" aria-label="From"></label><label class="sl-field"><span class="sl-lab">Until</span><input class="sl-in mono" value="07:00" aria-label="Until"></label></div><span class="mut sm">Messages wait until morning. Delivery-day updates still come through.</span></section>
+<section class="sl-card col g12"><h2 class="sl-ct">Language and summaries</h2><div class="sl-field"><span class="sl-lab">Message language</span><div class="sl-seg boxed"><sc-for list="{{langs}}" as="l" hint-placeholder-count="3"><button class="{{l.cls}}" onClick="{{l.pick}}">{{l.label}}</button></sc-for></div></div><div class="sl-field"><span class="sl-lab">Weekly e-mail summary</span><div class="sl-seg boxed"><sc-for list="{{digs}}" as="d" hint-placeholder-count="3"><button class="{{d.cls}}" onClick="{{d.pick}}">{{d.label}}</button></sc-for></div></div></section>
+<section class="sl-card col g12"><h2 class="sl-ct">Offers and news</h2><div class="row between"><span class="col"><span>Promotions and holiday rates</span><span class="mut sm">Like the Christmas air rate</span></span><button class="sl-toggle {{promoCls}}" role="switch" aria-checked="{{promoAria}}" aria-label="Promotions" onClick="{{togglePromo}}"></button></div><div class="row between"><span class="col"><span>Newsletter</span><span class="mut sm">Once a month by e-mail</span></span><button class="sl-toggle {{newsCls}}" role="switch" aria-checked="{{newsAria}}" aria-label="Newsletter" onClick="{{toggleNews}}"></button></div></section>
+<section class="sl-card col g12"><h2 class="sl-ct">Recent messages to you</h2><sc-for list="{{recent}}" as="r" hint-placeholder-count="4"><div class="row g10 sm" style="padding:6px 0;border-top:1px solid var(--line)"><i class="ic ic-sm {{r.icon}}" aria-hidden="true"></i><span class="grow">{{r.t}}</span><span class="mut">{{r.w}}</span></div></sc-for><a class="sm fw5" href="Notifications.dc.html">See all →</a></section>
+</div>
+<div class="row between wrap g8 sm mut"><span>Want to stop everything? You can pause all messages except security codes.</span><button class="sl-btn ghost sm" onClick="{{pauseAll}}">{{pauseLabel}}</button></div>
+</div></main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1500}}'>
+const EV = [['Package arrived at US warehouse', 'With weight and photo', 1, 0, 1], ['Price ready to pay', 'Amount and pay link', 1, 1, 1], ['Shipped from the US', 'Flight or vessel number', 1, 0, 1], ['Arrived in Ghana', 'Cleared at Accra Hub', 1, 0, 0], ['Ready for pickup', 'With your pickup code', 1, 1, 1], ['Out for delivery', 'Rider name and phone', 1, 1, 0], ['Delivered', 'Proof of delivery photo', 1, 0, 1], ['Pre-alert received', 'We matched your pre-alert', 0, 0, 1], ['Bill reminders', 'Unpaid after 7 days', 1, 0, 1]];
+class Component extends DCLogic {
+constructor(p) { super(p); this.state = { ch: { wa: true, sms: true, em: true }, ev: EV.map(e => [e[2], e[3], e[4]]), quiet: true, lang: 'en', dig: 'week', promo: true, news: false, paused: false, flash: '' }; }
+note(m) { this.setState({ flash: m }); if (typeof window !== 'undefined') { clearTimeout(this._f); this._f = setTimeout(() => this.setState({ flash: '' }), 2600); } }
+componentWillUnmount() { clearTimeout(this._f); }
+renderVals() {
+  const s = this.state, ch = s.ch;
+  const flip = (i, k) => () => { const n = s.ev.map(r => r.slice()); n[i][k] = n[i][k] ? 0 : 1; this.setState({ ev: n }); this.note('Saved. ' + EV[i][0] + ' updated.'); };
+  const on = (i, k, c) => ch[c] && !s.paused && s.ev[i][k] ? 'on' : '';
+  const smsN = s.ev.filter(r => r[1]).length;
+  return {
+    chans: [['wa', 'WhatsApp', 'i-message', '+233 24 551 0921', 'Verified'], ['sms', 'SMS', 'i-phone', '+233 24 551 0921', 'Verified'], ['em', 'E-mail', 'i-mail', 'efua.owusu@gmail.com', 'Verified']].map(c => ({ label: c[1], icon: c[2], addr: c[3], ver: ch[c[0]] ? '✓ ' + c[4] : 'Off', cls: ch[c[0]] ? 'on' : '', aria: ch[c[0]] ? 'true' : 'false', off: ch[c[0]] ? '' : 'off', flip: () => { this.setState({ ch: { ...ch, [c[0]]: !ch[c[0]] } }); this.note(c[1] + (ch[c[0]] ? ' turned off.' : ' turned on.')); } })),
+    presets: [['all', 'Everything'], ['key', 'Only important'], ['custom', 'Custom']].map(p => ({ label: p[1], cls: p[0] === 'custom' ? 'on' : '', pick: () => { if (p[0] === 'all') this.setState({ ev: EV.map(() => [1, 1, 1]) }); if (p[0] === 'key') this.setState({ ev: EV.map((e, i) => [1, [1, 4, 5].includes(i) ? 1 : 0, [1, 4].includes(i) ? 1 : 0]) }); this.note('Saved.'); } })),
+    evs: EV.map((e, i) => ({ n: e[0], d: e[1], wa: on(i, 0, 'wa'), sms: on(i, 1, 'sms'), em: on(i, 2, 'em'), waA: on(i, 0, 'wa') ? 'true' : 'false', smsA: on(i, 1, 'sms') ? 'true' : 'false', emA: on(i, 2, 'em') ? 'true' : 'false', fWa: flip(i, 0), fSms: flip(i, 1), fEm: flip(i, 2) })),
+    costNote: smsN + ' SMS updates per parcel · free for you',
+    quietCls: s.quiet ? 'on' : '', quietAria: s.quiet ? 'true' : 'false', toggleQuiet: () => this.setState({ quiet: !s.quiet }),
+    langs: [['en', 'English'], ['tw', 'Twi'], ['fr', 'French']].map(l => ({ label: l[1], cls: s.lang === l[0] ? 'on' : '', pick: () => this.setState({ lang: l[0] }) })),
+    digs: [['week', 'Weekly'], ['month', 'Monthly'], ['off', 'Off']].map(d => ({ label: d[1], cls: s.dig === d[0] ? 'on' : '', pick: () => this.setState({ dig: d[0] }) })),
+    promoCls: s.promo ? 'on' : '', promoAria: s.promo ? 'true' : 'false', togglePromo: () => this.setState({ promo: !s.promo }),
+    newsCls: s.news ? 'on' : '', newsAria: s.news ? 'true' : 'false', toggleNews: () => this.setState({ news: !s.news }),
+    recent: [['i-message', 'SL-100480 ready for pickup · code 4821', '2 h ago'], ['i-mail', 'Your bill for SL-100455 is ready', 'Yesterday'], ['i-phone', 'SL-100431 shipped on KQ 8102', 'Nov 3'], ['i-message', 'SL-100419 out for delivery with Kwesi', 'Nov 2']].map(r => ({ icon: r[0], t: r[1], w: r[2] })),
+    pauseAll: () => this.setState({ paused: !s.paused }), pauseLabel: s.paused ? 'Resume all messages' : 'Pause all messages',
+    testAll: () => this.note('Test sent to your ' + ['wa', 'sms', 'em'].filter(k => ch[k]).map(k => ({ wa: 'WhatsApp', sms: 'SMS', em: 'e-mail' })[k]).join(', ') + '.'), flash: s.flash };
+}
+}
+</script>
+</body>
+</html>

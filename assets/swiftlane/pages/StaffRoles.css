@@ -1,0 +1,16 @@
+/* Page styles of StaffRoles.dc.html (from the approved design) */
+.sf-k{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
+.sf-k b{font:600 26px var(--font);letter-spacing:-.015em;font-variant-numeric:tabular-nums;line-height:1.15}.sf-k small{color:var(--muted);font-size:12.5px}
+.sf-bar{display:grid;grid-template-columns:130px 1fr 34px;gap:10px;align-items:center;font-size:13px}
+.sf-bar i{display:block;height:10px;border-radius:99px;background:#A9A59C}
+.sf-wk{display:grid;grid-template-columns:150px repeat(7,1fr);gap:4px;font-size:12px;align-items:center}
+.sf-wk span.d{height:26px;border-radius:7px;display:grid;place-items:center;background:var(--active);color:var(--muted)}
+.sf-wk span.on{background:#D6D2CA;color:var(--ink)}.sf-wk span.lv{background:var(--amber-bg);color:var(--amber-ink)}
+.sf-on{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:12px;background:var(--field);border:1px solid var(--line);font-size:13px}
+.sf-dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex:none}.sf-dot.a{background:var(--yellow)}
+.sr-full{display:flex!important;flex-direction:column!important;gap:16px}
+.sr-full>.a,.sr-full>.b{width:100%!important;max-width:none!important;flex:none!important}
+.sr-full>.b{order:-1;display:grid!important;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));gap:16px}
+.sr-full>.b>section:first-child{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px 16px;grid-column:1/-1}
+.sr-full>.b>section:first-child>.sl-ch{grid-column:1/-1}
+.sr-full>.b>section:first-child .sf-on{padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:var(--field)}

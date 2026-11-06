@@ -1,0 +1,16 @@
+/* Page styles of AirShipments.dc.html (from the approved design) */
+.rm{position:relative}.rm>summary{list-style:none;cursor:pointer}.rm>summary::-webkit-details-marker{display:none}.rm[open]>summary{background:var(--active)}
+.rm-pop{position:absolute;right:0;top:34px;z-index:30;width:230px;background:var(--panel);border:1px solid var(--line-2);border-radius:14px;box-shadow:0 16px 40px rgba(0,0,0,.16);padding:6px;display:flex;flex-direction:column}
+.rm-h{font:600 12px var(--mono);color:var(--muted);padding:8px 10px 6px}
+.rm-i{display:flex;align-items:center;gap:10px;min-height:36px;padding:0 10px;border-radius:9px;font-size:13.5px;color:var(--ink)}.rm-i:hover{background:var(--hover)}.rm-x{color:var(--red-ink);border-top:1px solid var(--line);border-radius:0 0 9px 9px;margin-top:4px}
+.as-dots{position:sticky;right:0;background:var(--card);box-shadow:-8px 0 8px -8px rgba(0,0,0,.12)}
+.as-more{width:40px;height:40px;border-radius:12px;border:1px solid var(--line-2);background:var(--card);display:grid;place-items:center;color:var(--ink);cursor:pointer}
+.as-more:hover,.as-more.on{background:var(--ink);color:var(--inverse);border-color:var(--ink)}
+.as-mrow td{padding:0 12px 12px!important;background:var(--active)}
+.as-menu{display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:14px;background:var(--card);border:1px solid var(--line-2);box-shadow:0 10px 24px rgba(0,0,0,.08)}
+.as-mh{display:flex;align-items:center;gap:10px}
+.as-acts{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:6px}
+.as-a{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 12px;border-radius:10px;border:1px solid var(--line);font-size:13.5px;color:var(--ink);background:var(--field)}
+.as-a:hover{background:var(--hover);border-color:var(--line-2)}
+.as-a.pri{background:var(--ink);color:var(--inverse);border-color:var(--ink)}
+.as-a.danger{color:var(--red-ink)}

@@ -1,0 +1,49 @@
+/* Page styles of ModuleController.dc.html (from the approved design) */
+.ov-card{display:flex;flex-direction:column;gap:10px;padding:16px 18px 14px;border:1px solid var(--line);border-radius:18px;background:var(--card);color:var(--ink)}
+.ov-card .hd{display:flex;align-items:center;justify-content:space-between;font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.ov-card .hd span{display:flex;align-items:center;gap:8px}
+.ov-card .fig{font-size:15.5px;margin-top:8px}
+.ov-card .fig i{font-style:normal;color:var(--muted)}
+.ov-card .ft{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted)}
+.ov-seg{display:flex;gap:2px;font-size:13px;color:var(--muted)}
+.ov-seg button{border:0;background:transparent;color:inherit;font:inherit;padding:5px 9px;border-radius:8px;cursor:pointer}
+.ov-seg button.on{background:var(--active);color:var(--ink)}
+.ov-avg{font-size:13.5px;color:var(--muted)}.ov-avg b{color:var(--ink);font-weight:500}
+.ov-chart text{font-size:11px;fill:var(--muted);font-family:var(--font)}
+.ov-qa{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.ov-qa a{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 12px;border-radius:10px;color:var(--ink-2);font-size:14px}
+.ov-qa a:first-child{background:var(--active);color:var(--ink)}
+.ov-qa a:hover{background:var(--hover)}
+.ov-row{display:flex;align-items:center;gap:12px;min-height:52px;border-top:1px solid var(--line);font-size:14px}
+.ov-row:first-child{border-top:0}
+.ov-pill{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:6px;font-size:12px;font-weight:500;background:var(--active);color:var(--ink-2)}
+.ov-pill.ok{background:var(--green-bg);color:var(--green-ink)}.ov-pill.warn{background:var(--amber-bg);color:var(--amber-ink)}.ov-pill.bad{background:var(--red-bg);color:var(--red-ink)}
+.ov-hm{display:grid;gap:4px;align-items:center}
+.ov-hm b{width:12px;height:12px;border-radius:3px;background:var(--heat-0);place-self:center}
+.ov-hm b.h0{width:3px;height:3px;border-radius:50%}
+.ov-hm b.h1{background:var(--heat-1)}.ov-hm b.h2{background:var(--heat-2)}.ov-hm b.h3{background:var(--heat-3)}
+.ov-hm span{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sl-ticks.n{--c:var(--muted)}
+.mc{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.mc-main{flex:999 1 640px;min-width:0;display:flex;flex-direction:column;gap:16px}
+.mc-side{flex:1 1 280px;min-width:0;display:flex;flex-direction:column;gap:16px;position:sticky;top:12px}
+.mc-grp{border:1px solid var(--line);border-radius:20px;background:var(--card);overflow:hidden}
+.mc-gh{display:flex;align-items:center;gap:12px;padding:14px 18px;background:var(--panel);border-bottom:1px solid var(--line)}
+.mc-gh .tl{width:38px;height:38px;border-radius:11px;background:var(--active);display:grid;place-items:center;flex:none}
+.mc-gh b{font-size:15.5px;font-weight:600}.mc-gh small{display:block;color:var(--muted);font-size:12.5px}
+.mc-row{display:flex;align-items:center;gap:14px;padding:12px 18px;border-top:1px solid var(--line)}
+.mc-row:first-of-type{border-top:0}
+.mc-row.off .nm b,.mc-row.off>.ic{opacity:.45}
+.mc-row .nm{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.mc-row .nm b{font-size:14.5px;font-weight:500}.mc-row .nm small{color:var(--muted);font-size:12.5px}
+.mc-tags{display:flex;gap:4px;flex-wrap:wrap}
+.mc-tags span{font-size:11px;padding:1px 7px;border-radius:5px;background:var(--active);color:var(--ink-2)}
+.mc-tags span.warn{background:var(--amber-bg);color:var(--amber-ink)}
+.mc-sw{width:44px;height:26px;border-radius:13px;border:0;background:var(--line-2);position:relative;cursor:pointer;flex:none;padding:0}
+.mc-sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .15s}
+.mc-sw.on{background:var(--green)}.mc-sw.on::after{left:21px}
+.mc-sw.lock{opacity:.5;cursor:not-allowed}
+.mc-prev{border:1px solid var(--line);border-radius:18px;background:var(--panel);padding:12px}
+.mc-prev a{display:flex;align-items:center;gap:10px;height:34px;padding:0 8px;border-radius:8px;font-size:13px;color:var(--ink-2)}
+.mc-prev .gl{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);padding:10px 8px 4px}
+.mc-toast{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:14px;background:var(--amber-bg);color:var(--amber-ink);font-size:13px}

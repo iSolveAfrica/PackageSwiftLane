@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Swift Lane My Bills</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./swiftlane.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.sl-ticks.n{--c:var(--muted)}
+.ur-ring{position:relative;width:58px;height:58px;border-radius:50%;flex:none;display:grid;place-items:center}
+.ur-ring::after{content:"";position:absolute;inset:5px;border-radius:50%;background:var(--card)}
+.ur-ring b{position:relative;z-index:1;font-size:16px;font-weight:600}
+.ur-dl>div{display:flex;gap:14px;padding:12px 0;border-bottom:1px solid var(--line);font-size:13.5px;align-items:flex-start}
+.ur-dl>div:last-child{border-bottom:0}
+.ur-dl .k{flex:0 0 150px;display:flex;align-items:center;gap:10px;color:var(--muted)}
+.ur-dl .v{flex:1;min-width:0;font-weight:500}
+.ur-chip{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:100px;background:var(--active);font-size:12.5px;color:var(--ink-2)}
+.ur-addr{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(180px,100%),1fr));gap:4px 16px}
+.ur-addr>div{display:flex;gap:12px;padding:12px 0;border-bottom:1px dashed var(--line-2)}
+.ur-addr small{display:block;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.ur-promo{display:flex;flex-wrap:wrap;align-items:center;gap:16px 24px;padding:18px 22px;border-radius:var(--r-lg);background:var(--ink);color:var(--inverse)}
+.ur-promo s{color:var(--faint);font-size:15px}
+.ur-stat{display:flex;flex-direction:column;gap:2px;padding:12px 0;border-bottom:1px solid var(--line)}
+.ur-stat:last-child{border-bottom:0}
+.ur-stat b{font-size:22px;font-weight:500;letter-spacing:-.01em}
+.ur-ev{display:flex;gap:14px}
+.ur-ev .ico{width:32px;height:32px;border-radius:50%;background:var(--active);display:grid;place-items:center;color:var(--ink-2);flex:none}
+.ur-ev .body{flex:1;min-width:0;border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--field)}
+.ur-tabs{display:flex;gap:22px;border-bottom:1px solid var(--line);overflow-x:auto}
+.ur-tabs a{padding:0 0 12px;font-size:14px;font-weight:500;color:var(--muted);white-space:nowrap;border-bottom:2px solid transparent}
+.ur-tabs a.on{color:var(--ink);border-bottom-color:var(--ink)}
+.ur-score{display:grid;grid-template-columns:150px minmax(0,1fr) 64px;gap:12px;align-items:center;font-size:13.5px}
+
+body{margin:0}
+.ov-card{display:flex;flex-direction:column;gap:10px;padding:16px 18px 14px;border:1px solid var(--line);border-radius:18px;background:var(--card);color:var(--ink)}
+.ov-card .hd{display:flex;align-items:center;justify-content:space-between;font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.ov-card .hd span{display:flex;align-items:center;gap:8px}
+.ov-card .fig{font-size:15.5px;margin-top:8px}
+.ov-card .fig i{font-style:normal;color:var(--muted)}
+.ov-card .ft{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted)}
+.ov-seg{display:flex;gap:2px;font-size:13px;color:var(--muted)}
+.ov-seg button{border:0;background:transparent;color:inherit;font:inherit;padding:5px 9px;border-radius:8px;cursor:pointer}
+.ov-seg button.on{background:var(--active);color:var(--ink)}
+.ov-avg{font-size:13.5px;color:var(--muted)}.ov-avg b{color:var(--ink);font-weight:500}
+.ov-chart text{font-size:11px;fill:var(--muted);font-family:var(--font)}
+.ov-qa{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.ov-qa a{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 12px;border-radius:10px;color:var(--ink-2);font-size:14px}
+.ov-qa a:first-child{background:var(--active);color:var(--ink)}
+.ov-qa a:hover{background:var(--hover)}
+.ov-row{display:flex;align-items:center;gap:12px;min-height:52px;border-top:1px solid var(--line);font-size:14px}
+.ov-row:first-child{border-top:0}
+.ov-pill{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:6px;font-size:12px;font-weight:500;background:var(--active);color:var(--ink-2)}
+.ov-pill.ok{background:var(--green-bg);color:var(--green-ink)}.ov-pill.warn{background:var(--amber-bg);color:var(--amber-ink)}.ov-pill.bad{background:var(--red-bg);color:var(--red-ink)}
+.ov-hm{display:grid;gap:4px;align-items:center}
+.ov-hm b{width:12px;height:12px;border-radius:3px;background:var(--heat-0);place-self:center}
+.ov-hm b.h0{width:3px;height:3px;border-radius:50%}
+.ov-hm b.h1{background:var(--heat-1)}.ov-hm b.h2{background:var(--heat-2)}.ov-hm b.h3{background:var(--heat-3)}
+.ov-hm span{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sl-ticks.n{--c:var(--muted)}
+</style>
+</helmet>
+<div class="sl-app">
+  <input type="checkbox" id="navtg" class="nav-tg" aria-hidden="true" tabindex="-1">
+  <header class="sl-top">
+    <label class="sl-ib nav-open" for="navtg" aria-label="Open or close the menu" role="button" tabindex="0"><i class="ic i-sidebar" aria-hidden="true"></i></label>
+    <a class="sl-switch" href="UserHome.dc.html"><small>SL</small> Swift Lane · My account <i class="ic ic-sm i-down" aria-hidden="true"></i></a>
+    <a class="fx-chip" href="SettingsHub.dc.html" title="Exchange rate · set in Settings › General"><i class="ic ic-sm i-dollar" aria-hidden="true"></i><span class="mono">USD 1 = GHS 12.40</span><span class="fx-d">▲ 0.4%</span></a>
+    <div class="sl-search" style="max-width:360px;flex:1"><i class="ic ic-sm i-search" aria-hidden="true"></i><input aria-label="Search tracking, AWB or locker" placeholder="Search tracking, AWB or locker"></div>
+    <span class="grow"></span>
+    <details class="aitop"><summary aria-label="Help with Swift Lane AI"><span class="o"><i class="ic i-ai" aria-hidden="true"></i></span>Help</summary><div class="pop" role="menu">
+<div class="me"><span class="sl-av sm dark">EO</span><div class="grow"><div class="fw5 sm">Efua Owusu</div><div class="mut" style="font-size:12px">Customer · Locker SL-3318</div></div><a class="sl-btn sm ghost" href="AiStudio.dc.html">Edit</a></div>
+<a class="ask" href="StaffAI.dc.html"><i class="ic ic-sm i-spark" aria-hidden="true"></i>Ask AI for help on this page<b><i class="ic ic-sm i-send" aria-hidden="true"></i></b></a>
+<div class="hd">Your profile with AI</div>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-wand" aria-hidden="true"></i></span><span>Retouch my photo<small>Light, skin and background</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-refresh" aria-hidden="true"></i></span><span>Reset images<small>Go back to the original photo</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-edit" aria-hidden="true"></i></span><span>Change my name<small>AI fixes spelling and capitals</small></span></a>
+<a class="it" role="menuitem" href="AiStudio.dc.html"><span class="t"><i class="ic ic-sm i-user" aria-hidden="true"></i></span><span>Make my icon<small>Avatar from your photo or initials</small></span></a>
+<div class="hd">Help</div>
+<a class="it" role="menuitem" href="StaffAI.dc.html"><span class="t"><i class="ic ic-sm i-help" aria-hidden="true"></i></span><span>Explain this page</span></a>
+<a class="it" role="menuitem" href="CsInbox.dc.html"><span class="t"><i class="ic ic-sm i-message" aria-hidden="true"></i></span><span>Talk to a person</span></a>
+</div></details>
+    <div class="sl-seg boxed"><button class="on">GHS</button><button>USD</button></div>
+    <a class="sl-ib" aria-label="Notifications" href="Notifications.dc.html"><i class="ic i-bell" aria-hidden="true"></i></a>
+    <a class="sl-ib" aria-label="Switch theme" href="SettingsHub.dc.html"><i class="ic i-sun" aria-hidden="true"></i></a>
+    <a class="sl-btn ghost" href="Notifications.dc.html"><i class="ic ic-sm i-file" aria-hidden="true"></i>Authorization form</a>
+    <details class="uptop"><summary aria-label="Your profile and settings, Efua Owusu"><span class="me-pic eo" style="width:34px;height:34px"><i class="me-on" aria-hidden="true"></i></span><span class="up-nm">Efua</span><i class="ic ic-sm i-down" aria-hidden="true"></i></summary><div class="pop" role="menu">
+<a class="up-me" href="AiStudio.dc.html"><span class="me-pic eo" style="width:48px;height:48px"><i class="me-on" aria-hidden="true"></i></span><span class="col" style="min-width:0"><b>Efua Owusu</b><small>Customer · Locker SL-3318</small><small class="mono">efua.owusu@gmail.com</small></span></a>
+<div class="up-st"><span class="row g6 sm"><span class="ld" style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span>Available</span><a class="sm fw5" href="AiStudio.dc.html">Edit profile</a></div>
+<div class="up-h">Short links</div><div class="up-g"><a class="up-l" role="menuitem" href="UserHome.dc.html"><i class="ic ic-sm i-grid" aria-hidden="true"></i>My account</a><a class="up-l" role="menuitem" href="PublicTracking.dc.html"><i class="ic ic-sm i-route" aria-hidden="true"></i>Track a parcel</a><a class="up-l" role="menuitem" href="MyBills.dc.html"><i class="ic ic-sm i-receipt" aria-hidden="true"></i>My bills</a><a class="up-l" role="menuitem" href="SchedulePickup.dc.html"><i class="ic ic-sm i-truck" aria-hidden="true"></i>Request pickup</a><a class="up-l" role="menuitem" href="UserHome.dc.html"><i class="ic ic-sm i-pin" aria-hidden="true"></i>My shipping addresses</a><a class="up-l" role="menuitem" href="Notifications.dc.html"><i class="ic ic-sm i-bell" aria-hidden="true"></i>Notifications</a></div>
+<div class="up-h">Settings</div><a class="up-l" role="menuitem" href="AiStudio.dc.html"><i class="ic ic-sm i-ai" aria-hidden="true"></i>Profile and photo</a><a class="up-l" role="menuitem" href="ForgotPassword.dc.html"><i class="ic ic-sm i-lock" aria-hidden="true"></i>Password and sign-in</a><a class="up-l" role="menuitem" href="UserHome.dc.html"><i class="ic ic-sm i-globe" aria-hidden="true"></i>Language and currency</a>
+<div class="up-row"><span class="sm mut">Theme</span><span class="sl-seg boxed" style="height:30px"><a class="on" href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Light</a><a href="SettingsHub.dc.html" style="height:26px;padding:0 10px;display:inline-flex;align-items:center">Dark</a></span></div>
+<a class="up-l" role="menuitem" href="CsInbox.dc.html"><i class="ic ic-sm i-help" aria-hidden="true"></i>Help and support</a>
+<a class="up-l out" role="menuitem" href="Login.dc.html"><i class="ic ic-sm i-logout" aria-hidden="true"></i>Sign out</a>
+</div></details>
+  </header>
+  <div class="sl-body">
+    <label class="nav-bd" for="navtg" aria-hidden="true"></label>
+    <div class="sl-rail">
+      <a class="is-on" href="UserHome.dc.html" aria-label="My account"><i class="ic i-grid" aria-hidden="true"></i></a>
+      <a href="PreAlerts.dc.html" aria-label="Pre-alerts"><i class="ic i-inbox" aria-hidden="true"></i></a>
+      <a href="PublicTracking.dc.html" aria-label="Track"><i class="ic i-route" aria-hidden="true"></i></a>
+      <a href="Notifications.dc.html" aria-label="Messages"><i class="ic i-message" aria-hidden="true"></i></a>
+      <a class="me-pic eo" href="AiStudio.dc.html" aria-label="Your profile, Efua Owusu" style="width:34px;height:34px;margin-top:auto"></a>
+    </div>
+    <aside class="sl-side" aria-label="Customer navigation">
+      <div class="nav-x"><span class="fw5">Menu</span><label class="sl-ib" for="navtg" aria-label="Close the menu" role="button" tabindex="0"><i class="ic i-x" aria-hidden="true"></i></label></div>
+      <div class="sl-gl">My shipping</div>
+      <nav class="sl-nav">
+        <a href="UserHome.dc.html"><i class="ic i-grid" aria-hidden="true"></i><span>My account</span></a>
+        <a href="ClientDashboard.dc.html"><i class="ic i-route" aria-hidden="true"></i><span>Portal home</span></a>
+        <a href="AiStudio.dc.html"><i class="ic i-ai" aria-hidden="true"></i><span>AI profile studio</span></a>
+        <a href="AirShipments.dc.html"><i class="ic i-plane" aria-hidden="true"></i><span>My shipments</span><span class="cnt">4</span></a>
+        <a href="PreAlerts.dc.html"><i class="ic i-inbox" aria-hidden="true"></i><span>Pre-alerts</span><span class="cnt">2</span></a>
+        <a href="SeaPackages.dc.html"><i class="ic i-box" aria-hidden="true"></i><span>Registered packages</span><span class="cnt">6</span></a>
+        <a href="PublicTracking.dc.html"><i class="ic i-route" aria-hidden="true"></i><span>Track a parcel</span></a>
+        <a href="Pickups.dc.html"><i class="ic i-truck" aria-hidden="true"></i><span>Request pickup</span></a>
+      </nav>
+      <div class="sl-gl">Account</div>
+      <nav class="sl-nav">
+        <a href="MyBills.dc.html" class="is-active"><i class="ic i-receipt" aria-hidden="true"></i><span>My bills</span><span class="cnt">1</span></a>
+        <a href="Recipients.dc.html"><i class="ic i-user" aria-hidden="true"></i><span>Recipients</span><span class="cnt">3</span></a>
+        <a href="Notifications.dc.html"><i class="ic i-bell" aria-hidden="true"></i><span>Notifications</span><span class="cnt">3</span></a>
+        <a href="CustomerNotifications.dc.html"><i class="ic i-sliders" aria-hidden="true"></i><span>Notification settings</span></a>
+        <a href="SettingsHub.dc.html"><i class="ic i-sliders" aria-hidden="true"></i><span>Profile settings</span></a>
+      </nav>
+      <div class="sl-gl">Other</div>
+      <nav class="sl-nav">
+        <a href="CsInbox.dc.html"><i class="ic i-help" aria-hidden="true"></i><span>Get help</span></a>
+        <a href="Login.dc.html" class="danger"><i class="ic i-logout" aria-hidden="true"></i><span>Sign out</span></a>
+      </nav>
+      <a class="me-card" href="AiStudio.dc.html" aria-label="Signed in as Efua Owusu. Open your profile">
+        <span class="me-pic eo" role="img" aria-label="Photo of Efua Owusu"><i class="me-on" aria-hidden="true"></i></span>
+        <span class="grow col" style="min-width:0"><b>Efua Owusu</b><small>Customer · Locker SL-3318</small></span>
+        <i class="ic ic-sm i-more mut" aria-hidden="true"></i>
+      </a>
+      <a class="me-sub" href="ControlPanelsMobile.dc.html"><i class="ic ic-sm i-phone" aria-hidden="true"></i>Get the Swift Lane app<span class="sl-tag">iOS · Android</span></a>
+    </aside>
+
+    <main class="sl-main">
+<div class="sl-wrap" style="max-width:1120px">
+<div class="sl-head"><div><h1 class="sl-title" style="font-size:20px">My bills</h1><p class="sl-lede">Locker SL-3318 · pay by MoMo, card or bank</p></div><div class="row g8 wrap"><div class="ov-seg"><button class="">All</button><button class="on">Owing</button><button class="">Settled</button></div><a class="sl-btn ghost" href="Documents.dc.html"><i class="ic ic-sm i-download" aria-hidden="true"></i>Statement</a><a class="sl-btn" href="PayCheckout.dc.html"><i class="ic ic-sm i-card" aria-hidden="true"></i>Pay all ₵2,300</a></div></div><div class="grid cols3"><a class="ov-card" href="PayCheckout.dc.html"><div class="hd"><span><i class="ic ic-sm i-receipt" aria-hidden="true"></i>Owing</span><i class="ic ic-sm i-right" aria-hidden="true"></i></div><div class="fig">₵2,300.00 <i>/ 1 bill</i></div><div class="sl-ticks r" role="img" aria-label="12%"><i style="width:12%"></i></div><div class="ft">Due Nov 8 · storage fees start Nov 12</div></a><a class="ov-card" href="ReceiptPaid.dc.html"><div class="hd"><span><i class="ic ic-sm i-check" aria-hidden="true"></i>Paid this year</span><i class="ic ic-sm i-right" aria-hidden="true"></i></div><div class="fig">₵16,120.00 <i>/ ₵18,420 billed</i></div><div class="sl-ticks" role="img" aria-label="88%"><i style="width:88%"></i></div><div class="ft">11 bills settled</div></a><a class="ov-card" href="QuoteCalculator.dc.html"><div class="hd"><span><i class="ic ic-sm i-tag" aria-hidden="true"></i>Saved with promos</span><i class="ic ic-sm i-right" aria-hidden="true"></i></div><div class="fig">₵640.00 <i>Christmas air rate</i></div><div class="sl-ticks y" role="img" aria-label="35%"><i style="width:35%"></i></div><div class="ft">$6 per lb until Dec 31</div></a></div><section class="sl-card col g8"><div class="sl-ch" style="margin:0"><h2 class="sl-ct">What you spent</h2><div class="ov-seg"><button class="">6m</button><button class="on">1y</button></div></div><div class="ov-avg">Avg <b>₵1,535 / month</b></div><svg class="ov-chart" viewBox="0 0 1040 200" style="width:100%;height:auto" role="img" aria-label="Monthly spend over the year"><line x1="44" y1="170.0" x2="1030" y2="170.0" stroke="var(--line)" stroke-dasharray="0"></line><text x="36" y="174.0" text-anchor="end">₵0</text><line x1="44" y1="106.8" x2="1030" y2="106.8" stroke="var(--line)" stroke-dasharray="3 4"></line><text x="36" y="110.8" text-anchor="end">₵1000</text><line x1="44" y1="43.6" x2="1030" y2="43.6" stroke="var(--line)" stroke-dasharray="3 4"></line><text x="36" y="47.6" text-anchor="end">₵2000</text><rect x="72.1" y="111.9" width="26.0" height="58.1" rx="5" fill="#E9E7E1"></rect><rect x="154.2" y="95.4" width="26.0" height="74.6" rx="5" fill="#E9E7E1"></rect><rect x="236.4" y="115.6" width="26.0" height="54.4" rx="5" fill="#E9E7E1"></rect><rect x="318.6" y="66.4" width="26.0" height="103.6" rx="5" fill="#E9E7E1"></rect><rect x="400.8" y="43.0" width="26.0" height="127.0" rx="5" fill="#E9E7E1"></rect><rect x="482.9" y="80.3" width="26.0" height="89.7" rx="5" fill="#E9E7E1"></rect><rect x="565.1" y="87.2" width="26.0" height="82.8" rx="5" fill="#E9E7E1"></rect><rect x="647.3" y="61.3" width="26.0" height="108.7" rx="5" fill="#E9E7E1"></rect><rect x="729.4" y="44.9" width="26.0" height="125.1" rx="5" fill="#E9E7E1"></rect><rect x="811.6" y="72.7" width="26.0" height="97.3" rx="5" fill="#E9E7E1"></rect><rect x="893.8" y="54.3" width="26.0" height="115.7" rx="5" fill="#E9E7E1"></rect><rect x="975.9" y="24.6" width="26.0" height="145.4" rx="5" fill="#ECEAE5" stroke="#D9D7D0"></rect><text x="85.1" y="192" text-anchor="middle">Dec</text><text x="249.4" y="192" text-anchor="middle">Feb</text><text x="413.8" y="192" text-anchor="middle">Apr</text><text x="578.1" y="192" text-anchor="middle">Jun</text><text x="742.4" y="192" text-anchor="middle">Aug</text><text x="906.8" y="192" text-anchor="middle">Oct</text><text x="988.9" y="192" text-anchor="middle">Nov</text></svg></section><section class="sl-card flush"><div class="ov-row" style="padding:0 18px;min-height:68px"><span class="sl-tile"><i class="ic ic-sm i-file" aria-hidden="true"></i></span><span class="grow col"><span><span class="mono fw5">INV-20931</span> <span class="ov-pill bad">Due Nov 8</span></span><span class="mut sm">Nov 3 · SL-100480 · Amazon · 5.6 kg</span></span><span class="mono fw5">₵2,300.00</span><a class="sl-btn sm " href="PayCheckout.dc.html">Pay now</a></div><div class="ov-row" style="padding:0 18px;min-height:68px"><span class="sl-tile"><i class="ic ic-sm i-file" aria-hidden="true"></i></span><span class="grow col"><span><span class="mono fw5">INV-20877</span> <span class="ov-pill ok">Paid · MoMo</span></span><span class="mut sm">Oct 28 · SL-100431 · Nike · 2.8 kg</span></span><span class="mono fw5">₵1,180.00</span><a class="sl-btn sm ghost" href="ReceiptPaid.dc.html">Receipt</a></div><div class="ov-row" style="padding:0 18px;min-height:68px"><span class="sl-tile"><i class="ic ic-sm i-file" aria-hidden="true"></i></span><span class="grow col"><span><span class="mono fw5">INV-20802</span> <span class="ov-pill ok">Paid · card</span></span><span class="mut sm">Oct 19 · SL-100419 · eBay · 12.9 kg sea</span></span><span class="mono fw5">₵412.00</span><a class="sl-btn sm ghost" href="ReceiptPaid.dc.html">Receipt</a></div><div class="ov-row" style="padding:0 18px;min-height:68px"><span class="sl-tile"><i class="ic ic-sm i-file" aria-hidden="true"></i></span><span class="grow col"><span><span class="mono fw5">INV-20766</span> <span class="ov-pill ok">Paid · MoMo</span></span><span class="mut sm">Oct 11 · SL-100391 · Apple · 8.4 kg</span></span><span class="mono fw5">₵1,018.00</span><a class="sl-btn sm ghost" href="ReceiptPaid.dc.html">Receipt</a></div></section>
+</div>
+</main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1400}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+/* Page styles of Tariffs.dc.html (from the approved design) */
+.tf-mode{display:flex;flex-direction:column;gap:14px;padding:18px 20px;border-radius:20px;border:1px solid var(--line);background:var(--card)}
+.tf-mode.sea{background:var(--panel)}
+.tf-hd{display:flex;align-items:center;gap:12px}
+.tf-ic{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:var(--ink);color:var(--inverse)}
+.tf-mode.sea .tf-ic{background:var(--active);color:var(--ink)}
+.tf-k{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tf-k div{padding:10px 12px;border-radius:12px;background:var(--field);border:1px solid var(--line);display:flex;flex-direction:column;gap:2px}
+.tf-k small{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}.tf-k b{font:500 17px var(--mono)}
+.tf-cat td .yn{display:inline-flex;width:22px;height:22px;border-radius:50%;align-items:center;justify-content:center;background:var(--green-bg);color:var(--green-ink)}
+.tf-cat td .yn.no{background:var(--red-bg);color:var(--red-ink)}
+.tf-q{display:flex;flex-direction:column;gap:12px}
+.tf-in{width:100%;height:40px;border:1px solid var(--line-2);border-radius:10px;background:var(--field);padding:0 12px;font:500 14px var(--mono);color:var(--ink);box-sizing:border-box}
+.tf-chip{height:30px;padding:0 12px;border-radius:999px;border:1px solid var(--line-2);background:var(--card);font:500 12.5px var(--font);color:var(--ink);cursor:pointer}
+.tf-chip.on{background:var(--ink);color:var(--inverse);border-color:var(--ink)}

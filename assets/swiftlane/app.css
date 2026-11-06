@@ -1,0 +1,40 @@
+/* Application additions on top of swiftlane.css: runtime states the static design
+   did not need (toasts, flash banners, modals, form validation, dark-mode on html). */
+html.sl-dark body{background:#13151F}
+.sl-wrap.wide{max-width:1320px}
+.sl-bell{position:relative}
+.sl-bell-n{position:absolute;top:4px;right:2px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--red);color:#fff;font:600 10px/16px var(--font);text-align:center}
+.sl-banner.warn{background:var(--amber-bg);color:var(--amber-ink)}
+.sl-banner a{text-decoration:underline}
+.sl-flash-float{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:60;box-shadow:0 10px 30px rgba(0,0,0,.15)}
+.sl-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:80;max-width:min(520px,calc(100vw - 32px));padding:12px 16px;border-radius:12px;background:var(--ink);color:var(--inverse);font-size:13.5px;box-shadow:0 14px 40px rgba(0,0,0,.25)}
+.sl-toast.bad{background:var(--red)}
+.sl-toast[hidden]{display:none}
+.sl-field .sl-err{color:var(--red-ink);font-size:12px}
+.sl-in.is-invalid,.sl-sel.is-invalid{border-color:var(--red)}
+.sl-in:disabled,.sl-btn:disabled,.sl-btn[aria-disabled="true"]{opacity:.55;cursor:not-allowed}
+.sl-btn.loading{position:relative;color:transparent}
+.sl-btn.loading::after{content:"";position:absolute;inset:0;margin:auto;width:16px;height:16px;border-radius:50%;border:2px solid currentColor;border-color:var(--inverse) transparent var(--inverse) transparent;animation:slspin .8s linear infinite}
+@keyframes slspin{to{transform:rotate(360deg)}}
+.sl-empty{display:flex;flex-direction:column;align-items:center;gap:8px;padding:40px 16px;text-align:center;color:var(--muted)}
+.sl-empty .sl-tile{width:48px;height:48px}
+.sl-dialog{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(10,10,12,.5)}
+.sl-dialog[hidden]{display:none}
+.sl-dialog .sl-modal{width:min(560px,100%);max-height:92vh;overflow:auto;padding:20px 22px;display:flex;flex-direction:column;gap:14px}
+.sl-table a.rowlink{color:inherit}
+.sl-table td.wrap{white-space:normal}
+.sl-pg a{min-width:32px;height:32px;display:inline-grid;place-items:center;border-radius:8px;padding:0 8px}
+.sl-pg a.on{background:var(--active)}
+.sl-sel select{appearance:none;border:0;background:transparent;font:inherit;color:inherit;width:100%;outline:0;cursor:pointer}
+.sl-sel.native{padding:0 12px}
+form.sl-inline{display:contents}
+.sl-tabs{display:flex;gap:2px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+.sl-tabs a,.sl-tabs button{height:38px;padding:0 12px;border:0;background:transparent;color:var(--muted);font:500 13.5px var(--font);border-bottom:2px solid transparent;margin-bottom:-1px;cursor:pointer}
+.sl-tabs .on{color:var(--ink);border-bottom-color:var(--ink)}
+[data-sl-tabpanel][hidden]{display:none}
+.sl-note{font-size:12.5px;color:var(--muted)}
+.sl-kbd{font:500 11px var(--mono);padding:2px 6px;border-radius:5px;border:1px solid var(--line-2);background:var(--field)}
+.sl-code{font:12.5px var(--mono);background:var(--active);border-radius:8px;padding:10px 12px;white-space:pre-wrap;word-break:break-all}
+@media print{.sl-top,.sl-rail,.sl-side,.sl-toast,[data-sl-theme]{display:none!important}.sl-main{border:0;padding:0}}
+.sl-skip{position:absolute;left:-999px;top:0;background:var(--ink);color:var(--inverse);padding:8px 12px;border-radius:8px;z-index:100}
+.sl-skip:focus{left:12px;top:12px}
