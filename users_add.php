@@ -1,53 +1,9 @@
 <?php
-// *************************************************************************
-// *                                                                       *
-// * Swiftlane - Integrated Web Shipping System                            *
-// * Copyright (c) iSolveAfrica Ltd. All rights reserved.                  *
-// *                                                                       *
-// *************************************************************************
-// *                                                                       *
-// * This software and its source code are proprietary and confidential    *
-// * property of iSolveAfrica Ltd. and were developed specifically for     *
-// * Swiftlane.                                                            *
-// *                                                                       *
-// * The software may not be copied, reproduced, modified, distributed,    *
-// * sublicensed, published, or used in whole or in part except as         *
-// * expressly permitted under the applicable license or written           *
-// * agreement with iSolveAfrica Ltd. Any permitted copies or derivative   *
-// * works must retain this copyright notice and all applicable            *
-// * proprietary notices.                                                  *
-// *                                                                       *
-// *************************************************************************
-
-
-
-    require_once("loader.php");
-
-    $user = new User();
-    $core = new Core();
-
-    // Fetch active roles from database
-    $db = new Conexion();
-    $db->cdp_query("SELECT role_id, role_name FROM cdb_user_roles WHERE rol_active = 1");
-    $roles = $db->cdp_registros();
-    // ... ask if we are logged in here:
-    if ($user->cdp_loginCheck() == true) 
-    {
-
-        $permissions = $user->cdp_getUserPermissions();
-
-        if (!$user->cdp_hasPermission('add_user')) {
-            header("location: error403.php");
-            exit;
-        }
-
-       
-      include('views/tools/users/users_add.php');     
-           
-
-    } else{
-        
-        header("location: login.php");
-        exit;       
-    }
-?>
+// Invite staff (Swift Lane UI): create a staff account with a role and send the invitation.
+require_once 'loader.php';
+$user = new User();
+$core = new Core();
+require_once 'helpers/sl_view.php';
+sl_gate('add_user');
+require_once 'views/sl/data/staff.php';
+sl_render('InviteStaff', ['id' => 'staff', 'title' => 'Invite staff', 'board' => 'InviteStaff'], sl_inviteStaffData($user, $core));

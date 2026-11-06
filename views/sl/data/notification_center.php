@@ -69,6 +69,9 @@ function sl_notificationCenterData($user, $core): array
     $d['enabled'] = $rules[$curKey][$channel]['enabled'] ?? true;
     $templates = sl_msgTemplates($channel);
     $tplId = $rules[$curKey][$channel]['template_id'] ?? null;
+    if (isset($_GET['tpl']) && isset($templates[(int) $_GET['tpl']])) {
+        $tplId = (int) $_GET['tpl'];
+    }
     $tpl = $tplId !== null && isset($templates[$tplId]) ? $templates[$tplId] : null;
     $d['templates'] = array_values($templates);
     $d['templateId'] = $tpl['id'] ?? 0;

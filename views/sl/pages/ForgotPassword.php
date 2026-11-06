@@ -21,7 +21,7 @@ $step = (int) sl_get($d, 'step', 1);
       <div class="col g6"><h1 style="font-size: 28px; font-weight: 500; letter-spacing: -.015em"><?= sl_v($d, 'heading', 'Forgot your password?') ?></h1><p class="mut">Enter the email of your account. We send a 6-digit code to it (and to your WhatsApp when it is on file). It expires in 5 minutes.</p></div>
       <?php if (sl_get($d, 'notice')): ?><div class="sl-banner info" role="status"><i class="ic ic-sm i-info" aria-hidden="true"></i><span><?= sl_v($d, 'notice') ?></span></div><?php endif; ?>
       <form class="col g16" data-sl-legacy-form action="ajax/forgot-password-ajax.php" method="post" id="forgotPassword">
-        <div class="sl-banner" data-sl-msg hidden></div>
+        <div class="sl-banner" data-sl-msg style="display:none"></div>
         <div class="sl-field"><label class="sl-lab" for="email">Email address</label><div class="sl-inwrap"><i class="ic ic-sm i-mail" aria-hidden="true"></i><input id="email" name="email" class="sl-in" type="email" autocomplete="email" autocapitalize="none" spellcheck="false" required placeholder="you@company.com"></div></div>
         <button class="sl-btn block" type="submit" style="height: 46px"><?= sl_v($d, 'button', 'Send me a code') ?></button>
       </form>

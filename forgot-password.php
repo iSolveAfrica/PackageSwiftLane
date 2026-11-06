@@ -22,20 +22,21 @@
 
 
     require_once("loader.php");
-
-    // $user = new User();
+    require_once 'helpers/sl_view.php';
+    require_once 'helpers/sl_auth.php';
+    $user = new User();
     $core = new Core();
-    // // ... ask if we are logged in here:
-    // if ($user->cdp_loginCheck() == true) 
-    // {
-
-       
-      include('views/auth/forgot-password.php');     
-           
-
-    // } else{
-        
-    //     header("location: login.php");
-    //     exit;       
-    // }
-?>
+    if ($user->cdp_loginCheck()) {
+        header('location: ' . sl_route('PasswordReset'));
+        exit;
+    }
+    $pics = sl_loginPicturesHtml('forgot', 'fs');
+    $notice = ($_GET['notice'] ?? '') === 'otp_expired' ? 'Your verification session expired. Request a new code.' : '';
+    sl_render('ForgotPassword', ['title' => 'Forgot password', 'board' => 'ForgotPassword', 'plain' => true, 'scripts' => ['dataJs/sl/auth.js']], [
+        'step' => 1,
+        'notice' => $notice,
+        'pics' => $pics,
+        'site' => $core->site_name ?? 'Swift Lane',
+        'heading' => $pics['texts'][0] ?? 'Forgot your password?',
+        'button' => $pics['texts'][1] ?? 'Send me a code',
+    ]);

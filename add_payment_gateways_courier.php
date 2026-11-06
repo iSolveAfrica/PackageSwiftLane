@@ -1,37 +1,12 @@
 <?php
-// *************************************************************************
-// *                                                                       *
-// * Swiftlane - Integrated Web Shipping System                            *
-// * Copyright (c) iSolveAfrica Ltd. All rights reserved.                  *
-// *                                                                       *
-// *************************************************************************
-// *                                                                       *
-// * This software and its source code are proprietary and confidential    *
-// * property of iSolveAfrica Ltd. and were developed specifically for     *
-// * Swiftlane.                                                            *
-// *                                                                       *
-// * The software may not be copied, reproduced, modified, distributed,    *
-// * sublicensed, published, or used in whole or in part except as         *
-// * expressly permitted under the applicable license or written           *
-// * agreement with iSolveAfrica Ltd. Any permitted copies or derivative   *
-// * works must retain this copyright notice and all applicable            *
-// * proprietary notices.                                                  *
-// *                                                                       *
-// *************************************************************************
-
-
-
-require_once("loader.php");
-
+/** Record a payment (design RecordPayment.dc.html) against a shipment. Write: ajax/sl/record_payment_ajax.php. */
+require_once 'loader.php';
+require_once 'helpers/finance_switch.php';
 $user = new User();
 $core = new Core();
-// ... ask if we are logged in here:
-if ($user->cdp_loginCheck() == true) {
-
-
-  include('views/courier/add_payment_gateways_courier.php');
-} else {
-
-  header("location: login.php");
-  exit;
-}
+require_once 'helpers/sl_view.php';
+sl_gate(['fs_record_payment', 'manage_account_payments', 'verify_payments', 'verify_consolidate_payment', 'verify_consolidate_package_payment']);
+cdp_financeGuardPage();
+require_once 'views/sl/data/finance.php';
+$type = (string) ($_GET['type'] ?? 'shipment');
+sl_render('RecordPayment', ['id' => 'pay', 'title' => 'Record a payment', 'board' => 'RecordPayment'], sl_recordPaymentData($user, $core, $type));

@@ -507,24 +507,26 @@ function sl_devEvaluateAlerts(): array
         $out['checked']++;
         $value = sl_devMetric($r->metric, (int) $r->window_min);
         $fires = (int) $r->enabled === 1 && sl_devCompare($value, $r->comparator, (float) $r->threshold);
-        $open = sl_row("SELECT id, status FROM cdb_dev_alerts WHERE rule_key = :k AND status IN ('firing','acknowledged') ORDER BY id DESC", [':k' => $r->rule_key]);
-        $detail = 'Value ' . ($value === null ? 'unavailable' : rtrim(rtrim(number_format($value, 2, '.', ''), '0'), '.')) . ' ' . $r->comparator . ' limit ' . rtrim(rtrim(number_format((float) $r->threshold, 2, '.', ''), '0'), '.') . ($r->window_min ? ' over ' . (int) $r->window_min . ' min' : '');
+        $key = 'rule:' . $r->rule_key;
+        $open = sl_row("SELECT id, status FROM cdb_dev_alerts WHERE alert_key = :k AND status IN ('active','acknowledged') ORDER BY id DESC", [':k' => $key]);
+        $fmt = fn($v) => $v === null ? 'unavailable' : rtrim(rtrim(number_format((float) $v, 2, '.', ''), '0'), '.');
+        $detail = 'Value ' . $fmt($value) . ' ' . $r->comparator . ' limit ' . $fmt($r->threshold) . ($r->window_min ? ' over ' . (int) $r->window_min . ' min' : '');
+        $ctx = json_encode(['metric' => $r->metric, 'value' => $value, 'threshold' => (float) $r->threshold, 'window_min' => (int) $r->window_min]);
         if ($fires) {
             $out['firing']++;
             if ($open) {
-                $db->cdp_query('UPDATE cdb_dev_alerts SET last_seen_at = NOW(), value = :v, detail = :d WHERE id = :id');
-                $db->bind(':v', $value); $db->bind(':d', $detail); $db->bind(':id', (int) $open->id);
+                $db->cdp_query('UPDATE cdb_dev_alerts SET last_seen = NOW(), detail = :d, context = :c WHERE id = :id');
+                $db->bind(':d', $detail); $db->bind(':c', $ctx); $db->bind(':id', (int) $open->id);
                 $db->cdp_execute();
             } else {
-                $db->cdp_query('INSERT INTO cdb_dev_alerts (rule_id, rule_key, severity, title, detail, value, threshold, status, first_seen_at, last_seen_at) VALUES (:r, :k, :s, :t, :d, :v, :th, :st, NOW(), NOW())');
-                $db->bind(':r', (int) $r->id); $db->bind(':k', $r->rule_key); $db->bind(':s', $r->severity); $db->bind(':t', $r->label); $db->bind(':d', $detail);
-                $db->bind(':v', $value); $db->bind(':th', (float) $r->threshold); $db->bind(':st', 'firing');
+                $db->cdp_query('INSERT INTO cdb_dev_alerts (alert_key, severity, service, title, detail, context, status, first_seen, last_seen) VALUES (:k, :s, :sv, :t, :d, :c, :st, NOW(), NOW())');
+                $db->bind(':k', $key); $db->bind(':s', $r->severity === 'critical' ? 'critical' : 'warning'); $db->bind(':sv', 'Alert rules'); $db->bind(':t', $r->label); $db->bind(':d', $detail); $db->bind(':c', $ctx); $db->bind(':st', 'active');
                 $db->cdp_execute();
                 $out['opened']++;
             }
         } elseif ($open) {
-            $db->cdp_query('UPDATE cdb_dev_alerts SET status = :s, resolved_at = NOW(), value = :v WHERE id = :id');
-            $db->bind(':s', 'resolved'); $db->bind(':v', $value); $db->bind(':id', (int) $open->id);
+            $db->cdp_query('UPDATE cdb_dev_alerts SET status = :s, resolved_at = NOW(), detail = :d WHERE id = :id');
+            $db->bind(':s', 'resolved'); $db->bind(':d', $detail . ' · cleared'); $db->bind(':id', (int) $open->id);
             $db->cdp_execute();
             $out['resolved']++;
         }

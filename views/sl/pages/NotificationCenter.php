@@ -1,78 +1,92 @@
 <?php
 /**
- * NotificationCenter - generated from docs/handover/artifact-source/NotificationCenter.dc.html by scripts/sl_convert.py.
- * Shell page: yes (rendered inside views/sl/inc/shell_start.php)
- * Data contract ($d):
- *   loop  groups                       as $g
- *   loop  g.items                      as $e
- *   loop  tabs                         as $t
- *   loop  vars                         as $v
- *   if    isEmail
- *   if    isEmail
- *   if    isChat
- *   value body, bodyPrev, bubbleCls, channelNote, counter, false, groups, isChat, isEmail, onBody, onEmail, onQ, onSms, onSubject, onWa, q, reset, save, saveLabel, subject, subjectPrev, tabLabel, tabs, total, true, vars, wEmail, wSms, wWa
- * sl-wrap extras in the design: style="max-width:1120px"
- * Demo data shapes: see the renderVals() script in the artifact source file.
+ * NotificationCenter - from docs/handover/artifact-source/NotificationCenter.dc.html.
+ * Data: views/sl/data/notification_center.php (sl_notificationCenterData).
  */
 if (!isset($d)) { $d = []; }
+$hl = $d['health'];
+$ajax = 'ajax/sl/notification_rules_ajax.php';
 ?>
-<div class="sl-head"><div><h1 class="sl-title" style="font-size:20px">Notification Center</h1><p class="sl-lede">Every message the system sends, by e-mail, SMS and WhatsApp, in one place you can edit</p></div><div class="row g8 wrap"><a class="sl-btn ghost" href="<?= sl_route('EmailBuilder') ?>"><i class="ic ic-sm i-mail" aria-hidden="true"></i>E-mail builder</a><a class="sl-btn ghost" href="<?= sl_route('MessageTemplates') ?>"><i class="ic ic-sm i-message" aria-hidden="true"></i>SMS &amp; WhatsApp</a><a class="sl-btn ghost" href="<?= sl_route('Broadcast') ?>"><i class="ic ic-sm i-send" aria-hidden="true"></i>Send to customers</a><a class="sl-btn ghost" href="<?= sl_route('MessageCosts') ?>"><i class="ic ic-sm i-dollar" aria-hidden="true"></i>Message costs</a><a class="sl-btn ghost" href="<?= sl_route('MessageLogs') ?>"><i class="ic ic-sm i-clock" aria-hidden="true"></i>Message logs</a><button class="sl-btn" data-sl-on="click:save"><i class="ic ic-sm i-check" aria-hidden="true"></i><?= sl_v($d, 'saveLabel') ?></button></div></div>
-
+<div class="sl-head"><div><h1 class="sl-title" style="font-size:20px">Notification Center</h1><p class="sl-lede">Every message the system sends, by e-mail, SMS and WhatsApp, in one place you can edit</p></div><div class="row g8 wrap"><a class="sl-btn ghost" href="<?= sl_route('EmailBuilder') ?>"><i class="ic ic-sm i-mail" aria-hidden="true"></i>E-mail builder</a><a class="sl-btn ghost" href="<?= sl_route('MessageTemplates') ?>"><i class="ic ic-sm i-message" aria-hidden="true"></i>SMS &amp; WhatsApp</a><a class="sl-btn ghost" href="<?= sl_route('Broadcast') ?>"><i class="ic ic-sm i-send" aria-hidden="true"></i>Send to customers</a><a class="sl-btn ghost" href="<?= sl_route('MessageCosts') ?>"><i class="ic ic-sm i-dollar" aria-hidden="true"></i>Message costs</a><a class="sl-btn ghost" href="<?= sl_route('MessageLogs') ?>"><i class="ic ic-sm i-clock" aria-hidden="true"></i>Message logs</a><?php if ($d['canEdit']): ?><button class="sl-btn" type="submit" form="nc-form"><i class="ic ic-sm i-check" aria-hidden="true"></i><?= h($d['saveLabel']) ?></button><?php endif; ?></div></div>
+<?php if (!$d['ready']): ?><div class="sl-banner warn"><i class="ic ic-sm i-alert" aria-hidden="true"></i>The per-channel switches need the database upgrade <b>2026_11_06_messaging_settings</b>. Until then every channel behaves as it does today.</div><?php endif; ?>
 <div class="grid cols3">
-  <div class="ov-card"><div class="hd"><span><i class="ic ic-sm i-mail" aria-hidden="true"></i>E-mail · SMTP</span><span class="ov-pill ok">Connected</span></div><div class="fig"><?= sl_v($d, 'onEmail') ?> <i>/ <?= sl_v($d, 'total') ?> notifications on</i></div><div class="sl-ticks" role="img" aria-label="<?= sl_v($d, 'onEmail') ?> on"><i style="<?= sl_v($d, 'wEmail') ?>"></i></div><div class="ft">23,100 sent this month · 99.2% delivered</div></div>
-  <div class="ov-card"><div class="hd"><span><i class="ic ic-sm i-phone" aria-hidden="true"></i>SMS · Hubtel</span><span class="ov-pill warn">Degraded</span></div><div class="fig"><?= sl_v($d, 'onSms') ?> <i>/ <?= sl_v($d, 'total') ?> notifications on</i></div><div class="sl-ticks y" role="img" aria-label="<?= sl_v($d, 'onSms') ?> on"><i style="<?= sl_v($d, 'wSms') ?>"></i></div><div class="ft">SMS only for registered, ready and handed over</div></div>
-  <div class="ov-card"><div class="hd"><span><i class="ic ic-sm i-message" aria-hidden="true"></i>WhatsApp API</span><span class="ov-pill ok">Connected</span></div><div class="fig"><?= sl_v($d, 'onWa') ?> <i>/ <?= sl_v($d, 'total') ?> notifications on</i></div><div class="sl-ticks" role="img" aria-label="<?= sl_v($d, 'onWa') ?> on"><i style="<?= sl_v($d, 'wWa') ?>"></i></div><div class="ft">19,320 sent this month · 97.8% read</div></div>
+  <div class="ov-card"><div class="hd"><span><i class="ic ic-sm i-mail" aria-hidden="true"></i><?= h($hl['email']['label']) ?></span><span class="ov-pill <?= h($hl['email']['pill']) ?>"><?= h($hl['email']['state']) ?></span></div><div class="fig"><?= (int) $d['onEmail'] ?> <i>/ <?= (int) $d['total'] ?> notifications on</i></div><div class="sl-ticks" role="img" aria-label="<?= (int) $d['onEmail'] ?> on"><i style="<?= h($d['wEmail']) ?>"></i></div><div class="ft"><?= sl_num($hl['email']['month']['sent']) ?> sent this month · <?= (int) $hl['email']['month']['rate'] ?>% delivered</div></div>
+  <div class="ov-card"><div class="hd"><span><i class="ic ic-sm i-phone" aria-hidden="true"></i><?= h($hl['sms']['label']) ?></span><span class="ov-pill <?= h($hl['sms']['pill']) ?>"><?= h($hl['sms']['state']) ?></span></div><div class="fig"><?= (int) $d['onSms'] ?> <i>/ <?= (int) $d['total'] ?> notifications on</i></div><div class="sl-ticks y" role="img" aria-label="<?= (int) $d['onSms'] ?> on"><i style="<?= h($d['wSms']) ?>"></i></div><div class="ft"><?= sl_num($hl['sms']['month']['sent']) ?> sent this month · <?= (int) $hl['sms']['month']['rate'] ?>% delivered</div></div>
+  <div class="ov-card"><div class="hd"><span><i class="ic ic-sm i-message" aria-hidden="true"></i><?= h($hl['whatsapp']['label']) ?></span><span class="ov-pill <?= h($hl['whatsapp']['pill']) ?>"><?= h($hl['whatsapp']['state']) ?></span></div><div class="fig"><?= (int) $d['onWa'] ?> <i>/ <?= (int) $d['total'] ?> notifications on</i></div><div class="sl-ticks" role="img" aria-label="<?= (int) $d['onWa'] ?> on"><i style="<?= h($d['wWa']) ?>"></i></div><div class="ft"><?= sl_num($hl['whatsapp']['month']['sent']) ?> sent this month · <?= (int) $hl['whatsapp']['month']['rate'] ?>% delivered</div></div>
 </div>
 
 <div class="nc-wrap">
   <section class="sl-card flush nc-list">
-    <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--line)">
-      <div class="sl-search"><i class="ic ic-sm i-search" aria-hidden="true"></i><input aria-label="Search notifications" placeholder="Search <?= sl_v($d, 'total') ?> notifications" value="<?= sl_v($d, 'q') ?>" data-sl-on="change:onQ"></div>
+    <form method="get" style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--line)">
+      <input type="hidden" name="event" value="<?= h($d['cur']['key']) ?>"><input type="hidden" name="channel" value="<?= h($d['channel']) ?>">
+      <div class="sl-search"><i class="ic ic-sm i-search" aria-hidden="true"></i><input name="q" aria-label="Search notifications" placeholder="Search <?= (int) $d['total'] ?> notifications" value="<?= h($d['q']) ?>"></div>
       <div class="nc-head"><span>Notification</span><span title="E-mail"><i class="ic ic-sm i-mail" aria-hidden="true"></i></span><span title="SMS"><i class="ic ic-sm i-phone" aria-hidden="true"></i></span><span title="WhatsApp"><i class="ic ic-sm i-message" aria-hidden="true"></i></span></div>
-    </div>
+    </form>
     <div class="nc-scroll">
-      <?php foreach ((array) sl_get($d, 'groups', []) as $__i => $g): ?>
-        <div class="nc-gl"><?= sl_v($g, 'label') ?> <span><?= sl_v($g, 'count') ?></span></div>
-        <?php foreach ((array) sl_get($g, 'items', []) as $__i => $e): ?>
-          <div class="nc-ev <?= sl_v($e, 'cls') ?>">
-            <button class="nc-name" data-sl-on="click:pick"><b><?= sl_v($e, 'name') ?></b><small><?= sl_v($e, 'when') ?></small></button>
-            <button class="nc-t <?= sl_v($e, 'em') ?>" data-sl-on="click:tEm" aria-label="E-mail for <?= sl_v($e, 'name') ?>" aria-pressed="<?= sl_v($e, 'emP') ?>"></button>
-            <button class="nc-t <?= sl_v($e, 'sm') ?>" data-sl-on="click:tSm" aria-label="SMS for <?= sl_v($e, 'name') ?>" aria-pressed="<?= sl_v($e, 'smP') ?>"></button>
-            <button class="nc-t <?= sl_v($e, 'wa') ?>" data-sl-on="click:tWa" aria-label="WhatsApp for <?= sl_v($e, 'name') ?>" aria-pressed="<?= sl_v($e, 'waP') ?>"></button>
+      <?php foreach ($d['groups'] as $g): ?>
+        <div class="nc-gl"><?= h($g['label']) ?> <span><?= (int) $g['count'] ?></span></div>
+        <?php foreach ($g['items'] as $e): ?>
+          <div class="nc-ev <?= h($e['cls']) ?>">
+            <a class="nc-name" href="<?= h($e['href']) ?>"><b><?= h($e['name']) ?></b><small><?= h($e['when']) ?></small></a>
+            <?php foreach (['em' => 'email', 'sm' => 'sms', 'wa' => 'whatsapp'] as $short => $ch): ?>
+            <button type="button" class="nc-t <?= h($e[$short]) ?>" aria-label="<?= h(ucfirst($ch)) ?> for <?= h($e['name']) ?>" aria-pressed="<?= h($e[$short . 'P']) ?>" data-nc-toggle data-event="<?= h($e['key']) ?>" data-channel="<?= $ch ?>" <?= $d['canEdit'] ? '' : 'disabled' ?>></button>
+            <?php endforeach; ?>
           </div>
         <?php endforeach; ?>
       <?php endforeach; ?>
+      <?php if (!$d['groups']): ?><div class="sl-empty" style="padding:24px">No notification matches “<?= h($d['q']) ?>”.</div><?php endif; ?>
     </div>
   </section>
 
   <section class="sl-card col g16 nc-ed">
     <div class="row between wrap g12">
-      <div><div class="up"><?= sl_v($d, 'cur.group') ?> · sent <?= sl_v($d, 'cur.when') ?></div><h2 style="font-size:20px;font-weight:600;letter-spacing:-.01em;margin-top:4px"><?= sl_v($d, 'cur.name') ?></h2><p class="mut sm" style="margin-top:2px"><?= sl_v($d, 'cur.desc') ?></p></div>
-      <div class="row g8"><span class="ov-pill"><?= sl_v($d, 'cur.audience') ?></span><span class="ov-pill"><?= sl_v($d, 'cur.sent') ?> sent this month</span></div>
+      <div><div class="up"><?= h($d['cur']['group']) ?> · sent <?= h($d['cur']['when']) ?></div><h2 style="font-size:20px;font-weight:600;letter-spacing:-.01em;margin-top:4px"><?= h($d['cur']['name']) ?></h2><p class="mut sm" style="margin-top:2px"><?= h($d['cur']['desc']) ?></p></div>
+      <div class="row g8"><span class="ov-pill"><?= h($d['cur']['audience']) ?></span><span class="ov-pill"><?= h($d['cur']['sent']) ?> sent this month</span></div>
     </div>
     <div class="nc-tabs" role="tablist">
-      <?php foreach ((array) sl_get($d, 'tabs', []) as $__i => $t): ?><button role="tab" class="<?= sl_v($t, 'cls') ?>" aria-selected="<?= sl_v($t, 'sel') ?>" data-sl-on="click:pick"><i class="ic ic-sm <?= sl_v($t, 'icon') ?>" aria-hidden="true"></i><?= sl_v($t, 'label') ?><span class="nc-sw <?= sl_v($t, 'on') ?>" aria-hidden="true"></span></button><?php endforeach; ?>
+      <?php foreach ($d['tabs'] as $t): ?><a role="tab" class="<?= h($t['cls']) ?>" aria-selected="<?= h($t['sel']) ?>" href="<?= h($t['href']) ?>"><i class="ic ic-sm <?= h($t['icon']) ?>" aria-hidden="true"></i><?= h($t['label']) ?><span class="nc-sw <?= h($t['on']) ?>" aria-hidden="true"></span></a><?php endforeach; ?>
     </div>
-    <div class="nc-edit">
+    <form class="nc-edit" id="nc-form" data-sl-form action="<?= $ajax ?>" method="post">
+      <input type="hidden" name="op" value="save"><input type="hidden" name="event" value="<?= h($d['cur']['key']) ?>"><input type="hidden" name="channel" value="<?= h($d['channel']) ?>">
       <div class="col g12" style="flex:1 1 360px;min-width:0">
-        <?php if (sl_get($d, 'isEmail')): ?>
-          <div class="sl-field"><label class="sl-lab" for="nc-subj">Subject</label><input id="nc-subj" class="sl-in" value="<?= sl_v($d, 'subject') ?>" data-sl-on="change:onSubject"></div>
+        <div class="sl-field"><label class="sl-lab" for="nc-tpl">Template used</label><label class="sl-sel native"><select id="nc-tpl" name="template_id" onchange="location.href='<?= h(sl_url(['event' => $d['cur']['key'], 'channel' => $d['channel']])) ?>&tpl='+this.value"><option value="0">— none linked —</option><?php foreach ($d['templates'] as $t): ?><option value="<?= (int) $t['id'] ?>" <?= (int) $t['id'] === (int) $d['templateId'] ? 'selected' : '' ?>>#<?= (int) $t['id'] ?> · <?= h($t['name']) ?></option><?php endforeach; ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></label></div>
+        <?php if ($d['isEmail']): ?>
+          <div class="sl-field"><label class="sl-lab" for="nc-subj">Subject</label><input id="nc-subj" name="subject" class="sl-in" value="<?= h($d['subject']) ?>"></div>
         <?php endif; ?>
-        <div class="sl-field"><label class="sl-lab" for="nc-body">Message</label><textarea id="nc-body" class="sl-in nc-ta" data-sl-on="change:onBody" value="<?= sl_v($d, 'body') ?>"></textarea>
-          <div class="row between sm mut"><span><?= sl_v($d, 'counter') ?></span><span><?= sl_v($d, 'channelNote') ?></span></div></div>
-        <div><div class="up" style="margin-bottom:8px">Insert a field</div><div class="row g6 wrap"><?php foreach ((array) sl_get($d, 'vars', []) as $__i => $v): ?><button class="nc-var" data-sl-on="click:add"><?= sl_v($v, 'label') ?></button><?php endforeach; ?></div></div>
-        <div class="row g8 wrap" style="margin-top:4px"><button class="sl-btn" data-sl-on="click:save"><?= sl_v($d, 'saveLabel') ?></button><button class="sl-btn ghost"><i class="ic ic-sm i-send" aria-hidden="true"></i>Send test to me</button><button class="sl-btn ghost" data-sl-on="click:reset">Reset to default</button></div>
+        <div class="sl-field"><label class="sl-lab" for="nc-body">Message<?= $d['bodyIsHtml'] ? ' (HTML)' : '' ?></label><textarea id="nc-body" name="body" class="sl-in nc-ta" <?= $d['canEdit'] ? '' : 'readonly' ?>><?= h($d['body']) ?></textarea>
+          <div class="row between sm mut"><span data-nc-counter><?= h($d['counter']) ?></span><span><?= h($d['channelNote']) ?></span></div></div>
+        <div><div class="up" style="margin-bottom:8px">Insert a field</div><div class="row g6 wrap"><?php foreach ($d['vars'] as $v): ?><button type="button" class="nc-var" data-nc-var="<?= h($v['label']) ?>"><?= h($v['label']) ?></button><?php endforeach; ?></div></div>
+        <?php if ($d['canEdit']): ?><div class="row g8 wrap" style="margin-top:4px"><button class="sl-btn" type="submit"><?= h($d['saveLabel']) ?></button><button type="button" class="sl-btn ghost" data-nc-test><i class="ic ic-sm i-send" aria-hidden="true"></i>Send test to me</button><button type="button" class="sl-btn ghost" onclick="location.reload()">Discard edits</button></div><?php endif; ?>
       </div>
       <div class="nc-prev">
-        <div class="up" style="margin-bottom:10px">Preview · <?= sl_v($d, 'tabLabel') ?></div>
-        <?php if (sl_get($d, 'isEmail')): ?>
-          <div class="nc-mail"><div class="nc-mh"><span class="sl-av sm dark">SL</span><div class="grow"><b class="sm">Swift Lane</b><div class="mut" style="font-size:12px">to efua.owusu@[email]</div></div></div><b style="font-size:15px"><?= sl_v($d, 'subjectPrev') ?></b><p style="white-space:pre-line;font-size:14px;line-height:1.55"><?= sl_v($d, 'bodyPrev') ?></p><span class="sl-btn sm" style="align-self:flex-start">Track parcel</span></div>
+        <div class="up" style="margin-bottom:10px">Preview · <?= h($d['tabLabel']) ?></div>
+        <?php if ($d['isEmail']): ?>
+          <div class="nc-mail"><div class="nc-mh"><span class="sl-av sm dark"><?= h(sl_initials($core->site_name ?? 'SL')) ?></span><div class="grow"><b class="sm"><?= h($core->site_name ?? 'Swift Lane') ?></b><div class="mut" style="font-size:12px">to <?= h($d['sample']['email']) ?></div></div></div><b style="font-size:15px" data-nc-prev-subject><?= h($d['subjectPrev']) ?></b><p style="white-space:pre-line;font-size:14px;line-height:1.55" data-nc-prev-body><?= h($d['bodyPrev']) ?></p><span class="sl-btn sm" style="align-self:flex-start">Track parcel</span></div>
+        <?php else: ?>
+          <div class="nc-phone"><div class="nc-ph"><span class="sl-av sm dark"><?= h(sl_initials($core->site_name ?? 'SL')) ?></span><b class="sm"><?= h($core->site_name ?? 'Swift Lane') ?></b></div><div class="nc-bubble <?= h($d['bubbleCls']) ?>" style="white-space:pre-line"><span data-nc-prev-body><?= h($d['bodyPrev']) ?></span><small><?= date('H:i') ?></small></div></div>
         <?php endif; ?>
-        <?php if (sl_get($d, 'isChat')): ?>
-          <div class="nc-phone"><div class="nc-ph"><span class="sl-av sm dark">SL</span><b class="sm">Swift Lane</b></div><div class="nc-bubble <?= sl_v($d, 'bubbleCls') ?>" style="white-space:pre-line"><?= sl_v($d, 'bodyPrev') ?><small>09:41</small></div></div>
-        <?php endif; ?>
-        <p class="mut sm" style="margin-top:10px">Sample customer: Efua Owusu · SL-100480 · code 482193</p>
+        <p class="mut sm" style="margin-top:10px">Sample customer: <?= h($d['sample']['name']) ?> · <?= h($d['sample']['locker']) ?> · code 482193</p>
       </div>
-    </div>
+    </form>
   </section>
 </div>
+<script>
+(function(){
+  var sample = <?= json_encode($d['sample']) ?>, site = <?= json_encode($core->site_name ?? 'Swift Lane') ?>;
+  function fill(t){ return t.replace(/\[USERNAME\]|\[NAME\]/g, sample.name).replace(/\[FIRST_NAME\]/g, sample.first).replace(/\[SITE_NAME\]/g, site).replace(/\[TRACKING_NUMBER\]|\[TRACKING\]/g, 'SL-100480').replace(/\[STATUS\]/g, 'Ready for pickup').replace(/\[LOCKER\]/g, sample.locker).replace(/\[URL_SHIP\]|\[URL\]/g, location.origin).replace(/\[MESSAGE\]/g, 'Your parcel is ready.').replace(/\[CODE\]|\[PICKUP_CODE\]/g, '482193'); }
+  var body = document.getElementById('nc-body'), subj = document.getElementById('nc-subj'), isSms = <?= json_encode($d['channel'] === 'sms') ?>;
+  function refresh(){
+    var pb = document.querySelector('[data-nc-prev-body]'); if (pb) pb.textContent = fill(body.value.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, ''));
+    var ps = document.querySelector('[data-nc-prev-subject]'); if (ps && subj) ps.textContent = fill(subj.value);
+    var c = document.querySelector('[data-nc-counter]'), n = body.value.length;
+    if (c) c.textContent = isSms ? n + ' characters · ' + Math.max(1, Math.ceil(n / 153)) + ' SMS part' + (n > 153 ? 's' : '') : n + ' characters';
+  }
+  body.addEventListener('input', refresh); if (subj) subj.addEventListener('input', refresh);
+  document.addEventListener('click', function(e){
+    var v = e.target.closest('[data-nc-var]'); if (v) { var s = body.selectionStart || body.value.length; body.value = body.value.slice(0, s) + v.getAttribute('data-nc-var') + body.value.slice(s); refresh(); body.focus(); return; }
+    var t = e.target.closest('[data-nc-toggle]'); if (t) { var on = !t.classList.contains('on'); t.classList.toggle('on', on); t.classList.toggle('off', !on); t.setAttribute('aria-pressed', on ? 'true' : 'false');
+      SL.post('<?= $ajax ?>', { op: 'toggle', event: t.getAttribute('data-event'), channel: t.getAttribute('data-channel'), value: on ? 1 : 0 }).then(function(j){ SL.toast(j.message || (j.success ? 'Saved' : 'Not saved'), !j.success); if (!j.success) { t.classList.toggle('on', !on); t.classList.toggle('off', on); } }); return; }
+    var x = e.target.closest('[data-nc-test]'); if (x) { x.classList.add('loading'); SL.post('<?= $ajax ?>', { op: 'test', event: <?= json_encode($d['cur']['key']) ?>, channel: <?= json_encode($d['channel']) ?>, subject: subj ? subj.value : '', body: body.value }).then(function(j){ SL.toast(j.message || '', !j.success); }).finally(function(){ x.classList.remove('loading'); }); }
+  });
+})();
+</script>

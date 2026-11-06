@@ -1,49 +1,18 @@
 <?php
 // *************************************************************************
-// *                                                                       *
 // * Swiftlane - Integrated Web Shipping System                            *
 // * Copyright (c) iSolveAfrica Ltd. All rights reserved.                  *
-// *                                                                       *
 // *************************************************************************
-// *                                                                       *
-// * This software and its source code are proprietary and confidential    *
-// * property of iSolveAfrica Ltd. and were developed specifically for     *
-// * Swiftlane.                                                            *
-// *                                                                       *
-// * The software may not be copied, reproduced, modified, distributed,    *
-// * sublicensed, published, or used in whole or in part except as         *
-// * expressly permitted under the applicable license or written           *
-// * agreement with iSolveAfrica Ltd. Any permitted copies or derivative   *
-// * works must retain this copyright notice and all applicable            *
-// * proprietary notices.                                                  *
-// *                                                                       *
-// *************************************************************************
-
-
-
-    require_once("loader.php");
-
-    $user = new User();
-    $core = new Core();
-    // ... ask if we are logged in here:
-    if ($user->cdp_loginCheck() == true) 
-    {
-
-        $permissions = $user->cdp_getUserPermissions();
-        // Customers (userlevel 1) see their OWN shipments only — courier_list_ajax.php
-        // filters by sender_id — so allow them past the staff permission gate.
-        if ((int)$user->userlevel !== 1 && !$user->cdp_hasPermission('view_shipment_list')) {
-            header("location: error403.php");
-            exit;
-        }
-
-       
-      include('views/courier/courier_list.php');     
-           
-
-    } else{
-        
-        header("location: login.php");
-        exit;       
-    }
-?>
+// Air shipments list (Swift Lane UI: views/sl/pages/AirShipments.php).
+require_once("loader.php");
+$user = new User();
+$core = new Core();
+require_once 'helpers/sl_view.php';
+// Customers see their own shipments only (scoped in the data provider).
+sl_gate(sl_userIs('client') ? null : 'view_shipment_list');
+require_once 'views/sl/data/shipments.php';
+if (($_GET['export'] ?? '') === 'csv') {
+    require 'views/sl/export/shipments_csv.php';
+    exit;
+}
+sl_render('AirShipments', ['id' => 'air', 'title' => sl_userIs('client') ? 'My Shipments' : 'Air Shipments', 'board' => 'AirShipments', 'wide' => true], sl_airShipmentsData($user, $core));

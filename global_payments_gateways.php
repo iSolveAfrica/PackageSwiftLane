@@ -1,50 +1,25 @@
 <?php
-// *************************************************************************
-// *                                                                       *
-// * Swiftlane - Integrated Web Shipping System                            *
-// * Copyright (c) iSolveAfrica Ltd. All rights reserved.                  *
-// *                                                                       *
-// *************************************************************************
-// *                                                                       *
-// * This software and its source code are proprietary and confidential    *
-// * property of iSolveAfrica Ltd. and were developed specifically for     *
-// * Swiftlane.                                                            *
-// *                                                                       *
-// * The software may not be copied, reproduced, modified, distributed,    *
-// * sublicensed, published, or used in whole or in part except as         *
-// * expressly permitted under the applicable license or written           *
-// * agreement with iSolveAfrica Ltd. Any permitted copies or derivative   *
-// * works must retain this copyright notice and all applicable            *
-// * proprietary notices.                                                  *
-// *                                                                       *
-// *************************************************************************
-
-
-
-    require_once("loader.php");
-    require_once("helpers/finance_switch.php");
-    cdp_financeGuardPage(); // financial module switched off: back to the dashboard
-
-    $user = new User();
-    $core = new Core();
-    // ... ask if we are logged in here:
-    if ($user->cdp_loginCheck() == true) 
-    {
-
-        $permissions = $user->cdp_getUserPermissions();
-
-        if (!$user->cdp_hasPermission('view_global_payments')) {
-            header("location: error403.php");
-            exit;
-        }
-
-       
-      include('views/global_payments_gateways.php');     
-           
-
-    } else{
-        
-        header("location: login.php");
-        exit;       
-    }
-?>
+/**
+ * Payments: every payment received across air, sea and consolidations
+ * (cdb_payments_gateway, cdb_charges_order, cdb_fs_payments). Design: Payments.dc.html.
+ * The four legacy payments_gateways_*_list.php pages redirect here with a type filter.
+ */
+require_once 'loader.php';
+require_once 'helpers/finance_switch.php';
+$user = new User();
+$core = new Core();
+require_once 'helpers/sl_view.php';
+sl_gate(['view_global_payments', 'view_payment_shipment_list', 'view_payment_list', 'payments_gateways_consolidate_shipment', 'payments_gateways_package_consolidate']);
+cdp_financeGuardPage();
+require_once 'views/sl/data/finance.php';
+$d = sl_paymentsData($user, $core);
+if (($_GET['export'] ?? '') === 'csv') {
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="payments-' . date('Ymd') . '.csv"');
+    $out = fopen('php://output', 'w');
+    fputcsv($out, ['Reference', 'Customer', 'Packages', 'Gateway', 'Method', 'Amount', 'Fee', 'Net', 'Paid at', 'Status']);
+    foreach ($d['rows'] as $r) fputcsv($out, [$r['ref'], $r['name'], $r['pkg'], $r['gateway'], $r['method'], $r['amt'], $r['fee'], $r['net'], $r['at'], $r['st']]);
+    fclose($out);
+    exit;
+}
+sl_render('Payments', ['id' => 'pay', 'title' => 'Payments', 'board' => 'Payments'], $d);

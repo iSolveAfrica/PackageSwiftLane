@@ -234,25 +234,14 @@ CREATE TABLE IF NOT EXISTS cdb_dev_alert_rules (
     UNIQUE KEY uq_rule (rule_key)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- Alerts: same table the live DevOps dashboard (helpers/devops.php) creates on
+-- first use, so both the collector and the rule engine write one list.
 CREATE TABLE IF NOT EXISTS cdb_dev_alerts (
-    id              BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    rule_id         INT UNSIGNED NULL,
-    rule_key        VARCHAR(40) NOT NULL,
-    severity        VARCHAR(10) NOT NULL DEFAULT 'warning',
-    title           VARCHAR(190) NOT NULL,
-    detail          VARCHAR(500) NULL,
-    value           DECIMAL(12,2) NULL,
-    threshold       DECIMAL(12,2) NULL,
-    status          VARCHAR(14) NOT NULL DEFAULT 'firing',    -- firing | acknowledged | resolved
-    first_seen_at   DATETIME NOT NULL,
-    last_seen_at    DATETIME NOT NULL,
-    acknowledged_by INT NULL,
-    acknowledged_at DATETIME NULL,
-    resolved_at     DATETIME NULL,
-    PRIMARY KEY (id),
-    KEY idx_status (status, rule_key),
-    KEY idx_seen (last_seen_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+    id INT NOT NULL AUTO_INCREMENT, alert_key VARCHAR(80) NOT NULL, severity VARCHAR(12) NOT NULL, service VARCHAR(60) NOT NULL,
+    title VARCHAR(160) NOT NULL, detail VARCHAR(500) NULL, context TEXT NULL, status VARCHAR(12) NOT NULL DEFAULT 'active',
+    first_seen DATETIME NOT NULL, last_seen DATETIME NOT NULL, resolved_at DATETIME NULL, ack_by INT NULL, ack_at DATETIME NULL,
+    PRIMARY KEY (id), KEY idx_key (alert_key, status), KEY idx_status (status, last_seen)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS cdb_dev_issues (
     id           INT UNSIGNED NOT NULL AUTO_INCREMENT,

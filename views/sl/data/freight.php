@@ -183,18 +183,17 @@ function sl_freightScheduleData($user, $core): array
     $sel = (int) ($_GET['id'] ?? 0);
     $evs = [];
     foreach (sl_rows("SELECT id, voyage_no, mode, departs_at, cutoff_at, arrives_at, arrived_at, status, capacity_booked, capacity_total, capacity_unit FROM cdb_freight_schedules WHERE (departs_at BETWEEN :a AND :b) OR (cutoff_at BETWEEN :a2 AND :b2) OR (COALESCE(arrived_at, arrives_at) BETWEEN :a3 AND :b3)", [':a' => date('Y-m-d 00:00:00', $monday), ':b' => date('Y-m-d 23:59:59', $sunday), ':a2' => date('Y-m-d 00:00:00', $monday), ':b2' => date('Y-m-d 23:59:59', $sunday), ':a3' => date('Y-m-d 00:00:00', $monday), ':b3' => date('Y-m-d 23:59:59', $sunday)]) as $s) {
-        $add = function ($at, $t, $sub, $co = false) use (&$evs, $s, $sel) {
+        $add = function ($at, $t, $sub, $co = false) use (&$evs, $s, $sel, $monday) {
             if (!$at) return;
-            $day = (int) floor((strtotime(date('Y-m-d', strtotime($at))) - strtotime(date('Y-m-d', 0) ? date('Y-m-d', $GLOBALS['__sl_monday']) : 'monday this week')) / 86400);
+            $day = (int) floor((strtotime(date('Y-m-d', strtotime($at))) - $monday) / 86400);
+            if ($day < 0 || $day > 6) return;
             $evs[$day][] = ['t' => $t, 's' => $sub, 'cls' => (($sel === (int) $s->id) ? 'on ' : '') . ($co ? 'co' : ''), 'href' => sl_url(['id' => (int) $s->id])];
         };
-        $GLOBALS['__sl_monday'] = $monday;
         $isSoon = $s->cutoff_at && strtotime($s->cutoff_at) <= time() + 2 * 86400 && strtotime($s->cutoff_at) >= time() - 86400;
         $add($s->cutoff_at, $s->voyage_no . ' cut-off', sl_date($s->cutoff_at, 'H:i') . ' · ' . sl_num($s->capacity_booked) . ' / ' . ($s->capacity_total > 0 ? sl_num($s->capacity_total) : '—'), $isSoon);
         $add($s->departs_at, $s->voyage_no . ' ' . ($s->status === 'in_transit' || $s->status === 'arrived' ? 'departed' : 'departs'), sl_date($s->departs_at, 'H:i') . ' · ' . sl_num($s->capacity_booked) . ' ' . sl_frUnit($s->capacity_unit), $isSoon);
         $add($s->arrived_at ?: $s->arrives_at, $s->voyage_no . ($s->arrived_at ? ' landed' : ' arrives'), sl_date($s->arrived_at ?: $s->arrives_at, 'H:i'));
     }
-    unset($GLOBALS['__sl_monday']);
     for ($i = 0; $i < 7; $i++) {
         $ts = $monday + $i * 86400;
         $d['days'][] = ['l' => date('D j', $ts), 'cls' => date('Y-m-d', $ts) === date('Y-m-d') ? 'today' : '', 'evs' => $evs[$i] ?? []];

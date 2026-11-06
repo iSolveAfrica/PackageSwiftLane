@@ -29,7 +29,7 @@ $client = !empty($d['client']);
             <span class="mut sm">Rows</span><label class="sl-sel native" style="width: 80px"><select name="per" aria-label="Rows per page" onchange="this.form.submit()"><?php foreach ([25, 50, 100] as $n): ?><option <?= $n === $d['per'] ? 'selected' : '' ?>><?= $n ?></option><?php endforeach; ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></label>
           </form>
           <?php if ($d['canSelect']): ?>
-          <div class="row g12 wrap" style="padding: 10px 16px; background: var(--active)" id="as-bulk" hidden>
+          <div class="row g12 wrap" style="padding: 10px 16px; background: var(--active)" id="as-bulk" hidden style="display:none">
             <strong><span data-as-count>0</span> selected</strong><span class="grow"></span>
             <?php if ($d['canStatus']): ?><button type="button" class="sl-btn ghost sm" data-sl-open="as-status"><i class="ic ic-sm i-refresh" aria-hidden="true"></i>Update status</button><?php endif; ?>
             <?php if ($d['canAssign']): ?><button type="button" class="sl-btn ghost sm" data-sl-open="as-driver" data-as-bulk-driver><i class="ic ic-sm i-wheel" aria-hidden="true"></i>Assign driver</button><?php endif; ?>
@@ -43,7 +43,7 @@ $client = !empty($d['client']);
               <tbody>
                 <?php foreach ($d['rows'] as $r): $cols = 11 - ($client ? 1 : 0) - ($d['canSelect'] ? 0 : 1); ?>
                   <tr data-as-row>
-                    <?php if ($d['canSelect']): ?><td><?php if ($r['selectable']): ?><label class="sl-chk" aria-label="Select <?= h($r['track']) ?>"><input type="checkbox" value="<?= (int) $r['id'] ?>" data-as-pick data-track="<?= h($r['track']) ?>" data-no="<?= h(substr($r['track'], strlen($r['track']) - strlen((string) $r['id']) > 0 ? 0 : 0)) ?>" style="position:absolute;opacity:0;width:0;height:0"></label><?php endif; ?></td><?php endif; ?>
+                    <?php if ($d['canSelect']): ?><td><?php if ($r['selectable']): ?><label class="sl-chk" aria-label="Select <?= h($r['track']) ?>"><input type="checkbox" value="<?= (int) $r['id'] ?>" data-as-pick data-track="<?= h($r['track']) ?>" style="position:absolute;opacity:0;width:0;height:0"></label><?php endif; ?></td><?php endif; ?>
                     <td><a class="id" href="<?= sl_route('ShipmentDetail', ['id' => $r['id']]) ?>"><?= h($r['track']) ?></a></td>
                     <td class="mono mut sm"><?= $r['carrier'] !== '' ? h($r['carrier']) : '—' ?></td>
                     <td><?= h($r['date']) ?></td>
@@ -87,7 +87,7 @@ $client = !empty($d['client']);
   var bulk = document.getElementById('as-bulk');
   function sync() {
     var n = picks().length;
-    if (bulk) { bulk.hidden = n === 0; var c = bulk.querySelector('[data-as-count]'); if (c) c.textContent = n; }
+    if (bulk) { bulk.hidden = n === 0; bulk.style.display = n ? "" : "none"; var c = bulk.querySelector('[data-as-count]'); if (c) c.textContent = n; }
     document.querySelectorAll('[data-as-pick]').forEach(function (i) { i.closest('.sl-chk').classList.toggle('on', i.checked); });
     var all = document.querySelector('[data-as-all]'); if (all) all.closest('.sl-chk').classList.toggle('on', all.checked);
   }

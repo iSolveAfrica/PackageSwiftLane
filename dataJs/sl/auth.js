@@ -12,7 +12,7 @@
     if (btn) { btn.classList.add('loading'); btn.disabled = true; }
     var box = f.querySelector('[data-sl-msg]');
     function say(msg, bad) {
-      if (box) { box.hidden = false; box.className = 'sl-banner ' + (bad ? 'bad' : 'ok'); box.textContent = msg; }
+      if (box) { box.style.display = 'flex'; box.className = 'sl-banner ' + (bad ? 'bad' : 'ok'); box.textContent = msg; }
       SL.toast(msg, bad);
     }
     SL.post(f.getAttribute('action'), new FormData(f)).then(function (j) {
@@ -90,10 +90,10 @@
     var meter = document.querySelector(inp.getAttribute('data-sl-pw')), msg = document.querySelector(inp.getAttribute('data-sl-pw-msg'));
     var confirm = document.querySelector(inp.getAttribute('data-sl-pw-confirm')), match = document.querySelector(inp.getAttribute('data-sl-pw-match'));
     var rules = document.querySelectorAll('[data-sl-rule]'), submit = document.querySelector(inp.getAttribute('data-sl-pw-submit'));
-    var labels = ['Too short', 'Weak', 'Fair', 'Good', 'Strong'], cls = ['', 'weak', 'fair', 'good', 'strong'];
+    var labels = ['Too short', 'Weak', 'Fair', 'Good', 'Strong'], cls = ['', 's1', 's2', 's3', 's4'];
     function run() {
       var p = inp.value, s = p.length ? strength(p) : 0;
-      if (meter) { meter.className = meter.className.replace(/\b(weak|fair|good|strong)\b/g, '').trim() + (s ? ' ' + cls[s] : ''); }
+      if (meter) { meter.className = meter.className.replace(/\bs[1-4]\b/g, '').trim() + (s ? ' ' + cls[s] : ''); }
       if (msg) { msg.textContent = p.length ? labels[s] : ''; msg.className = 'sm ' + (s >= 3 ? 'ok' : s >= 1 ? 'mut' : 'bad'); }
       var okAll = true;
       rules.forEach(function (r) {

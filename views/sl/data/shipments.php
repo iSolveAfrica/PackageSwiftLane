@@ -138,7 +138,7 @@ function sl_airShipmentsData($user, $core): array
     $period = (string) ($_GET['period'] ?? 'all');
     $filter = (string) ($_GET['filter'] ?? 'all');
     $page = max(1, (int) ($_GET['page'] ?? 1));
-    $per = in_array((int) ($_GET['per'] ?? 25), [25, 50, 100], true) ? (int) $_GET['per'] : 25;
+    $per = in_array((int) ($_GET['per'] ?? 25), [25, 50, 100], true) ? (int) ($_GET['per'] ?? 25) : 25;
     $where = "a.is_deleted = 0 AND a.status_courier <> 14 $scope";
     $binds = [];
     if ($q !== '') {
@@ -205,7 +205,7 @@ function sl_airShipmentsData($user, $core): array
         $list[] = [
             'id' => (int) $r->order_id, 'track' => $track, 'carrier' => $carriers[(int) $r->order_id]->tracking_number ?? '', 'date' => sl_date($r->order_date),
             'sender' => sl_userName($s), 'from' => $s->locker ?? '', 'sender_id' => (int) $r->sender_id,
-            'name' => $rc ? trim(($rc->fname ?? '') . ' ' . ($rc->lname ?? '')) : '—', 'ini' => sl_initials($rc ? ($rc->fname . ' ' . $rc->lname) : '?'),
+            'name' => $rc ? trim(($rc->fname ?? '') . ' ' . ($rc->lname ?? '')) : sl_userName($s) . ' (self)', 'ini' => sl_initials($rc ? ($rc->fname . ' ' . $rc->lname) : sl_userName($s)),
             'dest' => $dest, 'kg' => (float) $r->total_weight > 0 ? sl_weight($r->total_weight) : '—', 'total' => sl_money($r->total_order),
             'pay' => $payLabel, 'payCls' => $payCls, 'payMethod' => $pay[(int) $r->order_payment_method] ?? '',
             'st' => str_replace('_', ' ', $eff->mod_style ?: ($statusMap[(int) $r->status_courier]->mod_style ?? '—')), 'stCls' => sl_statusClass($eff->status_id), 'stColor' => $eff->color,
