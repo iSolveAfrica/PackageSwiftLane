@@ -136,9 +136,10 @@ function sl_navStaff(): array
                 'count' => fn() => sl_tableExists('cdb_api_connections') ? sl_navCount("SELECT COUNT(*) FROM cdb_api_connections") : 0],
             ['id' => 'apitraffic', 'label' => 'Live API Traffic', 'icon' => 'activity', 'board' => 'ApiTraffic', 'perm' => 'view_api_logs'],
             ['id' => 'tariffs', 'label' => 'Shipping Tariffs', 'icon' => 'tag', 'board' => 'Tariffs', 'perm' => 'view_shipping_tariffs'],
-            ['id' => 'notifc', 'label' => 'Notifications', 'icon' => 'bell', 'board' => 'NotificationCenter', 'perm' => 'view_tools'],
+            ['id' => 'notifc', 'label' => 'Notifications', 'icon' => 'bell', 'board' => 'NotificationCenter', 'perm' => ['manage_notification_rules', 'view_tools']],
             ['id' => 'ebuild', 'label' => 'Email Builder', 'icon' => 'mail', 'board' => 'EmailBuilder', 'perm' => 'manage_newsletter'],
             ['id' => 'msgtpl', 'label' => 'SMS & WhatsApp', 'icon' => 'message', 'board' => 'MessageTemplates', 'perm' => ['list_sms_templates', 'manage_whatsapp_templates']],
+            ['id' => 'compose', 'label' => 'Compose Message', 'icon' => 'mail', 'board' => 'ComposeMessage', 'perm' => ['push_notifications', 'manage_newsletter']],
             ['id' => 'bcast', 'label' => 'Push Notifications', 'icon' => 'send', 'board' => 'Broadcast', 'perm' => 'push_notifications'],
             ['id' => 'costs', 'label' => 'Operating Costs', 'icon' => 'dollar', 'board' => 'CostSettings', 'perm' => 'superadmin'],
             ['id' => 'addr', 'label' => 'Shipping Addresses', 'icon' => 'pin', 'board' => 'ShippingAddresses', 'perm' => 'view_tools'],
@@ -227,6 +228,9 @@ function sl_navResolve(string $activeId): array
         @include_once CDP_ROOT . '/helpers/ai_assistant.php';
         @include_once CDP_ROOT . '/helpers/support.php';
     }
+    if (is_file(CDP_ROOT . '/helpers/sl_modules.php')) {
+        require_once CDP_ROOT . '/helpers/sl_modules.php';
+    }
     $groups = sl_userIs('client') ? sl_navCustomer() : sl_navStaff();
     $finance = cdp_financeEnabled();
     $out = [];
@@ -240,6 +244,9 @@ function sl_navResolve(string $activeId): array
                 continue;
             }
             if (!sl_navAllowed($it['perm'], $it)) {
+                continue;
+            }
+            if (function_exists('sl_navItemEnabled') && !sl_navItemEnabled($it['id'])) {
                 continue;
             }
             $c1 = isset($it['count']) ? (string) $it['count']() : '';
