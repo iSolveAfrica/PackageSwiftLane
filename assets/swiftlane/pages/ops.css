@@ -27,3 +27,4 @@
 .row[hidden],.col[hidden],.grid[hidden]{display:none}
 button.np-chip{border:0;font:inherit;cursor:pointer;height:34px}
 .sl-banner[hidden],.cd-ok[hidden]{display:none}
+.sl-app [hidden]:not(.sl-dialog){display:none!important}
