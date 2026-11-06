@@ -65,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         if ($userId > 0) {
             $hasCol = sl_columnExists('cdb_users', 'password_changed_at');
-            $db->cdp_query('UPDATE cdb_users SET password = :password' . ($hasCol ? ', password_changed_at = NOW()' : '') . ' WHERE id = :id');
+            $db->cdp_query('UPDATE cdb_users SET password = :password' . ($hasCol ? ', password_changed_at = NOW()' : '') . (sl_columnExists('cdb_users', 'force_password_reset') ? ', force_password_reset = 0' : '') . ' WHERE id = :id');
             $db->bind(':password', password_hash($pass, PASSWORD_DEFAULT));
             $db->bind(':id', $userId);
             $db->cdp_execute();

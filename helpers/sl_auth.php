@@ -149,6 +149,12 @@ function sl_passwordRotationGuard(): void
     if (empty($_SESSION['userid']) || basename((string) ($_SERVER['SCRIPT_NAME'] ?? '')) === 'forgot-reset.php') {
         return;
     }
+    // Forced reset set by an administrator (Security Centre).
+    if (sl_columnExists('cdb_users', 'force_password_reset')
+        && (int) sl_scalar('SELECT force_password_reset FROM cdb_users WHERE id = :id', [':id' => (int) $_SESSION['userid']]) === 1) {
+        header('Location: forgot-reset.php?expired=1');
+        exit;
+    }
     if (sl_passwordRotationDays() <= 0) {
         return;
     }
