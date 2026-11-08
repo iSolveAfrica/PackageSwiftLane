@@ -62,6 +62,31 @@ function sl_controlPanelsData($user, $core): array
     ];
     $c = fn(string $sql) => sl_num(sl_scalar($sql));
     $sections = [
+        ['id' => 'command-centers', 'icon' => 'i-grid', 't' => 'Command Centers', 's' => 'Key controls and oversight in one place', 'featured' => true, 'rows' => [
+            ['ExecDashboard', 'i-chart', 'Management Center', 'Business performance and decisions', ['main_dashboard_index', 'view_exec_dashboard'], null],
+            ['AiCenter', 'i-ai', 'AI Automation Center', 'AI tools, rules and automation', 'ai:manage', null],
+            ['NotificationCenter', 'i-bell', 'Notification Control', 'Delivery rules and message settings', ['manage_notification_rules', 'view_tools'], null],
+            ['Payments', 'i-card', 'Payment Gateways', 'Payments and gateway activity', 'view_global_payments', null],
+            ['LoyaltyRewards', 'i-star', 'Loyalty & Referrals', 'Rewards, points and referrals', 'manage_loyalty', null],
+            ['SupportHub', 'i-ticket', 'Customer Care', 'Service activity and customer needs', 'cs:agent', null],
+            ['CommsHub', 'i-message', 'Communications', 'Customer messages and campaigns', ['push_notifications', 'manage_newsletter', 'view_message_logs'], null],
+            ['SecurityCenter', 'i-shield', 'Security Center', 'System access, policies and checks', 'view_system_logs', null],
+            ['AccountSecurity', 'i-lock', 'My Account Security', 'Update your password and sign-in details', 'customers_profile_edit', null],
+        ]],
+        ['id' => 'developer', 'icon' => 'i-terminal', 't' => 'Developer', 's' => 'Platform health and technical controls', 'featured' => true, 'rows' => [
+            ['DevOverview', 'i-terminal', 'Developer Console', 'Services, logs, metrics and deploys', 'view_developer', null],
+            ['DevServices', 'i-server', 'Services', 'Service status and diagnostics', 'view_developer', null],
+            ['DevMetrics', 'i-activity', 'Metrics', 'Performance and capacity', 'view_developer', null],
+            ['DevDeployments', 'i-rocket', 'Deployments', 'Release activity', 'view_developer', null],
+        ]],
+        ['id' => 'support', 'icon' => 'i-ticket', 't' => 'Support', 's' => 'Tickets, service quality and team guidance', 'featured' => true, 'rows' => [
+            ['CsInbox', 'i-inbox', 'Support Desk', 'Conversations and active tickets', 'cs:agent', fn() => sl_tableExists('cdb_cs_tickets') ? $c("SELECT COUNT(*) FROM cdb_cs_tickets WHERE status NOT IN ('closed','resolved')") : ''],
+            ['SupportHub', 'i-grid', 'Service Panel', 'Team activity and channel health', 'cs:agent', null],
+            ['CsReports', 'i-chart', 'Service Reports', 'Response, resolution and satisfaction', 'cs:manage', null],
+            ['CsPlaybook', 'i-book', 'Playbooks', 'Rules and saved replies', 'cs:agent', null],
+            ['CsKnowledgeBase', 'i-file', 'Knowledge Base', 'Published help articles', 'cs:agent', null],
+            ['CsChannels', 'i-sliders', 'Support Settings', 'Channels, teams and service rules', 'cs:manage', null],
+        ]],
         ['id' => 'shipments', 'icon' => 'i-plane', 't' => 'Shipping & freight', 's' => 'Everything moving between the US and Ghana', 'rows' => [
             ['AirShipments', 'i-plane', 'Air shipments', 'Not yet delivered', 'view_shipment_list', fn() => $c("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.is_pickup = 0 AND a.status_courier NOT IN (8,15,21) $w")],
             ['SeaPackages', 'i-ship', 'Sea packages', 'Containers and LCL boxes', 'view_package_list', fn() => $c("SELECT COUNT(*) FROM cdb_customers_packages a WHERE a.status_courier NOT IN (8,15,21) $w")],
@@ -112,10 +137,11 @@ function sl_controlPanelsData($user, $core): array
         if (!empty($s['finance']) && !$finance) continue;
         $rows = [];
         foreach ($s['rows'] as [$board, $icon, $label, $sub, $perm, $count]) {
+            if ($board === 'Payments' && !$finance) continue;
             if (!$ok($perm)) continue;
             $rows[] = ['href' => sl_route($board), 'icon' => $icon, 'label' => $label, 'sub' => $sub, 'n' => $count ? (string) $count() : ''];
         }
-        if ($rows) $d['sections'][] = ['id' => $s['id'], 'icon' => $s['icon'], 't' => $s['t'], 's' => $s['s'], 'rows' => $rows];
+        if ($rows) $d['sections'][] = ['id' => $s['id'], 'icon' => $s['icon'], 't' => $s['t'], 's' => $s['s'], 'featured' => !empty($s['featured']), 'rows' => $rows];
     }
     $pins = [['NewShipment', 'i-newdoc', 'New shipment', 'add_shipment'], ['Warehouse', 'i-scan', 'Scan package', ['warehouse_view', 'view_warehouse_delivery']], ['RecordPayment', 'i-card', 'Record payment', ['fs_record_payment', 'manage_account_payments']], ['PublicTracking', 'i-route', 'Track', null], ['CsInbox', 'i-ticket', 'New ticket', 'cs:agent']];
     $d['pins'] = [];

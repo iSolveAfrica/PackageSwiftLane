@@ -64,17 +64,44 @@ function sl_navStaff(): array
             ['id' => 'docs', 'label' => 'Documents', 'icon' => 'file', 'board' => 'Documents', 'perm' => ['view_documents', 'view_general_reports']],
             ['id' => 'locker', 'label' => 'Locker Search', 'icon' => 'lock', 'board' => 'LockerSearch', 'perm' => 'view_shipment_list'],
         ]],
-        ['label' => 'Hubs', 'items' => [
-            ['id' => 'execdash', 'label' => 'Management Dashboard', 'icon' => 'chart', 'board' => 'ExecDashboard', 'perm' => ['main_dashboard_index', 'view_exec_dashboard']],
-            ['id' => 'billhub', 'label' => 'Billing & Finance', 'icon' => 'dollar', 'board' => 'BillingHub', 'perm' => ['financial_sheet', 'manage_finance_switch']],
-            ['id' => 'lastmile', 'label' => 'Last-Mile Delivery', 'icon' => 'truck', 'board' => 'LastMile', 'perm' => ['view_freight', 'view_pickup_list']],
-            ['id' => 'aicenter', 'label' => 'AI Centre', 'icon' => 'ai', 'board' => 'AiCenter', 'perm' => 'ai:manage'],
-            ['id' => 'commshub', 'label' => 'Messages & Automation', 'icon' => 'message', 'board' => 'CommsHub', 'perm' => ['push_notifications', 'manage_newsletter', 'view_message_logs']],
-            ['id' => 'supporthub', 'label' => 'Support & CRM', 'icon' => 'ticket', 'board' => 'SupportHub', 'perm' => 'cs:agent'],
+        ['label' => 'Command Centers', 'items' => [
+            ['id' => 'execdash', 'label' => 'Management Center', 'icon' => 'chart', 'board' => 'ExecDashboard', 'perm' => ['main_dashboard_index', 'view_exec_dashboard']],
+            ['id' => 'aicenter', 'label' => 'AI Automation Center', 'icon' => 'ai', 'board' => 'AiCenter', 'perm' => 'ai:manage'],
+            ['id' => 'notifc', 'label' => 'Notification Control', 'icon' => 'bell', 'board' => 'NotificationCenter', 'perm' => ['manage_notification_rules', 'view_tools']],
+            ['id' => 'pay', 'label' => 'Payment Gateways', 'icon' => 'card', 'board' => 'Payments', 'perm' => 'view_global_payments', 'finance' => true],
             ['id' => 'loyalty', 'label' => 'Loyalty & Referrals', 'icon' => 'star', 'board' => 'LoyaltyRewards', 'perm' => 'manage_loyalty'],
-            ['id' => 'security', 'label' => 'Security & Reliability', 'icon' => 'shield', 'board' => 'SecurityCenter', 'perm' => 'view_system_logs'],
+            ['id' => 'supporthub', 'label' => 'Customer Care', 'icon' => 'ticket', 'board' => 'SupportHub', 'perm' => 'cs:agent'],
+            ['id' => 'commshub', 'label' => 'Communications', 'icon' => 'message', 'board' => 'CommsHub', 'perm' => ['push_notifications', 'manage_newsletter', 'view_message_logs']],
+            ['id' => 'security', 'label' => 'Security Center', 'icon' => 'shield', 'board' => 'SecurityCenter', 'perm' => 'view_system_logs'],
+            ['id' => 'accountsec', 'label' => 'My Account Security', 'icon' => 'lock', 'board' => 'AccountSecurity', 'perm' => 'customers_profile_edit'],
+        ]],
+        ['label' => 'Developer', 'items' => [
+            ['id' => 'devov', 'label' => 'Developer Console', 'icon' => 'terminal', 'board' => 'DevOverview', 'perm' => 'view_developer'],
+            ['id' => 'devsvc', 'label' => 'Services', 'icon' => 'server', 'board' => 'DevServices', 'perm' => 'view_developer'],
+            ['id' => 'devlogs', 'label' => 'Logs', 'icon' => 'activity', 'board' => 'DevLogs', 'perm' => 'view_developer'],
+            ['id' => 'devmet', 'label' => 'Metrics', 'icon' => 'cpu', 'board' => 'DevMetrics', 'perm' => 'view_developer'],
+            ['id' => 'devinfra', 'label' => 'Infrastructure', 'icon' => 'cloud', 'board' => 'DevInfrastructure', 'perm' => 'view_developer'],
+            ['id' => 'devdep', 'label' => 'Deployments', 'icon' => 'rocket', 'board' => 'DevDeployments', 'perm' => 'view_developer'],
+            ['id' => 'devalert', 'label' => 'Alerts', 'icon' => 'alert', 'board' => 'DevAlerts', 'perm' => 'view_developer',
+                'count' => fn() => sl_tableExists('cdb_dev_alerts') ? sl_navCount("SELECT COUNT(*) FROM cdb_dev_alerts WHERE status = 'active'") : 0],
+            ['id' => 'devissues', 'label' => 'Issues & Change Log', 'icon' => 'bug', 'board' => 'DevIssues', 'perm' => 'view_developer',
+                'count' => fn() => sl_tableExists('cdb_dev_issues') ? sl_navCount("SELECT COUNT(*) FROM cdb_dev_issues WHERE status IN ('open','in_progress')") : 0],
+            ['id' => 'devint', 'label' => 'Integrations', 'icon' => 'puzzle', 'board' => 'DevIntegrations', 'perm' => 'view_developer'],
+        ]],
+        ['label' => 'Support', 'items' => [
+            ['id' => 'tickets', 'label' => 'Support Desk', 'icon' => 'ticket', 'board' => 'CsInbox', 'perm' => 'cs:agent',
+                'count' => fn() => sl_tableExists('cdb_cs_tickets') ? sl_num(sl_navCount("SELECT COUNT(*) FROM cdb_cs_tickets WHERE status NOT IN ('closed','resolved')")) : 0],
+            ['id' => 'servicepanel', 'label' => 'Service Panel', 'icon' => 'grid', 'board' => 'SupportHub', 'perm' => 'cs:agent'],
+            ['id' => 'csrep', 'label' => 'Service Reports', 'icon' => 'chart', 'board' => 'CsReports', 'perm' => 'cs:manage'],
+            ['id' => 'playbook', 'label' => 'Playbooks', 'icon' => 'book', 'board' => 'CsPlaybook', 'perm' => 'cs:agent'],
+            ['id' => 'knowledge', 'label' => 'Knowledge Base', 'icon' => 'file', 'board' => 'CsPlaybook', 'href' => sl_route('CsPlaybook') . '#knowledge-base', 'perm' => 'cs:agent'],
+            ['id' => 'cschan', 'label' => 'Support Settings', 'icon' => 'sliders', 'board' => 'CsChannels', 'perm' => 'cs:manage'],
+            ['id' => 'csrules', 'label' => 'Ticket Rules', 'icon' => 'filter', 'board' => 'CsRules', 'perm' => 'cs:manage'],
+            ['id' => 'csai', 'label' => 'AI Assistant', 'icon' => 'ai', 'board' => 'StaffAI', 'perm' => 'ai:use'],
+            ['id' => 'cssupai', 'label' => 'AI for Customers', 'icon' => 'spark', 'board' => 'CsAI', 'perm' => 'cs:manage'],
         ]],
         ['label' => 'Freight', 'items' => [
+            ['id' => 'lastmile', 'label' => 'Last-Mile Delivery', 'icon' => 'truck', 'board' => 'LastMile', 'perm' => ['view_freight', 'view_pickup_list']],
             ['id' => 'frhub', 'label' => 'Freight Hub', 'icon' => 'plane', 'board' => 'FreightHub', 'perm' => 'view_freight'],
             ['id' => 'frsched', 'label' => 'Departures & Arrivals', 'icon' => 'calendar', 'board' => 'FreightSchedule', 'perm' => 'view_freight',
                 'count' => fn() => sl_tableExists('cdb_freight_schedules') ? sl_navCount("SELECT COUNT(*) FROM cdb_freight_schedules WHERE status NOT IN ('arrived','cancelled','completed')") : 0],
@@ -98,7 +125,7 @@ function sl_navStaff(): array
             ['id' => 'staff', 'label' => 'Staff & Roles', 'icon' => 'shield', 'board' => 'StaffRoles', 'perm' => ['view_user_list', 'view_role_assignment']],
         ]],
         ['label' => 'Finance', 'finance' => true, 'items' => [
-            ['id' => 'pay', 'label' => 'Payments', 'icon' => 'card', 'board' => 'Payments', 'perm' => 'view_global_payments'],
+            ['id' => 'billhub', 'label' => 'Billing & Finance', 'icon' => 'dollar', 'board' => 'BillingHub', 'perm' => ['financial_sheet', 'manage_finance_switch']],
             ['id' => 'trans', 'label' => 'Transactions', 'icon' => 'activity', 'board' => 'Transactions', 'perm' => 'view_transactions'],
             ['id' => 'sendp', 'label' => 'Send Prices', 'icon' => 'send', 'board' => 'SendPrices', 'perm' => 'send_prices'],
             ['id' => 'ar', 'label' => 'Accounts Receivable', 'icon' => 'receipt', 'board' => 'AccountsReceivable', 'perm' => 'view_receivable_accounts'],
@@ -110,36 +137,12 @@ function sl_navStaff(): array
             ['id' => 'activity', 'label' => 'Activity Logs', 'icon' => 'clock', 'board' => 'ActivityLogs', 'perm' => 'view_activity_logs'],
             ['id' => 'messages', 'label' => 'Message Logs', 'icon' => 'archive', 'board' => 'MessageLogs', 'perm' => 'view_message_logs'],
         ]],
-        ['label' => 'Customer Service', 'items' => [
-            ['id' => 'tickets', 'label' => 'Support Inbox', 'icon' => 'ticket', 'board' => 'CsInbox', 'perm' => 'cs:agent',
-                'count' => fn() => sl_tableExists('cdb_cs_tickets') ? sl_num(sl_navCount("SELECT COUNT(*) FROM cdb_cs_tickets WHERE status NOT IN ('closed','resolved')")) : 0],
-            ['id' => 'csrules', 'label' => 'Ticket Rules', 'icon' => 'filter', 'board' => 'CsRules', 'perm' => 'cs:manage'],
-            ['id' => 'playbook', 'label' => 'Playbook', 'icon' => 'book', 'board' => 'CsPlaybook', 'perm' => 'cs:agent'],
-            ['id' => 'csrep', 'label' => 'Support Reports', 'icon' => 'star', 'board' => 'CsReports', 'perm' => 'cs:manage'],
-            ['id' => 'cschan', 'label' => 'Channels & Teams', 'icon' => 'message', 'board' => 'CsChannels', 'perm' => 'cs:manage'],
-            ['id' => 'csai', 'label' => 'AI Assistant', 'icon' => 'ai', 'board' => 'StaffAI', 'perm' => 'ai:use'],
-            ['id' => 'cssupai', 'label' => 'AI for Customers', 'icon' => 'spark', 'board' => 'CsAI', 'perm' => 'cs:manage'],
-        ]],
-        ['label' => 'Developer', 'items' => [
-            ['id' => 'devov', 'label' => 'Dev Overview', 'icon' => 'terminal', 'board' => 'DevOverview', 'perm' => 'view_developer'],
-            ['id' => 'devsvc', 'label' => 'Services', 'icon' => 'server', 'board' => 'DevServices', 'perm' => 'view_developer'],
-            ['id' => 'devlogs', 'label' => 'Logs', 'icon' => 'activity', 'board' => 'DevLogs', 'perm' => 'view_developer'],
-            ['id' => 'devmet', 'label' => 'Metrics', 'icon' => 'cpu', 'board' => 'DevMetrics', 'perm' => 'view_developer'],
-            ['id' => 'devinfra', 'label' => 'Infrastructure', 'icon' => 'cloud', 'board' => 'DevInfrastructure', 'perm' => 'view_developer'],
-            ['id' => 'devdep', 'label' => 'Deployments', 'icon' => 'rocket', 'board' => 'DevDeployments', 'perm' => 'view_developer'],
-            ['id' => 'devalert', 'label' => 'Alerts', 'icon' => 'alert', 'board' => 'DevAlerts', 'perm' => 'view_developer',
-                'count' => fn() => sl_tableExists('cdb_dev_alerts') ? sl_navCount("SELECT COUNT(*) FROM cdb_dev_alerts WHERE status = 'active'") : 0],
-            ['id' => 'devissues', 'label' => 'Issues & Change Log', 'icon' => 'bug', 'board' => 'DevIssues', 'perm' => 'view_developer',
-                'count' => fn() => sl_tableExists('cdb_dev_issues') ? sl_navCount("SELECT COUNT(*) FROM cdb_dev_issues WHERE status IN ('open','in_progress')") : 0],
-            ['id' => 'devint', 'label' => 'Integrations', 'icon' => 'puzzle', 'board' => 'DevIntegrations', 'perm' => 'view_developer'],
-        ]],
         ['label' => 'Settings', 'items' => [
             ['id' => 'general', 'label' => 'General', 'icon' => 'cog', 'board' => 'SettingsHub', 'perm' => 'view_tools'],
             ['id' => 'apis', 'label' => 'API Connections', 'icon' => 'link', 'board' => 'ApiConnections', 'perm' => 'manage_api_settings',
                 'count' => fn() => sl_tableExists('cdb_api_connections') ? sl_navCount("SELECT COUNT(*) FROM cdb_api_connections") : 0],
             ['id' => 'apitraffic', 'label' => 'Live API Traffic', 'icon' => 'activity', 'board' => 'ApiTraffic', 'perm' => 'view_api_logs'],
             ['id' => 'tariffs', 'label' => 'Shipping Tariffs', 'icon' => 'tag', 'board' => 'Tariffs', 'perm' => 'view_shipping_tariffs'],
-            ['id' => 'notifc', 'label' => 'Notifications', 'icon' => 'bell', 'board' => 'NotificationCenter', 'perm' => ['manage_notification_rules', 'view_tools']],
             ['id' => 'ebuild', 'label' => 'Email Builder', 'icon' => 'mail', 'board' => 'EmailBuilder', 'perm' => 'manage_newsletter'],
             ['id' => 'msgtpl', 'label' => 'SMS & WhatsApp', 'icon' => 'message', 'board' => 'MessageTemplates', 'perm' => ['list_sms_templates', 'manage_whatsapp_templates']],
             ['id' => 'compose', 'label' => 'Compose Message', 'icon' => 'mail', 'board' => 'ComposeMessage', 'perm' => ['push_notifications', 'manage_newsletter']],
@@ -259,7 +262,7 @@ function sl_navResolve(string $activeId): array
                 $c2 = '';
             }
             $items[] = [
-                'href' => sl_route($it['board']),
+                'href' => $it['href'] ?? sl_route($it['board']),
                 'label' => $it['label'],
                 'icon' => 'i-' . $it['icon'],
                 'cls' => $it['id'] === $activeId ? 'is-active' : '',
@@ -269,9 +272,10 @@ function sl_navResolve(string $activeId): array
             ];
         }
         if ($items) {
-            $out[] = ['label' => $g['label'], 'items' => $items];
+            $out[] = ['label' => $g['label'], 'items' => $items, 'open' => in_array('is-active', array_column($items, 'cls'), true)];
         }
     }
+    if ($out && !array_filter($out, fn($group) => $group['open'])) $out[0]['open'] = true;
     return $out;
 }
 

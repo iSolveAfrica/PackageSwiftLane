@@ -60,14 +60,7 @@
     </div>
     <aside class="sl-side" aria-label="<?= $slIsClient ? 'Customer navigation' : 'Main navigation' ?>">
       <div class="nav-x"><span class="fw5">Menu</span><label class="sl-ib" for="navtg" aria-label="Close the menu" role="button" tabindex="0"><i class="ic i-x" aria-hidden="true"></i></label></div>
-      <?php foreach ($slNav as $g): ?>
-        <div class="sl-gl"><?= h($g['label']) ?></div>
-        <nav class="sl-nav">
-          <?php foreach ($g['items'] as $it): ?>
-            <a href="<?= h($it['href']) ?>" class="<?= h($it['cls']) ?>"<?= $it['cls'] ? ' aria-current="page"' : '' ?>><i class="ic <?= h($it['icon']) ?>" aria-hidden="true"></i><span><?= h($it['label']) ?></span><?php if ($it['c1'] !== ''): ?><span class="cnt <?= h($it['ok']) ?>"><?= h($it['c1']) ?> <em><?= h($it['c2']) ?></em></span><?php endif; ?></a>
-          <?php endforeach; ?>
-        </nav>
-      <?php endforeach; ?>
+      <?php include __DIR__ . '/nav_groups.php'; ?>
       <div class="sl-gl">Other</div>
       <nav class="sl-nav">
         <?php if (!$slIsClient && $user->cdp_hasPermission('view_tools')): ?><a href="<?= h(sl_route('SettingsHub', ['tab' => 'general'])) ?>#language"><i class="ic i-globe" aria-hidden="true"></i><span>Language</span></a><?php endif; ?>

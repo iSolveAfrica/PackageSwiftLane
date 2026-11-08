@@ -89,8 +89,8 @@
         if (!data.length) { $('#' + el).html('<div class="swl-dev-note">History builds up as samples are taken.</div>'); return; }
         chart(key, el, {
             chart: { type: 'area', height: 46, sparkline: { enabled: true }, animations: { enabled: false } },
-            series: [{ name: '', data: data }], colors: [color], stroke: { width: 2, curve: 'smooth' },
-            fill: { type: 'gradient', gradient: { opacityFrom: 0.35, opacityTo: 0 } }, tooltip: { enabled: false }, xaxis: { type: 'datetime' }
+            series: [{ name: 'Value', data: data }], colors: [color], stroke: { width: 2, curve: 'smooth' },
+            fill: { type: 'gradient', gradient: { opacityFrom: 0.35, opacityTo: 0 } }, tooltip: { enabled: true, shared: false, intersect: false }, xaxis: { type: 'datetime' }
         });
     }
     function areaOpts(series, names, colors, unit, height) {

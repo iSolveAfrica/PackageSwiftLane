@@ -41,6 +41,7 @@ function sl_messageCostsData($user, $core): array
     $src = array_slice($r['sources'] ?? [], 0, 6);
     $bars = [];
     foreach ($src as $s) $bars[mb_substr($s['label'], 0, 12)] = round($s['cost'], 2);
+    $d['barSeries'] = $bars;
     require_once CDP_ROOT . '/views/sl/data/api_admin.php';
     $d['bars'] = $bars ? sl_apiBars($bars) : '';
     $d['topSrc'] = $src ? $src[0]['label'] : '—';

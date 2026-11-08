@@ -114,6 +114,16 @@ h1,h2,h3,h4,p{margin:0}
 .sl-side{flex:0 0 264px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-xl);padding:12px 10px;display:flex;flex-direction:column}
 .sl-gl{font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:16px 10px 6px;font-weight:500}
 .sl-gl:first-child{padding-top:6px}
+.sl-nav-group{border-radius:12px}
+.sl-nav-group+.sl-nav-group{margin-top:2px}
+.sl-nav-group[open]{background:color-mix(in srgb,var(--active) 35%,transparent)}
+.sl-nav-group>.sl-gl{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:39px;padding:8px 10px;cursor:pointer;border-radius:10px;list-style:none;user-select:none}
+.sl-nav-group>.sl-gl::-webkit-details-marker{display:none}
+.sl-nav-group>.sl-gl:hover{background:var(--hover);color:var(--ink)}
+.sl-nav-group>.sl-gl:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.sl-nav-group>.sl-gl .ic{transition:transform .18s ease;color:var(--muted)}
+.sl-nav-group[open]>.sl-gl .ic{transform:rotate(180deg)}
+.sl-nav-group>.sl-nav{padding:0 4px 6px}
 .sl-nav{display:flex;flex-direction:column;gap:2px}
 .sl-nav a{display:flex;align-items:center;gap:10px;height:40px;padding:0 10px;border-radius:var(--r-sm);font-size:14px;color:var(--ink)}
 .sl-nav a:hover{background:var(--hover)}

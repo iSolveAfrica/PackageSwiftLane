@@ -444,6 +444,8 @@ function sl_transactionsData($user, $core): array
         $svg .= '<text x="' . round(44 + $idx * $bw + $bw / 2, 1) . '" y="212" text-anchor="middle">' . date('M j', strtotime('-' . ($n - 1 - $idx) . ' days')) . '</text>';
     }
     $d['chart'] = $svg; $d['chartN'] = $n;
+    $d['chartValues'] = array_map(fn($value) => sl_money($value), $vals);
+    $d['chartDays'] = array_map(fn($i) => date('M j, Y', strtotime('-' . ($n - 1 - $i) . ' days')), range(0, $n - 1));
     $d['avg'] = sl_money(array_sum($vals) / $n);
     // list
     $q = trim((string) ($_GET['q'] ?? ''));

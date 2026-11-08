@@ -32,7 +32,7 @@ function sl_modules(): array
         'messaging'     => ['label' => 'Messages and automation', 'group' => 'messaging', 'desc' => 'Push notifications, templates, logs, costs', 'nav' => ['commshub', 'messages', 'notifc', 'ebuild', 'msgtpl', 'bcast'], 'customer' => false, 'api' => ['notifications']],
         'automations'   => ['label' => 'Automations', 'group' => 'messaging', 'desc' => 'When this happens, do that', 'nav' => ['auto'], 'customer' => false, 'api' => []],
         // Support and AI
-        'support'       => ['label' => 'Customer service', 'group' => 'support', 'desc' => 'Tickets, rules, playbook, channels', 'nav' => ['supporthub', 'tickets', 'csrules', 'playbook', 'csrep', 'cschan', 'cssupai'], 'customer' => true, 'api' => []],
+        'support'       => ['label' => 'Customer service', 'group' => 'support', 'desc' => 'Tickets, rules, playbook, channels', 'nav' => ['supporthub', 'servicepanel', 'tickets', 'csrules', 'playbook', 'knowledge', 'csrep', 'cschan', 'cssupai'], 'customer' => true, 'api' => []],
         'ai'            => ['label' => 'AI assistant', 'group' => 'support', 'desc' => 'Staff assistant and AI Centre', 'nav' => ['aicenter', 'csai'], 'customer' => false, 'api' => []],
         // Insights and developer
         'reports'       => ['label' => 'Reports and logs', 'group' => 'insights', 'desc' => 'Reports, activity and system logs', 'nav' => ['reports', 'activity', 'execdash', 'security'], 'customer' => false, 'api' => []],

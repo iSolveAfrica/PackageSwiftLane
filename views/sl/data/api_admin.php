@@ -40,7 +40,7 @@ function sl_apiMonitorData($user, $core): array
     [$range, $iv] = sl_apiRange();
     $d = ['ready' => sl_tableExists('cdb_api_request_log'), 'range' => $range, 'ranges' => ['1h', '24h', '7d', '30d']];
     $d['hourSeries'] = []; $d['hourLabels'] = [];
-    $d['n'] = 0; $d['ok'] = 0; $d['err'] = 0; $d['p95'] = 0; $d['slow'] = '—'; $d['hours'] = ''; $d['bars'] = ''; $d['live'] = []; $d['top'] = '—'; $d['avgHour'] = 0;
+    $d['n'] = 0; $d['ok'] = 0; $d['err'] = 0; $d['p95'] = 0; $d['slow'] = '—'; $d['hours'] = ''; $d['bars'] = ''; $d['topSeries'] = []; $d['live'] = []; $d['top'] = '—'; $d['avgHour'] = 0;
     if ($d['ready']) {
         $w = "created_at >= NOW() - INTERVAL $iv";
         $k = sl_row("SELECT COUNT(*) n, SUM(status < 400) ok, SUM(status >= 400) err FROM cdb_api_request_log WHERE $w");
@@ -65,6 +65,7 @@ function sl_apiMonitorData($user, $core): array
         $tops = [];
         foreach (sl_rows("SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(path, '/api/v1/', -1), '/', 1) seg, COUNT(*) n FROM cdb_api_request_log WHERE $w GROUP BY seg ORDER BY n DESC LIMIT 6") as $r) $tops['/' . $r->seg] = (int) $r->n;
         $d['bars'] = sl_apiBars($tops);
+        $d['topSeries'] = $tops;
         $d['top'] = $tops ? array_key_first($tops) : '—';
         $d['live'] = array_map(fn($r) => ['ts' => date('H:i:s', strtotime($r->created_at)), 'who' => $r->who ?: ($r->status == 401 ? 'unknown token' : 'public'), 'code' => (int) $r->status,
             'cls' => $r->status >= 500 ? 'bad' : ($r->status >= 400 ? 'warn' : 'ok'), 'line' => $r->method . ' ' . $r->path . ' · ' . $r->duration_ms . ' ms'],

@@ -15,11 +15,31 @@ $core = (object) ['site_name' => 'Swift Lane'];
 <?php foreach (['swiftlane.css','app.css','pages/ControlPanels.css','pages/AirShipments.css','pages/StaffAI.css','pages/AiChatMobile.sheet.css','chart-interactions.css','ai-response.css'] as $css): ?><link rel="stylesheet" href="/assets/swiftlane/<?= $css ?>"><?php endforeach; ?>
 <style>.fixture-content{padding:24px;display:flex;flex-direction:column;gap:24px}.fixture-extra{padding:16px;background:var(--card);border:1px solid var(--line);border-radius:16px}.fixture-extra svg{width:100%;height:150px}#ai{min-width:0}.ai-th{min-width:0}.ai-chat{min-width:0}</style>
 <div id="sl-app" class="sl-app"><main class="fixture-content">
+<aside id="nav-fixture" class="sl-side" aria-label="Main navigation">
+<?php
+$navItem = fn($label, $href, $active = false) => ['href' => $href, 'label' => $label, 'icon' => 'i-grid', 'cls' => $active ? 'is-active' : '', 'ok' => '', 'c1' => '', 'c2' => ''];
+$slNav = [
+    ['label' => 'Command Centers', 'open' => true, 'items' => [$navItem('Management Center', 'exec_dashboard.php', true), $navItem('AI Automation Center', 'ai_center.php')]],
+    ['label' => 'Developer', 'open' => false, 'items' => [$navItem('Developer Console', 'dev_overview.php')]],
+    ['label' => 'Support', 'open' => false, 'items' => [$navItem('Support Desk', 'support_inbox.php'), $navItem('Knowledge Base', 'support_playbook.php#knowledge-base')]],
+];
+include CDP_ROOT . '/views/sl/inc/nav_groups.php';
+?>
+</aside>
 <div id="control-fixture">
 <?php
 $d = ['pins' => [], 'updated' => '08:00', 'health' => [], 'sections' => [], 'attn' => array_map(function ($label, $value) {
     return ['l' => $label, 'n' => $value, 'href' => 'courier_list.php?filter=held', 'up' => false, 'd' => 'Same as yesterday', 'aria' => 'Seven days', 's' => array_fill(0, 7, $value), 'bars' => array_fill(0, 7, 'height:' . ($value ? 90 : 4) . '%')];
 }, ['Awaiting approval', 'Held parcels', 'Unassigned pickups', 'Open pre-alerts'], [0, 160, 49, 1327])];
+$sectionRows = [
+    ['command-centers', 'Command Centers', 'Key controls and oversight in one place', ['Management Center', 'AI Automation Center', 'Notification Control', 'Payment Gateways', 'Loyalty & Referrals', 'Customer Care', 'Communications', 'Security Center', 'My Account Security']],
+    ['developer', 'Developer', 'Platform health and technical controls', ['Developer Console', 'Services', 'Metrics', 'Deployments']],
+    ['support', 'Support', 'Tickets, service quality and team guidance', ['Support Desk', 'Service Panel', 'Service Reports', 'Playbooks', 'Knowledge Base', 'Support Settings']],
+    ['shipments', 'Shipping & freight', 'Parcels on the move', ['Air shipments', 'Sea packages']],
+];
+foreach ($sectionRows as [$id, $title, $description, $labels]) {
+    $d['sections'][] = ['id' => $id, 'icon' => 'i-grid', 't' => $title, 's' => $description, 'featured' => $id !== 'shipments', 'rows' => array_map(fn($label) => ['href' => strtolower(str_replace(' ', '_', $label)) . '.php', 'icon' => 'i-grid', 'label' => $label, 'sub' => 'Open ' . $label, 'n' => ''], $labels)];
+}
 include CDP_ROOT . '/views/sl/pages/ControlPanels.php';
 ?>
 </div><div id="shipment-fixture">

@@ -25,7 +25,7 @@ if (!empty($_GET['edit'])) {
         header('Location: ' . ($user->cdp_is_Admin() ? 'customers_list.php' : 'index.php'));
         exit;
     }
-    sl_render('ProfileEdit', ['id' => 'myaccount', 'title' => $d['isOwn'] ? 'My details' : 'Edit ' . $d['name'], 'board' => 'UserHome'], $d);
+    sl_render('ProfileEdit', ['id' => $d['isOwn'] && !sl_userIs('client') ? 'accountsec' : 'myaccount', 'title' => $d['isOwn'] ? 'My details' : 'Edit ' . $d['name'], 'board' => 'UserHome'], $d);
     exit;
 }
 require_once 'views/sl/data/portal.php';

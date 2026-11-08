@@ -25,6 +25,7 @@ function sl_routes(): array
         'ExecDashboard'        => 'exec_dashboard.php',
         'ClientDashboard'      => 'index.php',
         'UserHome'             => 'customers_profile_edit.php',
+        'AccountSecurity'      => 'customers_profile_edit.php?edit=1#account-security',
         'DesignSystem'         => 'design_system.php',
         'Piece-7d1a'           => 'index.php',
 
@@ -128,6 +129,7 @@ function sl_routes(): array
         'CsCustomer' => 'support_customer.php',
         'CsRules'    => 'support_rules.php',
         'CsPlaybook' => 'support_playbook.php',
+        'CsKnowledgeBase' => 'support_playbook.php#knowledge-base',
         'CsReports'  => 'support_reports.php',
         'CsChannels' => 'support_channels.php',
         'CsAI'       => 'support_ai.php',

@@ -19,7 +19,7 @@ $k = $d['kpi'];
         </div>
         <div class="split">
           <section class="a sl-card"><div class="sl-ch"><h2 class="sl-ct">Revenue by month</h2><span class="mut sm">Last 12 months · shape only</span></div>
-            <div class="sl-bars" style="height: 200px"><?php foreach ($d['months'] as $m): ?><div class="sl-bar <?= h($m['hi']) ?>"><span style="<?= h($m['sty']) ?>"></span></div><?php endforeach; ?></div>
+            <div class="sl-bars" <?= sl_chartAttrs([['name' => 'Revenue', 'values' => array_fill(0, count($d['months']), 'Hidden for your role')]], $d['monthLabels'], 'Revenue by month') ?> style="height: 200px"><?php foreach ($d['months'] as $m): ?><div class="sl-bar <?= h($m['hi']) ?>"><span style="<?= h($m['sty']) ?>"></span></div><?php endforeach; ?></div>
             <div class="row between mut sm" style="margin-top: 8px"><?php foreach ($d['monthLabels'] as $l): ?><span><?= h($l) ?></span><?php endforeach; ?></div>
           </section>
           <aside class="b sl-card col g12"><h2 class="sl-ct">Payments by gateway</h2>

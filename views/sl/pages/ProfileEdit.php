@@ -29,8 +29,11 @@ $ps = $d['phoneStatus'];
           <?= sl_fInput('Last name', 'lname', $r->lname) ?>
           <?= sl_fInput('E-mail', 'email', $r->email, 'email') ?>
           <?= sl_fSelect('Gender', 'gender', ['Male' => 'Male', 'Female' => 'Female', 'Other' => 'Other'], $r->gender, '—') ?>
-          <?= sl_fInput('New password', 'password', '', 'password', 'autocomplete="new-password"', 'Leave blank to keep your password') ?>
         </div>
+      </section>
+      <section class="sl-card col g12" id="account-security" style="scroll-margin-top:24px">
+        <div class="sl-ch" style="margin:0"><div><h2 class="sl-ct">Account security</h2><span class="mut sm">Choose a new password when you need to update your sign-in.</span></div><i class="ic i-lock" aria-hidden="true"></i></div>
+        <?= sl_fInput('New password', 'password', '', 'password', 'autocomplete="new-password"', 'Leave blank to keep your password') ?>
       </section>
       <section class="sl-card col g16">
         <div class="sl-ch" style="margin:0"><div><h2 class="sl-ct">Addresses <span class="mut sm">(optional)</span></h2><div class="mut sm">A new address needs all of its fields; leave a new block empty to skip it</div></div></div>
