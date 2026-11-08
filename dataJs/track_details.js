@@ -3,8 +3,10 @@
 /* ============================================================================
    Public tracking detail pages (track.php / track_online_shopping.php).
 
-   Reveal-on-scroll, count-up numbers, and "copy tracking number". Vanilla —
-   these pages do not load jQuery.
+   Reveal-on-scroll, count-up numbers, "copy tracking number", and the fold
+   buttons that hide the earlier stages of a long journey / history. Vanilla —
+   these pages do not load jQuery. Everything here is progressive: without
+   JS every stage and update is visible and nothing animates.
 
    No map: the route map and its Leaflet/Nominatim dependency were removed, so
    nothing here talks to a third party any more.
@@ -15,18 +17,49 @@
   // page blank.
   document.documentElement.classList.add("trk-js");
 
+  var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
   document.addEventListener("DOMContentLoaded", function () {
+    initFolds();
     initReveal();
     initCountUps();
     initCopy();
   });
+
+  /* ── Fold earlier stages / updates ──────────────────────────────────────── */
+  function initFolds() {
+    var buttons = document.querySelectorAll(".trk-fold__btn[data-fold-for], .trk-fold[data-fold-for] .trk-fold__btn");
+    buttons.forEach(function (btn) {
+      var holder = btn.hasAttribute("data-fold-for") ? btn : btn.closest("[data-fold-for]");
+      var list = holder && document.getElementById(holder.getAttribute("data-fold-for"));
+      if (!list) return;
+      var early = list.querySelectorAll(".trk-stage--early, .trk-tl--early");
+      if (!early.length) return;
+
+      list.classList.add("is-folded");
+      btn.removeAttribute("hidden");
+      btn.setAttribute("aria-expanded", "false");
+
+      btn.addEventListener("click", function () {
+        var open = list.classList.toggle("is-folded") === false;
+        btn.setAttribute("aria-expanded", open ? "true" : "false");
+        if (open) {
+          // Move focus to the first revealed item so keyboard and screen
+          // reader users land on what just appeared.
+          var first = early[0];
+          first.setAttribute("tabindex", "-1");
+          first.focus({ preventScroll: false });
+        }
+      });
+    });
+  }
 
   /* ── Reveal on scroll ───────────────────────────────────────────────────── */
   function initReveal() {
     var els = document.querySelectorAll("[data-reveal]");
     if (!els.length) return;
 
-    if (!("IntersectionObserver" in window)) {
+    if (reduceMotion || !("IntersectionObserver" in window)) {
       for (var i = 0; i < els.length; i++) els[i].classList.add("is-in");
       return;
     }
@@ -60,6 +93,7 @@
       if (isNaN(target)) { el.textContent = el.getAttribute("data-countup"); return; }
 
       var decimals = (String(target).split(".")[1] || "").length;
+      if (reduceMotion) { el.textContent = decimals ? target.toFixed(decimals) : String(target); return; }
       var start = null;
       var duration = 900;
 
@@ -82,12 +116,25 @@
     var btn = document.querySelector("[data-copy]");
     if (!btn) return;
 
+    var label = btn.querySelector("[data-copy-label]");
+    var status = document.querySelector("[data-copy-status]");
+    var icon = btn.querySelector("i");
+    var timer = null;
+
     btn.addEventListener("click", function () {
       var text = btn.getAttribute("data-copy") || "";
       var done = function () {
-        var original = btn.innerHTML;
-        btn.innerHTML = '<i class="mdi mdi-check"></i> Copied';
-        setTimeout(function () { btn.innerHTML = original; }, 1600);
+        if (label) label.textContent = "Copied";
+        if (icon) icon.className = "mdi mdi-check";
+        btn.classList.add("is-copied");
+        if (status) status.textContent = "Tracking number " + text + " copied to clipboard";
+        clearTimeout(timer);
+        timer = setTimeout(function () {
+          if (label) label.textContent = "Copy";
+          if (icon) icon.className = "mdi mdi-content-copy";
+          btn.classList.remove("is-copied");
+          if (status) status.textContent = "";
+        }, 1800);
       };
 
       if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -104,7 +151,9 @@
         ta.style.left = "-9999px";
         document.body.appendChild(ta);
         ta.select();
-        try { document.execCommand("copy"); done(); } catch (e) { /* nothing to do */ }
+        try { document.execCommand("copy"); done(); } catch (e) {
+          if (status) status.textContent = "Copy failed. Select the number to copy it.";
+        }
         document.body.removeChild(ta);
       }
     });

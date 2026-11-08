@@ -22,18 +22,18 @@
  *
  * @param int    $statusId    cdb_styles.id of the (effective) current status
  * @param string $statusName  mod_style text, used only as a keyword fallback
- * @return array{percent:float,inset:float,index:int,count:int,steps:array<int,array{key:string,label:string,icon:string}>}
+ * @return array{percent:float,inset:float,index:int,count:int,steps:array<int,array{key:string,label:string,icon:string,desc:string}>}
  */
 function cdp_trackProgress($statusId, $statusName = '')
 {
     $steps = [
-        ['key' => 'received',  'label' => 'Received Office',      'icon' => '📥'],
-        ['key' => 'approved',  'label' => 'Approved For Shipping', 'icon' => '✅'],
-        ['key' => 'transit',   'label' => 'Transit',              'icon' => '🛫'],
-        ['key' => 'customs',   'label' => 'Clearing At Customs',  'icon' => '🛃'],
-        ['key' => 'sorting',   'label' => 'Accra Sorting Office', 'icon' => '🏢'],
-        ['key' => 'billed',    'label' => 'Billed',               'icon' => '🧾'],
-        ['key' => 'pickup',    'label' => 'Ready For Pickup',     'icon' => '📦'],
+        ['key' => 'received',  'label' => 'Received Office',      'icon' => '📥', 'desc' => 'Package received and checked in at our office.'],
+        ['key' => 'approved',  'label' => 'Approved For Shipping', 'icon' => '✅', 'desc' => 'Shipment approved, packed and booked for the next sailing.'],
+        ['key' => 'transit',   'label' => 'Transit',              'icon' => '🚢', 'desc' => 'Shipment is on the water, moving towards Ghana.'],
+        ['key' => 'customs',   'label' => 'Clearing At Customs',  'icon' => '🛃', 'desc' => 'Shipment is going through customs at the port of entry.'],
+        ['key' => 'sorting',   'label' => 'Accra Sorting Office', 'icon' => '🏢', 'desc' => 'Shipment has arrived and is being sorted at the Accra office.'],
+        ['key' => 'billed',    'label' => 'Billed',               'icon' => '🧾', 'desc' => 'Charges have been calculated and the invoice issued.'],
+        ['key' => 'pickup',    'label' => 'Ready For Pickup',     'icon' => '📦', 'desc' => 'Shipment is ready for collection.'],
     ];
 
     // cdb_styles.id → stage index (0..6). Precise for the current install.

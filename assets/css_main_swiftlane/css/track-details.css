@@ -19,22 +19,30 @@ body:has(.trk) {
 }
 
 .trk {
-    /* palette — Swift Lane design tokens (this sheet loads without swiftlane-tokens.css) */
-    --ink: #192A3E;
-    --ink-2: #22374F;
-    --line: #E1E5EA;
-    --line-2: #EEF1F5;
-    --canvas: #F6F7F9;
-    --surface: #ffffff;
-    --text: #192A3E;
-    --muted: #9BA9BB;
-    --faint: #B7C1CC;
-    --accent: #FFCB01;          /* fills: buttons, done markers */
-    --accent-text: #F39D37;     /* amber that stays readable as text */
-    --accent-soft: #FEF9EC;
-    --warn: #B4770D;
-    --warn-soft: #FDF3E0;
-    --live: #86E23E;
+    /* palette — the Swift Lane tokens (swiftlane-tokens.css) with literal
+       fallbacks, because error403.php loads this sheet on its own. Every text
+       colour here reaches 4.5:1 on white: --muted is the tokens' --text-muted
+       (5.6:1), not the decorative slate (2.4:1) it used to be. */
+    --ink: var(--ink-800, #192A3E);
+    --ink-2: var(--ink-700, #253E5B);
+    --line: var(--line-200, #E1E5EA);
+    --line-2: var(--fill-100, #EDF0F3);
+    --canvas: var(--page-050, #F6F7F9);
+    --surface: var(--white, #ffffff);
+    --text: var(--text-primary, #192A3E);
+    --muted: var(--text-muted, #59697D);       /* secondary text: 5.6:1 on white */
+    --faint: var(--slate-600, #59697D);        /* de-emphasised text: still 5.6:1 */
+    --deco: var(--slate-400, #9BA9BB);         /* decoration only, never text */
+    --accent: var(--swift-amber, #FFCB01);     /* fills: buttons, done markers */
+    --accent-text: var(--status-warning-ink, #8A4B00); /* amber family, readable as text (7.3:1) */
+    --accent-soft: var(--amber-surface, #FEF9EC);
+    --warn: var(--status-warning-ink, #8A4B00);
+    --warn-soft: var(--amber-surface, #FDF3E0);
+    --live: var(--leaf-500, #86E23E);
+    --focus: var(--focus-ring, #5548D1);
+    --focus-dark: var(--focus-on-dark, #FFCB01);
+    --motion: var(--motion-base, 180ms);
+    --ease: var(--ease-standard, cubic-bezier(.2, .6, .3, 1));
 
     --font-display: "Archivo Black", "Arial Black", Impact, sans-serif;
     --font-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
@@ -65,6 +73,44 @@ body:has(.trk) {
 .trk .mt-3 { margin-top: 1rem; }
 .trk .mb-3 { margin-bottom: 1rem; }
 
+/* ── Keyboard focus, skip link, screen-reader text ───────────────────────── */
+/* These pages do not load swiftlane-ds.css, so the focus contract lives here. */
+.trk :focus { outline: none; }
+.trk :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+    border-radius: 6px;
+}
+.trk-nav :focus-visible,
+.trk-head :focus-visible { outline-color: var(--focus-dark); }
+
+.trk-skip {
+    position: absolute;
+    left: 16px;
+    top: -100px;
+    z-index: 100;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 16px;
+    border-radius: 100px;
+    background: var(--accent);
+    color: var(--ink) !important;
+    font-weight: 700;
+    font-size: .85rem;
+}
+.trk-skip:focus { top: 12px; }
+
+.trk-sr {
+    position: absolute !important;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
 /* ── Top bar ─────────────────────────────────────────────────────────────── */
 .trk-nav {
     background: var(--ink);
@@ -76,6 +122,7 @@ body:has(.trk) {
     padding: 14px 28px;
 }
 
+.trk-nav__logo { display: inline-flex; align-items: center; min-height: 40px; }
 .trk-nav__logo img { height: 34px; width: auto; display: block; }
 .trk-nav__logo span { font-weight: 700; font-size: 1.05rem; letter-spacing: -.01em; }
 .trk-nav__actions { display: flex; align-items: center; gap: 10px; }
@@ -92,11 +139,13 @@ body:has(.trk) {
     font-size: .85rem;
     font-weight: 600;
     cursor: pointer;
-    transition: background .15s ease, border-color .15s ease, color .15s ease;
+    transition: background var(--motion) var(--ease), border-color var(--motion) var(--ease), color var(--motion) var(--ease);
     white-space: nowrap;
+    text-decoration: none;
 }
 
 .trk-btn i { font-size: 1.05rem; }
+.trk-btn--block { display: flex; width: 100%; justify-content: center; }
 
 .trk-btn--ghost {
     border-color: rgba(255, 255, 255, .28);
@@ -148,7 +197,7 @@ body:has(.trk) {
     letter-spacing: .12em;
     font-size: .72rem; /* never under 11px */
     font-weight: 700;
-    color: rgba(255, 255, 255, .55);
+    color: rgba(255, 255, 255, .72); /* 7.5:1 on the ink band */
 }
 
 .trk-code {
@@ -166,14 +215,13 @@ body:has(.trk) {
 
 .trk-copy {
     font: inherit; /* a <button> does not inherit the page font by itself */
-    font-size: .8rem;
-    border: 1px solid rgba(255, 255, 255, .25);
+    border: 1px solid rgba(255, 255, 255, .3);
     background: transparent;
-    color: rgba(255, 255, 255, .8);
-    border-radius: 7px;
-    height: 30px;
-    padding: 0 10px;
-    font-size: .72rem;
+    color: rgba(255, 255, 255, .88);
+    border-radius: 8px;
+    height: 36px;      /* comfortable tap target beside the number */
+    padding: 0 12px;
+    font-size: .74rem;
     font-weight: 600;
     cursor: pointer;
     display: inline-flex;
@@ -181,6 +229,7 @@ body:has(.trk) {
     gap: 5px;
 }
 .trk-copy:hover { background: rgba(255, 255, 255, .12); color: #fff; }
+.trk-copy.is-copied { border-color: var(--accent); color: var(--accent); }
 
 .trk-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 
@@ -193,8 +242,8 @@ body:has(.trk) {
     border-radius: 6px;
     font-size: .74rem;
     font-weight: 600;
-    background: rgba(255, 255, 255, .1);
-    color: rgba(255, 255, 255, .88);
+    background: rgba(255, 255, 255, .12);
+    color: rgba(255, 255, 255, .92);
 }
 
 .trk-state {
@@ -205,34 +254,65 @@ body:has(.trk) {
     gap: 8px;
 }
 
+/* The status colour comes from the database and can be any hue. As with the
+   app's status pills (.label.swl-status in swiftlane-ds.css) the colour tints
+   the surface and draws the ring; the text is never coloured by hand. The
+   fallback (no color-mix) is a solid fill with the ink the server picked for
+   it (--c-ink, cdp_trackColorInk). */
 .trk-status-badge {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 9px 16px;
-    border-radius: 8px;
+    gap: 9px;
+    min-height: 40px;
+    padding: 8px 16px;
+    border-radius: 100px;
     font-weight: 700;
     font-size: .92rem;
-    color: #fff;
+    letter-spacing: -.01em;
+    color: var(--c-ink, var(--ink));
     background: var(--c, var(--accent));
-    box-shadow: 0 6px 18px -8px var(--c, var(--accent));
+    box-shadow: inset 0 0 0 1.5px var(--c, var(--accent));
 }
 
 .trk-status-badge .dot {
-    width: 8px;
-    height: 8px;
+    width: 9px;
+    height: 9px;
     border-radius: 50%;
-    background: #fff;
+    background: currentColor;
     opacity: .9;
+    flex: none;
+}
+
+@supports (color: color-mix(in srgb, red 50%, white)) {
+    .trk-status-badge {
+        color: #fff;
+        background: color-mix(in srgb, var(--c, var(--accent)) 22%, var(--ink));
+    }
+    .trk-status-badge .dot { background: var(--c, var(--accent)); opacity: 1; }
+}
+
+.trk-stagepill {
+    display: inline-flex;
+    align-items: center;
+    height: 26px;
+    padding: 0 10px;
+    border-radius: 6px;
+    font-size: .74rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--ink);
+    background: var(--accent);
 }
 
 .trk-live {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-size: .74rem;
-    color: rgba(255, 255, 255, .6);
+    font-size: .76rem;
+    color: rgba(255, 255, 255, .78);
 }
+.trk-live time { font-weight: 600; color: #fff; }
 
 .trk-live .dot {
     width: 7px;
@@ -284,6 +364,18 @@ body:has(.trk) {
 }
 
 .trk-card__head .ico { font-size: 1.05rem; color: var(--accent-text); line-height: 1; }
+.trk-card__title { font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; margin: 0; }
+.trk-card__count {
+    margin-left: auto;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    color: var(--muted);
+    background: var(--line-2);
+    border-radius: 100px;
+    padding: 3px 9px;
+    text-transform: none;
+}
 .trk-card__body { padding: 20px; }
 
 .trk-two {
@@ -292,8 +384,98 @@ body:has(.trk) {
     gap: 18px;
 }
 
+/* ── Journey progress summary (stage x of n + bar) ───────────────────────── */
+.trk-progress {
+    padding: 18px 20px 16px;
+    border-bottom: 1px solid var(--line-2);
+    background: linear-gradient(180deg, var(--accent-soft) 0%, var(--surface) 100%);
+}
+
+.trk-progress__row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.trk-progress__now { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+
+.trk-progress__eyebrow {
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--accent-text);
+}
+
+.trk-progress__label {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(1.1rem, 2.4vw, 1.45rem);
+    letter-spacing: -.02em;
+    line-height: 1.2;
+    color: var(--ink);
+}
+
+.trk-progress__pct {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 1.6rem;
+    letter-spacing: -.02em;
+    color: var(--ink);
+    line-height: 1;
+    text-align: right;
+    flex: none;
+}
+.trk-progress__pct small {
+    display: block;
+    font-family: var(--font-ui);
+    font-size: .7rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 4px;
+}
+
+.trk-progress__bar {
+    position: relative;
+    height: 8px;
+    margin-top: 14px;
+    border-radius: 100px;
+    background: var(--line-2);
+    overflow: hidden;
+}
+.trk-progress__fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: var(--p, 0%);
+    border-radius: 100px;
+    background: var(--accent);
+    transition: width .6s var(--ease);
+}
+.trk-progress__fill::after {
+    /* a lighter cap so a 100% fill still reads as a bar, not a block */
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 60%, rgba(255, 255, 255, .35));
+}
+
+.trk-progress__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    margin-top: 10px;
+    font-size: .8rem;
+    color: var(--muted);
+}
+.trk-progress__meta b { color: var(--ink); font-weight: 700; }
+.trk-progress__meta i { color: var(--accent-text); }
+.trk-progress__meta time { font-weight: 600; color: var(--text); }
+
 /* ── Journey rail (replaces the old map + horizontal stepper) ────────────── */
-.trk-journey { padding: 8px 20px 20px; }
+.trk-journey { padding: 8px 20px 20px; margin: 0; list-style: none; }
 
 .trk-stage {
     display: grid;
@@ -348,6 +530,7 @@ body:has(.trk) {
     font-weight: 600;
     font-size: .95rem;
     color: var(--faint);
+    line-height: 1.35;
     align-self: center;
     display: flex;
     align-items: center;
@@ -356,6 +539,61 @@ body:has(.trk) {
 }
 
 .trk-stage.is-done .trk-stage__label { color: var(--text); }
+
+.trk-stage__num {
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    color: var(--deco);
+    min-width: 1.6em;
+}
+.trk-stage.is-done .trk-stage__num,
+.trk-stage.is-current .trk-stage__num { color: var(--accent-text); }
+
+/* Upcoming stages keep readable text but lighter chrome. */
+.trk-stage.is-next .trk-stage__dot { color: var(--deco); }
+.trk-stage.is-next .trk-stage__desc { color: var(--muted); }
+
+/* Earlier completed stages fold behind the button once JS runs. */
+html.trk-js .trk-journey.is-folded .trk-stage--early,
+html.trk-js .trk-timeline.is-folded .trk-tl--early { display: none; }
+html.trk-js .trk-fold__btn[hidden] { display: inline-flex; }
+
+.trk-fold { list-style: none; padding: 6px 0 4px; position: relative; }
+.trk-fold::after {
+    /* keep the rail continuous above the first visible marker */
+    content: "";
+    position: absolute;
+    left: 16px;
+    top: 100%;
+    height: 13px;
+    width: 2px;
+    background: var(--accent);
+}
+.trk-journey:not(.is-folded) .trk-fold::after { display: none; }
+
+.trk-fold__btn {
+    font: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 36px;
+    padding: 0 12px 0 8px;
+    border: 1px dashed var(--line);
+    border-radius: 100px;
+    background: var(--surface);
+    color: var(--muted);
+    font-size: .8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color var(--motion) var(--ease), color var(--motion) var(--ease), background var(--motion) var(--ease);
+}
+.trk-fold__btn:hover { border-color: var(--accent); color: var(--ink); background: var(--accent-soft); }
+.trk-fold__btn i { font-size: 1.1rem; transition: transform var(--motion) var(--ease); }
+.trk-fold__btn[aria-expanded="true"] i { transform: rotate(180deg); }
+.trk-fold__btn .trk-fold__hide { display: none; }
+.trk-fold__btn[aria-expanded="true"] .trk-fold__show { display: none; }
+.trk-fold__btn[aria-expanded="true"] .trk-fold__hide { display: inline; }
+.trk-fold__btn--history { margin-top: 6px; }
 
 .trk-stage.is-current .trk-stage__label {
     color: var(--ink);
@@ -411,9 +649,10 @@ body:has(.trk) {
     font-size: .74rem;
     font-weight: 600;
 }
-.trk-stage__time { color: var(--muted); }
+.trk-stage__time { color: var(--muted); display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap; }
 .trk-stage__time.is-missing { color: var(--faint); font-weight: 500; font-style: italic; }
 .trk-stage.is-current .trk-stage__time { color: var(--accent-text); }
+.trk-stage__rel { color: var(--muted); font-weight: 500; }
 .trk-stage__flight {
     color: var(--ink);
     background: var(--line-2);
@@ -501,6 +740,7 @@ body:has(.trk) {
 .trk-dl__row:last-child { border-bottom: 0; }
 .trk-dl__k { color: var(--muted); }
 .trk-dl__v { font-weight: 600; word-break: break-word; }
+.trk-dl__sub { color: var(--muted); font-weight: 500; font-size: .8rem; margin-left: 4px; }
 
 /* ── Metrics ─────────────────────────────────────────────────────────────── */
 .trk-metrics {
@@ -525,6 +765,7 @@ body:has(.trk) {
 }
 
 .trk-metric__v small { font-size: .8rem; font-weight: 600; color: var(--muted); }
+.trk-metric__v--text { font-size: 1.05rem; }
 
 .trk-metric__k {
     margin-top: 4px;
@@ -563,7 +804,7 @@ body:has(.trk) {
 .trk-file__ico { color: var(--accent-text); font-size: 1rem; }
 
 /* ── History timeline ────────────────────────────────────────────────────── */
-.trk-timeline { position: relative; padding-left: 20px; }
+.trk-timeline { position: relative; padding-left: 20px; margin: 0; list-style: none; }
 
 .trk-tl {
     position: relative;
@@ -587,7 +828,8 @@ body:has(.trk) {
 .trk-tl.is-latest .trk-tl__dot { border-color: var(--accent); background: var(--accent); }
 .trk-tl.is-latest .trk-tl__status { color: var(--ink); }
 
-.trk-tl__date { font-size: .72rem; color: var(--faint); font-weight: 600; }
+.trk-tl__date { display: block; font-size: .74rem; color: var(--muted); font-weight: 600; }
+.trk-tl__rel { color: var(--accent-text); }
 .trk-tl__status { font-weight: 700; font-size: .9rem; margin-top: 2px; }
 .trk-tl__loc { font-size: .8rem; color: var(--muted); margin-top: 3px; }
 
@@ -606,6 +848,19 @@ body:has(.trk) {
     color: var(--muted);
     font-size: .87rem;
 }
+.trk-note__ico {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    margin: 0 auto 10px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent-text);
+    font-size: 1.3rem;
+}
+.trk-note p { color: var(--text); font-weight: 600; }
+.trk-note__sub { margin-top: 4px; color: var(--muted) !important; font-weight: 500 !important; font-size: .8rem; }
 
 /* ── Footer ──────────────────────────────────────────────────────────────── */
 .trk-foot {
@@ -715,11 +970,36 @@ html.trk-js .trk [data-reveal] {
 
 html.trk-js .trk [data-reveal].is-in { opacity: 1; transform: none; }
 
+@media (prefers-reduced-motion: reduce) {
+    html.trk-js .trk [data-reveal] { opacity: 1; transform: none; transition: none; }
+    .trk-live .dot, .trk-empty__art .ring { animation: none; }
+    .trk-progress__fill, .trk-fold__btn i, .trk-btn { transition: none; }
+}
+
+/* ── Print: the journey and history on paper, no chrome ──────────────────── */
+@media print {
+    html:has(.trk), body:has(.trk), .trk { background: #fff; }
+    .trk-nav, .trk-skip, .trk-copy, .trk-fold, .trk-fold__btn, .trk-live, .trk-foot,
+    .trk-card .trk-btn { display: none !important; }
+    .trk-head { background: none; color: #000; padding: 0 0 12px; border-bottom: 2px solid #000; }
+    .trk-head .trk-eyebrow, .trk-head .trk-tag, .trk-head .trk-live { color: #000; background: none; }
+    .trk-status-badge { color: #000; background: none; box-shadow: inset 0 0 0 1.5px #000; }
+    .trk-main { padding: 0; }
+    .trk-grid { grid-template-columns: 1fr; margin-top: 12px; gap: 12px; }
+    .trk-card { border-color: #999; break-inside: avoid; }
+    html.trk-js .trk [data-reveal] { opacity: 1; transform: none; }
+    html.trk-js .trk-journey.is-folded .trk-stage--early,
+    html.trk-js .trk-timeline.is-folded .trk-tl--early { display: grid; }
+    html.trk-js .trk-timeline.is-folded .trk-tl--early { display: block; }
+    .trk-progress { background: none; }
+    .trk-progress__fill { background: #000; }
+}
+
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 980px) {
     .trk-grid { grid-template-columns: 1fr; }
     .trk-two { grid-template-columns: 1fr; }
-    .trk-state { text-align: left; align-items: flex-start; }
+    .trk-state { text-align: left; flex-direction: row; flex-wrap: wrap; align-items: center; }
     .trk-head__inner { align-items: flex-start; }
 }
 
@@ -732,6 +1012,13 @@ html.trk-js .trk [data-reveal].is-in { opacity: 1; transform: none; }
     .trk-card__body { padding: 16px; }
     .trk-empty__box { padding: 32px 22px; }
     .trk-card__hint { display: none; }
+    .trk-progress { padding: 16px; }
+    .trk-progress__pct { font-size: 1.35rem; }
+    .trk-journey { padding: 6px 16px 16px; }
+    .trk-stage { grid-template-columns: 30px 1fr; gap: 12px; }
+    .trk-stage__dot { width: 30px; height: 30px; font-size: .85rem; }
+    .trk-stage::before { left: 14px; }
+    .trk-fold::after { left: 14px; }
     .trk-route { padding: 12px 10px; }
     .trk-route__code { font-size: .95rem; }
     .trk-route__city { font-size: .7rem; }

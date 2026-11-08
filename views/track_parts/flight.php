@@ -7,8 +7,8 @@ if ($mode !== 'air') return;
 $route   = $progress['route'];
 $lastUpd = !empty($progress['last_updated']) ? date('M d, Y · h:i A', strtotime($progress['last_updated'])) : '';
 ?>
-<div class="trk-card" data-reveal>
-	<div class="trk-card__head"><span class="ico"><i class="mdi mdi-airplane-takeoff"></i></span> Flight Details</div>
+<section class="trk-card" data-reveal aria-labelledby="trk-flight-title">
+	<div class="trk-card__head"><span class="ico" aria-hidden="true"><i class="mdi mdi-airplane-takeoff"></i></span> <h2 class="trk-card__title" id="trk-flight-title">Flight Details</h2></div>
 	<div class="trk-card__body">
 		<div class="trk-route">
 			<div class="trk-route__pt">
@@ -16,13 +16,13 @@ $lastUpd = !empty($progress['last_updated']) ? date('M d, Y · h:i A', strtotime
 				<span class="trk-route__city"><?php echo $e($route['origin']['city']); ?></span>
 				<span class="trk-route__role">Origin</span>
 			</div>
-			<span class="trk-route__arrow"><i class="mdi mdi-airplane"></i></span>
+			<span class="trk-route__arrow" aria-hidden="true"><i class="mdi mdi-airplane"></i></span>
 			<div class="trk-route__pt">
 				<span class="trk-route__code"><?php echo $e($route['transit']['code']); ?></span>
 				<span class="trk-route__city"><?php echo $e($route['transit']['city']); ?></span>
 				<span class="trk-route__role">Transit</span>
 			</div>
-			<span class="trk-route__arrow"><i class="mdi mdi-airplane"></i></span>
+			<span class="trk-route__arrow" aria-hidden="true"><i class="mdi mdi-airplane"></i></span>
 			<div class="trk-route__pt">
 				<span class="trk-route__code"><?php echo $e($route['destination']['code']); ?></span>
 				<span class="trk-route__city"><?php echo $e($route['destination']['city']); ?></span>
@@ -42,4 +42,4 @@ $lastUpd = !empty($progress['last_updated']) ? date('M d, Y · h:i A', strtotime
 			<div class="trk-dl__row"><span class="trk-dl__k">Last Updated</span><span class="trk-dl__v"><?php echo $lastUpd ? $e($lastUpd) : 'No update recorded yet'; ?></span></div>
 		</div>
 	</div>
-</div>
+</section>

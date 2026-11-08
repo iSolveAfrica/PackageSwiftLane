@@ -145,3 +145,24 @@ Regression checks: `node scripts/check_ui_runtime.cjs`,
 `node scripts/check_auth_requests.cjs <preview-base-url>`. Browser checks require
 Playwright and Chromium (`CHROMIUM_PATH` can select a different executable).
 Auth browser tests intercept mutation requests; use a local test environment.
+
+## Public tracking pages
+
+`track.php` and `track_online_shopping.php` do not use the shell. They load
+`swiftlane-tokens.css` and then `assets/css_main_swiftlane/css/track-details.css`,
+whose `.trk` palette is the tokens with literal fallbacks (error403.php loads
+the sheet on its own). The journey ("stage") rail is shared through
+`views/track_parts/journey.php`, `flight.php` and `history.php`, with the
+presentation helpers in `helpers/track_ui.php` (stage summary, `<time>` values,
+relative dates, safe status colours). Rules that apply there:
+
+- The rail is an `<ol>`; the current step carries `aria-current="step"`, every
+  marker has a text equivalent and every timestamp is a `<time datetime>`.
+- "Stage x of n" and the progress bar come from `cdp_trackStageSummary()`; the
+  long air rail folds its earlier completed stages behind a button only once
+  JavaScript runs (`cdp_trackFoldCount()`), so nothing is hidden without it.
+- Status colours from `cdb_styles` tint the badge surface and ring, as the app's
+  `.label.swl-status` pills do; text is never coloured by hand, and the
+  no-`color-mix()` fallback uses the ink `cdp_trackColorInk()` picks.
+- Secondary text uses `--muted` (the tokens' `--text-muted`, 5.6:1); the
+  decorative slate is `--deco` and is never used for text.

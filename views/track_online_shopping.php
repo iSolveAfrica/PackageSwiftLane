@@ -24,6 +24,7 @@
 require_once('helpers/querys.php');
 require_once('helpers/track_progress.php');
 require_once('helpers/air_journey.php');
+require_once('helpers/track_ui.php');
 require_once('helpers/asset.php');
 
 if (isset($_GET['order_track'])) {
@@ -194,29 +195,32 @@ $print_href = "print_customer_package_track.php";
 	<meta name="description" content="">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<meta name="theme-color" content="#0d1b2a">
+	<meta name="theme-color" content="#192A3E">
 	<title><?php echo $e($lang['left127']); ?> | <?php echo $e($core->site_name); ?></title>
 	<link rel="icon" type="image/png" sizes="16x16" href="assets/<?php echo $e($core->favicon); ?>">
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-	<link rel="stylesheet" href="assets/css_main_swiftlane/css/materialdesignicons.min.css">
+	<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+	<noscript><link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
+	<link rel="stylesheet" href="<?= cdp_asset('assets/css_main_swiftlane/css/swiftlane-tokens.css') ?>">
+	<link rel="stylesheet" href="<?= cdp_asset('assets/css_main_swiftlane/css/materialdesignicons.min.css') ?>">
 	<link rel="stylesheet" href="<?= cdp_asset('assets/css_main_swiftlane/css/track-details.css') ?>">
 </head>
 
 <body>
 <div class="trk">
+	<a class="trk-skip" href="#trk-main">Skip to shipment details</a>
 
 	<!-- ── Top bar ──────────────────────────────────────────────────────── -->
-	<header class="trk-nav">
+	<header class="trk-nav" role="banner">
 		<a class="trk-nav__logo" href="index.php">
 			<?php echo ($core->logo_web)
 				? '<img src="assets/' . $e($core->logo_web) . '" alt="' . $e($core->site_name) . '">'
 				: '<span>' . $e($core->site_name) . '</span>'; ?>
 		</a>
 		<div class="trk-nav__actions">
-			<a href="tracking.php" class="trk-btn trk-btn--ghost"><i class="mdi mdi-magnify"></i> <?php echo $e($lang['left127']); ?></a>
-			<a href="index.php" class="trk-btn trk-btn--dark"><i class="mdi mdi-home-outline"></i> <?php echo $e($lang['left180'] ?? 'Home'); ?></a>
+			<a href="tracking.php" class="trk-btn trk-btn--ghost"><i class="mdi mdi-magnify" aria-hidden="true"></i> <?php echo $e($lang['left127']); ?></a>
+			<a href="index.php" class="trk-btn trk-btn--dark"><i class="mdi mdi-home-outline" aria-hidden="true"></i> <?php echo $e($lang['left180'] ?? 'Home'); ?></a>
 		</div>
 	</header>
 
@@ -235,8 +239,8 @@ $print_href = "print_customer_package_track.php";
 			<span class="trk-empty__code"><?php echo $e($rawOrderTrackInput); ?></span>
 			<p class="mt-2"><?php echo $e($lang['track-shipment2'] ?? 'Please double-check the number, or reach out to our team and we’ll be glad to help.'); ?></p>
 			<div class="trk-empty__actions">
-				<a href="tracking.php" class="trk-btn trk-btn--grad"><i class="mdi mdi-magnify"></i> Try Another Number</a>
-				<a href="index.php" class="trk-btn trk-btn--ghost"><i class="mdi mdi-home-outline"></i> <?php echo $e($lang['left183'] ?? 'Back to Home'); ?></a>
+				<a href="tracking.php" class="trk-btn trk-btn--grad"><i class="mdi mdi-magnify" aria-hidden="true"></i> Try Another Number</a>
+				<a href="index.php" class="trk-btn trk-btn--ghost"><i class="mdi mdi-home-outline" aria-hidden="true"></i> <?php echo $e($lang['left183'] ?? 'Back to Home'); ?></a>
 			</div>
 		</div>
 	</section>
@@ -245,6 +249,7 @@ $print_href = "print_customer_package_track.php";
 		$track_code   = $track->order_prefix . $track->order_no;
 		$latest_entry = $hist_count > 0 ? $courier_track[$hist_count - 1] : null;
 		$current_step = $progress['steps'][$progress['index']] ?? null;
+		$stage_summary = cdp_trackStageSummary($progress);
 	?>
 
 	<!-- ══════════════════════════ FOUND ═════════════════════════════════ -->
@@ -256,30 +261,37 @@ $print_href = "print_customer_package_track.php";
 				<p class="trk-eyebrow"><?php echo $e($lang['track-shipment4'] ?? 'Shipment Tracking'); ?></p>
 				<h1 class="trk-code">
 					<?php echo $e($track_code); ?>
-					<button type="button" class="trk-copy" data-copy="<?php echo $e($track_code); ?>"><i class="mdi mdi-content-copy"></i> Copy</button>
+					<button type="button" class="trk-copy" data-copy="<?php echo $e($track_code); ?>" aria-label="Copy tracking number <?php echo $e($track_code); ?>"><i class="mdi mdi-content-copy" aria-hidden="true"></i> <span data-copy-label>Copy</span></button>
+					<span class="trk-sr" data-copy-status role="status" aria-live="polite"></span>
 				</h1>
 				<div class="trk-tags">
-					<span class="trk-tag"><i class="mdi <?php echo $mode === 'air' ? 'mdi-airplane' : 'mdi-ferry'; ?>"></i> <?php echo $mode === 'air' ? 'Air Freight' : 'Sea Freight'; ?></span>
-					<?php if ($mode === 'air') : ?><span class="trk-tag"><i class="mdi mdi-map-marker-path"></i> <?php echo $e($progress['route']['origin']['code']); ?> → <?php echo $e($progress['route']['transit']['code']); ?> → <?php echo $e($progress['route']['destination']['code']); ?></span><?php endif; ?>
-					<span class="trk-tag"><i class="mdi mdi-calendar-blank-outline"></i> <?php echo $e($track->order_date); ?></span>
-					<span class="trk-tag"><i class="mdi mdi-package-variant-closed"></i> <?php echo (int)$count; ?> <?php echo $e($lang['track-shipment11'] ?? 'Packages'); ?></span>
+					<span class="trk-tag"><i class="mdi <?php echo $mode === 'air' ? 'mdi-airplane' : 'mdi-ferry'; ?>" aria-hidden="true"></i> <?php echo $mode === 'air' ? 'Air Freight' : 'Sea Freight'; ?></span>
+					<?php if ($mode === 'air') : ?><span class="trk-tag"><i class="mdi mdi-map-marker-path" aria-hidden="true"></i> <?php echo $e($progress['route']['origin']['code']); ?> → <?php echo $e($progress['route']['transit']['code']); ?> → <?php echo $e($progress['route']['destination']['code']); ?></span><?php endif; ?>
+					<span class="trk-tag"><i class="mdi mdi-calendar-blank-outline" aria-hidden="true"></i> <?php echo $e($track->order_date); ?></span>
+					<span class="trk-tag"><i class="mdi mdi-package-variant-closed" aria-hidden="true"></i> <?php echo (int)$count; ?> <?php echo $e($lang['track-shipment11'] ?? 'Packages'); ?></span>
 				</div>
 			</div>
 			<div class="trk-state">
-				<span class="trk-status-badge" style="--c: <?php echo $e($status_color); ?>;">
-					<span class="dot"></span><?php echo $e($status_name); ?>
+				<?php $badge_color = cdp_trackSafeColor($status_color); ?>
+				<span class="trk-status-badge" style="--c: <?php echo $e($badge_color); ?>; --c-ink: <?php echo $e(cdp_trackColorInk($badge_color)); ?>;">
+					<span class="dot" aria-hidden="true"></span><span class="trk-sr">Status: </span><?php echo $e($status_name); ?>
 				</span>
+				<?php if (!empty($stage_summary['count'])) : ?>
+				<span class="trk-stagepill">Stage <?php echo (int) $stage_summary['current']; ?> of <?php echo (int) $stage_summary['count']; ?></span>
+				<?php endif; ?>
 				<span class="trk-live">
-					<span class="dot"></span>
-					<?php echo $latest_entry
-						? 'Last updated ' . $e(date('M d, Y · h:i A', strtotime($latest_entry->t_date)))
-						: 'Live tracking'; ?>
+					<span class="dot" aria-hidden="true"></span>
+					<?php if ($latest_entry) : ?>
+						Last updated <time datetime="<?php echo $e(cdp_trackIsoDate($latest_entry->t_date)); ?>" title="<?php echo $e(cdp_trackFmtDate($latest_entry->t_date)); ?>"><?php echo $e(cdp_trackRelativeDate($latest_entry->t_date)); ?></time>
+					<?php else : ?>
+						Live tracking
+					<?php endif; ?>
 				</span>
 			</div>
 		</div>
 	</section>
 
-	<main class="trk-main">
+	<main class="trk-main" id="trk-main" tabindex="-1">
 		<div class="trk-grid">
 
 			<!-- ── Main column ──────────────────────────────────────────── -->
@@ -291,7 +303,7 @@ $print_href = "print_customer_package_track.php";
 
 				<!-- Shipment contents -->
 				<div class="trk-card" data-reveal>
-					<div class="trk-card__head"><span class="ico"><i class="mdi mdi-cube-outline"></i></span> Shipment Details</div>
+					<div class="trk-card__head"><span class="ico" aria-hidden="true"><i class="mdi mdi-cube-outline"></i></span> <h2 class="trk-card__title">Shipment Details</h2></div>
 					<div class="trk-card__body">
 						<div class="trk-metrics">
 							<div class="trk-metric">
@@ -303,11 +315,11 @@ $print_href = "print_customer_package_track.php";
 								<div class="trk-metric__k"><?php echo $e($lang['track-shipment13'] ?? 'Total Weight'); ?></div>
 							</div>
 							<div class="trk-metric">
-								<div class="trk-metric__v" style="font-size:1.05rem;"><?php echo $e($track->order_date); ?></div>
+								<div class="trk-metric__v trk-metric__v--text"><?php echo $e($track->order_date); ?></div>
 								<div class="trk-metric__k"><?php echo $e($lang['track-shipment8'] ?? 'Date of Shipment'); ?></div>
 							</div>
 							<div class="trk-metric">
-								<div class="trk-metric__v" style="font-size:1.05rem;"><?php echo $e($delivery_time ? $delivery_time->delitime : '—'); ?></div>
+								<div class="trk-metric__v trk-metric__v--text"><?php echo $e($delivery_time ? $delivery_time->delitime : '—'); ?></div>
 								<div class="trk-metric__k"><?php echo $e($lang['track-shipment9'] ?? 'Shipping Time'); ?></div>
 							</div>
 						</div>
@@ -368,7 +380,7 @@ $print_href = "print_customer_package_track.php";
 				if ($numrows > 0 || !empty($track->photo_delivered)) : ?>
 				<!-- Proof of delivery & files -->
 				<div class="trk-card" data-reveal>
-					<div class="trk-card__head"><span class="ico"><i class="mdi mdi-image-outline"></i></span> <?php echo $e($lang['leftorder55'] ?? 'Proof of Delivery'); ?></div>
+					<div class="trk-card__head"><span class="ico" aria-hidden="true"><i class="mdi mdi-image-outline"></i></span> <h2 class="trk-card__title"><?php echo $e($lang['leftorder55'] ?? 'Proof of Delivery'); ?></h2></div>
 					<div class="trk-card__body">
 						<?php if (!empty($track->photo_delivered)) : ?>
 							<img src="<?php echo $e($track->photo_delivered); ?>" alt="Proof of delivery" class="trk-photo mb-3">
@@ -394,16 +406,16 @@ $print_href = "print_customer_package_track.php";
 			<aside class="trk-col">
 
 				<div class="trk-card" data-reveal>
-					<div class="trk-card__head"><span class="ico"><i class="mdi mdi-clipboard-text-outline"></i></span> Summary</div>
+					<div class="trk-card__head"><span class="ico" aria-hidden="true"><i class="mdi mdi-clipboard-text-outline"></i></span> <h2 class="trk-card__title">Summary</h2></div>
 					<div class="trk-card__body">
 						<div class="trk-dl">
 							<div class="trk-dl__row"><span class="trk-dl__k">Tracking Number</span><span class="trk-dl__v"><?php echo $e($track_code); ?></span></div>
 							<div class="trk-dl__row"><span class="trk-dl__k">Status</span><span class="trk-dl__v"><?php echo $e($status_name); ?></span></div>
-							<div class="trk-dl__row"><span class="trk-dl__k">Stage</span><span class="trk-dl__v"><?php echo $e($current_step['label'] ?? '—'); ?></span></div>
+							<div class="trk-dl__row"><span class="trk-dl__k">Stage</span><span class="trk-dl__v"><?php echo $e($current_step['label'] ?? '—'); ?><?php if (!empty($stage_summary['count'])) : ?> <span class="trk-dl__sub"><?php echo (int) $stage_summary['current']; ?> of <?php echo (int) $stage_summary['count']; ?></span><?php endif; ?></span></div>
 							<div class="trk-dl__row"><span class="trk-dl__k"><?php echo $e($lang['track-shipment19'] ?? 'Est. Delivery'); ?></span><span class="trk-dl__v"><?php echo $e($track->order_datetime ?: '—'); ?></span></div>
 						</div>
-						<a class="trk-btn trk-btn--grad mt-3" style="display:flex;justify-content:center;" target="_blank" href="<?php echo $e($print_href); ?>?id=<?php echo (int)$track->order_id; ?>">
-							<i class="mdi mdi-printer"></i> <?php echo $e($lang['toolprint'] ?? 'Print'); ?>
+						<a class="trk-btn trk-btn--grad trk-btn--block mt-3" target="_blank" rel="noopener" href="<?php echo $e($print_href); ?>?id=<?php echo (int)$track->order_id; ?>">
+							<i class="mdi mdi-printer" aria-hidden="true"></i> <?php echo $e($lang['toolprint'] ?? 'Print'); ?><span class="trk-sr"> (opens in a new tab)</span>
 						</a>
 					</div>
 				</div>
