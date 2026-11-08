@@ -272,10 +272,9 @@ function sl_navResolve(string $activeId): array
             ];
         }
         if ($items) {
-            $out[] = ['label' => $g['label'], 'items' => $items, 'open' => in_array('is-active', array_column($items, 'cls'), true)];
+            $out[] = ['label' => $g['label'], 'items' => $items, 'open' => in_array($g['label'], ['Operations', 'My shipping'], true)];
         }
     }
-    if ($out && !array_filter($out, fn($group) => $group['open'])) $out[0]['open'] = true;
     return $out;
 }
 

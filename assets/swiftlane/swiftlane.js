@@ -347,3 +347,26 @@
     document.addEventListener('click', function () { setTimeout(soon, 60); });
   })();
 })();
+
+// Keep native details keyboard behavior while animating sidebar groups both ways.
+(function () {
+  document.querySelectorAll('.sl-nav-group').forEach(function (group) {
+    var summary = group.querySelector('summary'), animation = null, expanded = group.open;
+    summary.addEventListener('click', function (event) {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !group.animate) return;
+      event.preventDefault();
+      var from = group.getBoundingClientRect().height;
+      expanded = animation ? !expanded : !group.open;
+      if (animation) { animation.cancel(); animation = null; }
+      group.open = true;
+      var to = expanded ? group.getBoundingClientRect().height : summary.getBoundingClientRect().height;
+      group.style.overflow = 'hidden';
+      animation = group.animate([{ height: from + 'px' }, { height: to + 'px' }], { duration: 240, easing: 'cubic-bezier(.2,.8,.2,1)' });
+      animation.onfinish = function () {
+        group.open = expanded;
+        group.style.overflow = '';
+        animation = null;
+      };
+    });
+  });
+})();

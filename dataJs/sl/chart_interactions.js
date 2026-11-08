@@ -14,11 +14,15 @@
     active = null;
   }
   function position(box) {
-    var r = box.getBoundingClientRect(), w = Math.min(340, innerWidth - 24);
+    var r = box.getBoundingClientRect(), pointer = active && active.chart.pointer, w = Math.min(280, innerWidth - 24);
     tip.style.width = w + 'px';
     tip.style.left = Math.max(12, Math.min(innerWidth - w - 12, r.left + r.width / 2 - w / 2)) + 'px';
     var h = tip.getBoundingClientRect().height;
     tip.style.top = Math.max(12, r.top > h + 20 ? r.top - h - 10 : Math.min(innerHeight - h - 12, r.bottom + 10)) + 'px';
+    if (pointer && !pinned) {
+      tip.style.left = Math.max(12, Math.min(innerWidth - w - 12, pointer.x + 16)) + 'px';
+      tip.style.top = Math.max(12, Math.min(innerHeight - h - 12, pointer.y > h + 24 ? pointer.y - h - 14 : pointer.y + 20)) + 'px';
+    }
   }
   function positionGuide(chart, index) {
     if (chart.kind === 'donut' || chart.labels.length < 2 || chart.points.length) { guide.hidden = true; return; }
@@ -97,6 +101,9 @@
     root.removeAttribute('aria-hidden'); root.querySelectorAll('[aria-hidden="true"]').forEach(function (n) { n.removeAttribute('aria-hidden'); });
     var hidden = root.closest('[aria-hidden="true"]'); if (hidden) hidden.removeAttribute('aria-hidden');
     root.dataset.chartReady = 'true'; root.classList.add('sl-interactive-chart');
+    // The custom popup replaces native browser tooltips; keep the captured data.
+    root.querySelectorAll('[title]').forEach(function (node) { node.removeAttribute('title'); });
+    root.querySelectorAll('title').forEach(function (node) { node.remove(); });
     if (root instanceof SVGElement && root.viewBox && root.viewBox.baseVal.width) {
       var hit = document.createElementNS('http://www.w3.org/2000/svg', 'rect'), bounds = root.viewBox.baseVal;
       hit.setAttribute('x', bounds.x); hit.setAttribute('y', bounds.y); hit.setAttribute('width', bounds.width); hit.setAttribute('height', bounds.height);
@@ -129,8 +136,9 @@
       }
       return Math.round(Math.max(0, Math.min(1, f)) * (count - 1));
     }
-    root.addEventListener('pointerenter', function (event) { if (event.pointerType !== 'touch') show(chart, indexAt(event), false); });
-    root.addEventListener('pointermove', function (event) { if (event.pointerType !== 'touch') show(chart, indexAt(event), false); });
+    function hover(event) { if (event.pointerType !== 'touch') { chart.pointer = { x: event.clientX, y: event.clientY }; show(chart, indexAt(event), false); } }
+    root.addEventListener('pointerenter', hover);
+    root.addEventListener('pointermove', hover);
     root.addEventListener('pointerleave', function () { if (!pinned && active && active.chart === chart) hide(); });
     root.addEventListener('click', function (event) {
       if (root === focus && root.matches('a[href]')) return;
@@ -140,6 +148,7 @@
     focus.addEventListener('focus', function () { if (!restoringFocus) { if (active && active.chart !== chart) hide(); show(chart, chart.index, false); } });
     focus.addEventListener('blur', function () { if (!pinned && active && active.chart === chart) hide(); });
     focus.addEventListener('keydown', function (event) {
+      chart.pointer = null;
       var i = chart.index;
       if (event.key === 'ArrowRight') i++;
       else if (event.key === 'ArrowLeft') i--;

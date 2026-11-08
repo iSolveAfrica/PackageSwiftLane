@@ -70,6 +70,16 @@ function sl_overviewData($user, $core, $userData): array
     $arriving = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier = 3 $agency");
     $awaiting = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (6,32) $agency");
     $d['warehouse'] = ['used' => $inBay, 'capacity' => $capacity, 'pct' => $capacity > 0 ? sl_pct($inBay, $capacity) : 0, 'arriving' => $arriving, 'awaiting' => $awaiting];
+    $registeredToday = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND DATE(a.order_date) = CURDATE() $agency");
+    $d['deskStats'] = [];
+    if ($user->cdp_hasPermission('view_shipment_list')) {
+        $handedToday = (int) sl_scalar("SELECT COUNT(DISTINCT a.order_id) FROM cdb_add_order a JOIN cdb_courier_track t ON t.order_track = CONCAT(a.order_prefix, a.order_no) WHERE a.is_deleted = 0 AND t.status_courier IN (8,15) AND t.t_date >= CURDATE() AND t.t_date < CURDATE() + INTERVAL 1 DAY $agency");
+        $d['deskStats'][] = ['label' => 'Registered today', 'n' => $registeredToday, 'sub' => 'New air shipments', 'icon' => 'i-plus', 'href' => sl_route('AirShipments', ['period' => 'today'])];
+        $d['deskStats'][] = ['label' => 'Handed over today', 'n' => $handedToday, 'sub' => 'Picked up or delivered', 'icon' => 'i-check', 'href' => sl_route('AirShipments', ['filter' => 'delivered'])];
+    }
+    if ($user->cdp_hasPermission(['view_warehouse_delivery', 'warehouse_deliver_package'])) {
+        $d['deskStats'][] = ['label' => 'Ready for collection', 'n' => $awaiting, 'sub' => 'Air shipments awaiting handover', 'icon' => 'i-box', 'href' => sl_route('HandOut')];
+    }
 
     // ── Smart briefing: rule based cards from live figures ─────────────────
     $brief = [];
@@ -90,7 +100,7 @@ function sl_overviewData($user, $core, $userData): array
         ['l' => 'In warehouse', 'v' => sl_num($inBay), 's' => 'bays used', 'href' => sl_route('Warehouse'), 'a' => ''],
         ['l' => 'Out for delivery', 'v' => sl_num(sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier = 7 $agency")), 's' => "$driversOut riders", 'href' => sl_route('DeliveryTracking'), 'a' => ''],
         ['l' => 'Delivered today', 'v' => sl_num(sl_scalar("SELECT COUNT(*) FROM cdb_courier_track t WHERE t.status_courier IN (8,15) AND DATE(t.t_date) = CURDATE()")), 's' => 'since midnight', 'href' => sl_route('AirShipments', ['status' => 8]), 'a' => 'g'],
-        ['l' => 'Registered today', 'v' => sl_num(sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND DATE(a.order_date) = CURDATE() $agency")), 's' => 'new shipments', 'href' => sl_route('AirShipments'), 'a' => ''],
+        ['l' => 'Registered today', 'v' => sl_num($registeredToday), 's' => 'new shipments', 'href' => sl_route('AirShipments'), 'a' => ''],
         ['l' => 'Open tickets', 'v' => sl_num(sl_tableExists('cdb_cs_tickets') ? sl_scalar("SELECT COUNT(*) FROM cdb_cs_tickets WHERE status NOT IN ('closed','resolved')") : 0), 's' => 'customer service', 'href' => sl_route('CsInbox'), 'a' => ''],
     ];
     $d['clock'] = date('H:i');

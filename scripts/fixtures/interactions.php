@@ -21,7 +21,8 @@ $core = (object) ['site_name' => 'Swift Lane'];
 <?php
 $navItem = fn($label, $href, $active = false) => ['href' => $href, 'label' => $label, 'icon' => 'i-grid', 'cls' => $active ? 'is-active' : '', 'ok' => '', 'c1' => '', 'c2' => ''];
 $slNav = [
-    ['label' => 'Command Centers', 'open' => true, 'items' => [$navItem('Management Center', 'exec_dashboard.php', true), $navItem('AI Automation Center', 'ai_center.php')]],
+    ['label' => 'Operations', 'open' => true, 'items' => [$navItem('Overview', 'index.php')]],
+    ['label' => 'Command Centers', 'open' => false, 'items' => [$navItem('Management Center', 'exec_dashboard.php', true), $navItem('AI Automation Center', 'ai_center.php')]],
     ['label' => 'Developer', 'open' => false, 'items' => [$navItem('Developer Console', 'dev_overview.php')]],
     ['label' => 'Support', 'open' => false, 'items' => [$navItem('Support Desk', 'support_inbox.php'), $navItem('Knowledge Base', 'support_playbook.php#knowledge-base')]],
 ];
@@ -61,6 +62,11 @@ include CDP_ROOT . '/views/sl/pages/partials/overview_intake.php';
 </div><section class="fixture-extra"><h2>Mixed chart</h2><svg id="mixed-chart" viewBox="0 0 400 150" <?= sl_chartAttrs([['name'=>'Shipments','values'=>[0,12,8]],['name'=>'Packages','values'=>[2,4,6]]], ['Nov 6','Nov 7','Nov 8'], 'Daily volume') ?>><rect x="175" y="25" width="50" height="125" fill="#D6D2CA"/><polyline points="0,130 200,110 400,90" fill="none" stroke="#E08A3C"/></svg></section>
 <section class="fixture-extra"><h2>Heatmap</h2><div class="sl-heat" id="test-heat" style="grid-template-columns:repeat(2,14px)"><b class="h0" title="Nov 7: 0 parcels"></b><b class="h3" title="Nov 8: 12 parcels"></b></div></section>
 <section class="fixture-extra"><div id="test-donut" class="donut" style="width:150px;height:150px;background:conic-gradient(#333 0% 60%,#abc 60% 100%);border-radius:50%" <?= sl_chartAttrs([['name'=>'Parcels','values'=>[0,12,8]]], ['No data','In transit','Delivered'], 'Status mix', null, null, 'donut') ?>></div></section>
+<section class="fixture-extra" id="model-fixture">
+<form id="aic-form"><input name="provider" type="hidden" value="openai"><button type="button" data-prov="openai" data-models='{"saved-model":"Saved model"}'>OpenAI</button><button type="button" data-prov="anthropic" data-models='{"other-model":"Other model"}'>Claude</button>
+<?php $d = ['provider'=>'openai','model'=>'saved-model','providers'=>['openai'=>['models'=>['saved-model'=>'Saved model']]]]; include CDP_ROOT . '/views/sl/pages/partials/ai_model_picker.php'; ?>
+<button type="button" id="aic-models-btn">Load models</button><button type="button" id="aic-test">Test connection</button><span id="aic-out" role="status"></span></form>
+</section>
 <div id="ai-fixture">
 <?php
 $answer = <<<'MD'
@@ -86,5 +92,5 @@ include CDP_ROOT . '/views/sl/pages/StaffAI.php';
 ?>
 </div></main></div><div id="sl-toast" role="status" hidden></div>
 <script src="/assets/swiftlane/swiftlane.js"></script>
-<script src="/assets/vendor/libs/marked/marked.min.js"></script><script src="/assets/vendor/libs/dompurify/purify.min.js"></script><script src="/dataJs/sl/ai_response.js"></script><script src="/dataJs/sl/ai_chat.js"></script>
+<script src="/assets/vendor/libs/marked/marked.min.js"></script><script src="/assets/vendor/libs/dompurify/purify.min.js"></script><script src="/dataJs/sl/ai_response.js"></script><script src="/dataJs/sl/ai_chat.js"></script><script src="/dataJs/sl/ai_center.js"></script>
 </html>
