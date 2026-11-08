@@ -45,11 +45,15 @@ form.sl-inline{display:contents}
 .sl-main{padding-left:24px;padding-right:24px}
 @media (max-width:900px){.sl-main{padding-left:16px;padding-right:16px}}
 
-/* USD/GHS display switch in the icon rail, under Warehouse (views/sl/inc/shell_frame.php) */
-.sl-rail .sl-ccy-rail{width:40px;height:40px;border-radius:var(--r-sm);display:grid;place-items:center;border:0;background:transparent;color:var(--ink-2);font:600 16px/1 inherit;cursor:pointer;position:relative}
-.sl-rail .sl-ccy-rail:hover{background:var(--hover)}
-.sl-rail .sl-ccy-rail.on{background:var(--active);color:var(--ink)}
-.sl-rail .sl-ccy-rail.on::after{content:"";position:absolute;top:7px;right:7px;width:6px;height:6px;border-radius:50%;background:var(--green)}
+/* USD/GHS display switch in the icon rail, under Warehouse (views/sl/inc/shell_frame.php):
+   a small vertical toggle with both labels; the active currency is filled. */
+.sl-rail .sl-ccy-rail{width:40px;height:auto;padding:4px 0;border:0;background:transparent;display:grid;place-items:center;cursor:pointer;margin-top:2px}
+.sl-rail .sl-ccy-rail .ccy-pill{display:flex;flex-direction:column;gap:2px;padding:2px;border-radius:9px;background:var(--line-2);border:1px solid var(--line)}
+.sl-rail .sl-ccy-rail .ccy-pill b{display:block;width:32px;padding:4px 0;border-radius:7px;font-size:10px;font-weight:600;letter-spacing:.02em;line-height:1;text-align:center;color:var(--muted)}
+.sl-rail .sl-ccy-rail .ccy-pill b.act{background:var(--ink);color:var(--bg,#fff)}
+.sl-rail .sl-ccy-rail.on .ccy-pill b.act{background:var(--green);color:#fff}
+.sl-rail .sl-ccy-rail:hover .ccy-pill{border-color:var(--ink-2)}
+.sl-rail .sl-ccy-rail.is-on{background:transparent}
 .sl-rail .sl-ccy-rail.loading{opacity:.6}
 
 /* Support inbox: keep the ticket column narrow so every column fits; long subjects end with … (full text on hover / in the ticket). */
