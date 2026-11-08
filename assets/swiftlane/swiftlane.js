@@ -243,12 +243,23 @@
     var sel = '.sl-masonry,.hb-g';
     function lay(g) {
       var cs = getComputedStyle(g), cols = cs.gridTemplateColumns.split(' ').length;
-      var gap = parseFloat(cs.columnGap) || 16;
-      Array.prototype.forEach.call(g.children, function (k) {
-        if (cols < 2) { k.style.gridRowEnd = ''; return; }
-        k.style.gridRowEnd = 'span ' + Math.max(1, Math.ceil(k.getBoundingClientRect().height + gap));
-      });
+      var gap = parseFloat(cs.columnGap) || 16, kids = Array.prototype.slice.call(g.children);
+      kids.forEach(function (k) { k.style.minHeight = ''; });
       g.classList.toggle('is-masonry', cols > 1);
+      if (cols < 2) { kids.forEach(function (k) { k.style.gridRowEnd = ''; }); return; }
+      kids.forEach(function (k) { k.style.gridRowEnd = 'span ' + Math.max(1, Math.ceil(k.getBoundingClientRect().height + gap)); });
+      /* close the holes: the last card in each column grows to the grid's bottom edge */
+      var last = {}, bottom = 0;
+      kids.forEach(function (k) {
+        if (k.offsetParent === null) return;
+        var r = k.getBoundingClientRect(); bottom = Math.max(bottom, r.bottom);
+        var key = Math.round(r.left) + ':' + Math.round(r.right);
+        if (!last[key] || r.bottom > last[key].r.bottom) last[key] = { k: k, r: r };
+      });
+      Object.keys(last).forEach(function (key) {
+        var it = last[key], d = bottom - it.r.bottom;
+        if (d > 1) it.k.style.minHeight = Math.round(it.r.height + d) + 'px';
+      });
     }
     var grids = document.querySelectorAll(sel);
     if (!grids.length) return;
