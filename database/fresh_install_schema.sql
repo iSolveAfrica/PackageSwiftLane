@@ -1,4 +1,4 @@
--- Swift Lane database package, generated 2026-11-06 by scripts/build_database_package.php
+-- Swift Lane database package, generated 2026-11-08 by scripts/build_database_package.php
 -- Engine: MySQL 8.0+ (tested on 9.7) or MariaDB 10.6+. Character set utf8mb4.
 -- FRESH INSTALL: schema + reference data + every migration. Run on an EMPTY database only.
 -- Creates no user accounts: run `php scripts/create_admin.php` afterwards.
@@ -158860,4 +158860,73 @@ WHERE ma.action_name IN ('view_warehouse_pickups', 'warehouse_receive', 'warehou
 
 INSERT INTO cdb_schema_migrations (name, applied_at) SELECT '2026_11_06_warehouse_packages', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_schema_migrations WHERE name = '2026_11_06_warehouse_packages');
 SELECT 'ok: 2026_11_06_warehouse_packages' AS result;
+
+
+-- >>> migrations/2026_11_08_support_rule_templates.sql
+-- Support > Automate: 20 ready-made rules for Swift Lane, installed as DRAFTS.
+-- Nothing runs until an admin reviews and publishes each rule. Safe to re-run.
+
+INSERT INTO cdb_cs_rules (name, kind, trigger_event, match_mode, conditions, actions, status, sort_order, stop_processing, max_per_ticket, version, run_count, fail_count, template_key, created_at, updated_at)
+SELECT 'SLA nearly missed: tell the leads', 'automation', 'sla.warning', 'all', '[]', '[{"type":"notify_leads","value":"SLA deadline is near"},{"type":"add_tag","value":"sla-risk"}]', 'draft', 100, 0, 1, 1, 0, 0, 'sla_escalate', NOW(), NOW() FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM cdb_cs_rules WHERE template_key = 'sla_escalate');
+INSERT INTO cdb_cs_rules (name, kind, trigger_event, match_mode, conditions, actions, status, sort_order, stop_processing, max_per_ticket, version, run_count, fail_count, template_key, created_at, updated_at)
+SELECT 'Billing questions go to Billing', 'automation', 'ticket.created', 'any', '[{"field":"category","op":"is","value":"billing"},{"field":"message","op":"contains","value":"invoice"},{"field":"message","op":"contains","value":"payment"}]', '[{"type":"set_category","value":"billing"},{"type":"add_tag","value":"billing"}]', 'draft', 100, 0, 1, 1, 0, 0, 'billing_route', NOW(), NOW() FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM cdb_cs_rules WHERE template_key = 'billing_route');
+INSERT INTO cdb_cs_rules (name, kind, trigger_event, match_mode, conditions, actions, status, sort_order, stop_processing, max_per_ticket, version, run_count, fail_count, template_key, created_at, updated_at)
+SELECT 'Missing warehouse reference', 'automation', 'ticket.created', 'any', '[{"field":"category","op":"is","value":"warehouse"},{"field":"message","op":"contains","value":"delivered but"}]', '[{"type":"set_category","value":"warehouse"},{"type":"add_tag","value":"warehouse-check"},{"type":"create_task","value":"Check warehouse receipt against carrier tracking | 24"}]', 'draft', 100, 0, 1, 1, 0, 0, 'warehouse_missing_ref', NOW(), NOW() FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM cdb_cs_rules WHERE template_key = 'warehouse_missing_ref');
+INSERT INTO cdb_cs_rules (name, kind, trigger_event, match_mode, conditions, actions, status, sort_order, stop_processing, max_per_ticket, version, run_count, fail_count, template_key, created_at, updated_at)
+SELECT 'Lost or damaged: high priority', 'automation', 'ticket.created', 'any', '[{"field":"category","op":"is","value":"claim"},{"field":"message","op":"contains","value":"damaged"},{"field":"message","op":"contains","value":"lost"}]', '[{"type":"set_priority","value":"high"},{"type":"add_tag","value":"claim"}]', 'draft', 100, 0, 1, 1, 0, 0, 'claims_priority', NOW(), NOW() FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM cdb_cs_rules WHERE template_key = 'claims_priority');
+INSERT INTO cdb_cs_rules (name, kind, trigger_event, match_mode, conditions, actions, status, sort_order, stop_processing, max_per_ticket, version, run_count, fail_count, template_key, created_at, updated_at)
+SELECT 'Human requested: assign and summarise once', 'automation', 'handover.requested', 'all', '[{"field":"assignee","op":"is","value":"none"}]', '[{"type":"auto_assign","value":"least_loaded"},{"type":"ai_summarize","value":""}]', 'draft', 100, 0, 1, 1, 0, 0, 'handover_route', NOW(), NOW() FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM cdb_cs_rules WHERE template_key = 'handover_route');
+INSERT INTO cdb_cs_rules (name, kind, trigger_event, match_mode, conditions, actions, status, sort_order, stop_processing, max_per_ticket, version, run_count, fail_count, template_key, created_at, updated_at)
+SELECT 'Detect language and suggest tags', 'automation', 'ticket.created', 'all', '[]', '[{"type":"ai_classify","value":""}]', 'draft', 100, 0, 1, 1, 0, 0, 'classify_new', NOW(), NOW() FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM cdb_cs_rules WHERE template_key = 'classify_new');
+INSERT INTO cdb_cs_rules (name, kind, trigger_event, match_mode, conditions, actions, status, sort_order, stop_processing, max_per_ticket, version, run_count, fail_count, template_key, created_at, updated_at)
+SELECT 'One reminder after 48h without a reply', 'automation', 'schedule.no_reply', 'all', '[{"field":"status","op":"is","value":"pending_customer"},{"field":"hours_since_customer","op":"gt","value":"48"}]', '[{"type":"reply_canned","value":""}]', 'draft', 100, 0, 1, 1, 0, 0, 'no_reply_reminder', NOW(), NOW() FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM cdb_cs_rules WHERE template_key = 'no_reply_reminder');
+INSERT INTO cdb_cs_rules (name, kind, trigger_event, match_mode, conditions, actions, status, sort_order, stop_processing, max_per_ticket, version, run_count, fail_count, template_key, created_at, updated_at)
+SELECT 'Poor rating: supervisor follow-up', 'automation', 'csat.poor', 'all', '[]', '[{"type":"notify_leads","value":"Customer rated support poorly"},{"type":"create_task","value":"Service recovery call | 24"}]', 'draft', 100, 0, 1, 1, 0, 0, 'poor_csat', NOW(), NOW() FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM cdb_cs_rules WHERE template_key = 'poor_csat');
+INSERT INTO cdb_cs_rules (name, kind, trigger_event, match_mode, conditions, actions, status, sort_order, stop_processing, max_per_ticket, version, run_count, fail_count, template_key, created_at, updated_at)
+SELECT 'Where is my parcel: shipment desk', 'automation', 'ticket.created', 'any', '[{"field":"message","op":"contains","value":"where is my"},{"field":"message","op":"contains","value":"tracking"},{"field":"message","op":"contains","value":"not moved"}]', '[{"type":"set_category","value":"shipment"},{"type":"add_tag","value":"tracking"},{"type":"auto_assign","value":"least_loaded"}]', 'draft', 100, 0, 1, 1, 0, 0, 'tracking_question', NOW(), NOW() FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM cdb_cs_rules WHERE template_key = 'tracking_question');
+INSERT INTO cdb_cs_rules (name, kind, trigger_event, match_mode, conditions, actions, status, sort_order, stop_processing, max_per_ticket, version, run_count, fail_count, template_key, created_at, updated_at)
+SELECT 'Charged twice: urgent billing check', 'automation', 'ticket.created', 'any', '[{"field":"message","op":"contains","value":"charged twice"},{"field":"message","op":"contains","value":"double charge"},{"field":"message","op":"contains","value":"refund"}]', '[{"type":"set_category","value":"billing"},{"type":"set_priority","value":"urgent"},{"type":"add_tag","value":"refund-check"},{"type":"create_task","value":"Check payment gateway and Financial Sheet for duplicate payment | 4"}]', 'draft', 100, 0, 1, 1, 0, 0, 'double_charge', NOW(), NOW() FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM cdb_cs_rules WHERE template_key = 'double_charge');
+INSERT INTO cdb_cs_rules (name, kind, trigger_event, match_mode, conditions, actions, status, sort_order, stop_processing, max_per_ticket, version, run_count, fail_count, template_key, created_at, updated_at)
+SELECT 'Pickup requests go to dispatch', 'automation', 'ticket.created', 'any', '[{"field":"message","op":"contains","value":"pickup"},{"field":"message","op":"contains","value":"pick up"},{"field":"message","op":"contains","value":"collect"}]', '[{"type":"set_category","value":"delivery"},{"type":"add_tag","value":"pickup"},{"type":"create_task","value":"Schedule the pickup and confirm a time with the customer | 8"}]', 'draft', 100, 0, 1, 1, 0, 0, 'pickup_request', NOW(), NOW() FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM cdb_cs_rules WHERE template_key = 'pickup_request');
+INSERT INTO cdb_cs_rules (name, kind, trigger_event, match_mode, conditions, actions, status, sort_order, stop_processing, max_per_ticket, version, run_count, fail_count, template_key, created_at, updated_at)
+SELECT 'Wrong delivery address: hold and confirm', 'automation', 'ticket.created', 'any', '[{"field":"message","op":"contains","value":"wrong address"},{"field":"message","op":"contains","value":"change address"},{"field":"message","op":"contains","value":"deliver to"}]', '[{"type":"set_category","value":"delivery"},{"type":"set_priority","value":"high"},{"type":"add_tag","value":"address-change"},{"type":"add_note","value":"Confirm the new address with the customer before the rider leaves."}]', 'draft', 100, 0, 1, 1, 0, 0, 'wrong_address', NOW(), NOW() FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM cdb_cs_rules WHERE template_key = 'wrong_address');
+INSERT INTO cdb_cs_rules (name, kind, trigger_event, match_mode, conditions, actions, status, sort_order, stop_processing, max_per_ticket, version, run_count, fail_count, template_key, created_at, updated_at)
+SELECT 'Customs and duty questions', 'automation', 'ticket.created', 'any', '[{"field":"message","op":"contains","value":"customs"},{"field":"message","op":"contains","value":"duty"},{"field":"message","op":"contains","value":"clearance"}]', '[{"type":"set_category","value":"shipment"},{"type":"add_tag","value":"customs"}]', 'draft', 100, 0, 1, 1, 0, 0, 'customs_duty', NOW(), NOW() FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM cdb_cs_rules WHERE template_key = 'customs_duty');
+INSERT INTO cdb_cs_rules (name, kind, trigger_event, match_mode, conditions, actions, status, sort_order, stop_processing, max_per_ticket, version, run_count, fail_count, template_key, created_at, updated_at)
+SELECT 'US / UK mailbox address help', 'automation', 'ticket.created', 'any', '[{"field":"message","op":"contains","value":"mailbox"},{"field":"message","op":"contains","value":"shipping address"},{"field":"message","op":"contains","value":"locker"}]', '[{"type":"set_category","value":"account"},{"type":"add_tag","value":"mailbox"},{"type":"reply_canned","value":""}]', 'draft', 100, 0, 1, 1, 0, 0, 'mailbox_address', NOW(), NOW() FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM cdb_cs_rules WHERE template_key = 'mailbox_address');
+INSERT INTO cdb_cs_rules (name, kind, trigger_event, match_mode, conditions, actions, status, sort_order, stop_processing, max_per_ticket, version, run_count, fail_count, template_key, created_at, updated_at)
+SELECT 'Login, OTP or password trouble', 'automation', 'ticket.created', 'any', '[{"field":"message","op":"contains","value":"password"},{"field":"message","op":"contains","value":"otp"},{"field":"message","op":"contains","value":"cannot log"}]', '[{"type":"set_category","value":"technical"},{"type":"add_tag","value":"login"}]', 'draft', 100, 0, 1, 1, 0, 0, 'login_problem', NOW(), NOW() FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM cdb_cs_rules WHERE template_key = 'login_problem');
+INSERT INTO cdb_cs_rules (name, kind, trigger_event, match_mode, conditions, actions, status, sort_order, stop_processing, max_per_ticket, version, run_count, fail_count, template_key, created_at, updated_at)
+SELECT 'Business and bulk shippers: priority', 'automation', 'ticket.created', 'any', '[{"field":"category","op":"is","value":"business"},{"field":"message","op":"contains","value":"bulk"},{"field":"message","op":"contains","value":"container"}]', '[{"type":"set_category","value":"business"},{"type":"set_priority","value":"high"},{"type":"notify_leads","value":"New business / bulk enquiry"}]', 'draft', 100, 0, 1, 1, 0, 0, 'business_account', NOW(), NOW() FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM cdb_cs_rules WHERE template_key = 'business_account');
+INSERT INTO cdb_cs_rules (name, kind, trigger_event, match_mode, conditions, actions, status, sort_order, stop_processing, max_per_ticket, version, run_count, fail_count, template_key, created_at, updated_at)
+SELECT 'Weekend message: set expectations', 'automation', 'ticket.created', 'all', '[{"field":"business_hours","op":"is","value":"no"},{"field":"channel","op":"any_of","value":"web,portal,whatsapp,email"}]', '[{"type":"reply_canned","value":""},{"type":"add_tag","value":"after-hours"}]', 'draft', 100, 0, 1, 1, 0, 0, 'after_hours', NOW(), NOW() FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM cdb_cs_rules WHERE template_key = 'after_hours');
+INSERT INTO cdb_cs_rules (name, kind, trigger_event, match_mode, conditions, actions, status, sort_order, stop_processing, max_per_ticket, version, run_count, fail_count, template_key, created_at, updated_at)
+SELECT 'Reopened twice: escalate to leads', 'automation', 'ticket.reopened', 'all', '[{"field":"reopen_count","op":"gt","value":"1"}]', '[{"type":"set_priority","value":"high"},{"type":"notify_leads","value":"Ticket reopened more than once"},{"type":"ai_summarize","value":""}]', 'draft', 100, 0, 1, 1, 0, 0, 'reopened_escalate', NOW(), NOW() FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM cdb_cs_rules WHERE template_key = 'reopened_escalate');
+INSERT INTO cdb_cs_rules (name, kind, trigger_event, match_mode, conditions, actions, status, sort_order, stop_processing, max_per_ticket, version, run_count, fail_count, template_key, created_at, updated_at)
+SELECT 'SLA missed: urgent and tagged', 'automation', 'sla.breached', 'all', '[]', '[{"type":"set_priority","value":"urgent"},{"type":"add_tag","value":"sla-breached"},{"type":"notify_leads","value":"SLA deadline missed"}]', 'draft', 100, 0, 1, 1, 0, 0, 'sla_breached', NOW(), NOW() FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM cdb_cs_rules WHERE template_key = 'sla_breached');
+INSERT INTO cdb_cs_rules (name, kind, trigger_event, match_mode, conditions, actions, status, sort_order, stop_processing, max_per_ticket, version, run_count, fail_count, template_key, created_at, updated_at)
+SELECT 'Close after 7 days without a reply', 'automation', 'schedule.no_reply', 'all', '[{"field":"status","op":"is","value":"pending_customer"},{"field":"hours_since_customer","op":"gt","value":"168"}]', '[{"type":"add_note","value":"Closed automatically: no customer reply for 7 days."},{"type":"set_status","value":"resolved"}]', 'draft', 100, 0, 1, 1, 0, 0, 'auto_close_stale', NOW(), NOW() FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM cdb_cs_rules WHERE template_key = 'auto_close_stale');
+
+INSERT INTO cdb_schema_migrations (name, applied_at) SELECT '2026_11_08_support_rule_templates', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_schema_migrations WHERE name = '2026_11_08_support_rule_templates');
+SELECT 'ok: 2026_11_08_support_rule_templates' AS result;
 
