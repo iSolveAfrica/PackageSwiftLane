@@ -156,7 +156,7 @@ h1,h2,h3,h4,p{margin:0}
 .sl-mv{font-size:15px;margin:12px 0 0;color:var(--ink)}
 .sl-mv i{font-style:normal;color:var(--muted)}
 .sl-mf{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
-.sl-ticks{--c:var(--green);position:relative;height:8px;border-radius:2px;background:repeating-linear-gradient(90deg,#DCDAD4 0 3px,transparent 3px 5px)}
+.sl-ticks{--c:var(--green);position:relative;overflow:hidden;height:8px;border-radius:2px;background:repeating-linear-gradient(90deg,#DCDAD4 0 3px,transparent 3px 5px)}
 .sl-ticks i{position:absolute;left:0;top:0;bottom:0;background:repeating-linear-gradient(90deg,var(--c) 0 3px,transparent 3px 5px)}
 .sl-ticks.y{--c:var(--yellow)}.sl-ticks.r{--c:var(--red)}.sl-ticks.v{--c:var(--violet)}.sl-ticks.o{--c:var(--orange)}
 .sl-ticks.lg{height:12px}
@@ -622,3 +622,18 @@ textarea.sl-in{height:96px;padding:10px 12px;resize:vertical}
 
 @media (max-width:640px){.sl-top .sl-switch{display:none}}
 .hb-p>.sl-ch:first-child{min-height:32px;align-items:center}
+/* ---------- phone safety net: nothing may push the page wider than the screen ---------- */
+.grid>*,.split>*,.fr-split>*,.iq-split>*,.bc>*,.mt>*{min-width:0}
+.sl-wrap .cron>*{min-width:0;overflow-wrap:anywhere}.sl-wrap .cron{grid-template-columns:minmax(0,1fr) auto auto}
+@media (max-width:640px){
+  .sl-seg{max-width:100%;overflow-x:auto;scrollbar-width:none}.sl-seg::-webkit-scrollbar{display:none}
+  .sl-wrap .eb-b{overflow-x:auto}.sl-wrap .eb-b table{max-width:100%}
+  .sl-wrap .rf-row{grid-template-columns:1fr 1fr!important}.sl-wrap .rf-row>*{min-width:0}.sl-wrap .rf-row .row{flex-wrap:wrap}.sl-wrap .rf-row>:first-child{grid-column:1/-1}
+  .sl-wrap .al-row{grid-template-columns:28px minmax(0,1fr) auto}.sl-wrap .al-row>:nth-child(n+4){grid-column:2/-1}
+  .sl-wrap .cron{grid-template-columns:minmax(0,1fr) auto}.sl-wrap .cron>:nth-child(3){grid-column:1/-1}
+  .sl-wrap .ls-sl{grid-template-columns:28px minmax(0,1fr) auto}.sl-wrap .ls-sl>:nth-child(3){grid-column:2/-1;grid-row:2}
+  .sl-wrap .gbars{overflow-x:auto}
+  .sl-head>*{min-width:0;max-width:100%}
+  .sl-wrap .cx-col{min-width:0}
+  .sl-wrap .wb-h{grid-template-columns:24px minmax(0,1fr) auto}.sl-wrap .wb-h>:nth-child(n+4){grid-column:2/-1}
+}

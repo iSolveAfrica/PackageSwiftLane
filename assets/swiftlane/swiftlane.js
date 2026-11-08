@@ -272,4 +272,78 @@
     });
     window.addEventListener('load', function () { Array.prototype.forEach.call(grids, lay); });
   })();
+  /* ---------- balance side-by-side columns (.split, .fr-split, .mt, .sl-balance, card grids) ----------
+     Cards sharing a row end on the same line. A short companion column next to a very long one
+     becomes sticky instead of being stretched into a big empty card. Layout only; no content change. */
+  (function () {
+    var sel = '.split,.fr-split,.mt,.au,.dt,.eb,.nc-wrap,.ix,.ho,.sl-balance,.cpx-featured-grid,.grid.cols2,.grid.cols3';
+    var STRETCH_MAX = 720;
+    function cardish(e) {
+      var s = getComputedStyle(e);
+      return s.borderTopWidth !== '0px' || (s.backgroundColor !== 'rgba(0, 0, 0, 0)' && s.backgroundColor !== 'transparent');
+    }
+    function lastCard(e) {
+      for (var i = 0; i < 6 && e; i++) {
+        if (/^(INPUT|SELECT|TEXTAREA|BUTTON|LABEL|A|TABLE|IMG|SVG|CANVAS|FORM)$/i.test(e.tagName) && !cardish(e)) return null;
+        if (e.offsetHeight < 80) return null;
+        if (cardish(e)) return e;
+        /* walk back past small trailing notes/buttons to the last real card */
+        var kids = Array.prototype.filter.call(e.children, function (k) { return k.offsetParent !== null; }), next = null;
+        for (var j = kids.length - 1; j >= 0; j--) { if (kids[j].offsetHeight >= 80) { next = kids[j]; break; } }
+        e = next;
+      }
+      return null;
+    }
+    function topOffset() {
+      var t = document.querySelector('.sl-top');
+      return t && getComputedStyle(t).position === 'sticky' ? t.offsetHeight + 12 : 16;
+    }
+    function bal(c) {
+      var kids = Array.prototype.filter.call(c.children, function (k) { return k.offsetParent !== null && k.offsetHeight > 40; });
+      if (kids.length < 2) return;
+      var rows = {};
+      kids.forEach(function (k) { var r = k.getBoundingClientRect(), key = Math.round(r.top / 4); (rows[key] = rows[key] || []).push({ k: k, r: r }); });
+      Object.keys(rows).forEach(function (key) {
+        var row = rows[key]; if (row.length < 2) return;
+        var bottom = Math.max.apply(null, row.map(function (x) { return x.r.bottom; }));
+        row.forEach(function (x) {
+          var d = bottom - x.r.bottom; if (d < 2) return;
+          if (d > STRETCH_MAX) {
+            var t = topOffset();
+            x.k.style.position = 'sticky'; x.k.style.top = t + 'px'; x.k.style.alignSelf = 'flex-start';
+            /* taller than the screen: cap it and let it scroll inside, so it stays reachable */
+            if (x.r.height > window.innerHeight - t - 16) { x.k.style.maxHeight = (window.innerHeight - t - 16) + 'px'; x.k.style.overflowY = 'auto'; }
+            touched.push(x.k);
+            return;
+          }
+          var card = lastCard(x.k); if (!card) return;
+          var cr = card.getBoundingClientRect();
+          card.style.minHeight = Math.round(Math.max(cr.height, cr.height + (bottom - cr.bottom))) + 'px';
+          touched.push(card);
+        });
+      });
+    }
+    var list = document.querySelectorAll(sel);
+    if (!list.length) return;
+    var pending = false, touched = [];
+    function all() {
+      pending = false;
+      touched.forEach(function (e) { e.style.minHeight = ''; e.style.position = ''; e.style.top = ''; e.style.alignSelf = ''; e.style.maxHeight = ''; e.style.overflowY = ''; });
+      touched = [];
+      Array.prototype.forEach.call(list, bal);
+    }
+    function soon() { if (!pending) { pending = true; requestAnimationFrame(all); } }
+    all();
+    window.addEventListener('load', soon);
+    window.addEventListener('resize', soon);
+    if (window.ResizeObserver) {
+      var last = new WeakMap();
+      var ro = new ResizeObserver(function (es) {
+        var changed = es.some(function (e) { var w = Math.round(e.contentRect.width); var p = last.get(e.target); last.set(e.target, w); return p !== undefined && p !== w; });
+        if (changed) soon();
+      });
+      Array.prototype.forEach.call(list, function (c) { ro.observe(c); });
+    }
+    document.addEventListener('click', function () { setTimeout(soon, 60); });
+  })();
 })();

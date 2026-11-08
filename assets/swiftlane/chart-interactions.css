@@ -18,7 +18,7 @@
 .sl-chart-tip-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .sl-chart-tip-actions button,.sl-chart-tip-actions a{background:var(--field,#f2f1ed);color:inherit;border:1px solid var(--line-2,#d9d7d0);border-radius:8px;padding:6px 9px;font:inherit;cursor:pointer;text-decoration:none}
 .sl-chart-tip-actions button:hover,.sl-chart-tip-actions a:hover{background:var(--line-2,#e6e2da)}
-.sl-chart-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.sl-chart-sr{position:absolute;left:0;top:0;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 @media(print){.sl-chart-tooltip,.sl-chart-guide{display:none}}
 
 .sl-chart-hint{font-size:12px;color:var(--muted,#77736b);margin:0 0 10px}
