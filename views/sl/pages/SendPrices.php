@@ -7,7 +7,7 @@ if (!isset($d)) { $d = []; }
 $first = $d['rows'][0]['name'] ?? 'Customer';
 ?>
 <div class="row g8 mut sm"><a href="<?= sl_route('Payments') ?>">Payments</a><i class="ic ic-sm i-right" aria-hidden="true"></i><span style="color:var(--ink)">Send prices</span></div>
-<div class="sl-head"><div><h1 class="sl-title">Send prices</h1><p class="sl-lede">Pick who should get the current price sheet, choose SMS, WhatsApp or e-mail, and send in one go</p></div><div class="row g8"><a class="sl-btn ghost" href="<?= sl_route('Tariffs') ?>"><i class="ic ic-sm i-tag" aria-hidden="true"></i>Edit tariffs</a></div></div>
+<div class="sl-head"><div><h1 class="sl-title">Send prices</h1><p class="sl-lede">Pick who should get the current price sheet, choose SMS, WhatsApp or e-mail, and send in one go</p></div><div class="row g8"></div></div>
 <?php if ($d['recent']): ?><div class="sp-ok" role="status"><i class="ic ic-sm i-check" aria-hidden="true"></i><?= (int) $d['recent'] ?> price messages sent in the last 7 days. <a href="<?= sl_route('MessageLogs') ?>">See Message Logs</a></div><?php endif; ?>
 <form data-sl-form action="ajax/sl/send_prices_ajax.php" id="sp-form" class="split">
 <section class="a sl-card flush"><div class="row between wrap g8" style="padding:14px 16px"><div><h2 class="sl-ct">Customers · <?= h($d['segLabel']) ?> · <?= count($d['rows']) ?></h2><div class="mut sm">Tick who to send to. Up to 300 are listed; narrow with the search.</div></div><button type="button" class="sl-btn ghost sm" id="sp-all">Select all</button></div>
