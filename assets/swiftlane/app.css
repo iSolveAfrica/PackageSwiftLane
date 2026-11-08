@@ -52,3 +52,7 @@ form.sl-inline{display:contents}
 .sl-nav .sl-ccy b{font-weight:400;color:var(--muted)}
 .sl-nav .sl-ccy em{font-style:normal;font-size:12px;color:var(--muted);width:12px;text-align:center}
 .sl-nav .sl-ccy.loading{opacity:.6}
+
+/* Support inbox: keep the ticket column narrow so every column fits; long subjects end with … (full text on hover / in the ticket). */
+.sl-table td.cs-tk .cs-tk-l{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:clamp(150px,calc(100vw - 1180px),560px)}
+.sl-table td.cs-tk + td .sl-cell{white-space:nowrap}

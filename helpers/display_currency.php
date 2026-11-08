@@ -11,8 +11,42 @@
 
 function sl_displayCurrency(): string
 {
-    $c = $_SESSION['sl_ccy'] ?? ($_COOKIE['sl_ccy'] ?? 'USD');
-    return $c === 'GHS' ? 'GHS' : 'USD';
+    if (!isset($_SESSION['sl_ccy'])) {
+        // First request of a session: load this staff member's saved choice.
+        $_SESSION['sl_ccy'] = sl_loadDisplayCurrency((int) ($_SESSION['userid'] ?? 0));
+    }
+    return $_SESSION['sl_ccy'] === 'GHS' ? 'GHS' : 'USD';
+}
+
+/** Saved choice for one user (cdb_user_preferences, key display_currency). */
+function sl_loadDisplayCurrency(int $uid): string
+{
+    if ($uid <= 0) return 'USD';
+    try {
+        $db = new Conexion();
+        $db->cdp_query("SELECT pref_value FROM cdb_user_preferences WHERE user_id = :u AND pref_key = 'display_currency' LIMIT 1");
+        $db->bind(':u', $uid);
+        $row = $db->cdp_registro();
+        return ($row && $row->pref_value === 'GHS') ? 'GHS' : 'USD';
+    } catch (Throwable $e) {
+        return 'USD';
+    }
+}
+
+/** Store the choice on the user's account so it follows them to any device. */
+function sl_saveDisplayCurrency(int $uid, string $ccy): void
+{
+    $_SESSION['sl_ccy'] = $ccy;
+    if ($uid <= 0) return;
+    try {
+        $db = new Conexion();
+        $db->cdp_query("INSERT INTO cdb_user_preferences (user_id, pref_key, pref_value, updated_at) VALUES (:u, 'display_currency', :v, NOW()) ON DUPLICATE KEY UPDATE pref_value = VALUES(pref_value), updated_at = NOW()");
+        $db->bind(':u', $uid);
+        $db->bind(':v', $ccy);
+        $db->cdp_execute();
+    } catch (Throwable $e) {
+        // Session still holds the choice.
+    }
 }
 
 function sl_exchangeRateValue(): float
@@ -35,6 +69,7 @@ function sl_exchangeRateValue(): float
 /** True when amounts should be shown in GHS (switch on and a rate is set). */
 function sl_showGhs(): bool
 {
+    if (function_exists('sl_userIs') && sl_userIs('client')) return false;
     return sl_displayCurrency() === 'GHS' && sl_exchangeRateValue() > 0;
 }
 
