@@ -12,4 +12,4 @@ if (!cdp_aiCanUse($user) && !cdp_aiCanManage($user)) {
     exit;
 }
 require_once 'views/sl/data/ai.php';
-sl_render('StaffAI', ['id' => 'csai', 'title' => 'AI Assistant', 'board' => 'StaffAI', 'wide' => true, 'styles' => ['assets/swiftlane/pages/AiChatMobile.sheet.css'], 'scripts' => ['dataJs/sl/ai_chat.js']], sl_aiStaffData($user, $core, $userData));
+sl_render('StaffAI', ['id' => 'csai', 'title' => 'AI Assistant', 'board' => 'StaffAI', 'wide' => true, 'styles' => ['assets/swiftlane/pages/AiChatMobile.sheet.css', 'assets/swiftlane/ai-response.css'], 'scripts' => ['assets/vendor/libs/marked/marked.min.js', 'assets/vendor/libs/dompurify/purify.min.js', 'dataJs/sl/ai_response.js', 'dataJs/sl/ai_chat.js']], sl_aiStaffData($user, $core, $userData));

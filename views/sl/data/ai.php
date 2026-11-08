@@ -92,13 +92,13 @@ function sl_aiCenterData($user, $core): array
     $cs = sl_tableExists('cdb_cs_ai_runs') ? sl_row("SELECT COUNT(*) AS n, COALESCE(SUM(tokens_in),0) AS tin, COALESCE(SUM(tokens_out),0) AS tout, SUM(outcome LIKE '%error%' OR outcome LIKE '%fail%') AS errs, AVG(latency_ms) AS ms FROM cdb_cs_ai_runs WHERE created_at >= NOW() - INTERVAL 30 DAY") : null;
     $d['usage'] = ['answers' => (int) ($usage->n ?? 0), 'tokens' => (int) ($usage->tin ?? 0) + (int) ($usage->tout ?? 0), 'csRuns' => (int) ($cs->n ?? 0), 'csTokens' => (int) ($cs->tin ?? 0) + (int) ($cs->tout ?? 0), 'csErrors' => (int) ($cs->errs ?? 0), 'csMs' => $cs && $cs->ms !== null ? (int) $cs->ms : null];
     $spark = function (string $table, string $where = '1=1') {
-        if (!sl_tableExists($table)) return array_fill(0, 12, 'height:8%');
+        if (!sl_tableExists($table)) return [];
         $map = [];
         foreach (sl_rows("SELECT DATE(created_at) AS d, COUNT(*) AS n FROM $table WHERE $where AND created_at >= CURDATE() - INTERVAL 11 DAY GROUP BY d") as $r) $map[$r->d] = (int) $r->n;
         $max = max(1, $map ? max($map) : 1);
         $o = [];
-        for ($i = 11; $i >= 0; $i--) { $day = date('Y-m-d', strtotime("-$i days")); $o[] = 'height:' . max(8, sl_pct($map[$day] ?? 0, $max)) . '%'; }
-        return $o;
+        for ($i = 11; $i >= 0; $i--) { $day = date('Y-m-d', strtotime("-$i days")); $o[] = $map[$day] ?? 0; }
+        return sl_sparkBars($o, 8);
     };
     $king = function_exists('cdp_csSetting') ? cdp_csSetting('king_mode', 'off') : 'off';
     $d['kpis'] = [

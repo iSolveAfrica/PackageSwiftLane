@@ -65,7 +65,7 @@ function sl_lastMileData($user, $core): array
         $vals = [];
         for ($i = 11; $i >= 0; $i--) $vals[] = $map[date('Y-m-d', strtotime("-$i days"))] ?? 0;
         $max = max(1, max($vals));
-        return array_map(fn($v) => 'height:' . max(6, sl_pct($v, $max)) . '%', $vals);
+        return sl_sparkBars($vals, 6);
     };
     $spDel = $spark("SELECT DATE(t_date) AS d, COUNT(DISTINCT order_track) AS n FROM cdb_courier_track WHERE status_courier = 8 AND t_date >= CURDATE() - INTERVAL 11 DAY GROUP BY d");
     $spFail = $spark("SELECT DATE(t_date) AS d, COUNT(*) AS n FROM cdb_courier_track WHERE status_courier IN (12,16) AND t_date >= CURDATE() - INTERVAL 11 DAY GROUP BY d");

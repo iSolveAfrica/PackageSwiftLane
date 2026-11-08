@@ -140,6 +140,7 @@ function sl_staffProductivityData($user, $core): array
         $bars[] = ['x' => round($x, 1), 'w' => round($w * 0.6, 1), 'ya' => round(220 - $ha, 1), 'ha' => round($ha, 1), 'yi' => round(220 - $ha - $hi, 1), 'hi' => round($hi, 1)];
         $pk[] = (int) $b['packages']; $i++;
     }
+    $chartSeries = [['name' => 'Active hours', 'values' => array_map(fn($b) => round($b['seconds'] / 3600, 2), array_values($byDay)), 'unit' => ' h'], ['name' => 'Idle hours', 'values' => array_map(fn($b) => round(max(0, ($b['span'] ?? 0) - ($b['rel_seconds'] ?? 0)) / 3600, 2), array_values($byDay)), 'unit' => ' h'], ['name' => 'Packages created', 'values' => $pk]];
     $line = $pk ? sl_svgPoints($pk, 1000, 200, 20, max(1, max($pk)), $w / 2) : '';
     $staff = [];
     foreach ($rows as $r) {
@@ -155,7 +156,7 @@ function sl_staffProductivityData($user, $core): array
     $pkToday = 0; foreach ($today as $days) $pkToday += (int) ($days[date('Y-m-d')]['created_count'] ?? 0);
     return ['period' => $p, 'periods' => array_map(fn($k, $v) => ['k' => $k, 'label' => $v[0]], array_keys($periods), $periods), 'label' => $label, 'from' => $from, 'to' => $to,
         'kpis' => [['l' => 'Staff with activity', 'v' => (int) ($t['staff'] ?? 0), 's' => sl_num(count($ids)) . ' staff in scope'], ['l' => 'Active hours', 'v' => number_format((float) ($t['active_hours'] ?? 0), 1), 's' => 'of ' . number_format((float) ($t['span_hours'] ?? 0), 1) . ' h in the window'], ['l' => 'Idle hours', 'v' => number_format((float) ($t['idle_hours'] ?? 0), 1), 's' => 'presence and log days only'], ['l' => 'Utilisation', 'v' => ($t['utilisation'] ?? 0) . '%', 's' => 'active ÷ window'], ['l' => 'Packages created', 'v' => sl_num($t['packages_added'] ?? 0), 's' => sl_num($t['packages_edited'] ?? 0) . ' edited'], ['l' => 'Check-ins', 'v' => sl_num($t['checkins'] ?? 0), 's' => sl_num($t['staff_days'] ?? 0) . ' staff-days'], ['l' => 'Actions', 'v' => sl_num($t['events'] ?? 0), 's' => 'every recorded action']],
-        'live' => $live, 'liveSum' => count($live) . ' people checked in today', 'bars' => $bars, 'line' => $line, 'x0' => sl_date($from, 'M j'), 'x1' => sl_date($to, 'M j'), 'chartSub' => $label . ' · ' . sl_date($from, 'M j') . ' – ' . sl_date($to, 'M j'),
+        'live' => $live, 'liveSum' => count($live) . ' people checked in today', 'chartSeries' => $chartSeries, 'chartLabels' => array_keys($byDay), 'bars' => $bars, 'line' => $line, 'x0' => sl_date($from, 'M j'), 'x1' => sl_date($to, 'M j'), 'chartSub' => $label . ' · ' . sl_date($from, 'M j') . ' – ' . sl_date($to, 'M j'),
         'insights' => $ins, 'goalTxt' => $goal ? "$pkToday / $goal" : (string) $pkToday, 'goalW' => 'width:' . ($goal ? sl_pct($pkToday, $goal) : 100) . '%', 'rows' => $staff, 'sort' => $sort,
         'settings' => cdp_spSettings(), 'settingsReady' => cdp_spSettingsTableReady(), 'canExport' => $user->cdp_hasPermission('export_staff_productivity')];
 }

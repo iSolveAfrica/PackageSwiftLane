@@ -167,7 +167,7 @@ function sl_whHandoverStats(int $days): array
     $hm = [];
     foreach ([2 => 'Mon', 3 => 'Tue', 4 => 'Wed', 5 => 'Thu', 6 => 'Fri', 7 => 'Sat'] as $wd => $l) {
         $c = [];
-        for ($h = 8; $h <= 19; $h++) $c[] = sl_heatLevel($heat[$wd][$h] ?? 0, $peak);
+        for ($h = 8; $h <= 19; $h++) $c[] = ['c' => sl_heatLevel($heat[$wd][$h] ?? 0, $peak), 't' => $l . ' ' . sprintf('%02d:00', $h) . ': ' . ($heat[$wd][$h] ?? 0) . ' handovers'];
         $hm[] = ['d' => $l, 'c' => $c];
     }
     $tot = $pick + $del;
@@ -303,7 +303,7 @@ function sl_warehousePickupsData($user, $core): array
         'pick' => $today['pick'], 'pickPct' => $today['pickPct'], 'del' => $today['del'], 'delPct' => $today['delPct'], 'onRoute' => $onRoute, 'voided' => $voided,
         'all' => $all, 'picked' => $pk, 'delivered' => $all - $pk, 'perDay' => $st['perDay'],
         'dayBars' => array_map(fn($b) => $b + ['h' => round($b['n'] / $dmx * 178, 1)], $dayBars), 'dmx' => $dmx,
-        'line' => implode(' ', $pts), 'peak' => $mx > 1 || max($hours) > 0 ? sprintf('%02d:00–%02d:00', $peakH, $peakH + 1) : '—', 'hourMax' => $mx, 'hourKeys' => array_keys($hours),
+        'line' => implode(' ', $pts), 'peak' => $mx > 1 || max($hours) > 0 ? sprintf('%02d:00–%02d:00', $peakH, $peakH + 1) : '—', 'hourMax' => $mx, 'hourKeys' => array_keys($hours), 'hourValues' => array_values($hours),
         'canUndo' => $user->cdp_hasPermission('warehouse_undo_delivery'), 'canHand' => $user->cdp_hasPermission(['view_warehouse_delivery', 'warehouse_deliver_package']),
         'canAging' => $user->cdp_hasPermission('view_pickup_aging'),
     ];

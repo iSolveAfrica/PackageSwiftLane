@@ -79,7 +79,7 @@ function sl_reportsData($user, $core): array
         $m = []; foreach ($rows as $r) $m[$r->d] = (float) $r->c;
         $v = []; for ($t = strtotime($from); $t <= strtotime($to); $t += 86400) $v[] = $m[date('Y-m-d', $t)] ?? 0;
         if (count($v) > 60) { $v = array_map(fn($c) => array_sum($c), array_chunk($v, (int) ceil(count($v) / 60))); }
-        return [sl_svgAreaPath($v, 240, 46, 2), sl_svgLinePath($v, 240, 46, 2)];
+        return [sl_svgAreaPath($v, 240, 46, 2), sl_svgLinePath($v, 240, 46, 2), $v];
     };
     $d['kpi'] = [
         ['t' => 'Parcels handled', 'v' => sl_num($parcels), 'd' => $delta($parcels, $prevP), 'ok' => $parcels >= $prevP, 'sp' => $spark('cdb_add_order', 'order_date', ' AND is_deleted = 0')],
@@ -93,7 +93,7 @@ function sl_reportsData($user, $core): array
     $pick = sl_monthlyCounts('cdb_add_order', 'order_date', $year, ' AND is_deleted = 0 AND is_pickup = 1');
     $sea = sl_monthlyCounts('cdb_customers_packages', 'order_date', $year);
     $mx = max(1, max($ship), max($pick), max($sea));
-    $d['monthly'] = ['year' => $year, 'mx' => $mx, 'ship' => sl_svgLinePath($ship, 634, 160, 10, $mx, 44), 'shipA' => sl_svgAreaPath($ship, 634, 160, 10, $mx, 44), 'pick' => sl_svgLinePath($pick, 634, 160, 10, $mx, 44), 'sea' => sl_svgLinePath($sea, 634, 160, 10, $mx, 44)];
+    $d['monthly'] = ['values' => [['name' => 'Shipments', 'values' => $ship], ['name' => 'Pickups', 'values' => $pick], ['name' => 'Sea packages', 'values' => $sea]], 'year' => $year, 'mx' => $mx, 'ship' => sl_svgLinePath($ship, 634, 160, 10, $mx, 44), 'shipA' => sl_svgAreaPath($ship, 634, 160, 10, $mx, 44), 'pick' => sl_svgLinePath($pick, 634, 160, 10, $mx, 44), 'sea' => sl_svgLinePath($sea, 634, 160, 10, $mx, 44)];
     $rows = sl_rows("SELECT COALESCE(s.mod_style,'Other') AS l, COALESCE(s.color,'#94a3b8') AS c, COUNT(*) AS n FROM cdb_add_order a LEFT JOIN cdb_styles s ON s.id = a.status_courier WHERE a.is_deleted = 0 AND a.order_date BETWEEN :f AND :t $agency GROUP BY a.status_courier ORDER BY n DESC LIMIT 6", $b);
     $tot = array_sum(array_map(fn($r) => (int) $r->n, $rows)) ?: 1;
     $d['mix'] = ['conic' => sl_conic(array_map(fn($r) => [$r->c, (int) $r->n], $rows ?: [])), 'rows' => array_map(fn($r) => ['l' => ucwords(str_replace('_', ' ', $r->l)), 'c' => $r->c, 'pct' => sl_pct($r->n, $tot), 'n' => (int) $r->n], $rows), 'total' => array_sum(array_map(fn($r) => (int) $r->n, $rows))];

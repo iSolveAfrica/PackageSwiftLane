@@ -123,7 +123,7 @@ function sl_systemLogsData($user, $core): array
     $sc = array_fill(0, 40, ['n' => 0, 'lv' => '']);
     foreach ($events as $e) { $k = max(0, min(39, (int) (($e['ts'] - $since) / $ss))); $sc[$k]['n']++; if ($e['lv'] === 'err') $sc[$k]['lv'] = 'e'; elseif ($e['lv'] === 'warn' && $sc[$k]['lv'] !== 'e') $sc[$k]['lv'] = 'w'; }
     $sm = max(1, max(array_column($sc, 'n')));
-    foreach ($sc as $k => $s) $spark[] = ['s' => 'height:' . max(4, sl_pct($s['n'], $sm)) . '%', 'c' => $k === 39 ? 'now' : $s['lv']];
+    foreach ($sc as $k => $s) $spark[] = ['t' => date('M j H:i', $since + $k * $ss) . ': ' . $s['n'] . ' events', 's' => 'height:' . max(4, sl_pct($s['n'], $sm)) . '%', 'c' => $k === 39 ? 'now' : $s['lv']];
     // by source
     $bySrc = [];
     foreach ($events as $e) {
@@ -207,7 +207,7 @@ function sl_systemLogsData($user, $core): array
         'range' => $range, 'ranges' => array_keys($ranges), 'file' => $file ? str_replace(CDP_ROOT . '/', '', $file) : '', 'hasLog' => $hasLog,
         'total' => $total, 'errs' => $errs, 'warns' => $warns, 'groups' => count($groups), 'health' => $total ? number_format(100 - $errs / $total * 100, 1) : '100',
         'lines' => array_map($fmt, array_slice($events, 0, 14)), 'rate' => $total ? number_format($total / max(1, $ranges[$range] / 60), 1) : '0', 'spark' => $spark,
-        'bars' => $bars, 'peak' => $peak, 'peakAt' => $peakAt, 'sources' => $sources, 'recurring' => $recurring, 'heat' => $heat, 'sec' => $sec, 'cron' => $cron, 'backup' => $backup,
+        'bucketLabels' => array_map(fn($k) => date('M j H:i', $since + $k * $step), range(0, $slots - 1)), 'bucketSeries' => [['name' => 'Info', 'values' => array_column($buckets, 'i')], ['name' => 'Warnings', 'values' => array_column($buckets, 'w')], ['name' => 'Errors', 'values' => array_column($buckets, 'e')]], 'bars' => $bars, 'peak' => $peak, 'peakAt' => $peakAt, 'sources' => $sources, 'recurring' => $recurring, 'heat' => $heat, 'sec' => $sec, 'cron' => $cron, 'backup' => $backup,
         'q' => $q, 'lvl' => $lvl, 'src' => $srcF, 'srcOptions' => $srcOptions, 'page' => $page, 'per' => $per, 'count' => count($list),
         'rows' => array_map($fmt, array_slice($list, ($page - 1) * $per, $per)),
         'newGroup' => $recurring ? ($recurring[0]['status'][0] === 'New' ? $recurring[0]['msg'] : 'none new') : 'none',

@@ -183,7 +183,7 @@ function sl_airShipmentsData($user, $core): array
         case 'nocarrier': if (sl_tableExists('cdb_package_tracking_number')) $where .= " AND a.status_courier NOT IN (8,15,21,12) AND NOT EXISTS (SELECT 1 FROM cdb_package_tracking_number p WHERE p.order_id = a.order_id AND p.tracking_number <> '')"; break;
     }
     $count = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE $where", $binds);
-    $rows = sl_rows("SELECT a.order_id, a.order_prefix, a.order_no, a.order_date, a.sender_id, a.receiver_id, a.recipient_type, a.status_courier, a.status_invoice, a.total_order, a.total_weight, a.driver_id, a.is_pickup, a.is_consolidate, a.order_incomplete, a.is_dangerous_good, a.agency, a.order_pay_mode, a.order_payment_method
+    $rows = sl_rows("SELECT a.order_id, a.order_prefix, a.order_no, a.order_date, a.order_datetime, a.order_deli_time, a.sender_id, a.receiver_id, a.recipient_type, a.status_courier, a.status_invoice, a.total_order, a.total_weight, a.driver_id, a.is_pickup, a.is_consolidate, a.order_incomplete, a.is_dangerous_good, a.agency, a.order_pay_mode, a.order_payment_method
         FROM cdb_add_order a WHERE $where ORDER BY a.order_id DESC LIMIT " . (($page - 1) * $per) . ", $per", $binds);
     $senders = sl_usersById(array_map(fn($r) => $r->sender_id, $rows));
     $recips = sl_recipientsFor($rows);
@@ -200,6 +200,7 @@ function sl_airShipmentsData($user, $core): array
     $pay = [];
     foreach (sl_rows('SELECT id, label FROM cdb_payment_methods') as $p) $pay[(int) $p->id] = $p->label;
     $statusMap = sl_statusMap();
+    cdp_prefetchConsolidations(array_map(fn($r) => $r->order_no, $rows));
     $list = [];
     foreach ($rows as $r) {
         $track = $r->order_prefix . $r->order_no;
@@ -215,7 +216,8 @@ function sl_airShipmentsData($user, $core): array
         if ((int) $r->is_dangerous_good) $badges[] = 'Dangerous goods';
         if ((int) $r->order_incomplete === 0 && !(int) $r->is_pickup) $badges[] = $client ? 'Awaiting acceptance' : 'Customer booking';
         $list[] = [
-            'id' => (int) $r->order_id, 'track' => $track, 'carrier' => $carriers[(int) $r->order_id]->tracking_number ?? '', 'date' => sl_date($r->order_date),
+            'id' => (int) $r->order_id, 'track' => $track, 'carrier' => $carriers[(int) $r->order_id]->tracking_number ?? '', 'date' => sl_date($r->order_datetime ?? null) ?: sl_date($r->order_date), 'time' => sl_date($r->order_datetime ?? null, 'H:i'),
+            'eta' => cdp_getEffectiveEta((int) $r->order_id, $r->order_no, $r->order_deli_time ?? null, $r->is_consolidate),
             'sender' => sl_userName($s), 'from' => $s->locker ?? '', 'sender_id' => (int) $r->sender_id,
             'name' => $rc ? trim(($rc->fname ?? '') . ' ' . ($rc->lname ?? '')) : sl_userName($s) . ' (self)', 'ini' => sl_initials($rc ? ($rc->fname . ' ' . $rc->lname) : sl_userName($s)),
             'dest' => $dest, 'kg' => (float) $r->total_weight > 0 ? sl_weight($r->total_weight) : '—', 'total' => sl_money($r->total_order),

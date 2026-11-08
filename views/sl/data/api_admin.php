@@ -27,7 +27,7 @@ function sl_apiBars(array $data, string $unit = ''): string
     foreach ($data as $label => $v) {
         $bh = round(178 * $v / $max, 1);
         $x = round(44 + $w * $i + $w * 0.25, 1);
-        $out .= '<rect x="' . $x . '" y="' . (190 - $bh) . '" width="' . round($w * 0.5, 1) . '" height="' . $bh . '" rx="5" fill="' . ($i === 0 ? '#ECEAE5' : '#E9E7E1') . '"' . ($i === 0 ? ' stroke="#D9D7D0"' : '') . '></rect>'
+        $out .= '<rect x="' . $x . '" y="' . (190 - $bh) . '" width="' . round($w * 0.5, 1) . '" height="' . $bh . '" rx="5" fill="' . ($i === 0 ? '#ECEAE5' : '#E9E7E1') . '"' . ($i === 0 ? ' stroke="#D9D7D0"' : '') . '><title>' . h((string) $label . ': ' . sl_num($v) . $unit) . '</title></rect>'
             . '<text x="' . round($x + $w * 0.25, 1) . '" y="' . (184 - $bh) . '" text-anchor="middle" style="fill:var(--ink-2);font-weight:500">' . h(sl_num($v)) . h($unit) . '</text>'
             . '<text x="' . round($x + $w * 0.25, 1) . '" y="212" text-anchor="middle">' . h(mb_substr((string) $label, 0, 12)) . '</text>';
         $i++;
@@ -39,6 +39,7 @@ function sl_apiMonitorData($user, $core): array
 {
     [$range, $iv] = sl_apiRange();
     $d = ['ready' => sl_tableExists('cdb_api_request_log'), 'range' => $range, 'ranges' => ['1h', '24h', '7d', '30d']];
+    $d['hourSeries'] = []; $d['hourLabels'] = [];
     $d['n'] = 0; $d['ok'] = 0; $d['err'] = 0; $d['p95'] = 0; $d['slow'] = '—'; $d['hours'] = ''; $d['bars'] = ''; $d['live'] = []; $d['top'] = '—'; $d['avgHour'] = 0;
     if ($d['ready']) {
         $w = "created_at >= NOW() - INTERVAL $iv";
@@ -56,6 +57,8 @@ function sl_apiMonitorData($user, $core): array
         foreach (sl_rows("SELECT HOUR(created_at) h, COUNT(*) n FROM cdb_api_request_log WHERE created_at >= NOW() - INTERVAL 24 HOUR GROUP BY h") as $r) $hrs[(int) $r->h] = (int) $r->n;
         $series = [];
         for ($i = 23; $i >= 0; $i--) $series[] = $hrs[(int) date('G', strtotime("-$i hours"))] ?? 0;
+        $d['hourSeries'] = $series;
+        $d['hourLabels'] = array_map(fn($i) => date('M j H:00', strtotime('-' . (23 - $i) . ' hours')), range(0, 23));
         $d['hours'] = sl_svgLinePath($series, 550, 190, 12, max(1, max($series)), 44);
         $d['hourMax'] = max($series);
         $d['avgHour'] = round(array_sum($series) / 24, 1);
@@ -142,7 +145,7 @@ function sl_apiTrafficData($user, $core): array
         $sp = [];
         $mx = 1;
         foreach ($hrs as $x) $mx = max($mx, (int) $x->n);
-        for ($i = 11; $i >= 0; $i--) { $x = $hrs[(int) date('G', strtotime("-$i hours"))] ?? null; $sp[] = ['c' => $x && $x->e ? 'e' : '', 's' => 'height:' . max(8, sl_pct($x->n ?? 0, $mx)) . '%']; }
+        for ($i = 11; $i >= 0; $i--) { $x = $hrs[(int) date('G', strtotime("-$i hours"))] ?? null; $sp[] = ['t' => date('M j H:00', strtotime("-$i hours")) . ': ' . (int) ($x->n ?? 0) . ' calls', 'c' => $x && $x->e ? 'e' : '', 's' => 'height:' . max(8, sl_pct($x->n ?? 0, $mx)) . '%']; }
         $n = (int) $r->n; $e = (int) $r->e;
         $provs[] = ['n' => $name, 'kind' => $w === 'push' ? 'Inbound' : 'Outbound', 'rate' => sl_num($n) . ' in 24h', 'ms' => $n ? (100 - sl_pct($e, $n)) . '% ok' : 'idle', 'dot' => $n === 0 ? 'off' : ($e / max(1, $n) > 0.05 ? 'e' : ($e ? 'w' : 'live')), 'sp' => $sp];
     }

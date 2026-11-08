@@ -52,7 +52,7 @@ function sl_execData($user, $core): array
         $weekly[] = ['a' => $a, 'n' => $agg('COUNT(*)', $a, $b)];
     }
     $wmax = max(1, max(array_column($weekly, 'n')));
-    $spark = array_map(fn($x) => 'height:' . max(4, sl_pct($x['n'], $wmax)) . '%', $weekly);
+    $spark = sl_sparkBars(array_column($weekly, 'n'), 4, array_map(fn($x) => 'Week of ' . sl_date($x['a']), $weekly));
     $hid = '••••';
     $d['kpis'] = [
         ['icon' => $mode === 'sea' ? 'i-ship' : 'i-plane', 'l' => 'Shipments', 'v' => sl_num($n), 's' => $chg($n, $pn), 'sp' => $spark],

@@ -9,8 +9,8 @@ if (function_exists('cdp_activityLogDocument')) {
 header('Content-Type: text/csv; charset=utf-8');
 header('Content-Disposition: attachment; filename="shipments-' . date('Ymd') . '.csv"');
 $out = fopen('php://output', 'w');
-fputcsv($out, ['Tracking', 'Carrier tracking', 'Date', 'Sender', 'Locker', 'Recipient', 'Destination', 'Weight', 'Total', 'Payment', 'Status']);
+fputcsv($out, ['Tracking', 'Carrier tracking', 'Date & time', 'Sender', 'Locker', 'Recipient', 'ETA', 'Weight', 'Total', 'Payment', 'Status']);
 foreach ($d['rows'] as $r) {
-    fputcsv($out, [$r['track'], $r['carrier'], $r['date'], $r['sender'], $r['from'], $r['name'], $r['dest'], $r['kg'], $r['total'], $r['pay'], $r['st']]);
+    fputcsv($out, [$r['track'], $r['carrier'], $r['date'] . ($r['time'] ? ' ' . $r['time'] : ''), $r['sender'], $r['from'], $r['name'], $r['eta'], $r['kg'], $r['total'], $r['pay'], $r['st']]);
 }
 fclose($out);
