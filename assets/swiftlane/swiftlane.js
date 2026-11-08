@@ -238,4 +238,27 @@
   document.querySelectorAll('[data-sl-clock]').forEach(function (el) {
     setInterval(function () { el.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }, 30000);
   });
+  /* ---------- masonry grids: short cards stack instead of leaving holes ---------- */
+  (function () {
+    var sel = '.sl-masonry,.hb-g';
+    function lay(g) {
+      var cs = getComputedStyle(g), cols = cs.gridTemplateColumns.split(' ').length;
+      var gap = parseFloat(cs.columnGap) || 16;
+      Array.prototype.forEach.call(g.children, function (k) {
+        if (cols < 2) { k.style.gridRowEnd = ''; return; }
+        k.style.gridRowEnd = 'span ' + Math.max(1, Math.ceil(k.getBoundingClientRect().height + gap));
+      });
+      g.classList.toggle('is-masonry', cols > 1);
+    }
+    var grids = document.querySelectorAll(sel);
+    if (!grids.length) return;
+    var ro = window.ResizeObserver ? new ResizeObserver(function (es) {
+      es.forEach(function (e) { var g = e.target.closest(sel); if (g) lay(g); });
+    }) : null;
+    Array.prototype.forEach.call(grids, function (g) {
+      lay(g);
+      if (ro) { ro.observe(g); Array.prototype.forEach.call(g.children, function (k) { ro.observe(k); }); }
+    });
+    window.addEventListener('load', function () { Array.prototype.forEach.call(grids, lay); });
+  })();
 })();
