@@ -143,7 +143,7 @@ if ($action === 'preview') {
         $description          = trim((string)$get('description', ''));
         $declared_value       = (float)$get('declared_value', 0);
         $distance_miles       = (float)$get('distance_miles', 0);
-        $manual_tariff        = (int)$get('manual_tariff', 0);
+        $manual_tariff        = 1; // tariff table pricing removed
         $price_lb             = (float)$get('price_lb', 0);
         $country_origin_id    = (int)$get('country_origin_id', 0);
         $country_destination_id = (int)$get('country_destination_id', 0);
@@ -508,7 +508,7 @@ if ($action === 'create') {
     $errWeightMin = isset($lang['courier_import_err_weight_min']) ? $lang['courier_import_err_weight_min'] : 'El peso debe ser al menos 1 libra.';
 
     foreach ($rows as $i => $row) {
-        $manual_tariff = (int)(isset($row['manual_tariff']) ? $row['manual_tariff'] : 0);
+        $manual_tariff = 1; // tariff table pricing removed
         $sender_id             = (int)($row['sender_id'] ?? 0);
         $sender_address_id     = (int)($row['sender_address_id'] ?? 0);
         $recipient_id          = (int)($row['recipient_id'] ?? 0);

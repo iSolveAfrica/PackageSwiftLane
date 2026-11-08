@@ -105,7 +105,7 @@ function sl_execData($user, $core): array
     $cov = [
         ['Shipments and volume', 'Air Shipments', sl_route('AirShipments')], ['Sea packages', 'Sea Packages', sl_route('SeaPackages')], ['Consolidations', 'Consolidations', sl_route('Consolidations')],
         ['Revenue and margin', 'Financial Overview', sl_route('FinancialOverview')], ['Payments', 'Payments', sl_route('Payments')], ['Receivables', 'Accounts Receivable', sl_route('AccountsReceivable')],
-        ['Operating costs', 'Operating costs', sl_route('CostSettings')], ['Tariffs', 'Shipping Tariffs', sl_route('Tariffs')], ['Warehouse', 'Warehouse', sl_route('Warehouse')],
+        ['Operating costs', 'Operating costs', sl_route('CostSettings')], ['Warehouse', 'Warehouse', sl_route('Warehouse')],
         ['Riders', 'Rider dispatch', sl_route('RiderDispatch')], ['Customers', 'Customers', sl_route('Customers')], ['Staff productivity', 'Staff productivity', sl_route('StaffProductivity')],
         ['Support', 'Support reports', sl_route('CsReports')], ['Messages', 'Message logs', sl_route('MessageLogs')], ['All reports', 'Reports', sl_route('Reports')],
     ];

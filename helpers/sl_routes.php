@@ -152,8 +152,6 @@ function sl_routes(): array
         // Settings and admin
         'SettingsHub'       => 'tools.php',
         'Catalog'           => 'catalog.php',
-        'Tariffs'           => 'shipping_tariffs_list.php',
-        'RateEditor'        => 'shipping_tariffs_add.php',
         'ShippingAddresses' => 'shipping_addresses.php',
         'LoginSettings'     => 'login_settings.php',
         'ModuleController'  => 'module_controller.php',

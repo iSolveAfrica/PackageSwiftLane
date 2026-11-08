@@ -141,7 +141,7 @@ if (empty($errors)) {
     }
 
     $is_pickup = true;
-    $tariff_mode = isset($_POST['tariff_mode']) ? 1 : 0;
+    $tariff_mode = 1; // Tariff table pricing removed: always manual pricing.
 
 
     $dataShipment = array(

@@ -102,7 +102,7 @@ if (empty($errors)) {
     }
     $due_date       = cdp_sumardias($sale_date, $days);
     $status_invoice = ($days === 0) ? 1 : 2;
-    $tariff_mode    = isset($_POST['tariff_mode']) ? 1 : 0;
+    $tariff_mode    = 1; // Tariff table pricing removed: always manual pricing.
 
     $shipment_id = cdp_sanitize(intval($_POST["order_id"]));
 

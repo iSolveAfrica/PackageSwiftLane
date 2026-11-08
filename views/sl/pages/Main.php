@@ -15,7 +15,7 @@ $wh = $d['warehouse']; $pk = $d['pickups']; $rv = $d['revenue'];
             <div class="col g8" style="margin-top:auto">
               <a class="sl-btn sm" href="<?= sl_route('Warehouse') ?>"><i class="ic ic-sm i-scan" aria-hidden="true"></i>Scan package</a>
               <div class="row g8"><a class="sl-btn sm ghost grow" href="<?= sl_route('RiderDispatch') ?>"><i class="ic ic-sm i-truck" aria-hidden="true"></i>Dispatch</a><a class="sl-btn sm ghost grow" href="<?= sl_route('AirShipments') ?>"><i class="ic ic-sm i-print" aria-hidden="true"></i>Print AWBs</a></div>
-              <div class="row g8"><a class="sl-btn sm ghost grow" href="<?= sl_route('Customers', ['filter' => 'unapproved']) ?>"><i class="ic ic-sm i-user" aria-hidden="true"></i>Approvals</a><a class="sl-btn sm ghost grow" href="<?= sl_route('Tariffs') ?>"><i class="ic ic-sm i-file" aria-hidden="true"></i>Pricing sheet</a></div>
+              <div class="row g8"><a class="sl-btn sm ghost grow" href="<?= sl_route('Customers', ['filter' => 'unapproved']) ?>"><i class="ic ic-sm i-user" aria-hidden="true"></i>Approvals</a></div>
             </div>
           </div>
           <div class="dk-qs">

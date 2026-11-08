@@ -519,8 +519,6 @@ function sl_billingHubData($user, $core): array
     $cf = (string) ($_GET['area'] ?? 'all');
     $d['cf'] = array_map(fn($x) => ['f' => $x[0], 'label' => $x[1], 'cls' => $x[0] === $cf ? 'on' : ''], [['all', 'All'], ['pricing', 'Pricing'], ['billing', 'Billing'], ['payments', 'Payments'], ['reports', 'Reports']]);
     $cov = [
-        ['pricing', 'Shipping tariffs', 'Settings › Shipping tariffs', sl_route('Tariffs'), true],
-        ['pricing', 'Rate editor', 'Settings › Shipping tariffs › Add rate', sl_route('RateEditor'), true],
         ['pricing', 'Price package items', 'Financial Sheet › consolidation', 'financial_sheet_consolidation.php', $on],
         ['pricing', 'Send prices to customers', 'Finance › Send prices', sl_route('SendPrices'), true],
         ['pricing', 'Quote calculator', 'Public site', sl_route('QuoteCalculator'), true],

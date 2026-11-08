@@ -6672,7 +6672,7 @@ function cdp_deleteTariffs($id)
 }
 
 /**
- * Calcula tarifa por rango de peso server-side (misma lógica que get_price_range_weight_tariffs_ajax).
+ * Calcula tarifa por rango de peso server-side (no longer called: tariff pricing removed).
  * Usar en add_courier_ajax / edit_courier_ajax cuando manual_tariff = 0.
  * @param int $sender_id
  * @param int $sender_address_id

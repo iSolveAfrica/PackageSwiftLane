@@ -13,7 +13,6 @@
   var $ = function (s) { return f.querySelector(s); };
   var num = function (v) { v = parseFloat(String(v == null ? '' : v).replace(/[^0-9.\-]/g, '')); return isFinite(v) ? v : 0; };
   var money = function (v) { return (R.currency === 'USD' ? '$' : R.currency + ' ') + v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); };
-  var tariff = null;
 
   function fill(sel, rows, empty, want) {
     sel.innerHTML = '';
@@ -92,8 +91,6 @@
   if (dg) dg.addEventListener('click', function () { var on = !dg.classList.contains('on'); dg.classList.toggle('on', on); dg.setAttribute('aria-checked', on ? 'true' : 'false'); $('[name="is_dangerous_good"]').value = on ? 1 : 0; });
   var dtype = $('[data-sf-dtype]');
   dtype.addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; dtype.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); }); $('[name="discount_type"]').value = b.getAttribute('data-v'); quote(); });
-  var rm = $('[data-sf-ratemode]');
-  if (rm) rm.addEventListener('change', function () { $('[data-sf-tariffmode]').checked = rm.value === 'manual'; tariff = null; quote(); });
 
   // ---- quote (mirrors the server arithmetic; the server result is final) ----
   var qt;
@@ -102,20 +99,10 @@
     p.forEach(function (i) { var vol = R.meter > 0 ? i.length * i.width * i.height / R.meter : 0; var cw = Math.max(i.weight, vol); pcs += i.qty; w += cw * i.qty; decl += i.declared_value * i.qty; base += i.use_custom_price ? i.custom_price * i.qty : cw * i.qty * priceLb; });
     $('[data-sf-packages]').value = JSON.stringify(p);
     $('[data-sf-wsum]').textContent = w.toFixed(2) + ' ' + R.weight + ' · ' + pcs + ' piece' + (pcs === 1 ? '' : 's');
-    if (rm && rm.value === 'tariff' && hasRecip) {
-      clearTimeout(qt);
-      if (sSel.value && saSel.value && rSel.value && raSel.value && p.length) {
-        qt = setTimeout(function () {
-          SL.post('ajax/courier/get_price_range_weight_tariffs_ajax.php', { sender_id: sSel.value, sender_address_id: saSel.value, recipient_id: rSel.value, recipient_address_id: raSel.value, recipient_type: $('[data-sf-rtype]').value, order_item_category: $('[name="order_item_category"]').value, order_service_options: $('[name="order_service_options"]').value, packages: JSON.stringify(p) })
-            .then(function (j) { tariff = j && j.success ? j : null; paint(w, decl, priceLb, base); if (!tariff) $('[data-q="note"]').textContent = (j && j.error) || 'No tariff for this route: switch Rate from to Manual.'; });
-        }, 350);
-      }
-    }
     paint(w, decl, priceLb, base);
   }
   function paint(w, decl, priceLb, base) {
-    var useT = rm && rm.value === 'tariff' && tariff;
-    var freight = useT ? num(tariff.total_tarifa) : base;
+    var freight = base;
     var tax = freight > R.min_tax ? freight * R.tax / 100 : 0;
     var declTax = decl > R.min_declared ? decl * R.declared / 100 : 0;
     var dv = num($('[name="discount_value"]').value), dt = $('[name="discount_type"]').value || 'percent';

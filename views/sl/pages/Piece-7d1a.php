@@ -23,7 +23,7 @@ if (!isset($d)) { $d = []; }
     <h1>How can we set things up?</h1>
     <p>Everything Swift Lane is configured by — company, money, operations, messaging and access — in one place.</p>
     <label class="sx-find"><i class="ic i-search" aria-hidden="true"></i><input aria-label="Search settings" placeholder="Search 81 settings, e.g. exchange rate or SMS"><kbd>⌘K</kbd></label>
-    <div class="sx-sugg"><span>Popular:</span><a href="<?= sl_route('FinancialOverview') ?>"><i class="ic ic-sm i-dollar" aria-hidden="true"></i>Exchange rate</a><a href="<?= sl_route('Tariffs') ?>"><i class="ic ic-sm i-receipt" aria-hidden="true"></i>Shipping rates</a><a href="<?= sl_route('Notifications') ?>"><i class="ic ic-sm i-message" aria-hidden="true"></i>WhatsApp API</a><a href="<?= sl_route('StaffRoles') ?>"><i class="ic ic-sm i-key" aria-hidden="true"></i>Roles</a><a href="<?= sl_route('DevInfrastructure') ?>"><i class="ic ic-sm i-database" aria-hidden="true"></i>Backup</a></div>
+    <div class="sx-sugg"><span>Popular:</span><a href="<?= sl_route('FinancialOverview') ?>"><i class="ic ic-sm i-dollar" aria-hidden="true"></i>Exchange rate</a><a href="<?= sl_route('Notifications') ?>"><i class="ic ic-sm i-message" aria-hidden="true"></i>WhatsApp API</a><a href="<?= sl_route('StaffRoles') ?>"><i class="ic ic-sm i-key" aria-hidden="true"></i>Roles</a><a href="<?= sl_route('DevInfrastructure') ?>"><i class="ic ic-sm i-database" aria-hidden="true"></i>Backup</a></div>
   </section>
 
   <div class="sx-strip">

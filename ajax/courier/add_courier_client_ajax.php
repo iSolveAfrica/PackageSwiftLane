@@ -190,7 +190,7 @@ if (empty($errors)) {
         'due_date' =>  $due_date,
         'status_invoice' =>  $status_invoice,
         'volumetric_percentage' =>  $meter,
-        'manual_tariff' => 0,
+        'manual_tariff' => 1,
 
     );
 

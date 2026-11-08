@@ -31,7 +31,7 @@ function sl_settingsForms(): array
                 'min_cost_declared_tax' => ['Minimum declared value for tax', 'number', ''],
                 'insurance' => ['Insurance (%)', 'number', 'Of the insured value'],
                 'c_tariffs' => ['Customs tariff (%)', 'number', ''],
-                'value_weight' => ['Price per weight unit', 'number', 'Used when no tariff matches'],
+                'value_weight' => ['Price per weight unit', 'number', 'Base freight price'],
                 'meter' => ['Volumetric divisor', 'number', 'Length × width × height ÷ this value'],
                 'units' => ['Length unit', 'select', '', ['cm' => 'Centimetre', 'm' => 'Metre', 'Pie' => 'Foot', 'in' => 'Inch']],
                 'weight_p' => ['Weight unit', 'select', '', ['kg' => 'Kilogram', 'lb' => 'Pound']],

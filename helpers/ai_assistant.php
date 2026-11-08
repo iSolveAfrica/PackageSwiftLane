@@ -466,7 +466,6 @@ if (!function_exists('cdp_aiPageCatalogue')) {
             ['staff_productivity.php', 'Staff Productivity', 'Staff activity and active time.', 'view_activity_logs'],
             ['tools.php', 'Settings', 'Company, e-mail, SMS, WhatsApp and system settings.', 'view_tools'],
             ['status_courier_list.php', 'Statuses', 'The shipment statuses used across the system.', 'view_statuses'],
-            ['shipping_tariffs_list.php', 'Shipping Tariffs', 'Prices per route and weight.', 'view_shipping_tariffs'],
             ['offices_list.php', 'Offices', 'Offices.', 'view_offices'],
             ['branchoffices_list.php', 'Branch Offices / Agencies', 'Branches and agencies.', 'view_branches'],
             ['courier_add_client.php', 'Book a Shipment', 'Customers book their own shipment.', 'courier_add_client'],

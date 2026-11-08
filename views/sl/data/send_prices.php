@@ -1,18 +1,20 @@
 <?php
-/** Data for Send prices (SendPrices.dc.html): pick customers/segments and send the current tariff sheet. */
+/** Data for Send prices (SendPrices.dc.html): pick customers/segments and send the current price sheet. */
 require_once CDP_ROOT . '/helpers/sl_view.php';
-require_once CDP_ROOT . '/views/sl/data/tariffs.php';
-
-/** The tariff sheet as plain text (one line per band), used as the message body. */
+/** The price sheet as plain text, used as the message body. Built from the
+ *  price per weight unit and taxes in Settings (the tariff table was removed). */
 function sl_tariffSheetText(): string
 {
-    $modes = sl_tariffModes();
-    $lines = [];
-    foreach (sl_rows('SELECT f.order_service_options AS m, f.initial_range, f.final_range, f.price, oc.name AS o, dc.name AS de FROM cdb_shipping_fees f LEFT JOIN cdb_countries oc ON oc.id = f.origin LEFT JOIN cdb_countries dc ON dc.id = f.destiny WHERE f.client_id IS NULL OR f.client_id = 0 ORDER BY f.order_service_options, f.initial_range LIMIT 40') as $r) {
-        $u = (int) $r->m === 27 ? 'cu ft' : 'lb';
-        $lines[] = ($modes[(int) $r->m] ?? 'Rate') . ' ' . $r->o . '→' . $r->de . ': ' . (float) $r->initial_range . '–' . (float) $r->final_range . " $u at " . sl_rate($r->price) . "/$u";
-    }
-    return $lines ? implode("\n", $lines) : 'No tariffs are set up yet.';
+    $s = sl_rows('SELECT * FROM cdb_settings LIMIT 1');
+    $s = $s ? $s[0] : null;
+    if (!$s) return 'Prices are not set up yet.';
+    $cur = (string) ($s->currency ?? '');
+    $unit = (string) ($s->weight_p ?? 'lb');
+    $lines = ['Price per ' . $unit . ': ' . $cur . ' ' . number_format((float) ($s->value_weight ?? 0), 2)];
+    if ((float) ($s->c_tariffs ?? 0) > 0) $lines[] = 'Customs: ' . (float) $s->c_tariffs . '%';
+    if ((float) ($s->tax ?? 0) > 0) $lines[] = 'Tax: ' . (float) $s->tax . '%';
+    if ((float) ($s->insurance ?? 0) > 0) $lines[] = 'Insurance: ' . (float) $s->insurance . '% of declared value';
+    return implode("\n", $lines);
 }
 
 function sl_sendPricesSegments(): array

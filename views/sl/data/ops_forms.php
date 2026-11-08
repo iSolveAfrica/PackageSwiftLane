@@ -189,7 +189,6 @@ function sl_shipFormData($user, $core, string $mode, int $id = 0): array
         'statuses' => $core->cdp_getStatusByType(1) ?: [], 'payTerms' => sl_rows('SELECT id, label, days FROM cdb_payment_methods ORDER BY id'), 'drivers' => sl_opsDrivers(),
         'agencyLocked' => !empty($ctx['is_restricted']) && !empty($ctx['agency_id']),
         'rates' => ['price_lb' => (float) ($settings->value_weight ?? 0), 'tax' => (float) ($settings->tax ?? 0), 'insurance' => (float) ($settings->insurance ?? 0), 'tariffs' => (float) ($settings->c_tariffs ?? 0), 'declared' => (float) ($settings->declared_tax ?? 0), 'min_tax' => (float) ($core->min_cost_tax ?? 0), 'min_declared' => (float) ($core->min_cost_declared_tax ?? 0), 'meter' => (float) ($settings->meter ?? 0), 'rate' => (float) ($core->exchange_rate ?? 0), 'currency' => (string) ($core->currency ?? 'USD'), 'weight' => (string) ($core->weight_p ?? 'lb')],
-        'hasTariffs' => (int) sl_scalar('SELECT COUNT(*) FROM cdb_shipping_fees') > 0,
         'hidden' => [], 'items' => [], 'files' => [], 'fileDel' => '', 'pre' => ['sender' => null, 'saddr' => 0, 'recip' => null, 'rtype' => 'recipient', 'raddr' => 0],
         'hasRecipient' => true, 'sum' => null,
         'notify' => ['whatsapp' => (int) ($settings->active_whatsapp ?? 0) === 1],

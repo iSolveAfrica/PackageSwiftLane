@@ -659,7 +659,6 @@ function sl_newShipmentData($user, $core, bool $client): array
         'agencyLocked' => !empty($ctx['is_restricted']) && !empty($ctx['agency_id']),
         'rates' => ['price_lb' => (float) ($settings->value_weight ?? 0), 'tax' => (float) ($settings->tax ?? 0), 'insurance' => (float) ($settings->insurance ?? 0), 'tariffs' => (float) ($settings->c_tariffs ?? 0), 'declared' => (float) ($settings->declared_tax ?? 0), 'min_tax' => (float) ($core->min_cost_tax ?? 0), 'min_declared' => (float) ($core->min_cost_declared_tax ?? 0), 'meter' => (float) ($settings->meter ?? 0), 'rate' => (float) ($core->exchange_rate ?? 0), 'currency' => (string) ($core->currency ?? 'USD'), 'weight' => (string) ($core->weight_p ?? 'lb')],
         'today' => date('Y-m-d'),
-        'hasTariffs' => (int) sl_scalar('SELECT COUNT(*) FROM cdb_shipping_fees') > 0,
         'endpoint' => $client ? 'ajax/courier/add_courier_client_ajax.php' : 'ajax/courier/add_courier_ajax.php',
         'me' => null, 'prealert' => null,
         'notify' => ['whatsapp' => (int) ($settings->active_whatsapp ?? 0) === 1, 'sms' => (int) ($settings->active_sms ?? 0) === 1, 'email' => true],

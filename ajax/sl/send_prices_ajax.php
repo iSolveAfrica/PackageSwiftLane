@@ -1,6 +1,6 @@
 <?php
 /**
- * Send the current tariff sheet to chosen customers. WhatsApp and e-mail go
+ * Send the current price sheet to chosen customers. WhatsApp and e-mail go
  * through cdp_pushNotifyUser() and SMS through cdp_sendSms(); both write to
  * cdb_message_log (source send_prices). Capped at 50 recipients per request.
  */

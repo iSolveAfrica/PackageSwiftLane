@@ -136,7 +136,7 @@ if (empty($errors)) {
         $code_prefix = cdp_sanitize($_POST["code_prefix"]);
     }
 
-    $tariff_mode = isset($_POST['tariff_mode']) ? 1 : 0;
+    $tariff_mode = 1; // Tariff table pricing removed: always manual pricing.
 
 
     if (isset($_POST["packages"])) {

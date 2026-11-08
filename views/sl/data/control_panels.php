@@ -111,7 +111,6 @@ function sl_controlPanelsData($user, $core): array
             ['AccountsReceivable', 'i-receipt', 'Accounts receivable', 'Unpaid invoices', 'view_receivable_accounts', fn() => $c("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_invoice = 23 AND a.status_courier <> 21 $w")],
             ['FinancialOverview', 'i-chart', 'Financial overview', $money ? 'Revenue and margin' : 'Counts only for your role', 'view_financial_overview', null],
             ['BillingHub', 'i-dollar', 'Billing & finance', 'Financial sheet and switch', 'financial_sheet', null],
-            ['Tariffs', 'i-tag', 'Shipping tariffs', 'Rates per lb and cu ft', 'view_shipping_tariffs', fn() => $c('SELECT COUNT(*) FROM cdb_shipping_fees')],
         ]],
         ['id' => 'messages', 'icon' => 'i-message', 't' => 'Messages & support', 's' => 'Every conversation with customers', 'rows' => [
             ['CsInbox', 'i-ticket', 'Support inbox', 'Open tickets', 'cs:agent', fn() => sl_tableExists('cdb_cs_tickets') ? $c("SELECT COUNT(*) FROM cdb_cs_tickets WHERE status NOT IN ('closed','resolved')") : ''],

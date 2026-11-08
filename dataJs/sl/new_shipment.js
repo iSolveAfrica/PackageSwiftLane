@@ -10,7 +10,6 @@
   var $ = function (s) { return f.querySelector(s); };
   var num = function (v) { v = parseFloat(String(v || '').replace(/[^0-9.\-]/g, '')); return isFinite(v) ? v : 0; };
   var money = function (v) { return (R.currency === 'USD' ? '$' : R.currency + ' ') + v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); };
-  var tariff = null; // server tariff result when "Tariff table" is chosen
 
   function fill(sel, rows, empty, keep) {
     var cur = keep ? sel.value : '';
@@ -83,8 +82,6 @@
   f.addEventListener('change', function (e) { if (e.target.matches('[data-ns-chip]')) e.target.closest('.nt-ch').classList.toggle('on', e.target.checked); });
   var dtype = $('[data-ns-dtype]');
   if (dtype) dtype.addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; dtype.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); }); $('[name="discount_type"]').value = b.getAttribute('data-v'); quote(); });
-  var rm = $('[data-ns-ratemode]');
-  if (rm) rm.addEventListener('change', function () { $('[data-ns-tariffmode]').checked = rm.value === 'manual'; tariff = null; quote(); });
   f.querySelectorAll('[data-ns-files]').forEach(function (inp) { inp.addEventListener('change', function () { var n = 0; f.querySelectorAll('[data-ns-files]').forEach(function (x) { n += x.files.length; }); $('[data-ns-fname]').textContent = n ? n + ' file(s) attached' : 'Invoices, receipts, up to 10 MB each'; }); });
 
   // ---- quote (mirrors ajax/courier/add_courier_ajax.php) ----
@@ -94,22 +91,11 @@
     p.forEach(function (i) { pcs += i.qty; w += i.weight * i.qty; decl += i.declared_value * i.qty; base += i.use_custom_price ? i.custom_price * i.qty : i.weight * i.qty * priceLb; });
     $('[data-ns-packages]').value = JSON.stringify(p);
     $('[data-ns-wsum]').textContent = w.toFixed(2) + ' ' + R.weight + ' · ' + pcs + ' piece' + (pcs === 1 ? '' : 's');
-    var useTariff = rm && rm.value === 'tariff';
-    if (useTariff) {
-      clearTimeout(qt);
-      if (senderId() && saSel.value && rSel.value && raSel.value && p.length) {
-        qt = setTimeout(function () {
-          SL.post('ajax/courier/get_price_range_weight_tariffs_ajax.php', { sender_id: senderId(), sender_address_id: saSel.value, recipient_id: rSel.value, recipient_address_id: raSel.value, recipient_type: $('[data-ns-rtype]').value, order_item_category: $('[name="order_item_category"]').value, order_service_options: $('[name="order_service_options"]').value, packages: JSON.stringify(p) })
-            .then(function (j) { tariff = j && j.success ? j : null; paint(p, w, decl, priceLb, base); if (!tariff) $('[data-q="note"]').textContent = (j && j.error) || 'No tariff for this route: switch Rate from to Manual.'; });
-        }, 350);
-      }
-    }
     paint(p, w, decl, priceLb, base);
   }
   function paint(p, w, decl, priceLb, base) {
-    var useTariff = rm && rm.value === 'tariff' && tariff;
-    var freight = useTariff ? num(tariff.total_tarifa) : base;
-    var rate = useTariff ? num(tariff.price_lb) : priceLb;
+    var freight = base;
+    var rate = priceLb;
     var tax = freight > R.min_tax ? freight * R.tax / 100 : 0;
     var declTax = decl > R.min_declared ? decl * R.declared / 100 : 0;
     var dv = num(($('[name="discount_value"]') || {}).value), dt = ($('[name="discount_type"]') || {}).value || 'percent';
@@ -121,7 +107,7 @@
     var set = function (k, v) { var el = f.querySelector('[data-q="' + k + '"]'); if (el) el.textContent = v; };
     set('w', w.toFixed(2) + ' ' + R.weight); set('rate', money(rate)); set('freight', money(freight)); set('decl', money(declTax)); set('ins', money(ins)); set('customs', money(customs)); set('tax', money(tax)); set('total', money(total));
     if (R.rate > 0) set('ghs', '₵' + (total * R.rate).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','));
-    if (!(rm && rm.value === 'tariff') || tariff) set('note', 'Final price is confirmed on save' + (client ? ' and when the parcel is weighed' : '') + '.');
+    set('note', 'Final price is confirmed on save' + (client ? ' and when the parcel is weighed' : '') + '.');
   }
   f.addEventListener('input', function (e) { if (e.target.closest('[data-ns-items]') || e.target.matches('[data-ns-calc]')) quote(); });
   f.addEventListener('change', function (e) { if (e.target.matches('[name="order_service_options"],[data-ns-saddr],[data-ns-raddr]')) quote(); });

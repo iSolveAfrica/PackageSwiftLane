@@ -125,7 +125,7 @@ if (empty($errors)) {
     $receiver_data = ($cdpRecipType === 'user')
         ? cdp_getSenderCourier(intval($_POST["recipient_id"]))
         : cdp_getRecipientCourier(intval($_POST["recipient_id"]));
-    $tariff_mode = isset($_POST['tariff_mode']) ? 1 : 0;
+    $tariff_mode = 1; // Tariff table pricing removed: always manual pricing.
 
     $dataShipment = array(
         'order_id' =>  cdp_sanitize(intval($_POST["order_id"])),

@@ -165,7 +165,7 @@ if (empty($errors)) {
 
     $is_pickup       = false;
     $order_incomplete = 1;
-    $tariff_mode      = isset($_POST['tariff_mode']) ? 1 : 0; // 1 = manual, 0 = motor tarifas
+    $tariff_mode      = 1; // Tariff table pricing removed: always manual pricing. // 1 = manual, 0 = motor tarifas
 
     if ($tariff_mode == 0 && isset($_POST['packages'])) {
         $packages_pre = json_decode($_POST['packages']);
