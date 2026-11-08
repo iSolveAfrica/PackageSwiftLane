@@ -11,6 +11,7 @@
  *       'title' => 'Freight that moves…',   // white headline above the card
  *       'links' => [['href' => 'tracking.php', 'label' => 'Track a Parcel', 'icon' => 'send']],
  *       'wide'  => false,                   // true for the register form
+ *       'split' => false,                   // true: intro and a product demo left, the card right (tracking)
  *   ]);
  *   …card…
  *   cdp_authFrameClose($core);
@@ -60,6 +61,7 @@ if (!function_exists('cdp_authFrameOpen')) {
         $photo = cdp_authPhotoName($o['photo'] ?? 'login');
         $links = $o['links'] ?? [];
         $wide  = !empty($o['wide']);
+        $split = !empty($o['split']);
         ?>
     <div class="auth-photo auth-photo--<?php echo $photo; ?>" aria-hidden="true"></div>
 
@@ -79,7 +81,7 @@ if (!function_exists('cdp_authFrameOpen')) {
         <?php } ?>
     </header>
 
-    <main class="auth-stage<?php echo $wide ? ' auth-stage--wide' : ''; ?>">
+    <main class="auth-stage<?php echo $wide ? ' auth-stage--wide' : ''; ?><?php echo $split ? ' auth-stage--split' : ''; ?>">
         <?php if (!empty($o['badge']) || !empty($o['title'])) { ?>
             <div class="auth-intro">
                 <?php if (!empty($o['badge'])) { ?><span class="auth-badge"><?php echo cdp_authFrameEsc($o['badge']); ?></span><?php } ?>

@@ -1,0 +1,25 @@
+{
+  "name": "swiftlane-stageshow",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Swift Lane product demos built with the Stageshow kit (.agents/skills/stageshow). `npm run build` writes assets/stageshow/, which the PHP pages load.",
+  "engines": { "node": ">=20.19" },
+  "scripts": {
+    "dev": "vite --port 5181 --strictPort --host 127.0.0.1",
+    "build": "vite build && node scripts/copy-kit-css.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "lucide-react": "0.468.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.1",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.7.0",
+    "typescript": "^5.6.3",
+    "vite": "^6.4.5"
+  }
+}

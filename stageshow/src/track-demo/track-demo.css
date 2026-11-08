@@ -1,0 +1,238 @@
+/* The tracking-page demo. Scoped to .td (the Stage's outer wrapper). The
+   window and card follow views/track.php and track-details.css: an ink
+   header band, a white journey card, amber done markers. */
+
+.td .ss-stage {
+  --gutter: 32px;
+  overflow: hidden;
+  background: var(--ss-well);
+  border-radius: 24px; /* the auth card's radius, so the tile sits beside it as a sibling */
+  font-family: var(--ss-font);
+}
+
+/* Pinned top-left, runs off the bottom (and the right under the phone) */
+.td .td-window {
+  position: absolute;
+  top: var(--gutter);
+  left: var(--gutter);
+  width: 496px;
+  height: 480px;
+  box-shadow: var(--ss-shadow-hero);
+}
+.td .td-window .ss-window__body {
+  display: block;
+  background: var(--ss-canvas);
+}
+
+/* Header band */
+.td .td-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px 30px;
+  background: linear-gradient(180deg, var(--swl-ink-2) 0%, var(--swl-ink) 100%);
+  color: #fff;
+}
+.td .td-head__left { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.td .td-head__eyebrow { opacity: .45; }
+.td .td-code {
+  display: block;
+  font-family: var(--swl-display);
+  font-weight: 400;
+  font-size: 22px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+.td .td-tags { display: flex; align-items: center; gap: 8px; }
+
+/* The status badge, the app's tinted pill: hue on the ring and a dark tint
+   of the surface, white text */
+.td .td-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 26px;
+  padding: 0 11px;
+  border-radius: var(--ss-radius-pill);
+  background: color-mix(in srgb, #37A4F3 22%, var(--swl-ink));
+  box-shadow: inset 0 0 0 1.5px #37A4F3;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  will-change: transform; /* its box glides as the label rolls */
+}
+.td .td-status__dot { width: 7px; height: 7px; border-radius: 50%; background: #37A4F3; flex: none; }
+.td .td-stagepill {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 5px;
+  background: var(--ss-accent);
+  color: var(--swl-ink);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  will-change: transform; /* it glides as the badge beside it changes width */
+}
+.td .td-stagepill { gap: 3px; }
+
+/* Journey card, pulled up over the band as the page does */
+.td .td-card {
+  margin: -14px 20px 0;
+  background: var(--ss-surface);
+  border: 1px solid var(--ss-line);
+  border-radius: var(--ss-radius-lg);
+  overflow: hidden;
+}
+.td .td-progress {
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid var(--ss-line-faint);
+  background: linear-gradient(180deg, var(--ss-accent-soft) 0%, var(--ss-surface) 100%);
+}
+.td .td-progress__row { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.td .td-progress__now { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.td .td-progress__eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ss-accent-text);
+  white-space: nowrap;
+}
+.td .td-progress__eyebrow { display: inline-flex; align-items: center; gap: 4px; }
+.td .td-progress__sep { width: 3px; height: 3px; border-radius: 50%; background: var(--ss-accent-text); margin: 0 3px; opacity: .6; }
+.td .td-progress__label {
+  font-family: var(--swl-display);
+  font-weight: 400;
+  font-size: 17px;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: var(--ss-text-strong);
+  white-space: nowrap;
+}
+.td .td-progress__bar {
+  position: relative;
+  height: 7px;
+  margin-top: 12px;
+  border-radius: var(--ss-radius-pill);
+  background: var(--ss-well);
+  overflow: hidden;
+}
+.td .td-progress__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: var(--ss-radius-pill);
+  background: var(--ss-accent);
+  transition: width 800ms cubic-bezier(0.45, 0, 0.1, 1);
+}
+.td .td-progress__meta { margin-top: 9px; font-size: 11px; color: var(--ss-text); }
+.td .td-progress__next { display: inline-flex; gap: 4px; white-space: nowrap; }
+.td .td-progress__nextv { font-weight: 700; color: var(--ss-text-strong); }
+
+/* The rail: one grid for every row so the columns line up */
+.td .td-rail { padding: 6px 16px 12px; }
+.td .td-stage {
+  position: relative;
+  display: grid;
+  grid-template-columns: 22px 20px auto 1fr;
+  align-items: center;
+  column-gap: 8px;
+  height: 36px;
+}
+.td .td-stage::before {
+  content: "";
+  position: absolute;
+  left: 10px;
+  top: 29px;
+  height: 14px;
+  width: 2px;
+  background: var(--ss-line);
+  transition: background 300ms;
+}
+.td .td-stage:last-child::before { display: none; }
+.td .td-stage[data-state="done"]::before { background: var(--ss-accent); }
+.td .td-stage__dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--ss-well);
+  box-shadow: inset 0 0 0 2px var(--ss-line);
+  color: var(--swl-ink);
+  transition: background 300ms, box-shadow 300ms;
+}
+.td .td-stage[data-state="done"] .td-stage__dot { background: var(--ss-accent); box-shadow: inset 0 0 0 2px var(--ss-accent); }
+.td .td-stage[data-state="current"] .td-stage__dot { background: var(--ss-surface); box-shadow: inset 0 0 0 2px var(--ss-accent), 0 0 0 4px var(--ss-accent-soft); }
+.td .td-stage__pip { display: block; width: 6px; height: 6px; border-radius: 50%; background: var(--ss-text-faint); transition: background 300ms; }
+.td .td-stage[data-state="current"] .td-stage__pip { background: var(--ss-accent-text); }
+.td .td-stage__num {
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ss-text-faint);
+  transition: color 300ms;
+}
+.td .td-stage[data-state="done"] .td-stage__num,
+.td .td-stage[data-state="current"] .td-stage__num { color: var(--ss-accent-text); }
+.td .td-stage__label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ss-text);
+  white-space: nowrap;
+  transition: color 300ms;
+}
+.td .td-stage[data-state="done"] .td-stage__label,
+.td .td-stage[data-state="current"] .td-stage__label { color: var(--ss-text-strong); }
+.td .td-stage__bar { align-self: center; }
+.td .td-now {
+  justify-self: start;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 7px;
+  border-radius: 5px;
+  background: var(--ss-accent-soft);
+  color: var(--ss-accent-text);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0;
+  transition: opacity 220ms;
+  will-change: transform; /* it moves as the label beside it changes */
+}
+.td .td-now[data-show] { opacity: 1; }
+
+/* The phone straddles the window's right edge over the header's margin and
+   the rail's blank column; a level above the window */
+.td .td-phone {
+  position: absolute;
+  top: 78px;
+  right: var(--gutter);
+  box-shadow: var(--ss-shadow-satellite), 0 30px 50px -20px rgba(25, 42, 62, 0.35);
+}
+.td .td-appicon { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; display: block; }
+
+/* Compact (358): the header's third tag goes, the window runs off the right
+   under the phone, the phone keeps its size and stands a gutter from the
+   right so the notification shows whole */
+.td .ss-stage[data-layout="compact"] { --gutter: 16px; }
+.td .ss-stage[data-layout="compact"] .td-window { width: 420px; }
+.td .ss-stage[data-layout="compact"] .td-head { padding: 14px 16px 26px; }
+.td .ss-stage[data-layout="compact"] .td-head__eyebrow { display: none; }
+.td .ss-stage[data-layout="compact"] .td-code { font-size: 20px; }
+.td .ss-stage[data-layout="compact"] .td-card { margin: -14px 16px 0; }
+.td .ss-stage[data-layout="compact"] .td-tags { flex-wrap: wrap; }
+/* The phone sits where the Next line would be: the bar says it */
+.td .ss-stage[data-layout="compact"] .td-progress { padding-bottom: 14px; }
+.td .ss-stage[data-layout="compact"] .td-progress__meta { display: none; }
+/* Stacked: the phone sits below the summary over the rail's filler rows,
+   its clock off, so the notification is the first thing on its screen */
+.td .ss-stage[data-layout="compact"] .td-phone { top: 222px; }

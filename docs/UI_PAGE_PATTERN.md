@@ -166,3 +166,14 @@ relative dates, safe status colours). Rules that apply there:
   no-`color-mix()` fallback uses the ink `cdp_trackColorInk()` picks.
 - Secondary text uses `--muted` (the tokens' `--text-muted`, 5.6:1); the
   decorative slate is `--deco` and is never used for text.
+
+## Product demos (Stageshow)
+
+`stageshow/` holds faux-product demos of Swift Lane built with the Stageshow
+kit vendored in `.agents/skills/stageshow/` (its `SKILL.md` has the method and
+rules). `npm run build` there writes `assets/stageshow/`, which a page loads
+with `cdp_asset()` and mounts on a `data-swl-demo` element; the built files are
+committed. The tracking page shows the first one beside its form through the
+auth frame's `split` option (`views/inc/auth_chrome.php`). Every demo ships a
+`REHEARSAL.md` with its gold example, beats and gate result; see
+`stageshow/README.md` for building and filming.

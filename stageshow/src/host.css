@@ -1,0 +1,18 @@
+/* The host wrapper the embed renders: the stage, then a quiet replay control. */
+.swl-demo-host { display: flex; flex-direction: column; gap: 10px; }
+.swl-demo-replay {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 100px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font: 600 12px/1 "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  cursor: pointer;
+}
+.swl-demo-replay:hover { background: rgba(255, 255, 255, 0.22); }
+.swl-demo-replay:focus-visible { outline: 2px solid #FFCB01; outline-offset: 2px; }

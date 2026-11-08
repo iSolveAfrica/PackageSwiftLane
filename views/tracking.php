@@ -24,6 +24,9 @@ if (!function_exists('cdp_asset')) { $d = __DIR__; while ($d !== dirname($d) && 
     <link href="<?= cdp_asset('assets/css_main_swiftlane/css/style.css') ?>" rel="stylesheet" type="text/css" id="theme-opt" />
     <link href="<?= cdp_asset('assets/css_main_swiftlane/css/colors/default.css') ?>" rel="stylesheet" id="color-opt">
     <?php $cdpAuthPhoto = 'tracking'; include 'views/inc/auth_head.php'; ?>
+    <!-- Product demo (stageshow/, built to assets/stageshow/) -->
+    <link href="<?= cdp_asset('assets/stageshow/kit/stageshow.css') ?>" rel="stylesheet" type="text/css" />
+    <link href="<?= cdp_asset('assets/stageshow/track-demo.css') ?>" rel="stylesheet" type="text/css" />
 </head>
 
 <body class="auth-page">
@@ -42,7 +45,21 @@ if (!function_exists('cdp_asset')) { $d = __DIR__; while ($d !== dirname($d) && 
         'badge' => 'Live Tracking',
         'title' => 'Every parcel, every stage, in one place.',
         'links' => ($login->cdp_loginCheck() ? [['href' => 'index.php', 'label' => 'Dashboard', 'icon' => 'grid', 'primary' => true]] : [['href' => 'login.php', 'label' => 'Sign In', 'icon' => 'log-in', 'primary' => true]]),
+        'split' => true,
     ]); ?>
+
+        <?php
+        // The tracking journey as a product demo: the real page in a browser
+        // window, a scan arriving, the update landing on the customer's phone.
+        // Built with the Stageshow kit (stageshow/); plays once in view.
+        $demoHost = preg_replace('/[^A-Za-z0-9.:\-]/', '', (string) ($_SERVER['HTTP_HOST'] ?? ''));
+        ?>
+        <div class="auth-demo" data-swl-demo="track"
+             data-url="<?php echo htmlspecialchars(($demoHost !== '' ? $demoHost : 'swiftlane') . '/track.php', ENT_QUOTES, 'UTF-8'); ?>"
+             data-name="<?php echo htmlspecialchars((string) $core->site_name, ENT_QUOTES, 'UTF-8'); ?>"
+             data-icon="<?php echo !empty($core->favicon) ? 'assets/' . htmlspecialchars((string) $core->favicon, ENT_QUOTES, 'UTF-8') : ''; ?>"
+             data-replay="Replay demo"
+             aria-label="Product demo: a shipment moving through its journey stages"></div>
 
         <div class="auth-card auth-card--compact auth-card--tracking card login-page border-0">
             <div class="auth-card__top text-center">
@@ -132,6 +149,7 @@ if (!function_exists('cdp_asset')) { $d = __DIR__; while ($d !== dirname($d) && 
     <!--Note: All important javascript like page loader, menu, sticky menu, menu-toggler, one page menu etc. -->
 
     <script src="<?= cdp_asset('dataJs/tracking.js') ?>"></script>
+    <script src="<?= cdp_asset('assets/stageshow/track-demo.js') ?>" defer></script>
 
 </body>
 
