@@ -1,0 +1,16 @@
+        <section class="sl-card" aria-label="Monthly volume">
+          <div class="sl-ch" style="margin-bottom: 4px"><h2 class="sl-ct">Monthly Volume</h2><div class="sl-seg"><a class="<?= $d['monthly']['year'] == date('Y') ? 'on' : '' ?>" href="<?= h(sl_url(['year' => date('Y')])) ?>"><?= date('Y') ?></a><a class="<?= $d['monthly']['year'] == date('Y') - 1 ? 'on' : '' ?>" href="<?= h(sl_url(['year' => date('Y') - 1])) ?>"><?= date('Y') - 1 ?></a></div></div>
+          <p class="mut" style="margin-bottom: 10px">Shipments, pickups and consolidations — <?= (int) $d['monthly']['year'] ?></p>
+          <p class="sl-chart-hint">Hover to explore · click or tap to keep values open</p>
+          <svg <?= sl_chartAttrs([['name' => 'Shipments', 'color' => '#D9792B', 'values' => $d['monthly']['ship']], ['name' => 'Pickups', 'color' => '#6C4BDD', 'values' => $d['monthly']['pick']], ['name' => 'Consolidations', 'color' => '#0EAD78', 'values' => $d['monthly']['cons']]], array_map(fn($month) => $month . ' ' . $d['monthly']['year'], ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']), 'Monthly volume', 50, 750) ?> viewBox="0 0 760 250" width="100%" height="250" role="img" aria-label="Monthly shipments, pickups and consolidations in <?= (int) $d['monthly']['year'] ?>" style="display: block">
+            <g stroke="#E7E5DF" stroke-width="1" stroke-dasharray="4 4"><line x1="50" y1="20" x2="750" y2="20"></line><line x1="50" y1="70" x2="750" y2="70"></line><line x1="50" y1="120" x2="750" y2="120"></line><line x1="50" y1="170" x2="750" y2="170"></line></g>
+            <line x1="50" y1="220" x2="750" y2="220" stroke="#D9D7D0"></line>
+            <g fill="#6B6A65" font-size="11" text-anchor="end"><text x="42" y="24"><?= h($d['monthly']['axis'][0]) ?></text><text x="42" y="74"><?= h($d['monthly']['axis'][1]) ?></text><text x="42" y="124"><?= h($d['monthly']['axis'][2]) ?></text><text x="42" y="174"><?= h($d['monthly']['axis'][3]) ?></text><text x="42" y="224">0</text></g>
+            <g fill="#6B6A65" font-size="11" text-anchor="middle"><text x="50" y="240">Jan</text><text x="108" y="240">Feb</text><text x="167" y="240">Mar</text><text x="225" y="240">Apr</text><text x="283" y="240">May</text><text x="342" y="240">Jun</text><text x="400" y="240">Jul</text><text x="458" y="240">Aug</text><text x="517" y="240">Sep</text><text x="575" y="240">Oct</text><text x="633" y="240">Nov</text><text x="692" y="240">Dec</text></g>
+            <path d="<?= h($d['monthly']['areaShip']) ?>" fill="rgba(217,121,43,.10)"></path>
+            <path d="<?= h($d['monthly']['lineShip']) ?>" fill="none" stroke="#D9792B" stroke-width="2"></path>
+            <path d="<?= h($d['monthly']['linePick']) ?>" fill="none" stroke="#6C4BDD" stroke-width="2"></path>
+            <path d="<?= h($d['monthly']['lineCons']) ?>" fill="none" stroke="#0EAD78" stroke-width="2"></path>
+          </svg>
+          <div class="row g16 wrap" style="justify-content: center; margin-top: 6px"><span class="row g6 sm"><span style="color: #D9792B">●</span>Shipments</span><span class="row g6 sm"><span style="color: #6C4BDD">●</span>Pickups</span><span class="row g6 sm"><span style="color: #0EAD78">●</span>Consolidations</span></div>
+        </section>

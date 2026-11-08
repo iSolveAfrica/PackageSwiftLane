@@ -20,3 +20,6 @@
 .sl-chart-tip-actions button:hover,.sl-chart-tip-actions a:hover{background:var(--line-2,#e6e2da)}
 .sl-chart-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 @media(print){.sl-chart-tooltip,.sl-chart-guide{display:none}}
+
+.sl-chart-hint{font-size:12px;color:var(--muted,#77736b);margin:0 0 10px}
+svg.sl-interactive-chart{pointer-events:all}

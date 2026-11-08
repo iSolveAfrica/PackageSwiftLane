@@ -26,6 +26,8 @@
     if (chart.root instanceof SVGElement && chart.root.viewBox.baseVal.width) {
       var vb = chart.root.viewBox.baseVal, start = chart.start == null ? vb.x : chart.start, end = chart.end == null ? vb.x + vb.width : chart.end;
       x = r.left + r.width * (start + (end - start) * index / (chart.labels.length - 1) - vb.x) / vb.width;
+      var matrix = chart.root.getScreenCTM();
+      if (matrix) { var point = chart.root.createSVGPoint(); point.x = start + (end - start) * index / (chart.labels.length - 1); point.y = vb.y; x = point.matrixTransform(matrix).x; }
     }
     guide.hidden = false; guide.style.left = Math.round(x) + 'px'; guide.style.top = Math.max(0, r.top) + 'px';
     guide.style.height = Math.max(0, Math.min(innerHeight, r.bottom) - Math.max(0, r.top)) + 'px';
@@ -95,6 +97,13 @@
     root.removeAttribute('aria-hidden'); root.querySelectorAll('[aria-hidden="true"]').forEach(function (n) { n.removeAttribute('aria-hidden'); });
     var hidden = root.closest('[aria-hidden="true"]'); if (hidden) hidden.removeAttribute('aria-hidden');
     root.dataset.chartReady = 'true'; root.classList.add('sl-interactive-chart');
+    if (root instanceof SVGElement && root.viewBox && root.viewBox.baseVal.width) {
+      var hit = document.createElementNS('http://www.w3.org/2000/svg', 'rect'), bounds = root.viewBox.baseVal;
+      hit.setAttribute('x', bounds.x); hit.setAttribute('y', bounds.y); hit.setAttribute('width', bounds.width); hit.setAttribute('height', bounds.height);
+      hit.setAttribute('fill', 'transparent'); hit.setAttribute('pointer-events', 'all'); hit.setAttribute('aria-hidden', 'true'); hit.classList.add('sl-chart-hit-area');
+      root.insertBefore(hit, root.firstChild);
+      root.style.pointerEvents = 'all';
+    }
     focus.setAttribute('aria-label', chart.title + '. Interactive chart: use left and right arrows to inspect values.');
     var live = el('span'); live.className = 'sl-chart-sr'; live.setAttribute('role', 'status'); live.setAttribute('aria-live', 'polite');
     root.insertAdjacentElement('afterend', live); chart.live = live;
@@ -113,12 +122,14 @@
       }
       var r = root.getBoundingClientRect(), f = (event.clientX - r.left) / Math.max(1, r.width);
       if (root instanceof SVGElement && root.viewBox.baseVal.width) {
-        var vb = root.viewBox.baseVal, x = f * vb.width + vb.x;
+        var vb = root.viewBox.baseVal, x = f * vb.width + vb.x, matrix = root.getScreenCTM();
+        if (matrix) { var point = root.createSVGPoint(); point.x = event.clientX; point.y = event.clientY; x = point.matrixTransform(matrix.inverse()).x; }
         var start = data.start == null ? vb.x : data.start, end = data.end == null ? vb.x + vb.width : data.end;
         f = (x - start) / Math.max(1, end - start);
       }
       return Math.round(Math.max(0, Math.min(1, f)) * (count - 1));
     }
+    root.addEventListener('pointerenter', function (event) { if (event.pointerType !== 'touch') show(chart, indexAt(event), false); });
     root.addEventListener('pointermove', function (event) { if (event.pointerType !== 'touch') show(chart, indexAt(event), false); });
     root.addEventListener('pointerleave', function () { if (!pinned && active && active.chart === chart) hide(); });
     root.addEventListener('click', function (event) {

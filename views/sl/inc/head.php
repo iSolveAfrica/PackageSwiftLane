@@ -19,6 +19,7 @@ $slBoardCss = $slPage['board'] ? 'assets/swiftlane/pages/' . $slPage['board'] . 
 <link rel="stylesheet" href="<?= h(cdp_asset($slBoardCss)) ?>">
 <?php endif; ?>
 <link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/chart-interactions.css')) ?>">
+<script defer src="<?= h(cdp_asset('dataJs/sl/chart_interactions.js')) ?>"></script>
 <?php foreach ((array) ($slPage['styles'] ?? []) as $slCss): ?>
 <link rel="stylesheet" href="<?= h(cdp_asset($slCss)) ?>">
 <?php endforeach; ?>
