@@ -261,6 +261,7 @@ function sl_navResolve(string $activeId): array
                 $c2 = '';
             }
             $items[] = [
+                'id' => $it['id'],
                 'href' => $it['href'] ?? sl_route($it['board']),
                 'label' => $it['label'],
                 'icon' => 'i-' . $it['icon'],

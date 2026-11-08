@@ -19,8 +19,12 @@ function cdb_money_format($amount)
         $curr_point = $data_currency->dec_point ?? '.';
         $curr_sep = $data_currency->thousands_sep ?? ',';
 
-        $amount = (float) $amount;
+        $amount = function_exists('sl_displayAmount') ? sl_displayAmount($amount) : (float) $amount;
         $currency_code = ($curr_symbol == '') ? $curr_money : $curr_symbol;
+        if (function_exists('sl_showGhs') && sl_showGhs()) {
+            $currency_code = '₵';
+            $curr_symbol = '₵';
+        }
         $dec_digit = ($curr_decimal == 'true') ? 2 : 0;
 
         $retval = number_format($amount, $dec_digit, $curr_point, $curr_sep);
@@ -55,8 +59,12 @@ function cdb_money_format_bar($amount)
         $curr_point = $data_currency->dec_point ?? '.';
         $curr_sep = $data_currency->thousands_sep ?? ',';
 
-        $amount = (float) $amount;
+        $amount = function_exists('sl_displayAmount') ? sl_displayAmount($amount) : (float) $amount;
         $currency_code = ($curr_symbol == '') ? $curr_money : $curr_symbol;
+        if (function_exists('sl_showGhs') && sl_showGhs()) {
+            $currency_code = '₵';
+            $curr_symbol = '₵';
+        }
         $dec_digit = ($curr_decimal == 'true') ? 2 : 0;
 
         $retval = number_format($amount, $dec_digit, $curr_point, $curr_sep);

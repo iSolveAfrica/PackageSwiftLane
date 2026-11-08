@@ -44,3 +44,11 @@ form.sl-inline{display:contents}
 .sl-wrap,.sl-wrap.wide,.sl-main>.sl-wrap[style]{max-width:none!important;width:100%}
 .sl-main{padding-left:24px;padding-right:24px}
 @media (max-width:900px){.sl-main{padding-left:16px;padding-right:16px}}
+
+/* Sidebar USD/GHS display switch (views/sl/inc/nav_groups.php) */
+.sl-nav .sl-ccy{display:flex;align-items:center;gap:10px;width:100%;height:40px;padding:0 10px;border:0;background:none;border-radius:var(--r-sm);font:inherit;font-size:14px;color:var(--ink);cursor:pointer;text-align:left}
+.sl-nav .sl-ccy:hover{background:var(--bg-2,rgba(0,0,0,.04))}
+.sl-nav .sl-ccy span:not(.sl-toggle){flex:1}
+.sl-nav .sl-ccy b{font-weight:400;color:var(--muted)}
+.sl-nav .sl-ccy em{font-style:normal;font-size:12px;color:var(--muted);width:12px;text-align:center}
+.sl-nav .sl-ccy.loading{opacity:.6}

@@ -102,6 +102,7 @@ if (!isset($lang) || !is_array($lang)) {
     $direction_layout = 'ltr';
 }
 require_once CDP_ROOT . '/helpers/autoload_lang.php';
+require_once CDP_ROOT . '/helpers/display_currency.php';
 require_once CDP_ROOT . '/helpers/functions.php';
 require_once CDP_ROOT . '/helpers/function_exist.php';
 require_once CDP_ROOT . '/helpers/querys.php';

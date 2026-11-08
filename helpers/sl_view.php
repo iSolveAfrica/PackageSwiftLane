@@ -72,6 +72,10 @@ function sl_money($amount, ?string $currency = null): string
 {
     global $core;
     $symbol = $currency ?? ($core->for_symbol ?? ($core->currency ?? '$'));
+    if ($currency === null && function_exists('sl_showGhs') && sl_showGhs()) {
+        $amount = sl_displayAmount($amount);
+        $symbol = '₵';
+    }
     $dec = isset($core->for_decimal) ? (int) $core->for_decimal : 2;
     $formatted = number_format((float) $amount, $dec, $core->dec_point ?? '.', $core->thousands_sep ?? ',');
     return ($core->cformat ?? '1') == '2' ? $formatted . ' ' . $symbol : $symbol . $formatted;
