@@ -1,0 +1,12 @@
+.sl-interactive-chart{cursor:crosshair;touch-action:pan-y}
+.sl-interactive-chart:focus-visible,.sl-interactive-chart:focus-within{outline:2px solid var(--ink,#34374b);outline-offset:4px;border-radius:4px}
+.sl-interactive-chart [data-chart-selected]{filter:brightness(1.2);outline:2px solid var(--ink,#34374b);outline-offset:2px}
+.sl-chart-tooltip{position:fixed;z-index:10050;box-sizing:border-box;padding:14px 16px;background:var(--card,#fff);color:var(--ink,#24231f);border:1px solid var(--line-2,#d9d7d0);border-radius:14px;box-shadow:0 8px 30px #0002;font:13px/1.5 var(--font,system-ui);max-height:calc(100dvh - 24px);overflow:auto;pointer-events:none}
+.sl-chart-tooltip[hidden]{display:none}
+.sl-chart-tooltip[role=dialog]{pointer-events:auto}
+.sl-chart-tooltip strong{display:block;font-weight:600;margin-bottom:4px}
+.sl-chart-tooltip p{margin:5px 0;overflow-wrap:anywhere}
+.sl-chart-tip-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.sl-chart-tip-actions button,.sl-chart-tip-actions a{background:var(--field,#f2f1ed);color:inherit;border:1px solid var(--line-2,#d9d7d0);border-radius:8px;padding:6px 9px;font:inherit;cursor:pointer;text-decoration:none}
+.sl-chart-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+@media(print){.sl-chart-tooltip{display:none}}

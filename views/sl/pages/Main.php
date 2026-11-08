@@ -65,7 +65,7 @@ $wh = $d['warehouse']; $pk = $d['pickups']; $rv = $d['revenue'];
         <section class="sl-card col g16" aria-label="US packages">
 <div class="sl-ch" style="margin:0"><div><h2 class="sl-ct">US packages</h2><div class="mut sm">From the overseas warehouse to customers</div></div><div class="row g8"><a class="sl-btn sm ghost" href="<?= sl_route('PackageIntake') ?>"><i class="ic ic-sm i-plus" aria-hidden="true"></i>Input package</a></div></div>
 <div class="up7-pipe"><?php foreach ($d['pipe'] as $st): ?><div class="up7-st"><span class="up7-ic"><i class="ic ic-sm <?= h($st['icon']) ?>" aria-hidden="true"></i></span><b class="mono"><?= sl_num($st['n']) ?></b><span class="fw5 sm"><?= h($st['label']) ?></span><span class="mut" style="font-size:12px"><?= h($st['sub']) ?></span></div><?php endforeach; ?></div>
-<div class="split"><div class="a col g8"><div class="row between"><span class="fw5">Collected vs input per day</span><span class="row g16 sm mut"><span class="row g6"><i style="width:10px;height:10px;border-radius:3px;background:#D6D2CA;display:inline-block"></i>Packages collected</span><span class="row g6"><i style="width:14px;height:2px;background:#E08A3C;display:inline-block"></i>Shipments input</span></span></div><svg viewBox="0 0 640 174" preserveAspectRatio="none" style="width:100%;height:190px;display:block" role="img" aria-label="Packages collected and input per day for 14 days"><?= $d['ciBars'] ?><polyline points="<?= h($d['ciLine']) ?>" fill="none" stroke="#E08A3C" stroke-width="2.4" vector-effect="non-scaling-stroke"/><?= $d['ciDots'] ?></svg><div class="row between mut sm"><span><?= h($d['ciLabels'][0]) ?></span><span><?= h($d['ciLabels'][1]) ?></span><span><?= h($d['ciLabels'][2]) ?></span></div>
+<div class="split"><div class="a col g8"><div class="row between"><span class="fw5">Collected vs input per day</span><span class="row g16 sm mut"><span class="row g6"><i style="width:10px;height:10px;border-radius:3px;background:#D6D2CA;display:inline-block"></i>Packages collected</span><span class="row g6"><i style="width:14px;height:2px;background:#E08A3C;display:inline-block"></i>Shipments input</span></span></div><svg <?= sl_chartAttrs($d['ciSeries'], $d['ciDays'], 'Packages collected and shipments input', 22.9, 617.1) ?> viewBox="0 0 640 174" preserveAspectRatio="none" style="width:100%;height:190px;display:block" role="img" aria-label="Packages collected and input per day for 14 days"><?= $d['ciBars'] ?><polyline points="<?= h($d['ciLine']) ?>" fill="none" stroke="#E08A3C" stroke-width="2.4" vector-effect="non-scaling-stroke"/><?= $d['ciDots'] ?></svg><div class="row between mut sm"><span><?= h($d['ciLabels'][0]) ?></span><span><?= h($d['ciLabels'][1]) ?></span><span><?= h($d['ciLabels'][2]) ?></span></div>
 <div class="row g24 wrap sm"><span><b class="mono"><?= sl_num($d['ciTotals']['collected']) ?></b> <span class="mut">collected</span></span><span><b class="mono"><?= sl_num($d['ciTotals']['input']) ?></b> <span class="mut">input</span></span><span><b class="mono"><?= sl_num($d['ciTotals']['weight'], 1) ?> lb</b> <span class="mut">average weight</span></span></div></div>
 <div class="b col g12"><span class="fw5">Collected by carrier</span><?php foreach ($d['carriers'] as $c): ?><div class="col g4"><div class="row between sm"><span><?= h($c['name']) ?></span><span class="mono"><?= (int) $c['pct'] ?>%</span></div><div class="up7-b"><i style="width:<?= (int) $c['w'] ?>%"></i></div></div><?php endforeach; ?><?php if (!$d['carriers']): ?><span class="mut sm">No packages in the last 30 days.</span><?php endif; ?>
 <div class="col g8" style="margin-top:6px"><?php foreach ($d['departures'] as $dep): ?><div class="up7-dep"><i class="ic ic-sm <?= h($dep['icon']) ?>" aria-hidden="true"></i><div class="grow"><div class="fw5 sm"><?= h($dep['title']) ?></div><div class="mut" style="font-size:12px"><?= h($dep['sub']) ?></div></div><span class="mono sm"><?= (int) $dep['n'] ?> pkgs</span></div><?php endforeach; ?></div></div></div>
@@ -82,7 +82,7 @@ $wh = $d['warehouse']; $pk = $d['pickups']; $rv = $d['revenue'];
             <div class="sl-heatcol">
               <div class="sl-heatmonths" aria-hidden="true"><?php foreach ($d['heatMonths'] as $m): ?><span><?= h($m) ?></span><?php endforeach; ?></div>
               <div class="sl-heat" role="img" aria-label="Daily shipments registered over the last six months">
-                <?php foreach ($d['heat'] as $c): ?><b class="<?= h($c['c']) ?>"></b><?php endforeach; ?>
+                <?php foreach ($d['heat'] as $c): ?><b title="<?= h($c['t']) ?>" class="<?= h($c['c']) ?>"></b><?php endforeach; ?>
               </div>
             </div>
           </div>
@@ -99,7 +99,7 @@ $wh = $d['warehouse']; $pk = $d['pickups']; $rv = $d['revenue'];
             <div class="row top g8">
               <div class="sl-axis" aria-hidden="true"><?php foreach ($d['week']['axis'] as $a): ?><span><?= h($a) ?></span><?php endforeach; ?></div>
               <div class="grow">
-                <svg viewBox="0 0 400 190" preserveAspectRatio="none" width="100%" height="190" role="img" aria-label="Parcels received per day over the last seven days" style="display: block">
+                <svg <?= sl_chartAttrs([['name' => 'Parcels', 'values' => $d['week']['values']]], $d['week']['days'], 'Parcels received', 0, 400) ?> viewBox="0 0 400 190" preserveAspectRatio="none" width="100%" height="190" role="img" aria-label="Parcels received per day over the last seven days" style="display: block">
                   <g stroke="#E7E5DF" stroke-width="1"><line x1="0" y1="2" x2="400" y2="2" stroke-dasharray="4 4"></line><line x1="0" y1="50" x2="400" y2="50"></line><line x1="0" y1="98" x2="400" y2="98"></line><line x1="0" y1="146" x2="400" y2="146"></line><line x1="0" y1="188" x2="400" y2="188"></line></g>
                   <path d="<?= h($d['week']['path']) ?>" fill="none" stroke="#D9792B" stroke-width="1.6"></path>
                   <circle cx="<?= h(explode(',', $d['week']['dot'])[0]) ?>" cy="<?= h(explode(',', $d['week']['dot'])[1] ?? 188) ?>" r="3.5" fill="#FBFAF8" stroke="#161615" stroke-width="1.2"></circle>
@@ -126,7 +126,7 @@ $wh = $d['warehouse']; $pk = $d['pickups']; $rv = $d['revenue'];
         <section class="sl-card" aria-label="Monthly volume">
           <div class="sl-ch" style="margin-bottom: 4px"><h2 class="sl-ct">Monthly Volume</h2><div class="sl-seg"><a class="<?= $d['monthly']['year'] == date('Y') ? 'on' : '' ?>" href="<?= h(sl_url(['year' => date('Y')])) ?>"><?= date('Y') ?></a><a class="<?= $d['monthly']['year'] == date('Y') - 1 ? 'on' : '' ?>" href="<?= h(sl_url(['year' => date('Y') - 1])) ?>"><?= date('Y') - 1 ?></a></div></div>
           <p class="mut" style="margin-bottom: 10px">Shipments, pickups and consolidations — <?= (int) $d['monthly']['year'] ?></p>
-          <svg viewBox="0 0 760 250" width="100%" height="250" role="img" aria-label="Monthly shipments, pickups and consolidations in <?= (int) $d['monthly']['year'] ?>" style="display: block">
+          <svg <?= sl_chartAttrs([['name' => 'Shipments', 'values' => $d['monthly']['ship']], ['name' => 'Pickups', 'values' => $d['monthly']['pick']], ['name' => 'Consolidations', 'values' => $d['monthly']['cons']]], ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], 'Monthly volume', 50, 750) ?> viewBox="0 0 760 250" width="100%" height="250" role="img" aria-label="Monthly shipments, pickups and consolidations in <?= (int) $d['monthly']['year'] ?>" style="display: block">
             <g stroke="#E7E5DF" stroke-width="1" stroke-dasharray="4 4"><line x1="50" y1="20" x2="750" y2="20"></line><line x1="50" y1="70" x2="750" y2="70"></line><line x1="50" y1="120" x2="750" y2="120"></line><line x1="50" y1="170" x2="750" y2="170"></line></g>
             <line x1="50" y1="220" x2="750" y2="220" stroke="#D9D7D0"></line>
             <g fill="#6B6A65" font-size="11" text-anchor="end"><text x="42" y="24"><?= h($d['monthly']['axis'][0]) ?></text><text x="42" y="74"><?= h($d['monthly']['axis'][1]) ?></text><text x="42" y="124"><?= h($d['monthly']['axis'][2]) ?></text><text x="42" y="174"><?= h($d['monthly']['axis'][3]) ?></text><text x="42" y="224">0</text></g>
@@ -147,7 +147,7 @@ $wh = $d['warehouse']; $pk = $d['pickups']; $rv = $d['revenue'];
             <div class="sl-heatcol">
               <div class="sl-heatmonths" aria-hidden="true"><?php foreach ($d['yearMonths'] as $m): ?><span><?= h($m) ?></span><?php endforeach; ?></div>
               <div class="sl-heat" style="grid-template-columns: repeat(52, minmax(0, 1fr))" role="img" aria-label="Shipments registered per day over the last year">
-                <?php foreach ($d['year'] as $c): ?><b class="<?= h($c['c']) ?>"></b><?php endforeach; ?>
+                <?php foreach ($d['year'] as $c): ?><b title="<?= h($c['t']) ?>" class="<?= h($c['c']) ?>"></b><?php endforeach; ?>
               </div>
             </div>
           </div>
@@ -158,7 +158,7 @@ $wh = $d['warehouse']; $pk = $d['pickups']; $rv = $d['revenue'];
           <section class="sl-card" aria-label="Shipment status mix">
             <div class="sl-ch" style="margin-bottom: 4px"><h2 class="sl-ct">Status Mix</h2><span class="mut sm">All open shipments</span></div>
             <div class="row g24 wrap" style="margin-top: 10px">
-              <div class="donut" style="background: <?= h($d['mix']['conic']) ?>"><b><?= sl_num($d['mix']['total']) ?><small>parcels</small></b></div>
+              <div class="donut" <?= sl_chartAttrs([['name' => 'Parcels', 'values' => array_column($d['mix']['rows'], 'n')]], array_column($d['mix']['rows'], 'label'), 'Shipments by status', null, null, 'donut') ?> style="background: <?= h($d['mix']['conic']) ?>"><b><?= sl_num($d['mix']['total']) ?><small>parcels</small></b></div>
               <div class="col g10 grow">
                 <?php foreach ($d['mix']['rows'] as $m): ?><span class="lgd"><i style="background: <?= h($m['color']) ?>"></i><?= h($m['label']) ?><span class="mut" style="margin-left: auto"><?= (int) $m['pct'] ?>%</span></span><?php endforeach; ?>
               </div>
@@ -167,7 +167,7 @@ $wh = $d['warehouse']; $pk = $d['pickups']; $rv = $d['revenue'];
           <section class="sl-card" aria-label="On-time delivery">
             <div class="sl-ch" style="margin-bottom: 4px"><h2 class="sl-ct">On-time Delivery</h2><span class="sl-pill <?= $d['ontime']['now'] >= 95 ? 'delivered' : 'onway' ?>"><?= h($d['ontime']['now']) ?>%</span></div>
             <p class="mut" style="margin-bottom: 10px">Last 12 weeks against the 95% target</p>
-            <svg viewBox="0 0 400 170" preserveAspectRatio="none" width="100%" height="170" role="img" aria-label="On-time delivery rate, last 12 weeks" style="display: block">
+            <svg <?= sl_chartAttrs([['name' => 'On-time delivery', 'values' => $d['ontime']['series'], 'unit' => '%']], [], 'Weekly on-time delivery', 0, 400) ?> viewBox="0 0 400 170" preserveAspectRatio="none" width="100%" height="170" role="img" aria-label="On-time delivery rate, last 12 weeks" style="display: block">
               <g stroke="#E7E5DF"><line x1="0" y1="20" x2="400" y2="20"></line><line x1="0" y1="80" x2="400" y2="80"></line><line x1="0" y1="140" x2="400" y2="140"></line></g>
               <line x1="0" y1="26" x2="400" y2="26" stroke="#0EAD78" stroke-dasharray="5 5"></line>
               <path d="<?= h($d['ontime']['path']) ?>" fill="none" stroke="#161615" stroke-width="2"></path>

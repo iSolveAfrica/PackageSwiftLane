@@ -43,7 +43,7 @@ function sl_devSpark(array $vals, float $w = 240, float $h = 46): array
         return ['line' => '', 'area' => ''];
     }
     $max = max($vals) ?: 1;
-    return ['line' => sl_svgLinePath($vals, $w, $h, 4, $max * 1.1), 'area' => sl_svgAreaPath($vals, $w, $h, 4, $max * 1.1)];
+    return ['values' => $vals, 'line' => sl_svgLinePath($vals, $w, $h, 4, $max * 1.1), 'area' => sl_svgAreaPath($vals, $w, $h, 4, $max * 1.1)];
 }
 
 function sl_devCommon($user): array
@@ -248,7 +248,7 @@ function sl_devMetricsData($user, $core): array
         $paths = [];
         foreach ($lines as $l) {
             $vals = array_map(fn($v) => (float) ($v ?? 0), array_column($s, $l[0]));
-            $paths[] = ['c' => $l[1], 'label' => $l[2], 'd' => count($vals) > 1 ? sl_svgLinePath($vals, 634, 160, 10, $max, 44) : '', 'last' => $vals ? end($vals) : null];
+            $paths[] = ['c' => $l[1], 'label' => $l[2], 'values' => array_column($s, $l[0]), 'd' => count($vals) > 1 ? sl_svgLinePath($vals, 634, 160, 10, $max, 44) : '', 'last' => $vals ? end($vals) : null];
         }
         $ticks = [];
         foreach ([0, 1, 2, 3] as $i) $ticks[] = ['y' => 10 + $i * 50, 'l' => $unit === '%' ? round($max * (3 - $i) / 3) . '%' : sl_num($max * (3 - $i) / 3, $max < 10 ? 1 : 0)];
@@ -260,7 +260,7 @@ function sl_devMetricsData($user, $core): array
                 $xl[] = ['x' => round(44 + 590 * $f), 'l' => date(count($s) > 0 && strtotime(end($s)['t']) - strtotime($s[0]['t']) > 86400 * 2 ? 'M j' : 'H:i', strtotime($s[$i]['t']))];
             }
         }
-        return ['t' => $title, 'sub' => $sub, 'paths' => $paths, 'ticks' => $ticks, 'xl' => $xl, 'unit' => $unit];
+        return ['labels' => array_map(fn($row) => sl_date($row['t'], 'M j H:i'), $s), 't' => $title, 'sub' => $sub, 'paths' => $paths, 'ticks' => $ticks, 'xl' => $xl, 'unit' => $unit];
     };
     $d['charts'] = [
         $chart('Throughput', 'Application actions per minute (cdb_activity_log)', [['apm', '#5B9BF0', 'actions/min']], ''),

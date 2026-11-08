@@ -148,6 +148,8 @@ function sl_overviewData($user, $core, $userData): array
         $bars[] = sprintf('<rect x="%.1f" y="%.1f" width="33.7" height="%.1f" rx="4" fill="%s"/>', $x, 170 - $hgt, $hgt, $i === 13 ? '#8E8A82' : '#D6D2CA');
     }
     $d['ciBars'] = implode('', $bars);
+    $d['ciSeries'] = [['name' => 'Packages collected', 'values' => $collected], ['name' => 'Shipments input', 'values' => $input]];
+    $d['ciDays'] = array_map(fn($i) => date('M j, Y', strtotime('-' . (13 - $i) . ' days')), range(0, 13));
     $d['ciLine'] = sl_svgPoints($input, 640, 170, 20, $maxCI, 22.9);
     $pts = explode(' ', $d['ciLine']);
     $d['ciDots'] = implode('', array_map(fn($p) => '<circle cx="' . explode(',', $p)[0] . '" cy="' . explode(',', $p)[1] . '" r="3" fill="#E08A3C"/>', array_filter($pts)));
@@ -169,7 +171,7 @@ function sl_overviewData($user, $core, $userData): array
     $daily182 = sl_dailyCounts('cdb_add_order', 'order_date', 182, ' AND is_deleted = 0');
     $peak = max(1, max($daily182));
     $peakDay = array_search(max($daily182), $daily182, true);
-    $d['heat'] = array_map(fn($n) => ['c' => sl_heatLevel($n, $peak)], array_values($daily182));
+    $d['heat'] = array_map(fn($day, $n) => ['c' => sl_heatLevel($n, $peak), 't' => $day . ': ' . $n . ' parcels'], array_keys($daily182), array_values($daily182));
     $d['heatRange'] = date('M', strtotime('-181 days')) . ' – ' . date('M Y');
     $d['heatMonths'] = [];
     for ($i = 5; $i >= 0; $i--) $d['heatMonths'][] = date('M', strtotime("-$i months"));
@@ -177,7 +179,7 @@ function sl_overviewData($user, $core, $userData): array
     $daily364 = sl_dailyCounts('cdb_add_order', 'order_date', 364, ' AND is_deleted = 0');
     $peakY = max(1, max($daily364));
     $peakYDay = array_search(max($daily364), $daily364, true);
-    $d['year'] = array_map(fn($n) => ['c' => sl_heatLevel($n, $peakY)], array_values($daily364));
+    $d['year'] = array_map(fn($day, $n) => ['c' => sl_heatLevel($n, $peakY), 't' => $day . ': ' . $n . ' parcels'], array_keys($daily364), array_values($daily364));
     $d['yearMonths'] = [];
     for ($i = 11; $i >= 0; $i--) $d['yearMonths'][] = date('M', strtotime("-$i months"));
     $d['yearPeak'] = ['n' => max($daily364), 'day' => $peakYDay ? date('M j', strtotime($peakYDay)) : ''];
@@ -186,7 +188,7 @@ function sl_overviewData($user, $core, $userData): array
     $week = array_values(sl_dailyCounts('cdb_add_order', 'order_date', 7, ' AND is_deleted = 0'));
     $weekKg = (float) sl_scalar("SELECT COALESCE(SUM(a.total_weight),0) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.order_date >= CURDATE() - INTERVAL 6 DAY $agency");
     $maxW = max(1, max($week));
-    $d['week'] = ['avg' => round(array_sum($week) / 7, 1), 'kg' => $weekKg, 'path' => sl_svgLinePath($week, 400, 188, 10, $maxW), 'axis' => [sl_num($maxW), sl_num($maxW * .75), sl_num($maxW * .5), sl_num($maxW * .25), '0'], 'days' => []];
+    $d['week'] = ['values' => $week, 'avg' => round(array_sum($week) / 7, 1), 'kg' => $weekKg, 'path' => sl_svgLinePath($week, 400, 188, 10, $maxW), 'axis' => [sl_num($maxW), sl_num($maxW * .75), sl_num($maxW * .5), sl_num($maxW * .25), '0'], 'days' => []];
     for ($i = 6; $i >= 0; $i--) $d['week']['days'][] = date('D', strtotime("-$i days"));
     $lastPt = explode(' ', sl_svgPoints($week, 400, 188, 10, $maxW));
     $d['week']['dot'] = end($lastPt) ?: '400,188';
@@ -216,7 +218,7 @@ function sl_overviewData($user, $core, $userData): array
         ['Exceptions', '#E5484D', $held],
     ];
     $mtot = array_sum(array_column($mix, 2)) ?: 1;
-    $d['mix'] = ['total' => array_sum(array_column($mix, 2)), 'conic' => sl_conic(array_map(fn($m) => [$m[1], $m[2]], $mix)), 'rows' => array_map(fn($m) => ['label' => $m[0], 'color' => $m[1], 'pct' => sl_pct($m[2], $mtot)], $mix)];
+    $d['mix'] = ['total' => array_sum(array_column($mix, 2)), 'conic' => sl_conic(array_map(fn($m) => [$m[1], $m[2]], $mix)), 'rows' => array_map(fn($m) => ['label' => $m[0], 'color' => $m[1], 'n' => $m[2], 'pct' => sl_pct($m[2], $mtot)], $mix)];
     $ontime = [];
     for ($w = 11; $w >= 0; $w--) {
         $from = date('Y-m-d', strtotime("-" . ($w * 7 + 6) . " days"));

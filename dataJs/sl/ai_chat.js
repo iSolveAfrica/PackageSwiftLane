@@ -11,7 +11,8 @@
     if (!me) { var av = document.createElement('span'); av.className = 'ai-av'; av.innerHTML = '<i class="ic ic-sm i-ai" aria-hidden="true"></i>'; m.appendChild(av); }
     var b = document.createElement('div'); b.className = 'ai-b';
     (tools || []).forEach(function (t) { var d = document.createElement('div'); d.className = 'ai-tool'; d.innerHTML = '<i class="ic ic-sm i-search" aria-hidden="true"></i>'; d.appendChild(document.createTextNode((t.name || '') + (t.summary ? ' · ' + t.summary : ''))); b.appendChild(d); });
-    b.appendChild(document.createTextNode(text)); m.appendChild(b); th.appendChild(m); m.scrollIntoView({ block: 'end' }); return m;
+    if (me || !SL.aiResponse) { b.appendChild(document.createTextNode(text)); }
+    else { var answer = document.createElement('div'); b.appendChild(answer); SL.aiResponse.render(answer, text); } m.appendChild(b); th.appendChild(m); m.scrollIntoView({ block: 'end' }); return m;
   }
   function typing() { var m = bubble(false, ''); m.querySelector('.ai-b').innerHTML = '<span class="ai-typing"><i></i><i></i><i></i></span>'; return m; }
   function ask(text) {

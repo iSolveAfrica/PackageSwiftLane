@@ -23,8 +23,8 @@ function sl_loyaltyData($user, $core): array
         foreach (sl_rows("SELECT DATE(created_at) AS d, COUNT(*) AS n FROM cdb_loyalty_events WHERE $where AND created_at >= CURDATE() - INTERVAL 11 DAY GROUP BY d") as $r) $map[$r->d] = (int) $r->n;
         $max = max(1, $map ? max($map) : 1);
         $o = [];
-        for ($i = 11; $i >= 0; $i--) { $day = date('Y-m-d', strtotime("-$i days")); $o[] = 'height:' . max(8, sl_pct($map[$day] ?? 0, $max)) . '%'; }
-        return $o;
+        for ($i = 11; $i >= 0; $i--) { $day = date('Y-m-d', strtotime("-$i days")); $o[] = $map[$day] ?? 0; }
+        return sl_sparkBars($o, 8);
     };
     $d['kpis'] = [
         ['icon' => 'i-users', 'l' => 'Members', 'v' => sl_num($members), 's' => sl_pct($members, $customers) . '% of customers', 'sp' => $spark("kind = 'earn'")],

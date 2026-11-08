@@ -16,8 +16,8 @@ $daily = function (string $where) use ($hasLog) {
     if ($hasLog) foreach (sl_rows("SELECT DATE(created_at) d, COUNT(*) n FROM cdb_message_log WHERE created_at >= CURDATE() - INTERVAL 13 DAY AND $where GROUP BY d") as $r) $m[$r->d] = (int) $r->n;
     $out = [];
     $mx = max(1, max($m ?: [1]));
-    for ($i = 13; $i >= 0; $i--) $out[] = 'height:' . max(6, sl_pct($m[date('Y-m-d', strtotime("-$i days"))] ?? 0, $mx)) . '%';
-    return $out;
+    for ($i = 13; $i >= 0; $i--) $out[] = $m[date('Y-m-d', strtotime("-$i days"))] ?? 0;
+    return sl_sparkBars($out, 6);
 };
 $cnt = fn($w) => $hasLog ? (int) sl_scalar("SELECT COUNT(*) FROM cdb_message_log WHERE created_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01') AND $w") : 0;
 $cost = cdp_mcReport(['from' => date('Y-m-01'), 'to' => date('Y-m-d'), 'channel' => '', 'source' => '', 'group' => 'day']);

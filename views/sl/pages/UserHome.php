@@ -68,7 +68,7 @@ $seg = [(int) sl_get($d, 'atWh'), (int) sl_get($d, 'ready'), (int) sl_get($d, 'i
                 <div class="sl-heatdays" style="padding-top:26px"><span></span><span>Mon</span><span></span><span>Wed</span><span></span><span>Fri</span><span></span></div>
                 <div class="sl-heatcol">
                   <div class="sl-heatmonths"><?php foreach ((array) sl_get($d, 'months', []) as $m): ?><span><?= h($m) ?></span><?php endforeach; ?></div>
-                  <div class="sl-heat" style="grid-template-columns:repeat(52,minmax(0,1fr))" role="img" aria-label="Shipments per day over the last year"><?php foreach ((array) sl_get($d, 'heat', []) as $h): ?><b class="<?= sl_v($h, 'c') ?>"></b><?php endforeach; ?></div>
+                  <div class="sl-heat" style="grid-template-columns:repeat(52,minmax(0,1fr))" role="img" aria-label="Shipments per day over the last year"><?php foreach ((array) sl_get($d, 'heat', []) as $h): ?><b title="<?= sl_v($h, 't') ?>" class="<?= sl_v($h, 'c') ?>"></b><?php endforeach; ?></div>
                 </div>
               </div>
               <div class="sl-legend"><span>Quiet</span><b style="background:var(--heat-0)"></b><b style="background:var(--heat-1)"></b><b style="background:var(--heat-2)"></b><b style="background:var(--heat-3)"></b><span>Busy</span></div>

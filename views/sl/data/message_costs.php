@@ -33,6 +33,7 @@ function sl_messageCostsData($user, $core): array
     $d['avg'] = $periods ? $money(array_sum($series) / count($series)) : $money(0);
     $d['group'] = $r['group'] ?? 'day';
     $max = max(0.01, max($series ?: [0]));
+    $d['series'] = $series; $d['seriesLabels'] = array_column($periods, 'period');
     $d['line'] = count($series) > 1 ? sl_svgLinePath($series, 550, 190, 12, $max, 44) : '';
     $d['lineMax'] = $money($max);
     $d['xFirst'] = $periods ? $periods[0]['period'] : '';

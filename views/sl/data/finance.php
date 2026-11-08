@@ -132,7 +132,7 @@ function sl_paymentsData($user, $core): array
         $h = round($v / $maxA * 170, 1);
         $bars .= sprintf('<rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" rx="3" fill="%s"><title>%s: %s</title></rect>', $i * $bw + ($bw - $w) / 2, 170 - $h, $w, $h, $i === $n - 1 ? '#8E8A82' : '#D6D2CA', date('M j', strtotime('-' . ($n - 1 - $i) . ' days')), h(sl_money($v)));
     }
-    $d['chart'] = ['bars' => $bars, 'line' => sl_svgPoints($cnts, 720, 170, 15, max(1, max($cnts)), $bw / 2), 'labels' => [date('M j', strtotime('-' . ($n - 1) . ' days')), date('M j', strtotime('-' . intdiv($n, 2) . ' days')), date('M j')], 'n' => $n];
+    $d['chart'] = ['counts' => $cnts, 'days' => array_map(fn($i) => date('M j, Y', strtotime('-' . ($n - 1 - $i) . ' days')), range(0, $n - 1)), 'amounts' => array_map(fn($v) => sl_money($v), $amts), 'bars' => $bars, 'line' => sl_svgPoints($cnts, 720, 170, 15, max(1, max($cnts)), $bw / 2), 'labels' => [date('M j', strtotime('-' . ($n - 1) . ' days')), date('M j', strtotime('-' . intdiv($n, 2) . ' days')), date('M j')], 'n' => $n];
 
     // by gateway / method / entity
     $gw = sl_rows("SELECT x.gateway AS k, COALESCE(SUM(x.usd),0) AS amt, COALESCE(SUM(x.fee_usd),0) AS fee, COUNT(*) AS n FROM $u x WHERE x.at >= :f AND x.status IN ('success','manual','completed','approved','paid') GROUP BY x.gateway ORDER BY amt DESC LIMIT 6", [':f' => $from]);
@@ -483,7 +483,7 @@ function sl_billingHubData($user, $core): array
     $open = sl_row("SELECT COUNT(*) AS n, COALESCE(SUM(total_order),0) AS amt FROM cdb_add_order WHERE is_deleted = 0 AND status_invoice = 23 AND status_courier <> 21");
     $overdue = sl_row("SELECT COUNT(*) AS n, COALESCE(SUM(total_order),0) AS amt FROM cdb_add_order WHERE is_deleted = 0 AND status_invoice = 23 AND due_date < CURDATE()");
     $unpriced = sl_tableExists('cdb_add_order_item') && sl_columnExists('cdb_add_order_item', 'priced_at') ? (int) sl_scalar("SELECT COUNT(DISTINCT i.order_id) FROM cdb_add_order_item i JOIN cdb_add_order a ON a.order_id = i.order_id WHERE i.priced_at IS NULL AND a.is_deleted = 0 AND a.status_courier NOT IN (8,15,21)") : 0;
-    $spark = function (string $table, string $col, string $expr, string $where = '') { $v = array_values(sl_dailyCounts($table, $col, 14, $where)); $m = max(1, max($v)); return array_map(fn($x) => 'height:' . max(4, sl_pct($x, $m)) . '%', $v); };
+    $spark = function (string $table, string $col, string $expr, string $where = '') { $v = array_values(sl_dailyCounts($table, $col, 14, $where)); $m = max(1, max($v)); return sl_sparkBars($v); };
     $d['kpis'] = [
         ['icon' => 'i-receipt', 'l' => 'Billed this month', 'v' => sl_money($billedM), 's' => date('F'), 'sp' => $spark('cdb_add_order', 'order_date', '', ' AND is_deleted = 0')],
         ['icon' => 'i-dollar', 'l' => 'Received this month', 'v' => sl_money($recvM), 's' => sl_pct($recvM, $billedM) . '% of billed', 'sp' => []],

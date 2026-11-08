@@ -3,6 +3,7 @@
  * View helpers for the Swift Lane design system pages (views/sl/*).
  */
 require_once __DIR__ . '/sl_routes.php';
+require_once __DIR__ . '/sl_chart_interactions.php';
 require_once __DIR__ . '/asset.php';
 require_once __DIR__ . '/csrf.php';
 

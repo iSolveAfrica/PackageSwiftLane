@@ -85,7 +85,7 @@ function sl_securityData($user, $core): array
         $v = [];
         for ($i = 11; $i >= 0; $i--) $v[] = $map[date('Y-m-d', strtotime("-$i days"))] ?? 0;
         $m = max(1, max($v));
-        return array_map(fn($x) => 'height:' . max(6, sl_pct($x, $m)) . '%', $v);
+        return sl_sparkBars($v, 6);
     };
     $d['kpis'] = [
         ['icon' => 'i-shield', 'l' => 'Checks passing', 'v' => $d['passN'] . ' / ' . count($chk), 's' => 'Computed on page load', 'sp' => []],

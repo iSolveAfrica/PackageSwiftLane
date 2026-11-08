@@ -552,8 +552,8 @@ function sl_csHubData($user, $core): array
         foreach (sl_rows($sql, $b) as $r) $map[$r->d] = (int) $r->n;
         $out = [];
         $max = max(1, $map ? max($map) : 1);
-        for ($i = 11; $i >= 0; $i--) { $day = date('Y-m-d', strtotime("-$i days")); $out[] = 'height:' . max(8, sl_pct($map[$day] ?? 0, $max)) . '%'; }
-        return $out;
+        for ($i = 11; $i >= 0; $i--) { $day = date('Y-m-d', strtotime("-$i days")); $out[] = $map[$day] ?? 0; }
+        return sl_sparkBars($out, 8);
     };
     $d['kpis'] = [
         ['icon' => 'i-ticket', 'l' => 'Open tickets', 'v' => sl_num($open), 's' => $queued . ' waiting for a person', 'sp' => $spark("SELECT DATE(created_at) AS d, COUNT(*) AS n FROM cdb_cs_tickets WHERE created_at >= CURDATE() - INTERVAL 11 DAY GROUP BY d"), 'href' => sl_route('CsInbox')],

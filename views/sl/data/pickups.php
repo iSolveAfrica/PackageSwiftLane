@@ -23,7 +23,7 @@ function sl_pickupsData($user, $core): array
         for ($i = 29; $i >= 0; $i--) $out[] = $map[date('Y-m-d', strtotime("-$i days"))] ?? 0;
         return $out;
     };
-    $spark = function (array $v) { $p = sl_svgLinePath($v, 240, 34, 2); return ['line' => $p, 'area' => $p . ' L240,46 L0,46 Z']; };
+    $spark = function (array $v) { $p = sl_svgLinePath($v, 240, 34, 2); return ['series' => $v, 'line' => $p, 'area' => $p . ' L240,46 L0,46 Z']; };
     $d['kpi'] = [
         ['t' => 'Requested', 'v' => $req, 'small' => 'awaiting driver', 'd' => $reqHour ? '▲ ' . $reqHour . ' in the last hour' : 'none in the last hour', 'dc' => $reqHour ? 'dv-bad' : 'dv-info', 'f' => 'requested'] + $spark($series('a.status_courier = 14')),
         ['t' => 'Accepted', 'v' => $acc, 'small' => 'assigned', 'd' => $accSoon . ' start before 11:00', 'dc' => 'dv-warn', 'f' => 'accepted'] + $spark($series('a.status_courier = 1')),

@@ -69,6 +69,7 @@ function sl_customersData($user, $core): array
         $activeSeries[] = $mapAct[$ym] ?? 0;
     }
     $d['months'] = $months;
+    $d['activeSeries'] = $activeSeries;
     $d['line'] = sl_svgPoints($activeSeries, 1200, 160, 16, max(1, max($activeSeries)), 50);
     $pts = explode(' ', $d['line']);
     [$d['dotX'], $d['dotY']] = explode(',', end($pts) ?: '1150,160');

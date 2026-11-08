@@ -39,17 +39,17 @@ $client = !empty($d['client']);
           <?php endif; ?>
           <div class="sl-tw">
             <table class="sl-table">
-              <thead><tr><?php if ($d['canSelect']): ?><th style="width: 40px"><label class="sl-chk" aria-label="Select all"><input type="checkbox" data-as-all style="position:absolute;opacity:0;width:0;height:0"></label></th><?php endif; ?><th>Swift tracking</th><th>Carrier tracking</th><th>Date</th><?php if (!$client): ?><th>Sender</th><?php endif; ?><th>Recipient</th><th>Destination</th><th class="num">Weight</th><th>Payment</th><th>Status</th><th></th></tr></thead>
+              <thead><tr><?php if ($d['canSelect']): ?><th style="width: 40px"><label class="sl-chk" aria-label="Select all"><input type="checkbox" data-as-all style="position:absolute;opacity:0;width:0;height:0"></label></th><?php endif; ?><th>Swift tracking</th><th>Carrier tracking</th><th>Date &amp; time</th><?php if (!$client): ?><th>Sender</th><?php endif; ?><th>Recipient</th><th><abbr title="Estimated time of arrival">ETA</abbr></th><th class="num">Weight</th><th>Payment</th><th>Status</th><th></th></tr></thead>
               <tbody>
                 <?php foreach ($d['rows'] as $r): $cols = 11 - ($client ? 1 : 0) - ($d['canSelect'] ? 0 : 1); ?>
                   <tr data-as-row>
                     <?php if ($d['canSelect']): ?><td><?php if ($r['selectable']): ?><label class="sl-chk" aria-label="Select <?= h($r['track']) ?>"><input type="checkbox" value="<?= (int) $r['id'] ?>" data-as-pick data-track="<?= h($r['track']) ?>" style="position:absolute;opacity:0;width:0;height:0"></label><?php endif; ?></td><?php endif; ?>
                     <td><a class="id" href="<?= sl_route('ShipmentDetail', ['id' => $r['id']]) ?>"><?= h($r['track']) ?></a></td>
                     <td class="mono mut sm"><?= $r['carrier'] !== '' ? h($r['carrier']) : '—' ?></td>
-                    <td><?= h($r['date']) ?></td>
+                    <td class="nowrap"><?= h($r['date']) ?><span class="sub mono"><?= h($r['time'] ?: 'Time not recorded') ?></span></td>
                     <?php if (!$client): ?><td><div><a href="<?= sl_route('CustomerProfile', ['id' => $r['sender_id']]) ?>" style="color:inherit"><?= h($r['sender']) ?></a><span class="sub"><?= h($r['from']) ?></span></div></td><?php endif; ?>
                     <td><div class="sl-cell"><span class="sl-av sm"><?= h($r['ini']) ?></span><?= h($r['name']) ?></div></td>
-                    <td><?= h($r['dest']) ?></td>
+                    <td><?= h($r['eta'] !== '' && $r['eta'] !== 'N/A' ? $r['eta'] : 'Not set') ?></td>
                     <td class="num"><?= h($r['kg']) ?></td>
                     <td><span class="col g4"><span class="sl-pill <?= h($r['payCls']) ?>"><?= h($r['pay']) ?></span><span class="mut mono" style="font-size:11.5px"><?= h($r['total']) ?></span></span></td>
                     <td><span class="col g4"><span class="sl-pill <?= h($r['stCls']) ?>"><?= h($r['st']) ?></span><?php foreach ($r['badges'] as $b): ?><span class="mut" style="font-size:11.5px"><?= h($b) ?></span><?php endforeach; ?></span></td>

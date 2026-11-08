@@ -189,7 +189,7 @@ function sl_quoteData($core): array
         $vals[] = $r ? round((float) $r->price * $w, 2) : 0;
     }
     $top = max(1, max($vals));
-    $d['chart'] = ['path' => sl_svgLinePath($vals, 1030, 170, 12, $top, 44), 'max' => $max, 'top' => $top, 'labels' => [1, (int) round($max / 3), (int) round($max * 2 / 3), $max]];
+    $d['chart'] = ['values' => $vals, 'weights' => range(1, count($vals)), 'path' => sl_svgLinePath($vals, 1030, 170, 12, $top, 44), 'max' => $max, 'top' => $top, 'labels' => [1, (int) round($max / 3), (int) round($max * 2 / 3), $max]];
     return $d;
 }
 
@@ -374,7 +374,7 @@ function sl_userHomeData($user, $core, $userData): array
     for ($i = 0; $i < 364; $i++) {
         // grid fills column by column (week), 7 rows
         $day = date('Y-m-d', $start + $i * 86400);
-        $heat[] = ['c' => sl_heatLevel($daily[$day] ?? 0, $peak)];
+        $heat[] = ['c' => sl_heatLevel($daily[$day] ?? 0, $peak), 't' => $day . ': ' . ($daily[$day] ?? 0) . ' shipments'];
     }
     // the CSS grid places items row by row: reorder to day-major
     $grid = [];
