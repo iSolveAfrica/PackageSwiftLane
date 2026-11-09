@@ -126,8 +126,8 @@ $virtualMailboxes = $core->cdp_getVirtualMailboxes($where);
                                                     $db->cdp_execute();
                                                     $flag = strtolower($db->cdp_registro()->iso2);
 
-                                                    $pattern = '/\(?locker\s*ID\)?/i';
-                                                    $updatedAddress = preg_replace($pattern, ' (' . $userData->locker . ') ', $virtualMailbox->address);
+                                                    require_once __DIR__ . '/../../../helpers/virtual_mailbox.php';
+                                                    $updatedAddress = cdp_mailboxAddressHtml($virtualMailbox->address, $userData->locker ?? '');
                                                     ?>
                                                     
                                                     <div class="col-md-4">

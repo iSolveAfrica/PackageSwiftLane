@@ -112,7 +112,7 @@ $bd = cdp_dashStatusBreakdown('cdb_add_order', "AND order_incomplete=1 $own");
                                     <div class="sw-mailbox-card">
                                         <h6><span class="flag-circle mr-1"><i class="fi fi-<?php echo strtolower($country_data->iso2); ?>"></i></span> <?php echo htmlspecialchars($country_data->name, ENT_QUOTES, 'UTF-8'); ?></h6>
                                         <div class="mb-1"><?php echo htmlspecialchars(($userData->fname ?? '') . ' ' . ($userData->lname ?? ''), ENT_QUOTES, 'UTF-8'); ?> <span class="sw-locker">(<?php echo htmlspecialchars($userData->locker ?? '', ENT_QUOTES, 'UTF-8'); ?>)</span></div>
-                                        <div class="text-muted small"><?php echo $virtualMailbox->address; ?></div>
+                                        <div class="text-muted small"><?php require_once __DIR__ . '/../../helpers/virtual_mailbox.php'; echo cdp_mailboxAddressHtml($virtualMailbox->address, $userData->locker ?? ''); ?></div>
                                         <div class="text-muted small"><?php echo $virtualMailbox->city . ' ' . $virtualMailbox->postcode; ?></div>
                                     </div>
                                     <?php } ?>
