@@ -21,7 +21,7 @@ $c = $d['cfg'];
 <div data-lt="vars" class="col g8" hidden><span class="mut sm">Click to put a variable into the selected block's text. Do not change the words inside the brackets.</span><div class="row wrap g6"><?php foreach ($c['tags'] as $k => $l): ?><button type="button" class="eb-var" title="<?= h($l) ?>" data-var="<?= h($k) ?>"><?= h($k) ?></button><?php endforeach; ?></div></div>
 <div class="col g8" style="border-top:1px solid var(--line);padding-top:12px"><b class="fw5 sm">E-mail colours</b><div class="grid cols2" style="gap:8px" id="eb-glob"></div></div>
 </aside>
-<section class="col g8"><div class="row between sm"><span class="mut">Subject: <b class="fw5" style="color:var(--ink)" id="eb-subj-shown">(none yet)</b></span><span class="mut" id="eb-count">0 blocks · 600 px</span></div>
+<section class="col g8"><div class="row between wrap g8 sm"><span class="mut">Subject: <b class="fw5" style="color:var(--ink)" id="eb-subj-shown">(none yet)</b></span><span class="mut" id="eb-count">0 blocks · 600 px</span></div>
 <section class="eb-insp sl-card col g12" id="eb-insp" hidden></section><div class="eb-stage" id="eb-stage"><div class="eb-mail" id="eb-mail"></div></div></section>
 </div>
 <div class="eb-set" id="eb-send" hidden>

@@ -60,3 +60,8 @@ $slHome = sl_route('Main');
 $slHub = $slIsClient ? 'My account' : ($slOffice ?: ($core->c_city ?? 'Hub'));
 $slProfileUrl = sl_route('AiStudio');
 $slHelpUrl = $slIsClient ? 'support.php' : sl_route('CsInbox');
+
+// Customer help opens the customer service workspace; staff AI needs its own access.
+$slCanAskAI = !$slIsClient && sl_navAllowed('ai:use', []);
+$slHasSupport = $slIsClient || sl_navAllowed('cs:agent', []);
+$slAssistantUrl = $slCanAskAI ? sl_route('StaffAI', ['q' => 'Explain this page', 'page' => sl_self()]) : $slHelpUrl;

@@ -1,5 +1,11 @@
 /* Application additions on top of swiftlane.css: runtime states the static design
    did not need (toasts, flash banners, modals, form validation, dark-mode on html). */
+[hidden]{display:none!important}
+:where(.sl-app,.sl-body-page) :focus-visible{outline:2px solid var(--violet-ink);outline-offset:3px}
+.sl-sel.native:focus-within{outline:2px solid var(--violet-ink);outline-offset:2px}
+.sl-tw:focus-visible{outline-offset:-2px}
+.sl-btn[aria-busy="true"],.sl-toggle[aria-busy="true"]{cursor:wait}
+.sl-toggle[aria-disabled="true"]{cursor:default}
 html.sl-dark body{background:#13151F}
 .sl-wrap.wide{max-width:1320px}
 .sl-bell{position:relative}
@@ -38,6 +44,7 @@ form.sl-inline{display:contents}
 @media print{.sl-top,.sl-rail,.sl-side,.sl-toast,[data-sl-theme]{display:none!important}.sl-main{border:0;padding:0}}
 .sl-skip{position:absolute;left:-999px;top:0;background:var(--ink);color:var(--inverse);padding:8px 12px;border-radius:8px;z-index:100}
 .sl-skip:focus{left:12px;top:12px}
+.sl-support-link{position:fixed;right:20px;bottom:20px;z-index:60;display:flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border-radius:999px;background:var(--ink);color:var(--inverse);box-shadow:0 6px 20px rgba(0,0,0,.18)}
 
 /* Full-width layout (requested 2026-11-06): page content fills the main panel
    edge to edge on every page instead of a centred 1060px column. */
@@ -69,3 +76,36 @@ form.sl-inline{display:contents}
 .tpl-grid .tpl .mut.sm{font-size:12px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tpl-grid .tpl .sl-tile{flex:none;width:36px;height:36px}
 .tpl-grid .tpl > .ic:last-child{flex:none;color:var(--muted)}
+/* Keep segmented controls and compact charts inside narrow cards. */
+.sl-seg.boxed{max-width:100%;height:auto;flex-wrap:wrap}
+.cx-col{min-width:0}
+.sl-tw{max-width:100%}
+.sl-head>*{min-width:0;max-width:100%}
+.bc>*,.eb>*,.iq-split>*{min-width:0}
+.iq-board{max-width:100%}
+.kvr>*{min-width:0;overflow-wrap:anywhere}
+.kvr>:last-child{max-width:65%}
+.sl-app .cron{grid-template-columns:minmax(0,1fr) auto}
+.cron>*{min-width:0;overflow-wrap:anywhere}
+.cron>:last-child{grid-column:2}
+.gbars{gap:8px}
+.gbars .gb{flex:1;min-width:0}
+.gbars .gb i{min-width:0;max-width:40%}
+.sl-app .eb-stage{overflow-x:auto;justify-content:safe center}
+.sl-app .ls-canvas{overflow-x:auto;justify-content:safe center}
+@media (max-width:640px){
+  .cx-ch{gap:4px}
+  .sl-app .sf-wk{grid-template-columns:minmax(60px,1fr) repeat(7,minmax(0,1fr));gap:2px;font-size:10px}
+  .rf-row,.rf-row[style]{grid-template-columns:1fr!important;gap:8px}
+  .rf-row>label{flex-wrap:wrap}
+  .rf-row .rf-split{max-width:100%;width:100%}
+  .sl-app .al-row{grid-template-columns:28px minmax(0,1fr)}
+  .al-row>*{min-width:0;overflow-wrap:anywhere}
+  .al-row>:nth-child(n+3){grid-column:2}
+  .sl-app .tf-k{grid-template-columns:1fr}
+  .sys-sources .ov-row{flex-wrap:wrap;gap:8px}
+  .sys-sources>.row{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  .sl-app *,.sl-body-page *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}

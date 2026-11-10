@@ -74,6 +74,14 @@ node scripts/dev_shot.cjs http://127.0.0.1:8084/customers_list.php shot.png 1440
 
 Checks: `php -l` on changed files, `php vendor/bin/phpunit` (API tests), `node scripts/check_page_shell.js` only applies to legacy pages.
 
+Design-system regressions: `node scripts/check_design_routes.cjs` checks every
+literal `sl_route()` reference and its controller without a database.
+`node scripts/check_design_runtime.cjs` runs the real shared CSS and JavaScript
+against isolated local HTTP fixtures in Playwright/Chromium. It checks navigation,
+dialog focus, table menus, filters, tabs, theme changes, password visibility,
+switch rollback, validation, duplicate submissions, CSRF, and failed/expired requests.
+It does not send messages, make payments, or use real user accounts.
+
 ## 5. Feature matrix
 
 `docs/handover/FEATURE_MATRIX.md` has one row per artboard. Update the row when you finish a page: status (done / partial / planned), data source, endpoints, permissions and how it was verified.

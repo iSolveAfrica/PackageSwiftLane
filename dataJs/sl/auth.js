@@ -34,6 +34,10 @@
     if (!inp) return;
     inp.type = inp.type === 'password' ? 'text' : 'password';
     b.setAttribute('aria-label', inp.type === 'password' ? 'Show password' : 'Hide password');
+    b.setAttribute('aria-pressed', String(inp.type === 'text'));
+  });
+  document.addEventListener('keydown', function (e) {
+    if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-sl-peek]')) { e.preventDefault(); e.target.click(); }
   });
 
   /* ---- OTP boxes: six visual cells backed by one hidden/real input ---- */

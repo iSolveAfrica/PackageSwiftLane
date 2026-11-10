@@ -109,6 +109,7 @@ function sl_routes(): array
         'ActivityLogs' => 'activity_logs.php',
         'MessageLogs'  => 'message_logs.php',
         'MessageCosts' => 'message_costs.php',
+        'DevBilling'   => 'message_costs.php',
         'SystemLogs'   => 'system_logs.php',
         'Documents'    => 'documents.php',
 

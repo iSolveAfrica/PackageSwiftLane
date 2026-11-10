@@ -74,7 +74,7 @@ $opt = function (array $rows, $selected, string $labelKey = 'label') { $o = ''; 
   function money(n) { return CFG.sym + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
   function rows() { return Array.prototype.slice.call(tb.querySelectorAll('tr')); }
   function add() { tb.appendChild(tpl.content.cloneNode(true)); renumber(); calc(); }
-  function renumber() { rows().forEach(function (r, i) { r.querySelector('.n').textContent = i + 1; }); }
+  function renumber() { var single = rows().length === 1; rows().forEach(function (r, i) { r.querySelector('.n').textContent = i + 1; var remove = r.querySelector('.np-del'); remove.disabled = single; remove.title = single ? 'Keep at least one box' : 'Remove box'; }); }
   function val(r, k) { var i = r.querySelector('[data-k="' + k + '"]'); return i ? i.value : ''; }
   function calc() {
     var w = 0, vw = 0, declared = 0, list = [];
