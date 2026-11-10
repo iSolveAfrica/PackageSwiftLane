@@ -11,7 +11,7 @@ function walk(dir) {
 }
 const errors = [];
 for (const [board, url] of routes) {
-  if (!fs.existsSync(path.join(root, url.split('?')[0]))) errors.push(`${board}: missing ${url}`);
+  if (!fs.existsSync(path.join(root, url.split(/[?#]/)[0]))) errors.push(`${board}: missing ${url}`);
 }
 const files = [...walk(path.join(root, 'views/sl')), ...walk(path.join(root, 'helpers'))].filter(f => f.endsWith('.php'));
 for (const file of files) {

@@ -98,6 +98,7 @@ function sl_routes(): array
         'Transactions'                => 'transactions.php',
         'BillingHub'                  => 'financial_sheet.php',
         'FinancialSheet'              => 'financial_sheet_consolidation.php',
+        'PickupCodes' => 'pickup_codes.php',
         'MyBills'                     => 'my_bills.php',
         'PayCheckout'                 => 'pay_checkout.php',
         'CostSettings'                => 'cost_settings.php',

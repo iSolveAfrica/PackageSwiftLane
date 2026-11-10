@@ -172,6 +172,7 @@ function sl_navCustomer(): array
                 'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_customers_packages WHERE sender_id = :u AND status_courier NOT IN (8,15,21)", [':u' => $uid])],
             ['id' => 'prealert', 'label' => 'Pre-Alerts', 'icon' => 'inbox', 'board' => 'PreAlerts', 'perm' => 'prealert_list',
                 'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_pre_alert WHERE customer_id = :u AND is_package = 0", [':u' => $uid])],
+            ['id' => 'codes', 'label' => 'Pickup codes', 'icon' => 'key', 'board' => 'PickupCodes', 'perm' => null],
             ['id' => 'track', 'label' => 'Track a parcel', 'icon' => 'route', 'board' => 'PublicTracking', 'perm' => null],
             ['id' => 'pickup', 'label' => 'My pickups', 'icon' => 'truck', 'board' => 'Pickups', 'perm' => ['view_pickup_list', 'pickup_add']],
         ]],

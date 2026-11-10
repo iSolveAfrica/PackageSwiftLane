@@ -28,7 +28,7 @@
       b.setAttribute('aria-expanded', String(open));
       b.setAttribute('aria-label', open ? 'Close the menu' : 'Open the menu');
     });
-    document.querySelectorAll('.sl-main,.sl-top,.sl-rail').forEach(function (el) { el.inert = mobile.matches && open; });
+    document.querySelectorAll('.sl-main,.sl-top,.sl-rail,.sl-mobile-nav').forEach(function (el) { el.inert = mobile.matches && open; });
     document.body.style.overflow = mobile.matches && open ? 'hidden' : '';
   }
   if (nav && side) {

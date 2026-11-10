@@ -29,7 +29,7 @@ $online = sl_get($d, 'gateway') && sl_get($d, 'consolidated') && $consol;
 <aside class="b col g16"><section class="sl-card col g16"><div class="sl-ch" style="margin:0"><h2 class="sl-ct">Summary</h2></div>
 <?php if ($online): ?>
 <div class="sl-kv" id="pc-summary"></div><div class="row between"><b class="fw5">Total</b><b class="mono" style="font-size:22px" id="pc-total">—</b></div>
-<button class="sl-btn block" type="button" id="pc-pay" style="height:48px" disabled><i class="ic ic-sm i-lock" aria-hidden="true"></i><span>Pay</span></button><span class="mut sm" style="text-align:center">Secured by Paystack</span>
+<div class="sl-mobile-sticky"><button class="sl-btn block" type="button" id="pc-pay" style="height:48px" disabled><i class="ic ic-sm i-lock" aria-hidden="true"></i><span>Pay</span></button><span class="mut sm" style="text-align:center">Secured by Paystack</span></div>
 <?php else: ?>
 <div class="mut sm">Nothing can be paid online on this page.</div><a class="sl-btn ghost block" href="<?= sl_route('MyBills') ?>">Back to my bills</a>
 <?php endif; ?>

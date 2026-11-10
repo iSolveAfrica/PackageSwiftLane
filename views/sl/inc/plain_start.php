@@ -7,7 +7,8 @@ require_once CDP_ROOT . '/helpers/sl_view.php';
 <head>
 <?php include CDP_ROOT . '/views/sl/inc/head.php'; ?>
 </head>
-<body class="sl-body-page sl-plain">
+<?php require_once CDP_ROOT . "/helpers/sl_mobile.php"; ?>
+<body data-mobile-role="<?= h(sl_mobileRole()) ?>" class="sl-body-page sl-plain">
 <?php if (!empty($_SESSION['sl_flash'])): $slFlash = $_SESSION['sl_flash']; unset($_SESSION['sl_flash']); ?>
 <div class="sl-banner <?= h($slFlash['type'] ?? 'ok') ?> sl-flash-float" role="status"><?= h($slFlash['text'] ?? '') ?></div>
 <?php endif; ?>

@@ -10,6 +10,7 @@
     <?php if ($slRate > 0): ?>
     <a class="fx-chip" href="<?= h($slIsClient ? sl_route('MyBills') : sl_route('SettingsHub') . '#language') ?>" title="Exchange rate · set in Settings › General"><i class="ic ic-sm i-dollar" aria-hidden="true"></i><span class="mono">USD 1 = GHS <?= h(number_format($slRate, 2)) ?></span><?php if ($slRateDelta): ?><span class="fx-d"><?= h($slRateDelta) ?></span><?php endif; ?></a>
     <?php endif; ?>
+    <?php if ($slIsClient || sl_userIs('driver')): ?><a class="sl-phone-identity" href="<?= h($slIsClient ? sl_route('Main') : sl_route('DriverApp')) ?>"><?= h($core->site_name ?? 'Swift Lane') ?><small><?= $slIsClient ? 'Your shipping companion' : 'Rider workspace' ?></small></a><?php endif; ?>
     <span class="grow"></span>
     <?php if ($slHasSupport || $slCanAskAI): ?><details class="aitop"><summary aria-label="Help and support"><span class="o"><i class="ic i-ai" aria-hidden="true"></i></span>Help</summary><div class="pop" role="menu">
 <div class="me"><span class="sl-av sm dark"><?= h($slInitials) ?></span><div class="grow"><div class="fw5 sm"><?= h($slName) ?></div><div class="mut" style="font-size:12px"><?= h($slSub) ?></div></div><a class="sl-btn sm ghost" href="<?= h($slProfileUrl) ?>">Edit</a></div>

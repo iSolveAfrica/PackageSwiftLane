@@ -7,5 +7,6 @@ require CDP_ROOT . '/views/sl/inc/shell_vars.php';
 <head>
 <?php include CDP_ROOT . '/views/sl/inc/head.php'; ?>
 </head>
-<body class="sl-body-page">
+<?php require_once CDP_ROOT . "/helpers/sl_mobile.php"; ?>
+<body data-mobile-role="<?= h(sl_mobileRole()) ?>" class="sl-body-page">
 <?php include CDP_ROOT . '/views/sl/inc/shell_frame.php'; ?>

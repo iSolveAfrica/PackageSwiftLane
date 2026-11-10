@@ -13,6 +13,7 @@ $steps = sl_get($d, 'latestSteps');
           <div><h1 class="sl-title">Welcome back, <?= sl_v($d, 'first') ?></h1><p class="sl-lede">Locker <?= sl_v($d, 'locker') ?> · <?= (int) sl_get($d, 'ready') ?> parcel<?= (int) sl_get($d, 'ready') === 1 ? '' : 's' ?> ready for pickup</p></div>
           <div class="row g8 wrap"><?php if (sl_get($d, 'canPrealert')): ?><a class="sl-btn ghost" href="<?= sl_route('PreAlerts') ?>"><i class="ic ic-sm i-inbox" aria-hidden="true"></i>Add Pre-Alert</a><?php endif; ?><?php if (sl_get($d, 'canShip')): ?><a class="sl-btn" href="courier_add_client.php"><i class="ic ic-sm i-plus" aria-hidden="true"></i>New Shipment</a><?php endif; ?></div>
         </div>
+        <?php include __DIR__ . '/partials/mobile_dashboard.php'; ?>
         <div class="grid cols3">
           <a class="sl-card sl-metric" href="<?= sl_route('AirShipments') ?>" style="color:inherit"><div class="sl-ml"><span><i class="ic ic-sm i-plane" aria-hidden="true"></i>Active shipments</span></div><div class="sl-mv"><?= (int) sl_get($d, 'active') ?> <i>/ <?= (int) sl_get($d, 'year') ?> this year</i></div><div class="sl-ticks"><i style="width: <?= sl_pct(sl_get($d, 'active'), max(1, (int) sl_get($d, 'year'))) ?>%"></i></div></a>
           <?php if (sl_get($d, 'finance')): ?>
@@ -22,7 +23,7 @@ $steps = sl_get($d, 'latestSteps');
         </div>
         <?php include __DIR__ . '/partials/portal_addresses.php'; ?>
         <div class="split">
-          <section class="a sl-card flush">
+          <section class="a sl-card flush sl-desktop-shipments">
             <div class="row between" style="padding: 14px 16px"><h2 class="sl-ct">My shipments</h2><a href="<?= sl_route('UserHome') ?>" class="sm fw5 row g6">View all <i class="ic ic-sm i-right" aria-hidden="true"></i></a></div>
             <div class="sl-tw"><table class="sl-table"><thead><tr><th>Tracking</th><th>From</th><th class="num">Weight</th><th class="num">Cost</th><th>Status</th></tr></thead><tbody>
               <?php foreach ((array) sl_get($d, 'rows', []) as $r): ?><tr><td><a class="id" href="<?= sl_v($r, 'href') ?>"><?= sl_v($r, 'id') ?></a></td><td><?= sl_v($r, 'from') ?></td><td class="num"><?= sl_v($r, 'w') ?></td><td class="num"><?= sl_v($r, 'c') ?></td><td><span class="sl-pill <?= sl_v($r, 'cls') ?>"><?= sl_v($r, 'st') ?></span></td></tr><?php endforeach; ?>
