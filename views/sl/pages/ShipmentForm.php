@@ -141,15 +141,13 @@ $pre = $d['pre'];
         <div class="sl-kv">
           <div><span>Chargeable weight</span><span data-q="w">0</span></div>
           <div><span>Freight</span><span data-q="freight">—</span></div>
-          <div><span>Declared value · tax <?= h($d['rates']['declared']) ?>%</span><span data-q="decl">—</span></div>
-          <div><span>Insured value · <?= h($d['rates']['insurance']) ?>%</span><span class="row g6"><input class="sl-in mono" name="insured_value" value="<?= h($v['insured_value']) ?>" style="width:90px;height:28px" inputmode="decimal" aria-label="Insured value" data-sf-calc><span data-q="ins">—</span></span></div>
+          <div><span>Declared value</span><span data-q="decl">—</span></div>
+          <div><span>Insurance · <?= $d['rates']['insurance_mode'] === 'fixed' ? h(sl_money($d['rates']['insurance_fixed'])) . ' fixed' : h($d['rates']['insurance']) . '%' ?></span><span class="row g6"><input class="sl-in mono" name="insured_value" value="<?= h($v['insured_value']) ?>" style="width:90px;height:28px" inputmode="decimal" aria-label="Insured value" data-sf-calc><span data-q="ins">—</span></span></div>
           <div><span>Re-shipping fee</span><input class="sl-in mono" name="reexpedicion_value" value="<?= h($v['reexpedicion_value']) ?>" style="width:90px;height:28px" inputmode="decimal" aria-label="Re-shipping fee" data-sf-calc></div>
-          <div><span>Customs tax · <?= h($d['rates']['tariffs']) ?>%</span><span data-q="customs">—</span></div>
-          <div><span>Tax · <?= h($d['rates']['tax']) ?>%</span><span data-q="tax">—</span></div>
           <div><span>Discount</span><span class="row g6"><span class="sl-seg boxed" style="height:26px" data-sf-dtype><button type="button" class="<?= $v['discount_type'] === 'amount' ? 'on' : '' ?>" data-v="amount" style="height:22px;padding:0 8px">$</button><button type="button" class="<?= $v['discount_type'] !== 'amount' ? 'on' : '' ?>" data-v="percent" style="height:22px;padding:0 8px">%</button></span><input class="sl-in mono" name="discount_value" value="<?= h($v['discount_value']) ?>" style="width:70px;height:28px" inputmode="decimal" aria-label="Discount" data-sf-calc></span></div>
         </div>
         <input type="hidden" name="discount_type" value="<?= h($v['discount_type']) ?>">
-        <input type="hidden" name="tax_value" value="<?= h($d['rates']['tax']) ?>"><input type="hidden" name="insurance_value" value="<?= h($d['rates']['insurance']) ?>"><input type="hidden" name="tariffs_value" value="<?= h($d['rates']['tariffs']) ?>"><input type="hidden" name="declared_value_tax" value="<?= h($d['rates']['declared']) ?>"><input type="hidden" name="distance_miles" value="0">
+        <input type="hidden" name="tax_value" value="0"><input type="hidden" name="insurance_value" value="<?= h($d['rates']['insurance']) ?>"><input type="hidden" name="tariffs_value" value="0"><input type="hidden" name="declared_value_tax" value="0"><input type="hidden" name="distance_miles" value="0">
         <div class="row between" style="padding-top: 6px"><span class="fw5">Total due</span><span class="big" data-q="total">—</span></div>
         <div class="sm mut" data-q="note">Final price is confirmed on save.</div>
         <button type="submit" class="sl-btn block"><?= h($d['submit']) ?></button>

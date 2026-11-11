@@ -24,6 +24,16 @@ function sl_setting(string $key, $default = '')
     return array_key_exists($key, $cache) && $cache[$key] !== '' ? $cache[$key] : $default;
 }
 
+/** Charge insurance only when a shipment has an insured value. */
+function sl_insuranceCharge(float $insuredValue, float $percentage): float
+{
+    if ($insuredValue <= 0) return 0.0;
+    if (sl_setting('shipment_insurance_mode', 'percentage') === 'fixed') {
+        return max(0, (float) sl_setting('shipment_insurance_fixed', 0));
+    }
+    return $insuredValue * $percentage / 100;
+}
+
 /** Upsert one value in cdb_sl_settings. */
 function sl_settingSet(string $key, $value, ?int $by = null): bool
 {

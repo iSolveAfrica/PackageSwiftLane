@@ -643,10 +643,11 @@ function sl_newShipmentData($user, $core, bool $client): array
     $ctx = cdp_getAgencyContext();
     $uid = (int) $_SESSION['userid'];
     $look = sl_opsLookups();
-    $mode = strtolower((string) ($_GET['mode'] ?? 'air')) === 'sea' ? 'sea' : 'air';
+    $mode = 'air'; // Sea packages use their dedicated registration flow.
     $d = [
         'client' => $client, 'mode' => $mode,
         'prefix' => (string) ($settings->prefix ?? 'SL-'), 'nextNo' => (string) cdp_uidNext('order_no'),
+        'numberCountries' => sl_rows('SELECT name, iso2 FROM cdb_countries WHERE is_active = 1 AND iso2 <> "" ORDER BY name'),
         'agencies' => $look['agencies'], 'offices' => $look['offices'], 'couriers' => $look['couriers'], 'packaging' => $look['packaging'], 'delitimes' => $look['delitimes'], 'services' => $look['services'],
         'statuses' => $core->cdp_getStatusByType(1) ?: $look['statuses'], 'payTerms' => sl_rows('SELECT id, label, days FROM cdb_payment_methods ORDER BY id'), 'payModes' => $look['payments'],
         'drivers' => $client ? [] : $look['drivers'], 'categories' => $core->cdp_getCategoriesById(27) ?: $look['categories'],
@@ -657,7 +658,7 @@ function sl_newShipmentData($user, $core, bool $client): array
             'order_payment_method' => (int) ($info->payment_default7 ?? 0), 'status_courier' => (int) ($info->status_default8 ?? 0), 'order_item_category' => $mode === 'sea' ? 27 : 26,
         ],
         'agencyLocked' => !empty($ctx['is_restricted']) && !empty($ctx['agency_id']),
-        'rates' => ['price_lb' => (float) ($settings->value_weight ?? 0), 'tax' => (float) ($settings->tax ?? 0), 'insurance' => (float) ($settings->insurance ?? 0), 'tariffs' => (float) ($settings->c_tariffs ?? 0), 'declared' => (float) ($settings->declared_tax ?? 0), 'min_tax' => (float) ($core->min_cost_tax ?? 0), 'min_declared' => (float) ($core->min_cost_declared_tax ?? 0), 'meter' => (float) ($settings->meter ?? 0), 'rate' => (float) ($core->exchange_rate ?? 0), 'currency' => (string) ($core->currency ?? 'USD'), 'weight' => (string) ($core->weight_p ?? 'lb')],
+        'rates' => ['price_lb' => (float) ($settings->value_weight ?? 0), 'tax' => 0, 'insurance' => (float) ($settings->insurance ?? 0), 'insurance_mode' => sl_slSetting('shipment_insurance_mode', 'percentage'), 'insurance_fixed' => (float) sl_slSetting('shipment_insurance_fixed', 0), 'tariffs' => 0, 'declared' => 0, 'min_tax' => 0, 'min_declared' => 0, 'meter' => (float) ($settings->meter ?? 0), 'rate' => (float) ($core->exchange_rate ?? 0), 'currency' => (string) ($core->currency ?? 'USD'), 'weight' => (string) ($core->weight_p ?? 'lb')],
         'today' => date('Y-m-d'),
         'endpoint' => $client ? 'ajax/courier/add_courier_client_ajax.php' : 'ajax/courier/add_courier_ajax.php',
         'me' => null, 'prealert' => null,
@@ -675,8 +676,8 @@ function sl_newShipmentData($user, $core, bool $client): array
             $d['prealert'] = ['id' => $pa, 'tracking' => $row->tracking, 'shop' => $row->provider_shop, 'courier' => $row->name_com ?: '', 'courier_id' => (int) $row->courier_com, 'customer_id' => (int) $row->customer_id, 'customer' => trim($row->fname . ' ' . $row->lname), 'locker' => $row->locker, 'desc' => $row->package_description, 'price' => (float) $row->purchase_price];
         }
     }
-    $pending = $client ? [] : sl_rows('SELECT p.pre_alert_id, p.tracking, p.provider_shop, u.fname, u.lname FROM cdb_pre_alert p LEFT JOIN cdb_users u ON u.id = p.customer_id WHERE p.is_package = 0 ORDER BY p.pre_alert_id DESC LIMIT 30');
-    $d['prealerts'] = array_map(fn($p) => ['id' => (int) $p->pre_alert_id, 'label' => $p->tracking . ' · ' . $p->provider_shop . ' · ' . trim($p->fname . ' ' . $p->lname)], $pending);
+    $pending = $client ? [] : sl_rows('SELECT p.pre_alert_id, p.tracking, p.provider_shop, p.customer_id, p.courier_com, p.package_description, p.purchase_price, u.fname, u.lname, u.locker FROM cdb_pre_alert p LEFT JOIN cdb_users u ON u.id = p.customer_id WHERE p.is_package = 0 ORDER BY p.pre_alert_id DESC LIMIT 30');
+    $d['prealerts'] = array_map(fn($p) => ['id' => (int) $p->pre_alert_id, 'label' => $p->tracking . ' · ' . trim($p->fname . ' ' . $p->lname), 'tracking' => $p->tracking, 'customer_id' => (int) $p->customer_id, 'customer' => trim($p->fname . ' ' . $p->lname), 'locker' => $p->locker, 'courier_id' => (int) $p->courier_com, 'desc' => $p->package_description, 'price' => (float) $p->purchase_price], $pending);
     $d['prefs'] = json_decode((string) sl_slSetting('new_shipment_defaults_' . $uid, ''), true) ?: [];
     return $d;
 }
