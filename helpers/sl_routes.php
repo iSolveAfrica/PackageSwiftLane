@@ -168,6 +168,15 @@ function sl_routes(): array
         'ApiMonitor'        => 'api_monitor.php',
         'ApiTraffic'        => 'api_traffic.php',
 
+        // Communication, management and staff operations
+        'CommsCenter'       => 'comms_center.php',
+        'CommsInbox'        => 'comms_inbox.php',
+        'NotificationPrefs' => 'comms_preferences.php',
+        'MasterView'        => 'master_view.php',
+        'StaffHub'          => 'staff_hub.php',
+        'Workspace'         => 'workspace.php',
+        'AgentPortal'       => 'agent_portal.php',
+
         // Developer
         'DevOverview'       => 'dev_overview.php',
         'DevServices'       => 'dev_services.php',

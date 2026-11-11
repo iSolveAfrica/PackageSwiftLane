@@ -66,12 +66,15 @@ function sl_navStaff(): array
         ]],
         ['label' => 'Command Centers', 'items' => [
             ['id' => 'execdash', 'label' => 'Management Center', 'icon' => 'chart', 'board' => 'ExecDashboard', 'perm' => ['main_dashboard_index', 'view_exec_dashboard']],
+            ['id' => 'masterview', 'label' => 'Gerald Master View', 'icon' => 'gauge', 'board' => 'MasterView', 'perm' => 'ops:mgmt'],
             ['id' => 'aicenter', 'label' => 'AI Automation Center', 'icon' => 'ai', 'board' => 'AiCenter', 'perm' => 'ai:manage'],
             ['id' => 'notifc', 'label' => 'Notification Control', 'icon' => 'bell', 'board' => 'NotificationCenter', 'perm' => ['manage_notification_rules', 'view_tools']],
             ['id' => 'pay', 'label' => 'Payment Gateways', 'icon' => 'card', 'board' => 'Payments', 'perm' => 'view_global_payments', 'finance' => true],
             ['id' => 'loyalty', 'label' => 'Loyalty & Referrals', 'icon' => 'star', 'board' => 'LoyaltyRewards', 'perm' => 'manage_loyalty'],
             ['id' => 'supporthub', 'label' => 'Customer Care', 'icon' => 'ticket', 'board' => 'SupportHub', 'perm' => 'cs:agent'],
             ['id' => 'commshub', 'label' => 'Communications', 'icon' => 'message', 'board' => 'CommsHub', 'perm' => ['push_notifications', 'manage_newsletter', 'view_message_logs']],
+            ['id' => 'commscenter', 'label' => 'Communication Center', 'icon' => 'send', 'board' => 'CommsCenter', 'perm' => 'ops:staff'],
+            ['id' => 'commsinbox', 'label' => 'WhatsApp Inbox', 'icon' => 'message', 'board' => 'CommsInbox', 'perm' => 'ops:staff'],
             ['id' => 'security', 'label' => 'Security Center', 'icon' => 'shield', 'board' => 'SecurityCenter', 'perm' => 'view_system_logs'],
             ['id' => 'accountsec', 'label' => 'My Account Security', 'icon' => 'lock', 'board' => 'AccountSecurity', 'perm' => 'customers_profile_edit'],
         ]],
@@ -124,6 +127,9 @@ function sl_navStaff(): array
             ['id' => 'dispatch', 'label' => 'Dispatch Board', 'icon' => 'route', 'board' => 'RiderDispatch', 'perm' => 'dispatch_riders'],
             ['id' => 'staffact', 'label' => 'Staff Activity', 'icon' => 'clock', 'board' => 'StaffActivity', 'perm' => 'view_staff_activity'],
             ['id' => 'staff', 'label' => 'Staff & Roles', 'icon' => 'shield', 'board' => 'StaffRoles', 'perm' => ['view_user_list', 'view_role_assignment']],
+            ['id' => 'staffhub', 'label' => 'Staff & Branches', 'icon' => 'warehouse', 'board' => 'StaffHub', 'perm' => 'ops:staff'],
+            ['id' => 'workspace', 'label' => 'My Workspace', 'icon' => 'grid', 'board' => 'Workspace', 'perm' => 'ops:member'],
+            ['id' => 'agentportal', 'label' => 'Partner Portal', 'icon' => 'users', 'board' => 'AgentPortal', 'perm' => 'ops:agent'],
         ]],
         ['label' => 'Finance', 'finance' => true, 'items' => [
             ['id' => 'billhub', 'label' => 'Billing & Finance', 'icon' => 'dollar', 'board' => 'BillingHub', 'perm' => ['financial_sheet', 'manage_finance_switch']],
@@ -176,6 +182,7 @@ function sl_navCustomer(): array
                 'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_pre_alert WHERE customer_id = :u AND is_package = 0", [':u' => $uid])],
             ['id' => 'deliveries', 'label' => 'Request delivery', 'icon' => 'truck', 'board' => 'DeliveryRequest', 'perm' => null],
             ['id' => 'codes', 'label' => 'Pickup codes', 'icon' => 'key', 'board' => 'PickupCodes', 'perm' => null],
+            ['id' => 'notifprefs', 'label' => 'Notification preferences', 'icon' => 'bell', 'board' => 'NotificationPrefs', 'perm' => null],
             ['id' => 'track', 'label' => 'Track a parcel', 'icon' => 'route', 'board' => 'PublicTracking', 'perm' => null],
             ['id' => 'pickup', 'label' => 'My pickups', 'icon' => 'truck', 'board' => 'Pickups', 'perm' => ['view_pickup_list', 'pickup_add']],
         ]],
@@ -215,6 +222,20 @@ function sl_navAllowed($perm, array $ctx): bool
                 break;
             case 'cs:manage':
                 if (sl_userIs('admin')) return true;
+                break;
+            case 'ops:staff':   // Communication Center, WhatsApp Inbox, Staff & Branches (rank 2+)
+            case 'ops:member':  // My Workspace (staff, drivers, agents: rank 1+)
+            case 'ops:mgmt':    // Gerald Master View
+            case 'ops:agent':   // Partner Portal
+                require_once CDP_ROOT . '/helpers/staffops.php';
+                $rk = cdp_opsRank($user);
+                if ($p === 'ops:staff' && $rk >= 2) return true;
+                if ($p === 'ops:member' && $rk >= 1) return true;
+                if ($p === 'ops:agent' && cdp_staffJobRole($user) === 'agent') return true;
+                if ($p === 'ops:mgmt') {
+                    require_once CDP_ROOT . '/helpers/mgmt.php';
+                    if (cdp_mgmtCanView($user)) return true;
+                }
                 break;
             case 'driver:self':
                 if (sl_userIs('driver')) return true;
