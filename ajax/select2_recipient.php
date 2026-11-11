@@ -50,7 +50,7 @@ if ($ctx['is_restricted']) {
 ------------------------------------
 */
 
-$sql = "SELECT id,fname,lname,email FROM cdb_users
+$sql = "SELECT id,fname,lname,email,phone FROM cdb_users
         WHERE id = $sender_id
         AND (
             fname LIKE '%$search%' OR
@@ -68,7 +68,7 @@ foreach ($users as $row) {
     $sender_email = $row->email ?? '';
     $data[] = [
         'id' => $row->id,
-        'text' => $row->fname . " " . $row->lname,
+        'text' => $row->fname . " " . $row->lname . " · " . implode(" · ", array_filter([$row->email, $row->phone])),
         'type' => 'user'
     ];
 }
@@ -109,7 +109,7 @@ $recipients = $db->cdp_registros();
 foreach ($recipients as $row) {
     $data[] = [
         'id' => $row->id,
-        'text' => $row->fname . " " . $row->lname,
+        'text' => $row->fname . " " . $row->lname . " · " . implode(" · ", array_filter([$row->email, $row->phone])),
         'type' => 'recipient'
     ];
 }

@@ -26,17 +26,27 @@
   var senderSummary = $('[data-ns-sender-summary]');
   function showSender() {
     if (!senderSummary || !sSel || !sSel.value) return;
+    senderSummary.hidden = false;
     senderSummary.textContent = (sSel.selectedOptions[0]?.textContent || 'Sender') + ' · ' + (saSel.selectedOptions[0]?.textContent || 'No address on file');
     $('[data-ns-change-sender]').hidden = false;
   }
   function findSender() {
     var q = ($('[data-ns-find]') || {}).value || '';
     if (q.trim().length < 2) { SL.toast('Type at least 2 characters', true); return; }
-    get('ajax/select2_sender.php?q=' + encodeURIComponent(q.trim())).then(function (rows) {
+    var requested = q.trim();
+    get('ajax/select2_sender.php?q=' + encodeURIComponent(requested)).then(function (rows) {
+      if ($('[data-ns-find]').value.trim() !== requested) return;
       rows = Array.isArray(rows) ? rows : [];
-      fill(sSel, rows, rows.length ? null : 'No customer matches', false);
-      if (!rows.length) SL.toast('No customer matches "' + q + '"', true);
-      sSel.dispatchEvent(new Event('change'));
+      var results = $('[data-ns-results]'); results.replaceChildren(); results.hidden = false;
+      if (!rows.length) results.textContent = 'No customer matches';
+      rows.forEach(function (row) {
+        var button = document.createElement('button'); button.type = 'button'; button.className = 'sl-btn ghost';
+        button.textContent = row.text;
+        button.addEventListener('click', function () {
+          fill(sSel, [row], null, false); results.hidden = true;
+          sSel.dispatchEvent(new Event('change'));
+        }); results.appendChild(button);
+      });
     });
   }
   if (!client) {
@@ -47,8 +57,9 @@
   function loadSender() {
     var id = senderId();
     if (!id) return;
+    $('[data-ns-recipient-panel]').hidden = false;
     if (!client) {
-      var t = sSel.options[sSel.selectedIndex];
+
       get('ajax/select2_sender_addresses.php?id=' + encodeURIComponent(id)).then(function (rows) { fill(saSel, (rows || []).map(function (a) { return { id: a.id, text: [a.text, a.city, a.country].filter(Boolean).join(', ') }; }), rows && rows.length ? null : 'This customer has no address', false); showSender(); quote(); });
     }
     get('ajax/select2_recipient.php?id=' + encodeURIComponent(id) + '&q=').then(function (rows) {
@@ -66,6 +77,7 @@
     if (!rSel.value) { fill(raSel, [], 'Pick the recipient first'); return; }
     get('ajax/select2_recipient_addresses.php?id=' + encodeURIComponent(rSel.value) + '&type=' + type).then(function (rows) {
       fill(raSel, (rows || []).map(function (a) { return { id: a.id, text: [a.text, a.city, a.country].filter(Boolean).join(', ') }; }), rows && rows.length ? null : 'No address on file', false);
+      $('[data-ns-recipient-summary]').textContent = (rSel.selectedOptions[0]?.textContent || '') + ' · ' + (raSel.selectedOptions[0]?.textContent || 'No address on file');
       quote();
     });
   });
@@ -79,21 +91,39 @@
     country.addEventListener('change', function () { prefix.value = this.value ? f.dataset.prefix + this.value.toUpperCase() + '-' : f.dataset.prefix; $('[data-ns-prefix]').textContent = prefix.value; });
   }
   if ($('[data-ns-edit-rate]')) $('[data-ns-edit-rate]').addEventListener('click', function () { var rate = $('[name="price_lb"]'); rate.readOnly = false; rate.focus(); rate.select(); });
-  var prealert = $('[data-ns-prealert]');
-  if (prealert) prealert.addEventListener('change', function () {
-    var raw = this.selectedOptions[0]?.dataset.pa; if (!raw) return;
-    try {
-      var p = JSON.parse(raw);
-      sSel.replaceChildren(new Option(p.customer || p.locker || 'Sender', String(p.customer_id), true, true));
-      if ($('[data-ns-find]')) $('[data-ns-find]').value = p.locker || p.customer || '';
-      sSel.dispatchEvent(new Event('change'));
+  var tracking = $('[name="tracking_number"]'), trackingTimer, trackingVersion = 0, detectedTracking = null;
+  function detectPrealert() {
+    if (tracking.value === detectedTracking) return Promise.resolve();
+    var scannedValue = tracking.value;
+    var values = tracking.value.split(/[\r\n,;]+/).map(function (v) { return v.trim(); }).filter(Boolean);
+    var version = ++trackingVersion;
+    return Promise.all(values.map(function (value) { return get('ajax/sl/shipment_prealert_ajax.php?tracking=' + encodeURIComponent(value)); })).then(function (matches) {
+      if (version !== trackingVersion) return;
+      detectedTracking = scannedValue;
+      var alerts = matches.map(function (j) { return j.prealert; }).filter(Boolean);
+      var ids = Array.from(new Set(alerts.map(function (p) { return String(p.id); })));
+      var note = $('[data-ns-prealert-note]');
+      if (ids.length > 1) { $('[name="prealert_id"]').value = ''; note.hidden = false; note.textContent = 'Multiple pre-alerts detected. Create a separate shipment for each pre-alert.'; return; }
+      var p = alerts[0];
+      $('[name="prealert_id"]').value = p ? p.id : '';
+      note.hidden = !p;
+      if (!p) return;
+      note.textContent = 'Pre-alert linked: ' + p.tracking;
+      if (!client) {
+        sSel.replaceChildren(new Option(p.customer || p.locker || 'Sender', String(p.customer_id), true, true));
+        $('[data-ns-find]').value = p.locker || p.customer || '';
+        $('[data-ns-results]').hidden = true;
+        sSel.dispatchEvent(new Event('change'));
+      }
       if (p.courier_id) $('[name="order_courier"]').value = String(p.courier_id);
-      if (p.tracking) $('[name="tracking_number"]').value = p.tracking;
       var first = $('[data-ns-item]');
       if (first) { first.querySelector('[data-k="description"]').value = p.desc || ''; first.querySelector('[data-k="declared_value"]').value = p.price || ''; }
       quote();
-    } catch (e) { SL.toast('Could not load pre-alert details', true); }
-  });
+    });
+  }
+  tracking.addEventListener('input', function () { clearTimeout(trackingTimer); trackingVersion++; trackingTimer = setTimeout(detectPrealert, 300); });
+  tracking.addEventListener('change', detectPrealert);
+  tracking.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); detectPrealert(); } });
 
   // ---- items ----
   var tb = $('[data-ns-items]');
@@ -149,13 +179,15 @@
     SL.post('ajax/sl/shipment_action_ajax.php', { op: 'prefs', prefs: JSON.stringify(prefs) }).then(function (j) { SL.toast(j.message || 'Saved', !j.success); var s = f.querySelector('[data-ns-saved]'); if (s && j.success) s.style.display = ''; });
   }
   if (sd) sd.addEventListener('click', saveDefaults);
-  if (ed) ed.addEventListener('click', function () { var t = $('[name="order_courier"]'); if (t) { t.scrollIntoView({ behavior: 'smooth', block: 'center' }); t.focus(); } SL.toast('Change the carrier or status, then save your defaults below.'); });
+  if (ed) ed.addEventListener('click', function () { var t = $('[name="status_courier"]'); if (t) { t.scrollIntoView({ behavior: 'smooth', block: 'center' }); t.focus(); } SL.toast('Adjust your defaults here, then use the settings icon to save them.'); });
 
   // ---- submit to the legacy endpoint ----
   var next = false;
   f.addEventListener('click', function (e) { if (e.target.closest('[type="submit"]')) next = !!e.target.closest('[data-ns-next]'); });
-  f.addEventListener('submit', function (e) {
+  f.addEventListener('submit', async function (e) {
     e.preventDefault();
+    clearTimeout(trackingTimer);
+    await detectPrealert();
     quote();
     f.querySelectorAll('.sl-err').forEach(function (x) { x.remove(); });
     f.querySelectorAll('.is-invalid').forEach(function (x) { x.classList.remove('is-invalid'); });

@@ -20,3 +20,8 @@
 .ns-notify-settings summary{list-style:none;cursor:pointer}
 .ns-notify-settings summary::-webkit-details-marker{display:none}
 .ns-notify-pop{position:absolute;right:0;top:calc(100% + 8px);z-index:20;width:min(280px,80vw);display:flex;flex-direction:column;gap:10px;padding:16px;border:1px solid var(--line-2);border-radius:12px;background:var(--card);box-shadow:var(--sh-2)}
+.ns-search-results{gap:4px;max-height:240px;overflow:auto;background:var(--card);border:1px solid var(--line);padding:6px;border-radius:10px}
+.ns-search-results .sl-btn{justify-content:flex-start;text-align:left;white-space:normal;min-height:44px;height:auto;padding:10px}
+.ns-sender:has([data-ns-sender-summary][hidden]){padding:0;border:0;background:transparent}
+.ns-notify .nt-ch{width:40px;height:40px;padding:0;justify-content:center}
+.ns-number-value .sl-ib{display:inline-flex;vertical-align:middle;margin-left:8px}

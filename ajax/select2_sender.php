@@ -49,7 +49,7 @@ if ($ctx['is_restricted']) {
 
 $sql = "SELECT * FROM cdb_users
  WHERE
-  (fname LIKE '%" . $search . "%'
+  (CONCAT(fname, ' ', lname) LIKE '%" . $search . "%' or fname LIKE '%" . $search . "%'
   or lname LIKE '%" . $search . "%'  
   or email LIKE '%" . $search . "%'
   or phone LIKE '%" . $search . "%'
@@ -63,7 +63,7 @@ $datas = $db->cdp_registros();
 
 foreach ($datas as $key) {
 
-	$data[] = array('id' => $key->id, 'text' => $key->fname . " " . $key->lname);
+	$data[] = array('id' => $key->id, 'text' => $key->fname . " " . $key->lname . " · " . implode(" · ", array_filter([$key->locker, $key->email, $key->phone])));
 }
 
 echo json_encode($data);
