@@ -29,7 +29,7 @@
     document.querySelectorAll('.sl-shortcut-pin').forEach(function (button) {
       var on = saved.includes(button.dataset.shortcutId); button.setAttribute('aria-pressed', String(on));
       button.setAttribute('aria-label', (on ? 'Remove' : 'Pin') + ' ' + button.dataset.shortcutLabel + ' shortcut');
-      button.title = on ? 'Remove shortcut' : 'Pin shortcut'; button.textContent = on ? '★' : '☆';
+      button.title = on ? 'Remove shortcut' : 'Add shortcut'; button.textContent = on ? '−' : '+';
     });
   }
   function add(id) { if (!byId.has(id) || saved.includes(id) || saved.length >= 8) return; saved.push(id); persist(); render(); }

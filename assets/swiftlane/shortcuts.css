@@ -8,6 +8,8 @@
 .sl-shortcut-pin,.sl-shortcut-remove{flex:none;display:grid;place-items:center;width:30px;height:30px;border:0;border-radius:8px;background:transparent;color:var(--muted);cursor:pointer;font:600 18px var(--font)}
 .sl-shortcut-pin:hover,.sl-shortcut-pin:focus-visible,.sl-shortcut-remove:hover,.sl-shortcut-remove:focus-visible{background:var(--hover);color:var(--ink)}
 .sl-shortcut-pin[aria-pressed=true]{color:var(--ink);background:var(--active)}
+.sl-nav-shortcut-row .sl-shortcut-pin{opacity:0;transition:opacity .15s}
+.sl-nav-shortcut-row:hover .sl-shortcut-pin,.sl-nav-shortcut-row:focus-within .sl-shortcut-pin{opacity:1}
 .sl-rail .sl-shortcuts{width:44px;display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 0;margin:8px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);border-radius:9px}
 .sl-shortcuts-caption,.sl-shortcuts-hint{font:500 10px/1.2 var(--font);color:var(--muted);text-align:center}
 .sl-shortcuts-list{display:flex;flex-direction:column;align-items:center;gap:5px;width:100%}
@@ -18,5 +20,5 @@
 .sl-shortcut-remove{position:absolute;right:-2px;top:-3px;width:16px;height:16px;border-radius:50%;background:var(--card);font-size:14px;line-height:1}
 .sl-rail .sl-shortcuts.is-dragover{background:var(--active);outline:2px dashed var(--ink)}
 .sl-mobile-shortcuts{display:none}
-@media(max-width:900px){.sl-mobile-shortcuts{display:block;padding:8px 6px}.sl-mobile-shortcuts .sl-shortcuts-list{align-items:stretch}.sl-mobile-shortcuts .sl-shortcut{flex-direction:row;gap:10px;padding-right:26px}.sl-mobile-shortcuts .sl-shortcut>a{flex:none}.sl-mobile-shortcuts .sl-shortcut>span{font:500 15px var(--font)}.sl-mobile-shortcuts .sl-shortcut-remove{right:4px;top:12px}.sl-rail [data-sl-tip]::after{display:none}}
+@media(max-width:900px){.sl-nav-shortcut-row .sl-shortcut-pin{opacity:1}.sl-mobile-shortcuts{display:block;padding:8px 6px}.sl-mobile-shortcuts .sl-shortcuts-list{align-items:stretch}.sl-mobile-shortcuts .sl-shortcut{flex-direction:row;gap:10px;padding-right:26px}.sl-mobile-shortcuts .sl-shortcut>a{flex:none}.sl-mobile-shortcuts .sl-shortcut>span{font:500 15px var(--font)}.sl-mobile-shortcuts .sl-shortcut-remove{right:4px;top:12px}.sl-rail [data-sl-tip]::after{display:none}}
 @media(prefers-reduced-motion:reduce){.sl-rail [data-sl-tip]::after{transition:none}}
