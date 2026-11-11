@@ -30,4 +30,4 @@
 .ai-send{width:52px;height:52px;border-radius:14px;border:0;background:var(--ink);color:var(--inverse);display:grid;place-items:center;cursor:pointer}
 .ai-typing{display:inline-flex;gap:4px}.ai-typing i{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:aiT 1s infinite}.ai-typing i:nth-child(2){animation-delay:.15s}.ai-typing i:nth-child(3){animation-delay:.3s}@keyframes aiT{0%,100%{opacity:.3}50%{opacity:1}}
 .ai-kv{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line);font-size:15px}.ai-kv:first-of-type{border-top:0}
-.ai-bar2{display:grid;grid-template-columns:80px 1fr 34px;gap:8px;align-items:center;font-size:14.5px}.ai-bar2 i{display:block;height:8px;border-radius:99px;background:#A9A59C}
+.ai-bar2{display:grid;grid-template-columns:80px 1fr 34px;gap:8px;align-items:center;font-size:14.5px}.ai-bar2 i{display:block;height:8px;border-radius:99px;background:var(--faint)}

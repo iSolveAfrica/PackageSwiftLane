@@ -6,12 +6,12 @@
 .eb-blk:hover{border-color:var(--line-2);background:var(--hover)}
 .eb-blk .ic{width:20px;height:20px}
 .eb-stage{border-radius:20px;background:#E9E5DE;padding:28px 16px;display:flex;justify-content:center;min-height:900px;border:1px solid var(--line)}
-.eb-mail{width:600px;max-width:100%;background:#fff;color:#1E1D1A;border-radius:6px;box-shadow:0 10px 30px rgba(0,0,0,.08);font:15px/1.6 Figtree,Arial,sans-serif;transition:width .25s}
+.eb-mail{width:600px;max-width:100%;background:#fff;color:var(--ink);border-radius:6px;box-shadow:0 10px 30px rgba(0,0,0,.08);font:15px/1.6 Figtree,Arial,sans-serif;transition:width .25s}
 .eb-mail.m{width:375px}
 .eb-b{position:relative;outline:1.5px dashed transparent;outline-offset:-2px;cursor:pointer}
 .eb-b:hover{outline-color:#C9C2B6}
 .eb-b.sel{outline:2px solid #E2632A}
-.eb-tb{position:absolute;top:-16px;right:8px;display:none;gap:2px;padding:3px;border-radius:10px;background:#1E1D1A;z-index:3}
+.eb-tb{position:absolute;top:-16px;right:8px;display:none;gap:2px;padding:3px;border-radius:10px;background:var(--ink);z-index:3}
 .eb-b.sel .eb-tb{display:flex}
 .eb-tb button{width:28px;height:28px;border:0;border-radius:7px;background:transparent;color:#fff;display:grid;place-items:center;cursor:pointer}
 .eb-tb button:hover{background:rgba(255,255,255,.15)}
@@ -20,7 +20,7 @@
 .eb-drop{height:10px;margin:0 24px;border-radius:6px;transition:height .12s,background .12s}
 .eb-drop.on{height:44px;background:repeating-linear-gradient(45deg,#FBE3D6,#FBE3D6 8px,#FDF1EA 8px,#FDF1EA 16px);border:1.5px dashed #E2632A}
 .eb-hd{display:flex;align-items:center;gap:10px;padding:22px 32px;font:600 17px Figtree,sans-serif}
-.eb-logo{width:30px;height:30px;border-radius:9px;background:#1E1D1A;color:#fff;display:grid;place-items:center;font-size:14px}
+.eb-logo{width:30px;height:30px;border-radius:9px;background:var(--ink);color:#fff;display:grid;place-items:center;font-size:14px}
 .eb-h{padding:12px 32px 4px;font:600 26px/1.25 Figtree,sans-serif;letter-spacing:-.01em}
 .eb-t{padding:8px 32px;white-space:pre-line}
 .eb-btnw{padding:14px 32px}

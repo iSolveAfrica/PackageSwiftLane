@@ -20,7 +20,7 @@
 .ls-up input{position:absolute;inset:0;opacity:0;cursor:pointer}
 .ls-logo{width:56px;height:56px;border-radius:14px;background:var(--card) center/contain no-repeat;border:1px solid var(--line);display:grid;place-items:center;flex:none}
 .ls-logo.xs{width:22px;height:22px;border-radius:6px;border:0;background-color:transparent}
-.ls-fav{width:32px;height:32px;border-radius:8px;background:#1E1D1A center/cover no-repeat;color:#fff;display:grid;place-items:center;font:700 13px var(--font);flex:none}
+.ls-fav{width:32px;height:32px;border-radius:8px;background:var(--ink) center/cover no-repeat;color:#fff;display:grid;place-items:center;font:700 13px var(--font);flex:none}
 .ls-fav.sm{width:16px;height:16px;border-radius:4px;font-size:7px}
 .ls-tabs{display:flex;gap:2px;padding:6px 6px 0;background:#DCD8D1;border-radius:12px 12px 0 0}
 .ls-tab{display:flex;align-items:center;gap:8px;width:210px;height:34px;padding:0 10px;border-radius:10px 10px 0 0;font-size:14.5px;color:#55524C}
@@ -29,7 +29,7 @@
 .ls-sw{width:30px;height:30px;border-radius:9px;border:2px solid var(--card);box-shadow:0 0 0 1px var(--line-2);cursor:pointer}.ls-sw.on{box-shadow:0 0 0 2px var(--ink)}
 .ls-chrome{display:flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:12px 12px 0 0;background:#DCD8D1;font-size:14px;margin-bottom:-12px}
 .ls-chrome .t{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:45%}.ls-chrome .u{margin-left:auto;color:#6B6862;font-size:13px}
-.ls-prev.m{width:250px;height:500px;margin:0 auto;border-radius:34px;border:8px solid #1E1D1A}
+.ls-prev.m{width:250px;height:500px;margin:0 auto;border-radius:34px;border:8px solid var(--ink)}
 .ls-prev.m .card{width:200px}
 .ls-prev .ln{display:flex;align-items:center;padding:0 10px;font-size:13px;color:var(--muted)}
 .ls-prev .btn{display:grid;place-items:center;color:#fff;font:600 14px var(--font)}

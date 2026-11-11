@@ -20,7 +20,7 @@ if (!isset($core) || !($core instanceof Core)) {
 }
 require __DIR__ . '/../sl/inc/shell_vars.php';
 require_once CDP_ROOT . '/helpers/sl_mobile.php';
-echo '<script>document.body.dataset.mobileRole=' . json_encode(sl_mobileRole()) . ';</script>';
+echo '<script>document.body.dataset.mobileRole=' . json_encode(sl_bodyRole()) . ';</script>';
 include __DIR__ . '/../sl/inc/shell_frame.php';
 register_shutdown_function(function () use ($user) {
     include CDP_ROOT . "/views/sl/inc/mobile_nav.php";

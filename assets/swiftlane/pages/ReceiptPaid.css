@@ -19,12 +19,12 @@ body{margin:0;background:#fff}
 .rx-kv span{color:#555}.rx-kv b{font-weight:600}
 .rx-mono{font-family:JetBrains Mono,monospace;word-break:break-all;font-size:11.5px}
 .rx-tb{width:100%;border-collapse:collapse}
-.rx-tb th{font-size:10px;text-transform:uppercase;letter-spacing:.06em;text-align:left;padding:7px 12px;background:#F3F2EF;color:#444}
-.rx-tb td{padding:8px 12px;border-top:1px solid #E7E5DF}
+.rx-tb th{font-size:10px;text-transform:uppercase;letter-spacing:.06em;text-align:left;padding:7px 12px;background:var(--bg);color:#444}
+.rx-tb td{padding:8px 12px;border-top:1px solid var(--line)}
 .rx-tb .n{text-align:right;font-family:JetBrains Mono,monospace}
-.rx-tot{display:flex;justify-content:space-between;padding:8px 12px;border-top:1.5px solid #111;background:#F3F2EF;font-weight:600}
+.rx-tot{display:flex;justify-content:space-between;padding:8px 12px;border-top:1.5px solid #111;background:var(--bg);font-weight:600}
 .rx-r{display:flex;justify-content:space-between;padding:5px 12px}
 .rx-r.big{font-size:15px;font-weight:800;border-top:1.5px solid #111;padding-top:9px;margin-top:3px}
 .rx-pay{display:flex;gap:12px;align-items:center;padding:10px 12px}
 .rx-ft{text-align:center;font-size:10px;color:#555;line-height:1.5}
-.rx-cut{border-top:1.5px dashed #A9A8A2;position:relative;margin:2px 0}
+.rx-cut{border-top:1.5px dashed var(--faint);position:relative;margin:2px 0}

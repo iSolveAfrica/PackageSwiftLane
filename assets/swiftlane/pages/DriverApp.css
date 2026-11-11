@@ -50,7 +50,7 @@ body{margin:0;background:var(--bg)}
 .da-bad{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:var(--red-bg);color:var(--red-ink);font-size:16px}
 .da-toast{position:fixed;top:12px;left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:448px;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:16px;background:var(--ink);color:var(--inverse);z-index:9;box-sizing:border-box;animation:daT .4s}@keyframes daT{from{transform:translate(-50%,-20px);opacity:0}}
 .da-bars{display:flex;align-items:flex-end;gap:6px;height:110px}
-.da-bars i{flex:1;border-radius:6px 6px 2px 2px;background:#A9A59C}.da-bars i.now{background:#E2632A}
+.da-bars i{flex:1;border-radius:6px 6px 2px 2px;background:var(--faint)}.da-bars i.now{background:#E2632A}
 .da-li{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line);color:var(--ink)}
 .da-li:first-child{border-top:0}
 .da-photo{height:120px;border-radius:14px;border:1.5px dashed var(--line-2);background:var(--field);display:grid;place-items:center;color:var(--muted);font-size:15px}

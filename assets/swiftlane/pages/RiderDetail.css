@@ -1,7 +1,7 @@
 /* Page styles of RiderDetail.dc.html (from the approved design) */
 .rd-k{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
 .rd-k b{font:600 26px var(--font);letter-spacing:-.015em;font-variant-numeric:tabular-nums;line-height:1.15}.rd-k small{color:var(--muted);font-size:14.5px}
-.rd-split{display:flex;height:12px;border-radius:99px;overflow:hidden;gap:2px}.rd-split i{display:block}.rd-split .r{background:#A9A59C}.rd-split .s{background:var(--ink)}
+.rd-split{display:flex;height:12px;border-radius:99px;overflow:hidden;gap:2px}.rd-split i{display:block}.rd-split .r{background:var(--faint)}.rd-split .s{background:var(--ink)}
 .rd-code{display:inline-flex;align-items:center;height:26px;padding:0 9px;border-radius:7px;background:var(--active);font:600 15px var(--mono);letter-spacing:.12em}
 .rd-col{display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid var(--line);border-radius:16px;background:var(--card);min-width:0}
 .rd-pk{display:grid;grid-template-columns:1fr auto;gap:4px 10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--field);font-size:15px}
@@ -16,4 +16,4 @@
 .rd-ev .d.g{background:var(--green-bg);color:var(--green-ink)}.rd-ev .d.y{background:var(--amber-bg);color:var(--amber-ink)}.rd-ev .d.r{background:var(--red-bg);color:var(--red-ink)}
 .rd-map{position:relative;height:230px;border-radius:16px;overflow:hidden;background:var(--active)}
 @keyframes rdmv{0%{offset-distance:0%}100%{offset-distance:100%}}
-.rd-bars{display:flex;align-items:flex-end;gap:5px;height:120px}.rd-bars i{flex:1;background:#D6D2CA;border-radius:4px 4px 0 0}.rd-bars i.hi{background:#8E8A82}
+.rd-bars{display:flex;align-items:flex-end;gap:5px;height:120px}.rd-bars i{flex:1;background:var(--line-2);border-radius:4px 4px 0 0}.rd-bars i.hi{background:var(--muted)}

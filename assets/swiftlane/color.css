@@ -1,0 +1,221 @@
+/* Swift Lane — colour, depth and the dark theme.
+   Loads after swiftlane.css and app.css on every page (views/sl/inc/head.php,
+   views/inc/head_scripts.php). Everything here is tokens and tints: the layout
+   stays in swiftlane.css, the motion in experience.css.
+
+   1. Accent and group colours   2. Dark theme on <html>   3. Tinted components
+   4. Depth                      5. Legacy token aliases (swiftlane-ds pages) */
+
+/* ---------- 1. accent, group and chart colours ---------- */
+:root{
+  --accent:#F2C400;            /* the brand amber from the logo */
+  --accent-ink:#161615;        /* text on an amber fill */
+  --accent-soft:#FBF1D7;
+  --accent-line:#E8C85C;
+  --brand:#E2632A;             /* the orange the boards already use */
+  /* one colour per navigation group; the sidebar, tiles and tabs read --g */
+  --g-ops:#0EAD78; --g-riders:#2F7FC8; --g-centers:#6C4BDD; --g-dev:#D9792B; --g-support:#C8428B;
+  --g-freight:#1F8FB5; --g-people:#7A5AF8; --g-finance:#C99A06; --g-insights:#6C4BDD; --g-settings:#6B6A65;
+  --g-shipping:#0EAD78; --g-account:#2F7FC8;
+  /* chart series */
+  --ch-1:#0EAD78; --ch-2:#2F7FC8; --ch-3:#F2C400; --ch-4:#6C4BDD; --ch-5:#E2632A; --ch-6:#C8428B;
+  --ch-grid:#E7E5DF; --ch-muted:#D9D7D0;
+  /* elevation */
+  --sh-1:0 1px 2px rgba(22,22,21,.04),0 1px 1px rgba(22,22,21,.02);
+  --sh-2:0 6px 18px -6px rgba(22,22,21,.12),0 2px 4px rgba(22,22,21,.04);
+  --sh-3:0 20px 50px -20px rgba(22,22,21,.28),0 6px 16px -8px rgba(22,22,21,.1);
+  --ring:0 0 0 3px color-mix(in srgb,var(--accent) 45%,transparent);
+  color-scheme:light;
+}
+
+/* ---------- 2. dark theme: true dark, on <html> so everything follows ---------- */
+html.sl-dark{color-scheme:dark}
+html.sl-dark,html.sl-dark .sl-app,html.sl-dark .dk,.dk{
+  --bg:#0E0F12; --main:#121316; --panel:#15161A; --card:#1A1B20; --field:#1F2026;
+  --hover:#212229; --active:#282A32; --line:#2A2C34; --line-2:#383B46;
+  --ink:#F2F2F0; --ink-2:#C9CAC6; --muted:#9092A0; --faint:#5F6170; --inverse:#0E0F12;
+  --green:#2FD48F; --green-ink:#5BE0A5; --green-bg:rgba(47,212,143,.14);
+  --yellow:#F2C400; --amber-ink:#F3CD52; --amber-bg:rgba(242,196,0,.13);
+  --red:#F0565C; --red-ink:#FF8E93; --red-bg:rgba(240,86,92,.16);
+  --sky:#4C8DF6; --sky-ink:#8DB6FA; --sky-bg:rgba(76,141,246,.16);
+  --violet:#8A74F0; --violet-ink:#B4A6F8; --violet-bg:rgba(138,116,240,.18);
+  --orange:#E8923F; --brand:#F0783F;
+  --accent-ink:#161615; --accent-soft:rgba(242,196,0,.14); --accent-line:rgba(242,196,0,.45);
+  --g-finance:#F2C400; --g-settings:#9092A0;
+  --ch-grid:#2A2C34; --ch-muted:#383B46;
+  --heat-0:#24262E; --heat-1:#1E4A3A; --heat-2:#1F8A62; --heat-3:#2FD48F;
+  --sh-1:0 1px 2px rgba(0,0,0,.4); --sh-2:0 8px 22px -8px rgba(0,0,0,.6); --sh-3:0 24px 60px -20px rgba(0,0,0,.7);
+}
+html.sl-dark body{background:var(--bg);color:var(--ink)}
+html.sl-dark .sl-app{background:var(--bg);color:var(--ink)}
+html.sl-dark .sl-main{background:var(--main)}
+html.sl-dark .sl-ticks,html.sl-dark .sl-steps i{background:repeating-linear-gradient(90deg,var(--line-2) 0 3px,transparent 3px 5px)}
+html.sl-dark .sl-bar span{background:var(--active)}
+html.sl-dark .sl-av{background:var(--active);color:var(--ink-2)}
+html.sl-dark .sl-promo{background:linear-gradient(120deg,#2A2745 0%,#3B2742 100%)}
+html.sl-dark .sl-btn{background:var(--ink);border-color:var(--ink);color:var(--inverse)}
+html.sl-dark .sl-btn:hover{background:#DCDCD8}
+html.sl-dark .sl-btn.ghost{background:var(--field);border-color:var(--line-2);color:var(--ink)}
+html.sl-dark .sl-btn.ghost:hover{background:var(--hover)}
+html.sl-dark .sl-btn.soft{background:var(--active);color:var(--ink)}
+html.sl-dark .sl-btn.danger{background:var(--field);border-color:rgba(240,86,92,.45)}
+html.sl-dark .sl-search,html.sl-dark .sl-sel,html.sl-dark .sl-in,html.sl-dark .composer{background:var(--field);border-color:var(--line-2);color:var(--ink)}
+html.sl-dark .sl-in::placeholder,html.sl-dark .sl-search input::placeholder{color:var(--faint)}
+html.sl-dark .sl-seg.boxed{background:var(--field)}html.sl-dark .sl-seg.boxed .on{background:var(--active);box-shadow:none}
+html.sl-dark .sl-toggle{background:var(--line-2)}html.sl-dark .sl-toggle.on{background:var(--green)}
+html.sl-dark .sl-chk,html.sl-dark .sl-radio{background:var(--field);border-color:var(--line-2)}
+html.sl-dark .sl-tag{background:var(--ink);color:var(--inverse)}
+html.sl-dark .sl-top{background:var(--bg)}
+html.sl-dark .sl-side,html.sl-dark .aitop .pop,html.sl-dark .uptop .pop{background:var(--panel);border-color:var(--line)}
+html.sl-dark .aitop>summary,html.sl-dark .uptop>summary,html.sl-dark .fx-chip{background:var(--card);border-color:var(--line-2);color:var(--ink)}
+html.sl-dark .aitop .pop,html.sl-dark .uptop .pop{box-shadow:0 18px 50px rgba(0,0,0,.6)}
+html.sl-dark .me-card{background:var(--card)}
+html.sl-dark .me-pic{box-shadow:0 0 0 2px var(--card),0 0 0 3px var(--line-2)}
+html.sl-dark .sl-modal{background:var(--card);box-shadow:0 24px 60px rgba(0,0,0,.6)}
+html.sl-dark .sl-dialog{background:rgba(0,0,0,.6)}
+html.sl-dark .sl-toast{background:var(--ink);color:var(--inverse)}
+html.sl-dark .sl-table tbody tr:hover td{background:var(--hover)}
+html.sl-dark .term,html.sl-dark .code{background:#0A0B0E}
+html.sl-dark .sl-mobile-nav{background:var(--panel);border-top-color:var(--line);box-shadow:0 -4px 20px rgba(0,0,0,.4)}
+html.sl-dark .sl-network-status{background:var(--amber-bg);color:var(--amber-ink)}
+html.sl-dark .sl-support-link{background:var(--ink);color:var(--inverse)}
+html.sl-dark img.sl-dim,html.sl-dark .sl-dim-dark{filter:brightness(.85)}
+/* charts drawn inline use the paper greys for grid lines */
+html.sl-dark svg [stroke="#E7E5DF"]{stroke:var(--ch-grid)}
+html.sl-dark svg [fill="#FBFAF8"]{fill:var(--card)}
+html.sl-dark svg [stroke="#161615"]{stroke:var(--ink)}
+
+/* ---------- 3. tinted components ---------- */
+/* The sidebar: each group carries its colour; the open group's icon is filled
+   with it, the active page gets a tinted row with a left bar. */
+.sl-nav-group{--g:var(--ink)}
+.sl-nav-group[data-group="ops"]{--g:var(--g-ops)}
+.sl-nav-group[data-group="riders"]{--g:var(--g-riders)}
+.sl-nav-group[data-group="centers"]{--g:var(--g-centers)}
+.sl-nav-group[data-group="dev"]{--g:var(--g-dev)}
+.sl-nav-group[data-group="support"]{--g:var(--g-support)}
+.sl-nav-group[data-group="freight"]{--g:var(--g-freight)}
+.sl-nav-group[data-group="people"]{--g:var(--g-people)}
+.sl-nav-group[data-group="finance"]{--g:var(--g-finance)}
+.sl-nav-group[data-group="insights"]{--g:var(--g-insights)}
+.sl-nav-group[data-group="settings"]{--g:var(--g-settings)}
+.sl-nav-group[data-group="shipping"]{--g:var(--g-shipping)}
+.sl-nav-group[data-group="account"]{--g:var(--g-account)}
+.sl-nav-group>.sl-gl .sl-group-icon{color:var(--g);background:color-mix(in srgb,var(--g) 12%,transparent)}
+.sl-nav-group[open]>.sl-gl .sl-group-icon{background:var(--g);color:#fff}
+.sl-nav-group[data-group="finance"][open]>.sl-gl .sl-group-icon{color:var(--accent-ink)}
+.sl-nav-group[open]{background:color-mix(in srgb,var(--g) 5%,transparent)}
+.sl-nav a{position:relative}
+.sl-nav a.is-active{background:color-mix(in srgb,var(--g,var(--ink)) 11%,transparent);color:var(--ink);font-weight:500}
+.sl-nav a.is-active::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:3px;border-radius:3px;background:var(--g,var(--ink))}
+.sl-nav a.is-active .ic{color:var(--g,var(--ink))}
+.sl-nav .cnt.ok{color:var(--green-ink)}
+.sl-rail .is-on{background:var(--accent-soft);color:var(--ink);box-shadow:inset 0 0 0 1px var(--accent-line)}
+.sl-rail a:hover{color:var(--ink)}
+/* brand mark in the top bar */
+.sl-top .sl-switch small{color:var(--accent-ink);background:var(--accent);padding:2px 6px;border-radius:6px;font-weight:700;letter-spacing:.04em}
+html.sl-dark .sl-top .sl-switch small{color:#161615}
+.sl-bell-n{background:var(--red);box-shadow:0 0 0 2px var(--bg)}
+
+/* Metric cards: the icon takes the meter's colour, the figure is set in mono */
+.sl-metric .sl-ml .ic{color:var(--green-ink)}
+.sl-metric:has(.sl-ticks.y) .sl-ml .ic{color:var(--amber-ink)}
+.sl-metric:has(.sl-ticks.r) .sl-ml .ic{color:var(--red-ink)}
+.sl-metric:has(.sl-ticks.v) .sl-ml .ic{color:var(--violet-ink)}
+.sl-metric:has(.sl-ticks.o) .sl-ml .ic{color:var(--orange)}
+.sl-metric:has(.sl-ticks.n) .sl-ml .ic{color:var(--muted)}
+.sl-metric .sl-mv{font-size:17px;font-weight:500;letter-spacing:-.01em}
+.sl-metric .sl-mv i{font-weight:400;font-size:15px}
+.sl-ticks i{box-shadow:none}
+.sl-ticks.lg{height:10px}
+
+/* Delta pills: +38% / −29%, as the dashboards read them */
+.sl-delta{display:inline-flex;align-items:center;gap:3px;height:22px;padding:0 8px;border-radius:100px;font:600 13px var(--mono);letter-spacing:0;white-space:nowrap;background:var(--active);color:var(--ink-2)}
+.sl-delta.up{background:var(--green-bg);color:var(--green-ink)}
+.sl-delta.down{background:var(--red-bg);color:var(--red-ink)}
+.sl-delta.flat{background:var(--active);color:var(--muted)}
+.sl-delta::before{font-size:11px}
+.sl-delta.up::before{content:"▲"}.sl-delta.down::before{content:"▼"}
+/* Big figures: tabular mono, like the metrics in the reference */
+.sl-num,.sl-mv b,.dk-q b,.up7-st b,.desk .big,.dv-kpi .v,.big.mono,.sl-table .num{font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.sl-num.lg{font-size:28px;font-weight:500;line-height:1.1}
+.sl-num.xl{font-size:34px;font-weight:500;line-height:1.05}
+
+/* Status pills keep their dot and gain a hairline of their own hue */
+.sl-pill{box-shadow:inset 0 0 0 1px color-mix(in srgb,currentColor 18%,transparent)}
+.sl-pill.air{background:var(--sky-bg);color:var(--sky-ink)}.sl-pill.sea{background:var(--violet-bg);color:var(--violet-ink)}
+.sl-pill.warn{background:var(--amber-bg);color:var(--amber-ink)}.sl-pill.ok{background:var(--green-bg);color:var(--green-ink)}.sl-pill.bad{background:var(--red-bg);color:var(--red-ink)}
+
+/* Buttons: an accent variant for the one action a page is about, a green one for confirmations */
+.sl-btn.accent{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.sl-btn.accent:hover{background:#E0B600}
+.sl-btn.ok{background:var(--green);border-color:var(--green);color:#fff}
+.sl-btn.ok:hover{background:var(--green-ink)}
+.sl-btn.danger:hover{background:var(--red-bg)}
+.sl-btn:focus-visible,.sl-ib:focus-visible,.sl-in:focus-visible,.sl-sel:focus-within,.sl-search:focus-within{outline:0;box-shadow:var(--ring)}
+.sl-in:focus,.sl-search:focus-within,.sl-sel:focus-within{border-color:var(--accent-line)}
+.sl-toggle.on{background:var(--green)}
+.sl-chk.on{background:var(--green);border-color:var(--green)}
+.sl-radio.on{border-color:var(--green)}.sl-radio.on::after{background:var(--green)}
+.sl-opt.on{border-color:var(--accent-line);box-shadow:0 0 0 1px var(--accent-line);background:var(--accent-soft)}
+.sl-tabs .on{border-bottom-color:var(--accent);color:var(--ink)}
+.sl-tabs .on,.sl-seg .on{font-weight:500}
+.sl-pg a.on{background:var(--ink);color:var(--inverse)}
+.sl-tile{color:var(--ink-2)}
+.sl-tile.g{background:var(--green-bg);color:var(--green-ink)}.sl-tile.y{background:var(--amber-bg);color:var(--amber-ink)}.sl-tile.r{background:var(--red-bg);color:var(--red-ink)}.sl-tile.b{background:var(--sky-bg);color:var(--sky-ink)}.sl-tile.v{background:var(--violet-bg);color:var(--violet-ink)}
+/* queue rows on the desk: a tinted tile per queue (first six colours) */
+.dk-q:nth-child(6n+1) .sl-tile{background:var(--green-bg);color:var(--green-ink)}
+.dk-q:nth-child(6n+2) .sl-tile{background:var(--sky-bg);color:var(--sky-ink)}
+.dk-q:nth-child(6n+3) .sl-tile{background:var(--violet-bg);color:var(--violet-ink)}
+.dk-q:nth-child(6n+4) .sl-tile{background:var(--amber-bg);color:var(--amber-ink)}
+.dk-q:nth-child(6n+5) .sl-tile{background:var(--red-bg);color:var(--red-ink)}
+.dk-q:nth-child(6n+6) .sl-tile{background:var(--active);color:var(--ink-2)}
+/* timeline and steps */
+.sl-tl .now .dot{border-color:var(--green);box-shadow:0 0 0 4px var(--green-bg)}
+/* banners get a left bar of their hue */
+.sl-banner{box-shadow:inset 3px 0 0 currentColor}
+/* table header and row accents */
+.sl-table thead th{color:var(--muted)}
+.sl-table tbody tr:hover td{background:color-mix(in srgb,var(--accent) 6%,var(--card))}
+html.sl-dark .sl-table tbody tr:hover td{background:color-mix(in srgb,var(--accent) 8%,var(--card))}
+/* AI surfaces keep one violet */
+.mn-ai,.aitop>summary .o{background:var(--violet-ink);color:#fff}
+.cd-chip:hover,.mn-chip.on{border-color:var(--violet);color:var(--violet-ink);background:var(--violet-bg)}
+
+/* ---------- 4. depth ---------- */
+.sl-card{box-shadow:var(--sh-1)}
+.sl-side{box-shadow:var(--sh-1)}
+.sl-main{box-shadow:none}
+a.sl-card,.sl-card[data-sl-link],.cp,.dk-q{transition:transform .18s cubic-bezier(.2,.7,.2,1),box-shadow .18s,border-color .18s}
+@media (hover:hover){
+  a.sl-card:hover,.sl-card[data-sl-link]:hover{transform:translateY(-2px);box-shadow:var(--sh-2);border-color:var(--line-2)}
+  .cp:hover{box-shadow:var(--sh-2)}
+}
+.sl-modal{box-shadow:var(--sh-3)}
+.aitop .pop,.uptop .pop{box-shadow:var(--sh-3)}
+.sl-top .sl-btn{box-shadow:var(--sh-1)}
+
+/* ---------- 5. legacy pages (swiftlane-ds.css tokens) follow the same theme ---------- */
+html.sl-dark{
+  --ink-900:#F2F2F0; --ink-800:#E4E5E2; --ink-700:#C9CAC6; --slate-400:#8D8F9C; --slate-600:#A9ABB7;
+  --line-200:#2A2C34; --fill-100:#1F2026; --page-050:#0E0F12; --white:#1A1B20;
+  --green-surface:#0F2B22; --green-line:#1F6B4F; --red-surface:#33141F; --amber-surface:#2E2512; --sky-surface:#0E2640; --purple-surface:#211C3E; --leaf-surface:#162A19;
+  --surface-card-inverse:#24262E; --text-inverse:#F2F2F0; --border-control:#3A3D4A; --border-inverse:rgba(234,240,247,.18);
+  --status-success-ink:#5BE0A5; --status-danger-ink:#FF8E93; --status-warning-ink:#F3CD52; --status-info-ink:#8DB6FA;
+  --focus-ring:#8A74F0; --shadow-control:0 1px 2px rgba(0,0,0,.5);
+}
+html.sl-dark .sl-legacy .card,html.sl-dark .sl-legacy .modal-content,html.sl-dark .sl-legacy .dropdown-menu{background:var(--card);border-color:var(--line);color:var(--ink)}
+html.sl-dark .sl-legacy .table thead th{background:var(--card);color:var(--muted)}
+html.sl-dark .sl-legacy .table,html.sl-dark .sl-legacy .table td,html.sl-dark .sl-legacy .table th{color:var(--ink);border-color:var(--line)}
+html.sl-dark .sl-legacy .form-control,html.sl-dark .sl-legacy .custom-select,html.sl-dark .sl-legacy .select2-container--default .select2-selection--single{background:var(--field);color:var(--ink);border-color:var(--line-2)}
+html.sl-dark .sl-legacy .form-control::placeholder{color:var(--faint)}
+html.sl-dark .sl-legacy label,html.sl-dark .sl-legacy .card-title,html.sl-dark .sl-legacy h1,html.sl-dark .sl-legacy h2,html.sl-dark .sl-legacy h3,html.sl-dark .sl-legacy h4,html.sl-dark .sl-legacy h5{color:var(--ink)}
+html.sl-dark .sl-legacy .btn-secondary,html.sl-dark .sl-legacy .btn-info,html.sl-dark .sl-legacy .btn-light,html.sl-dark .sl-legacy [class*="btn-outline"]{background:var(--field);border-color:var(--line-2);color:var(--ink)}
+html.sl-dark .sl-legacy .btn-primary,html.sl-dark .sl-legacy .btn-danger,html.sl-dark .sl-legacy .btn-outline-danger,html.sl-dark .sl-legacy .btn-warning,html.sl-dark .sl-legacy .btn-success,html.sl-dark .sl-legacy .btn-dark{background:var(--ink);border-color:var(--ink);color:var(--inverse)}
+html.sl-dark .sl-legacy .pagination .page-link{background:var(--card);border-color:var(--line);color:var(--ink)}
+html.sl-dark .sl-legacy .email-app .left-part{background:var(--panel);border-color:var(--line)}
+html.sl-dark .sl-legacy .text-muted{color:var(--muted)!important}
+html.sl-dark .sl-legacy .alert-success{background:var(--green-bg);color:var(--green-ink)}
+html.sl-dark .sl-legacy .alert-danger,html.sl-dark .sl-legacy .alert-warning{background:var(--red-bg);color:var(--red-ink)}
+html.sl-dark .sl-legacy .swl-metric,html.sl-dark .sl-legacy .swl-panel{background:var(--card);border-color:var(--line)}
+html.sl-dark .sl-legacy .apexcharts-tooltip{background:var(--card)!important;color:var(--ink)!important;border-color:var(--line)!important}

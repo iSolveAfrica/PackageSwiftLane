@@ -8,5 +8,5 @@ require CDP_ROOT . '/views/sl/inc/shell_vars.php';
 <?php include CDP_ROOT . '/views/sl/inc/head.php'; ?>
 </head>
 <?php require_once CDP_ROOT . "/helpers/sl_mobile.php"; ?>
-<body data-mobile-role="<?= h(sl_mobileRole()) ?>" class="sl-body-page">
+<body data-mobile-role="<?= h(sl_bodyRole()) ?>" class="sl-body-page">
 <?php include CDP_ROOT . '/views/sl/inc/shell_frame.php'; ?>

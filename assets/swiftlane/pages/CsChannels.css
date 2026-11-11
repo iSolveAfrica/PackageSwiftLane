@@ -7,7 +7,7 @@ body{margin:0}.cf{display:flex;flex-direction:column;gap:8px}
 a.cf-n:hover{background:var(--hover)}
 .cf-ic{width:32px;height:32px;border-radius:10px;background:var(--card);border:1px solid var(--line);display:grid;place-items:center;flex:none}
 .cf-ic.big{width:44px;height:44px;border-radius:14px;background:var(--ink);color:var(--inverse);border:0}
-.cf-b{display:block;height:5px;border-radius:9px;background:var(--active);margin-top:4px;overflow:hidden}.cf-b i{display:block;height:100%;background:#A9A59C}
+.cf-b{display:block;height:5px;border-radius:9px;background:var(--active);margin-top:4px;overflow:hidden}.cf-b i{display:block;height:100%;background:var(--faint)}
 .cf-ln{align-self:center;width:2px;height:22px;background:repeating-linear-gradient(180deg,var(--line-2) 0 5px,transparent 5px 9px);position:relative}
 .cf-ln i{position:absolute;left:-3px;width:8px;height:8px;border-radius:50%;background:#E2632A;animation:cfM 1.8s linear infinite}@keyframes cfM{from{top:0}to{top:calc(100% - 8px)}}
 .cf-mid{display:flex;flex-direction:row;align-items:center;gap:12px;padding:12px 16px;border:1px solid var(--line-2);border-radius:16px;background:var(--card)}
