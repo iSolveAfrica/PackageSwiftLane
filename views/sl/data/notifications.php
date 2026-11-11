@@ -32,10 +32,10 @@ function sl_notificationsData($user, $core): array
         $type = (int) $r->shipping_type;
         $href = '';
         if ((int) $r->order_id > 0) {
-            $href = $type === 4 ? sl_route('PackageDetail', ['id' => (int) $r->order_id]) : sl_route('ShipmentDetail', ['id' => (int) $r->order_id]);
+            $href = $type === 99 ? sl_route(sl_userIs('driver') ? 'DeliveryJob' : (sl_userIs('client') ? 'DeliveryRequest' : 'DeliveryDispatch'), ['id'=>(int)$r->order_id]) : ($type === 4 ? sl_route('PackageDetail', ['id' => (int) $r->order_id]) : sl_route('ShipmentDetail', ['id' => (int) $r->order_id]));
         }
         $items[] = ['id' => (int) $r->notification_id, 'ic' => $type === 4 ? 'i-ship' : ($type === 1 ? 'i-plane' : 'i-bell'), 't' => (string) $r->notification_description,
-            'd' => $href ? ($type === 4 ? 'Sea package' : 'Air shipment') . ' #' . (int) $r->order_id : 'System', 'w' => sl_ago($r->notification_date), 'c' => (int) $r->notification_read ? '' : 'g', 'read' => (int) $r->notification_read === 1, 'href' => $href];
+            'd' => $href ? ($type === 99 ? 'Delivery' : ($type === 4 ? 'Sea package' : 'Air shipment')) . ' #' . (int) $r->order_id : 'System', 'w' => sl_ago($r->notification_date), 'c' => (int) $r->notification_read ? '' : 'g', 'read' => (int) $r->notification_read === 1, 'href' => $href];
     }
     $prefs = [];
     $hasPrefs = sl_tableExists('cdb_user_notification_prefs');

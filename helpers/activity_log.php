@@ -426,7 +426,7 @@ function cdp_activityIsSecret($key)
 {
     $k = strtolower((string) $key);
     foreach (['password', 'passwd', 'pass_', 'token', 'csrf', 'secret', 'api_key', 'apikey',
-              'private_key', 'card', 'cvv', 'pin', 'otp_code', 'authorization'] as $needle) {
+              'server_key', 'browser_key', 'private_key', 'card', 'cvv', 'pin', 'otp_code', 'authorization'] as $needle) {
         if (strpos($k, $needle) !== false) {
             return true;
         }

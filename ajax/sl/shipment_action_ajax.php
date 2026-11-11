@@ -134,6 +134,8 @@ switch ($op) {
             cdp_insertCourierShipmentTrack(['user_id' => $actor, 'order_id' => $id, 'order_track' => $track, 't_date' => date('Y-m-d H:i:s'), 'status_courier' => $status, 'comments' => $comment ?: 'Status updated', 'office' => (int) $row->origin_off]);
             cdp_insertCourierShipmentUserHistory(['user_id' => $actor, 'order_id' => $id, 'order_track' => $track, 'action' => 'Status: ' . str_replace('_', ' ', $style->mod_style), 'date_history' => date('Y-m-d H:i:s')]);
             cdp_activityLogStatus('shipments', 'shipment', $id, $track, $status, cdp_activityStatusName($status), $prev);
+            require_once CDP_ROOT . '/helpers/delivery_service.php';
+            if ((int)$row->status_courier !== $status) dl_queueReady('air', $id, $status, str_replace('_', ' ', $style->mod_style));
             $n++;
         }
         sl_json(['success' => true, 'message' => $n . ' shipment(s) set to ' . str_replace('_', ' ', $style->mod_style)]);

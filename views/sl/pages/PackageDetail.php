@@ -61,3 +61,7 @@ $can = $d['can']; $o = $d['owner'];
 </form></div>
 <?php endif; ?>
 <?php if ($can['code']) { include CDP_ROOT . '/views/sl/inc/pickup_code_dialog.php'; } ?>
+
+<?php if (!empty($d['id'])) { require_once CDP_ROOT . "/helpers/delivery_service.php"; $deliveryLink=dl_parcelLink("sea", (int)$d['id']); if ($deliveryLink): ?>
+<a class="sl-btn ghost" href="<?= h($deliveryLink['href']) ?>">Delivery history and proof · <?= h($deliveryLink['state']) ?></a>
+<?php endif; } ?>

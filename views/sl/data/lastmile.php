@@ -16,14 +16,15 @@ function sl_lmZoneFor(string $city, array $zones): ?array
     if ($c === '') {
         return null;
     }
+    $matches = [];
     foreach ($zones as $z) {
         foreach (array_filter(array_map('trim', explode(',', mb_strtolower((string) $z['match'])))) as $m) {
-            if ($m !== '' && ($c === $m || mb_strpos($c, $m) !== false)) {
-                return $z;
+            if ($m !== '' && ($c === $m)) {
+                $matches[$z['id']] = $z;
             }
         }
     }
-    return null;
+    return count($matches) === 1 ? reset($matches) : null;
 }
 
 function sl_lmZones(): array
@@ -39,6 +40,7 @@ function sl_lastMileData($user, $core): array
     $d = ['flash' => (string) ($_GET['flash'] ?? ''), 'zonesReady' => sl_tableExists('cdb_delivery_zones'), 'canManage' => $user->cdp_hasPermission('manage_freight')];
     $ctx = function_exists('cdp_getAgencyContext') ? cdp_getAgencyContext() : ['is_restricted' => false];
     $scope = !empty($ctx['is_restricted']) && !empty($ctx['agency_id']) ? ' AND o.agency = ' . (int) $ctx['agency_id'] : '';
+    if (sl_tableExists('cdb_delivery_claims')) $scope .= " AND NOT EXISTS (SELECT 1 FROM cdb_delivery_claims dc WHERE dc.module='air' AND dc.order_id=o.order_id)";
     $out = "o.is_deleted = 0 AND o.status_courier IN (5,7) $scope";
     $zones = sl_lmZones();
     $d['zones'] = $zones;

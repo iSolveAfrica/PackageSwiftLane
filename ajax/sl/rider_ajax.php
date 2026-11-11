@@ -35,6 +35,7 @@ switch ($op) {
     case 'unassign':
         require_permission(['dispatch_riders', 'assign_drivers', 'assign_driver_pickup']);
         $j = $job((int) ($_POST['id'] ?? 0));
+        if (sl_tableExists('cdb_delivery_claims') && sl_scalar("SELECT COUNT(*) FROM cdb_delivery_claims WHERE module='air' AND order_id=:i", [':i'=>(int)$j->order_id])) sl_json(['success'=>false,'message'=>'Use Customer delivery requests to manage this parcel'],409);
         $trk = $j->order_prefix . $j->order_no;
         if ($op === 'assign') {
             $rid = (int) ($_POST['driver_id'] ?? 0);

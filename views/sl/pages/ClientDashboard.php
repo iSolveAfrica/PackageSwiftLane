@@ -1,3 +1,4 @@
+<a class="sl-btn ghost" href="<?= h(sl_route('DeliveryRequest')) ?>"><i class="ic i-truck" aria-hidden="true"></i>Request delivery / My deliveries</a>
 <?php
 /**
  * ClientDashboard - from docs/handover/artifact-source/ClientDashboard.dc.html (scripts/sl_convert.py), bound to index.php (client branch).

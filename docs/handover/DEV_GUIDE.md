@@ -107,3 +107,13 @@ php scripts/check_rider_routes.php
 The map uses the actual assigned addresses and a lazy Google Maps iframe. Keep
 address fallback and external navigation available if the provider is blocked.
 The route preview is one leg at a time, not a GPS route optimizer.
+
+## Customer-approved deliveries
+
+See [Courier delivery](COURIER_DELIVERY.md) for the state machine, migration,
+Google key/API setup, private proof storage, worker setup and verification.
+Business logic lives in `helpers/delivery_service.php`, pure fare/geofence rules
+in `delivery_pricing.php`, and server-only Google calls in `delivery_google.php`.
+External notifications must be queued after a transactional state change, never
+sent from inside that transaction. Keep delivery fees separate from shipping
+invoice clearance and never accept a price or distance supplied by the browser.

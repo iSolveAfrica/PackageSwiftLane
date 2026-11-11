@@ -1,3 +1,4 @@
+<a class="sl-btn ghost" href="<?= h(sl_route('DeliveryRequest')) ?>"><i class="ic i-truck" aria-hidden="true"></i>Request delivery / My deliveries</a>
 <div class="sl-head"><div><h1 class="sl-title">Your pickup codes</h1><p class="sl-lede">Show your code to the team when you collect your parcels.</p></div></div>
 <div class="sl-banner info"><i class="ic i-shield" aria-hidden="true"></i><span>Keep these codes private. Share only with the person handing over your parcel. Bring your ID.</span></div>
 <div class="grid cols2 sl-code-wallet">

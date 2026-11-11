@@ -1,0 +1,9 @@
+.dl-map{height:340px;min-height:280px;width:100%;border:1px solid var(--line);border-radius:16px;background:var(--field)}
+.dl-parcel{display:flex;gap:12px;align-items:center;padding:14px;border:1px solid var(--line);border-radius:12px;min-height:52px;cursor:pointer}.dl-parcel small{display:block;margin-top:4px}
+.dl-list-item{display:flex;align-items:center;gap:12px;padding:16px 0;border-bottom:1px solid var(--line)}.dl-list-item .grow{min-width:0;overflow-wrap:anywhere}
+.dl-rate-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.dl-rate-grid>*{min-width:0}
+.dl-zone-form{padding:16px;border-top:1px solid var(--line)}.dl-zone-form textarea{min-height:80px}
+.sl-field textarea.sl-in{height:auto;padding:12px}
+gmp-place-autocomplete{width:100%;color-scheme:light}
+@media(max-width:767px){.dl-rate-grid{grid-template-columns:1fr}.dl-map{height:42dvh}.dl-parcel .mono{overflow-wrap:anywhere}.dl-list-item{flex-wrap:wrap}}
+.sl-card code{white-space:normal;overflow-wrap:anywhere}

@@ -1,3 +1,6 @@
+<?php require_once CDP_ROOT . '/helpers/delivery_service.php'; ?>
+<div class="sl-banner info">Set customer delivery quotes in Delivery pricing and Maps. The rules below manage fees for other assigned jobs.</div>
+<div class="row wrap g8"><?php if (dl_manager($user)): ?><a class="sl-btn ghost" href="<?= h(sl_route('DeliveryDispatch')) ?>">Customer delivery requests</a><?php if (!dl_agency() && $user->cdp_hasPermission(['manage_freight','manage_rider_fees'])): ?><a class="sl-btn ghost" href="<?= h(sl_route('DeliverySettings')) ?>">Delivery pricing and Maps</a><?php endif; endif; ?></div>
 <?php
 /**
  * RiderSettings - from docs/handover/artifact-source/RiderSettings.dc.html.

@@ -1,3 +1,5 @@
+<?php require_once CDP_ROOT . '/helpers/delivery_service.php'; ?>
+<div class="row wrap g8"><?php if (dl_manager($user)): ?><a class="sl-btn ghost" href="<?= h(sl_route('DeliveryDispatch')) ?>">Customer delivery requests</a><?php if (!dl_agency() && $user->cdp_hasPermission(['manage_freight','manage_rider_fees'])): ?><a class="sl-btn ghost" href="<?= h(sl_route('DeliverySettings')) ?>">Delivery pricing and Maps</a><?php endif; endif; ?></div>
 <?php
 /**
  * LastMile - from docs/handover/artifact-source/LastMile.dc.html.
