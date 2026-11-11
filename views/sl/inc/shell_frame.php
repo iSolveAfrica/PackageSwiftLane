@@ -59,11 +59,13 @@
       <?php if ($user->cdp_hasPermission(['warehouse_view', 'view_warehouse_delivery'])): ?><a href="<?= h(sl_route('Warehouse')) ?>" aria-label="Warehouse" title="Warehouse"><i class="ic i-warehouse" aria-hidden="true"></i></a><?php endif; ?>
       <?php if (function_exists('sl_displayCurrency') && !sl_userIs('client')): $slGhs = sl_displayCurrency() === 'GHS'; ?><button type="button" class="sl-ccy-rail<?= $slGhs ? ' is-on on' : '' ?>" role="switch" aria-checked="<?= $slGhs ? 'true' : 'false' ?>" aria-label="Show amounts in <?= $slGhs ? 'USD' : 'GHS' ?>" title="Showing <?= $slGhs ? 'GHS' : 'USD' ?> · click to show <?= $slGhs ? 'USD' : 'GHS' ?>" data-sl-action="ajax/sl/display_currency_ajax.php" data-sl-reload><span class="ccy-pill" aria-hidden="true"><b class="<?= $slGhs ? '' : 'act' ?>">USD</b><b class="<?= $slGhs ? 'act' : '' ?>">GHS</b></span></button><?php endif; ?>
       <?php endif; ?>
+      <div class="sl-shortcuts" data-shortcuts-user="<?= (int) $_SESSION['userid'] ?>" aria-label="My shortcuts"><span class="sl-shortcuts-caption">Pinned</span><div class="sl-shortcuts-list"></div><span class="sl-shortcuts-hint">Drop here</span></div>
       <a class="me-pic" href="<?= h($slProfileUrl) ?>" aria-label="Your profile, <?= h($slName) ?>" style="width:34px;height:34px;margin-top:auto;font-size:14px;<?= $slPicStyle ?>"><?= $slAvatar ? '' : h($slInitials) ?></a>
     </div>
     <aside class="sl-side" id="sl-navigation" aria-label="<?= $slIsClient ? 'Customer navigation' : 'Main navigation' ?>">
       <div class="nav-x"><span class="fw5">Menu</span><button class="sl-ib" type="button" data-sl-nav aria-controls="sl-navigation" aria-expanded="true" aria-label="Close the menu"><i class="ic i-x" aria-hidden="true"></i></button></div>
       <?php include __DIR__ . '/nav_groups.php'; ?>
+      <div class="sl-mobile-shortcuts" aria-label="My shortcuts"><div class="sl-gl">My shortcuts</div><nav class="sl-shortcuts-list sl-nav"></nav></div>
       <div class="sl-gl">Other</div>
       <nav class="sl-nav">
         <?php if (!$slIsClient && $user->cdp_hasPermission('view_tools')): ?><a href="<?= h(sl_route('SettingsHub') . '#language') ?>"><i class="ic i-globe" aria-hidden="true"></i><span>Language</span></a><?php endif; ?>

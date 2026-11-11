@@ -3,7 +3,7 @@
   var dock = document.querySelector('.sl-shortcuts[data-shortcuts-user]');
   if (!dock) return;
   document.querySelectorAll('.sl-rail [aria-label]').forEach(function (item) { item.dataset.slTip = item.getAttribute('aria-label'); item.removeAttribute('title'); });
-  var list = dock.querySelector('.sl-shortcuts-list');
+  var lists = [dock.querySelector('.sl-shortcuts-list'), document.querySelector('.sl-mobile-shortcuts .sl-shortcuts-list')].filter(Boolean);
   var links = Array.from(document.querySelectorAll('.sl-nav-group .sl-nav a[data-shortcut-id]'));
   var byId = new Map(links.map(function (link) { return [link.dataset.shortcutId, link]; }));
   var key = 'sl.shortcuts.' + dock.dataset.shortcutsUser;
@@ -11,19 +11,21 @@
   try { var value = JSON.parse(localStorage.getItem(key) || '[]'); if (Array.isArray(value)) saved = value.filter(function (id) { return byId.has(id); }).slice(0, 8); } catch (e) {}
   function persist() { try { localStorage.setItem(key, JSON.stringify(saved)); } catch (e) {} }
   function render() {
-    list.replaceChildren();
-    saved.forEach(function (id) {
+    lists.forEach(function (list) {
+      list.replaceChildren();
+      saved.forEach(function (id) {
       var source = byId.get(id); if (!source) return;
       var label = source.querySelector('span')?.textContent?.trim() || id;
       var item = document.createElement('div'); item.className = 'sl-shortcut';
-      var link = document.createElement('a'); link.href = source.href; link.setAttribute('aria-label', label); link.title = label;
+      var link = document.createElement('a'); link.href = source.href; link.setAttribute('aria-label', label); link.dataset.slTip = label;
       var icon = source.querySelector('i.ic'); if (icon) link.appendChild(icon.cloneNode(true));
       var name = document.createElement('span'); name.textContent = label;
       var remove = document.createElement('button'); remove.type = 'button'; remove.className = 'sl-shortcut-remove'; remove.textContent = '×'; remove.setAttribute('aria-label', 'Remove ' + label + ' shortcut');
       remove.addEventListener('click', function () { saved = saved.filter(function (entry) { return entry !== id; }); persist(); render(); });
       item.append(link, name, remove); list.appendChild(item);
+      });
     });
-    dock.querySelector('p').hidden = saved.length > 0;
+    dock.querySelector('.sl-shortcuts-hint').hidden = saved.length > 0;
     document.querySelectorAll('.sl-shortcut-pin').forEach(function (button) {
       var on = saved.includes(button.dataset.shortcutId); button.setAttribute('aria-pressed', String(on));
       button.setAttribute('aria-label', (on ? 'Remove' : 'Pin') + ' ' + button.dataset.shortcutLabel + ' shortcut');
