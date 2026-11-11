@@ -1274,6 +1274,9 @@ if ($action === 'bill_customer') {
     $pickupCode   = $pickupCodes ? (string) reset($pickupCodes) : '';
     $codeLineWa   = cdp_pickupCodeLine($pickupCode, $plural);
     $codeLineHtml = cdp_pickupCodeLine($pickupCode, $plural, true);
+    require_once CDP_ROOT . '/helpers/delivery_service.php';
+    $codeLineWa .= "\n\n" . dl_invite(32, 'Ready for pickup');
+    $codeLineHtml .= dl_invite(32, 'Ready for pickup', true);
 
     $msgWa = $intro . "\n\n"
         . "*Pickup Details*\n"

@@ -70,6 +70,7 @@ function sl_rdJobs(string $from, string $to, ?int $driverId = null): array
     $closed = implode(',', array_merge(SL_RD_DONE, SL_RD_FAILED));
     $w = 'o.is_deleted = 0 AND o.driver_id > 0' . sl_rdScope() . ($driverId ? ' AND o.driver_id = ' . (int) $driverId : '');
     $done = sl_rdDoneAt('o');
+    if (sl_tableExists('cdb_delivery_claims')) $w .= " AND NOT EXISTS (SELECT 1 FROM cdb_delivery_claims dc WHERE dc.module='air' AND dc.order_id=o.order_id)";
     $recipientType = sl_columnExists('cdb_add_order', 'recipient_type') ? "COALESCE(o.recipient_type, 'recipient')" : "'recipient'";
     $sql = "SELECT o.order_id, o.order_prefix, o.order_no, o.driver_id, o.status_courier, o.is_pickup, o.total_order, o.total_weight, o.order_pay_mode, o.status_invoice, o.sender_id, o.receiver_id, o.person_receives,
             CASE WHEN o.is_pickup = 1 THEN CONCAT(s.fname, ' ', s.lname)
@@ -176,6 +177,7 @@ function sl_riderDispatchData($user, $core): array
     $kind = (string) ($_GET['kind'] ?? 'all');
     $statuses = $kind === 'pickup' ? SL_RD_OPEN_PICKUP : ($kind === 'delivery' ? [5, 6, 32] : array_merge(SL_RD_OPEN_PICKUP, [5, 6, 32]));
     $w = 'o.is_deleted = 0 AND (o.driver_id IS NULL OR o.driver_id = 0) AND o.status_courier IN (' . implode(',', $statuses) . ')' . sl_rdScope();
+    if (sl_tableExists('cdb_delivery_claims')) $w .= " AND NOT EXISTS (SELECT 1 FROM cdb_delivery_claims dc WHERE dc.module='air' AND dc.order_id=o.order_id)";
     if ($kind === 'pickup') $w .= ' AND o.is_pickup = 1';
     if ($kind === 'delivery') $w .= ' AND o.is_pickup = 0';
     $b = [];

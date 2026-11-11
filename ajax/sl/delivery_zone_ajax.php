@@ -59,14 +59,17 @@ switch ($op) {
         sl_json(['success' => (bool) $ok, 'message' => $ok ? 'Zone removed' : 'Could not remove', 'reload' => true]);
         break;
     case 'assign':
+        require_once CDP_ROOT . '/views/sl/data/riders.php';
+        $activeRiders=sl_rdRiders(true);
         $zones = sl_lmZones();
         $ctx = function_exists('cdp_getAgencyContext') ? cdp_getAgencyContext() : ['is_restricted' => false];
         $scope = !empty($ctx['is_restricted']) && !empty($ctx['agency_id']) ? ' AND o.agency = ' . (int) $ctx['agency_id'] : '';
+        if (sl_tableExists('cdb_delivery_claims')) $scope .= " AND NOT EXISTS (SELECT 1 FROM cdb_delivery_claims dc WHERE dc.module='air' AND dc.order_id=o.order_id)";
         $n = 0;
         $per = [];
         foreach (sl_rows("SELECT o.order_id, o.order_no, a.recipient_city AS city FROM cdb_add_order o LEFT JOIN cdb_address_shipments a ON a.order_id = o.order_id WHERE o.is_deleted = 0 AND o.status_courier IN (5,6,7) AND COALESCE(o.driver_id,0) = 0 $scope LIMIT 1000") as $r) {
             $z = sl_lmZoneFor((string) $r->city, $zones);
-            if (!$z || !$z['rider']) continue;
+            if (!$z || !$z['rider'] || !isset($activeRiders[$z['rider']])) continue;
             $db->cdp_query('UPDATE cdb_add_order SET driver_id = :d WHERE order_id = :o AND COALESCE(driver_id,0) = 0');
             $db->bind(':d', $z['rider']); $db->bind(':o', (int) $r->order_id);
             if ($db->cdp_execute()) {

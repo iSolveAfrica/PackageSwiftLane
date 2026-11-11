@@ -98,3 +98,7 @@ document.addEventListener('sl:done', function (e) {
   else if (j.errors) { var m = Object.keys(j.errors).map(function (k) { return j.errors[k]; }).join(' '); if (m) SL.toast(m, true); }
 }, true); // sl:done does not bubble: listen in the capture phase
 </script>
+
+<?php if (!empty($d['id'])) { require_once CDP_ROOT . "/helpers/delivery_service.php"; $deliveryLink=dl_parcelLink("air", (int)$d['id']); if ($deliveryLink): ?>
+<a class="sl-btn ghost" href="<?= h($deliveryLink['href']) ?>">Delivery history and proof · <?= h($deliveryLink['state']) ?></a>
+<?php endif; } ?>

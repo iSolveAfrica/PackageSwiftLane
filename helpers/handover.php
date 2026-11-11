@@ -111,6 +111,7 @@ if (!function_exists('cdp_handoverStatuses')) {
         if ($id === 7) {
             return 'delivery';
         }
+        if (!in_array($id, [7,8,12,15,16,21], true) && preg_match('/\bready\s+(?:at|for)\s+customs\b/i', str_replace('_', ' ', (string) $label))) return 'pickup';
         if ($id > 0 && in_array($id, [1, 2, 3, 4, 5, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 21, 23, 25], true)) {
             return '';
         }
@@ -135,7 +136,7 @@ if (!function_exists('cdp_handoverStatuses')) {
         if (cdp_isHandedOver($id)) {
             return 'handed_over';
         }
-        if (cdp_statusReadyKind($id, $label) !== '') {
+        if (cdp_statusReadyKind($id, $label) !== '' || (function_exists('dl_invite') && dl_invite($id, (string)$label) !== '')) {
             return 'ready';
         }
         if ($id <= 0) {

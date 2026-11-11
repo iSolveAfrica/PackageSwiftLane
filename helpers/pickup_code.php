@@ -383,16 +383,19 @@ if (!function_exists('cdp_pickupCodeEnsureTables')) {
      */
     function cdp_pickupCodeReadyLine($module, array $orderIds, $statusId, $statusLabel = '', $html = false)
     {
+        require_once __DIR__ . '/delivery_service.php';
+        $invitation = dl_invite((int)$statusId, (string)$statusLabel, (bool)$html);
         $kind = cdp_statusReadyKind($statusId, $statusLabel);
+        if ($kind === '' && $invitation !== '') $kind = 'pickup';
         if ($kind === '' || ($kind === 'delivery' && !CDP_PICKUP_CODE_ON_DELIVERY)) {
-            return '';
+            return $invitation;
         }
         $codes = cdp_pickupCodeForReady($module, $orderIds, 'ready_' . $kind);
         $uniq  = array_values(array_unique($codes));
         if (count($uniq) !== 1) {
-            return '';   // none, or several owners: their own messages carry their codes
+            return $invitation;   // no code, but delivery invitation may still apply
         }
-        return cdp_pickupCodeLine($uniq[0], count($codes) > 1, $html, $kind);
+        return cdp_pickupCodeLine($uniq[0], count($codes) > 1, $html, $kind) . ($invitation !== '' ? ($html ? '' : "\n\n") . $invitation : '');
     }
 
     function cdp_pickupCodeMarkSent($codeId)
