@@ -22,7 +22,7 @@ $client = !empty($d['client']);
             <input type="hidden" name="filter" value="<?= h($d['filter']) ?>"><input type="hidden" name="period" value="<?= h($d['period']) ?>">
             <div class="sl-search"><i class="ic ic-sm i-search" aria-hidden="true"></i><input name="q" value="<?= h($d['q']) ?>" aria-label="Search shipments" placeholder="Search tracking, recipient or sender"></div>
             <label class="sl-sel native" style="width: 170px"><select name="status" aria-label="Status" onchange="this.form.submit()"><option value="">All statuses</option><?php foreach ($d['statuses'] as $s): ?><option value="<?= (int) $s->id ?>" <?= (int) $s->id === $d['status'] ? 'selected' : '' ?>><?= h(str_replace('_', ' ', $s->mod_style)) ?></option><?php endforeach; ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></label>
-            <?php if (!$client): ?><label class="sl-sel native" style="width: 160px"><select name="driver" aria-label="Driver" onchange="this.form.submit()"><option value="">All drivers</option><?php foreach ($d['drivers'] as $dr): ?><option value="<?= (int) $dr->id ?>" <?= (int) $dr->id === $d['driver'] ? 'selected' : '' ?>><?= h(trim($dr->fname . ' ' . $dr->lname)) ?></option><?php endforeach; ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></label><?php endif; ?>
+            <?php if (!$client): ?><label class="sl-sel native" style="width: 160px"><select name="driver" aria-label="Rider" onchange="this.form.submit()"><option value="">All riders</option><?php foreach ($d['drivers'] as $dr): ?><option value="<?= (int) $dr->id ?>" <?= (int) $dr->id === $d['driver'] ? 'selected' : '' ?>><?= h(trim($dr->fname . ' ' . $dr->lname)) ?></option><?php endforeach; ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></label><?php endif; ?>
             <div class="sl-seg boxed"><?php foreach ([['all', 'All time'], ['30d', '30d'], ['7d', '7d'], ['today', 'Today']] as $p): ?><a class="<?= $p[0] === $d['period'] ? 'on' : '' ?>" href="<?= h(sl_url(['period' => $p[0], 'page' => null])) ?>"><?= h($p[1]) ?></a><?php endforeach; ?></div>
             <div class="sl-seg boxed"><?php foreach ($d['filters'] as $x): ?><a class="<?= $x['f'] === $d['filter'] ? 'on' : '' ?>" href="<?= h(sl_url(['filter' => $x['f'], 'page' => null])) ?>"><?= h($x['label']) ?></a><?php endforeach; ?></div>
             <span class="grow"></span>
@@ -32,7 +32,7 @@ $client = !empty($d['client']);
           <div class="row g12 wrap" style="padding: 10px 16px; background: var(--active)" id="as-bulk" hidden style="display:none">
             <strong><span data-as-count>0</span> selected</strong><span class="grow"></span>
             <?php if ($d['canStatus']): ?><button type="button" class="sl-btn ghost sm" data-sl-open="as-status"><i class="ic ic-sm i-refresh" aria-hidden="true"></i>Update status</button><?php endif; ?>
-            <?php if ($d['canAssign']): ?><button type="button" class="sl-btn ghost sm" data-sl-open="as-driver" data-as-bulk-driver><i class="ic ic-sm i-wheel" aria-hidden="true"></i>Assign driver</button><?php endif; ?>
+            <?php if ($d['canAssign']): ?><button type="button" class="sl-btn ghost sm" data-sl-open="as-driver" data-as-bulk-driver><i class="ic ic-sm i-wheel" aria-hidden="true"></i>Assign rider</button><?php endif; ?>
             <?php if ($d['canLabel']): ?><button type="button" class="sl-btn ghost sm" data-as-labels><i class="ic ic-sm i-print" aria-hidden="true"></i>Print labels</button><?php endif; ?>
             <button type="button" class="sl-btn ghost sm" style="border-color: transparent; background: transparent" data-as-clear>Clear</button>
           </div>
@@ -64,10 +64,10 @@ $client = !empty($d['client']);
           <?= sl_pager($d['page'], $d['per'], $d['count'], 'shipments') ?>
         </div>
 <?php if ($d['canAssign']): ?>
-<div class="sl-dialog" id="as-driver" hidden><form class="sl-modal" data-sl-form data-sl-reload action="ajax/sl/shipment_action_ajax.php" method="post" role="dialog" aria-label="Assign driver">
+<div class="sl-dialog" id="as-driver" hidden><form class="sl-modal" data-sl-form data-sl-reload action="ajax/sl/shipment_action_ajax.php" method="post" role="dialog" aria-label="Assign rider">
   <input type="hidden" name="op" value="driver"><input type="hidden" name="ids" id="as-driver-ids" value="">
-  <div class="row g10"><span class="sl-tile"><i class="ic i-wheel" aria-hidden="true"></i></span><div class="col grow"><b class="fw5">Assign a driver</b><span class="mut sm" id="as-driver-sub">The driver is notified and the shipment appears on their route.</span></div></div>
-  <label class="sl-field"><span class="sl-lab">Driver</span><span class="sl-sel native"><select name="driver_id" id="as-driver-sel" required><option value="">Choose a driver</option><?php foreach ($d['drivers'] as $dr): ?><option value="<?= (int) $dr->id ?>"><?= h(trim($dr->fname . ' ' . $dr->lname)) ?></option><?php endforeach; ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></span></label>
+  <div class="row g10"><span class="sl-tile"><i class="ic i-wheel" aria-hidden="true"></i></span><div class="col grow"><b class="fw5">Assign a rider</b><span class="mut sm" id="as-driver-sub">The driver is notified and the shipment appears on their route.</span></div></div>
+  <label class="sl-field"><span class="sl-lab">Rider</span><span class="sl-sel native"><select name="driver_id" id="as-driver-sel" required><option value="">Choose a rider</option><?php foreach ($d['drivers'] as $dr): ?><option value="<?= (int) $dr->id ?>"><?= h(trim($dr->fname . ' ' . $dr->lname)) ?></option><?php endforeach; ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></span></label>
   <div class="row g8"><button type="submit" class="sl-btn">Assign</button><button type="button" class="sl-btn ghost" data-sl-close>Cancel</button></div>
 </form></div>
 <?php endif; ?>

@@ -1,5 +1,5 @@
 <?php /** Render the permission-filtered navigation groups from sl_navResolve(). */
-$groupIcons = ['Operations'=>'gauge','Rider Management'=>'truck','Command Centers'=>'grid','Developer'=>'terminal','Support'=>'ticket','Freight'=>'plane','People'=>'users','Finance'=>'card','Insights'=>'chart','Settings'=>'cog','My shipping'=>'box','Account'=>'user'];
+$groupIcons = ['Operations'=>'gauge','RIDERS'=>'truck','Command Centers'=>'grid','Developer'=>'terminal','Support'=>'ticket','Freight'=>'plane','People'=>'users','Finance'=>'card','Insights'=>'chart','Settings'=>'cog','My shipping'=>'box','Account'=>'user'];
 ?>
 <?php foreach ($slNav as $g): ?>
   <details class="sl-nav-group"<?= $g['open'] ? ' open' : '' ?>>

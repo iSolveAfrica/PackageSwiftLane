@@ -23,6 +23,7 @@ try {
     $slRole = (string) sl_scalar('SELECT role_name FROM cdb_user_roles WHERE role_id = :r', [':r' => (int) $userData->userlevel], '');
 } catch (Throwable $e) {
 }
+if (sl_userIs('driver')) $slRole = 'Rider';
 $slOffice = $userData->name_off ?: '';
 $slSub = $slIsClient
     ? 'Customer' . ($userData->locker ? ' · Locker ' . $userData->locker : '')

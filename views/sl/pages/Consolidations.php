@@ -27,7 +27,7 @@ if (!isset($d)) { $d = []; }
                   <a role="menuitem" href="<?= h($r['href']) ?>">View</a>
                   <?php if ($a['edit']): ?><a role="menuitem" href="<?= h($r['href']) ?>&add=1">Add packages</a><a role="menuitem" href="<?= h($a['edit']) ?>">Edit</a><?php endif; ?>
                   <?php if ($a['pay']): ?><a role="menuitem" href="<?= h($a['pay']) ?>">Record payment</a><?php endif; ?>
-                  <?php if ($a['driver']): ?><button type="button" role="menuitem" data-sl-open="cn-driver" data-drv-id="<?= (int) $r['cid'] ?>" data-drv-type="<?= h($r['type']) ?>" data-drv-trk="<?= h($r['id']) ?>">Assign driver</button><?php endif; ?>
+                  <?php if ($a['driver']): ?><button type="button" role="menuitem" data-sl-open="cn-driver" data-drv-id="<?= (int) $r['cid'] ?>" data-drv-type="<?= h($r['type']) ?>" data-drv-trk="<?= h($r['id']) ?>">Assign rider</button><?php endif; ?>
                   <?php if ($a['print']): ?><a role="menuitem" target="_blank" href="<?= h($a['print']) ?>">Print</a><?php endif; ?>
                   <?php if ($a['label']): ?><a role="menuitem" target="_blank" href="<?= h($a['label']) ?>">Print label</a><?php endif; ?>
                   <?php if ($a['packing']): ?><a role="menuitem" target="_blank" href="<?= h($a['packing']) ?>">Packing list</a><a role="menuitem" href="<?= h($a['packingX']) ?>">Packing list (Excel)</a><?php endif; ?>
@@ -41,8 +41,8 @@ if (!isset($d)) { $d = []; }
           </table></div>
           <?= sl_pager($d['page'], $d['per'], $d['count'], 'consolidations') ?>
         </div>
-<div class="sl-dialog" id="cn-driver" hidden><form class="sl-modal" data-sl-form data-sl-reload action="ajax/sl/consolidation_ajax.php" method="post" role="dialog" aria-label="Assign driver"><input type="hidden" name="op" value="driver"><input type="hidden" name="id" id="cn-drv-id"><input type="hidden" name="type" id="cn-drv-type">
-  <b class="fw5">Assign a driver to <span class="mono" id="cn-drv-trk"></span></b>
-  <label class="sl-field"><span class="sl-lab">Driver</span><span class="sl-sel native"><select name="driver_id" required><option value="">Choose</option><?php foreach ($d['drivers'] as $dr): ?><option value="<?= (int) $dr->id ?>"><?= h($dr->fname . ' ' . $dr->lname) ?></option><?php endforeach; ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></span></label>
+<div class="sl-dialog" id="cn-driver" hidden><form class="sl-modal" data-sl-form data-sl-reload action="ajax/sl/consolidation_ajax.php" method="post" role="dialog" aria-label="Assign rider"><input type="hidden" name="op" value="driver"><input type="hidden" name="id" id="cn-drv-id"><input type="hidden" name="type" id="cn-drv-type">
+  <b class="fw5">Assign a rider to <span class="mono" id="cn-drv-trk"></span></b>
+  <label class="sl-field"><span class="sl-lab">Rider</span><span class="sl-sel native"><select name="driver_id" required><option value="">Choose</option><?php foreach ($d['drivers'] as $dr): ?><option value="<?= (int) $dr->id ?>"><?= h($dr->fname . ' ' . $dr->lname) ?></option><?php endforeach; ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></span></label>
   <div class="row g8"><button class="sl-btn" type="submit">Assign</button><button type="button" class="sl-btn ghost" data-sl-close>Cancel</button></div></form></div>
 <script>document.addEventListener('click', function (e) { var b = e.target.closest('[data-drv-id]'); if (b) { document.getElementById('cn-drv-id').value = b.getAttribute('data-drv-id'); document.getElementById('cn-drv-type').value = b.getAttribute('data-drv-type'); document.getElementById('cn-drv-trk').textContent = b.getAttribute('data-drv-trk'); } });</script>

@@ -33,7 +33,7 @@ $to = date('Y-m-d');
             <div class="sl-field" style="min-width:240px"><label class="sl-lab" for="rv-cust">Customer</label><label class="sl-sel native"><select id="rv-cust" name="customer_id"><option value="0">All customers</option><?php foreach ($d['customers'] as $c): ?><option value="<?= (int) $c->id ?>"><?= h($c->n) ?></option><?php endforeach; ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></label></div>
             <?php endif; ?>
             <?php if (in_array('employee_id', $p, true)): ?>
-            <div class="sl-field" style="min-width:220px"><label class="sl-lab" for="rv-emp"><?= $rep['drivers'] ? 'Driver' : 'Employee' ?></label><label class="sl-sel native"><select id="rv-emp" name="employee_id"><option value="0">All</option><?php foreach ($d['employees'] as $e): ?><option value="<?= (int) $e->id ?>"><?= h($e->n) ?></option><?php endforeach; ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></label></div>
+            <div class="sl-field" style="min-width:220px"><label class="sl-lab" for="rv-emp"><?= $rep['drivers'] ? 'Rider' : 'Employee' ?></label><label class="sl-sel native"><select id="rv-emp" name="employee_id"><option value="0">All</option><?php foreach ($d['employees'] as $e): ?><option value="<?= (int) $e->id ?>"><?= h($e->n) ?></option><?php endforeach; ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></label></div>
             <?php endif; ?>
             <button type="submit" class="sl-btn"><i class="ic ic-sm i-search" aria-hidden="true"></i>Run report</button>
           </form>

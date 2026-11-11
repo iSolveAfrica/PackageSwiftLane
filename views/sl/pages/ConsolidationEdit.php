@@ -23,7 +23,7 @@ $opt = function (array $rows, $cur, string $lab) { $o = ''; foreach ($rows as $r
       <div class="grid cols3">
         <label class="sl-field"><span class="sl-lab">Status</span><span class="sl-sel native"><select name="status_courier"><?= $opt($d['statuses'], $v['status_courier'], 'mod_style') ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></span></label>
         <label class="sl-field"><span class="sl-lab">Payment method</span><span class="sl-sel native"><select name="order_pay_mode"><?= $opt($d['payModes'], $v['order_pay_mode'], 'label') ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></span></label>
-        <label class="sl-field"><span class="sl-lab">Driver</span><span class="sl-sel native"><select name="driver_id"><option value="0">Unassigned</option><?= $opt($d['drivers'], $v['driver_id'], 'label') ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></span></label>
+        <label class="sl-field"><span class="sl-lab">Rider</span><span class="sl-sel native"><select name="driver_id"><option value="0">Unassigned</option><?= $opt($d['drivers'], $v['driver_id'], 'label') ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></span></label>
         <label class="sl-field"><span class="sl-lab">Seals</span><input class="sl-in mono" name="seals" value="<?= h($v['seals']) ?>"></label>
         <label class="sl-field"><span class="sl-lab">Estimated arrival</span><input class="sl-in" type="date" name="estimated_eta" value="<?= h(substr($v['estimated_eta'], 0, 10)) ?>"></label>
         <?php if ($d['hasAwb']): ?><label class="sl-field"><span class="sl-lab">Air waybill (AWB)</span><input class="sl-in mono" name="awb_no" value="<?= h($v['awb_no']) ?>"></label><?php endif; ?>

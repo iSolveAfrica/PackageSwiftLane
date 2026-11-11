@@ -21,7 +21,7 @@ $s = $d['sum'];
       <input type="hidden" name="handover_type" value="picked_up"></div>
     <div class="grid cols2">
       <label class="sl-field"><span class="sl-lab">Date</span><input class="sl-in" type="date" name="<?= h($d['dateField']) ?>" value="<?= h($d['today']) ?>" required></label>
-      <label class="sl-field"><span class="sl-lab">Handled by (driver / staff)</span><span class="sl-sel native"><select name="driver_id" required><option value="">Choose</option><?php foreach ($d['drivers'] as $dr): ?><option value="<?= (int) $dr['id'] ?>" <?= $dr['id'] === $d['driver'] ? 'selected' : '' ?>><?= h($dr['label']) ?></option><?php endforeach; ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></span></label>
+      <label class="sl-field"><span class="sl-lab">Handled by (rider / staff)</span><span class="sl-sel native"><select name="driver_id" required><option value="">Choose</option><?php foreach ($d['drivers'] as $dr): ?><option value="<?= (int) $dr['id'] ?>" <?= $dr['id'] === $d['driver'] ? 'selected' : '' ?>><?= h($dr['label']) ?></option><?php endforeach; ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></span></label>
       <label class="sl-field" style="grid-column:1/-1"><span class="sl-lab">Received by</span><input class="sl-in" name="person_receives" placeholder="Full name of the person who received it" required></label>
     </div>
     <div class="grid cols2">
