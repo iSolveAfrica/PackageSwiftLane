@@ -63,7 +63,7 @@
         list.innerHTML = '';
         (j.customers || []).forEach(function (c) {
           var b = document.createElement('button'); b.type = 'button'; b.className = 'cs-pick';
-          b.innerHTML = '<span class="sl-av sm"></span><span class="col"><b class="fw5 sm"></b><span class="mut" style="font-size:12px"></span></span>';
+          b.innerHTML = '<span class="sl-av sm"></span><span class="col"><b class="fw5 sm"></b><span class="mut" style="font-size:14px"></span></span>';
           b.querySelector('.sl-av').textContent = (c.name || '?').split(' ').map(function (p) { return p[0]; }).join('').slice(0, 2).toUpperCase();
           b.querySelector('b').textContent = c.name; b.querySelector('.mut').textContent = (c.email || '') + (c.locker ? ' · ' + c.locker : '');
           b.addEventListener('click', function () { document.querySelector(q.getAttribute('data-cs-target')).value = c.id; q.value = c.name; list.innerHTML = ''; });

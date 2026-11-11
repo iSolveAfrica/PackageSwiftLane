@@ -15,7 +15,7 @@ body{margin:0}body{margin:0}
 .fs .fs-dots{display:flex;gap:6px}.fs .fs-dots i{height:4px;width:36px;border-radius:9px;background:rgba(255,255,255,.3);position:relative;overflow:hidden}
 .fs .fs-dots i::after{content:"";position:absolute;inset:0;background:#fff;transform:scaleX(0);transform-origin:left;animation:fsbar 18s linear infinite}
 .fs .fs-dots i:nth-child(2)::after{animation-delay:6s}.fs .fs-dots i:nth-child(3)::after{animation-delay:12s}
-.fs .fs-top{position:absolute;z-index:2;top:32px;left:48px;right:48px;display:flex;justify-content:space-between;color:#fff;font-size:13px}
+.fs .fs-top{position:absolute;z-index:2;top:32px;left:48px;right:48px;display:flex;justify-content:space-between;color:#fff;font-size:15px}
 @keyframes fsfade{0%{opacity:0;transform:scale(1.08)}6%{opacity:1}33%{opacity:1}39%{opacity:0;transform:scale(1)}100%{opacity:0}}
 @keyframes fscap{0%{opacity:0;transform:translateY(10px)}6%{opacity:1;transform:none}31%{opacity:1}36%{opacity:0}100%{opacity:0}}
 @keyframes fsbar{0%{transform:scaleX(0)}33%{transform:scaleX(1)}33.1%{transform:scaleX(0)}100%{transform:scaleX(0)}}

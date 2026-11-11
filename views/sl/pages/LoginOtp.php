@@ -39,7 +39,7 @@ $signup = $flow === 'signup';
       </form>
       <div class="sl-banner info"><i class="ic i-info" aria-hidden="true"></i><span>After 5 wrong codes the code is locked and you must request a new one. At most 5 codes every 30 minutes.</span></div>
       <?php if ($age): ?>
-      <a class="row g10 sl-card" href="<?= sl_route('PasswordReset') ?>" style="padding:12px 14px;color:inherit"><span class="sl-tile"><i class="ic i-lock" aria-hidden="true"></i></span><span class="col grow"><b class="fw5 sm"><?= $age['expired'] ? 'Your password has expired' : 'Your password expires in ' . max(0, (int) $age['left']) . ' days' ?></b><span class="mut" style="font-size:12px">Passwords reset every <?= (int) $age['period'] ?> days · change it after you log in</span></span><i class="ic ic-sm i-right" aria-hidden="true"></i></a>
+      <a class="row g10 sl-card" href="<?= sl_route('PasswordReset') ?>" style="padding:12px 14px;color:inherit"><span class="sl-tile"><i class="ic i-lock" aria-hidden="true"></i></span><span class="col grow"><b class="fw5 sm"><?= $age['expired'] ? 'Your password has expired' : 'Your password expires in ' . max(0, (int) $age['left']) . ' days' ?></b><span class="mut" style="font-size:14px">Passwords reset every <?= (int) $age['period'] ?> days · change it after you log in</span></span><i class="ic ic-sm i-right" aria-hidden="true"></i></a>
       <?php endif; ?>
     </div>
   </div>

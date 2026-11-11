@@ -1,7 +1,7 @@
 /* Runtime response formatting; the approved shell and page styles stay intact. */
 .ai-m:not(.me) .ai-b{min-width:0;max-width:calc(100% - 40px);white-space:normal}
 .ai-response{min-width:0;overflow-wrap:anywhere}
-.ai-response-content{font-size:14px;line-height:1.7}
+.ai-response-content{font-size:16px;line-height:1.7}
 .ai-response-content>:first-child{margin-top:0}
 .ai-response-content>:last-child{margin-bottom:0}
 .ai-response-content p{margin:0 0 14px}
@@ -16,15 +16,15 @@
 .ai-response-content :not(pre)>code{font-size:.9em;background:var(--field);padding:2px 5px;border-radius:4px}
 .ai-response-content hr{border:0;border-top:1px solid var(--line);margin:20px 0}
 .ai-response-table{max-width:100%;overflow:auto;border:1px solid var(--line-2);border-radius:10px;margin:14px 0 18px}
-.ai-response-table table{border-collapse:collapse;width:100%;min-width:440px;font-size:13px;line-height:1.55}
+.ai-response-table table{border-collapse:collapse;width:100%;min-width:440px;font-size:15px;line-height:1.55}
 .ai-response-table th,.ai-response-table td{text-align:start;padding:11px 12px;vertical-align:top;border-bottom:1px solid var(--line);min-width:100px}
-.ai-response-table th{background:var(--field);font-size:12px;font-weight:600;white-space:nowrap}
+.ai-response-table th{background:var(--field);font-size:14px;font-weight:600;white-space:nowrap}
 .ai-response-table tr:last-child td{border-bottom:0}.ai-response-table tbody tr:nth-child(even){background:var(--field)}
 .ai-response-actions{display:flex;flex-wrap:wrap;gap:8px;border-top:1px solid var(--line-2);margin-top:18px;padding-top:12px}
-.ai-response-actions .sl-btn{height:auto;min-height:32px;padding:6px 10px;font-size:12px}
+.ai-response-actions .sl-btn{height:auto;min-height:32px;padding:6px 10px;font-size:14px}
 .ai-response-plain{white-space:pre-wrap}
 .ai-response-table:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
-@media(max-width:640px){.ai-response-content{font-size:14px}.ai-m:not(.me) .ai-b{padding:12px;max-width:calc(100% - 40px)}.ai-response-actions .sl-btn{min-height:40px}}
+@media(max-width:640px){.ai-response-content{font-size:16px}.ai-m:not(.me) .ai-b{padding:12px;max-width:calc(100% - 40px)}.ai-response-actions .sl-btn{min-height:40px}}
 @media print{.ai-response-actions,.ai-tool{display:none}}
 
-.ai-response-sources{font-size:12px;color:var(--muted);margin-bottom:12px}.ai-response-sources summary{cursor:pointer;padding:4px 0}.ai-response-sources>div{padding:5px 8px;background:var(--field);border-radius:6px;margin-top:4px;overflow-wrap:anywhere}
+.ai-response-sources{font-size:14px;color:var(--muted);margin-bottom:12px}.ai-response-sources summary{cursor:pointer;padding:4px 0}.ai-response-sources>div{padding:5px 8px;background:var(--field);border-radius:6px;margin-top:4px;overflow-wrap:anywhere}

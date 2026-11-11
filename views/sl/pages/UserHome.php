@@ -89,7 +89,7 @@ $seg = [(int) sl_get($d, 'atWh'), (int) sl_get($d, 'ready'), (int) sl_get($d, 'i
                 <div class="ur-stat"><span class="up">Balance owed</span><b style="color:var(--red-ink)"><?= sl_v($d, 'dueMoney') ?></b></div>
               </section><?php endif; ?>
               <section class="sl-card col"><div class="up row g6"><i class="ic ic-sm i-grid" aria-hidden="true"></i>At a glance</div>
-                <div class="ur-stat"><span class="up">Total weight shipped</span><b><?= sl_v($d, 'totalKg') ?> <span class="mut" style="font-size:13px"><?= h($GLOBALS['core']->weight_p ?? 'kg') ?></span></b></div>
+                <div class="ur-stat"><span class="up">Total weight shipped</span><b><?= sl_v($d, 'totalKg') ?> <span class="mut" style="font-size:15px"><?= h($GLOBALS['core']->weight_p ?? 'kg') ?></span></b></div>
                 <div class="ur-stat"><span class="up">My recipients</span><b><?= (int) sl_get($d, 'recips') ?></b></div>
                 <div class="ur-stat"><span class="up">Profile complete</span><b><?= (int) sl_get($d, 'complete') ?>%</b></div>
               </section>

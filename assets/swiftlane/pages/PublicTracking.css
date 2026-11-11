@@ -2,7 +2,7 @@
 .pt-ic{width:34px;height:34px;border-radius:50%;background:var(--green);color:#fff;display:inline-grid;place-items:center;flex:none;box-shadow:0 0 0 3px var(--green-bg)}
 .pt-ic.w{background:#fff;color:var(--green-ink);border:1.5px solid var(--green);box-shadow:none}
 .pt-ic.lg{width:44px;height:44px}
-.pt-steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;font-size:12.5px;color:var(--muted);text-align:center}
+.pt-steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;font-size:14.5px;color:var(--muted);text-align:center}
 .pt-steps>div{display:flex;flex-direction:column;align-items:center;gap:8px}
 .pt-steps .now{color:var(--ink);font-weight:500}
 .pt-kv{display:flex;align-items:center;gap:12px}
@@ -25,7 +25,7 @@
 .pt-ev{animation:ptup .5s both}
 .pt-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(180px,100%),1fr));gap:0;border:1px solid var(--line);border-radius:14px;overflow:hidden}
 .pt-grid>div{padding:12px 14px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:2px;background:var(--card)}
-.pt-grid small{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.pt-grid small{font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
 .pt-item{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line);animation:ptup .5s both}
 .pt-item:first-child{border-top:0}
 .pt-thumb{width:44px;height:44px;border-radius:12px;background:var(--active);display:grid;place-items:center}

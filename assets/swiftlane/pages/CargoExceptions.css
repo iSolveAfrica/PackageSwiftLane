@@ -1,7 +1,7 @@
 /* Page styles of CargoExceptions.dc.html (from the approved design) */
 .fr-k{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
-.fr-k b{font:600 24px var(--font);font-variant-numeric:tabular-nums;letter-spacing:-.01em}.fr-k small{color:var(--muted);font-size:12.5px}
-.fr-ok{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;background:var(--green-bg);color:var(--green-ink);font-size:13.5px}
+.fr-k b{font:600 24px var(--font);font-variant-numeric:tabular-nums;letter-spacing:-.01em}.fr-k small{color:var(--muted);font-size:14.5px}
+.fr-ok{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;background:var(--green-bg);color:var(--green-ink);font-size:15.5px}
 .fr-bar{height:8px;border-radius:9px;background:var(--active);overflow:hidden}.fr-bar i{display:block;height:100%;background:#8E8A82}.fr-bar i.hi{background:#E2632A}
 .fr-tabs{display:flex;gap:6px;flex-wrap:wrap}
 .fr-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--card);cursor:pointer;width:100%;text-align:left;font:inherit;color:var(--ink)}
@@ -14,5 +14,5 @@
 .ce-c{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:10px;position:relative;padding-bottom:14px}
 .ce-c::before{content:"";position:absolute;left:14px;top:30px;bottom:0;border-left:2px solid var(--line-2)}.ce-c:last-child::before{display:none}
 .ce-c .me-pic{width:30px;height:30px}
-.ce-bulk{display:grid;grid-template-columns:28px 110px minmax(0,1fr) 130px;gap:10px;align-items:center;padding:8px 10px;border-bottom:1px solid var(--line);font-size:13px}
+.ce-bulk{display:grid;grid-template-columns:28px 110px minmax(0,1fr) 130px;gap:10px;align-items:center;padding:8px 10px;border-bottom:1px solid var(--line);font-size:15px}
 @media (max-width:900px){.ce-l{grid-template-columns:28px 1fr}.ce-l>span:nth-child(n+3){display:none}}

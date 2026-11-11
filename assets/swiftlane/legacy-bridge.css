@@ -2,27 +2,27 @@
    (Bootstrap 4 + swiftlane-ds.css) are wrapped in the Swift Lane shell. These rules
    neutralise the old template's shell layout inside the new one and must load last. */
 .sl-app{font-family:var(--font);color:var(--ink)}
-.sl-legacy{font-size:14px}
+.sl-legacy{font-size:16px}
 .sl-legacy #main-wrapper,.sl-legacy .page-wrapper,.sl-legacy .page-wrapper>.container-fluid{margin:0!important;padding:0!important;min-height:0!important;width:auto!important;max-width:none!important;position:static!important;background:transparent!important;box-shadow:none!important;transform:none!important}
 #main-wrapper{padding:0!important;margin:0!important;width:auto!important;overflow:visible!important}
 body.sl-body-page{background:var(--bg)!important;overflow-x:hidden}
 .preloader,.sl-legacy .preloader,.sl-legacy .topbar,.sl-legacy .left-sidebar,.sl-legacy footer.footer,.sl-legacy .swl-skip-link{display:none!important}
 .sl-legacy .page-breadcrumb{position:static!important;margin:0 0 16px!important;padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important;height:auto!important}
 .sl-legacy .page-breadcrumb .page-title,.sl-legacy .page-breadcrumb h1{font-size:18px;font-weight:500;letter-spacing:-.005em;color:var(--ink);margin:0;font-family:var(--font)}
-.sl-legacy .page-breadcrumb .page-title small{font-size:13.5px;color:var(--muted);margin-left:8px;font-weight:400}
+.sl-legacy .page-breadcrumb .page-title small{font-size:15.5px;color:var(--muted);margin-left:8px;font-weight:400}
 .sl-legacy .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:none;margin-bottom:16px;color:var(--ink)}
 .sl-legacy .card-body{padding:18px 20px}
 .sl-legacy .card-title,.sl-legacy h3,.sl-legacy h4,.sl-legacy h5{color:var(--ink);font-family:var(--font)}
-.sl-legacy .table{color:var(--ink);font-size:13.5px}
-.sl-legacy .table thead th{font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-weight:500;border-bottom:1px solid var(--line);border-top:0;background:var(--card)}
+.sl-legacy .table{color:var(--ink);font-size:15.5px}
+.sl-legacy .table thead th{font-size:13.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-weight:500;border-bottom:1px solid var(--line);border-top:0;background:var(--card)}
 .sl-legacy .table td,.sl-legacy .table th{border-color:var(--line);vertical-align:middle}
 .sl-legacy .table-hover tbody tr:hover,.sl-legacy .table tbody tr:hover td{background:var(--hover)}
 .sl-legacy .form-control,.sl-legacy .custom-select,.sl-legacy .select2-container--default .select2-selection--single{height:42px;border:1px solid var(--line-2);border-radius:var(--r-sm);background:var(--field);color:var(--ink);font-family:var(--font);box-shadow:none}
 .sl-legacy textarea.form-control{height:auto}
 .sl-legacy .form-control:focus{border-color:var(--ink);box-shadow:none}
-.sl-legacy label{color:var(--ink-2);font-size:12.5px;font-weight:500}
-.sl-legacy .btn{height:40px;padding:0 16px;border-radius:var(--r-sm);font:500 13.5px var(--font);display:inline-flex;align-items:center;gap:6px;box-shadow:none;line-height:1}
-.sl-legacy .btn-sm{height:32px;padding:0 10px;font-size:12.5px}
+.sl-legacy label{color:var(--ink-2);font-size:14.5px;font-weight:500}
+.sl-legacy .btn{height:40px;padding:0 16px;border-radius:var(--r-sm);font:500 15.5px var(--font);display:inline-flex;align-items:center;gap:6px;box-shadow:none;line-height:1}
+.sl-legacy .btn-sm{height:32px;padding:0 10px;font-size:14.5px}
 .sl-legacy .btn-primary,.sl-legacy .btn-danger,.sl-legacy .btn-outline-danger,.sl-legacy .btn-warning,.sl-legacy .btn-success,.sl-legacy .btn-dark{background:var(--ink);border-color:var(--ink);color:var(--inverse)}
 .sl-legacy .btn-secondary,.sl-legacy .btn-info,.sl-legacy .btn-light,.sl-legacy [class*="btn-outline"]{background:var(--field);border:1px solid var(--line-2);color:var(--ink)}
 .sl-legacy .btn:hover{opacity:.9}

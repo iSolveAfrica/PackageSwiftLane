@@ -11,7 +11,7 @@ if (!isset($d)) { $d = []; }
   <header class="m-bar">
     <button class="sl-ib" aria-label="Open menu"><i class="ic i-sidebar" aria-hidden="true"></i></button>
     <a class="sw" href="<?= sl_route('Main') ?>"><small>SL</small>Accra Hub<i class="ic ic-sm i-down" aria-hidden="true"></i></a>
-    <a class="fx-chip" style="height:30px;padding:0 9px;font-size:11px;gap:4px" href="<?= sl_route('SettingsHub') ?>" title="Exchange rate · set in Settings › General"><span class="mono">USD 1 = GHS 12.40</span></a>
+    <a class="fx-chip" style="height:30px;padding:0 9px;font-size:13px;gap:4px" href="<?= sl_route('SettingsHub') ?>" title="Exchange rate · set in Settings › General"><span class="mono">USD 1 = GHS 12.40</span></a>
     <span class="grow"></span>
     <a class="sl-ib" aria-label="Notifications" href="<?= sl_route('Notifications') ?>"><i class="ic i-bell" aria-hidden="true"></i></a>
     <span class="sl-av sm">H</span>

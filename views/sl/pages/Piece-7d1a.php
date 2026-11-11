@@ -54,7 +54,7 @@ if (!isset($d)) { $d = []; }
     <?php foreach ((array) sl_get($d, 'groups', []) as $__i => $g): ?>
       <section class="sx-tile">
         <div class="sx-th"><span class="tl"><i class="ic <?= sl_v($g, 'icon') ?>" aria-hidden="true"></i></span><div><b><?= sl_v($g, 'title') ?></b><small><?= sl_v($g, 'desc') ?></small></div></div>
-        <div class="sx-links"><?php foreach ((array) sl_get($g, 'top', []) as $__i => $it): ?><a href="<?= sl_v($it, 'href') ?>"><i class="ic ic-sm <?= sl_v($it, 'icon') ?>" aria-hidden="true"></i><span class="col" style="min-width:0"><span><?= sl_v($it, 'label') ?></span><small class="mut" style="font-size:12px"><?= sl_v($it, 'sub') ?></small></span><span class="v"><?= sl_v($it, 'val') ?></span></a><?php endforeach; ?></div>
+        <div class="sx-links"><?php foreach ((array) sl_get($g, 'top', []) as $__i => $it): ?><a href="<?= sl_v($it, 'href') ?>"><i class="ic ic-sm <?= sl_v($it, 'icon') ?>" aria-hidden="true"></i><span class="col" style="min-width:0"><span><?= sl_v($it, 'label') ?></span><small class="mut" style="font-size:14px"><?= sl_v($it, 'sub') ?></small></span><span class="v"><?= sl_v($it, 'val') ?></span></a><?php endforeach; ?></div>
         <div class="sx-ft"><span><?= sl_v($g, 'count') ?> · <?= sl_v($g, 'more') ?></span><a href="<?= sl_v($g, 'anchor') ?>">Open<i class="ic ic-sm i-right" aria-hidden="true"></i></a></div>
       </section>
     <?php endforeach; ?>

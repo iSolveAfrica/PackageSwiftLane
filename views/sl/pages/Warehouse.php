@@ -22,7 +22,7 @@ if (!isset($d)) { $d = []; }
         <?php endif; ?>
         <div class="split">
           <section class="a sl-card">
-            <div class="sl-ch"><h2 class="sl-ct">Locker bays</h2><div class="sl-mv" style="margin: 0; font-size: 14px"><?= (int) $d['full'] ?> / <?= (int) $d['bayN'] ?> <i>full (<?= (int) $d['fullPct'] ?>%)</i></div></div>
+            <div class="sl-ch"><h2 class="sl-ct">Locker bays</h2><div class="sl-mv" style="margin: 0; font-size: 16px"><?= (int) $d['full'] ?> / <?= (int) $d['bayN'] ?> <i>full (<?= (int) $d['fullPct'] ?>%)</i></div></div>
             <div class="sl-ticks <?= $d['fullPct'] >= 90 ? 'r' : ($d['fullPct'] >= 70 ? 'y' : '') ?>" style="margin-bottom: 18px"><i style="width: <?= (int) $d['fullPct'] ?>%"></i></div>
             <div class="sl-heat" style="grid-template-rows: repeat(<?= (int) ceil($d['bayN'] / 10) ?>, 40px); grid-template-columns: repeat(10, minmax(0, 1fr)); grid-auto-flow: row" role="img" aria-label="Locker bay map, <?= (int) $d['full'] ?> of <?= (int) $d['bayN'] ?> bays occupied">
               <?php foreach ($d['bays'] as $b): ?><b class="<?= h($b['c']) ?>" title="<?= h($b['t']) ?>" style="width: 30px; height: 30px; border-radius: 8px; opacity: 1"></b><?php endforeach; ?>

@@ -191,7 +191,7 @@
       return '<button type="button" class="sl-card col g4" data-ticket="' + t.id + '" style="text-align:left;padding:12px;cursor:pointer;color:inherit;font:inherit">'
         + '<span class="row between g8"><b class="mono sm">' + esc(t.ref) + '</b>' + pill(t.status_key, t.status) + '</span>'
         + '<span class="sm fw5">' + esc(t.subject) + '</span>'
-        + '<span class="mut" style="font-size:12px">' + (t.waiting_on_you ? '<b>Waiting for your reply</b> · ' : '') + 'Updated ' + esc(when(t.updated_at)) + (t.can_rate ? ' · Please rate our help' : '') + '</span></button>';
+        + '<span class="mut" style="font-size:14px">' + (t.waiting_on_you ? '<b>Waiting for your reply</b> · ' : '') + 'Updated ' + esc(when(t.updated_at)) + (t.can_rate ? ' · Please rate our help' : '') + '</span></button>';
     }).join('');
   }
   function renderChats(list) {
@@ -199,7 +199,7 @@
     if (!list.length) { $('hp-chats').innerHTML = '<div class="sl-empty mut sm">No chats yet.</div>'; return; }
     $('hp-chats').innerHTML = list.map(function (c) {
       return '<div class="row between g8" style="padding:8px 0;border-top:1px solid var(--line)"><span class="col"><button type="button" class="fw5 sm" data-conv="' + c.id + '" style="background:none;border:0;padding:0;text-align:left;cursor:pointer;color:inherit;font:inherit">' + esc(c.subject) + '</button>'
-        + '<span class="mut" style="font-size:12px">' + esc(when(c.updated_at)) + (c.ticket_ref ? ' · ' + esc(c.ticket_ref) : '') + '</span></span>' + (c.unread ? '<span class="sl-pill transit">' + c.unread + ' new</span>' : '') + '</div>';
+        + '<span class="mut" style="font-size:14px">' + esc(when(c.updated_at)) + (c.ticket_ref ? ' · ' + esc(c.ticket_ref) : '') + '</span></span>' + (c.unread ? '<span class="sl-pill transit">' + c.unread + ' new</span>' : '') + '</div>';
     }).join('');
   }
   function refresh(after) {
@@ -224,7 +224,7 @@
       if (!r.articles.length) { $('hp-help').innerHTML = '<div class="sl-empty mut sm">' + (q ? 'Nothing matches “' + esc(q) + '”. Ask in the chat instead.' : 'No help articles have been published yet.') + '</div>'; return; }
       $('hp-help').innerHTML = r.articles.map(function (a) {
         return '<details class="sl-card" style="padding:12px"><summary class="fw5 sm" style="cursor:pointer">' + esc(a.title) + '</summary><div class="sm" style="margin-top:8px;line-height:1.55">' + md(a.body) + '</div>'
-          + '<div class="mut row g6 wrap" style="font-size:12px;margin-top:6px" data-vote-box>Updated ' + esc(when(a.updated_at)) + ' · Was this helpful? <button type="button" class="sl-btn ghost sm" data-vote="1" data-id="' + a.id + '">Yes</button><button type="button" class="sl-btn ghost sm" data-vote="0" data-id="' + a.id + '">No</button></div></details>';
+          + '<div class="mut row g6 wrap" style="font-size:14px;margin-top:6px" data-vote-box>Updated ' + esc(when(a.updated_at)) + ' · Was this helpful? <button type="button" class="sl-btn ghost sm" data-vote="1" data-id="' + a.id + '">Yes</button><button type="button" class="sl-btn ghost sm" data-vote="0" data-id="' + a.id + '">No</button></div></details>';
       }).join('');
     }).catch(function () {});
   }

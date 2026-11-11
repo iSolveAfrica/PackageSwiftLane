@@ -43,7 +43,7 @@ $can = $d['can'];
                   <td><?= (int) $r['items'] ?><span class="sub" style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block"><?= h($r['what']) ?></span></td>
                   <td class="num"><?= h($r['w']) ?></td><td class="num"><?= h($r['amt']) ?></td>
                   <td><span class="sl-pill <?= h($r['payCls']) ?>"><?= h($r['pay']) ?></span></td>
-                  <td><span class="col"><span class="sl-pill <?= h($r['stCls']) ?>"><?= h($r['st']) ?></span><?php if ($r['inCon']): ?><span class="mut" style="font-size:11.5px">in consolidation</span><?php elseif ($r['driver'] !== '—'): ?><span class="mut" style="font-size:11.5px">Driver <?= h($r['driver']) ?></span><?php endif; ?></span></td>
+                  <td><span class="col"><span class="sl-pill <?= h($r['stCls']) ?>"><?= h($r['st']) ?></span><?php if ($r['inCon']): ?><span class="mut" style="font-size:13.5px">in consolidation</span><?php elseif ($r['driver'] !== '—'): ?><span class="mut" style="font-size:13.5px">Driver <?= h($r['driver']) ?></span><?php endif; ?></span></td>
                   <td><details class="sl-menu" data-sl-pop><summary class="sl-ib sm" aria-label="Actions for <?= h($r['trk']) ?>"><i class="ic i-more" aria-hidden="true"></i></summary><div class="pop" role="menu">
                     <?php if ($can['view'] || $d['isClient']): ?><a role="menuitem" href="<?= sl_route('PackageDetail', ['id' => $r['id']]) ?>">View details</a><?php endif; ?>
                     <?php if ($r['canCode']): ?><button type="button" role="menuitem" data-sl-open="sp-code" data-code-id="<?= (int) $r['id'] ?>" data-code-trk="<?= h($r['trk']) ?>">Pickup code</button><?php endif; ?>

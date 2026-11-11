@@ -61,7 +61,7 @@ $ajax = 'ajax/sl/notification_rules_ajax.php';
       <div class="nc-prev">
         <div class="up" style="margin-bottom:10px">Preview · <?= h($d['tabLabel']) ?></div>
         <?php if ($d['isEmail']): ?>
-          <div class="nc-mail"><div class="nc-mh"><span class="sl-av sm dark"><?= h(sl_initials($core->site_name ?? 'SL')) ?></span><div class="grow"><b class="sm"><?= h($core->site_name ?? 'Swift Lane') ?></b><div class="mut" style="font-size:12px">to <?= h($d['sample']['email']) ?></div></div></div><b style="font-size:15px" data-nc-prev-subject><?= h($d['subjectPrev']) ?></b><p style="white-space:pre-line;font-size:14px;line-height:1.55" data-nc-prev-body><?= h($d['bodyPrev']) ?></p><span class="sl-btn sm" style="align-self:flex-start">Track parcel</span></div>
+          <div class="nc-mail"><div class="nc-mh"><span class="sl-av sm dark"><?= h(sl_initials($core->site_name ?? 'SL')) ?></span><div class="grow"><b class="sm"><?= h($core->site_name ?? 'Swift Lane') ?></b><div class="mut" style="font-size:14px">to <?= h($d['sample']['email']) ?></div></div></div><b style="font-size:15px" data-nc-prev-subject><?= h($d['subjectPrev']) ?></b><p style="white-space:pre-line;font-size:16px;line-height:1.55" data-nc-prev-body><?= h($d['bodyPrev']) ?></p><span class="sl-btn sm" style="align-self:flex-start">Track parcel</span></div>
         <?php else: ?>
           <div class="nc-phone"><div class="nc-ph"><span class="sl-av sm dark"><?= h(sl_initials($core->site_name ?? 'SL')) ?></span><b class="sm"><?= h($core->site_name ?? 'Swift Lane') ?></b></div><div class="nc-bubble <?= h($d['bubbleCls']) ?>" style="white-space:pre-line"><span data-nc-prev-body><?= h($d['bodyPrev']) ?></span><small><?= date('H:i') ?></small></div></div>
         <?php endif; ?>

@@ -10,7 +10,7 @@
 .dt-id b{font:600 19px var(--font);letter-spacing:-.01em}
 .dt-eta{display:flex;justify-content:space-between;align-items:flex-end;padding-top:14px;border-top:1px solid var(--line)}
 .dt-eta big{font:600 38px/1 var(--font);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
-.dt-eta big small{font-size:14px;font-weight:400;color:var(--muted);margin-left:6px}
+.dt-eta big small{font-size:16px;font-weight:400;color:var(--muted);margin-left:6px}
 .dt-prog{display:flex;align-items:center;gap:0;padding:14px 0 6px}
 .dt-prog .n{width:22px;height:22px;border-radius:50%;background:#E2632A;display:grid;place-items:center;flex:none;position:relative;z-index:1}
 .dt-prog .n::after{content:"";width:8px;height:8px;border-radius:50%;background:#fff}
@@ -31,8 +31,8 @@
 .dt-prog.done .tk{border-color:var(--green);color:var(--green-ink);box-shadow:none}
 .dt-prog.done .ln>i{background:var(--green)}
 @media (prefers-reduced-motion:reduce){.dt-prog .ln>i,.dt-prog .tk,.dt-prog .tk .ic,.dt-prog .tk::before{animation:none!important;transition:none!important}}
-.dt-ends{display:flex;justify-content:space-between;gap:12px;font-size:13.5px}
-.dt-ends small{display:block;color:var(--muted);font-size:12px}
+.dt-ends{display:flex;justify-content:space-between;gap:12px;font-size:15.5px}
+.dt-ends small{display:block;color:var(--muted);font-size:14px}
 .dt-who{display:flex;align-items:center;gap:12px;padding-top:12px;border-top:1px solid var(--line)}
 .dt-act{width:44px;height:44px;border-radius:50%;border:1px solid var(--line-2);background:var(--card);display:grid;place-items:center;color:var(--ink)}
 .dt-act.pri{background:var(--ink);color:var(--inverse);border-color:var(--ink)}
@@ -41,9 +41,9 @@
 .dt-ctl{position:absolute;right:14px;display:flex;flex-direction:column;border-radius:12px;background:var(--card);border:1px solid var(--line);overflow:hidden}
 .dt-ctl button,.dt-ctl a{width:44px;height:44px;border:0;background:none;display:grid;place-items:center;color:var(--ink);cursor:pointer}
 .dt-ctl button+button{border-top:1px solid var(--line)}
-.dt-live{position:absolute;left:14px;top:14px;display:flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-size:12.5px}
+.dt-live{position:absolute;left:14px;top:14px;display:flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-size:14.5px}
 .dt-live i{width:8px;height:8px;border-radius:50%;background:var(--green);animation:dtP 1.4s infinite}@keyframes dtP{50%{opacity:.3}}
-.dt-chip{position:absolute;left:14px;bottom:14px;display:flex;gap:16px;padding:10px 14px;border-radius:14px;background:var(--card);border:1px solid var(--line);font-size:12.5px}
+.dt-chip{position:absolute;left:14px;bottom:14px;display:flex;gap:16px;padding:10px 14px;border-radius:14px;background:var(--card);border:1px solid var(--line);font-size:14.5px}
 .dt-chip b{display:block;font:600 15px var(--font);font-variant-numeric:tabular-nums}
 .dt-g{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 @media (max-width:900px){.dt-g{grid-template-columns:1fr}}
@@ -51,8 +51,8 @@
 .dt-kv div{padding:10px 14px 10px 0;border-left:1px solid var(--line);padding-left:14px}
 .dt-kv div:nth-child(3n+1){border-left:0;padding-left:0}
 .dt-kv div:nth-child(n+4){border-top:1px solid var(--line)}
-.dt-kv small{display:block;color:var(--muted);font-size:12px}
-.dt-kv b{font:500 14px var(--font)}
+.dt-kv small{display:block;color:var(--muted);font-size:14px}
+.dt-kv b{font:500 16px var(--font)}
 .dt-tl{display:flex;flex-direction:column}
 .dt-st{display:grid;grid-template-columns:34px 110px 1fr;gap:12px;position:relative;padding-bottom:20px}
 .dt-st:last-child{padding-bottom:0}
@@ -66,5 +66,5 @@
 .dt-st.now .d::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:2px solid #E2632A;animation:dtPing 1.8s ease-out infinite}
 .dt-st.last.done .d{background:var(--green)}
 @media (prefers-reduced-motion:reduce){.dt-st.now .d::after{animation:none}}
-.dt-st small{display:block;color:var(--muted);font-size:12.5px}
+.dt-st small{display:block;color:var(--muted);font-size:14.5px}
 .dt-tabs{display:flex;gap:6px;flex-wrap:wrap}

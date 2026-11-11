@@ -1,28 +1,28 @@
 /* Page styles of CsTicket.dc.html (from the approved design) */
 .tk-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:var(--card)}
-.tk-sel{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 10px;border-radius:9px;border:1px solid var(--line-2);background:var(--field);font-size:13px;color:var(--ink)}
+.tk-sel{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 10px;border-radius:9px;border:1px solid var(--line-2);background:var(--field);font-size:15px;color:var(--ink)}
 .tk-sel b{font-weight:500}
 .tk-sla{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .tk-sla>div{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--field);display:flex;flex-direction:column;gap:6px}
 .tk-tabs{display:flex;gap:18px;border-bottom:1px solid var(--line)}
-.tk-tabs a{padding:0 0 10px;font-size:13.5px;font-weight:500;color:var(--muted);border-bottom:2px solid transparent}
+.tk-tabs a{padding:0 0 10px;font-size:15.5px;font-weight:500;color:var(--muted);border-bottom:2px solid transparent}
 .tk-tabs a.on{color:var(--ink);border-bottom-color:var(--ink)}
-.tk-coll{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:var(--amber-bg);color:var(--amber-ink);font-size:13px}
-.tk-kv{display:grid;grid-template-columns:110px minmax(0,1fr);gap:8px 10px;font-size:13px;align-items:center}
+.tk-coll{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:var(--amber-bg);color:var(--amber-ink);font-size:15px}
+.tk-kv{display:grid;grid-template-columns:110px minmax(0,1fr);gap:8px 10px;font-size:15px;align-items:center}
 .tk-kv>span:nth-child(odd){color:var(--muted)}
-.tk-mini{display:flex;align-items:center;gap:10px;min-height:44px;border-top:1px solid var(--line);font-size:13px}
+.tk-mini{display:flex;align-items:center;gap:10px;min-height:44px;border-top:1px solid var(--line);font-size:15px}
 .tk-mini:first-of-type{border-top:0}
 .tk-kbd{font:11px var(--mono);padding:1px 5px;border:1px solid var(--line-2);border-radius:4px;color:var(--muted)}
-.tk-check{display:flex;align-items:center;gap:10px;font-size:13px;min-height:32px}
+.tk-check{display:flex;align-items:center;gap:10px;font-size:15px;min-height:32px}
 /* Runtime additions (ov-pill as in CsCustomer; selects inside the ticket bar; file chips) */
-.ov-pill{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:6px;font-size:12px;font-weight:500;background:var(--active);color:var(--ink-2)}
+.ov-pill{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:6px;font-size:14px;font-weight:500;background:var(--active);color:var(--ink-2)}
 .ov-pill.ok{background:var(--green-bg);color:var(--green-ink)}.ov-pill.warn{background:var(--amber-bg);color:var(--amber-ink)}.ov-pill.bad{background:var(--red-bg);color:var(--red-ink)}
 .sl-ticks.n{--c:var(--muted)}
 .tk-sel select{appearance:none;border:0;background:transparent;font:inherit;font-weight:500;color:inherit;outline:0;cursor:pointer;max-width:180px}
 .tk-sel.is-saving{opacity:.6}
-.tk-file{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;background:var(--field);border:1px solid var(--line);font-size:12px;color:var(--ink)}
+.tk-file{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;background:var(--field);border:1px solid var(--line);font-size:14px;color:var(--ink)}
 .bub .tk-files{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.tk-hist{display:flex;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:13px}.tk-hist:first-child{border-top:0}
+.tk-hist{display:flex;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:15px}.tk-hist:first-child{border-top:0}
 .tk-hist small{color:var(--muted);white-space:nowrap}
 .aipop a{cursor:pointer}
 .aipop a.busy{opacity:.5;pointer-events:none}

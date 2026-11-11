@@ -39,7 +39,7 @@ if (!in_array($tab, ['home', 'route', 'pay'], true)) $tab = 'home';
 <button class="da-sec" type="button" style="flex:none" data-sl-action="ajax/sl/rider_ajax.php" data-p-op="failed" data-p-id="<?= (int) $j['id'] ?>" data-p-note="Customer not available" data-sl-confirm="Record a failed attempt?">Customer not there · try later</button></form>
 <?php else: ?><div class="da-ok"><i class="ic i-check" aria-hidden="true"></i><span><?= h($j['st']) ?><?= $j['receiver'] ? ' to ' . h($j['receiver']) : '' ?>. <?= $j['state'] === 'done' ? h($j['rid']) . ' added to today’s earnings.' : 'Contact dispatch to arrange another attempt.' ?></span></div><a class="da-pri" href="<?= sl_route('DriverApp') ?>">Next package</a><?php endif; ?>
 <?php elseif ($tab === 'pay'): ?>
-<section class="da-sheet"><span class="up">Earned today</span><b style="font:600 38px var(--font);letter-spacing:-.02em"><?= h($d['earned']) ?></b><span class="mut sm"><?= (int) $d['done'] ?> jobs · <?= (int) $d['pct'] ?>% of <?= h($d['feesToday']) ?> in fees</span><div class="da-bars"><?php foreach ($d['week'] as $w): ?><i class="<?= h($w['cls']) ?>" style="<?= h($w['h']) ?>" title="<?= h($w['t']) ?>"></i><?php endforeach; ?></div><div class="row between mut" style="font-size:11.5px"><?php foreach ($d['week'] as $w): ?><span><?= h($w['l']) ?></span><?php endforeach; ?></div></section>
+<section class="da-sheet"><span class="up">Earned today</span><b style="font:600 38px var(--font);letter-spacing:-.02em"><?= h($d['earned']) ?></b><span class="mut sm"><?= (int) $d['done'] ?> jobs · <?= (int) $d['pct'] ?>% of <?= h($d['feesToday']) ?> in fees</span><div class="da-bars"><?php foreach ($d['week'] as $w): ?><i class="<?= h($w['cls']) ?>" style="<?= h($w['h']) ?>" title="<?= h($w['t']) ?>"></i><?php endforeach; ?></div><div class="row between mut" style="font-size:13.5px"><?php foreach ($d['week'] as $w): ?><span><?= h($w['l']) ?></span><?php endforeach; ?></div></section>
 <div class="da-k"><div><b><?= h($d['weekEarned']) ?></b><small>Last 7 days</small></div><div><b><?= (int) $d['done'] ?></b><small>Done today</small></div><div><b><?= (int) $d['left'] ?></b><small>Still to do</small></div></div>
 <?php else: ?>
 <div class="da-k da-job-stats"><div><b><?= (int) $d['left'] ?></b><small>To do</small></div><div><b><?= (int) $d['done'] ?></b><small>Done</small></div><div><b><?= h($d['earned']) ?></b><small>Earned today</small></div></div>
@@ -78,8 +78,8 @@ if (!in_array($tab, ['home', 'route', 'pay'], true)) $tab = 'home';
 })();
 </script>
 <style>/* links in place of the design's buttons (server-side navigation) */
-.da-seg a{flex:none;height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--line-2);background:var(--card);font:500 13.5px var(--font);color:var(--ink);display:inline-flex;align-items:center}
+.da-seg a{flex:none;height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--line-2);background:var(--card);font:500 15.5px var(--font);color:var(--ink);display:inline-flex;align-items:center}
 .da-seg a.on{background:var(--ink);color:var(--inverse);border-color:var(--ink)}
-.da-tab a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;height:54px;font:500 11.5px var(--font);color:var(--muted);border-radius:14px}
+.da-tab a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;height:54px;font:500 13.5px var(--font);color:var(--muted);border-radius:14px}
 .da-tab a.on{color:var(--ink)}.da-tab a.on .ic{color:#E2632A}
 .da-photo{cursor:pointer}.da-body{padding-bottom:96px}</style>

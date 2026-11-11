@@ -22,7 +22,7 @@ $ro = $d['canEdit'] ? '' : ' disabled';
 </div>
 <aside class="b col g16">
 <section class="sl-card col"><div class="sl-ch"><h2 class="sl-ct">This month at these costs</h2><span class="mut sm">In <?= h($core->currency ?? 'USD') ?><?= $d['rate'] > 0 ? ' at ' . number_format($d['rate'], 2) : '' ?></span></div>
-<?php foreach ($d['totals'] as $t): ?><div class="cs-tot"><span class="col"><span><?= h($t['label']) ?></span><span class="mut" style="font-size:12px"><?= h($t['calc']) ?></span></span><b class="mono fw5"><?= h($t['total']) ?></b></div><?php endforeach; ?>
+<?php foreach ($d['totals'] as $t): ?><div class="cs-tot"><span class="col"><span><?= h($t['label']) ?></span><span class="mut" style="font-size:14px"><?= h($t['calc']) ?></span></span><b class="mono fw5"><?= h($t['total']) ?></b></div><?php endforeach; ?>
 <div class="cs-tot" style="border-top:1.5px solid var(--ink);font-size:15px"><b>Total</b><b class="mono"><?= h($d['grandF']) ?></b></div></section>
 <section class="sl-card col g8"><h2 class="sl-ct">Change history</h2><?php foreach ($d['history'] as $hh): ?><div class="cs-tot"><span><?= h($hh['t']) ?></span><span class="mut"><?= h($hh['who']) ?></span></div><?php endforeach; ?><?php if (!$d['history']): ?><span class="mut sm">No changes yet.</span><?php endif; ?></section>
 </aside></div>

@@ -13,7 +13,7 @@
     <?php if ($slIsClient || sl_userIs('driver')): ?><a class="sl-phone-identity" href="<?= h($slIsClient ? sl_route('Main') : sl_route('DriverApp')) ?>"><?= h($core->site_name ?? 'Swift Lane') ?><small><?= $slIsClient ? 'Your shipping companion' : 'Rider workspace' ?></small></a><?php endif; ?>
     <span class="grow"></span>
     <?php if ($slHasSupport || $slCanAskAI): ?><details class="aitop"><summary aria-label="Help and support"><span class="o"><i class="ic i-ai" aria-hidden="true"></i></span>Help</summary><div class="pop" role="menu">
-<div class="me"><span class="sl-av sm dark"><?= h($slInitials) ?></span><div class="grow"><div class="fw5 sm"><?= h($slName) ?></div><div class="mut" style="font-size:12px"><?= h($slSub) ?></div></div><a class="sl-btn sm ghost" href="<?= h($slProfileUrl) ?>">Edit</a></div>
+<div class="me"><span class="sl-av sm dark"><?= h($slInitials) ?></span><div class="grow"><div class="fw5 sm"><?= h($slName) ?></div><div class="mut" style="font-size:14px"><?= h($slSub) ?></div></div><a class="sl-btn sm ghost" href="<?= h($slProfileUrl) ?>">Edit</a></div>
 <a class="ask" href="<?= h($slAssistantUrl) ?>"><i class="ic ic-sm i-spark" aria-hidden="true"></i><?= $slCanAskAI ? 'Ask AI for help on this page' : 'Open help and support' ?><b><i class="ic ic-sm i-send" aria-hidden="true"></i></b></a>
 <div class="hd">Your profile with AI</div>
 <a class="it" role="menuitem" href="<?= h($slProfileUrl) ?>#retouch"><span class="t"><i class="ic ic-sm i-wand" aria-hidden="true"></i></span><span>Retouch my photo<small>Light, skin and background</small></span></a>
@@ -59,7 +59,7 @@
       <?php if ($user->cdp_hasPermission(['warehouse_view', 'view_warehouse_delivery'])): ?><a href="<?= h(sl_route('Warehouse')) ?>" aria-label="Warehouse" title="Warehouse"><i class="ic i-warehouse" aria-hidden="true"></i></a><?php endif; ?>
       <?php if (function_exists('sl_displayCurrency') && !sl_userIs('client')): $slGhs = sl_displayCurrency() === 'GHS'; ?><button type="button" class="sl-ccy-rail<?= $slGhs ? ' is-on on' : '' ?>" role="switch" aria-checked="<?= $slGhs ? 'true' : 'false' ?>" aria-label="Show amounts in <?= $slGhs ? 'USD' : 'GHS' ?>" title="Showing <?= $slGhs ? 'GHS' : 'USD' ?> · click to show <?= $slGhs ? 'USD' : 'GHS' ?>" data-sl-action="ajax/sl/display_currency_ajax.php" data-sl-reload><span class="ccy-pill" aria-hidden="true"><b class="<?= $slGhs ? '' : 'act' ?>">USD</b><b class="<?= $slGhs ? 'act' : '' ?>">GHS</b></span></button><?php endif; ?>
       <?php endif; ?>
-      <a class="me-pic" href="<?= h($slProfileUrl) ?>" aria-label="Your profile, <?= h($slName) ?>" style="width:34px;height:34px;margin-top:auto;font-size:12px;<?= $slPicStyle ?>"><?= $slAvatar ? '' : h($slInitials) ?></a>
+      <a class="me-pic" href="<?= h($slProfileUrl) ?>" aria-label="Your profile, <?= h($slName) ?>" style="width:34px;height:34px;margin-top:auto;font-size:14px;<?= $slPicStyle ?>"><?= $slAvatar ? '' : h($slInitials) ?></a>
     </div>
     <aside class="sl-side" id="sl-navigation" aria-label="<?= $slIsClient ? 'Customer navigation' : 'Main navigation' ?>">
       <div class="nav-x"><span class="fw5">Menu</span><button class="sl-ib" type="button" data-sl-nav aria-controls="sl-navigation" aria-expanded="true" aria-label="Close the menu"><i class="ic i-x" aria-hidden="true"></i></button></div>

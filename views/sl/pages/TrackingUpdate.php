@@ -29,7 +29,7 @@ $s = $d['sum'];
       <div class="row g8"><button type="submit" class="sl-btn">Save event</button><a class="sl-btn ghost" href="<?= h($d['back']) ?>">Cancel</a></div>
     </form>
     <section class="sl-card col g12"><div class="sl-ch" style="margin:0"><h2 class="sl-ct">History</h2><span class="sl-badge"><?= count($d['events']) ?> events</span></div>
-      <?php foreach (array_reverse($d['events']) as $e): ?><div class="row g10 sm" style="padding:8px 0;border-top:1px solid var(--line)"><span class="sl-pill <?= h($e['pc']) ?>"><?= h($e['t']) ?></span><span class="col grow"><span><?= h($e['where'] ?: '—') ?></span><?php if ($e['note']): ?><span class="mut" style="font-size:12px"><?= h($e['note']) ?></span><?php endif; ?></span><span class="mono mut" style="font-size:12px"><?= h($e['at']) ?></span></div><?php endforeach; ?>
+      <?php foreach (array_reverse($d['events']) as $e): ?><div class="row g10 sm" style="padding:8px 0;border-top:1px solid var(--line)"><span class="sl-pill <?= h($e['pc']) ?>"><?= h($e['t']) ?></span><span class="col grow"><span><?= h($e['where'] ?: '—') ?></span><?php if ($e['note']): ?><span class="mut" style="font-size:14px"><?= h($e['note']) ?></span><?php endif; ?></span><span class="mono mut" style="font-size:14px"><?= h($e['at']) ?></span></div><?php endforeach; ?>
       <?php if (!$d['events']): ?><div class="sl-empty">No events recorded yet.</div><?php endif; ?>
     </section>
   </div>

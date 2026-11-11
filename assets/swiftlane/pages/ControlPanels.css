@@ -8,28 +8,28 @@
 .cpx-attn a{display:flex;flex-direction:column;gap:4px;padding:4px 16px;border-left:1px solid var(--line);color:inherit}
 .cpx-attn a:first-child{border-left:0;padding-left:0}
 .cpx-attn b{font:500 26px var(--font);letter-spacing:-.01em}
-.cpx-attn .d{font-size:12px;color:var(--muted)}
+.cpx-attn .d{font-size:14px;color:var(--muted)}
 .cpx-mb{display:flex;align-items:flex-end;gap:4px;height:44px;margin-top:8px}
 .cpx-mb i{flex:1;border-radius:4px 4px 2px 2px;background:#32364A}
 .cpx-mb i:last-child{background:var(--ink-2)}
-.cpx-hl{display:flex;justify-content:space-between;font-size:11px;color:var(--faint);margin-top:4px}
+.cpx-hl{display:flex;justify-content:space-between;font-size:13px;color:var(--faint);margin-top:4px}
 .cpx-group{margin-top:24px;scroll-margin-top:24px}
 .cpx-group-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:14px}
 .cpx-group-head h2{font-size:21px;font-weight:600;letter-spacing:-.015em;margin:2px 0}
-.cpx-group-head p{font-size:13px;color:var(--muted);margin:0}
+.cpx-group-head p{font-size:15px;color:var(--muted);margin:0}
 .cpx-jump{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
-.cpx-jump a{display:inline-flex;align-items:center;gap:5px;min-height:34px;padding:0 10px;border:1px solid var(--line);border-radius:10px;color:var(--ink);background:var(--card);font-size:12px;text-decoration:none}
+.cpx-jump a{display:inline-flex;align-items:center;gap:5px;min-height:34px;padding:0 10px;border:1px solid var(--line);border-radius:10px;color:var(--ink);background:var(--card);font-size:14px;text-decoration:none}
 .cpx-jump a:hover,.cpx-jump a:focus-visible{background:var(--hover);border-color:var(--ink-2)}
 .cpx-featured-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}
 .cpx-card-featured{margin:0}
 .cpx-card-featured:target{outline:2px solid var(--ink);outline-offset:3px}
-.cpx-card-count{margin-left:auto;display:grid!important;place-items:center;min-width:25px;height:25px;padding:0 5px;border-radius:8px;background:var(--card);border:1px solid var(--line);font:600 12px var(--mono)!important;color:var(--ink-2)!important}
+.cpx-card-count{margin-left:auto;display:grid!important;place-items:center;min-width:25px;height:25px;padding:0 5px;border-radius:8px;background:var(--card);border:1px solid var(--line);font:600 14px var(--mono)!important;color:var(--ink-2)!important}
 .cpx-cols{columns:3 340px;column-gap:16px}
 .cpx-card{break-inside:avoid;margin-bottom:16px;border:1px solid var(--line);border-radius:20px;background:var(--card);overflow:hidden}
 .cpx-ch{display:flex;gap:14px;align-items:flex-start;padding:18px 18px 16px;background:var(--panel);border-bottom:1px solid var(--line)}
 .cpx-ch .tl{width:44px;height:44px;border-radius:12px;background:var(--active);display:grid;place-items:center;color:var(--ink);flex:none}
 .cpx-ch b{display:block;font-size:17px;font-weight:600;letter-spacing:-.005em}
-.cpx-ch span{display:block;color:var(--muted);font-size:13px;margin-top:2px;line-height:1.4}
+.cpx-ch span{display:block;color:var(--muted);font-size:15px;margin-top:2px;line-height:1.4}
 .cpx-row{display:flex;align-items:center;gap:12px;padding:0 18px;min-height:56px;color:var(--ink);border-top:1px solid var(--line)}
 .cpx-row:first-of-type{border-top:0}
 .cpx-row:hover{background:var(--hover)}
@@ -38,7 +38,7 @@
 .cpx-row:focus-visible{outline:2px solid var(--ink);outline-offset:-2px;background:var(--hover)}
 .cpx-row>.ic{color:var(--ink-2);flex:none}
 .cpx-row .nm{flex:1;min-width:0;display:flex;flex-direction:column;padding:9px 0}
-.cpx-row .nm small{color:var(--muted);font-size:12.5px}
+.cpx-row .nm small{color:var(--muted);font-size:14.5px}
 .cpx-row .ch{color:var(--faint);flex:none}
 .cpx-dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex:none}
 .cpx-dot.w{background:var(--yellow)}
@@ -51,7 +51,7 @@
 .cpx-pins .grow{display:none}
 .cpx-attn{grid-template-columns:1fr 1fr;gap:10px}
 .cpx-attn a,.cpx-attn a:first-child{border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--field);min-height:44px}
-.cpx-attn .up{font-size:10.5px;line-height:1.3;min-height:2.6em}
+.cpx-attn .up{font-size:12.5px;line-height:1.3;min-height:2.6em}
 .cpx-attn b{font-size:24px}
 .cpx-mb{height:32px}
 .cpx-ch{padding:14px}

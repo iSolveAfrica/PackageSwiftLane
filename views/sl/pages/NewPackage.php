@@ -64,7 +64,7 @@ $opt = function (array $rows, $selected, string $labelKey = 'label') { $o = ''; 
 </form>
 <div class="sl-dialog" id="np-prealert" hidden><div class="sl-modal" role="dialog" aria-label="Import from pre-alert">
   <b class="fw5">Open pre-alerts</b>
-  <div class="col g6" style="max-height:60vh;overflow:auto"><?php foreach ($d['prealerts'] as $p): ?><a class="ops-row" href="<?= sl_route('NewPackage', ['prealert_id' => (int) $p->pre_alert_id]) ?>"><span class="col grow"><b class="fw5 sm"><?= h(trim($p->fname . ' ' . $p->lname)) ?></b><span class="mut" style="font-size:12px"><?= h($p->provider_shop) ?></span></span><span class="mono sm"><?= h($p->tracking) ?></span></a><?php endforeach; ?><?php if (!$d['prealerts']): ?><span class="mut sm">No open pre-alerts.</span><?php endif; ?></div>
+  <div class="col g6" style="max-height:60vh;overflow:auto"><?php foreach ($d['prealerts'] as $p): ?><a class="ops-row" href="<?= sl_route('NewPackage', ['prealert_id' => (int) $p->pre_alert_id]) ?>"><span class="col grow"><b class="fw5 sm"><?= h(trim($p->fname . ' ' . $p->lname)) ?></b><span class="mut" style="font-size:14px"><?= h($p->provider_shop) ?></span></span><span class="mono sm"><?= h($p->tracking) ?></span></a><?php endforeach; ?><?php if (!$d['prealerts']): ?><span class="mut sm">No open pre-alerts.</span><?php endif; ?></div>
   <button type="button" class="sl-btn ghost" data-sl-close>Close</button>
 </div></div>
 <script>

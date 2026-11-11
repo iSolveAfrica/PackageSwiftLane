@@ -2,5 +2,5 @@
 .rv-out{min-height:160px}
 .rv-out .sl-table td{white-space:nowrap}
 .rv-out .sl-tw+.sl-tw{border-top:1px solid var(--line)}
-.rv-out h3,.rv-out h4,.rv-out h5{font-size:14px;font-weight:500;margin:14px 16px 6px}
+.rv-out h3,.rv-out h4,.rv-out h5{font-size:16px;font-weight:500;margin:14px 16px 6px}
 .rv-out .row{margin:0}
