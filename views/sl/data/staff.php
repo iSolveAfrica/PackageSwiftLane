@@ -59,7 +59,7 @@ function sl_staffRolesData($user, $core): array
         elseif ($never && !$lastTs) { $st = ['Invited', 'onway']; }
         else { $st = ['Active', 'delivered']; }
         $name = trim($r->fname . ' ' . $r->lname) ?: $r->username;
-        $list[] = ['id' => (int) $r->id, 'name' => $name, 'ini' => sl_initials($name), 'mail' => $r->email, 'role' => $roles[$rid]->role_name ?? ('Role #' . $rid), 'rid' => $rid,
+        $list[] = ['id' => (int) $r->id, 'name' => $name, 'ini' => sl_initials($name), 'mail' => $r->email, 'role' => isset($roles[$rid]) ? sl_roleDisplayName($roles[$rid]) : ('Role #' . $rid), 'rid' => $rid,
             'branch' => $r->name_off ?: '—', 'tasks' => (int) $r->tasks, 'seen' => $online ? 'Now' : ($lastTs ? sl_ago(date('Y-m-d H:i:s', $lastTs)) : ($st[0] === 'Invited' ? 'Invite sent' : 'Never')),
             'dot' => $online ? '' : ($lastTs >= time() - 3600 ? 'away' : 'off'), 'twostep' => (int) $r->trusted > 0, 'money' => $money, 'st' => $st[0], 'cls' => $st[1], 'active' => (int) $r->active,
             'self' => (int) $r->id === (int) $_SESSION['userid'], 'managed' => cdp_canManageUser($user, $rid), 'driver' => cdp_roleHasFlag($rid, 'is_driver'),
@@ -82,7 +82,7 @@ function sl_staffRolesData($user, $core): array
     // by role / by branch
     $byRole = sl_rows("SELECT u.userlevel, COUNT(*) AS n FROM cdb_users u WHERE $staffWhere GROUP BY u.userlevel ORDER BY n DESC");
     $rm = $byRole ? max(1, (int) $byRole[0]->n) : 1;
-    $byRoleList = array_map(fn($r) => ['label' => $roles[(int) $r->userlevel]->role_name ?? ('Role #' . $r->userlevel), 'n' => (int) $r->n, 'w' => sl_pct($r->n, $rm), 'id' => (int) $r->userlevel], $byRole);
+    $byRoleList = array_map(fn($r) => ['label' => isset($roles[(int) $r->userlevel]) ? sl_roleDisplayName($roles[(int) $r->userlevel]) : ('Role #' . $r->userlevel), 'n' => (int) $r->n, 'w' => sl_pct($r->n, $rm), 'id' => (int) $r->userlevel], $byRole);
     $byBranch = sl_rows("SELECT COALESCE(NULLIF(u.name_off,''), 'No branch') AS b, COUNT(*) AS n FROM cdb_users u WHERE $staffWhere GROUP BY b ORDER BY n DESC LIMIT 8");
     $bm = $byBranch ? max(1, (int) $byBranch[0]->n) : 1;
     $byBranchList = array_map(fn($r) => ['label' => $r->b, 'n' => (int) $r->n, 'w' => sl_pct($r->n, $bm)], $byBranch);
@@ -106,7 +106,7 @@ function sl_staffRolesData($user, $core): array
     foreach ($byRole as $r) $roleCounts[(int) $r->userlevel] = (int) $r->n;
     foreach ($roles as $rid => $r) {
         if (!cdp_canAssignRole($user, $rid) || cdp_roleHasFlag($rid, 'is_superadmin')) continue;
-        $roleBtns[] = ['id' => $rid, 'label' => $r->role_name, 'n' => $roleCounts[$rid] ?? 0];
+        $roleBtns[] = ['id' => $rid, 'label' => sl_roleDisplayName($r), 'n' => $roleCounts[$rid] ?? 0];
     }
     if (!$selRole || !isset($roles[$selRole]) || !cdp_canAssignRole($user, $selRole) || cdp_roleHasFlag($selRole, 'is_superadmin')) $selRole = $roleBtns[0]['id'] ?? 0;
     $perms = [];
@@ -124,7 +124,7 @@ function sl_staffRolesData($user, $core): array
         'rows' => $list, 'count' => $count, 'page' => $page, 'per' => $per, 'q' => $q, 'role' => $role, 'branch' => $branch,
         'roleFilters' => $byRoleList, 'branches' => array_map(fn($b) => $b['label'], array_filter($byBranchList, fn($b) => $b['label'] !== 'No branch')),
         'onlineList' => $onlineList, 'byRole' => $byRoleList, 'byBranch' => $byBranchList, 'week' => array_values($week), 'weekLabel' => date('M j', strtotime($monday)) . ' – ' . date('M j', strtotime($monday . ' +6 days')), 'changes' => $changes,
-        'roleBtns' => $roleBtns, 'selRole' => $selRole, 'selRoleName' => $roles[$selRole]->role_name ?? '', 'selRoleCount' => (int) sl_scalar('SELECT COUNT(*) FROM cdb_users WHERE userlevel = :r', [':r' => $selRole]), 'perms' => $perms, 'onCount' => $onCount,
+        'roleBtns' => $roleBtns, 'selRole' => $selRole, 'selRoleName' => isset($roles[$selRole]) ? sl_roleDisplayName($roles[$selRole]) : '', 'selRoleCount' => (int) sl_scalar('SELECT COUNT(*) FROM cdb_users WHERE userlevel = :r', [':r' => $selRole]), 'perms' => $perms, 'onCount' => $onCount,
         'canAdd' => $user->cdp_hasPermission('add_user'), 'canEdit' => $user->cdp_hasPermission('edit_user'), 'canDelete' => $user->cdp_hasPermission('delete_user'), 'canPerms' => $user->cdp_hasPermission('view_role_assignment'),
         'canViewAs' => function_exists('cdp_canViewAs'), 'viewerLevel' => (int) $user->userlevel, 'hasLog' => $hasLog,
     ];
@@ -134,7 +134,7 @@ function sl_inviteStaffData($user, $core): array
 {
     $roles = [];
     foreach (sl_assignableRoles($user) as $rid => $r) {
-        $roles[] = ['id' => $rid, 'label' => $r->role_name, 'blurb' => sl_roleBlurb($r), 'driver' => cdp_roleHasFlag($rid, 'is_driver')];
+        $roles[] = ['id' => $rid, 'label' => sl_roleDisplayName($r), 'blurb' => sl_roleBlurb($r), 'driver' => cdp_roleHasFlag($rid, 'is_driver')];
     }
     $branches = array_map(fn($r) => $r->name_off, sl_rows('SELECT name_off FROM cdb_offices ORDER BY name_off'));
     $zones = array_map(fn($r) => $r->zone, sl_rows("SELECT DISTINCT zone FROM cdb_users WHERE zone IS NOT NULL AND zone <> '' ORDER BY zone"));

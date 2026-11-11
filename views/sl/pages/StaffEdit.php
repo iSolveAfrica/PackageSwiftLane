@@ -11,9 +11,9 @@ $id = (int) $r->id;
 $drv = $d['driver'];
 $back = $drv ? sl_route('Drivers') : sl_route('StaffRoles');
 ?>
-<div class="row g8 mut sm"><a href="<?= h($back) ?>"><?= $drv ? 'Drivers' : 'Staff and roles' ?></a><i class="ic ic-sm i-right" aria-hidden="true"></i><span style="color:var(--ink)"><?= h($d['name']) ?></span></div>
+<div class="row g8 mut sm"><a href="<?= h($back) ?>"><?= $drv ? 'Riders' : 'Staff and roles' ?></a><i class="ic ic-sm i-right" aria-hidden="true"></i><span style="color:var(--ink)"><?= h($d['name']) ?></span></div>
 <div class="sl-head">
-  <div><h1 class="sl-title"><?= $d['isOwn'] ? 'My profile' : 'Edit ' . h($d['name']) ?></h1><p class="sl-lede"><?= $drv ? 'Driver' : h($d['roleName'] ?: 'Staff') ?> · username <?= h($r->username) ?><?= !$drv && $r->name_off ? ' · ' . h($r->name_off) : '' ?></p></div>
+  <div><h1 class="sl-title"><?= $d['isOwn'] ? 'My profile' : 'Edit ' . h($d['name']) ?></h1><p class="sl-lede"><?= $drv ? 'Rider' : h($d['roleName'] ?: 'Staff') ?> · username <?= h($r->username) ?><?= !$drv && $r->name_off ? ' · ' . h($r->name_off) : '' ?></p></div>
   <div class="row g8 wrap">
     <?php if ($d['canPerms']): ?><a class="sl-btn ghost" href="user_permissions.php?user=<?= $id ?>"><i class="ic ic-sm i-key" aria-hidden="true"></i>Permissions</a><?php endif; ?>
     <a class="sl-btn ghost" href="<?= h($back) ?>">Cancel</a>
@@ -62,7 +62,7 @@ $back = $drv ? sl_route('Drivers') : sl_route('StaffRoles');
       <div class="row g12"><span class="sl-av lg dark" style="width:56px;height:56px;background-image:url(<?= h($d['avatar']) ?>);background-size:cover;color:transparent"><?= h(sl_initials($d['name'])) ?></span><div class="col"><b class="fw5"><?= h($d['name']) ?></b><span class="mut sm"><?= h($r->email) ?></span></div></div>
       <div class="sl-kv">
         <div><span>Status</span><span><?= (int) $r->active ? sl_pill('Active', 'delivered') : sl_pill('Inactive', 'plain') ?></span></div>
-        <div><span>Role</span><span><?= $drv ? 'Driver' : h($d['roleName']) ?></span></div>
+        <div><span>Role</span><span><?= $drv ? 'Rider' : h($d['roleName']) ?></span></div>
         <?php if (!$drv && $r->name_off): ?><div><span>Office</span><span><?= h($r->name_off) ?></span></div><?php endif; ?>
         <div><span>Phone</span><span><?= h($r->phone) ?: '—' ?></span></div>
         <div><span>Created</span><span><?= h(sl_date($r->created)) ?></span></div>

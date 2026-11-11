@@ -28,7 +28,7 @@ $can = $d['can'];
           <?php if ($can['bulk']): ?>
           <div class="row wrap g8" style="padding: 0 16px 12px" id="sp-bulk" hidden><span class="sm mut"><b id="sp-n">0</b> selected</span>
             <?php if ($can['bulkStatus']): ?><label class="sl-sel native" style="width:190px"><select id="sp-bulk-status" aria-label="New status"><option value="">Change status…</option><?php foreach ($d['statuses'] as $s): ?><option value="<?= (int) $s->id ?>"><?= h(str_replace('_', ' ', $s->mod_style)) ?></option><?php endforeach; ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></label><button type="button" class="sl-btn ghost sm" id="sp-bulk-go">Apply</button><?php endif; ?>
-            <?php if ($can['driver']): ?><label class="sl-sel native" style="width:190px"><select id="sp-bulk-driver" aria-label="Driver"><option value="">Assign driver…</option><?php foreach ($d['drivers'] as $dr): ?><option value="<?= (int) $dr->id ?>"><?= h($dr->fname . ' ' . $dr->lname) ?></option><?php endforeach; ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></label><button type="button" class="sl-btn ghost sm" id="sp-bulk-driver-go">Assign</button><?php endif; ?>
+            <?php if ($can['driver']): ?><label class="sl-sel native" style="width:190px"><select id="sp-bulk-driver" aria-label="Rider"><option value="">Assign rider…</option><?php foreach ($d['drivers'] as $dr): ?><option value="<?= (int) $dr->id ?>"><?= h($dr->fname . ' ' . $dr->lname) ?></option><?php endforeach; ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></label><button type="button" class="sl-btn ghost sm" id="sp-bulk-driver-go">Assign</button><?php endif; ?>
             <?php if ($can['label']): ?><button type="button" class="sl-btn ghost sm" id="sp-bulk-labels"><i class="ic ic-sm i-print" aria-hidden="true"></i>Print labels</button><?php endif; ?>
           </div>
           <?php endif; ?>
@@ -43,14 +43,14 @@ $can = $d['can'];
                   <td><?= (int) $r['items'] ?><span class="sub" style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block"><?= h($r['what']) ?></span></td>
                   <td class="num"><?= h($r['w']) ?></td><td class="num"><?= h($r['amt']) ?></td>
                   <td><span class="sl-pill <?= h($r['payCls']) ?>"><?= h($r['pay']) ?></span></td>
-                  <td><span class="col"><span class="sl-pill <?= h($r['stCls']) ?>"><?= h($r['st']) ?></span><?php if ($r['inCon']): ?><span class="mut" style="font-size:13.5px">in consolidation</span><?php elseif ($r['driver'] !== '—'): ?><span class="mut" style="font-size:13.5px">Driver <?= h($r['driver']) ?></span><?php endif; ?></span></td>
+                  <td><span class="col"><span class="sl-pill <?= h($r['stCls']) ?>"><?= h($r['st']) ?></span><?php if ($r['inCon']): ?><span class="mut" style="font-size:13.5px">in consolidation</span><?php elseif ($r['driver'] !== '—'): ?><span class="mut" style="font-size:13.5px">Rider <?= h($r['driver']) ?></span><?php endif; ?></span></td>
                   <td><details class="sl-menu" data-sl-pop><summary class="sl-ib sm" aria-label="Actions for <?= h($r['trk']) ?>"><i class="ic i-more" aria-hidden="true"></i></summary><div class="pop" role="menu">
                     <?php if ($can['view'] || $d['isClient']): ?><a role="menuitem" href="<?= sl_route('PackageDetail', ['id' => $r['id']]) ?>">View details</a><?php endif; ?>
                     <?php if ($r['canCode']): ?><button type="button" role="menuitem" data-sl-open="sp-code" data-code-id="<?= (int) $r['id'] ?>" data-code-trk="<?= h($r['trk']) ?>">Pickup code</button><?php endif; ?>
                     <?php if ($d['isClient'] && $r['unpaid']): ?><a role="menuitem" href="add_payment_gateways_package.php?id_order=<?= (int) $r['id'] ?>">Pay now</a><?php endif; ?>
                     <?php if ($can['verify'] && $r['verify']): ?><a role="menuitem" href="<?= sl_route('PackageDetail', ['id' => $r['id']]) ?>#payment">Verify payment</a><?php endif; ?>
                     <?php if ($r['canEdit']): ?><a role="menuitem" href="customer_package_edit.php?id=<?= (int) $r['id'] ?>">Edit</a><?php endif; ?>
-                    <?php if ($r['canDriver']): ?><button type="button" role="menuitem" data-sl-open="sp-driver" data-drv-id="<?= (int) $r['id'] ?>" data-drv-trk="<?= h($r['trk']) ?>">Assign driver</button><?php endif; ?>
+                    <?php if ($r['canDriver']): ?><button type="button" role="menuitem" data-sl-open="sp-driver" data-drv-id="<?= (int) $r['id'] ?>" data-drv-trk="<?= h($r['trk']) ?>">Assign rider</button><?php endif; ?>
                     <?php if ($can['print']): ?><a role="menuitem" target="_blank" href="print_invoice_package.php?id=<?= (int) $r['id'] ?>">Print invoice</a><?php endif; ?>
                     <?php if ($can['label']): ?><a role="menuitem" target="_blank" href="print_label_package.php?id=<?= (int) $r['id'] ?>">Print label</a><?php endif; ?>
                     <?php if ($r['canTrack'] && $r['paid']): ?><a role="menuitem" href="customer_package_tracking.php?id=<?= (int) $r['id'] ?>">Update status</a><?php endif; ?>
@@ -65,10 +65,10 @@ $can = $d['can'];
           <?= sl_pager($d['page'], $d['per'], $d['count'], 'packages') ?>
         </div>
 <?php if ($can['driver']): ?>
-<div class="sl-dialog" id="sp-driver" hidden><form class="sl-modal" data-sl-form data-sl-reload action="ajax/sl/package_ajax.php" method="post" role="dialog" aria-label="Assign driver">
+<div class="sl-dialog" id="sp-driver" hidden><form class="sl-modal" data-sl-form data-sl-reload action="ajax/sl/package_ajax.php" method="post" role="dialog" aria-label="Assign rider">
   <input type="hidden" name="op" value="driver"><input type="hidden" name="id" id="sp-drv-id" value="">
-  <div><b class="fw5">Assign a driver to <span id="sp-drv-trk" class="mono"></span></b><div class="mut sm">The driver and the customer are notified.</div></div>
-  <label class="sl-field"><span class="sl-lab">Driver</span><span class="sl-sel native"><select name="driver_id" required><option value="">Choose a driver</option><?php foreach ($d['drivers'] as $dr): ?><option value="<?= (int) $dr->id ?>"><?= h($dr->fname . ' ' . $dr->lname) ?></option><?php endforeach; ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></span></label>
+  <div><b class="fw5">Assign a rider to <span id="sp-drv-trk" class="mono"></span></b><div class="mut sm">The rider and the customer are notified.</div></div>
+  <label class="sl-field"><span class="sl-lab">Rider</span><span class="sl-sel native"><select name="driver_id" required><option value="">Choose a rider</option><?php foreach ($d['drivers'] as $dr): ?><option value="<?= (int) $dr->id ?>"><?= h($dr->fname . ' ' . $dr->lname) ?></option><?php endforeach; ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></span></label>
   <div class="row g8"><button type="submit" class="sl-btn">Assign</button><button type="button" class="sl-btn ghost" data-sl-close>Cancel</button></div>
 </form></div>
 <?php endif; ?>
@@ -88,7 +88,7 @@ document.addEventListener('click', function (e) {
   document.addEventListener('change', function (e) { if (e.target.classList.contains('sp-chk')) refresh(); });
   function post(data) { SL.post('ajax/sl/package_ajax.php', data).then(function (j) { SL.toast(j.message || (j.success ? 'Done' : 'Failed'), !j.success); if (j.success) setTimeout(function () { location.reload(); }, 400); }); }
   var g = document.getElementById('sp-bulk-go'); if (g) g.addEventListener('click', function () { var s = document.getElementById('sp-bulk-status').value; if (!s) return SL.toast('Pick a status', true); if (!confirm('Change the status of ' + sel().length + ' package(s)?')) return; post({ op: 'bulk_status', status: s, ids: sel().map(function (c) { return c.value; }).join(',') }); });
-  var gd = document.getElementById('sp-bulk-driver-go'); if (gd) gd.addEventListener('click', function () { var s = document.getElementById('sp-bulk-driver').value; if (!s) return SL.toast('Pick a driver', true); post({ op: 'bulk_driver', driver_id: s, ids: sel().map(function (c) { return c.value; }).join(',') }); });
+  var gd = document.getElementById('sp-bulk-driver-go'); if (gd) gd.addEventListener('click', function () { var s = document.getElementById('sp-bulk-driver').value; if (!s) return SL.toast('Pick a rider', true); post({ op: 'bulk_driver', driver_id: s, ids: sel().map(function (c) { return c.value; }).join(',') }); });
   var gl = document.getElementById('sp-bulk-labels'); if (gl) gl.addEventListener('click', function () { var ids = sel().map(function (c) { return c.value; }); if (ids.length) window.open('print_label_package_multiple.php?id=' + ids.join(','), '_blank'); });
 })();
 </script>

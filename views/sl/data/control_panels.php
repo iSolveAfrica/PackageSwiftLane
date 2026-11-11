@@ -94,12 +94,12 @@ function sl_controlPanelsData($user, $core): array
             ['PreAlerts', 'i-inbox', 'Pre-alerts', 'Parcels customers told us about', 'prealert_list', fn() => $c('SELECT COUNT(*) FROM cdb_pre_alert WHERE is_package = 0')],
             ['PublicTracking', 'i-route', 'Public tracking', 'What customers see', null, null],
         ]],
-        ['id' => 'warehouse', 'icon' => 'i-warehouse', 't' => 'Warehouse & dispatch', 's' => 'Bays, lockers, drivers and routes', 'rows' => [
+        ['id' => 'warehouse', 'icon' => 'i-warehouse', 't' => 'Warehouse & dispatch', 's' => 'Bays, lockers, riders and routes', 'rows' => [
             ['Warehouse', 'i-warehouse', 'Warehouse', 'Parcels in the bays', ['warehouse_view', 'view_warehouse_delivery'], fn() => sl_num((int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (4,6,32) $w") + (int) sl_scalar("SELECT COUNT(*) FROM cdb_customers_packages a WHERE a.status_courier IN (4,6,32) $w"))],
             ['HandOut', 'i-box', 'Hand out', 'Ready for pickup', ['view_warehouse_delivery', 'warehouse_deliver_package'], fn() => $c("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (6,32) $w")],
             ['LockerSearch', 'i-search', 'Locker search', 'Find a parcel by locker', 'view_shipment_list', null],
             ['Pickups', 'i-truck', 'Pickups', 'Today’s pickups done / booked', 'view_pickup_list', fn() => $c("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.is_pickup = 1 AND DATE(a.order_date) = CURDATE() AND a.status_courier NOT IN (1,14) $w") . ' / ' . $c("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.is_pickup = 1 AND DATE(a.order_date) = CURDATE() $w")],
-            ['Drivers', 'i-wheel', 'Drivers', 'On route / all riders', 'view_user_list', fn() => $c("SELECT COUNT(DISTINCT a.driver_id) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier = 7 AND a.driver_id > 0 $w") . ' / ' . $c('SELECT COUNT(*) FROM cdb_users WHERE userlevel = 3 AND active = 1')],
+            ['Drivers', 'i-wheel', 'Riders', 'On route / all riders', 'view_user_list', fn() => $c("SELECT COUNT(DISTINCT a.driver_id) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier = 7 AND a.driver_id > 0 $w") . ' / ' . $c('SELECT COUNT(*) FROM cdb_users WHERE userlevel = 3 AND active = 1')],
         ]],
         ['id' => 'customers', 'icon' => 'i-users', 't' => 'Customers & people', 's' => 'Who ships with us and who works here', 'rows' => [
             ['Customers', 'i-users', 'Customers', 'Profiles and lockers', 'view_client_list', fn() => $c('SELECT COUNT(*) FROM cdb_users WHERE userlevel = 1')],

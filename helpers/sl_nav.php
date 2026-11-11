@@ -62,7 +62,7 @@ function sl_navStaff(): array
             ['id' => 'docs', 'label' => 'Documents', 'icon' => 'file', 'board' => 'Documents', 'perm' => ['view_documents', 'view_general_reports']],
             ['id' => 'locker', 'label' => 'Locker Search', 'icon' => 'lock', 'board' => 'LockerSearch', 'perm' => 'view_shipment_list'],
         ]],
-        ['label' => 'Rider Management', 'items' => [
+        ['label' => 'RIDERS', 'items' => [
             ['id' => 'drivers', 'label' => 'Riders', 'icon' => 'wheel', 'board' => 'Drivers', 'perm' => 'view_user_list',
                 'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_users WHERE userlevel = 3 AND active = 1"),
                 'count2' => fn() => '/ ' . sl_navCount("SELECT COUNT(*) FROM cdb_users WHERE userlevel = 3")],

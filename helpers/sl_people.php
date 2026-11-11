@@ -23,6 +23,12 @@ function sl_assignableRoles($viewer): array
     return array_filter(sl_staffRoles(), fn($r, $rid) => cdp_canAssignRole($viewer, $rid), ARRAY_FILTER_USE_BOTH);
 }
 
+/** Use the rider name in the interface while retaining legacy role ids. */
+function sl_roleDisplayName($role): string
+{
+    return cdp_roleHasFlag((int) $role->role_id, 'is_driver') ? 'Rider' : (string) $role->role_name;
+}
+
 /** Plain-English description of a role for the invite screen. */
 function sl_roleBlurb($role): string
 {

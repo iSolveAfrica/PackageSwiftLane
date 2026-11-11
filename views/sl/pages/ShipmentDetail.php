@@ -59,7 +59,7 @@ if (!empty($d['missing'])): ?>
               <?php if (!empty($d['pickupCode']['live']) || !empty($d['pickupCode']['verified'])): ?><div class="row between sm" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><span class="mut">Pickup code</span><b><?= !empty($d['pickupCode']['verified']) ? 'Verified at hand-over' : 'Sent to the customer' ?></b></div><?php endif; ?>
             </section>
             <section class="sl-card col g12"><div class="row between"><h2 class="sl-ct">Assigned driver</h2><?php if ($d['canAssign']): ?><button type="button" class="sl-btn ghost sm" data-sl-open="sd-driver"><?= $d['driver'] ? 'Change' : 'Assign' ?></button><?php endif; ?></div>
-              <?php if ($d['driver']): ?><div class="row g12"><span class="sl-av dark"><?= h($d['driver']['ini']) ?></span><div class="grow"><div class="fw5"><?= h($d['driver']['name']) ?></div><div class="mut sm"><?= h($d['driver']['veh']) ?></div></div><?php if ($d['driver']['phone']): ?><a class="sl-ib sm" aria-label="Call driver" href="tel:<?= h($d['driver']['phone']) ?>"><i class="ic i-phone" aria-hidden="true"></i></a><?php endif; ?></div><?php else: ?><div class="mut sm">No driver assigned yet.</div><?php endif; ?>
+              <?php if ($d['driver']): ?><div class="row g12"><span class="sl-av dark"><?= h($d['driver']['ini']) ?></span><div class="grow"><div class="fw5"><?= h($d['driver']['name']) ?></div><div class="mut sm"><?= h($d['driver']['veh']) ?></div></div><?php if ($d['driver']['phone']): ?><a class="sl-ib sm" aria-label="Call driver" href="tel:<?= h($d['driver']['phone']) ?>"><i class="ic i-phone" aria-hidden="true"></i></a><?php endif; ?></div><?php else: ?><div class="mut sm">No rider assigned yet.</div><?php endif; ?>
             </section>
           </aside>
         </div>
@@ -82,10 +82,10 @@ if (!empty($d['missing'])): ?>
 </form></div>
 <?php endif; ?>
 <?php if ($d['canAssign']): ?>
-<div class="sl-dialog" id="sd-driver" hidden><form class="sl-modal" data-sl-form data-sl-reload action="ajax/sl/shipment_action_ajax.php" method="post" role="dialog" aria-label="Assign driver">
+<div class="sl-dialog" id="sd-driver" hidden><form class="sl-modal" data-sl-form data-sl-reload action="ajax/sl/shipment_action_ajax.php" method="post" role="dialog" aria-label="Assign rider">
   <input type="hidden" name="op" value="driver"><input type="hidden" name="ids" value="<?= (int) $d['id'] ?>">
-  <div class="row g10"><span class="sl-tile"><i class="ic i-wheel" aria-hidden="true"></i></span><div class="col grow"><b class="fw5">Assign a driver</b><span class="mut sm">The driver is notified and the shipment appears on their route.</span></div></div>
-  <label class="sl-field"><span class="sl-lab">Driver</span><span class="sl-sel native"><select name="driver_id" required><option value="">Choose a driver</option><?php foreach ($d['drivers'] as $dr): ?><option value="<?= (int) $dr->id ?>" <?= $d['driver'] && (int) $dr->id === $d['driver']['id'] ? 'selected' : '' ?>><?= h(trim($dr->fname . ' ' . $dr->lname)) ?></option><?php endforeach; ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></span></label>
+  <div class="row g10"><span class="sl-tile"><i class="ic i-wheel" aria-hidden="true"></i></span><div class="col grow"><b class="fw5">Assign a rider</b><span class="mut sm">The driver is notified and the shipment appears on their route.</span></div></div>
+  <label class="sl-field"><span class="sl-lab">Rider</span><span class="sl-sel native"><select name="driver_id" required><option value="">Choose a rider</option><?php foreach ($d['drivers'] as $dr): ?><option value="<?= (int) $dr->id ?>" <?= $d['driver'] && (int) $dr->id === $d['driver']['id'] ? 'selected' : '' ?>><?= h(trim($dr->fname . ' ' . $dr->lname)) ?></option><?php endforeach; ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></span></label>
   <div class="row g8"><button type="submit" class="sl-btn">Assign</button><button type="button" class="sl-btn ghost" data-sl-close>Cancel</button></div>
 </form></div>
 <?php endif; ?>
