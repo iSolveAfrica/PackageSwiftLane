@@ -30,3 +30,19 @@
 .rc .ac{display:flex;gap:6px;border-top:1px solid var(--line);padding-top:10px}
 .rc-h{display:flex;align-items:center;gap:10px;margin-top:8px}
 .rc-h .n{font:500 14px var(--mono);color:var(--muted)}
+
+.rp-analytics-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+.rp-analytics-card{min-width:0}
+.rp-chart-description{line-height:1.5;margin:4px 0 0}
+.rp-trend{width:100%;height:auto;min-height:160px}
+.rp-trend text{font:11px var(--font);fill:var(--muted)}
+.rp-series-dot{width:9px;height:9px;display:inline-block;border-radius:3px}
+.rp-chart-bars{display:flex;flex-direction:column;gap:8px;padding:4px 0}
+.rp-chart-row{display:grid;grid-template-columns:minmax(80px,1fr) minmax(60px,1.5fr) 45px;gap:12px;align-items:center;min-height:32px;padding:4px 6px;border-radius:8px}
+.rp-chart-label{font-size:13px;overflow-wrap:anywhere}
+.rp-chart-track{height:9px;border-radius:6px;background:var(--active);overflow:hidden}
+.rp-chart-track i{display:block;height:100%;border-radius:6px}
+.rp-chart-row b{font:500 13px var(--mono);text-align:right}
+.rp-chart-empty{min-height:180px;display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center;color:var(--muted);font-size:13px}
+@media(max-width:800px){.rp-analytics-grid{grid-template-columns:1fr}}
+@media(max-width:480px){.rp-chart-row{gap:8px;grid-template-columns:minmax(70px,1fr) minmax(40px,1fr) 38px}}

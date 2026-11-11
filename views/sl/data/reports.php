@@ -5,6 +5,7 @@ require_once CDP_ROOT . '/helpers/sl_charts.php';
 require_once CDP_ROOT . '/helpers/finance_switch.php';
 require_once CDP_ROOT . '/helpers/rbac.php';
 require_once CDP_ROOT . '/helpers/sl_nav.php';
+require_once __DIR__ . '/report_charts.php';
 
 /** Report catalogue: group => [title, sub, list page, excel page|null, print page|null, permission, finance?, by-links]. */
 function sl_reportCatalogue(): array
@@ -56,6 +57,7 @@ function sl_reportsData($user, $core): array
     $to = trim((string) ($_GET['to'] ?? '')) ?: date('Y-m-d');
     if (!strtotime($from) || !strtotime($to)) { $from = date('Y-m-d', strtotime('-29 days')); $to = date('Y-m-d'); }
     $from = date('Y-m-d', strtotime($from)); $to = date('Y-m-d', strtotime($to));
+    if ($from > $to) [$from, $to] = [$to, $from];
     $d['from'] = $from; $d['to'] = $to; $d['range'] = $range;
     $d['ranges'] = array_map(fn($r) => ['f' => $r, 'cls' => $r === $range && empty($_GET['from']) ? 'on' : ''], ['7d', '30d', '90d', '1y']);
     $legacyRange = date('Y/m/d', strtotime($from)) . ' - ' . date('Y/m/d', strtotime($to));
@@ -121,5 +123,6 @@ function sl_reportsData($user, $core): array
     }
     $d['groups'] = $groups; $d['excel'] = $excel;
     $d['reportN'] = array_sum(array_map(fn($g) => count($g['items']), $groups));
+    $d['charts'] = sl_reportCharts($user, $from, $to);
     return $d;
 }

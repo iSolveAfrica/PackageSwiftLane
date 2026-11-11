@@ -10,10 +10,11 @@ function sl_route($name, $params = []) { return strtolower($name) . '.php' . ($p
 function sl_url($params = []) { return '?' . http_build_query($params); }
 function sl_num($n) { return number_format((float) $n); }
 function sl_pager() { return ''; }
+function sl_date($value) { return date('M j, Y', strtotime($value)); }
 $core = (object) ['site_name' => 'Swift Lane'];
 ?>
 <!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Interaction fixture</title>
-<?php foreach (['swiftlane.css','app.css','pages/HandOut.css','pages/ops.css','pages/ControlPanels.css','pages/AirShipments.css','pages/StaffAI.css','pages/AiChatMobile.sheet.css','chart-interactions.css','ai-response.css'] as $css): ?><link rel="stylesheet" href="/assets/swiftlane/<?= $css ?>"><?php endforeach; ?>
+<?php foreach (['swiftlane.css','app.css','pages/Reports.css','pages/HandOut.css','pages/ops.css','pages/ControlPanels.css','pages/AirShipments.css','pages/StaffAI.css','pages/AiChatMobile.sheet.css','chart-interactions.css','ai-response.css'] as $css): ?><link rel="stylesheet" href="/assets/swiftlane/<?= $css ?>"><?php endforeach; ?>
 <style>.fixture-content{padding:24px;display:flex;flex-direction:column;gap:24px}.fixture-extra{padding:16px;background:var(--card);border:1px solid var(--line);border-radius:16px}.fixture-extra svg{width:100%;height:150px}#ai{min-width:0}.ai-th{min-width:0}.ai-chat{min-width:0}</style>
 <script defer src="/dataJs/sl/chart_interactions.js"></script>
 <div id="sl-app" class="sl-app"><main class="fixture-content">
@@ -62,6 +63,17 @@ include CDP_ROOT . '/views/sl/pages/partials/overview_intake.php';
 </div><section class="fixture-extra"><h2>Mixed chart</h2><svg id="mixed-chart" viewBox="0 0 400 150" <?= sl_chartAttrs([['name'=>'Shipments','values'=>[0,12,8]],['name'=>'Packages','values'=>[2,4,6]]], ['Nov 6','Nov 7','Nov 8'], 'Daily volume') ?>><rect x="175" y="25" width="50" height="125" fill="#D6D2CA"/><polyline points="0,130 200,110 400,90" fill="none" stroke="#E08A3C"/></svg></section>
 <section class="fixture-extra"><h2>Heatmap</h2><div class="sl-heat" id="test-heat" style="grid-template-columns:repeat(2,14px)"><b class="h0" title="Nov 7: 0 parcels"></b><b class="h3" title="Nov 8: 12 parcels"></b></div></section>
 <section class="fixture-extra"><div id="test-donut" class="donut" style="width:150px;height:150px;background:conic-gradient(#333 0% 60%,#abc 60% 100%);border-radius:50%" <?= sl_chartAttrs([['name'=>'Parcels','values'=>[0,12,8]]], ['No data','In transit','Delivered'], 'Status mix', null, null, 'donut') ?>></div></section>
+<div id="report-chart-fixture">
+<?php
+$d = ['from'=>'2026-11-01','to'=>'2026-11-03','charts'=>[
+ ['title'=>'Registration trend','sub'=>'Daily registrations','kind'=>'line','labels'=>['Nov 1','Nov 2','Nov 3'],'series'=>[['name'=>'Air shipments','color'=>'#D9792B','values'=>[2,0,5]]]],
+ ['title'=>'Top destinations','sub'=>'Top cities in selected dates','kind'=>'bars','labels'=>['Accra','Kumasi'],'series'=>[['name'=>'Shipments','color'=>'#2F7FC8','values'=>[10,4]]]],
+ ['title'=>'Warehouse age today','sub'=>'Age since registration','kind'=>'bars','labels'=>['0–7 days','8–14 days'],'series'=>[['name'=>'Parcels','color'=>'#B88632','values'=>[0,0]]]],
+ ['title'=>'Payment status','sub'=>'Invoice counts','kind'=>'bars','labels'=>['Paid','Unpaid'],'series'=>[['name'=>'Shipments','color'=>'#0E9A70','values'=>[8,6]]]]
+]];
+include CDP_ROOT . '/views/sl/pages/partials/report_charts.php';
+?>
+</div>
 <section id="handout-fixture">
 <?php
 function cdp_pickupCodeMask($phone) { return '•••• 0123'; }
