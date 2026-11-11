@@ -3,7 +3,7 @@
 (function () {
   'use strict';
   var tip = document.createElement('div'); tip.id = 'sl-chart-tooltip'; tip.className = 'sl-chart-tooltip'; tip.hidden = true;
-  (document.getElementById('sl-app') || document.body).appendChild(tip);
+  document.body.appendChild(tip);
   var guide = document.createElement('div'); guide.className = 'sl-chart-guide'; guide.hidden = true; document.body.appendChild(guide);
   var active = null, pinned = false, focusBefore = null, restoringFocus = false;
   function restoreFocus(target) { if (!target) return; restoringFocus = true; target.focus(); restoringFocus = false; }
