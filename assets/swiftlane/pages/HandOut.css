@@ -1,14 +1,22 @@
 /* Page styles of HandOut.dc.html (from the approved design) */
-.ho{display:grid;grid-template-columns:320px minmax(0,1fr);gap:16px;align-items:start}
+.ho{display:grid;grid-template-columns:minmax(250px,300px) minmax(0,1fr);gap:20px;align-items:start;min-width:0}
 @media (max-width:1100px){.ho{grid-template-columns:1fr}}
 .ho-steps{display:flex;gap:8px;flex-wrap:wrap}
 .ho-steps span{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 14px 0 6px;border-radius:999px;border:1px solid var(--line-2);background:var(--card);font:500 15.5px var(--font)}
 .ho-steps span b{width:28px;height:28px;border-radius:50%;background:var(--active);display:grid;place-items:center;font-size:14.5px}
 .ho-steps span.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}.ho-steps span.on b{background:var(--ink);color:var(--inverse)}
 .ho-steps span.done b{background:var(--green);color:#fff}
-.ho-q{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:var(--card);font:inherit;color:var(--ink);text-align:left;cursor:pointer;min-height:56px}
-.ho-q.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}.ho-q.gone{opacity:.45}
-.ho-big{display:flex;flex-direction:column;gap:16px;padding:22px;border-radius:22px;border:1px solid var(--line);background:var(--card)}
+.ho-queue{padding:16px;min-width:0;gap:12px}
+.ho-queue-list{display:flex;flex-direction:column;gap:8px;max-height:650px;overflow-y:auto;overscroll-behavior:contain;padding:2px 4px 4px 2px;scrollbar-width:thin}
+.ho-q{display:grid;grid-template-columns:32px minmax(0,1fr) auto;align-items:center;gap:9px;width:100%;box-sizing:border-box;padding:12px 10px;border:1px solid var(--line);border-radius:12px;background:var(--card);font:inherit;color:var(--ink);text-align:left;cursor:pointer;flex:none;min-height:88px;text-decoration:none}
+.ho-q .sl-av{width:32px;height:32px;font-size:12px}
+.ho-queue-name{line-height:1.4;overflow-wrap:anywhere}
+.ho-queue-meta{font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+.ho-q .sl-pill{font-size:11px;padding:3px 7px;white-space:nowrap}
+.ho-q:hover{background:var(--hover)}
+.ho-q.on{border-color:var(--ink-2);background:var(--active);box-shadow:inset 3px 0 0 var(--ink)}.ho-q.gone{opacity:.45}
+.ho-q:focus-visible{outline:2px solid var(--ink);outline-offset:1px}
+.ho-big{display:flex;flex-direction:column;gap:20px;padding:24px;min-width:0;border-radius:22px;border:1px solid var(--line);background:var(--card)}
 .ho-code{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;max-width:520px}
 .ho-code span{height:72px;border-radius:16px;border:1.5px solid var(--line-2);background:var(--field);display:grid;place-items:center;font:600 32px var(--mono)}
 .ho-code span.cur{border-color:var(--ink);box-shadow:0 0 0 2px var(--ink)}
@@ -17,7 +25,7 @@
 .ho-pad button{height:58px;border-radius:14px;border:1px solid var(--line);background:var(--card);font:500 22px var(--font);color:var(--ink);cursor:pointer}
 .ho-pad button:active{background:var(--active)}
 .ho-cust{display:flex;align-items:center;gap:14px;padding:14px;border-radius:16px;background:var(--field)}
-.ho-pk{display:grid;grid-template-columns:44px minmax(0,1fr) 110px 120px;gap:12px;align-items:center;padding:14px;border:1.5px solid var(--line);border-radius:16px;background:var(--card)}
+.ho-pk{display:grid;grid-template-columns:56px minmax(0,1fr) auto 22px;gap:12px;align-items:center;padding:14px;border:1.5px solid var(--line);border-radius:16px;background:var(--card)}
 .ho-pk.ok{border-color:var(--green);background:var(--green-bg)}
 .ho-pk.fresh{animation:hoS .9s}@keyframes hoS{from{transform:scale(1.02);box-shadow:0 0 0 4px rgba(47,143,91,.25)}}
 .ho-bay{display:flex;flex-direction:column;align-items:center;justify-content:center;height:56px;border-radius:12px;background:var(--ink);color:var(--inverse)}
@@ -31,3 +39,35 @@
 .ho-bad{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:var(--red-bg);color:var(--red-ink)}
 .ho-chk{display:flex;align-items:center;gap:10px;min-height:48px;padding:0 12px;border:1px solid var(--line);border-radius:14px;background:var(--card);cursor:pointer;font:inherit;color:var(--ink)}
 .ho-done{display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px;padding:30px}
+
+.ho-code-inputs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;width:100%;max-width:400px}
+.ho-code-inputs .ho-digit{width:100%;min-width:0;height:60px;text-align:center;padding:0;font-size:26px;border-radius:12px}
+.ho-code-help{flex-basis:100%;line-height:1.5;max-width:60ch}
+.ho-pk{min-width:0}
+.ho-pk .col{overflow-wrap:anywhere;line-height:1.5}
+.ho-package-check{width:18px;height:18px;margin:0;accent-color:var(--green)}
+.ho-cust{flex-wrap:wrap}
+.ho-cust .grow{min-width:140px;overflow-wrap:anywhere;line-height:1.5}
+.ho-scan{height:auto;min-height:60px;flex-wrap:wrap;padding:12px;box-sizing:border-box}
+.ho-scan input{min-width:0;width:0;flex:1 1 160px;font-size:15px}
+.ho-big .ho-bad[hidden],.ho-big .ho-done[hidden],.ho-big .ho-hide-done[hidden]{display:none!important}
+@media(max-width:1100px){.ho-queue-list{max-height:320px}}
+@media(max-width:600px){
+.ho{gap:14px}.ho-big{padding:16px;gap:16px}
+.ho-steps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.ho-steps span{font-size:12px;height:38px;padding-right:8px;gap:6px}
+.ho-steps span b{width:24px;height:24px;font-size:12px;flex:none}
+.ho-pk{grid-template-columns:48px minmax(0,1fr) 22px;gap:10px;padding:12px}
+.ho-pk>.mono{grid-column:2;grid-row:2;font-size:11px;color:var(--muted)}
+.ho-package-check{grid-column:3;grid-row:1 / span 2}
+.ho-bay{grid-row:1 / span 2}
+.ho-cust .sl-av{width:40px;height:40px;font-size:16px}
+.ho-code-inputs{gap:6px}.ho-code-inputs .ho-digit{height:50px;font-size:22px}
+.ho-code-actions .sl-btn{flex:1;justify-content:center;white-space:normal;height:auto;min-height:44px;padding:10px}
+.ho-big .grid.cols3{grid-template-columns:1fr}
+.ho-chk{padding:10px 12px}
+}
+@media(prefers-reduced-motion:reduce){.ho-pk.fresh,.ho-beam{animation:none}}
+.ho-queue{align-self:start;height:fit-content}
+.ho-queue-list{flex:none}
+.ho-pri:disabled{opacity:.45;cursor:not-allowed}

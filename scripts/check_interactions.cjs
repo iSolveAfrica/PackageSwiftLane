@@ -155,6 +155,34 @@ const fixture = rendered.stdout;
   assert.equal(await page.locator('.ai-m').last().getByRole('button', { name: 'Download table (.csv)' }).count(), 1);
   // Downloads and formatting never perform provider calls.
   assert.equal(calls.length, 1);
+  // Real hand-out template: long customer names and package descriptions must fit.
+  const handout = page.locator('#handout-fixture');
+  for (const width of [1440, 1100, 390]) {
+   await page.setViewportSize({ width, height: 1000 });
+   await handout.scrollIntoViewIfNeeded();
+   assert.equal(await handout.evaluate(root => {
+    const queue = root.querySelector('.ho-queue-list');
+    if (queue.scrollHeight <= queue.clientHeight) return false;
+    return Array.from(root.querySelectorAll('.ho-q,.ho-pk,.ho-code-inputs')).every(row => {
+     const box = row.getBoundingClientRect();
+     return Array.from(row.children).every(child => { const r = child.getBoundingClientRect(); return r.left >= box.left - 1 && r.right <= box.right + 1 && r.bottom <= box.bottom + 1; });
+    });
+   }), true, 'Hand-out contents must fit at width ' + width);
+   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false);
+   if (process.env.UI_SCREENSHOTS) await handout.screenshot({ path: path.join(process.env.UI_SCREENSHOTS, 'handout-' + width + '.png'), style: '#nav-fixture,#ai-fixture{display:none!important}' });
+  }
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.route('**/ajax/sl/warehouse_ajax.php', async route => {
+   assert.match(route.request().postData(), /verify_customer/);
+   await route.fulfill({ json: { success: true, message: 'Verified', verified: ['air:1','air:2','air:3'] } });
+  });
+  assert.equal(await handout.locator('#ho-go').isDisabled(), true);
+  for (let i = 0; i < 6; i++) await handout.locator('.ho-digit').nth(i).fill(String(i + 1));
+  await handout.locator('#ho-verify').click();
+  await handout.locator('#ho-flow.is-verified').waitFor();
+  assert.equal(await handout.locator('.ho-package-check:disabled').count(), 0);
+  await handout.locator('#ho-scan-in').fill('SL-TEST-001'); await handout.locator('#ho-scan-in').press('Enter');
+  assert.equal(await handout.locator('[data-trk="SL-TEST-001"]').evaluate(node => node.classList.contains('scanned')), true);
   if (process.env.UI_SCREENSHOTS) { fs.mkdirSync(process.env.UI_SCREENSHOTS, { recursive: true }); await page.locator('#ai-fixture').screenshot({ path: path.join(process.env.UI_SCREENSHOTS, 'ai-desktop.png') }); await page.locator('#control-fixture').screenshot({ path: path.join(process.env.UI_SCREENSHOTS, 'charts-desktop.png') }); }
   await page.setViewportSize({ width: 390, height: 844 });
   await monthly.tap();

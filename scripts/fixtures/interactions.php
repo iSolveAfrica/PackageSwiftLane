@@ -13,7 +13,7 @@ function sl_pager() { return ''; }
 $core = (object) ['site_name' => 'Swift Lane'];
 ?>
 <!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Interaction fixture</title>
-<?php foreach (['swiftlane.css','app.css','pages/ControlPanels.css','pages/AirShipments.css','pages/StaffAI.css','pages/AiChatMobile.sheet.css','chart-interactions.css','ai-response.css'] as $css): ?><link rel="stylesheet" href="/assets/swiftlane/<?= $css ?>"><?php endforeach; ?>
+<?php foreach (['swiftlane.css','app.css','pages/HandOut.css','pages/ops.css','pages/ControlPanels.css','pages/AirShipments.css','pages/StaffAI.css','pages/AiChatMobile.sheet.css','chart-interactions.css','ai-response.css'] as $css): ?><link rel="stylesheet" href="/assets/swiftlane/<?= $css ?>"><?php endforeach; ?>
 <style>.fixture-content{padding:24px;display:flex;flex-direction:column;gap:24px}.fixture-extra{padding:16px;background:var(--card);border:1px solid var(--line);border-radius:16px}.fixture-extra svg{width:100%;height:150px}#ai{min-width:0}.ai-th{min-width:0}.ai-chat{min-width:0}</style>
 <script defer src="/dataJs/sl/chart_interactions.js"></script>
 <div id="sl-app" class="sl-app"><main class="fixture-content">
@@ -62,6 +62,16 @@ include CDP_ROOT . '/views/sl/pages/partials/overview_intake.php';
 </div><section class="fixture-extra"><h2>Mixed chart</h2><svg id="mixed-chart" viewBox="0 0 400 150" <?= sl_chartAttrs([['name'=>'Shipments','values'=>[0,12,8]],['name'=>'Packages','values'=>[2,4,6]]], ['Nov 6','Nov 7','Nov 8'], 'Daily volume') ?>><rect x="175" y="25" width="50" height="125" fill="#D6D2CA"/><polyline points="0,130 200,110 400,90" fill="none" stroke="#E08A3C"/></svg></section>
 <section class="fixture-extra"><h2>Heatmap</h2><div class="sl-heat" id="test-heat" style="grid-template-columns:repeat(2,14px)"><b class="h0" title="Nov 7: 0 parcels"></b><b class="h3" title="Nov 8: 12 parcels"></b></div></section>
 <section class="fixture-extra"><div id="test-donut" class="donut" style="width:150px;height:150px;background:conic-gradient(#333 0% 60%,#abc 60% 100%);border-radius:50%" <?= sl_chartAttrs([['name'=>'Parcels','values'=>[0,12,8]]], ['No data','In transit','Delivered'], 'Status mix', null, null, 'donut') ?>></div></section>
+<section id="handout-fixture">
+<?php
+function cdp_pickupCodeMask($phone) { return '•••• 0123'; }
+$sampleName = 'Alexandria Mensah Boateng';
+$d = ['office'=>'New York','doneToday'=>17,'qN'=>84,'q'=>'','canCode'=>true,'canPkg'=>true,'queue'=>[], 'c'=>['id'=>1,'ini'=>'AM','name'=>$sampleName,'lock'=>'213295','phone'=>'0000000123','payCls'=>'pending','payL'=>'Balance due','unpaid'=>true,'code'=>['live'=>null], 'pkgs'=>[]]];
+for ($i=0;$i<16;$i++) $d['queue'][] = ['cls'=>$i===0?'on':'','href'=>'?customer='.($i+1),'ini'=>'AM','name'=>$sampleName,'lock'=>'213295','n'=>'14 parcels','wait'=>'Mar 24','pc'=>'delivered','st'=>'Ready'];
+for ($i=1;$i<=3;$i++) $d['c']['pkgs'][] = ['module'=>'air','oid'=>$i,'id'=>'SL-TEST-00'.$i,'bay'=>'A12','what'=>'Computer parts and accessories with a long package description','w'=>'1.6 lb','cleared'=>true,'days'=>'4 days'];
+include CDP_ROOT . '/views/sl/pages/HandOut.php';
+?>
+</section>
 <section class="fixture-extra" id="model-fixture">
 <form id="aic-form"><input name="provider" type="hidden" value="openai"><button type="button" data-prov="openai" data-models='{"saved-model":"Saved model"}'>OpenAI</button><button type="button" data-prov="anthropic" data-models='{"other-model":"Other model"}'>Claude</button>
 <?php $d = ['provider'=>'openai','model'=>'saved-model','providers'=>['openai'=>['models'=>['saved-model'=>'Saved model']]]]; include CDP_ROOT . '/views/sl/pages/partials/ai_model_picker.php'; ?>
