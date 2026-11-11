@@ -1,6 +1,5 @@
       </div>
     </main>
-    <aside class="sl-shortcuts" data-shortcuts-user="<?= (int) $_SESSION['userid'] ?>" aria-label="My shortcuts"><strong>Shortcuts</strong><div class="sl-shortcuts-list" aria-live="polite"></div><p>Drag a menu item here, or use its pin button.</p></aside>
   </div>
 </div>
 <?php include CDP_ROOT . "/views/sl/inc/mobile_nav.php"; ?>
