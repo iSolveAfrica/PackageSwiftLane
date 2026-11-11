@@ -12,7 +12,7 @@ if (CDP_APP_MODE_DEMO === true) sl_json(['success' => false, 'message' => 'Demo 
 require_permission('prealert_add');
 $isClient = sl_userIs('client');
 $errors = [];
-foreach (['tracking' => 'Tracking number is required', 'provider' => 'Supplier is required', 'courier' => 'Pick a carrier', 'price' => 'Price is required', 'description' => 'Say what is in it', 'date' => 'Expected date is required'] as $k => $m) {
+foreach (['tracking' => 'Tracking number is required', 'courier' => 'Pick a carrier', 'price' => 'Price is required', 'description' => 'Say what is in it', 'date' => 'Expected date is required'] as $k => $m) {
     if (trim((string) ($_POST[$k] ?? '')) === '') $errors[$k] = $m;
 }
 $customer = $isClient ? (int) $_SESSION['userid'] : (int) ($_POST['customer_id'] ?? 0);
@@ -41,7 +41,7 @@ if ($hasFile) {
     $url = 'pre_alert_files/' . $name;
 }
 $data = [
-    'tracking_prealert' => cdp_sanitize(trim($_POST['tracking'])), 'provider_prealert' => cdp_sanitize($_POST['provider']), 'courier_prealert' => (int) $_POST['courier'],
+    'tracking_prealert' => cdp_sanitize(trim($_POST['tracking'])), 'provider_prealert' => cdp_sanitize((string) ($_POST['provider'] ?? '')), 'courier_prealert' => (int) $_POST['courier'],
     'customer_id' => $customer, 'price_prealert' => (float) $_POST['price'], 'description_prealert' => cdp_sanitize($_POST['description']),
     'estimated_date' => date('Y-m-d', strtotime((string) $_POST['date']) ?: time()), 'prealert_date' => date('Y-m-d H:i:s'), 'file_invoice' => $url,
 ];
@@ -55,5 +55,5 @@ try {
         cdp_insertNotificationsUsers($nid, $customer);
     }
 } catch (Throwable $e) { /* notification is best-effort */ }
-cdp_activityLog(['module' => 'prealerts', 'action' => 'create', 'action_label' => 'Raised pre-alert', 'verb' => 'create', 'outcome' => 'ok', 'entity_type' => 'prealert', 'entity_id' => (int) $id, 'entity_label' => $data['tracking_prealert'], 'summary' => 'Raised pre-alert ' . $data['tracking_prealert'] . ' from ' . $data['provider_prealert']]);
+cdp_activityLog(['module' => 'prealerts', 'action' => 'create', 'action_label' => 'Raised pre-alert', 'verb' => 'create', 'outcome' => 'ok', 'entity_type' => 'prealert', 'entity_id' => (int) $id, 'entity_label' => $data['tracking_prealert'], 'summary' => 'Raised pre-alert ' . $data['tracking_prealert']]);
 sl_json(['success' => true, 'message' => 'Pre-alert saved']);
