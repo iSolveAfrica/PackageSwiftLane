@@ -13,6 +13,7 @@ if (!in_array($tab, ['home', 'route', 'pay'], true)) $tab = 'home';
 <div class="da">
 <header class="da-top"><?php if ($j || $tab !== 'home'): ?><a class="da-ib" aria-label="Back" href="<?= sl_route('DriverApp') ?>"><i class="ic i-left" aria-hidden="true"></i></a><?php else: ?><span class="sl-av" style="width:44px;height:44px"><?= h($d['ini']) ?></span><?php endif; ?><h1><?= h($j ? $j['trk'] : ($tab === 'pay' ? 'My earnings' : ($tab === 'route' ? "Today's route" : 'Hi ' . explode(' ', $d['name'] ?: 'rider')[0]))) ?></h1><a class="da-ib" href="<?= sl_route('Notifications') ?>" aria-label="Alerts"><i class="ic i-bell" aria-hidden="true"></i><?php if (!empty($d['unread'])): ?><b><?= (int) $d['unread'] ?></b><?php endif; ?></a></header>
 <main class="da-body" id="sl-main">
+<?php if (!empty($d['isRider']) && !$j && $tab==='home') include __DIR__ . '/partials/rider_app_hero.php'; ?>
 <?php if (!empty($d['isRider']) && !$j) include __DIR__ . '/partials/rider_delivery_requests.php'; ?>
 <?php if (!$d['isRider']): ?>
 <section class="da-sheet"><b class="fw5">This screen is for riders</b><span class="mut sm">Sign in with a driver account to see assigned pickups and deliveries. Staff can assign jobs on the dispatch board.</span><a class="da-pri" href="<?= sl_route('RiderDispatch') ?>">Open dispatch board</a><a class="da-sec" href="<?= sl_route('Main') ?>" style="flex:none">Back to overview</a></section>

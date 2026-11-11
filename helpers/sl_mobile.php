@@ -17,7 +17,7 @@ function sl_mobileLinks($user): array
         ['Account', 'user', sl_route('AiStudio')],
     ];
     if (sl_mobileRole() !== 'customer') return [];
-    $links = [['Home', 'grid', sl_route('Main')], ['Track', 'route', sl_route('PublicTracking')], ['Codes', 'key', sl_route('PickupCodes')]];
+    $links = [['Home', 'grid', sl_route('Main')], ['Parcels', 'box', sl_route('MyParcels')], ['Codes', 'key', sl_route('PickupCodes')]];
     if (cdp_financeEnabled() && $user->cdp_hasPermission('view_my_bills')) $links[] = ['Bills', 'card', sl_route('MyBills')];
     $links[] = ['Support', 'message', 'support.php'];
     return $links;

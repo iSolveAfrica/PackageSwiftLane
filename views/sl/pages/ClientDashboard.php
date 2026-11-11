@@ -1,4 +1,4 @@
-<a class="sl-btn ghost" href="<?= h(sl_route('DeliveryRequest')) ?>"><i class="ic i-truck" aria-hidden="true"></i>Request delivery / My deliveries</a>
+<a class="sl-btn ghost sl-desktop-delivery-cta" href="<?= h(sl_route('DeliveryRequest')) ?>"><i class="ic i-truck" aria-hidden="true"></i>Request delivery / My deliveries</a>
 <?php
 /**
  * ClientDashboard - from docs/handover/artifact-source/ClientDashboard.dc.html (scripts/sl_convert.py), bound to index.php (client branch).
@@ -15,6 +15,7 @@ $steps = sl_get($d, 'latestSteps');
           <div class="row g8 wrap"><?php if (sl_get($d, 'canPrealert')): ?><a class="sl-btn ghost" href="<?= sl_route('PreAlerts') ?>"><i class="ic ic-sm i-inbox" aria-hidden="true"></i>Add Pre-Alert</a><?php endif; ?><?php if (sl_get($d, 'canShip')): ?><a class="sl-btn" href="courier_add_client.php"><i class="ic ic-sm i-plus" aria-hidden="true"></i>New Shipment</a><?php endif; ?></div>
         </div>
         <?php include __DIR__ . '/partials/mobile_dashboard.php'; ?>
+        <div class="sl-dashboard-detail">
         <div class="grid cols3">
           <a class="sl-card sl-metric" href="<?= sl_route('AirShipments') ?>" style="color:inherit"><div class="sl-ml"><span><i class="ic ic-sm i-plane" aria-hidden="true"></i>Active shipments</span></div><div class="sl-mv"><?= (int) sl_get($d, 'active') ?> <i>/ <?= (int) sl_get($d, 'year') ?> this year</i></div><div class="sl-ticks"><i style="width: <?= sl_pct(sl_get($d, 'active'), max(1, (int) sl_get($d, 'year'))) ?>%"></i></div></a>
           <?php if (sl_get($d, 'finance')): ?>
@@ -56,3 +57,5 @@ $steps = sl_get($d, 'latestSteps');
             <div class="row g8"><div class="sl-search" style="max-width:none;flex:1"><i class="ic ic-sm i-message" aria-hidden="true"></i><input name="q" aria-label="Ask support" placeholder="Ask anything about your parcels"></div><button class="sl-btn" type="submit" aria-label="Send"><i class="ic ic-sm i-send" aria-hidden="true"></i></button></div></form>
             <a class="sm mut" href="support.php">Prefer a person? Open a ticket with customer service →</a></section>
         </div>
+
+</div>

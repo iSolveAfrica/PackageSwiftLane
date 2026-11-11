@@ -24,6 +24,7 @@ function sl_routes(): array
         'ControlPanelsMobile3' => 'control_panels.php',
         'ExecDashboard'        => 'exec_dashboard.php',
         'ClientDashboard'      => 'index.php',
+        'MyParcels' => 'my_parcels.php',
         'UserHome'             => 'customers_profile_edit.php',
         'AccountSecurity'      => 'customers_profile_edit.php?edit=1#account-security',
         'DesignSystem'         => 'design_system.php',

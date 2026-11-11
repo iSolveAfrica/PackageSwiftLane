@@ -67,3 +67,5 @@ if ($direction_layout == 'rtl') {
 <?php
 }
 ?>
+
+<?php require_once __DIR__ . '/../../helpers/pwa.php'; sl_pwa_head(); ?>

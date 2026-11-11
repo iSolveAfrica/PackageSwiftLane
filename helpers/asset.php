@@ -17,9 +17,15 @@ if (!function_exists('cdp_asset')) {
     function cdp_asset(string $path): string
     {
         static $cache = [];
+        if (preg_match('#^(?:[a-z][a-z0-9+.-]*:|//)#i', $path)) return $path;
 
         // Strip any existing query string before stat-ing the file on disk.
         $rel = ltrim(strtok($path, '?'), '/');
+        if (defined('SL_PWA_ROOT_URL')) {
+            $prefix = trim(SL_PWA_ROOT_URL, '/');
+            if ($prefix !== '' && str_starts_with($rel, $prefix . '/')) $rel = substr($rel, strlen($prefix) + 1);
+            $path = SL_PWA_ROOT_URL . $rel . (str_contains($path, '?') ? '?' . explode('?', $path, 2)[1] : '');
+        }
 
         if (!array_key_exists($rel, $cache)) {
             // __DIR__ keeps resolution stable no matter which page includes us.

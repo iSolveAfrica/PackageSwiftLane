@@ -10,7 +10,7 @@ if (($tab??'')==='pay') {
     return;
 }
 ?>
-<section class="da-sheet" style="order:-3"><div class="row between wrap g8"><h2 class="sl-ct">Customer deliveries</h2><span class="sl-badge"><?= count($jobs) ?> requests</span></div>
+<section class="da-sheet <?= !$jobs ? 'pwa-empty-customer-jobs' : '' ?>" style="order:-3"><div class="row between wrap g8"><h2 class="sl-ct">Customer deliveries</h2><span class="sl-badge"><?= count($jobs) ?> requests</span></div>
 <?php if(!$jobs): ?><p class="mut sm">Customer-approved air and sea deliveries appear here when dispatch assigns them to you.</p><?php endif; ?>
 <?php if($open): ?><div id="dl-rider-map" style="height:300px;border-radius:16px;background:var(--field)" role="region" aria-label="Assigned delivery stops map"></div><p id="dl-rider-map-error" class="mut sm" hidden>Map unavailable. Use Navigate on a stop to open Google Maps.</p>
 <div id="dl-rider-map-config" data-browser-key="<?= h(getenv('CDP_GOOGLE_MAPS_BROWSER_KEY')?:$config['browser_key']) ?>" data-stops="<?= h(json_encode(array_map(fn($r)=>['id'=>(int)$r->id,'lat'=>(float)$r->lat,'lng'=>(float)$r->lng,'address'=>$r->address],array_slice($open,0,100)))) ?>"></div><?php endif; ?>

@@ -59,10 +59,10 @@ $ps = $d['phoneStatus'];
     <form class="sl-card col g12" data-sl-form data-sl-reload action="ajax/save_profile_document_ajax.php" method="post" enctype="multipart/form-data">
       <input type="hidden" name="id" value="<?= $id ?>">
       <div class="sl-ch" style="margin:0"><h2 class="sl-ct">ID document <span class="mut sm">(optional)</span></h2></div>
-      <div class="row g12"><img id="pe-doc" src="<?= h($d['document']) ?>" alt="ID document" style="width:96px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line);background:var(--field)"><span class="mut sm grow">Add a type and number, a photo, or both.</span></div>
+      <div class="row g12"><img id="pe-doc" <?= !empty($d['hasDoc']) ? 'src="' . h($d['document']) . '"' : 'hidden' ?> alt="ID document" style="width:96px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line);background:var(--field)"><span class="mut sm grow">Add a type and number, a photo, or both.</span></div>
       <?= sl_fSelect('ID type', 'document_type', $d['docTypes'], $r->document_type, 'Choose') ?>
       <?= sl_fInput('ID number', 'document_number', $r->document_number) ?>
-      <label class="sl-field"><span class="sl-lab">Photo of the ID</span><input class="sl-in" type="file" name="document_photo" accept="image/*" onchange="var f=this.files[0];if(f)document.getElementById('pe-doc').src=URL.createObjectURL(f)"></label>
+      <label class="sl-field"><span class="sl-lab">Photo of the ID</span><input class="sl-in" type="file" name="document_photo" accept="image/*" onchange="var f=this.files[0];if(f){var img=document.getElementById('pe-doc');img.src=URL.createObjectURL(f);img.hidden=false;}"></label>
       <div class="row g8"><button type="submit" class="sl-btn sm"><i class="ic ic-sm i-check" aria-hidden="true"></i>Save document</button><?php if ($d['hasDoc']): ?><a class="sl-btn ghost sm" href="<?= h($d['document']) ?>" target="_blank" rel="noopener"><i class="ic ic-sm i-eye" aria-hidden="true"></i>View</a><?php endif; ?></div>
     </form>
   </aside>
