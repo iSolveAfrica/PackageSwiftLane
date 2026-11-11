@@ -201,7 +201,7 @@ if (!function_exists('cdp_commEnsureTables')) {
 
             "CREATE TABLE IF NOT EXISTS cdb_comm_outbox (
                 id BIGINT NOT NULL AUTO_INCREMENT, user_id INT NOT NULL DEFAULT 0, recipient_to VARCHAR(190) NULL,
-                event_key VARCHAR(40) NOT NULL, channel VARCHAR(12) NOT NULL, kind VARCHAR(12) NOT NULL DEFAULT 'transactional',
+                event_key VARCHAR(40) NOT NULL, channel VARCHAR(12) NOT NULL, kind VARCHAR(16) NOT NULL DEFAULT 'transactional',
                 subject VARCHAR(190) NULL, body TEXT NOT NULL, template_id INT NULL, wa_params TEXT NULL,
                 entity_type VARCHAR(30) NULL, entity_ref VARCHAR(80) NULL, campaign_id INT NULL,
                 dedupe_key VARCHAR(190) NOT NULL, status VARCHAR(12) NOT NULL DEFAULT 'queued', attempts INT NOT NULL DEFAULT 0,
@@ -1012,6 +1012,9 @@ if (!function_exists('cdp_commResolveTrack')) {
         $vars = ['tracking' => (string) $r->order_track, 'status' => $status, 'track_url' => cdp_commTrackUrl($r->order_track), 'branch' => $info['branch'] ?: 'our office'];
         $base = 'trk' . (int) $r->id . ':' . $owner;
         $specific = $event !== '' ? array_keys(array_filter($rules[$event] ?? [])) : [];
+        // Channels the specific automation owns never get the generic alert,
+        // even when the specific message is suppressed (one survey a day).
+        $owned = $specific;
         $n = 0;
         if ($specific) {
             if ($event === 'delivery_schedule' || $event === 'failed_delivery') {
@@ -1031,7 +1034,7 @@ if (!function_exists('cdp_commResolveTrack')) {
                 $n += cdp_commQueueEvent($event, $owner, $vars, ['entity_type' => $info['type'], 'entity_ref' => $r->order_track, 'dedupe' => $base . ':' . $event, 'channels' => $specific])['queued'];
             }
         }
-        $generic = array_diff(array_keys(array_filter($rules['shipment_alert'] ?? [])), $specific);
+        $generic = array_diff(array_keys(array_filter($rules['shipment_alert'] ?? [])), $owned);
         if ($generic) {
             $n += cdp_commQueueEvent('shipment_alert', $owner, $vars, ['entity_type' => $info['type'], 'entity_ref' => $r->order_track, 'dedupe' => $base . ':alert', 'channels' => array_values($generic)])['queued'];
         }

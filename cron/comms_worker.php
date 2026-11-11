@@ -16,6 +16,9 @@ if (PHP_SAPI !== 'cli') {
     exit;
 }
 chdir(dirname(__DIR__));
+// Scheduled reports run as the system: whole business, money included, sent
+// only to the recipients an administrator configured (helpers/mgmt.php).
+define('CDP_OPS_SYSTEM_RUN', true);
 require_once 'loader.php';
 require_once 'helpers/querys.php';
 require_once 'helpers/comms.php';

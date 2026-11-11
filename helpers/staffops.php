@@ -191,11 +191,11 @@ if (!function_exists('cdp_staffEnsureTables')) {
 
 if (!function_exists('cdp_staffProfile')) {
 
-    function cdp_staffProfile($userId)
+    function cdp_staffProfile($userId, $fresh = false)
     {
         static $cache = [];
         $userId = (int) $userId;
-        if (!array_key_exists($userId, $cache)) {
+        if ($fresh || !array_key_exists($userId, $cache)) {
             $cache[$userId] = $userId > 0 ? cdp_opsOne("SELECT * FROM cdb_staff_profiles WHERE user_id = :u", [':u' => $userId]) : null;
         }
         return $cache[$userId];
@@ -428,7 +428,7 @@ if (!function_exists('cdp_staffBranches')) {
         if (cdp_opsRank() < 3 && $home && !in_array($home, cdp_staffBranchIds(), true)) {
             return ['ok' => false, 'error' => 'You can only place staff in your own branches.'];
         }
-        $status = in_array($d['status'] ?? 'active', ['active', 'suspended', 'left'], true) ? $d['status'] : 'active';
+        $status = in_array($d['status'] ?? '', ['active', 'suspended', 'left'], true) ? $d['status'] : 'active';
         $r = cdp_opsX("INSERT INTO cdb_staff_profiles (user_id, employee_no, job_role, home_branch_id, hire_date, status, approval_limit, notes, updated_by, updated_at)
                        VALUES (:u, :e, :r, :h, :hd, :s, :l, :n, :by, :now)
                        ON DUPLICATE KEY UPDATE employee_no = VALUES(employee_no), job_role = VALUES(job_role), home_branch_id = VALUES(home_branch_id), hire_date = VALUES(hire_date),
@@ -436,6 +436,7 @@ if (!function_exists('cdp_staffBranches')) {
             [':u' => $uid, ':e' => mb_substr(trim((string) ($d['employee_no'] ?? '')), 0, 30) ?: null, ':r' => $role, ':h' => $home,
                 ':hd' => cdp_opsDate($d['hire_date'] ?? '', '') ?: null, ':s' => $status, ':l' => max(0, (float) ($d['approval_limit'] ?? 0)),
                 ':n' => mb_substr(trim((string) ($d['notes'] ?? '')), 0, 255), ':by' => cdp_opsUid(), ':now' => cdp_opsNow()]);
+        cdp_staffProfile($uid, true);
         if ($r['ok'] && isset($d['branch_ids'])) {
             $ids = array_unique(array_filter(array_map('intval', (array) $d['branch_ids'])));
             if (cdp_opsRank() < 3) {

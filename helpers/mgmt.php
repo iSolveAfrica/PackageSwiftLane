@@ -90,11 +90,17 @@ if (!function_exists('cdp_mgmtEnsureTables')) {
         return $rank >= 2 && in_array(cdp_staffJobRole($u), ['branch_manager', 'finance_officer'], true);
     }
 
+    /** The scheduled-report worker (cron/comms_worker.php) defines CDP_OPS_SYSTEM_RUN. */
+    function cdp_mgmtSystemRun()
+    {
+        return PHP_SAPI === 'cli' && defined('CDP_OPS_SYSTEM_RUN') && CDP_OPS_SYSTEM_RUN === true;
+    }
+
     function cdp_mgmtCanMoney($u = null)
     {
         global $user;
         $u = $u ?: $user;
-        if (PHP_SAPI === 'cli') {
+        if (cdp_mgmtSystemRun()) {
             return true;    // scheduled reports go to the recipients an administrator chose
         }
         return cdp_opsRank($u) >= 4 || cdp_canViewMoney($u, 'reports');
@@ -131,7 +137,7 @@ if (!function_exists('cdp_mgmtFilters')) {
         $prevTo = date('Y-m-d', strtotime($from . ' -1 day'));
         $prevFrom = date('Y-m-d', strtotime($prevTo . ' -' . ($days - 1) . ' days'));
         $branch = (int) ($in['branch_id'] ?? 0);
-        $allowed = cdp_opsRank() >= 3 || PHP_SAPI === 'cli' ? null : cdp_staffBranchIds();
+        $allowed = (cdp_opsRank() >= 3 || cdp_mgmtSystemRun()) ? null : cdp_staffBranchIds();
         if ($allowed !== null && $branch && !in_array($branch, $allowed, true)) {
             $branch = 0;
         }
@@ -443,7 +449,7 @@ if (!function_exists('cdp_mgmtShipmentStats')) {
         $rows = [];
         $sla = cdp_mgmtSlaSql();
         foreach (cdp_staffBranches(true) as $b) {
-            if (cdp_opsRank() < 3 && PHP_SAPI !== 'cli' && !in_array((int) $b->id, cdp_staffBranchIds(), true)) {
+            if (cdp_opsRank() < 3 && !cdp_mgmtSystemRun() && !in_array((int) $b->id, cdp_staffBranchIds(), true)) {
                 continue;
             }
             $parts = [];
