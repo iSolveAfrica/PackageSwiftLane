@@ -166,6 +166,7 @@ function sl_navCustomer(): array
     return [
         ['label' => 'My shipping', 'items' => [
             ['id' => 'dash', 'label' => 'Dashboard', 'icon' => 'grid', 'board' => 'Main', 'perm' => null],
+            ['id' => 'parcels', 'label' => 'All my parcels', 'icon' => 'box', 'board' => 'MyParcels', 'perm' => null],
             ['id' => 'myaccount', 'label' => 'My account', 'icon' => 'user', 'board' => 'UserHome', 'perm' => null],
             ['id' => 'air', 'label' => 'My Shipments', 'icon' => 'plane', 'board' => 'AirShipments', 'perm' => 'view_shipment_list',
                 'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_add_order WHERE sender_id = :u AND is_deleted = 0 AND status_courier NOT IN (8,15,21)", [':u' => $uid])],

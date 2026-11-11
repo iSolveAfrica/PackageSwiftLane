@@ -19,7 +19,9 @@ function dl_ready($parcel,array $config): bool
 function dl_url(string $path='delivery_request.php'): string
 {
     global $core;
-    $base=defined('CDP_APP_URL')?CDP_APP_URL:($core->site_url??'');return rtrim($base,'/').'/'.$path;
+    $base=defined('CDP_APP_URL')?CDP_APP_URL:($core->site_url??'');
+    if(preg_match('/^delivery_(request|job)\.php(?:[?]|$)/',$path,$match))$path='apps/'.($match[1]==='job'?'rider':'customer').'/app.php/'.$path;
+    return rtrim($base,'/').'/'.$path;
 }
 function dl_invite(int $status,string $label='',bool $html=false): string
 {

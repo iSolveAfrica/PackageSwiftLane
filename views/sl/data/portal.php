@@ -222,7 +222,7 @@ function sl_portalBase($userData, $core): array
 }
 
 /** Recent shipments + packages of the customer (merged, newest first). */
-function sl_portalShipments(int $uid, int $limit = 6, int $offset = 0, string $q = ''): array
+function sl_portalShipments(int $uid, int $limit = 6, int $offset = 0, string $q = '', string $filter = 'all'): array
 {
     $bind = [':u' => $uid, ':u2' => $uid];
     $w1 = $w2 = '';
@@ -232,6 +232,7 @@ function sl_portalShipments(int $uid, int $limit = 6, int $offset = 0, string $q
         $bind[':q'] = '%' . $q . '%';
         $bind[':q2'] = '%' . $q . '%';
     }
+    $w1 .= sl_portalFilterSql($filter, 'a.'); $w2 .= sl_portalFilterSql($filter, 'p.');
     $sql = "SELECT * FROM (
         SELECT 'air' AS src, a.order_id AS id, CONCAT(a.order_prefix,a.order_no) AS trk, a.order_date, a.total_weight, a.total_order, a.status_courier, a.provider_purchase, a.order_item_category, a.status_invoice FROM cdb_add_order a WHERE a.sender_id = :u AND a.is_deleted = 0 $w1
         UNION ALL
@@ -257,7 +258,7 @@ function sl_portalShipments(int $uid, int $limit = 6, int $offset = 0, string $q
     return $out;
 }
 
-function sl_portalCount(int $uid, string $q = ''): int
+function sl_portalCount(int $uid, string $q = '', string $filter = 'all'): int
 {
     $b = [':u' => $uid];
     $w1 = $w2 = '';
@@ -266,6 +267,7 @@ function sl_portalCount(int $uid, string $q = ''): int
         $w2 = $w1;
         $b[':q'] = '%' . $q . '%';
     }
+    $w1 .= sl_portalFilterSql($filter); $w2 .= sl_portalFilterSql($filter);
     return (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order WHERE sender_id = :u AND is_deleted = 0 $w1", $b)
         + (int) sl_scalar("SELECT COUNT(*) FROM cdb_customers_packages WHERE sender_id = :u $w2", $b);
 }
@@ -284,9 +286,11 @@ function sl_clientDashboardData($user, $core, $userData): array
     $billed = $d['finance'] ? (float) sl_scalar('SELECT COALESCE(SUM(total_order),0) FROM cdb_add_order WHERE sender_id = :u AND is_deleted = 0 AND status_courier <> 21', [':u' => $uid]) : 0;
     $d['duePct'] = sl_pct($d['dueAmt'], max(1, $billed));
     $d['rows'] = sl_portalShipments($uid, 6);
+    $d['mobileRows'] = sl_portalShipments($uid, 3, 0, '', 'active');
     // latest tracked parcel
     $latest = $d['rows'][0] ?? null;
     $d['latest'] = $latest;
+    $d['mobileDelivery'] = sl_tableExists('cdb_delivery_requests') ? sl_row("SELECT r.id,r.state,r.address,u.fname AS rider_name,u.phone AS rider_phone FROM cdb_delivery_requests r LEFT JOIN cdb_users u ON u.id=r.driver_id AND u.active=1 WHERE r.customer_id=:u AND r.state IN ('pending','assigned','onroute','failed') ORDER BY r.id DESC LIMIT 1", [':u'=>$uid]) : null;
     $d['tl'] = [];
     if ($latest) {
         $ev = array_reverse(cdp_getTrackEvents([$latest['id']]));
@@ -614,4 +618,17 @@ function sl_profileStudioData($user, $core, $userData): array
         'avatarEndpoint' => sl_userIs('client') ? 'ajax/customers/customers_avatar_edit_ajax.php' : 'ajax/users/users_avatar_edit_ajax.php',
         'isAdmin' => sl_userIs('admin') || sl_userIs('superadmin'),
     ];
+}
+
+/** Server-selected status filters; caller input never enters SQL. */
+function sl_portalFilterSql(string $filter,string $alias=''): string
+{
+    if($filter==='active')return " AND {$alias}status_courier NOT IN (8,15,21,12,16)";
+    if($filter==='delivered')return " AND {$alias}status_courier IN (8,15)";
+    if($filter==='ready'){
+        require_once CDP_ROOT.'/helpers/delivery_service.php';$config=dl_config();$ids=[];
+        foreach(sl_rows('SELECT id,mod_style FROM cdb_styles') as $status)if(dl_ready((object)['status_courier'=>$status->id,'status_name'=>$status->mod_style],$config))$ids[]=(int)$status->id;
+        return " AND {$alias}status_courier IN (".implode(',',$ids?:[6,32]).")";
+    }
+    return '';
 }

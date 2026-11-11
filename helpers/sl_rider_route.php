@@ -15,3 +15,11 @@ function sl_riderRouteMap(array $jobs): array
     $query = $second ? ['saddr' => $first, 'daddr' => $second, 'output' => 'embed'] : ['q' => $first, 'z' => 15, 'output' => 'embed'];
     return ['stops' => $stops, 'embed' => $first ? 'https://maps.google.com/maps?' . http_build_query($query, '', '&', PHP_QUERY_RFC3986) : '', 'leg' => $second !== ''];
 }
+
+/** WhatsApp links require an explicit international number, not an assumed country. */
+function sl_riderMessageLink(string $phone): string
+{
+    if(!str_starts_with(trim($phone),'+'))return '';
+    $digits=preg_replace('/\D/','',$phone);
+    return preg_match('/^[1-9][0-9]{7,14}$/',$digits)?'https://wa.me/'.$digits:'';
+}

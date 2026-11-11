@@ -12,7 +12,8 @@ $pics = sl_get($d, 'pics', []);
   <div class="lg-dim" aria-hidden="true" style="opacity:calc(var(--sl-dim,.3) + .5)"></div>
   <div class="lg-top"><div class="sl-brand" style="color:#fff"><span class="sl-logo"><i></i></span><?= sl_v($d, 'site') ?></div><a class="sm fw5" href="<?= sl_route('PublicTracking') ?>">Track a package →</a></div>
   <main class="lg-card">
-    <div class="col g6"><h1 style="font-size:28px;font-weight:500;letter-spacing:-.015em;margin:0"><?= sl_v($d, 'heading') ?></h1><p class="mut" style="margin:0">Log in to manage shipments, packages and pickups.</p></div>
+    <?php if (defined('SL_PWA_ROLE')): ?><span class="pwa-entry-label"><?= SL_PWA_ROLE==='rider'?'SWIFT LANE RIDER':'YOUR SWIFT LANE ACCOUNT' ?></span><?php endif; ?>
+    <div class="col g6"><h1 style="font-size:28px;font-weight:500;letter-spacing:-.015em;margin:0"><?= sl_v($d, 'heading') ?></h1><p class="mut" style="margin:0"><?= defined('SL_PWA_ROLE') ? (SL_PWA_ROLE==='rider' ? 'Sign in to your delivery run.' : 'Your parcels, pickup codes and deliveries, together.') : 'Log in to manage shipments, packages and pickups.' ?></p></div>
     <?php if (sl_get($d, 'notice')): ?><div class="sl-banner info" role="status"><i class="ic ic-sm i-info" aria-hidden="true"></i><span><?= sl_v($d, 'notice') ?></span></div><?php endif; ?>
     <?php foreach ((array) sl_get($d, 'errors', []) as $err): ?><div class="sl-banner bad" role="alert"><i class="ic ic-sm i-alert" aria-hidden="true"></i><span><?= h($err) ?></span></div><?php endforeach; ?>
     <form class="col g16" method="post" action="login.php" id="login-form" autocomplete="on">
@@ -26,7 +27,8 @@ $pics = sl_get($d, 'pics', []);
     </form>
     <div class="sl-sep" style="margin:0">or</div>
     <a class="sl-btn ghost block" href="<?= sl_route('ForgotPassword') ?>" style="height:44px" title="We send a one-time code to your email or WhatsApp"><i class="ic ic-sm i-phone" aria-hidden="true"></i>Reset my password with a one-time code</a>
-    <p class="mut sm" style="text-align:center;margin:0">New to <?= sl_v($d, 'site') ?>? <a href="<?= sl_route('SignUp') ?>" class="fw5" style="color: var(--ink); text-decoration: underline">Create an account</a></p>
+    <?php if (defined('SL_PWA_ROLE') && SL_PWA_ROLE==='rider'): ?><p class="mut sm" style="text-align:center;margin:0">Need rider access? Ask your dispatch team for an account.</p><?php else: ?>
+    <p class="mut sm" style="text-align:center;margin:0">New to <?= sl_v($d, 'site') ?>? <a href="<?= sl_route('SignUp') ?>" class="fw5" style="color: var(--ink); text-decoration: underline">Create an account</a></p><?php endif; ?>
   </main>
   <?php if (!empty($pics['captions'])): ?>
   <div class="lg-cap" aria-hidden="true" style="width:420px;max-width:calc(100vw - 80px)"><div class="lg-caps"><?= $pics['caps'] ?></div><div class="lg-dots"><?= $pics['dots'] ?></div></div>

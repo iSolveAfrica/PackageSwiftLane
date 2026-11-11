@@ -9,7 +9,8 @@ $mobilePath = sl_self();
     $parts = parse_url($href); parse_str($parts['query'] ?? '', $params);
     $active = basename($parts['path']) === $mobilePath;
     if ($mobilePath === 'driver_app.php') $active = $active && ($params['tab'] ?? 'home') === ($_GET['tab'] ?? 'home');
-    if ($label === 'Track' && $mobilePath === 'tracking.php') $active = true;
+    if ($label === 'Parcels' && in_array($mobilePath, ['courier_view.php','customer_packages_view.php','courier_shipment_tracking.php','customer_package_tracking.php'], true)) $active = true;
+    if ($label === 'Jobs' && $mobilePath === 'delivery_job.php') $active = true;
     if ($label === 'Bills' && in_array($mobilePath, ['pay_checkout.php', 'payment_return.php'], true)) $active = true;
 ?>
 <a href="<?= h($href) ?>"<?= $active ? ' aria-current="page"' : '' ?>><i class="ic i-<?= h($icon) ?>" aria-hidden="true"></i><span><?= h($label) ?></span></a>

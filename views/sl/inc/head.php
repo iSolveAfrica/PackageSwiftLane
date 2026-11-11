@@ -28,3 +28,5 @@ $slBoardCss = $slPage['board'] ? 'assets/swiftlane/pages/' . $slPage['board'] . 
 <script>
 (function(){try{var t=localStorage.getItem('sl.theme');if(t==='dark'||(t==='auto'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('sl-dark');}}catch(e){}})();
 </script>
+
+<?php require_once __DIR__ . '/../../../helpers/pwa.php'; sl_pwa_head(); ?>

@@ -1,0 +1,14 @@
+/* Actual handover controller in an isolated browser form; no backend writes. */
+const {chromium}=require('playwright'),assert=require('node:assert/strict'),path=require('node:path');
+(async()=>{const b=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',args:['--no-sandbox']});try{
+ const page=await b.newPage({viewport:{width:390,height:844}});await page.setContent(`<style>[hidden]{display:none!important}</style><form data-pwa-handover><ol data-pwa-steps hidden><li>PIN</li><li>Proof</li><li>Confirm</li></ol><fieldset data-pwa-step="0"><input name="code" required pattern="[0-9]{6}"><button type="button" data-pwa-next hidden>Next</button></fieldset><fieldset data-pwa-step="1"><input name="receiver" required minlength="2"><span data-pwa-photo-label>Photo</span><input type="file" name="photo" required accept="image/png"><img data-pwa-photo-preview hidden><button type="button" data-pwa-prev hidden>Back</button><button type="button" data-pwa-next hidden>Review</button></fieldset><fieldset data-pwa-step="2"><span data-pwa-review-receiver></span><button type="button" data-pwa-prev hidden>Back</button><button type="submit">Confirm delivery</button></fieldset></form>`);
+ await page.evaluate(()=>{window.sent=0;window.SL={toast:m=>window.lastToast=m};document.querySelector('form').addEventListener('submit',e=>{e.preventDefault();sent++;});});
+ await page.addScriptTag({path:path.resolve(__dirname,'../assets/swiftlane/pwa/handover.js')});
+ assert(await page.locator('[data-pwa-step="1"]').isHidden());await page.locator('[data-pwa-step="0"] button').click();assert(await page.locator('[data-pwa-step="0"]').isVisible());
+ await page.fill('[name=code]','123456');await page.locator('[data-pwa-step="0"] button').click();assert(await page.locator('[data-pwa-step="1"]').isVisible());
+ await page.fill('[name=receiver]','Ada Receiver');await page.locator('[name=photo]').setInputFiles({name:'handover.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==','base64')});assert(await page.locator('[data-pwa-photo-preview]').isVisible());
+ await page.locator('[data-pwa-step="1"] [data-pwa-next]').click();assert.equal(await page.locator('[data-pwa-review-receiver]').textContent(),'Ada Receiver');assert(await page.locator('[data-pwa-step="0"]').isHidden());
+ await page.context().setOffline(true);await page.locator('[type=submit]').click();assert.equal(await page.evaluate(()=>sent),0);assert((await page.evaluate(()=>lastToast)).includes('Reconnect'));
+ await page.context().setOffline(false);await page.locator('[type=submit]').click();assert.equal(await page.evaluate(()=>sent),1);
+ console.log('PWA handover checks passed: guided PIN/proof/review, photo preview, validation and online-only confirmation.');
+}finally{await b.close();}})().catch(e=>{console.error(e);process.exitCode=1});

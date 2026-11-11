@@ -1,7 +1,8 @@
 <section class="da-map-card" aria-label="Route map">
 <div class="da-map-heading"><span><b><?= $d['route']['leg'] ? 'Next route leg' : 'Your next stop' ?></b><small><?= count($d['route']['stops']) ?> mapped stop<?= count($d['route']['stops']) === 1 ? '' : 's' ?> · assigned order</small></span><a class="sl-btn sm ghost" href="<?= h(sl_route('DriverApp', ['tab' => 'route'])) ?>">All stops</a></div>
 <?php if ($d['route']['embed']): ?>
-<iframe class="da-route-map" id="da-route-map" title="<?= $d['route']['leg'] ? 'Map of the next two assigned stops and connecting route' : 'Map of the next assigned stop' ?>" src="<?= h($d['route']['embed']) ?>" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+<div class="pwa-run-map-placeholder" data-rider-map-placeholder><i class="ic i-route" aria-hidden="true"></i><b>See your route on the map</b><span class="sm">Preview the next leg, or use Navigate for turn-by-turn directions.</span><button class="sl-btn ghost" type="button" data-load-rider-map>Load route map</button></div>
+<iframe hidden class="da-route-map" id="da-route-map" title="<?= $d['route']['leg'] ? 'Map of the next two assigned stops and connecting route' : 'Map of the next assigned stop' ?>" src="about:blank" data-src="<?= h($d['route']['embed']) ?>" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
 <p class="da-map-note">Maps estimates locations from the saved address. Confirm the entrance with the customer. <a href="<?= h(sl_riderNavigation($d['route']['stops'][0]['addr'])) ?>" target="_blank" rel="noopener">Open in Maps</a></p>
 <div class="da-stop-list" aria-label="Assigned stops">
 <?php foreach ($d['route']['stops'] as $i => $stop): ?>

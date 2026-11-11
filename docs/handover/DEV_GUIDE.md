@@ -117,3 +117,18 @@ in `delivery_pricing.php`, and server-only Google calls in `delivery_google.php`
 External notifications must be queued after a transactional state change, never
 sent from inside that transaction. Keep delivery fees separate from shipping
 invoice clearance and never accept a price or distance supplied by the browser.
+
+## Separate customer and rider PWAs
+
+See [Customer and rider PWAs](CUSTOMER_RIDER_PWAS.md) for entry paths, manifests,
+role-scoped routing, install/update behavior, private-cache rules and deployment
+checks. `helpers/pwa.php` supplies metadata, `apps/router.php` adapts existing
+controllers under disjoint app scopes, and `assets/swiftlane/pwa/` holds the app
+runtime, UI, workers and icons. Do not add private pages or API data to the public
+worker cache, and do not queue handover/payment mutations offline.
+
+```bash
+node scripts/check_pwa_runtime.cjs http://localhost:8084
+node scripts/check_pwa_handover.cjs
+php scripts/check_customer_parcels.php   # disposable test/audit DB, read-only
+```

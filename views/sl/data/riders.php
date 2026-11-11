@@ -285,5 +285,14 @@ function sl_driverAppData($user, $core): array
     $d['week'] = $week; $d['weekEarned'] = sl_money($wk['rid']);
     $d['unread'] = (int) sl_scalar('SELECT COUNT(*) FROM cdb_notifications_users WHERE user_id = :u AND notification_read = 0', [':u' => $id]);
     $d['codesOn'] = function_exists('cdp_pickupCodeEnabled') ? cdp_pickupCodeEnabled() : true;
+    $deliveries=[];
+    if(sl_tableExists('cdb_delivery_requests'))$deliveries=sl_rows("SELECT * FROM cdb_delivery_requests WHERE driver_id=:u AND (state IN ('assigned','onroute','failed') OR (state='delivered' AND completed_at>=CURDATE())) ORDER BY FIELD(state,'onroute','assigned','failed','delivered'),approved_at,id",[':u'=>$id]);
+    $pending=array_values(array_filter($deliveries,fn($r)=>in_array($r->state,['assigned','onroute'],true)));
+    $deliveryNext=$pending[0]??null;$legacyNext=$d['next'];$hero=null;
+    if($deliveryNext&&(!$legacyNext||$legacyNext['st']!=='On route'||$deliveryNext->state==='onroute')){
+        $hero=['href'=>sl_route('DeliveryJob',['id'=>(int)$deliveryNext->id]),'name'=>$deliveryNext->contact_name,'address'=>$deliveryNext->address,'phone'=>$deliveryNext->contact_phone,'status'=>$deliveryNext->state==='onroute'?'On the way':'Ready to start','label'=>$deliveryNext->state==='onroute'?'Continue delivery':'Open next delivery','navigate'=>'https://www.google.com/maps/dir/?'.http_build_query(['api'=>1,'destination'=>$deliveryNext->lat.','.$deliveryNext->lng,'destination_place_id'=>$deliveryNext->place_id,'travelmode'=>'driving']),'parcels'=>count(json_decode($deliveryNext->parcel_json,true)?:[]),'type'=>'Delivery'];
+    }elseif($legacyNext){$hero=['href'=>sl_route('DriverApp',['job'=>$legacyNext['id']]),'name'=>$legacyNext['cust']==='Contact not supplied'?'Your next stop':$legacyNext['cust'],'address'=>$legacyNext['addr'],'phone'=>$legacyNext['phone'],'status'=>$legacyNext['st'],'label'=>$legacyNext['pickup']?'Open next pickup':'Continue delivery','navigate'=>sl_riderNavigation($legacyNext['addr']),'parcels'=>1,'type'=>$legacyNext['pickup']?'Pickup':'Delivery'];}
+    $d['pwaRun']=['next'=>$hero,'stops'=>count($pending)+count($openJobs),'parcels'=>array_sum(array_map(fn($r)=>count(json_decode($r->parcel_json,true)?:[]),$pending))+count($openJobs),'completed'=>$s['done']+count(array_filter($deliveries,fn($r)=>$r->state==='delivered'))];
+
     return $d;
 }
