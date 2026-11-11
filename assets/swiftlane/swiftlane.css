@@ -130,11 +130,11 @@ h1,h2,h3,h4,p{margin:0}
 .sl-nav-group>.sl-nav{padding:2px 6px 10px;gap:4px}
 @media(prefers-reduced-motion:reduce){.sl-nav-group>.sl-gl,.sl-group-icon,.sl-group-chevron{transition:none}}
 .sl-nav{display:flex;flex-direction:column;gap:2px}
-.sl-nav a{display:flex;align-items:center;gap:10px;height:40px;padding:0 10px;border-radius:var(--r-sm);font-size:16px;color:var(--ink)}
+.sl-nav a{display:flex;align-items:center;gap:10px;height:40px;padding:0 10px;border-radius:var(--r-sm);font-size:14.5px;color:var(--ink)}
 .sl-nav a:hover{background:var(--hover)}
 .sl-nav a.is-active{background:var(--active)}
 .sl-nav .ic{color:var(--ink-2)}
-.sl-nav .cnt{margin-left:auto;font-size:16px;color:var(--ink)}
+.sl-nav .cnt{margin-left:auto;font-size:14.5px;color:var(--ink)}
 .sl-nav .cnt em{font-style:normal;color:var(--muted)}
 .sl-nav .cnt.ok{color:var(--green-ink)}
 .sl-nav .danger{color:var(--red-ink)}.sl-nav .danger .ic{color:var(--red-ink)}
