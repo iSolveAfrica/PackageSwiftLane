@@ -23,6 +23,7 @@ ini_set('display_errors', 0);
 
 require_once("../../loader.php");
 require_once(__DIR__ . '/../../helpers/unique_ids.php');
+require_once(__DIR__ . '/../../helpers/sl_auth.php');
 
 require_once("../../helpers/querys.php");
 require_once(__DIR__ . '/../../helpers/ajax_guard.php');
@@ -142,7 +143,8 @@ if (empty($errors)) {
     $min_cost_tax           = $core->min_cost_tax;
     $min_cost_declared_tax  = $core->min_cost_declared_tax;
 
-    $date      = date('Y-m-d', strtotime(cdp_sanitize($_POST["order_date"])));
+    $quickLoad = !empty($_POST['quick_load_v2']);
+    $date      = $quickLoad ? date('Y-m-d') : date('Y-m-d', strtotime(cdp_sanitize($_POST["order_date"])));
     $time      = date("H:i:s");
     $date      = $date . ' ' . $time;
     $sale_date = date("Y-m-d H:i:s");
@@ -161,6 +163,11 @@ if (empty($errors)) {
         $code_prefix = cdp_sanitize($_POST["code_prefix2"]);
     } else {
         $code_prefix = cdp_sanitize($_POST["code_prefix"]);
+    }
+    if ($quickLoad) {
+        $country = strtoupper(trim((string) ($_POST['number_country'] ?? '')));
+        $countryValid = $country !== '' && preg_match('/^[A-Z]{2}$/', $country) && sl_scalar('SELECT COUNT(*) FROM cdb_countries WHERE iso2 = :code AND is_active = 1', [':code' => $country]);
+        $code_prefix = (string) ($settings->prefix ?? 'SL-') . ($countryValid ? $country . '-' : '');
     }
 
     $is_pickup       = false;
@@ -254,8 +261,8 @@ if (empty($errors)) {
         'status_invoice'       => $status_invoice,
         'volumetric_percentage'=> $meter,
         'manual_tariff'        => $tariff_mode,
-        'tracking_number' => cdp_sanitize(intval($_POST['tracking_number'])),
-        'estimated_eta' => cdp_sanitize($_POST['estimated_eta']),
+        'tracking_number' => cdp_sanitize(trim((string) ($_POST['tracking_number'] ?? ''))),
+        'estimated_eta' => $quickLoad ? '' : cdp_sanitize($_POST['estimated_eta']),
         'recipient_type' => cdp_sanitize($_POST['recipient_type'] ?? 'recipient'),
         'notify_whatsapp_sender' => (isset($_POST['notify_whatsapp_sender']) && intval($_POST['notify_whatsapp_sender']) === 1) ? 1 : 0,
         // Dangerous-goods (hazmat) flag — checkbox only posts when checked.
@@ -320,6 +327,7 @@ if (empty($errors)) {
             $declared_value_tax = floatval($_POST["declared_value_tax"]);
             $insurance_value    = floatval($_POST["insurance_value"]);
             $tax_value          = floatval($_POST["tax_value"]);
+            $tariffs_value = 0; $declared_value_tax = 0; $tax_value = 0; // Retired charges
             $discount_value     = floatval($_POST["discount_value"]);
             $reexpedicion_value = floatval($_POST["reexpedicion_value"]);
             $price_lb           = floatval($_POST["price_lb"]);
@@ -452,7 +460,8 @@ if (empty($errors)) {
             }
 
             // == SEGURO ==
-            $total_seguro = $insured_value * ($insurance_value / 100);
+            $insurance_value = (float) ($settings->insurance ?? 0);
+            $total_seguro = sl_insuranceCharge((float) $insured_value, (float) $insurance_value);
 
             // == PESO TOTAL (para arancel) ==
             $total_peso = $sumador_libras + $sumador_volumetric;
@@ -491,7 +500,7 @@ if (empty($errors)) {
             'tax_value'                   => floatval($tax_value),          // %
             'declared_value'              => floatval($declared_value_tax), // %
             'total_reexp'                 => floatval($reexpedicion_value),
-            'total_declared_value'        => floatval($total_valor_declarado),
+            'total_declared_value'        => floatval($sumador_valor_declarado),
             'total_fixed_value'           => floatval($max_fixed_charge),
             'total_tax_discount'          => floatval($total_descuento),
             'total_tax_insurance'         => floatval($total_seguro),
@@ -941,7 +950,11 @@ if (empty($errors)) {
             error_log('Error generating or sending SMS for receiver: ' . $e->getMessage());
         }
 
-        cdp_insertPackageTracking($shipment_id, $_SESSION['userid'], cdp_sanitize($_POST['tracking_number']), cdp_sanitize($_POST['estimated_eta']));
+        $trackingNumbers = preg_split('/[\r\n,;]+/', (string) ($_POST['tracking_number'] ?? ''));
+        $trackingNumbers = array_slice(array_unique(array_filter(array_map('trim', $trackingNumbers))), 0, 10);
+        foreach ($trackingNumbers as $trackingNumber) {
+            cdp_insertPackageTracking($shipment_id, $_SESSION['userid'], cdp_sanitize(substr($trackingNumber, 0, 120)), $quickLoad ? null : cdp_sanitize($_POST['estimated_eta']));
+        }
 
         cdp_activityLog([
             'module'       => 'shipments',

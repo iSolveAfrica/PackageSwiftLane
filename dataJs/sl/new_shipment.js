@@ -23,6 +23,12 @@
 
   // ---- sender search (locker, name, phone, e-mail) ----
   var sSel = $('[data-ns-sender]'), saSel = $('[data-ns-saddr]'), rSel = $('[data-ns-recip]'), raSel = $('[data-ns-raddr]');
+  var senderSummary = $('[data-ns-sender-summary]');
+  function showSender() {
+    if (!senderSummary || !sSel || !sSel.value) return;
+    senderSummary.textContent = (sSel.selectedOptions[0]?.textContent || 'Sender') + ' · ' + (saSel.selectedOptions[0]?.textContent || 'No address on file');
+    $('[data-ns-change-sender]').hidden = false;
+  }
   function findSender() {
     var q = ($('[data-ns-find]') || {}).value || '';
     if (q.trim().length < 2) { SL.toast('Type at least 2 characters', true); return; }
@@ -43,8 +49,7 @@
     if (!id) return;
     if (!client) {
       var t = sSel.options[sSel.selectedIndex];
-      $('[data-ns-contact]').textContent = t ? t.textContent : '';
-      get('ajax/select2_sender_addresses.php?id=' + encodeURIComponent(id)).then(function (rows) { fill(saSel, (rows || []).map(function (a) { return { id: a.id, text: [a.text, a.city, a.country].filter(Boolean).join(', ') }; }), rows && rows.length ? null : 'This customer has no address', false); quote(); });
+      get('ajax/select2_sender_addresses.php?id=' + encodeURIComponent(id)).then(function (rows) { fill(saSel, (rows || []).map(function (a) { return { id: a.id, text: [a.text, a.city, a.country].filter(Boolean).join(', ') }; }), rows && rows.length ? null : 'This customer has no address', false); showSender(); quote(); });
     }
     get('ajax/select2_recipient.php?id=' + encodeURIComponent(id) + '&q=').then(function (rows) {
       rows = (rows || []).map(function (r) { return { id: r.id, text: r.text + (r.type === 'user' ? ' (sender)' : ''), type: r.type || 'recipient' }; });
@@ -53,6 +58,8 @@
     });
   }
   if (sSel) sSel.addEventListener('change', loadSender);
+  if (saSel) saSel.addEventListener('change', showSender);
+  if ($('[data-ns-change-sender]')) $('[data-ns-change-sender]').addEventListener('click', function () { $('[data-ns-sender-fields]').hidden = false; sSel.focus(); });
   rSel.addEventListener('change', function () {
     var o = rSel.options[rSel.selectedIndex]; var type = o ? (o.getAttribute('data-type') || 'recipient') : 'recipient';
     $('[data-ns-rtype]').value = type;
@@ -64,6 +71,29 @@
   });
   if (client || (sSel && sSel.value)) loadSender();
   else if ($('[data-ns-find]') && $('[data-ns-find]').value) findSender();
+  if (!client) { var findTimer; $('[data-ns-find]').addEventListener('input', function () { clearTimeout(findTimer); if (this.value.trim().length >= 2) findTimer = setTimeout(findSender, 350); }); }
+
+  var country = $('[data-ns-country]'), prefix = $('[name="code_prefix"]');
+  if (country) {
+    $('[data-ns-number-change]').addEventListener('click', function () { var panel = $('.ns-number-edit'); panel.hidden = !panel.hidden; if (!panel.hidden) country.focus(); });
+    country.addEventListener('change', function () { prefix.value = this.value ? f.dataset.prefix + this.value.toUpperCase() + '-' : f.dataset.prefix; $('[data-ns-prefix]').textContent = prefix.value; });
+  }
+  if ($('[data-ns-edit-rate]')) $('[data-ns-edit-rate]').addEventListener('click', function () { var rate = $('[name="price_lb"]'); rate.readOnly = false; rate.focus(); rate.select(); });
+  var prealert = $('[data-ns-prealert]');
+  if (prealert) prealert.addEventListener('change', function () {
+    var raw = this.selectedOptions[0]?.dataset.pa; if (!raw) return;
+    try {
+      var p = JSON.parse(raw);
+      sSel.replaceChildren(new Option(p.customer || p.locker || 'Sender', String(p.customer_id), true, true));
+      if ($('[data-ns-find]')) $('[data-ns-find]').value = p.locker || p.customer || '';
+      sSel.dispatchEvent(new Event('change'));
+      if (p.courier_id) $('[name="order_courier"]').value = String(p.courier_id);
+      if (p.tracking) $('[name="tracking_number"]').value = p.tracking;
+      var first = $('[data-ns-item]');
+      if (first) { first.querySelector('[data-k="description"]').value = p.desc || ''; first.querySelector('[data-k="declared_value"]').value = p.price || ''; }
+      quote();
+    } catch (e) { SL.toast('Could not load pre-alert details', true); }
+  });
 
   // ---- items ----
   var tb = $('[data-ns-items]');
@@ -96,16 +126,13 @@
   function paint(p, w, decl, priceLb, base) {
     var freight = base;
     var rate = priceLb;
-    var tax = freight > R.min_tax ? freight * R.tax / 100 : 0;
-    var declTax = decl > R.min_declared ? decl * R.declared / 100 : 0;
     var dv = num(($('[name="discount_value"]') || {}).value), dt = ($('[name="discount_type"]') || {}).value || 'percent';
     var disc = dt === 'amount' ? dv : freight * dv / 100; if (disc < 0 || disc > freight) disc = 0;
-    var ins = num(($('[name="insured_value"]') || {}).value) * R.insurance / 100;
-    var customs = w * R.tariffs / 100;
+    var ins = num(($('[name="insured_value"]') || {}).value) > 0 ? (R.insurance_mode === 'fixed' ? num(R.insurance_fixed) : num($('[name="insured_value"]').value) * R.insurance / 100) : 0;
     var re = num(($('[name="reexpedicion_value"]') || {}).value);
-    var total = Math.round(((freight - disc) + ins + tax + customs + declTax + re) * 100) / 100;
+    var total = Math.round(((freight - disc) + ins + re) * 100) / 100;
     var set = function (k, v) { var el = f.querySelector('[data-q="' + k + '"]'); if (el) el.textContent = v; };
-    set('w', w.toFixed(2) + ' ' + R.weight); set('rate', money(rate)); set('freight', money(freight)); set('decl', money(declTax)); set('ins', money(ins)); set('customs', money(customs)); set('tax', money(tax)); set('total', money(total));
+    set('w', w.toFixed(2) + ' ' + R.weight); set('rate', money(rate)); set('freight', money(freight)); set('decl', money(decl)); set('ins', money(ins)); set('total', money(total));
     if (R.rate > 0) set('ghs', '₵' + (total * R.rate).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','));
     set('note', 'Final price is confirmed on save' + (client ? ' and when the parcel is weighed' : '') + '.');
   }
@@ -116,13 +143,13 @@
   // ---- defaults ----
   var sd = $('[data-ns-savedef]'), ed = f.querySelector('[data-ns-edit]');
   function saveDefaults() {
-    var keys = ['order_package', 'order_courier', 'order_service_options', 'order_deli_time', 'order_payment_method', 'status_courier', 'origin_off', 'agency'], prefs = {};
+    var keys = ['order_courier', 'status_courier'], prefs = {};
     keys.forEach(function (k) { var el = $('[name="' + k + '"]'); if (el && el.value) prefs[k] = el.value; });
     prefs.notify_whatsapp_sender = $('[name="notify_whatsapp_sender"]').checked ? 1 : 0; prefs.notify_sms_receiver = $('[name="notify_sms_receiver"]').checked ? 1 : 0;
     SL.post('ajax/sl/shipment_action_ajax.php', { op: 'prefs', prefs: JSON.stringify(prefs) }).then(function (j) { SL.toast(j.message || 'Saved', !j.success); var s = f.querySelector('[data-ns-saved]'); if (s && j.success) s.style.display = ''; });
   }
   if (sd) sd.addEventListener('click', saveDefaults);
-  if (ed) ed.addEventListener('click', function () { var t = $('[name="origin_off"]'); if (t) { t.scrollIntoView({ behavior: 'smooth', block: 'center' }); t.focus(); } SL.toast('Change the fields, then "Save these settings as my defaults".'); });
+  if (ed) ed.addEventListener('click', function () { var t = $('[name="order_courier"]'); if (t) { t.scrollIntoView({ behavior: 'smooth', block: 'center' }); t.focus(); } SL.toast('Change the carrier or status, then save your defaults below.'); });
 
   // ---- submit to the legacy endpoint ----
   var next = false;

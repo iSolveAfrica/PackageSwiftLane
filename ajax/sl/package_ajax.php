@@ -11,6 +11,7 @@
 require_once __DIR__ . '/../../loader.php';
 require_once __DIR__ . '/../../helpers/ajax_guard.php';
 require_once __DIR__ . '/../../helpers/sl_view.php';
+require_once __DIR__ . '/../../helpers/sl_auth.php';
 require_once __DIR__ . '/../../helpers/activity_log.php';
 require_once __DIR__ . '/../../helpers/unique_ids.php';
 require_once __DIR__ . '/../../helpers/pickup_code.php';
@@ -86,7 +87,7 @@ switch ($op) {
         $id = (int) $id;
         if (!empty($_POST['estimated_eta'])) cdp_setPackageEta($id, cdp_sanitize($_POST['estimated_eta']));
         // boxes and totals: the same arithmetic as ajax/customers_packages/add_customers_packages_ajax.php
-        $meter = (float) ($core->meter ?: 500); $rate = (float) ($core->value_weight ?? 0); $tax = (float) ($core->tax ?? 0); $ins = (float) ($core->insurance ?? 0);
+        $meter = (float) ($core->meter ?: 500); $rate = (float) ($core->value_weight ?? 0); $tax = 0; $ins = (float) ($core->insurance ?? 0);
         $disc = max(0, min(100, (float) ($_POST['discount_value'] ?? 0)));
         $w = 0; $vw = 0; $declared = 0; $fixed = 0;
         foreach ($boxes as $b) {
@@ -97,9 +98,9 @@ switch ($op) {
         $freight = max($w, $vw) * $rate;
         $discount = $freight * $disc / 100;
         $taxAmt = $freight > (float) ($core->min_cost_tax ?? 0) ? ($freight - $discount) * $tax / 100 : 0;
-        $insAmt = $declared * $ins / 100;
+        $insAmt = sl_insuranceCharge((float) $declared, (float) $ins);
         $total = $freight - $discount + $taxAmt + $insAmt + $fixed;
-        cdp_updateCustomerPackagesTotals(['order_id' => $id, 'value_weight' => $rate, 'sub_total' => $freight, 'tax_discount' => $disc, 'total_insured_value' => $declared, 'tax_insurance_value' => $ins, 'tax_custom_tariffis_value' => 0, 'tax_value' => $tax, 'declared_value' => 0, 'total_reexp' => 0, 'total_declared_value' => 0, 'total_fixed_value' => $fixed, 'total_tax_discount' => $discount, 'total_tax_insurance' => $insAmt, 'total_tax_custom_tariffis' => 0, 'total_tax' => $taxAmt, 'total_weight' => $w + $vw, 'total_order' => $total]);
+        cdp_updateCustomerPackagesTotals(['order_id' => $id, 'value_weight' => $rate, 'sub_total' => $freight, 'tax_discount' => $disc, 'total_insured_value' => $declared, 'tax_insurance_value' => $ins, 'tax_custom_tariffis_value' => 0, 'tax_value' => $tax, 'declared_value' => 0, 'total_reexp' => 0, 'total_declared_value' => $declared, 'total_fixed_value' => $fixed, 'total_tax_discount' => $discount, 'total_tax_insurance' => $insAmt, 'total_tax_custom_tariffis' => 0, 'total_tax' => $taxAmt, 'total_weight' => $w + $vw, 'total_order' => $total]);
         $track = $prefix . $orderNo;
         if (!empty($_POST['notes'])) {
             $db = new Conexion; $db->cdp_query('UPDATE cdb_customers_packages SET notes = :n WHERE order_id = :id'); $db->bind(':n', mb_substr(cdp_sanitize($_POST['notes']), 0, 2000)); $db->bind(':id', $id); $db->cdp_execute();

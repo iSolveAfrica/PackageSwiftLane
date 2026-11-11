@@ -103,16 +103,14 @@
   }
   function paint(w, decl, priceLb, base) {
     var freight = base;
-    var tax = freight > R.min_tax ? freight * R.tax / 100 : 0;
-    var declTax = decl > R.min_declared ? decl * R.declared / 100 : 0;
     var dv = num($('[name="discount_value"]').value), dt = $('[name="discount_type"]').value || 'percent';
     var disc = dt === 'amount' ? dv : freight * dv / 100; if (disc < 0 || disc > freight) disc = 0;
-    var ins = num($('[name="insured_value"]').value) * R.insurance / 100;
-    var customs = w * R.tariffs / 100;
+    var insured = num($('[name="insured_value"]').value);
+    var ins = insured > 0 ? (R.insurance_mode === 'fixed' ? num(R.insurance_fixed) : insured * R.insurance / 100) : 0;
     var re = num($('[name="reexpedicion_value"]').value);
-    var total = Math.round(((freight - disc) + ins + tax + customs + declTax + re) * 100) / 100;
+    var total = Math.round(((freight - disc) + ins + re) * 100) / 100;
     var set = function (k, v) { var el = f.querySelector('[data-q="' + k + '"]'); if (el) el.textContent = v; };
-    set('w', w.toFixed(2) + ' ' + R.weight); set('freight', money(freight)); set('decl', money(declTax)); set('ins', money(ins)); set('customs', money(customs)); set('tax', money(tax)); set('total', money(total));
+    set('w', w.toFixed(2) + ' ' + R.weight); set('freight', money(freight)); set('decl', money(decl)); set('ins', money(ins)); set('total', money(total));
   }
   f.addEventListener('input', function (e) { if (e.target.closest('[data-sf-items]') || e.target.matches('[data-sf-calc]')) quote(); });
   f.addEventListener('change', function (e) { if (e.target.matches('[name="order_service_options"],[data-sf-saddr],[data-sf-raddr]')) quote(); });

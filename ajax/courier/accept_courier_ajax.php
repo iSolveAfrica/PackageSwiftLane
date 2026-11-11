@@ -23,6 +23,7 @@ ini_set('display_errors', 0);
 
 
 require_once("../../loader.php");
+require_once __DIR__ . '/../../helpers/sl_auth.php';
 require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_login();
 require_permission('view_shipment_list');
@@ -168,10 +169,10 @@ if (empty($errors)) {
             $total_peso = 0;
             $total_impuesto_aduanero = 0;
             $total_valor_declarado = 0;
-            $tariffs_value = $_POST["tariffs_value"];
-            $declared_value_tax = $_POST["declared_value_tax"];
+            $tariffs_value = 0; // Retired charge
+            $declared_value_tax = 0; // Retired charge
             $insurance_value = $_POST["insurance_value"];
-            $tax_value = $_POST["tax_value"];
+            $tax_value = 0; // Retired charge
             $discount_value = $_POST["discount_value"];
             $reexpedicion_value = $_POST["reexpedicion_value"];
             $price_lb = $_POST["price_lb"];
@@ -234,7 +235,7 @@ if (empty($errors)) {
 
             $total_descuento = $sumador_total * $discount_value / 100;
             $total_peso = $sumador_libras + $sumador_volumetric;
-            $total_seguro = $insured_value * $insurance_value / 100;
+            $total_seguro = sl_insuranceCharge((float) $insured_value, (float) $insurance_value);
             $total_impuesto_aduanero = ($total_peso * $tariffs_value) / 100;
             $total_envio = ($sumador_total - $total_descuento) + $total_seguro + $total_impuesto + $total_impuesto_aduanero + $total_valor_declarado + $max_fixed_charge + $reexpedicion_value;
         }
@@ -250,7 +251,7 @@ if (empty($errors)) {
             'tax_value' => floatval($tax_value),
             'declared_value' =>  floatval($declared_value_tax),
             'total_reexp' =>  floatval($reexpedicion_value),
-            'total_declared_value' =>  floatval($total_valor_declarado),
+            'total_declared_value' =>  floatval($sumador_valor_declarado),
             'total_fixed_value' =>  floatval($max_fixed_charge),
             'total_tax_discount' =>  floatval($total_descuento),
             'total_tax_insurance' =>  floatval($total_seguro),

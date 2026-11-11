@@ -2,6 +2,7 @@
 ini_set('display_errors', 0);
 
 require_once("../../loader.php");
+require_once __DIR__ . '/../../helpers/sl_auth.php';
 require_once("../../helpers/querys.php");
 require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_login();
@@ -217,9 +218,9 @@ if (empty($errors)) {
         $insurance_value    = isset($_POST["insurance_value"])    ? floatval($_POST["insurance_value"])    : 0;
         $reexpedicion_value = isset($_POST["reexpedicion_value"]) ? floatval($_POST["reexpedicion_value"]) : 0;
         $discount_value     = isset($_POST["discount_value"])     ? floatval($_POST["discount_value"])     : 0;
-        $tax_value          = isset($_POST["tax_value"])          ? floatval($_POST["tax_value"])          : 0;
-        $declared_value_tax = isset($_POST["declared_value_tax"]) ? floatval($_POST["declared_value_tax"]) : 0;
-        $tariffs_value      = isset($_POST["tariffs_value"])      ? floatval($_POST["tariffs_value"])      : 0;
+        $tax_value = 0; // Retired charge
+        $declared_value_tax = 0; // Retired charge
+        $tariffs_value = 0; // Retired charge
         $core_meter         = isset($_POST["meter"])              ? floatval($_POST["meter"])              : floatval($settings->meter ?? 0);
 
         if (isset($_POST["packages"])) {
@@ -358,7 +359,7 @@ if (empty($errors)) {
                 : $sum_total_flete * $discount_value / 100;
             if ($total_descuento > $sum_total_flete || $discount_value < 0) { $total_descuento = 0; }
 
-            $total_seguro            = $insured_value * $insurance_value / 100;
+            $total_seguro = sl_insuranceCharge((float) $insured_value, (float) $insurance_value);
             $total_impuesto_aduanero = $total_peso * $tariffs_value / 100;
 
             $total_envio = $sum_total_flete
@@ -393,7 +394,7 @@ if (empty($errors)) {
             'tax_value'                  => floatval($tax_value),
             'declared_value'             => floatval($declared_value_tax),
             'total_reexp'                => floatval($reexpedicion_value),
-            'total_declared_value'       => floatval($total_valor_declarado),
+            'total_declared_value'       => floatval($sum_declared),
             'total_fixed_value'          => floatval($sum_fixed),
             'total_tax_discount'         => floatval($total_descuento),
             'total_tax_insurance'        => floatval($total_seguro),

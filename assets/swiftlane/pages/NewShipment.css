@@ -7,3 +7,16 @@
 .nd-chip .mut{font-weight:400}
 .nd-ed{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:12px;padding-top:12px;border-top:1px solid var(--line)}
 .nd-done{color:var(--green-ink);padding:8px 12px;border-radius:10px;background:var(--green-bg)}
+.ns-number{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;border-color:var(--line-2)}
+.ns-number-value{display:block;font:600 clamp(24px,3vw,34px)/1.2 var(--font);font-variant-numeric:tabular-nums;letter-spacing:-.02em;overflow-wrap:anywhere}
+.ns-number-edit{flex:1 1 180px;max-width:260px}
+.ns-party{padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--green-bg)}
+.ns-party.recipient{background:var(--sky-bg)}
+.ns-party .sl-search,.ns-party .sl-sel{background:var(--card)}
+.ns-party-summary{padding:10px 12px;border-radius:10px;background:var(--card);line-height:1.4}
+.ns-notify{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+.ns-notify .nt-ch{cursor:pointer}
+.ns-notify-settings{position:relative;margin-left:auto}
+.ns-notify-settings summary{list-style:none;cursor:pointer}
+.ns-notify-settings summary::-webkit-details-marker{display:none}
+.ns-notify-pop{position:absolute;right:0;top:calc(100% + 8px);z-index:20;width:min(280px,80vw);display:flex;flex-direction:column;gap:10px;padding:16px;border:1px solid var(--line-2);border-radius:12px;background:var(--card);box-shadow:var(--sh-2)}

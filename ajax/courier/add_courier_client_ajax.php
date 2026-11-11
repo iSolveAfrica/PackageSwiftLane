@@ -23,6 +23,7 @@ ini_set('display_errors', 0);
 
 
 require_once("../../loader.php");
+require_once(__DIR__ . '/../../helpers/sl_auth.php');
 require_once(__DIR__ . '/../../helpers/unique_ids.php');
 
 require_once(__DIR__ . '/../../helpers/ajax_guard.php');
@@ -139,7 +140,8 @@ if (empty($errors)) {
     $min_cost_tax = $core->min_cost_tax;
     $min_cost_declared_tax = $core->min_cost_declared_tax;
 
-    $date = date('Y-m-d', strtotime(cdp_sanitize($_POST["order_date"])));
+    $quickLoad = !empty($_POST['quick_load_v2']);
+    $date = $quickLoad ? date('Y-m-d') : date('Y-m-d', strtotime(cdp_sanitize($_POST["order_date"])));
     $time = date("H:i:s");
     $date = $date . ' ' . $time;
     $sale_date   = date("Y-m-d H:i:s");
@@ -216,10 +218,10 @@ if (empty($errors)) {
             $total_impuesto_aduanero = 0;
             $total_valor_declarado = 0;
 
-            $tariffs_value = $_POST["tariffs_value"];
-            $declared_value_tax = $_POST["declared_value_tax"];
-            $insurance_value = $_POST["insurance_value"];
-            $tax_value = $_POST["tax_value"];
+            $tariffs_value = 0; // Retired charge
+            $declared_value_tax = 0; // Retired charge
+            $insurance_value = (float) ($settings->insurance ?? 0);
+            $tax_value = 0; // Retired charge
             $discount_value = $_POST["discount_value"];
             $reexpedicion_value = $_POST["reexpedicion_value"];
             $price_lb = $_POST["price_lb"];
@@ -256,7 +258,7 @@ if (empty($errors)) {
 
                 $precio_total = $calculate_weight * $price_lb;
                 $sumador_total += $precio_total;
-                $sumador_valor_declarado += $package->declared_value;
+                $sumador_valor_declarado += $quickLoad ? (float) $package->declared_value * max(1, (int) $package->qty) : $package->declared_value;
                 $max_fixed_charge += $package->fixed_value;
 
                 if ($sumador_total > $min_cost_tax) {
@@ -268,9 +270,22 @@ if (empty($errors)) {
                 }
             }
 
+            if ($quickLoad) {
+                $sumador_total = 0;
+                $sumador_libras = 0;
+                foreach ($packages as $package) {
+                    $qty = max(1, (int) ($package->qty ?? 1));
+                    $weight = max(0, (float) ($package->weight ?? 0));
+                    $sumador_libras += $weight * $qty;
+                    $sumador_total += $weight * $qty * (float) $price_lb;
+                }
+                $total_impuesto = 0;
+                $total_valor_declarado = 0;
+            }
+
             $total_descuento = $sumador_total * $discount_value / 100;
             $total_peso = $sumador_libras + $sumador_volumetric;
-            $total_seguro = $insured_value * $insurance_value / 100;
+            $total_seguro = sl_insuranceCharge((float) $insured_value, (float) $insurance_value);
             $total_impuesto_aduanero = $total_peso * $tariffs_value;
             $total_envio = ($sumador_total - $total_descuento) + $total_seguro + $total_impuesto + $total_impuesto_aduanero + $total_valor_declarado + $max_fixed_charge + $reexpedicion_value;
         }
@@ -286,7 +301,7 @@ if (empty($errors)) {
             'tax_value' => floatval($tax_value),
             'declared_value' =>  floatval($declared_value_tax),
             'total_reexp' =>  floatval($reexpedicion_value),
-            'total_declared_value' =>  floatval($total_valor_declarado),
+            'total_declared_value' =>  floatval($sumador_valor_declarado),
             'total_fixed_value' =>  floatval($max_fixed_charge),
             'total_tax_discount' =>  floatval($total_descuento),
             'total_tax_insurance' =>  floatval($total_seguro),
@@ -325,6 +340,13 @@ if (empty($errors)) {
                     $target_file_db = "order_files/" . $image_name;
                     cdp_insertOrdersFiles($shipment_id, $target_file_db, $image_name, date("Y-m-d H:i:s"), '0', $imageFileType);
                 }
+            }
+        }
+
+        if ($quickLoad) {
+            $trackingNumbers = preg_split('/[\r\n,;]+/', (string) ($_POST['tracking_number'] ?? ''));
+            foreach (array_slice(array_unique(array_filter(array_map('trim', $trackingNumbers))), 0, 10) as $trackingNumber) {
+                cdp_insertPackageTracking($shipment_id, $_SESSION['userid'], cdp_sanitize(substr($trackingNumber, 0, 120)), null);
             }
         }
 

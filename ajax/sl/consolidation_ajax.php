@@ -10,6 +10,7 @@
 require_once __DIR__ . '/../../loader.php';
 require_once __DIR__ . '/../../helpers/ajax_guard.php';
 require_once __DIR__ . '/../../helpers/sl_view.php';
+require_once __DIR__ . '/../../helpers/sl_auth.php';
 require_once __DIR__ . '/../../helpers/activity_log.php';
 require_once __DIR__ . '/../../helpers/unique_ids.php';
 require_once CDP_ROOT . '/views/sl/data/consolidations.php';
@@ -93,9 +94,9 @@ switch ($op) {
         if (cdp_isHandedOver($status) || $status === 21) $status = 13;
         // totals: the same arithmetic as the legacy create page, from the packages picked
         $w = array_sum(array_map(fn($p) => (float) $p->total_weight, $pkgs));
-        $rate = (float) ($core->value_weight ?? 0); $taxP = (float) ($core->tax ?? 0); $insP = (float) ($core->insurance ?? 0);
-        $discP = max(0, min(100, (float) ($_POST['discount_value'] ?? 0))); $insured = max(0, (float) ($_POST['insured_value'] ?? 0)); $dutyP = max(0, (float) ($_POST['tariffs_value'] ?? 0)); $reex = max(0, (float) ($_POST['reexpedicion_value'] ?? 0));
-        $sub = $w * $rate; $disc = $sub * $discP / 100; $ins = $insured * $insP / 100; $duty = $w * $dutyP / 100; $tax = ($sub - $disc) * $taxP / 100;
+        $rate = (float) ($core->value_weight ?? 0); $taxP = 0; $insP = (float) ($core->insurance ?? 0);
+        $discP = max(0, min(100, (float) ($_POST['discount_value'] ?? 0))); $insured = max(0, (float) ($_POST['insured_value'] ?? 0)); $dutyP = 0; $reex = max(0, (float) ($_POST['reexpedicion_value'] ?? 0));
+        $sub = $w * $rate; $disc = $sub * $discP / 100; $ins = sl_insuranceCharge((float) $insured, (float) $insP); $duty = 0; $tax = 0;
         $total = $sub - $disc + $ins + $duty + $tax + $reex;
         $awbCol = cdp_awbColumnReady();
         $cols = ['user_id' => $uid, 'c_prefix' => $prefix, 'c_no' => $no, 'c_date' => $date, 'sender_id' => $uid, 'sender_address_id' => 0, 'receiver_id' => 0, 'receiver_address_id' => 0,
