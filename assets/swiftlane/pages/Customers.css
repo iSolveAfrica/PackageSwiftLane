@@ -1,5 +1,12 @@
 /* Page styles of Customers.dc.html (from the approved design) */
+.cx-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+.cx-kpis-three{grid-template-columns:repeat(3,minmax(0,1fr))}
 .cx-k{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:var(--card);color:inherit}
+.cx-k{min-width:0;min-height:130px}
+.cx-k small:last-child{margin-top:auto}
+@media(max-width:900px){.cx-kpis,.cx-kpis-three{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:900px){.cx-kpis-three .cx-k:last-child:nth-child(odd){grid-column:span 2}}
+@media(max-width:360px){.cx-kpis,.cx-kpis-three{grid-template-columns:1fr}.cx-kpis-three .cx-k:last-child:nth-child(odd){grid-column:auto}}
 .cx-k b{font:600 26px/1.15 var(--font);letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--ink)}.cx-k small{color:var(--muted);font-size:14.5px;font-family:var(--font)}.cx-k small:first-child{font-size:15px;font-weight:500;color:var(--ink-2)}
 .cx-k b.va{animation:cxA .9s}.cx-k b.vb{animation:cxB .9s}@keyframes cxA{from{color:var(--green-ink)}to{color:var(--ink)}}@keyframes cxB{from{color:var(--green-ink)}to{color:var(--ink)}}
 .cx-ch{position:relative;height:190px;display:flex;align-items:flex-end;gap:10px;padding-top:10px}
