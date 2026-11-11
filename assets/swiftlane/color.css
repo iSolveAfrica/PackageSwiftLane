@@ -31,9 +31,9 @@
 /* ---------- 2. dark theme: true dark, on <html> so everything follows ---------- */
 html.sl-dark{color-scheme:dark}
 html.sl-dark,html.sl-dark .sl-app,html.sl-dark .dk,.dk{
-  --bg:#0E0F12; --main:#121316; --panel:#15161A; --card:#1A1B20; --field:#1F2026;
-  --hover:#212229; --active:#282A32; --line:#2A2C34; --line-2:#383B46;
-  --ink:#F2F2F0; --ink-2:#C9CAC6; --muted:#9092A0; --faint:#5F6170; --inverse:#0E0F12;
+  --bg:#25262C; --main:#2B2C33; --panel:#303139; --card:#363841; --field:#3D3F48;
+  --hover:#454750; --active:#4B4D57; --line:#494B55; --line-2:#646671;
+  --ink:#F4F2EE; --ink-2:#D8D8DC; --muted:#BBBCC4; --faint:#9597A3; --inverse:#25262C;
   --green:#2FD48F; --green-ink:#5BE0A5; --green-bg:rgba(47,212,143,.14);
   --yellow:#F2C400; --amber-ink:#F3CD52; --amber-bg:rgba(242,196,0,.13);
   --red:#F0565C; --red-ink:#FF8E93; --red-bg:rgba(240,86,92,.16);
@@ -42,9 +42,9 @@ html.sl-dark,html.sl-dark .sl-app,html.sl-dark .dk,.dk{
   --orange:#E8923F; --brand:#F0783F;
   --accent-ink:#161615; --accent-soft:rgba(242,196,0,.14); --accent-line:rgba(242,196,0,.45);
   --g-finance:#F2C400; --g-settings:#9092A0;
-  --ch-grid:#2A2C34; --ch-muted:#383B46;
-  --heat-0:#24262E; --heat-1:#1E4A3A; --heat-2:#1F8A62; --heat-3:#2FD48F;
-  --sh-1:0 1px 2px rgba(0,0,0,.4); --sh-2:0 8px 22px -8px rgba(0,0,0,.6); --sh-3:0 24px 60px -20px rgba(0,0,0,.7);
+  --ch-grid:#494B55; --ch-muted:#646671;
+  --heat-0:#464850; --heat-1:#295443; --heat-2:#31966E; --heat-3:#2FD48F;
+  --sh-1:0 1px 2px rgba(0,0,0,.18); --sh-2:0 8px 22px -8px rgba(0,0,0,.3); --sh-3:0 24px 60px -20px rgba(0,0,0,.4);
 }
 html.sl-dark body{background:var(--bg);color:var(--ink)}
 html.sl-dark .sl-app{background:var(--bg);color:var(--ink)}
