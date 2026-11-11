@@ -45,7 +45,7 @@
   </header>
   <div class="sl-body">
     <label class="nav-bd" for="navtg" aria-hidden="true"></label>
-    <div class="sl-rail">
+    <div class="sl-rail" aria-label="Quick actions">
       <?php if ($slIsClient): ?>
       <?php if ($user->cdp_hasPermission('courier_add_client')): ?><a class="<?= ($slPage['id'] ?? '') === 'new' ? 'is-on' : '' ?>" href="courier_add_client.php" aria-label="New shipment" title="New shipment"><i class="ic i-newdoc" aria-hidden="true"></i></a><?php endif; ?>
       <a href="<?= h(sl_route('Notifications')) ?>" aria-label="Messages" title="Messages"><i class="ic i-message" aria-hidden="true"></i></a>
