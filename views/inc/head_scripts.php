@@ -51,7 +51,9 @@ if (!defined('SL_PAGEVIEW_LOGGED')) { define('SL_PAGEVIEW_LOGGED', true); cdp_ac
 <link href="<?= cdp_asset('assets/swiftlane/swiftlane.css') ?>" rel="stylesheet">
 <link href="<?= cdp_asset('assets/swiftlane/app.css') ?>" rel="stylesheet">
 <link href="<?= cdp_asset('assets/swiftlane/legacy-bridge.css') ?>" rel="stylesheet">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="<?= cdp_asset('assets/swiftlane/experience.css') ?>" rel="stylesheet">
+<script defer src="<?= cdp_asset('assets/swiftlane/experience.js') ?>"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>(function(){try{var t=localStorage.getItem('sl.theme');if(t==='dark'||(t==='auto'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('sl-dark');}}catch(e){}})();</script>
 <?php
 if ($direction_layout == 'rtl') {

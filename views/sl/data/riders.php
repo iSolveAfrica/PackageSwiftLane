@@ -7,6 +7,7 @@
 require_once CDP_ROOT . '/helpers/sl_view.php';
 require_once CDP_ROOT . '/helpers/sl_people.php';
 require_once CDP_ROOT . '/helpers/sl_nav.php';
+require_once CDP_ROOT . '/helpers/sl_rider_route.php';
 
 const SL_RD_OPEN_PICKUP = [1, 14];          // pickup waiting to be collected
 const SL_RD_OPEN_DELIVERY = [5, 6, 7, 32];  // distribution / available / on route / ready
@@ -69,11 +70,24 @@ function sl_rdJobs(string $from, string $to, ?int $driverId = null): array
     $closed = implode(',', array_merge(SL_RD_DONE, SL_RD_FAILED));
     $w = 'o.is_deleted = 0 AND o.driver_id > 0' . sl_rdScope() . ($driverId ? ' AND o.driver_id = ' . (int) $driverId : '');
     $done = sl_rdDoneAt('o');
+    $recipientType = sl_columnExists('cdb_add_order', 'recipient_type') ? "COALESCE(o.recipient_type, 'recipient')" : "'recipient'";
     $sql = "SELECT o.order_id, o.order_prefix, o.order_no, o.driver_id, o.status_courier, o.is_pickup, o.total_order, o.total_weight, o.order_pay_mode, o.status_invoice, o.sender_id, o.receiver_id, o.person_receives,
-            CONCAT(s.fname, ' ', s.lname) AS cust, s.phone AS cust_phone, $done AS done_at,
-            (SELECT ra.address FROM cdb_recipients_addresses ra WHERE ra.recipient_id = o.receiver_id LIMIT 1) AS addr,
+            CASE WHEN o.is_pickup = 1 THEN CONCAT(s.fname, ' ', s.lname)
+                 WHEN $recipientType = 'user' THEN CONCAT(ru.fname, ' ', ru.lname)
+                 ELSE CONCAT(r.fname, ' ', r.lname) END AS cust,
+            CASE WHEN o.is_pickup = 1 THEN s.phone WHEN $recipientType = 'user' THEN ru.phone ELSE r.phone END AS cust_phone,
+            $done AS done_at,
+            CASE WHEN o.is_pickup = 1 THEN
+                COALESCE(NULLIF(CONCAT_WS(', ', NULLIF(a.sender_address,''), NULLIF(a.sender_city,''), NULLIF(a.sender_country,'')), ''), sa.address)
+                ELSE COALESCE(NULLIF(CONCAT_WS(', ', NULLIF(a.recipient_address,''), NULLIF(a.recipient_city,''), NULLIF(a.recipient_country,'')), ''), CASE WHEN $recipientType = 'user' THEN ua.address ELSE ra.address END) END AS addr,
             st.mod_style AS status_name
         FROM cdb_add_order o LEFT JOIN cdb_users s ON s.id = o.sender_id LEFT JOIN cdb_styles st ON st.id = o.status_courier
+        LEFT JOIN cdb_recipients r ON r.id = o.receiver_id AND $recipientType <> 'user'
+        LEFT JOIN cdb_users ru ON ru.id = o.receiver_id AND $recipientType = 'user'
+        LEFT JOIN cdb_address_shipments a ON a.id = (SELECT ax.id FROM cdb_address_shipments ax WHERE ax.order_track = CONCAT(o.order_prefix, o.order_no) ORDER BY ax.id DESC LIMIT 1)
+        LEFT JOIN cdb_senders_addresses sa ON sa.id_addresses = o.sender_address_id AND sa.user_id = o.sender_id
+        LEFT JOIN cdb_senders_addresses ua ON ua.id_addresses = o.receiver_address_id AND ua.user_id = o.receiver_id
+        LEFT JOIN cdb_recipients_addresses ra ON ra.id_addresses = o.receiver_address_id AND ra.recipient_id = o.receiver_id
         WHERE $w AND (o.status_courier IN ($open) OR (o.status_courier IN ($closed) AND $done BETWEEN :f AND :t))
         ORDER BY o.driver_id, o.status_courier, o.order_id LIMIT 3000";
     return sl_rows($sql, [':f' => $from . ' 00:00:00', ':t' => $to . ' 23:59:59']);
@@ -123,7 +137,7 @@ function sl_rdPeriod(): array
 function sl_rdJobRow(array $x): array
 {
     $j = $x['j'];
-    return ['id' => (int) $j->order_id, 'trk' => $j->order_prefix . $j->order_no, 'cust' => trim((string) $j->cust) ?: '—', 'phone' => $j->cust_phone, 'addr' => $j->addr ?: '—', 'pickup' => (int) $j->is_pickup, 'st' => $x['st'][0], 'cls' => $x['st'][1], 'state' => $x['st'][2],
+    return ['id' => (int) $j->order_id, 'trk' => $j->order_prefix . $j->order_no, 'cust' => trim((string) $j->cust) ?: 'Contact not supplied', 'phone' => (string) ($j->cust_phone ?? ''), 'addr' => $j->addr ?: '—', 'pickup' => (int) $j->is_pickup, 'st' => $x['st'][0], 'cls' => $x['st'][1], 'state' => $x['st'][2],
         'fee' => sl_money($x['f']['fee']), 'rid' => sl_money($x['f']['rider']), 'sw' => sl_money($x['f']['swift']), 'pct' => (int) $x['f']['pct'], 'at' => $x['st'][2] === 'open' ? '' : sl_date($j->done_at, 'H:i'), 'kg' => (float) $j->total_weight, 'receiver' => $j->person_receives, 'value' => sl_money($j->total_order)];
 }
 
@@ -245,16 +259,21 @@ function sl_driverAppData($user, $core): array
     $today = date('Y-m-d');
     $s = sl_rdStats($today, $today, $id)[$id];
     $jobs = array_map('sl_rdJobRow', $s['jobs']);
+    // An in-progress delivery stays first, then the oldest assigned stop.
+    usort($jobs, fn($a, $b) => (($a['st'] === 'On route' ? 0 : 1) <=> ($b['st'] === 'On route' ? 0 : 1)) ?: ($a['id'] <=> $b['id']));
     $seg = (string) ($_GET['seg'] ?? 'open');
+    if (!in_array($seg, ['open', 'pickup', 'done', 'all'], true)) $seg = 'open';
     $d['seg'] = $seg;
     $d['segs'] = [['k' => 'open', 'label' => 'To do ' . $s['open']], ['k' => 'pickup', 'label' => 'Pickups'], ['k' => 'done', 'label' => 'Done ' . $s['done']], ['k' => 'all', 'label' => 'All']];
     $d['jobs'] = array_values(array_filter($jobs, fn($j) => $seg === 'all' || ($seg === 'open' && $j['state'] === 'open') || ($seg === 'done' && $j['state'] !== 'open') || ($seg === 'pickup' && $j['pickup'] && $j['state'] === 'open')));
     $openJobs = array_values(array_filter($jobs, fn($j) => $j['state'] === 'open'));
     $d['next'] = $openJobs[0] ?? null;
+    $d['route'] = sl_riderRouteMap($openJobs);
     $d['left'] = $s['open']; $d['done'] = $s['done']; $d['earned'] = sl_money($s['rid']); $d['feesToday'] = sl_money($s['fees']); $d['pct'] = (int) $s['pct']; $d['total'] = count($jobs);
     $jobId = (int) ($_GET['job'] ?? 0);
     $d['job'] = null;
     foreach ($jobs as $j) if ($j['id'] === $jobId) $d['job'] = $j;
+    $d['missingJob'] = $jobId > 0 && !$d['job'];
     $week = [];
     $wk = sl_rdStats(date('Y-m-d', strtotime('-6 day')), $today, $id)[$id];
     $byDay = [];

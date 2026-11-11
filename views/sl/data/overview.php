@@ -91,7 +91,7 @@ function sl_overviewData($user, $core, $userData): array
     if ($awaiting) $brief[] = ['lvl' => 'green', 'icon' => 'i-check', 'tag' => 'Warehouse', 'sev' => 'Ready', 'big' => $awaiting, 'bigS' => 'ready', 't' => 'Parcels ready for pickup', 'd' => 'Customers can collect; remind the ones that have not come.', 'cta' => 'Hand out', 'href' => sl_route('HandOut'), 'cat' => 'ops'];
     if (!$brief) $brief[] = ['lvl' => 'green', 'icon' => 'i-check', 'tag' => 'All clear', 'sev' => 'Now', 'big' => '0', 'bigS' => 'issues', 't' => 'Nothing needs your attention', 'd' => 'Queues are empty and no exceptions are open.', 'cta' => 'See activity', 'href' => sl_route('ActivityLogs'), 'cat' => 'ops'];
     $d['brief'] = $brief;
-    $d['briefLead'] = count($brief) === 1 && $brief[0]['tag'] === 'All clear' ? 'Everything is on track.' : count($brief) . ' thing' . (count($brief) > 1 ? 's' : '') . ' to look at this morning.';
+    $d['briefLead'] = count($brief) === 1 && $brief[0]['tag'] === 'All clear' ? 'Everything is on track.' : count($brief) . ' thing' . (count($brief) > 1 ? 's' : '') . ' to look at today.';
     $d['bfil'] = [['label' => 'All', 'cls' => 'on', 'f' => 'all'], ['label' => 'Operations', 'cls' => '', 'f' => 'ops'], ['label' => 'Money', 'cls' => '', 'f' => 'money'], ['label' => 'People', 'cls' => '', 'f' => 'people']];
 
     // ── Live pulse ─────────────────────────────────────────────────────────

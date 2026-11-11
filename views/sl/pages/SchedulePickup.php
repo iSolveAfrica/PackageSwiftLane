@@ -30,8 +30,8 @@ $opt = function (array $rows, $sel) { $o = ''; foreach ($rows as $r) { $o .= '<o
 <script>
 (function () {
   var box = document.getElementById('sp-parcels'), tpl = document.getElementById('sp-parcel');
-  function sync() { var l = []; box.querySelectorAll('.row').forEach(function (r) { var g = function (k) { return r.querySelector('[data-k=' + k + ']').value; }; if (g('description').trim()) l.push({ description: g('description'), qty: +g('qty') || 1, weight: +g('weight') || 0, length: 0, width: 0, height: 0, declared_value: 0, fixed_value: 0 }); }); document.getElementById('sp-pk').value = JSON.stringify(l); }
-  function add() { box.appendChild(tpl.content.cloneNode(true)); }
+  function sync() { box.querySelectorAll('.sp-del').forEach(function (b) { b.disabled = box.children.length === 1; b.title = b.disabled ? 'Keep at least one parcel' : 'Remove parcel'; }); var l = []; box.querySelectorAll('.row').forEach(function (r) { var g = function (k) { return r.querySelector('[data-k=' + k + ']').value; }; if (g('description').trim()) l.push({ description: g('description'), qty: +g('qty') || 1, weight: +g('weight') || 0, length: 0, width: 0, height: 0, declared_value: 0, fixed_value: 0 }); }); document.getElementById('sp-pk').value = JSON.stringify(l); }
+  function add() { box.appendChild(tpl.content.cloneNode(true)); sync(); }
   document.getElementById('sp-add').addEventListener('click', add); add();
   box.addEventListener('click', function (e) { if (e.target.closest('.sp-del') && box.children.length > 1) { e.target.closest('.row').remove(); sync(); } });
   document.getElementById('sp-form').addEventListener('input', sync);

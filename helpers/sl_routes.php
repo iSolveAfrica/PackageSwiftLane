@@ -98,6 +98,7 @@ function sl_routes(): array
         'Transactions'                => 'transactions.php',
         'BillingHub'                  => 'financial_sheet.php',
         'FinancialSheet'              => 'financial_sheet_consolidation.php',
+        'PickupCodes' => 'pickup_codes.php',
         'MyBills'                     => 'my_bills.php',
         'PayCheckout'                 => 'pay_checkout.php',
         'CostSettings'                => 'cost_settings.php',
@@ -109,6 +110,7 @@ function sl_routes(): array
         'ActivityLogs' => 'activity_logs.php',
         'MessageLogs'  => 'message_logs.php',
         'MessageCosts' => 'message_costs.php',
+        'DevBilling'   => 'message_costs.php',
         'SystemLogs'   => 'system_logs.php',
         'Documents'    => 'documents.php',
 

@@ -10,4 +10,4 @@ if (!sl_userIs('driver') && !$user->cdp_hasPermission('view_user_list')) {
     exit;
 }
 require_once 'views/sl/data/riders.php';
-sl_render('DriverApp', ['id' => 'drvapp', 'title' => 'Rider app', 'board' => 'DriverApp', 'plain' => true], sl_driverAppData($user, $core));
+sl_render('DriverApp', ['id' => 'drvapp', 'title' => 'Rider app', 'board' => 'DriverApp', 'plain' => true, 'scripts' => ['dataJs/sl/rider_map.js']], sl_driverAppData($user, $core));

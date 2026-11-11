@@ -4,7 +4,7 @@ $slTitle = ($slPage['title'] ?? 'Swift Lane') . ' | ' . ($core->site_name ?? 'Sw
 $slBoardCss = $slPage['board'] ? 'assets/swiftlane/pages/' . $slPage['board'] . '.css' : '';
 ?>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="csrf-param" content="<?= h(cdp_csrf_param()) ?>">
 <meta name="csrf-token" content="<?= h(cdp_csrf_token()) ?>">
 <meta name="color-scheme" content="light dark">
@@ -23,6 +23,8 @@ $slBoardCss = $slPage['board'] ? 'assets/swiftlane/pages/' . $slPage['board'] . 
 <?php foreach ((array) ($slPage['styles'] ?? []) as $slCss): ?>
 <link rel="stylesheet" href="<?= h(cdp_asset($slCss)) ?>">
 <?php endforeach; ?>
+<link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/experience.css')) ?>">
+<script defer src="<?= h(cdp_asset('assets/swiftlane/experience.js')) ?>"></script>
 <script>
 (function(){try{var t=localStorage.getItem('sl.theme');if(t==='dark'||(t==='auto'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('sl-dark');}}catch(e){}})();
 </script>

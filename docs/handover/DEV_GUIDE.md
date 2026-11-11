@@ -74,6 +74,36 @@ node scripts/dev_shot.cjs http://127.0.0.1:8084/customers_list.php shot.png 1440
 
 Checks: `php -l` on changed files, `php vendor/bin/phpunit` (API tests), `node scripts/check_page_shell.js` only applies to legacy pages.
 
+Design-system regressions: `node scripts/check_design_routes.cjs` checks every
+literal `sl_route()` reference and its controller without a database.
+`node scripts/check_design_runtime.cjs` runs the real shared CSS and JavaScript
+against isolated local HTTP fixtures in Playwright/Chromium. It checks navigation,
+dialog focus, table menus, filters, tabs, theme changes, password visibility,
+switch rollback, validation, duplicate submissions, CSRF, and failed/expired requests.
+It does not send messages, make payments, or use real user accounts.
+
 ## 5. Feature matrix
 
 `docs/handover/FEATURE_MATRIX.md` has one row per artboard. Update the row when you finish a page: status (done / partial / planned), data source, endpoints, permissions and how it was verified.
+
+## Mobile experience
+
+`assets/swiftlane/experience.css` and `experience.js` add shared motion and the
+phone experience after page styles. `helpers/sl_mobile.php` and
+`views/sl/inc/mobile_nav.php` define permission-aware destinations for both shell
+wrappers and the legacy bridge. Avoid duplicating bottom navigation in pages.
+Phone layout uses viewport/pointer media queries, not user-agent strings.
+
+Additional checks:
+
+```bash
+node scripts/check_mobile_experience.cjs
+node scripts/check_checkout_feedback.cjs
+# Disposable DB only (names containing test/audit); fixture writes roll back:
+php scripts/check_pickup_code_wallet.php
+php scripts/check_rider_routes.php
+```
+
+The map uses the actual assigned addresses and a lazy Google Maps iframe. Keep
+address fallback and external navigation available if the provider is blocked.
+The route preview is one leg at a time, not a GPS route optimizer.
