@@ -297,7 +297,7 @@ function sl_navResolve(string $activeId): array
             ];
         }
         if ($items) {
-            $out[] = ['label' => $g['label'], 'items' => $items, 'open' => in_array($g['label'], ['Operations', 'My shipping'], true)];
+            $out[] = ['label' => $g['label'], 'items' => $items, 'open' => in_array($activeId, array_column($items, 'id'), true)];
         }
     }
     return $out;
