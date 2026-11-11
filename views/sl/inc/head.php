@@ -15,6 +15,7 @@ $slBoardCss = $slPage['board'] ? 'assets/swiftlane/pages/' . $slPage['board'] . 
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/swiftlane.css')) ?>">
 <link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/app.css')) ?>">
+<link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/color.css')) ?>">
 <?php if ($slBoardCss && is_file(CDP_ROOT . '/' . $slBoardCss)): ?>
 <link rel="stylesheet" href="<?= h(cdp_asset($slBoardCss)) ?>">
 <?php endif; ?>

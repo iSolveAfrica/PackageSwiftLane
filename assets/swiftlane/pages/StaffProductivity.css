@@ -3,7 +3,7 @@
 .pr-k b{font:600 26px var(--font);letter-spacing:-.015em;font-variant-numeric:tabular-nums;line-height:1.15}
 .pr-k b.bump{animation:prB .8s}@keyframes prB{from{color:#E2632A}to{color:var(--ink)}}
 .pr-k small{color:var(--muted);font-size:14.5px}
-.pr-k .sp{display:flex;align-items:flex-end;gap:2px;height:22px;margin-top:4px}.pr-k .sp i{flex:1;background:#D6D2CA;border-radius:2px}.pr-k .sp i:last-child{background:#E2632A}
+.pr-k .sp{display:flex;align-items:flex-end;gap:2px;height:22px;margin-top:4px}.pr-k .sp i{flex:1;background:var(--line-2);border-radius:2px}.pr-k .sp i:last-child{background:#E2632A}
 .pr-live{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px}
 .pr-p{flex:0 0 190px;display:flex;flex-direction:column;gap:8px;padding:12px;border:1px solid var(--line);border-radius:16px;background:var(--card);cursor:pointer;text-align:left;font:inherit;color:inherit}
 .pr-p.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
@@ -18,7 +18,7 @@
 .pr-hm i.h1{background:#F6D3BF}.pr-hm i.h2{background:#EE9C6E}.pr-hm i.h3{background:#E2632A}
 .pr-tl{position:relative;height:14px;border-radius:7px;background:var(--active);overflow:hidden;min-width:140px}
 .pr-tl i{position:absolute;top:0;bottom:0;border-radius:3px}
-.pr-tl i.a{background:#8E8A82}.pr-tl i.i{background:#E5D9A8}
+.pr-tl i.a{background:var(--muted)}.pr-tl i.i{background:#E5D9A8}
 .pr-tl.big{height:30px;border-radius:10px}
 .pr-th{cursor:pointer;user-select:none;white-space:nowrap}.pr-th.on{color:var(--ink)}
 .pr-tr{cursor:pointer}.pr-tr.on td{background:var(--active)}
@@ -29,4 +29,4 @@
 .pr-ins:first-of-type{border-top:0}
 .pr-goal{height:10px;border-radius:9px;background:var(--active);overflow:hidden}.pr-goal i{display:block;height:100%;background:#E2632A;transition:width .6s}
 .pr-set{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));gap:12px}
-.pr-bar{display:grid;grid-template-columns:110px 1fr 40px;gap:8px;align-items:center;font-size:14.5px}.pr-bar i{display:block;height:8px;border-radius:9px;background:#A9A59C}
+.pr-bar{display:grid;grid-template-columns:110px 1fr 40px;gap:8px;align-items:center;font-size:14.5px}.pr-bar i{display:block;height:8px;border-radius:9px;background:var(--faint)}

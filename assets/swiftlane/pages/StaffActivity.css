@@ -2,10 +2,10 @@
 .sf-k{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
 .sf-k b{font:600 26px var(--font);letter-spacing:-.015em;font-variant-numeric:tabular-nums;line-height:1.15}.sf-k small{color:var(--muted);font-size:14.5px}
 .sf-bar{display:grid;grid-template-columns:130px 1fr 34px;gap:10px;align-items:center;font-size:15px}
-.sf-bar i{display:block;height:10px;border-radius:99px;background:#A9A59C}
+.sf-bar i{display:block;height:10px;border-radius:99px;background:var(--faint)}
 .sf-wk{display:grid;grid-template-columns:150px repeat(7,1fr);gap:4px;font-size:14px;align-items:center}
 .sf-wk span.d{height:26px;border-radius:7px;display:grid;place-items:center;background:var(--active);color:var(--muted)}
-.sf-wk span.on{background:#D6D2CA;color:var(--ink)}.sf-wk span.lv{background:var(--amber-bg);color:var(--amber-ink)}
+.sf-wk span.on{background:var(--line-2);color:var(--ink)}.sf-wk span.lv{background:var(--amber-bg);color:var(--amber-ink)}
 .sf-on{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:12px;background:var(--field);border:1px solid var(--line);font-size:15px}
 .sf-dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex:none}.sf-dot.a{background:var(--yellow)}
 
@@ -16,7 +16,7 @@
 .sa-tl{position:relative;height:58px;border-radius:12px;background:repeating-linear-gradient(90deg,var(--line) 0 1px,transparent 1px calc(100%/13));border:1px solid var(--line)}
 .sa-seg{position:absolute;top:10px;bottom:10px;border-radius:7px;cursor:pointer;border:0;padding:0;transition:transform .15s}
 .sa-seg:hover{transform:scaleY(1.12)}
-.sa-seg.a{background:var(--ink)}.sa-seg.i{background:var(--amber-bg);border:1px dashed var(--yellow)}.sa-seg.b{background:repeating-linear-gradient(45deg,#D6D2CA 0 4px,transparent 4px 8px)}
+.sa-seg.a{background:var(--ink)}.sa-seg.i{background:var(--amber-bg);border:1px dashed var(--yellow)}.sa-seg.b{background:repeating-linear-gradient(45deg,var(--line-2) 0 4px,transparent 4px 8px)}
 .sa-seg.sel{outline:2.5px solid var(--orange);outline-offset:2px}
 .sa-mk{position:absolute;top:-6px;bottom:-6px;width:2px;background:var(--green)}
 .sa-mk span{position:absolute;top:-20px;left:-30px;width:60px;text-align:center;font:500 13px var(--font);color:var(--green-ink)}
@@ -32,9 +32,9 @@
 .sa-ld{width:9px;height:9px;border-radius:50%;background:var(--green);animation:saP 1.6s infinite}@keyframes saP{0%{box-shadow:0 0 0 0 rgba(14,173,120,.5)}100%{box-shadow:0 0 0 9px rgba(14,173,120,0)}}
 .sa-wk{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;align-items:end;height:170px}
 .sa-wd{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;height:100%;cursor:pointer;background:none;border:0;padding:0;font:inherit;color:inherit}
-.sa-wd i{display:block;width:70%;border-radius:4px 4px 0 0}.sa-wd i.ac{background:#8E8A82}.sa-wd i.id{background:var(--amber-bg);border-radius:0}
+.sa-wd i{display:block;width:70%;border-radius:4px 4px 0 0}.sa-wd i.ac{background:var(--muted)}.sa-wd i.id{background:var(--amber-bg);border-radius:0}
 .sa-wd.on i.ac{background:var(--ink)}.sa-wd small{font-size:13.5px;color:var(--muted)}.sa-wd.on small{color:var(--ink);font-weight:600}
-.sa-bar{display:grid;grid-template-columns:130px 1fr 44px;gap:10px;align-items:center;font-size:15px}.sa-bar i{display:block;height:10px;border-radius:99px;background:#A9A59C}
+.sa-bar{display:grid;grid-template-columns:130px 1fr 44px;gap:10px;align-items:center;font-size:15px}.sa-bar i{display:block;height:10px;border-radius:99px;background:var(--faint)}
 .sa-hm{display:grid;grid-template-columns:repeat(13,1fr);gap:3px}.sa-hm i{height:30px;border-radius:5px;background:var(--heat-0)}.sa-hm i.h1{background:var(--heat-1)}.sa-hm i.h2{background:var(--heat-2)}.sa-hm i.h3{background:var(--heat-3)}
 .sa-cmp{display:grid;grid-template-columns:1fr 90px 90px 70px;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line);font-size:15.5px}.sa-cmp:first-child{border-top:0}
 .sa-flag{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:12px;font-size:15px}.sa-flag.w{background:var(--amber-bg);color:var(--amber-ink)}.sa-flag.i{background:var(--sky-bg);color:var(--sky-ink)}.sa-flag.g{background:var(--green-bg);color:var(--green-ink)}

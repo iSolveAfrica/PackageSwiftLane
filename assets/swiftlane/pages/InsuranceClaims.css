@@ -2,11 +2,11 @@
 .fr-k{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
 .fr-k b{font:600 24px var(--font);font-variant-numeric:tabular-nums;letter-spacing:-.01em}.fr-k small{color:var(--muted);font-size:14.5px}
 .fr-ok{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;background:var(--green-bg);color:var(--green-ink);font-size:15.5px}
-.fr-bar{height:8px;border-radius:9px;background:var(--active);overflow:hidden}.fr-bar i{display:block;height:100%;background:#8E8A82}.fr-bar i.hi{background:#E2632A}
+.fr-bar{height:8px;border-radius:9px;background:var(--active);overflow:hidden}.fr-bar i{display:block;height:100%;background:var(--muted)}.fr-bar i.hi{background:#E2632A}
 .fr-tabs{display:flex;gap:6px;flex-wrap:wrap}
 .fr-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--card);cursor:pointer;width:100%;text-align:left;font:inherit;color:var(--ink)}
 .fr-row.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
 .fr-pre{margin:0;padding:16px;border-radius:12px;background:#fff;color:#111;font:12px/1.55 var(--mono);border:1px solid var(--line);white-space:pre;overflow:auto}
 .fr-split{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:16px;align-items:start}@media (max-width:1200px){.fr-split{grid-template-columns:1fr}}
-.ic-steps{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}.ic-steps div{display:flex;flex-direction:column;gap:6px;font-size:13.5px;text-align:center}.ic-steps i{display:block;height:8px;border-radius:9px;background:var(--active)}.ic-steps .ok i{background:#8E8A82}.ic-steps .now i{background:#E2632A}
+.ic-steps{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}.ic-steps div{display:flex;flex-direction:column;gap:6px;font-size:13.5px;text-align:center}.ic-steps i{display:block;height:8px;border-radius:9px;background:var(--active)}.ic-steps .ok i{background:var(--muted)}.ic-steps .now i{background:#E2632A}
 .ic-ph{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.ic-ph span{height:80px;border-radius:10px;background:linear-gradient(135deg,#5B5348,#9A8670);display:grid;place-items:center;color:#fff;font-size:13.5px}

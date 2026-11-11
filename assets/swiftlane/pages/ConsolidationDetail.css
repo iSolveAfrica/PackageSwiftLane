@@ -1,7 +1,7 @@
 /* Page styles of ConsolidationDetail.dc.html (from the approved design) */
 .cd-k{display:flex;flex-direction:column;gap:6px;padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
 .cd-k b{font:600 24px var(--font);font-variant-numeric:tabular-nums;letter-spacing:-.015em}.cd-k small{color:var(--muted);font-size:14.5px}
-.cd-bar{height:8px;border-radius:9px;background:var(--active);overflow:hidden}.cd-bar i{display:block;height:100%;background:#8E8A82;transition:width .5s}.cd-bar i.hi{background:#E2632A}
+.cd-bar{height:8px;border-radius:9px;background:var(--active);overflow:hidden}.cd-bar i{display:block;height:100%;background:var(--muted);transition:width .5s}.cd-bar i.hi{background:#E2632A}
 .cd-info{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(170px,100%),1fr));gap:0;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--card)}
 .cd-info div{padding:12px 14px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
 .cd-info small{display:block;color:var(--muted);font-size:14px}.cd-info b{font:500 16px var(--font)}
@@ -12,8 +12,8 @@
 .cd-av.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
 .cd-tl{display:flex;flex-direction:column}
 .cd-st{display:grid;grid-template-columns:22px 1fr;gap:10px;position:relative;padding-bottom:14px}
-.cd-st::before{content:"";position:absolute;left:10px;top:22px;bottom:0;border-left:2px dashed var(--line-2)}.cd-st.done::before{border-left:2px solid #8E8A82}.cd-st:last-child::before{display:none}
-.cd-st .d{width:22px;height:22px;border-radius:50%;background:var(--card);border:1.5px solid var(--line-2)}.cd-st.done .d{background:#8E8A82;border-color:#8E8A82}.cd-st.now .d{background:#E2632A;border-color:#E2632A;box-shadow:0 0 0 5px rgba(226,99,42,.18)}
+.cd-st::before{content:"";position:absolute;left:10px;top:22px;bottom:0;border-left:2px dashed var(--line-2)}.cd-st.done::before{border-left:2px solid var(--muted)}.cd-st:last-child::before{display:none}
+.cd-st .d{width:22px;height:22px;border-radius:50%;background:var(--card);border:1.5px solid var(--line-2)}.cd-st.done .d{background:var(--muted);border-color:var(--muted)}.cd-st.now .d{background:#E2632A;border-color:#E2632A;box-shadow:0 0 0 5px rgba(226,99,42,.18)}
 .cd-st small{display:block;color:var(--muted);font-size:14px}
 .cd-ok{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;background:var(--green-bg);color:var(--green-ink);font-size:15.5px}
 .cd-tabs{display:flex;gap:6px}

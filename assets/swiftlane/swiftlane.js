@@ -55,7 +55,13 @@
   }
   SL.theme = function (t) {
     try { localStorage.setItem('sl.theme', t); } catch (e) {}
-    applyTheme(t);
+    /* the whole page crossfades between the two palettes instead of snapping */
+    var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (document.startViewTransition && !reduced) {
+      document.documentElement.classList.add('sl-theme-switch');
+      var vt = document.startViewTransition(function () { applyTheme(t); });
+      vt.finished.finally(function () { document.documentElement.classList.remove('sl-theme-switch'); });
+    } else applyTheme(t);
     SL.post('ajax/sl/preferences_ajax.php', { theme: t }).catch(function () {});
   };
   var saved = app && app.classList.contains('dk') ? 'dark' : 'light';

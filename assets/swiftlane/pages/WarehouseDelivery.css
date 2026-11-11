@@ -31,8 +31,8 @@
 .wd-bars{display:flex;align-items:flex-end;gap:4px;height:200px;padding-top:8px;border-bottom:1px solid var(--line)}
 .wd-bar{flex:1;min-width:0;height:100%;display:flex;flex-direction:column-reverse;gap:0;cursor:default}
 .wd-bar i{display:block;width:100%;border-radius:4px 4px 2px 2px;transition:height .4s}
-.wd-bar i.p{background:#D6D2CA;border-radius:2px 2px 0 0}
-.wd-bar i.d{background:#8E8A82;box-shadow:0 2px 0 var(--card)}
+.wd-bar i.p{background:var(--line-2);border-radius:2px 2px 0 0}
+.wd-bar i.d{background:var(--muted);box-shadow:0 2px 0 var(--card)}
 .wd-bar:hover i.p{background:#C4BFB5}.wd-bar:hover i.d{background:#6F6B64}
 .wd-hm{display:grid;grid-template-columns:44px repeat(12,minmax(0,1fr));gap:4px;align-items:center;font-size:13.5px;color:var(--muted)}
 .wd-hm i{display:block;height:22px;border-radius:5px;background:var(--active)}

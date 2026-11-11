@@ -50,6 +50,7 @@ if (!defined('SL_PAGEVIEW_LOGGED')) { define('SL_PAGEVIEW_LOGGED', true); cdp_ac
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link href="<?= cdp_asset('assets/swiftlane/swiftlane.css') ?>" rel="stylesheet">
 <link href="<?= cdp_asset('assets/swiftlane/app.css') ?>" rel="stylesheet">
+<link href="<?= cdp_asset('assets/swiftlane/color.css') ?>" rel="stylesheet">
 <link href="<?= cdp_asset('assets/swiftlane/legacy-bridge.css') ?>" rel="stylesheet">
 <link href="<?= cdp_asset('assets/swiftlane/experience.css') ?>" rel="stylesheet">
 <script defer src="<?= cdp_asset('assets/swiftlane/experience.js') ?>"></script>

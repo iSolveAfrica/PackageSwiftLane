@@ -10,15 +10,34 @@
   ::view-transition-new(root){animation:sl-page-in .18s ease-out both}
   @keyframes sl-page-out{to{opacity:0}}
   @keyframes sl-page-in{from{opacity:0}to{opacity:1}}
-  @keyframes sl-arrive{from{opacity:.3;translate:0 10px}to{opacity:1;translate:0 0}}
-  .sl-revealed{animation:sl-arrive .32s cubic-bezier(.2,.7,.3,1)}
-  .sl-dialog:not([hidden]) .sl-modal{animation:sl-arrive .18s ease-out}
-  :where(.sl-btn,.sl-ib,.da-pri,.da-sec,.da-pk,.sl-mobile-nav a,.sl-phone-shortcuts a){transition:background-color .16s,border-color .16s,box-shadow .16s,translate .16s}
-  :where(.sl-btn,.sl-ib,.da-pri,.da-sec):active{translate:0 1px}
+  @keyframes sl-arrive{from{opacity:0;translate:0 12px}to{opacity:1;translate:0 0}}
+  @keyframes sl-rise{from{opacity:0;translate:0 16px;scale:.98}to{opacity:1;translate:0 0;scale:1}}
+  @keyframes sl-pop{from{opacity:0;scale:.96;translate:0 -4px}to{opacity:1;scale:1;translate:0 0}}
+  @keyframes sl-fill{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0)}}
+  @keyframes sl-shimmer{to{background-position:-200% 0}}
+  @keyframes sl-pulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--green) 45%,transparent)}70%{box-shadow:0 0 0 8px transparent}}
+  /* cards arrive one after another; --i is set by experience.js in reading order */
+  .sl-revealed{animation:sl-arrive .42s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i,0) * 45ms)}
+  /* meters fill from the left once on screen */
+  .sl-revealed .sl-ticks i,.sl-revealed .sl-steps i.on,.sl-revealed .up7-b i,.sl-revealed .mb i{animation:sl-fill .9s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i,0) * 45ms + .12s)}
+  .sl-dialog:not([hidden]) .sl-modal{animation:sl-rise .26s cubic-bezier(.2,.7,.2,1)}
+  details[open]>.pop,details.aitop[open]>.pop,details.uptop[open]>.pop{animation:sl-pop .18s cubic-bezier(.2,.7,.2,1)}
+  .sl-toast:not([hidden]){animation:sl-rise .24s cubic-bezier(.2,.7,.2,1)}
+  [data-sl-tabpanel]:not([hidden]){animation:sl-page-in .22s ease-out}
+  .mn-pulse,.me-on{animation:sl-pulse 2.2s ease-out infinite}
+  :where(.sl-btn,.sl-ib,.da-pri,.da-sec,.da-pk,.sl-mobile-nav a,.sl-mobile-nav button,.sl-phone-shortcuts a,.sl-nav a,.sl-rail a,.sl-seg button,.sl-seg a,.sl-tabs a,.sl-tabs button,.sl-pill,.chipbtn,.cd-chip,.mn-chip){transition:background-color .16s,border-color .16s,box-shadow .16s,color .16s,translate .16s,scale .16s}
+  :where(.sl-btn,.sl-ib,.da-pri,.da-sec,.sl-rail a,.sl-mobile-nav a,.sl-mobile-nav button,.chipbtn,.cd-chip):active{scale:.97}
+  .sl-toggle,.sl-toggle::after{transition:background-color .2s,left .2s cubic-bezier(.2,.7,.2,1)}
+  .sl-chk,.sl-radio{transition:background-color .15s,border-color .15s}
+  .sl-nav a .ic,.sl-group-icon{transition:color .2s,background-color .2s,transform .2s}
+  .sl-nav a:hover .ic{transform:translateX(1px)}
+  .sl-skeleton{background:linear-gradient(90deg,var(--active) 25%,var(--hover) 50%,var(--active) 75%);background-size:200% 100%;animation:sl-shimmer 1.4s linear infinite;border-radius:8px;color:transparent}
+  /* theme switch crossfades the whole page (swiftlane.js wraps it in a view transition) */
+  html.sl-theme-switch::view-transition-old(root),html.sl-theme-switch::view-transition-new(root){animation-duration:.32s}
 }
 @media (hover:hover){
   :where(a.sl-card,.da-pk,.sl-phone-shortcuts a):hover{border-color:var(--muted);box-shadow:0 4px 14px rgba(0,0,0,.06)}
-  .sl-mobile-nav a:hover{background:var(--field)}
+  .sl-mobile-nav a:hover,.sl-mobile-nav button:hover{background:var(--field)}
 }
 :where(button,a)[aria-busy="true"]{cursor:progress;opacity:.65}
 .sl-network-status{position:fixed;top:0;left:0;right:0;z-index:90;padding:10px 16px;text-align:center;background:var(--amber-bg);color:var(--amber-ink);font:500 15px var(--font)}
@@ -26,11 +45,19 @@
 /* Viewport and pointer capability detection handles phones, rotation and small windows
    without browser sniffing. Tablets and large screens retain the desktop layout. */
 @media (max-width:767px), (max-height:500px) and (max-width:950px) and (pointer:coarse){
-  body[data-mobile-role="customer"],body[data-mobile-role="rider"]{--app-nav-height:calc(70px + env(safe-area-inset-bottom,0px));padding-bottom:var(--app-nav-height);scroll-padding-bottom:calc(var(--app-nav-height) + 80px)}
+  body[data-mobile-role="customer"],body[data-mobile-role="rider"],body[data-mobile-role="staff"]{--app-nav-height:calc(70px + env(safe-area-inset-bottom,0px));padding-bottom:var(--app-nav-height);scroll-padding-bottom:calc(var(--app-nav-height) + 80px)}
   body[data-mobile-role]:not([data-mobile-role=""]) .sl-mobile-nav{position:fixed;z-index:45;bottom:0;inset-inline:0;display:grid;grid-template-columns:repeat(var(--nav-count),minmax(0,1fr));padding:6px max(8px,env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));border-top:1px solid var(--line);background:var(--card);box-shadow:0 -4px 20px rgba(0,0,0,.04)}
-  .sl-mobile-nav a{min-width:0;min-height:56px;display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center;border-radius:14px;color:var(--muted);font:500 13px var(--font);text-decoration:none}
-  .sl-mobile-nav a[aria-current="page"]{background:var(--active);color:var(--ink)}
-  .sl-mobile-nav a[aria-current="page"] .ic{color:var(--amber-ink)}
+  .sl-mobile-nav a,.sl-mobile-nav button{min-width:0;min-height:56px;display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center;border:0;border-radius:14px;background:transparent;color:var(--muted);font:500 12.5px var(--font);text-decoration:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+  .sl-mobile-nav .ic{width:22px;height:22px;transition:transform .2s cubic-bezier(.2,.7,.2,1)}
+  .sl-mobile-nav a[aria-current="page"],.sl-mobile-nav button[aria-expanded="true"]{color:var(--ink)}
+  .sl-mobile-nav a[aria-current="page"] .ic,.sl-mobile-nav button[aria-expanded="true"] .ic{color:var(--accent-ink,var(--ink));background:currentColor;transform:translateY(-1px)}
+  .sl-mobile-nav a[aria-current="page"] span,.sl-mobile-nav button[aria-expanded="true"] span{font-weight:600}
+  /* the active tab sits on an amber pill behind its icon */
+  .sl-mobile-nav a,.sl-mobile-nav button{position:relative}
+  .sl-mobile-nav a::before,.sl-mobile-nav button::before{content:"";position:absolute;top:7px;width:48px;height:30px;border-radius:15px;background:var(--accent);opacity:0;scale:.6;transition:opacity .18s,scale .22s cubic-bezier(.2,.7,.2,1)}
+  .sl-mobile-nav a[aria-current="page"]::before,.sl-mobile-nav button[aria-expanded="true"]::before{opacity:1;scale:1}
+  .sl-mobile-nav .ic{position:relative;z-index:1}
+  html.sl-dark .sl-mobile-nav a[aria-current="page"] .ic{color:#161615}
   body[data-mobile-role]:not([data-mobile-role=""]) .sl-support-link{display:none}
   body[data-mobile-role]:not([data-mobile-role=""]) .sl-toast{bottom:calc(var(--app-nav-height) + 12px);max-width:calc(100vw - 24px)}
   body[data-mobile-role]:not([data-mobile-role=""]) .sl-main{border:0;border-radius:0;padding:18px 16px 28px!important}
@@ -39,7 +66,12 @@
   body[data-mobile-role]:not([data-mobile-role=""]) :where(.sl-btn,.sl-ib,.sl-tabs a,.sl-tabs button,.sl-pg a,.cd-chip,.sl-seg a,.sl-seg button,.ov-seg a){min-height:44px}
   body[data-mobile-role]:not([data-mobile-role=""]) :where(input:not([type=checkbox]):not([type=radio]),select,textarea){font-size:16px!important}
   body[data-mobile-role]:not([data-mobile-role=""]) :where(.sl-in,.sl-sel,.sl-search){min-height:48px}
-  body[data-mobile-role]:not([data-mobile-role=""]) .sl-title{font-size:26px!important;line-height:1.15}
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-title{font-size:26px!important;line-height:1.15;letter-spacing:-.02em;font-weight:600}
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-lede{font-size:15px}
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-card{border-radius:20px;padding:16px}
+  body[data-mobile-role]:not([data-mobile-role=""]) .grid{gap:12px}
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-ch{margin-bottom:10px}
+  body[data-mobile-role="staff"] .sl-top{background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:saturate(1.4) blur(14px);-webkit-backdrop-filter:saturate(1.4) blur(14px)}
   body[data-mobile-role]:not([data-mobile-role=""]) .sl-head{gap:12px;flex-wrap:wrap}
   body[data-mobile-role]:not([data-mobile-role=""]) .sl-head>.row{width:100%}
   body[data-mobile-role]:not([data-mobile-role=""]) .sl-head>.row>.sl-btn{flex:1}

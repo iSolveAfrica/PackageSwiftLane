@@ -177,3 +177,37 @@ committed. The tracking page shows the first one beside its form through the
 auth frame's `split` option (`views/inc/auth_chrome.php`). Every demo ships a
 `REHEARSAL.md` with its gold example, beats and gate result; see
 `stageshow/README.md` for building and filming.
+
+## Colour, dark theme and motion (Swift Lane shell)
+
+The Swift Lane shell (`assets/swiftlane/`) is "Warm Ledger" plus three layers,
+loaded in this order on every shell page (`views/sl/inc/head.php`,
+`views/inc/head_scripts.php`): `swiftlane.css` (layout and parts), `app.css`
+(runtime states), `color.css` (colour, depth, the dark theme), the page's own
+sheet, then `experience.css` (motion and the phone shell).
+
+- **Colour comes from tokens, never hex.** `color.css` adds `--accent` (the
+  brand amber), one colour per navigation group (`--g-ops`, `--g-finance`, …
+  read through `data-group` on `.sl-nav-group`, printed by
+  `views/sl/inc/nav_groups.php`), chart series `--ch-1`…`--ch-6`, and the
+  elevation `--sh-1`…`--sh-3`. Metric icons take their meter's colour
+  (`.sl-ticks.y` → amber, `.r` → red, `.v` → violet). Deltas are `.sl-delta.up`
+  / `.down`; big figures are `.sl-num` (mono, tabular). Buttons: `.sl-btn`
+  (ink), `.accent` (amber, for the one action a page is about), `.ok` (green).
+- **Dark theme lives on `<html class="sl-dark">`**, so toasts, dialogs, the
+  tab bar and legacy pages all follow it; `.dk` on `#sl-app` still works. The
+  switch (`SL.theme`) crossfades through a view transition. The legacy tokens
+  (`--ink-800`, `--page-050`, …) are re-pointed in the same block, so pages on
+  `swiftlane-ds.css` need nothing extra. A page sheet that still carries a
+  paper grey as hex will not follow the theme: use `var(--ink)`,
+  `var(--muted)`, `var(--line)` and friends.
+- **Motion is in `experience.css`** behind `prefers-reduced-motion`: cards
+  arrive in reading order (`--i` is set by `experience.js`), meters fill once,
+  figures count up on first sight (`.sl-mv`, `.sl-num`, `[data-sl-count]`;
+  `data-sl-static` on an ancestor opts out), menus and sheets rise in, and
+  controls press (`scale .97`). `.sl-skeleton` is the loading shimmer.
+- **Phones get an app shell for every signed-in role.** `sl_bodyRole()`
+  (helpers/sl_mobile.php) sets `data-mobile-role` to `customer`, `rider` or
+  `staff`; `sl_mobileLinks()` gives staff Home, Shipments, Scan, Alerts and a
+  Menu tab that opens the drawer. The PWA identity still uses
+  `sl_mobileRole()`, which stays empty for staff.

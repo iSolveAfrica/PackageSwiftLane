@@ -2,7 +2,7 @@
 .fr-k{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
 .fr-k b{font:600 24px var(--font);font-variant-numeric:tabular-nums;letter-spacing:-.01em}.fr-k small{color:var(--muted);font-size:14.5px}
 .fr-ok{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;background:var(--green-bg);color:var(--green-ink);font-size:15.5px}
-.fr-bar{height:8px;border-radius:9px;background:var(--active);overflow:hidden}.fr-bar i{display:block;height:100%;background:#8E8A82}.fr-bar i.hi{background:#E2632A}
+.fr-bar{height:8px;border-radius:9px;background:var(--active);overflow:hidden}.fr-bar i{display:block;height:100%;background:var(--muted)}.fr-bar i.hi{background:#E2632A}
 .fr-tabs{display:flex;gap:6px;flex-wrap:wrap}
 .fr-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--card);cursor:pointer;width:100%;text-align:left;font:inherit;color:var(--ink)}
 .fr-row.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
@@ -11,6 +11,6 @@
 .wb-tree{display:flex;flex-direction:column;gap:6px}
 .wb-h{display:grid;grid-template-columns:24px minmax(0,1fr) 110px 70px 80px;gap:10px;align-items:center;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-size:15px;margin-left:22px}
 .ld{display:grid;grid-template-columns:repeat(12,1fr);grid-auto-rows:34px;gap:3px;padding:10px;border:2px solid #55524C;border-radius:8px;background:#F1EEE8;position:relative}
-.ld i{border-radius:4px;background:#C9C2B6;display:grid;place-items:center;font:600 12px var(--mono);color:#1E1D1A}
-.ld i.a{background:#A9A59C}.ld i.b{background:#8E8A82;color:#fff}.ld i.c{background:#E2632A;color:#fff}.ld i.e{background:transparent;border:1.5px dashed #C9C2B6}
+.ld i{border-radius:4px;background:#C9C2B6;display:grid;place-items:center;font:600 12px var(--mono);color:var(--ink)}
+.ld i.a{background:var(--faint)}.ld i.b{background:var(--muted);color:#fff}.ld i.c{background:#E2632A;color:#fff}.ld i.e{background:transparent;border:1.5px dashed #C9C2B6}
 .ld .door{position:absolute;right:-12px;top:20%;bottom:20%;width:8px;border-radius:4px;background:#55524C}

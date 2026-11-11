@@ -33,6 +33,6 @@
 .lg-l .lv{font-weight:600;color:#9FD3B1}
 .lg-l.warn .lv{color:#F2C46B}.lg-l.err .lv{color:#F28B78}.lg-l.err{background:rgba(242,139,120,.08)}
 .lg-l.new{animation:lgN 1.2s}@keyframes lgN{from{background:rgba(226,99,42,.28)}}
-.lg-spark{display:flex;align-items:flex-end;gap:2px;height:46px}.lg-spark i{flex:1;border-radius:2px 2px 0 0;background:#A9A59C}.lg-spark i.w{background:#D9B062}.lg-spark i.e{background:#D7664F}.lg-spark i.now{background:#E2632A}
+.lg-spark{display:flex;align-items:flex-end;gap:2px;height:46px}.lg-spark i{flex:1;border-radius:2px 2px 0 0;background:var(--faint)}.lg-spark i.w{background:#D9B062}.lg-spark i.e{background:#D7664F}.lg-spark i.now{background:#E2632A}
 .bumpA{animation:lgB .9s}.bumpB{animation:lgB2 .9s}@keyframes lgB{from{color:#E2632A}}@keyframes lgB2{from{color:#E2632A}}
 @media (max-width:760px){.lg-l{grid-template-columns:70px 44px 1fr}.lg-l .src,.lg-l .ms{display:none}}
