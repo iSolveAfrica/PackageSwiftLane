@@ -26,10 +26,30 @@ $userData = $user->cdp_getUserData();
 // whole search, and any database error is reported rather than swallowed.
 $term = trim((string) ($_REQUEST['search'] ?? ''));
 
-if (strlen($term) < 2) {
-    echo '<div class="alert alert-info mb-0">Start typing to search (2+ characters): customer name, locker ID, phone, e-mail, item description, address, notes&hellip;</div>';
+// Optional date range on the order date (YYYY-MM-DD from <input type="date">).
+// Works with a search term, or on its own to list everything in the range.
+$validDate = function ($d) {
+    $d = trim((string) $d);
+    $dt = DateTime::createFromFormat('Y-m-d', $d);
+    return ($dt && $dt->format('Y-m-d') === $d) ? $d : '';
+};
+$dateFrom = $validDate($_REQUEST['date_from'] ?? '');
+$dateTo   = $validDate($_REQUEST['date_to'] ?? '');
+if ($dateFrom !== '' && $dateTo !== '' && $dateFrom > $dateTo) {
+    list($dateFrom, $dateTo) = array($dateTo, $dateFrom);
+}
+$hasDate = ($dateFrom !== '' || $dateTo !== '');
+$hasTerm = strlen($term) >= 2;
+
+if (!$hasTerm && !$hasDate) {
+    echo '<div class="alert alert-info mb-0">Start typing to search (2+ characters): customer name, locker ID, phone, e-mail, item description, address, notes&hellip; or pick a date range.</div>';
     exit;
 }
+
+$dateWhere = '';
+$dateBinds = array();
+if ($dateFrom !== '') { $dateWhere .= ' AND a.order_date >= :df'; $dateBinds[':df'] = $dateFrom; }
+if ($dateTo !== '')   { $dateWhere .= ' AND a.order_date <= :dt'; $dateBinds[':dt'] = $dateTo; }
 
 $like  = '%' . str_replace(array('\\', '%', '_'), array('\\\\', '\\%', '\\_'), $term) . '%';
 $limit = 100;   // rows shown per section
@@ -60,6 +80,8 @@ $ids = function ($rows, $field) {
     return array_values(array_unique($out));
 };
 
+$userIds = $recipIds = $shipItemIds = $pkgItemIds = $tracks = array();
+if ($hasTerm) {
 // 1) Customers (senders / package owners)
 $userIds = array_map('intval', $ids($cdp_srch(array(
     "SELECT id FROM cdb_users WHERE CONCAT_WS(' ', fname, lname, locker, email, phone, document_number, username) LIKE :t LIMIT $cap",
@@ -86,6 +108,7 @@ $tracks = $ids($cdp_srch(array(
                            recipient_country, recipient_state, recipient_city, recipient_zip_code, recipient_address) LIKE :t
       LIMIT $cap",
 ), array(':t' => $like)), 'order_track');
+}
 
 $inInts = function ($list) { return $list ? implode(',', $list) : '0'; };
 $trackBinds = array();
@@ -114,20 +137,24 @@ $shipSelect = "SELECT
         FROM cdb_add_order AS a
         INNER JOIN cdb_styles AS b ON a.status_courier = b.id
         %s
-        WHERE a.status_courier != 14 $scope
-          AND (a.sender_id IN (" . $inInts($userIds) . ")
+        WHERE a.status_courier != 14 $scope $dateWhere
+          %s
+        ORDER BY a.order_id DESC
+        LIMIT $limit";
+$shipMatch = function ($extra) use ($hasTerm, $inInts, $userIds, $recipIds, $shipItemIds, $trackIn) {
+    if (!$hasTerm) { return ''; }
+    return "AND (a.sender_id IN (" . $inInts($userIds) . ")
                OR a.receiver_id IN (" . $inInts($recipIds) . ")
                OR a.order_id IN (" . $inInts($shipItemIds) . ")
                OR CONCAT(a.order_prefix, a.order_no) IN ($trackIn)
-               %s)
-        ORDER BY a.order_id DESC
-        LIMIT $limit";
+               $extra)";
+};
 $joinTn = "LEFT JOIN cdb_package_tracking_number AS c ON a.order_id = c.order_id";
 $orders = $cdp_srch(array(
-    sprintf($shipSelect, "COALESCE(NULLIF(c.tracking_number, ''), a.tracking_num)", 'c.estimated_eta', $joinTn, "OR CONCAT_WS(' ', a.notes, a.person_receives) LIKE :t"),
-    sprintf($shipSelect, "COALESCE(NULLIF(c.tracking_number, ''), a.tracking_num)", 'c.estimated_eta', $joinTn, ''),
-    sprintf($shipSelect, "''", "''", '', ''),
-), array(':t' => $like) + $trackBinds);
+    sprintf($shipSelect, "COALESCE(NULLIF(c.tracking_number, ''), a.tracking_num)", 'c.estimated_eta', $joinTn, $shipMatch("OR CONCAT_WS(' ', a.notes, a.person_receives) LIKE :t")),
+    sprintf($shipSelect, "COALESCE(NULLIF(c.tracking_number, ''), a.tracking_num)", 'c.estimated_eta', $joinTn, $shipMatch('')),
+    sprintf($shipSelect, "''", "''", '', $shipMatch('')),
+), array(':t' => $like) + $trackBinds + $dateBinds);
 
 // Customer packages
 $pkgSelect = "SELECT a.order_id, a.order_prefix, a.order_no, a.order_date, a.sender_id,
@@ -136,17 +163,21 @@ $pkgSelect = "SELECT a.order_id, a.order_prefix, a.order_no, a.order_date, a.sen
                FROM cdb_customers_packages_detail AS d WHERE d.order_id = a.order_id) AS descriptions
         FROM cdb_customers_packages AS a
         INNER JOIN cdb_styles AS b ON a.status_courier = b.id
-        WHERE 1 = 1 $scope
-          AND (a.sender_id IN (" . $inInts($userIds) . ")
-               OR a.order_id IN (" . $inInts($pkgItemIds) . ")
-               OR CONCAT(a.order_prefix, a.order_no) IN ($trackIn)
-               %s)
+        WHERE 1 = 1 $scope $dateWhere
+          %s
         ORDER BY a.order_id DESC
         LIMIT $limit";
+$pkgMatch = function ($extra) use ($hasTerm, $inInts, $userIds, $pkgItemIds, $trackIn) {
+    if (!$hasTerm) { return ''; }
+    return "AND (a.sender_id IN (" . $inInts($userIds) . ")
+               OR a.order_id IN (" . $inInts($pkgItemIds) . ")
+               OR CONCAT(a.order_prefix, a.order_no) IN ($trackIn)
+               $extra)";
+};
 $packages = $cdp_srch(array(
-    sprintf($pkgSelect, "OR CONCAT_WS(' ', a.notes, a.person_receives, a.provider_purchase) LIKE :t"),
-    sprintf($pkgSelect, ''),
-), array(':t' => $like) + $trackBinds);
+    sprintf($pkgSelect, $pkgMatch("OR CONCAT_WS(' ', a.notes, a.person_receives, a.provider_purchase) LIKE :t")),
+    sprintf($pkgSelect, $pkgMatch('')),
+), array(':t' => $like) + $trackBinds + $dateBinds);
 
 if ($searchErrors && $userData->userlevel != 1) {
     echo '<div class="alert alert-danger">Part of the search failed: ' . htmlspecialchars(implode(' | ', array_filter($searchErrors))) . '</div>';
@@ -157,7 +188,7 @@ if ($searchErrors && $userData->userlevel != 1) {
 cdp_prefetchConsolidations(array_map(function ($r) { return $r->order_no; }, $orders ?: array()));
 
 if (!$orders && !$packages) {
-    echo '<div class="alert alert-warning">No shipments or packages match &ldquo;' . htmlspecialchars($term) . '&rdquo;.</div>';
+    echo '<div class="alert alert-warning">No shipments or packages match' . ($hasTerm ? ' &ldquo;' . htmlspecialchars($term) . '&rdquo;' : '') . ($hasDate ? ' between ' . htmlspecialchars($dateFrom ?: 'the start') . ' and ' . htmlspecialchars($dateTo ?: 'today') : '') . '.</div>';
     exit;
 }
 ?>

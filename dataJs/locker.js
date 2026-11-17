@@ -15,6 +15,22 @@ $(function () {
   $("#search-btn").on("click", function (e) {
     e.preventDefault(); clearTimeout(cdp_searchTimer); cdp_load(1);
   });
+
+  // Date filter: applies straight away, alone or together with the search term.
+  $("#date_from, #date_to").on("change", function () { clearTimeout(cdp_searchTimer); cdp_load(1); });
+  $("#date-clear").on("click", function (e) {
+    e.preventDefault(); $("#date_from, #date_to").val(""); cdp_load(1);
+  });
+  $(".date-preset").on("click", function (e) {
+    e.preventDefault();
+    var pad = function (n) { return (n < 10 ? "0" : "") + n; };
+    var ymd = function (d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); };
+    var to = new Date(), from = new Date();
+    if ($(this).data("month")) { from = new Date(to.getFullYear(), to.getMonth(), 1); }
+    else { from.setDate(to.getDate() - parseInt($(this).data("days"), 10)); }
+    $("#date_from").val(ymd(from)); $("#date_to").val(ymd(to));
+    cdp_load(1);
+  });
 });
 
 
@@ -33,19 +49,22 @@ var cdp_lastSearch = null;
 function cdp_load(page) {
   try { localStorage.setItem('currentTablePage-Locker', page); } catch (e) {}
   var search = $.trim($("#search").val() || "");
-  if (search === cdp_lastSearch && cdp_searchXhr) { return; } // same term already loading
-  cdp_lastSearch = search;
+  var dateFrom = $("#date_from").val() || "";
+  var dateTo = $("#date_to").val() || "";
+  var key = search + "|" + dateFrom + "|" + dateTo;
+  if (key === cdp_lastSearch && cdp_searchXhr) { return; } // same query already loading
+  cdp_lastSearch = key;
 
   // Only the newest search may paint the results.
   if (cdp_searchXhr) { cdp_searchXhr.abort(); }
 
-  if (search.length >= 2) {
+  if (search.length >= 2 || dateFrom || dateTo) {
     $("#search-status").html('<i class="fa fa-spinner fa-spin"></i> Searching&hellip;').removeClass('d-none');
   }
 
   cdp_searchXhr = $.ajax({
     url: './ajax/locker/locker_search_ajax.php',
-    data: { 'search': search },
+    data: { 'search': search, 'date_from': dateFrom, 'date_to': dateTo },
     cache: false,
     success: function (data) {
       $(".outer_divx").html(data).show();

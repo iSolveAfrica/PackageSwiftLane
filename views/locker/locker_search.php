@@ -95,6 +95,26 @@ $statusrow = $core->cdp_getStatus();
                                     <small id="search-status" class="text-muted d-none" aria-live="polite"></small>
                                 </div><!-- /.col -->
 
+                                <div class="col-sm-12 col-md-6 mb-2">
+                                    <div class="row">
+                                        <div class="col-6 pr-1">
+                                            <label for="date_from" class="small mb-0">From</label>
+                                            <input type="date" id="date_from" class="form-control input-sm" max="<?php echo date('Y-m-d'); ?>">
+                                        </div>
+                                        <div class="col-6 pl-1">
+                                            <label for="date_to" class="small mb-0">To</label>
+                                            <input type="date" id="date_to" class="form-control input-sm" max="<?php echo date('Y-m-d'); ?>">
+                                        </div>
+                                    </div>
+                                    <div class="mt-1 small">
+                                        <a href="#" class="date-preset mr-2 text-nowrap" data-days="0">Today</a>
+                                        <a href="#" class="date-preset mr-2 text-nowrap" data-days="7">Last 7 days</a>
+                                        <a href="#" class="date-preset mr-2 text-nowrap" data-days="30">Last 30 days</a>
+                                        <a href="#" class="date-preset mr-2 text-nowrap" data-month="1">This month</a>
+                                        <a href="#" id="date-clear" class="text-danger text-nowrap"><i class="fa fa-times"></i> Clear dates</a>
+                                    </div>
+                                </div><!-- /.col -->
+
                                 
                             </div>
 
