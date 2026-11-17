@@ -302,8 +302,8 @@ if ($numrows > 0) { ?>
 								<?php
 								// Time of entry: the clock time stamped when the shipment was saved.
 								$entry_ts = $row->order_datetime ?: $row->order_date;
-								$entry_time = $entry_ts ? date('H:i', strtotime($entry_ts)) : '';
-								echo ($entry_time !== '' && !($entry_time === '00:00' && strlen((string) $entry_ts) <= 10)) ? $entry_time : '—';
+								// Shown as 12-hour time, e.g. 2:37 PM; '—' when only a date was stored.
+								echo ($entry_ts && strlen((string) $entry_ts) > 10) ? date('g:i A', strtotime($entry_ts)) : '—';
 								?>
 							</td>
 							<?php

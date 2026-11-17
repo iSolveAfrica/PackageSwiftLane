@@ -89,11 +89,11 @@ if ($fType === 'pickup') { $shipWhere .= ' AND a.is_pickup = 1'; }
 $wantShip = ($fType !== 'pkg');
 $wantPkg  = ($fType === '' || $fType === 'pkg');
 
-// Entry time (HH:MM) of a row, from order_datetime; '—' when only a date is known.
+// Entry time (12-hour, AM/PM) of a row, from order_datetime; '—' when only a date is known.
 function cdp_srchEntryTime($row) {
     $ts = !empty($row->order_datetime) ? $row->order_datetime : ($row->order_date ?? '');
     if ($ts === '' || strlen((string) $ts) <= 10) { return '—'; }
-    return date('H:i', strtotime($ts));
+    return date('g:i A', strtotime($ts)); // 12-hour, e.g. 2:37 PM
 }
 function cdp_srchEntryDate($row) {
     $ts = !empty($row->order_date) ? $row->order_date : ($row->order_datetime ?? '');
@@ -237,7 +237,7 @@ if ($searchErrors && $userData->userlevel != 1) {
 cdp_prefetchConsolidations(array_map(function ($r) { return $r->order_no; }, $orders ?: array()));
 
 if (!$orders && !$packages) {
-    echo '<div class="alert alert-warning">No shipments or packages match' . ($hasTerm ? ' &ldquo;' . htmlspecialchars($term) . '&rdquo;' : '') . ($fromAt !== '' ? ' from ' . htmlspecialchars(substr($fromAt, 0, 16)) : '') . ($toAt !== '' ? ' to ' . htmlspecialchars(substr($toAt, 0, 16)) : '') . (($fType !== '' || $fStatus || $fInvoice) ? ' with the selected filters' : '') . '.</div>';
+    echo '<div class="alert alert-warning">No shipments or packages match' . ($hasTerm ? ' &ldquo;' . htmlspecialchars($term) . '&rdquo;' : '') . ($fromAt !== '' ? ' from ' . date('Y-m-d g:i A', strtotime($fromAt)) : '') . ($toAt !== '' ? ' to ' . date('Y-m-d g:i A', strtotime($toAt)) : '') . (($fType !== '' || $fStatus || $fInvoice) ? ' with the selected filters' : '') . '.</div>';
     exit;
 }
 ?>
