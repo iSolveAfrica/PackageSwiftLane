@@ -1,33 +1,13 @@
 <?php
 // *************************************************************************
 // * Pickup Aging — dedicated review page                                 *
-// * Lists every package in the pickup-aging chain with its current stage. *
+// * Full list; the same panel sits on the Warehouse and Packages panels. *
 // *************************************************************************
-
-require_once(__DIR__ . '/../../../helpers/pickup_aging.php');
 
 // left_sidebar.php gates its nav blocks on $userData->userlevel — without this
 // the whole sidebar renders empty on this page.
 $userData = $user->cdp_getUserData();
 
-// Refresh the state machine on load (same scan the cron runs).
-cdp_processPickupAging();
-
-$db = new Conexion;
-$db->cdp_query("
-    SELECT p.order_id, p.order_track, p.ready_at, p.notified_at, p.not_picked_at, p.auction_at,
-           p.notified_by, DATEDIFF(NOW(), p.ready_at) AS days_ready,
-           a.status_courier, s.mod_style, s.color,
-           u.fname, u.lname, u.locker
-    FROM cdb_package_pickup_aging p
-    JOIN cdb_add_order a ON a.order_id = p.order_id
-    LEFT JOIN cdb_styles s ON s.id = a.status_courier
-    LEFT JOIN cdb_users  u ON u.id = a.sender_id   -- the package's current owner, not the ledger copy
-    ORDER BY p.ready_at ASC");
-$db->cdp_execute();
-$rows = $db->cdp_registros();
-
-$readyDays = (int) CDP_PA_READY_DAYS;
 ?>
 <!DOCTYPE html>
 <html dir="<?php echo $direction_layout; ?>" lang="en">
@@ -38,15 +18,6 @@ $readyDays = (int) CDP_PA_READY_DAYS;
     <link rel="icon" type="image/png" sizes="16x16" href="assets/<?php echo $core->favicon ?>">
     <title>Pickup Aging | <?php echo $core->site_name ?></title>
     <?php include 'views/inc/head_scripts.php'; ?>
-    <style type="text/css">
-        .pa-badge { color:var(--white); padding:2px 8px; border-radius:10px; font-size:11px; font-weight:700; }
-        .pa-stage { font-size:11px; font-weight:700; padding:2px 8px; border-radius:10px; }
-        .pa-stage-pending { background:var(--amber-surface); color:var(--amber-500); }
-        .pa-stage-notified { background:var(--sky-surface); color:var(--sky-500); }
-        .pa-stage-notpicked { background:var(--fill-100); color:var(--red-500); }
-        .pa-stage-auction { background:var(--red-500); color:var(--white); }
-        .pa-stage-waiting { background:var(--line-200); color:var(--ink-800); }
-    </style>
 </head>
 
 <body>
@@ -59,67 +30,7 @@ $readyDays = (int) CDP_PA_READY_DAYS;
             <?php cdp_pageHeader('Pickup Aging'); ?>
             <div class="container-fluid">
                 <div class="row">
-                    <div class="col-12">
-                        <div class="card card-outline" style="border-top:3px solid var(--red-500);">
-                            <h4 class="card-title swl-promoted ml-4 mt-3"><i class="mdi mdi-clock-alert-outline"></i> Pickup Aging</h4>
-                            <div class="card-body">
-                                <p class="text-muted">
-                                    Packages awaiting collection. A package at <b>Ready for PickUp</b> for
-                                    <b><?php echo $readyDays; ?>+ days</b> can have its sender notified (status &rarr;
-                                    Pending Collection); a week later it auto-moves to <b>Not Picked Up</b>, then to
-                                    <b>Auction</b>.
-                                </p>
-
-                                <div class="mb-3">
-                                    <button type="button" class="btn btn-danger btn-sm" onclick="cdpPaNotifySelected()">
-                                        <i class="mdi mdi-bell-ring"></i> Notify senders for selected
-                                    </button>
-                                </div>
-
-                                <div class="table-responsive">
-                                    <table class="table table-sm table-hover">
-                                        <thead>
-                                            <tr style="background:var(--page-050);">
-                                                <th style="width:30px;"></th>
-                                                <th>Shipment</th>
-                                                <th>Sender</th>
-                                                <th>Current Status</th>
-                                                <th>Ready Since</th>
-                                                <th>Stage</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                        <?php if (!$rows): ?>
-                                            <tr><td colspan="6" class="text-center text-muted py-3">No packages in the pickup-aging chain.</td></tr>
-                                        <?php else: foreach ($rows as $r):
-                                            $pending = ($r->notified_at === null && (int) $r->status_courier === CDP_PA_READY && (int) $r->days_ready >= $readyDays);
-                                            if ($r->auction_at !== null)          { $stage = '<span class="pa-stage pa-stage-auction">Auction</span>'; }
-                                            elseif ($r->not_picked_at !== null)   { $stage = '<span class="pa-stage pa-stage-notpicked">Not Picked Up</span>'; }
-                                            elseif ($r->notified_at !== null)     { $stage = '<span class="pa-stage pa-stage-notified">Pending Collection</span>'; }
-                                            elseif ($pending)                     { $stage = '<span class="pa-stage pa-stage-pending">Awaiting Notification</span>'; }
-                                            else                                  { $stage = '<span class="pa-stage pa-stage-waiting">Ready (' . (int) $r->days_ready . 'd)</span>'; }
-                                            $sender = trim(($r->fname ?? '') . ' ' . ($r->lname ?? ''));
-                                            if ($r->locker) $sender .= ' (' . $r->locker . ')';
-                                        ?>
-                                            <tr>
-                                                <td>
-                                                    <?php if ($pending): ?>
-                                                        <input type="checkbox" class="pa-check" value="<?php echo (int) $r->order_id; ?>">
-                                                    <?php endif; ?>
-                                                </td>
-                                                <td><b><?php echo htmlspecialchars($r->order_track); ?></b></td>
-                                                <td><?php echo htmlspecialchars($sender ?: 'N/A'); ?></td>
-                                                <td><span class="pa-badge" style="background:<?php echo htmlspecialchars($r->color ?: 'var(--slate-400)'); ?>;"><?php echo htmlspecialchars($r->mod_style ?: '—'); ?></span></td>
-                                                <td><?php echo htmlspecialchars((string) $r->ready_at); ?> <span class="text-muted">(<?php echo (int) $r->days_ready; ?>d)</span></td>
-                                                <td><?php echo $stage; ?></td>
-                                            </tr>
-                                        <?php endforeach; endif; ?>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <?php $paLimit = 0; $paTitle = 'Pickup Aging'; include __DIR__ . '/pickup_aging_panel.php'; ?>
                 </div>
             </div>
             <?php include 'views/inc/footer.php'; ?>
