@@ -354,3 +354,29 @@ if (!function_exists('cdp_pickupAgingNotifySenders')) {
         return $result;
     }
 }
+
+if (!function_exists('cdp_pickupAgingScope')) {
+    /**
+     * What a notify would actually touch: the pending packages among $orderIds
+     * (or every pending package when $orderIds is null) and how many distinct
+     * customers (senders) would be messaged. The confirmation step shows these
+     * numbers and the notify action refuses to run unless the staff member
+     * typed back the same customer count, so a stray click can never message
+     * everyone.
+     *
+     * @return array{ids:int[], packages:int, customers:int}
+     */
+    function cdp_pickupAgingScope($orderIds = null)
+    {
+        $want = $orderIds === null ? null : array_flip(array_map('intval', (array) $orderIds));
+        $ids = [];
+        $senders = [];
+        foreach ((array) cdp_pickupAgingPending() as $p) {
+            $oid = (int) $p->order_id;
+            if ($want !== null && !isset($want[$oid])) continue;
+            $ids[] = $oid;
+            $senders[(int) $p->sender_id] = true;
+        }
+        return ['ids' => $ids, 'packages' => count($ids), 'customers' => count($senders)];
+    }
+}

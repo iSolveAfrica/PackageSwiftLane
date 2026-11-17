@@ -144,6 +144,9 @@ $charts[] = [
                     <?php cdp_dashPanel('close'); ?>
                 </div>
                 <div class="row">
+                    <?php $paLimit = 25; $paTitle = 'Pickup Ageing'; include __DIR__ . '/../reports/pickup_aging/pickup_aging_panel.php'; ?>
+                </div>
+                <div class="row">
                     <?php cdp_dashChartCard('open', 'chart_wh_arrivals', 'Monthly Shipment Volume', 'Registered Shipments — ' . date('Y'), 'col-12'); cdp_dashChartCard('close'); ?>
                 </div>
             </div>
@@ -152,6 +155,7 @@ $charts[] = [
     </div>
 
     <?php cdp_dashChartsRender($charts, $core->currency); ?>
+    <?php if ($user->cdp_hasPermission('view_pickup_aging')) { ?><script src="<?= cdp_asset('dataJs/pickup_aging.js') ?>"></script><?php } ?>
 </body>
 
 </html>

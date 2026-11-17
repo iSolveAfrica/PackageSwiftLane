@@ -93,6 +93,16 @@ function sl_whRowsOut(array $rows): array
     return $out;
 }
 
+/** Who may send the 14-day pickup reminder, and how many packages / customers it would cover now. */
+function sl_pickupAgingNotifyState($user): array
+{
+    $can = $user->cdp_hasPermission('view_pickup_aging');
+    if (!$can || !sl_tableExists('cdb_package_pickup_aging')) return ['can' => false, 'packages' => 0, 'customers' => 0];
+    require_once CDP_ROOT . '/helpers/pickup_aging.php';
+    $s = cdp_pickupAgingScope(null);
+    return ['can' => true, 'packages' => $s['packages'], 'customers' => $s['customers']];
+}
+
 /** Warehouse.dc.html */
 function sl_warehouseData($user, $core): array
 {
@@ -129,6 +139,15 @@ function sl_warehouseData($user, $core): array
     $w = $q !== '' ? sl_whSearchSql() : '';
     $b = $q !== '' ? [':q' => '%' . $q . '%'] : [];
     $office = sl_row('SELECT name_off, city FROM cdb_offices ORDER BY id LIMIT 1');
+    // Pickup ageing: parcels ready for collection for over 14 days, oldest first (full list on PickupAging).
+    $aging = [];
+    $agingN = 0;
+    if ($user->cdp_hasPermission('view_pickup_aging')) {
+        $old = array_values(array_filter(sl_whRowsOut(sl_whReady(' AND a.status_courier IN (6,32)', [], 2000)), fn($r) => $r['dn'] > 14));
+        usort($old, fn($a, $b) => $b['dn'] <=> $a['dn']);
+        $agingN = count($old);
+        $aging = array_slice($old, 0, 10);
+    }
     return [
         'lede' => ($office ? $office->name_off : ($core->site_name ?? 'Hub')) . ' · receive, shelve and hand over parcels',
         'bays' => $grid, 'bayN' => $bays, 'free' => $free, 'busy' => $busy, 'wait' => $wait, 'full' => $busy + $wait, 'fullPct' => sl_pct($busy + $wait, $bays), 'hasBay' => $hasBay,
@@ -138,6 +157,7 @@ function sl_warehouseData($user, $core): array
         'canHand' => $user->cdp_hasPermission(['view_warehouse_delivery', 'warehouse_deliver_package']),
         'canCode' => cdp_pickupCodeCanUse($user), 'canBulk' => $user->cdp_hasPermission('deliver_shipment'),
         'bayList' => array_column($grid, 'n'),
+        'aging' => $aging, 'agingN' => $agingN, 'paNotify' => sl_pickupAgingNotifyState($user),
     ];
 }
 
@@ -401,6 +421,6 @@ function sl_pickupAgingData($user, $core): array
         'mode' => $mode, 'rows' => array_slice($out, 0, 100), 'n' => $n, 'u3' => $u3, 'm14' => $m14, 'o14' => $o14,
         'u3p' => sl_pct($u3, $n), 'm14p' => sl_pct($m14, $n), 'o14p' => sl_pct($o14, $n), 'hist' => $hist, 'hmx' => $hmx, 'avg' => $avgAll,
         'line' => implode(' ', $pts), 'lab' => $lab, 'series' => $series, 'amx' => $amx, 'first' => $series[0], 'last' => end($series), 'firstL' => $lab[0],
-        'pending' => $pending, 'canCode' => cdp_pickupCodeCanUse($user), 'canNotify' => $user->cdp_hasPermission('view_pickup_aging'),
+        'pending' => $pending, 'paNotify' => sl_pickupAgingNotifyState($user), 'canCode' => cdp_pickupCodeCanUse($user), 'canNotify' => $user->cdp_hasPermission('view_pickup_aging'),
     ];
 }
