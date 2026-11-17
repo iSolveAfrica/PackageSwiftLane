@@ -153,6 +153,10 @@ if ($user->cdp_hasPermission('main_dashboard_package_locker')) {
                     </div>
                 </div>
 
+                <div class="row">
+                    <?php $paLimit = 25; $paTitle = 'Pickup Ageing (air shipments awaiting collection)'; include __DIR__ . '/../reports/pickup_aging/pickup_aging_panel.php'; ?>
+                </div>
+
                 <?php include('views/modals/modal_update_status_checked.php'); ?>
                 <?php include('views/modals/modal_send_email.php'); ?>
                 <?php include('views/modals/modal_update_driver.php'); ?>
@@ -169,6 +173,7 @@ if ($user->cdp_hasPermission('main_dashboard_package_locker')) {
         <!-- SweetAlert2 v11 already ships via views/inc/footer.php — do NOT
              re-load the template v7 copy here, it clobbers the shim. -->
         <script src="<?= cdp_asset('dataJs/customers_packages.js') ?>"></script>
+        <?php if ($user->cdp_hasPermission('view_pickup_aging')) { ?><script src="<?= cdp_asset('dataJs/pickup_aging.js') ?>"></script><?php } ?>
         <?php cdp_dashChartsRender($charts, $core->currency); ?>
 </body>
 

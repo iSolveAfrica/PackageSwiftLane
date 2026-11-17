@@ -542,9 +542,8 @@ if ($canStats) {
 
     <script src="<?= cdp_asset('dataJs/dashboard_index.js') ?>"></script>
     <?php cdp_dashChartsRender($charts, $core->currency); ?>
-    <!-- Pickup-aging: prompt admins to notify senders of packages uncollected for 2 weeks. -->
-    <script>window.cdpPaDashboard = true;</script>
-    <script src="<?= cdp_asset('dataJs/pickup_aging.js') ?>"></script>
+    <?php /* No pickup-aging pop-up here: the list and its notify action live on the
+             Warehouse Panel, the Packages Control Panel and pickup_aging.php. */ ?>
 </body>
 
 </html>
