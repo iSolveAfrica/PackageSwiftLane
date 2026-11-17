@@ -95,25 +95,71 @@ $statusrow = $core->cdp_getStatus();
                                     <small id="search-status" class="text-muted d-none" aria-live="polite"></small>
                                 </div><!-- /.col -->
 
+<?php
+                                    // Status list for the filter (shipment statuses).
+                                    $srch_status = $core->cdp_getStatusByType(1) ?: array();
+                                    $srch_today  = date('Y-m-d');
+                                ?>
                                 <div class="col-sm-12 col-md-6 mb-2">
                                     <div class="row">
-                                        <div class="col-6 pr-1">
-                                            <label for="date_from" class="small mb-0">From</label>
-                                            <input type="date" id="date_from" class="form-control input-sm" max="<?php echo date('Y-m-d'); ?>">
+                                        <div class="col-6 col-lg-3 pr-1">
+                                            <label for="date_from" class="small mb-0">From date</label>
+                                            <input type="date" id="date_from" class="form-control input-sm srch-filter" max="<?php echo $srch_today; ?>">
                                         </div>
-                                        <div class="col-6 pl-1">
-                                            <label for="date_to" class="small mb-0">To</label>
-                                            <input type="date" id="date_to" class="form-control input-sm" max="<?php echo date('Y-m-d'); ?>">
+                                        <div class="col-6 col-lg-3 pl-1 pr-lg-1">
+                                            <label for="time_from" class="small mb-0">From time</label>
+                                            <input type="time" id="time_from" class="form-control input-sm srch-filter">
+                                        </div>
+                                        <div class="col-6 col-lg-3 pr-1 pl-lg-1">
+                                            <label for="date_to" class="small mb-0">To date</label>
+                                            <input type="date" id="date_to" class="form-control input-sm srch-filter" max="<?php echo $srch_today; ?>">
+                                        </div>
+                                        <div class="col-6 col-lg-3 pl-1">
+                                            <label for="time_to" class="small mb-0">To time</label>
+                                            <input type="time" id="time_to" class="form-control input-sm srch-filter">
                                         </div>
                                     </div>
                                     <div class="mt-1 small">
+                                        <a href="#" class="date-preset mr-2 text-nowrap" data-hours="1">Last hour</a>
                                         <a href="#" class="date-preset mr-2 text-nowrap" data-days="0">Today</a>
+                                        <a href="#" class="date-preset mr-2 text-nowrap" data-yesterday="1">Yesterday</a>
                                         <a href="#" class="date-preset mr-2 text-nowrap" data-days="7">Last 7 days</a>
                                         <a href="#" class="date-preset mr-2 text-nowrap" data-days="30">Last 30 days</a>
                                         <a href="#" class="date-preset mr-2 text-nowrap" data-month="1">This month</a>
-                                        <a href="#" id="date-clear" class="text-danger text-nowrap"><i class="fa fa-times"></i> Clear dates</a>
+                                        <a href="#" id="date-clear" class="text-danger text-nowrap"><i class="fa fa-times"></i> Clear date &amp; time</a>
                                     </div>
                                 </div><!-- /.col -->
+
+                                <div class="col-6 col-md-3 mb-2">
+                                    <label for="f_type" class="small mb-0">Type</label>
+                                    <select id="f_type" class="form-control custom-select srch-filter">
+                                        <option value="">All</option>
+                                        <option value="ship">Shipments</option>
+                                        <option value="pickup">Pickups</option>
+                                        <option value="pkg">Customer packages</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-3 mb-2">
+                                    <label for="f_status" class="small mb-0">Status</label>
+                                    <select id="f_status" class="form-control custom-select srch-filter">
+                                        <option value="0">All statuses</option>
+                                        <?php foreach ($srch_status as $st) { ?>
+                                            <option value="<?php echo (int) $st->id; ?>"><?php echo htmlspecialchars(str_replace('_', ' ', $st->mod_style), ENT_QUOTES, 'UTF-8'); ?></option>
+                                        <?php } ?>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-3 mb-2">
+                                    <label for="f_invoice" class="small mb-0">Invoice</label>
+                                    <select id="f_invoice" class="form-control custom-select srch-filter">
+                                        <option value="0">All invoices</option>
+                                        <option value="1"><?php echo $lang['invoice_paid'] ?? 'Paid'; ?></option>
+                                        <option value="2"><?php echo $lang['invoice_pending'] ?? 'Pending'; ?></option>
+                                        <option value="3"><?php echo $lang['verify_payment'] ?? 'Verify payment'; ?></option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-3 mb-2 d-flex align-items-end">
+                                    <button type="button" id="filters-reset" class="btn btn-outline-secondary btn-block"><i class="fa fa-undo"></i> Reset all</button>
+                                </div>
 
                                 
                             </div>

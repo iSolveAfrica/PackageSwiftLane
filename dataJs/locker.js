@@ -16,19 +16,37 @@ $(function () {
     e.preventDefault(); clearTimeout(cdp_searchTimer); cdp_load(1);
   });
 
-  // Date filter: applies straight away, alone or together with the search term.
-  $("#date_from, #date_to").on("change", function () { clearTimeout(cdp_searchTimer); cdp_load(1); });
+  // Filters (date, time, type, status, invoice) apply straight away, alone or
+  // together with the search term.
+  $(".srch-filter").on("change", function () { clearTimeout(cdp_searchTimer); cdp_load(1); });
   $("#date-clear").on("click", function (e) {
-    e.preventDefault(); $("#date_from, #date_to").val(""); cdp_load(1);
+    e.preventDefault(); $("#date_from, #date_to, #time_from, #time_to").val(""); cdp_load(1);
+  });
+  $("#filters-reset").on("click", function (e) {
+    e.preventDefault();
+    $("#search, #date_from, #date_to, #time_from, #time_to").val("");
+    $("#f_type").val(""); $("#f_status, #f_invoice").val("0");
+    cdp_load(1);
   });
   $(".date-preset").on("click", function (e) {
     e.preventDefault();
     var pad = function (n) { return (n < 10 ? "0" : "") + n; };
     var ymd = function (d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); };
-    var to = new Date(), from = new Date();
-    if ($(this).data("month")) { from = new Date(to.getFullYear(), to.getMonth(), 1); }
-    else { from.setDate(to.getDate() - parseInt($(this).data("days"), 10)); }
+    var hm = function (d) { return pad(d.getHours()) + ":" + pad(d.getMinutes()); };
+    var $p = $(this), to = new Date(), from = new Date();
+    var tFrom = "", tTo = "";
+    if ($p.data("hours")) {
+      from = new Date(to.getTime() - parseInt($p.data("hours"), 10) * 3600 * 1000);
+      tFrom = hm(from); tTo = hm(to);
+    } else if ($p.data("yesterday")) {
+      from.setDate(to.getDate() - 1); to = new Date(from.getTime());
+    } else if ($p.data("month")) {
+      from = new Date(to.getFullYear(), to.getMonth(), 1);
+    } else {
+      from.setDate(to.getDate() - parseInt($p.data("days"), 10));
+    }
     $("#date_from").val(ymd(from)); $("#date_to").val(ymd(to));
+    $("#time_from").val(tFrom); $("#time_to").val(tTo);
     cdp_load(1);
   });
 });
@@ -51,20 +69,28 @@ function cdp_load(page) {
   var search = $.trim($("#search").val() || "");
   var dateFrom = $("#date_from").val() || "";
   var dateTo = $("#date_to").val() || "";
-  var key = search + "|" + dateFrom + "|" + dateTo;
+  var params = {
+    'search': search,
+    'date_from': dateFrom, 'date_to': dateTo,
+    'time_from': $("#time_from").val() || "", 'time_to': $("#time_to").val() || "",
+    'type': $("#f_type").val() || "",
+    'status': $("#f_status").val() || "0",
+    'invoice': $("#f_invoice").val() || "0"
+  };
+  var key = JSON.stringify(params);
   if (key === cdp_lastSearch && cdp_searchXhr) { return; } // same query already loading
   cdp_lastSearch = key;
 
   // Only the newest search may paint the results.
   if (cdp_searchXhr) { cdp_searchXhr.abort(); }
 
-  if (search.length >= 2 || dateFrom || dateTo) {
+  if (search.length >= 2 || dateFrom || dateTo || params.time_from || params.time_to || params.type || params.status !== "0" || params.invoice !== "0") {
     $("#search-status").html('<i class="fa fa-spinner fa-spin"></i> Searching&hellip;').removeClass('d-none');
   }
 
   cdp_searchXhr = $.ajax({
     url: './ajax/locker/locker_search_ajax.php',
-    data: { 'search': search, 'date_from': dateFrom, 'date_to': dateTo },
+    data: params,
     cache: false,
     success: function (data) {
       $(".outer_divx").html(data).show();

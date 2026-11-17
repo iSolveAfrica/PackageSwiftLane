@@ -26,30 +26,79 @@ $userData = $user->cdp_getUserData();
 // whole search, and any database error is reported rather than swallowed.
 $term = trim((string) ($_REQUEST['search'] ?? ''));
 
-// Optional date range on the order date (YYYY-MM-DD from <input type="date">).
-// Works with a search term, or on its own to list everything in the range.
+// Filters. Date + time bound the moment the shipment/package was ENTERED
+// (order_datetime, falling back to order_date), so "10 Nov 08:00 to 10 Nov
+// 12:00" means exactly that morning. A time without a date means today.
+// Type, status and invoice status narrow further. All of them work with a
+// search term or on their own.
 $validDate = function ($d) {
     $d = trim((string) $d);
     $dt = DateTime::createFromFormat('Y-m-d', $d);
     return ($dt && $dt->format('Y-m-d') === $d) ? $d : '';
 };
+$validTime = function ($t) {
+    $t = substr(trim((string) $t), 0, 5);
+    return preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $t) ? $t : '';
+};
 $dateFrom = $validDate($_REQUEST['date_from'] ?? '');
 $dateTo   = $validDate($_REQUEST['date_to'] ?? '');
-if ($dateFrom !== '' && $dateTo !== '' && $dateFrom > $dateTo) {
-    list($dateFrom, $dateTo) = array($dateTo, $dateFrom);
-}
-$hasDate = ($dateFrom !== '' || $dateTo !== '');
-$hasTerm = strlen($term) >= 2;
+$timeFrom = $validTime($_REQUEST['time_from'] ?? '');
+$timeTo   = $validTime($_REQUEST['time_to'] ?? '');
+$today    = date('Y-m-d');
 
-if (!$hasTerm && !$hasDate) {
-    echo '<div class="alert alert-info mb-0">Start typing to search (2+ characters): customer name, locker ID, phone, e-mail, item description, address, notes&hellip; or pick a date range.</div>';
+$fromAt = '';
+$toAt   = '';
+if ($dateFrom !== '' || $timeFrom !== '') {
+    $fromAt = ($dateFrom !== '' ? $dateFrom : ($dateTo !== '' ? $dateTo : $today)) . ' ' . ($timeFrom !== '' ? $timeFrom : '00:00') . ':00';
+}
+if ($dateTo !== '' || $timeTo !== '') {
+    $toAt = ($dateTo !== '' ? $dateTo : ($dateFrom !== '' ? $dateFrom : $today)) . ' ' . ($timeTo !== '' ? $timeTo : '23:59') . ':59';
+}
+if ($fromAt !== '' && $toAt !== '' && $fromAt > $toAt) {
+    list($fromAt, $toAt) = array(substr($toAt, 0, 17) . '00', substr($fromAt, 0, 17) . '59');
+}
+$hasDate = ($fromAt !== '' || $toAt !== '');
+
+$fType    = in_array(($_REQUEST['type'] ?? ''), array('ship', 'pickup', 'pkg'), true) ? $_REQUEST['type'] : '';
+$fStatus  = (int) ($_REQUEST['status'] ?? 0);
+$fInvoice = in_array((int) ($_REQUEST['invoice'] ?? 0), array(1, 2, 3), true) ? (int) $_REQUEST['invoice'] : 0;
+
+$hasTerm   = strlen($term) >= 2;
+$hasFilter = $hasDate || $fType !== '' || $fStatus > 0 || $fInvoice > 0;
+
+if (!$hasTerm && !$hasFilter) {
+    echo '<div class="alert alert-info mb-0">Start typing to search (2+ characters): customer name, locker ID, phone, e-mail, item description, address, notes&hellip; or use the date, time and other filters.</div>';
     exit;
 }
 
+$entryAt   = "COALESCE(a.order_datetime, a.order_date)";
 $dateWhere = '';
 $dateBinds = array();
-if ($dateFrom !== '') { $dateWhere .= ' AND a.order_date >= :df'; $dateBinds[':df'] = $dateFrom; }
-if ($dateTo !== '')   { $dateWhere .= ' AND a.order_date <= :dt'; $dateBinds[':dt'] = $dateTo; }
+if ($fromAt !== '') { $dateWhere .= " AND $entryAt >= :df"; $dateBinds[':df'] = $fromAt; }
+if ($toAt !== '')   { $dateWhere .= " AND $entryAt <= :dt"; $dateBinds[':dt'] = $toAt; }
+if ($fInvoice > 0)  { $dateWhere .= ' AND a.status_invoice = ' . $fInvoice; }
+
+$shipWhere = $dateWhere;
+$pkgWhere  = $dateWhere;
+if ($fStatus > 0) {
+    $shipWhere .= ' AND ' . cdp_effectiveStatusSql('a') . ' = ' . $fStatus;
+    $pkgWhere  .= ' AND ' . cdp_effectiveStatusSql('a', true) . ' = ' . $fStatus;
+}
+if ($fType === 'ship')   { $shipWhere .= ' AND a.is_pickup = 0'; }
+if ($fType === 'pickup') { $shipWhere .= ' AND a.is_pickup = 1'; }
+$wantShip = ($fType !== 'pkg');
+$wantPkg  = ($fType === '' || $fType === 'pkg');
+
+// Entry time (HH:MM) of a row, from order_datetime; '—' when only a date is known.
+function cdp_srchEntryTime($row) {
+    $ts = !empty($row->order_datetime) ? $row->order_datetime : ($row->order_date ?? '');
+    if ($ts === '' || strlen((string) $ts) <= 10) { return '—'; }
+    return date('H:i', strtotime($ts));
+}
+function cdp_srchEntryDate($row) {
+    $ts = !empty($row->order_date) ? $row->order_date : ($row->order_datetime ?? '');
+    return $ts ? date('Y-m-d', strtotime($ts)) : '';
+}
 
 $like  = '%' . str_replace(array('\\', '%', '_'), array('\\\\', '\\%', '\\_'), $term) . '%';
 $limit = 100;   // rows shown per section
@@ -130,14 +179,14 @@ if ($userData->userlevel == 1) {
 // Courier shipments
 $shipSelect = "SELECT 
             a.order_incomplete, a.status_invoice, a.is_consolidate, a.is_pickup, a.total_order,
-            a.order_id, a.order_prefix, a.order_no, a.order_date, a.sender_id, a.receiver_id,
+            a.order_id, a.order_prefix, a.order_no, a.order_date, a.order_datetime, a.sender_id, a.receiver_id,
             a.order_courier, a.order_pay_mode, a.status_courier, a.driver_id,
             a.order_service_options, a.order_deli_time, b.mod_style, b.color,
             %s AS tracking_number, %s AS estimated_eta
         FROM cdb_add_order AS a
         INNER JOIN cdb_styles AS b ON a.status_courier = b.id
         %s
-        WHERE a.status_courier != 14 $scope $dateWhere
+        WHERE a.status_courier != 14 $scope $shipWhere
           %s
         ORDER BY a.order_id DESC
         LIMIT $limit";
@@ -150,20 +199,20 @@ $shipMatch = function ($extra) use ($hasTerm, $inInts, $userIds, $recipIds, $shi
                $extra)";
 };
 $joinTn = "LEFT JOIN cdb_package_tracking_number AS c ON a.order_id = c.order_id";
-$orders = $cdp_srch(array(
+$orders = !$wantShip ? array() : $cdp_srch(array(
     sprintf($shipSelect, "COALESCE(NULLIF(c.tracking_number, ''), a.tracking_num)", 'c.estimated_eta', $joinTn, $shipMatch("OR CONCAT_WS(' ', a.notes, a.person_receives) LIKE :t")),
     sprintf($shipSelect, "COALESCE(NULLIF(c.tracking_number, ''), a.tracking_num)", 'c.estimated_eta', $joinTn, $shipMatch('')),
     sprintf($shipSelect, "''", "''", '', $shipMatch('')),
 ), array(':t' => $like) + $trackBinds + $dateBinds);
 
 // Customer packages
-$pkgSelect = "SELECT a.order_id, a.order_prefix, a.order_no, a.order_date, a.sender_id,
+$pkgSelect = "SELECT a.order_id, a.order_prefix, a.order_no, a.order_date, a.order_datetime, a.sender_id,
             a.status_courier, a.is_consolidate, a.total_weight, a.total_order, b.mod_style, b.color,
             (SELECT GROUP_CONCAT(d.order_item_description SEPARATOR ', ')
                FROM cdb_customers_packages_detail AS d WHERE d.order_id = a.order_id) AS descriptions
         FROM cdb_customers_packages AS a
         INNER JOIN cdb_styles AS b ON a.status_courier = b.id
-        WHERE 1 = 1 $scope $dateWhere
+        WHERE 1 = 1 $scope $pkgWhere
           %s
         ORDER BY a.order_id DESC
         LIMIT $limit";
@@ -174,7 +223,7 @@ $pkgMatch = function ($extra) use ($hasTerm, $inInts, $userIds, $pkgItemIds, $tr
                OR CONCAT(a.order_prefix, a.order_no) IN ($trackIn)
                $extra)";
 };
-$packages = $cdp_srch(array(
+$packages = !$wantPkg ? array() : $cdp_srch(array(
     sprintf($pkgSelect, $pkgMatch("OR CONCAT_WS(' ', a.notes, a.person_receives, a.provider_purchase) LIKE :t")),
     sprintf($pkgSelect, $pkgMatch('')),
 ), array(':t' => $like) + $trackBinds + $dateBinds);
@@ -188,7 +237,7 @@ if ($searchErrors && $userData->userlevel != 1) {
 cdp_prefetchConsolidations(array_map(function ($r) { return $r->order_no; }, $orders ?: array()));
 
 if (!$orders && !$packages) {
-    echo '<div class="alert alert-warning">No shipments or packages match' . ($hasTerm ? ' &ldquo;' . htmlspecialchars($term) . '&rdquo;' : '') . ($hasDate ? ' between ' . htmlspecialchars($dateFrom ?: 'the start') . ' and ' . htmlspecialchars($dateTo ?: 'today') : '') . '.</div>';
+    echo '<div class="alert alert-warning">No shipments or packages match' . ($hasTerm ? ' &ldquo;' . htmlspecialchars($term) . '&rdquo;' : '') . ($fromAt !== '' ? ' from ' . htmlspecialchars(substr($fromAt, 0, 16)) : '') . ($toAt !== '' ? ' to ' . htmlspecialchars(substr($toAt, 0, 16)) : '') . (($fType !== '' || $fStatus || $fInvoice) ? ' with the selected filters' : '') . '.</div>';
     exit;
 }
 ?>
@@ -210,6 +259,7 @@ if (!$orders && !$packages) {
                 <th><b><?php echo $lang['ltracking']; ?></b></th>
                 <th><b><?php echo $lang['customTracking']; ?></b></th>
                 <th><b><?php echo $lang['ddate']; ?></b></th>
+                <th><b>Time</b></th>
                 <th><b><?php echo $lang['eta']; ?></b></th>
                 <?php if ($userData->userlevel == 9 || $userData->userlevel == 2) { ?>
                     <th><b><?php echo $lang['left498']; ?></b></th>
@@ -296,16 +346,17 @@ if (!$orders && !$packages) {
                             </b>
                         </td>
                         <td><?php echo $row->tracking_number; ?></td>
-                        <td><?php echo $row->order_date; ?></td>
+                        <td><?php echo cdp_srchEntryDate($row); ?></td>
+                        <td class="text-nowrap"><?php echo cdp_srchEntryTime($row); ?></td>
                         <td><?php echo cdp_getEffectiveEta($row->order_id, $row->order_no, $row->order_deli_time ?? null, $row->is_consolidate); ?></td>
                         <?php if ($userData->userlevel == 9 || $userData->userlevel == 2) { ?>
                             <td><?php echo $sender_data->fname; ?> <?php echo $sender_data->lname; ?></td>
                         <?php } ?>
                         <td><?php echo empty($receiver_data->fname) ? $sender_data->fname : $receiver_data->fname; ?> <?php echo empty($receiver_data->lname) ? $sender_data->lname : $receiver_data->lname; ?></td>
                         <?php if ($userData->userlevel == 9 || $userData->userlevel == 2) { ?>
-                            <td><?php echo $address_order->sender_country; ?>-<?php echo $address_order->sender_city; ?></td>
+                            <td><?php echo ($address_order->sender_country ?? ""); ?>-<?php echo ($address_order->sender_city ?? ""); ?></td>
                         <?php } ?>
-                        <td><?php echo $address_order->recipient_country; ?>-<?php echo $address_order->recipient_city; ?></td>
+                        <td><?php echo ($address_order->recipient_country ?? ""); ?>-<?php echo ($address_order->recipient_city ?? ""); ?></td>
                         <td>
                             <?php $eff = cdp_getEffectiveStatus($row->order_no, $row->status_courier, $row->is_consolidate); ?>
                             <span style="background: <?php echo $eff->color; ?>;" class="label label-large"><?php echo $eff->mod_style; ?></span>
@@ -454,6 +505,7 @@ if (!$orders && !$packages) {
             <tr>
                 <th><b><?php echo $lang['ltracking']; ?></b></th>
                 <th><b><?php echo $lang['ddate']; ?></b></th>
+                <th><b>Time</b></th>
                 <th><b><?php echo $lang['ncustomer']; ?></b></th>
                 <th><b>Locker</b></th>
                 <th><b>Description</b></th>
@@ -471,7 +523,8 @@ if (!$orders && !$packages) {
             ?>
                 <tr>
                     <td><b><a href="customer_packages_view.php?id=<?php echo (int) $pk->order_id; ?>"><?php echo htmlspecialchars($pk->order_prefix . $pk->order_no); ?></a></b></td>
-                    <td><?php echo htmlspecialchars((string) $pk->order_date); ?></td>
+                    <td><?php echo cdp_srchEntryDate($pk); ?></td>
+                    <td class="text-nowrap"><?php echo cdp_srchEntryTime($pk); ?></td>
                     <td><?php echo $owner ? htmlspecialchars($owner->fname . ' ' . $owner->lname) : ''; ?></td>
                     <td><?php echo $owner ? htmlspecialchars((string) $owner->locker) : ''; ?></td>
                     <td><?php echo htmlspecialchars((string) $pk->descriptions); ?></td>
