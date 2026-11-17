@@ -291,11 +291,10 @@ if ($numrows > 0) { ?>
 							<?php } ?>
 							<td><b><a href="courier_view.php?id=<?php echo $row->order_id; ?>"><?php echo $row->order_prefix . $row->order_no; ?></a></b></td>
 							<?php
-							// Tracking is cut to its first 10 characters in the list; the full
-							// number is in the tooltip and on the shipment page.
+							// Full tracking number.
 							$trk_full = trim((string) ($postal_tracking->tracking_number ?? ''));
 							?>
-							<td class="text-nowrap"<?php if (strlen($trk_full) > 10) { ?> title="<?php echo htmlspecialchars($trk_full, ENT_QUOTES, 'UTF-8'); ?>"<?php } ?>><?php echo $trk_full !== '' ? htmlspecialchars(substr($trk_full, 0, 10), ENT_QUOTES, 'UTF-8') : 'N/A'; ?></td>
+							<td class="text-nowrap"><?php echo $trk_full !== '' ? htmlspecialchars($trk_full, ENT_QUOTES, 'UTF-8') : 'N/A'; ?></td>
 							<td>
 								<?php echo $row->order_date ? date('Y-m-d', strtotime($row->order_date)) : ''; ?>
 							</td>
