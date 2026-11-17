@@ -4,6 +4,37 @@
 $(function () {
   cdp_load(1);
 
+  // Date/time of entry and invoice filters reload the list straight away.
+  $(".cl-filter").on("change", function () { cdp_load(1); });
+  $("#date-clear").on("click", function (e) {
+    e.preventDefault(); $("#date_from, #date_to, #time_from, #time_to").val(""); cdp_load(1);
+  });
+  $("#filters-reset").on("click", function (e) {
+    e.preventDefault();
+    $("#search, #date_from, #date_to, #time_from, #time_to").val("");
+    $("#status_courier, #filterby, #f_invoice").val("0");
+    cdp_load(1);
+  });
+  $(".date-preset").on("click", function (e) {
+    e.preventDefault();
+    var pad = function (n) { return (n < 10 ? "0" : "") + n; };
+    var ymd = function (d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); };
+    var hm = function (d) { return pad(d.getHours()) + ":" + pad(d.getMinutes()); };
+    var $p = $(this), to = new Date(), from = new Date(), tFrom = "", tTo = "";
+    if ($p.data("hours")) {
+      from = new Date(to.getTime() - parseInt($p.data("hours"), 10) * 3600 * 1000);
+      tFrom = hm(from); tTo = hm(to);
+    } else if ($p.data("yesterday")) {
+      from.setDate(to.getDate() - 1); to = new Date(from.getTime());
+    } else if ($p.data("month")) {
+      from = new Date(to.getFullYear(), to.getMonth(), 1);
+    } else {
+      from.setDate(to.getDate() - parseInt($p.data("days"), 10));
+    }
+    $("#date_from").val(ymd(from)); $("#date_to").val(ymd(to));
+    $("#time_from").val(tFrom); $("#time_to").val(tTo);
+    cdp_load(1);
+  });
 });
 
 
@@ -15,7 +46,10 @@ function cdp_load(page) {
   var filterby = $("#filterby").val();
   var per_page = $("#per_page").val() || 25;
   var mode = (typeof window.CDP_SHIP_MODE !== "undefined") ? window.CDP_SHIP_MODE : "";
-  var parametros = { "page": page, 'search': search, 'status_courier': status_courier, 'filterby': filterby, 'per_page': per_page, 'mode': mode };
+  var parametros = { "page": page, 'search': search, 'status_courier': status_courier, 'filterby': filterby, 'per_page': per_page, 'mode': mode,
+    'date_from': $("#date_from").val() || "", 'date_to': $("#date_to").val() || "",
+    'time_from': $("#time_from").val() || "", 'time_to': $("#time_to").val() || "",
+    'invoice': $("#f_invoice").val() || "0" };
   $("#loader").fadeIn('slow');
   $.ajax({
     url: './ajax/courier/courier_list_ajax.php',

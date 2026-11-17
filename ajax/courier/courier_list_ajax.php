@@ -89,6 +89,21 @@ if ($filterby == 3) {
 							  WHERE d_f.order_no = a.order_no) ";
 }
 
+// Date & time of entry (order_datetime, falling back to order_date). A time
+// without a date means today. Values are validated before use.
+$cl_vd = function ($d) { $d = trim((string) $d); $o = DateTime::createFromFormat('Y-m-d', $d); return ($o && $o->format('Y-m-d') === $d) ? $d : ''; };
+$cl_vt = function ($t) { $t = substr(trim((string) $t), 0, 5); return preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $t) ? $t : ''; };
+$cl_df = $cl_vd($_REQUEST['date_from'] ?? ''); $cl_dt = $cl_vd($_REQUEST['date_to'] ?? '');
+$cl_tf = $cl_vt($_REQUEST['time_from'] ?? ''); $cl_tt = $cl_vt($_REQUEST['time_to'] ?? '');
+$cl_from = ($cl_df !== '' || $cl_tf !== '') ? (($cl_df ?: ($cl_dt ?: date('Y-m-d'))) . ' ' . ($cl_tf ?: '00:00') . ':00') : '';
+$cl_to   = ($cl_dt !== '' || $cl_tt !== '') ? (($cl_dt ?: ($cl_df ?: date('Y-m-d'))) . ' ' . ($cl_tt ?: '23:59') . ':59') : '';
+if ($cl_from !== '' && $cl_to !== '' && $cl_from > $cl_to) { list($cl_from, $cl_to) = array(substr($cl_to, 0, 17) . '00', substr($cl_from, 0, 17) . '59'); }
+if ($cl_from !== '') { $sWhere .= " and COALESCE(a.order_datetime, a.order_date) >= '" . $cl_from . "'"; }
+if ($cl_to !== '')   { $sWhere .= " and COALESCE(a.order_datetime, a.order_date) <= '" . $cl_to . "'"; }
+
+$cl_inv = (int) ($_REQUEST['invoice'] ?? 0);
+if (in_array($cl_inv, array(1, 2, 3), true)) { $sWhere .= " and a.status_invoice = '" . $cl_inv . "'"; }
+
 // Air vs Sea segregation — the dedicated Air Shipping / Sea Shipping menus each
 // show only their own shipments (order_item_category → Air/Ocean Freight).
 $sWhere .= cdp_shipModeWhere($_REQUEST['mode'] ?? '', 'a');

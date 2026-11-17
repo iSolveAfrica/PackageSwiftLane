@@ -93,6 +93,7 @@ $statusrow = $core->cdp_getStatus();
 
                                     </div>
                                     <small id="search-status" class="text-muted d-none" aria-live="polite"></small>
+                                    <input type="hidden" id="per_page" value="100"><?php /* stops the footer adding a rows-per-page dropdown: search shows up to 100 per section */ ?>
                                 </div><!-- /.col -->
 
 <?php

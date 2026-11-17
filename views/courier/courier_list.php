@@ -178,6 +178,47 @@ $ship_mode_label = $ship_mode === 'air' ? 'Air Shipments' : ($ship_mode === 'sea
                                 </div>
                             </div>
 
+                            <!-- Date & time of entry, and invoice status -->
+                            <div class="row mb-3 align-items-end">
+                                <div class="col-6 col-md-2 mb-2">
+                                    <label for="date_from" class="small mb-0">From date</label>
+                                    <input type="date" id="date_from" class="form-control input-sm cl-filter" max="<?php echo date('Y-m-d'); ?>">
+                                </div>
+                                <div class="col-6 col-md-2 mb-2">
+                                    <label for="time_from" class="small mb-0">From time</label>
+                                    <input type="time" id="time_from" class="form-control input-sm cl-filter">
+                                </div>
+                                <div class="col-6 col-md-2 mb-2">
+                                    <label for="date_to" class="small mb-0">To date</label>
+                                    <input type="date" id="date_to" class="form-control input-sm cl-filter" max="<?php echo date('Y-m-d'); ?>">
+                                </div>
+                                <div class="col-6 col-md-2 mb-2">
+                                    <label for="time_to" class="small mb-0">To time</label>
+                                    <input type="time" id="time_to" class="form-control input-sm cl-filter">
+                                </div>
+                                <div class="col-6 col-md-2 mb-2">
+                                    <label for="f_invoice" class="small mb-0">Invoice</label>
+                                    <select id="f_invoice" class="form-control custom-select cl-filter">
+                                        <option value="0">All invoices</option>
+                                        <option value="1"><?php echo $lang['invoice_paid'] ?? 'Paid'; ?></option>
+                                        <option value="2"><?php echo $lang['invoice_pending'] ?? 'Pending'; ?></option>
+                                        <option value="3"><?php echo $lang['verify_payment'] ?? 'Verify payment'; ?></option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-2 mb-2">
+                                    <button type="button" id="filters-reset" class="btn btn-outline-secondary btn-block"><i class="fa fa-undo"></i> Reset</button>
+                                </div>
+                                <div class="col-12 small">
+                                    <a href="#" class="date-preset mr-2 text-nowrap" data-hours="1">Last hour</a>
+                                    <a href="#" class="date-preset mr-2 text-nowrap" data-days="0">Today</a>
+                                    <a href="#" class="date-preset mr-2 text-nowrap" data-yesterday="1">Yesterday</a>
+                                    <a href="#" class="date-preset mr-2 text-nowrap" data-days="7">Last 7 days</a>
+                                    <a href="#" class="date-preset mr-2 text-nowrap" data-days="30">Last 30 days</a>
+                                    <a href="#" class="date-preset mr-2 text-nowrap" data-month="1">This month</a>
+                                    <a href="#" id="date-clear" class="text-danger text-nowrap"><i class="fa fa-times"></i> Clear date &amp; time</a>
+                                </div>
+                            </div>
+
 
                             <div class="row">
                                 <div class="col-md-6">
