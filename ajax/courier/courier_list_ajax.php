@@ -105,7 +105,7 @@ if (!function_exists('cdp_markOverdueInvoices')) { $d = __DIR__; while ($d !== d
 cdp_markOverdueInvoices($db);
 
 
-$sql = "SELECT a.order_incomplete, a.recipient_type, a.status_invoice, a.is_consolidate, a.is_dangerous_good, a.is_pickup, a.total_order, a.order_id, a.order_prefix, a.order_no, a.order_date, a.sender_id, a.receiver_id, a.order_courier, a.order_pay_mode, a.status_courier, a.driver_id, a.order_service_options, a.total_weight,  b.mod_style, b.color FROM
+$sql = "SELECT a.order_incomplete, a.recipient_type, a.status_invoice, a.is_consolidate, a.is_dangerous_good, a.is_pickup, a.total_order, a.order_id, a.order_prefix, a.order_no, a.order_date, a.order_datetime, a.sender_id, a.receiver_id, a.order_courier, a.order_pay_mode, a.status_courier, a.driver_id, a.order_service_options, a.total_weight,  b.mod_style, b.color FROM
 			 cdb_add_order as a
 			 INNER JOIN cdb_styles as b ON a.status_courier = b.id
 			 $sWhere
@@ -149,19 +149,15 @@ if ($numrows > 0) { ?>
 					<th><b><?php echo 'Swift Tracking' ?></b></th>
 					<th><b><?php echo 'Tracking' ?></b></th>
 					<th><b><?php echo $lang['ddate'] ?></b></th>
+					<th><b>Time</b></th>
 					<?php
 					if ($userData->userlevel == 9 || $userData->userlevel == 2) { ?>
 						<th><b><?php echo $lang['left498'] ?></b></th>
 					<?php } ?>
-					<th><b><?php echo $lang['left499'] ?></b></th>
-
-					<th><b><?php echo $lang['ldestination'] ?></b></th>
 					<?php if ($userData->userlevel == 1) { // customers see their package weight ?>
 						<th><b>Weight</b></th>
 					<?php } ?>
-					<th><b><?php echo $lang['lpayment'] ?></b></th>
 					<th><b><?php echo $lang['lstatusshipment'] ?></b></th>
-					<th class=""><b><?php echo $lang['ship-all5'] ?></b></th>
 					<th></th>
 					<th><b><?php echo $lang['global-3'] ?></b></th>
 					<th><b></b></th>
@@ -280,9 +276,22 @@ if ($numrows > 0) { ?>
 								</td>
 							<?php } ?>
 							<td><b><a href="courier_view.php?id=<?php echo $row->order_id; ?>"><?php echo $row->order_prefix . $row->order_no; ?></a></b></td>
-							<td><?php echo $postal_tracking->tracking_number ? $postal_tracking->tracking_number : 'N/A'; ?></td>
+							<?php
+							// Tracking is cut to its first 10 characters in the list; the full
+							// number is in the tooltip and on the shipment page.
+							$trk_full = trim((string) ($postal_tracking->tracking_number ?? ''));
+							?>
+							<td class="text-nowrap"<?php if (strlen($trk_full) > 10) { ?> title="<?php echo htmlspecialchars($trk_full, ENT_QUOTES, 'UTF-8'); ?>"<?php } ?>><?php echo $trk_full !== '' ? htmlspecialchars(substr($trk_full, 0, 10), ENT_QUOTES, 'UTF-8') : 'N/A'; ?></td>
 							<td>
-								<?php echo $row->order_date; ?>
+								<?php echo $row->order_date ? date('Y-m-d', strtotime($row->order_date)) : ''; ?>
+							</td>
+							<td class="text-nowrap">
+								<?php
+								// Time of entry: the clock time stamped when the shipment was saved.
+								$entry_ts = $row->order_datetime ?: $row->order_date;
+								$entry_time = $entry_ts ? date('H:i', strtotime($entry_ts)) : '';
+								echo ($entry_time !== '' && !($entry_time === '00:00' && strlen((string) $entry_ts) <= 10)) ? $entry_time : '—';
+								?>
 							</td>
 							<?php
 							if ($userData->userlevel == 9 || $userData->userlevel == 2) { ?>
@@ -290,18 +299,10 @@ if ($numrows > 0) { ?>
 									<?php echo $sender_data->fname; ?> <?php echo $sender_data->lname; ?>
 								</td>
 							<?php } ?>
-							<td>
-								<?php echo $receiver_data->fname; ?> <?php echo $receiver_data->lname; ?>
-							</td>
-
-							<td><?php echo $recipient_type == 'user' ? $address_order->sender_country : $address_order->recipient_country; ?>-<?php echo $recipient_type == 'user' ? $address_order->sender_city : $address_order->recipient_city; ?></td>
 							<?php if ($userData->userlevel == 1) { ?>
 								<td class="text-nowrap"><?php echo ((float) $row->total_weight > 0) ? number_format((float) $row->total_weight, 2) . ' ' . htmlspecialchars((string) $core->weight_p, ENT_QUOTES, 'UTF-8') : '—'; ?></td>
 							<?php } ?>
 
-							<td>
-							    <?php echo isset($met_payment->met_payment) ? $met_payment->met_payment : 'N/A'; ?>
-							</td>
 
 
 							<td class="">
@@ -356,9 +357,6 @@ if ($numrows > 0) { ?>
 								<?php } ?>
 							</td>
 
-							<td>
-								<b><?php echo $core->currency; ?></b> <?php echo cdb_money_format($row->total_order); ?>
-							</td>
 
 							<td>
 								<?php if ($row->status_invoice == 2) { ?>
