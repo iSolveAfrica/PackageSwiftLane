@@ -157,17 +157,6 @@ $ship_mode_label = $ship_mode === 'air' ? 'Air Shipments' : ($ship_mode === 'sea
 
                                 <div class=" col-sm-12 col-md-2 mb-2">
                                     <div class="input-group">
-                                        <select onchange="cdp_load(1);" class="form-control custom-select" id="filterby" name="filterby">
-                                            <option value="0"><?php echo $lang['leftorder128'] ?></option>
-                                            <option value="1"><?php echo $lang['left1077'] ?></option>
-                                            <option value="2"><?php echo $lang['leftorder129'] ?></option>
-                                            <option value="3"><?php echo $lang['leftorder130'] ?></option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div class=" col-sm-12 col-md-2 mb-2">
-                                    <div class="input-group">
                                         <select onchange="cdp_load(1);" class="form-control custom-select" id="per_page" name="per_page">
                                             <option value="25">25 rows</option>
                                             <option value="50">50 rows</option>
@@ -195,15 +184,6 @@ $ship_mode_label = $ship_mode === 'air' ? 'Air Shipments' : ($ship_mode === 'sea
                                 <div class="col-6 col-md-2 mb-2">
                                     <label for="time_to" class="small mb-0">To time</label>
                                     <input type="time" id="time_to" class="form-control input-sm cl-filter">
-                                </div>
-                                <div class="col-6 col-md-2 mb-2">
-                                    <label for="f_invoice" class="small mb-0">Invoice</label>
-                                    <select id="f_invoice" class="form-control custom-select cl-filter">
-                                        <option value="0">All invoices</option>
-                                        <option value="1"><?php echo $lang['invoice_paid'] ?? 'Paid'; ?></option>
-                                        <option value="2"><?php echo $lang['invoice_pending'] ?? 'Pending'; ?></option>
-                                        <option value="3"><?php echo $lang['verify_payment'] ?? 'Verify payment'; ?></option>
-                                    </select>
                                 </div>
                                 <div class="col-6 col-md-2 mb-2">
                                     <button type="button" id="filters-reset" class="btn btn-outline-secondary btn-block"><i class="fa fa-undo"></i> Reset</button>
