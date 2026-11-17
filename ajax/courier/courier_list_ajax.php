@@ -173,7 +173,6 @@ if ($numrows > 0) { ?>
 						<th><b>Weight</b></th>
 					<?php } ?>
 					<th><b><?php echo $lang['lstatusshipment'] ?></b></th>
-					<th></th>
 					<th><b><?php echo $lang['global-3'] ?></b></th>
 					<th><b></b></th>
 				</tr>
@@ -374,19 +373,14 @@ if ($numrows > 0) { ?>
 
 
 							<td>
-								<?php if ($row->status_invoice == 2) { ?>
-									<?php if ($userData->userlevel == 1) { ?>
-
-										<a style="background: #34e89e;" class="label label" href="add_payment_gateways_courier.php?id_order=<?php echo $row->order_id; ?>">
-											<i style="color:#343a40" class="fas fa-dollar-sign"></i>
-											&nbsp;<?php echo $lang['leftorder35'] ?>
-										</a>
-									<?php } ?>
-								<?php } ?>
-							</td>
-
-							<td>
 								<span class="label label-large <?php echo $label_class; ?>"><?php echo $text_status; ?></span>
+								<?php if ($row->status_invoice == 2 && $userData->userlevel == 1) { // customer pays from here ?>
+									<br>
+									<a style="background: #34e89e;" class="label mt-1 d-inline-block" href="add_payment_gateways_courier.php?id_order=<?php echo $row->order_id; ?>">
+										<i style="color:#343a40" class="fas fa-dollar-sign"></i>
+										&nbsp;<?php echo $lang['leftorder35'] ?>
+									</a>
+								<?php } ?>
 							</td>
 							<td align='center'>
 							    <div class="btn-group">
