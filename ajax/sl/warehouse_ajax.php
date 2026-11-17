@@ -12,7 +12,8 @@
  *     ajax/courier/warehouse_delivery_ajax.php), and the customer gets one WhatsApp (SMS copy via sms_event handed_over) + e-mail.
  *   op=undo  module=  id=   (warehouse_undo_delivery) reopens a handed-over package to In_Warehouse (4)
  * Warehouse floor: op=receive tracking= bay=   op=move id= module= bay=
- * Aging: op=aging_notify (view_pickup_aging) -> cdp_pickupAgingNotifySenders for the 14-day list.
+ * Aging: op=aging_notify confirm_customers=N (view_pickup_aging) -> cdp_pickupAgingNotifySenders for the 14-day list,
+ *   refused unless N equals the number of customers it would message (typed in views/sl/inc/pickup_aging_notify.php).
  */
 require_once __DIR__ . '/../../loader.php';
 require_once __DIR__ . '/../../helpers/ajax_guard.php';
@@ -253,10 +254,16 @@ switch ($op) {
         require_permission('view_pickup_aging');
         require_once CDP_ROOT . '/helpers/pickup_aging.php';
         cdp_processPickupAging();
-        $ids = array_map(fn($r) => (int) $r->order_id, (array) cdp_pickupAgingPending());
-        if (!$ids) sl_json(['success' => true, 'message' => 'No customer is due a 14-day reminder.']);
-        $res = cdp_pickupAgingNotifySenders($ids, $uid);
-        sl_json(['success' => true, 'message' => 'Reminders sent for ' . count($ids) . ' package(s)', 'result' => $res]);
+        $scope = cdp_pickupAgingScope(null);
+        if (!$scope['packages']) sl_json(['success' => true, 'message' => 'No customer is due a 14-day reminder.']);
+        // The staff member must type back the customer count the dialog showed; if the list
+        // changed since, or the number is wrong or missing, nothing is sent.
+        $typed = trim((string) ($_POST['confirm_customers'] ?? ''));
+        if ($typed === '' || !ctype_digit($typed) || (int) $typed !== $scope['customers']) {
+            sl_json(['success' => false, 'message' => 'Not sent: this would message ' . $scope['customers'] . ' customer(s). Type that number to confirm.', 'errors' => ['confirm_customers' => 'Type ' . $scope['customers'] . ' to confirm']], 409);
+        }
+        $res = cdp_pickupAgingNotifySenders($scope['ids'], $uid);
+        sl_json(['success' => true, 'message' => 'Reminders sent to ' . $scope['customers'] . ' customer(s) for ' . $scope['packages'] . ' package(s)', 'result' => $res]);
         break;
 
     default:

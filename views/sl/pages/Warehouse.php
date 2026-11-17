@@ -49,6 +49,15 @@ if (!isset($d)) { $d = []; }
           </tbody></table></div>
           <?= sl_pager($d['page'], $d['per'], $d['count'], 'parcels') ?>
         </section>
+<?php if ($d['paNotify']['can']): ?>
+        <section class="sl-card flush" id="pickup-ageing">
+          <div class="row between wrap g12" style="padding: 16px 20px"><div><h2 class="sl-ct">Pickup ageing · <?= sl_num($d['agingN']) ?> waiting over 14 days</h2><span class="mut sm"><?= (int) $d['paNotify']['packages'] ?> package(s) from <?= (int) $d['paNotify']['customers'] ?> customer(s) are due the 14-day reminder</span></div><div class="row g8 wrap"><?php $paNotify = $d['paNotify']; include CDP_ROOT . '/views/sl/inc/pickup_aging_notify.php'; ?><a class="sl-btn" href="<?= sl_route('PickupAging') ?>">Open pickup ageing</a></div></div>
+          <div class="sl-tw"><table class="sl-table"><thead><tr><th>Parcel</th><th>Customer</th><th>Stage</th><th>Ready since</th><th>Waiting</th></tr></thead><tbody>
+            <?php foreach ($d['aging'] as $r): ?><tr><td><a class="id" href="<?= h($r['href']) ?>"><?= h($r['id']) ?></a><span class="sub"><?= $r['module'] === 'sea' ? 'Sea' : 'Air' ?></span></td><td><?= h($r['cust']) ?><span class="sub mono"><?= h($r['locker']) ?></span></td><td><?= h($r['st']) ?></td><td><?= h($r['ready']) ?></td><td><span class="ov-pill <?= h($r['wc']) ?>"><?= (int) $r['dn'] ?> d</span></td></tr><?php endforeach; ?>
+            <?php if (!$d['aging']): ?><tr><td colspan="5"><div class="sl-empty"><span class="sl-tile"><i class="ic i-check" aria-hidden="true"></i></span>No parcel has waited over 14 days.</div></td></tr><?php endif; ?>
+          </tbody></table></div>
+        </section>
+<?php endif; ?>
 <?php if ($d['canReceive']): ?>
 <div class="sl-dialog" id="wh-move" hidden><form class="sl-modal" data-sl-form data-sl-reload action="ajax/sl/warehouse_ajax.php" method="post" role="dialog" aria-label="Move bay"><input type="hidden" name="op" value="move"><input type="hidden" name="id" id="wh-mv-id"><input type="hidden" name="module" id="wh-mv-m">
   <b class="fw5">Move <span class="mono" id="wh-mv-trk"></span></b>
