@@ -84,8 +84,8 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 					<li class="sidebar-item nav-divider"></li>
                     <li class="sidebar-item">
 						<a class="sidebar-link waves-effect waves-dark" href="locker_search.php" aria-expanded="false">
-							<iconify-icon icon="ph:lockers-light" class="fs-5"></iconify-icon>
-							<span class="hide-menu"> <?php echo $lang['left-menu-sidebar-00'] . ' Search' ?></span>
+							<iconify-icon icon="ph:magnifying-glass-light" class="fs-5"></iconify-icon>
+							<span class="hide-menu"> <?php echo $lang['lockersearch'] ?? 'Search' ?></span>
 						</a>
 					</li>
 					<?php } ?>

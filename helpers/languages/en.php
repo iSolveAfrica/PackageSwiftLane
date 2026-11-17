@@ -1048,7 +1048,7 @@ $lang = array(
 
 	"shiplist" => "Ship List",
     "pickup_delivered" => "Pickup/Delivered",
-    "lockersearch" => "Locker Search",
+    "lockersearch" => "Search",
     "postraltrackingsearch" => "Tracking Search",
 	"ncustomer" => "Customer Name",
 	"lorigin" => "Origin",
@@ -1269,7 +1269,7 @@ $lang = array(
 	"left214" => "Qty",
 	"left21550" => "Update Status",
 	"left21551" => "the tracking number",
-    "left21552" => "Locker ID or package description",
+    "left21552" => "Search name, locker ID, phone, e-mail, description, address...",
 	"left21553" => "the postal tracking number / tracking number",
 
 

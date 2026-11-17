@@ -84,9 +84,9 @@ $statusrow = $core->cdp_getStatus();
                                     $add_courier_url = ($userData->userlevel == 9) ? "courier_add.php" : "courier_add_client.php";
                                 ?>
 
-                                <div class=" col-sm-12 col-md-4 mb-2">
+                                <div class=" col-sm-12 col-md-6 mb-2">
                                     <div class="input-group">
-                                        <input type="text" name="search" id="search" class="form-control input-sm float-right" placeholder="<?php echo $lang['left21552'] ?>" onkeyup="cdp_load(1);">
+                                        <input type="text" name="search" id="search" class="form-control input-sm float-right" placeholder="<?php echo $lang['left21552'] ?>" onkeyup="cdp_searchDebounced();">
                                         <div class="input-group-append input-sm">
                                             <button type="submit" class="btn btn-outline-dark"><i class="fa fa-search"></i></button>
                                         </div>

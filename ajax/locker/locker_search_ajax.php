@@ -10,21 +10,45 @@ require_permission('view_shipment_list');
 
 $db    = new Conexion;
 $core  = new Core;
+$user  = new User;
+$userData = $user->cdp_getUserData();
 
-// The search box takes a locker ID or a package description. Tracking and
-// packaging numbers are deliberately NOT matched here: this page answers
-// "whose locker / what item", not "which waybill". Every package in the system
-// whose owner's locker or any item description matches is returned.
+// Platform-wide search. One term is matched against most text fields of a
+// package: customer (name, locker, email, phone, ID document, username),
+// recipient (name, email, phone), item descriptions, sender/recipient address
+// (country, state, city, zip, street), notes, the person who received it and
+// the online-store provider. Tracking and packaging numbers are deliberately
+// NOT matched.
 $term = trim((string) ($_REQUEST['search'] ?? ''));
 
-if ($term === '') {
-    echo '<div class="alert alert-info">Please enter a locker ID or a package description.</div>';
+if (mb_strlen($term) < 2) {
+    echo '<div class="alert alert-info">Type at least 2 characters to search: name, locker ID, phone, email, description, address, notes&hellip;</div>';
     exit;
 }
 
 $like = '%' . str_replace(array('\\', '%', '_'), array('\\\\', '\\%', '\\_'), $term) . '%';
+$limit = 100; // per section; the term can be very broad
 
-// Courier shipments: sender's locker, or any item description, matches.
+// Same visibility rules as the shipment / package lists: a customer sees only
+// their own, a driver only those assigned to them, an agency its own branch.
+$scopeShip = '';
+$scopePkg  = '';
+if ($userData->userlevel == 1) {
+    $scopeShip = $scopePkg = ' AND a.sender_id = ' . (int) $_SESSION['userid'];
+} elseif ($userData->userlevel == 3) {
+    $scopeShip = $scopePkg = ' AND a.driver_id = ' . (int) $_SESSION['userid'];
+} elseif ($userData->userlevel == 6) {
+    $agency = (int) cdp_getAgencyBranchIdForUser($userData->name_off ?? '');
+    $scopeShip = $scopePkg = ' AND a.agency = ' . $agency;
+}
+
+$userMatch = "SELECT u.id FROM cdb_users AS u
+              WHERE CONCAT_WS(' ', u.fname, u.lname, u.locker, u.email, u.phone, u.document_number, u.username) LIKE :tu";
+$addrMatch = "SELECT s.order_track FROM cdb_address_shipments AS s
+              WHERE CONCAT_WS(' ', s.sender_country, s.sender_state, s.sender_city, s.sender_zip_code, s.sender_address,
+                                   s.recipient_country, s.recipient_state, s.recipient_city, s.recipient_zip_code, s.recipient_address) LIKE :ta";
+
+// Courier shipments
 $sql = "SELECT 
             a.order_incomplete,
             a.status_invoice,
@@ -55,29 +79,40 @@ $sql = "SELECT
             cdb_package_tracking_number AS c ON a.order_id = c.order_id
         WHERE 
             a.status_courier != 14
+            $scopeShip
             AND (
-                a.sender_id IN (SELECT u.id FROM cdb_users AS u WHERE u.locker LIKE :t1)
-                OR a.order_id IN (SELECT i.order_id FROM cdb_add_order_item AS i WHERE i.order_item_description LIKE :t2)
+                a.sender_id IN ($userMatch)
+                OR a.receiver_id IN (SELECT r.id FROM cdb_recipients AS r
+                                     WHERE CONCAT_WS(' ', r.fname, r.lname, r.email, r.phone) LIKE :tr)
+                OR a.order_id IN (SELECT i.order_id FROM cdb_add_order_item AS i WHERE i.order_item_description LIKE :ti)
+                OR CONCAT(a.order_prefix, a.order_no) IN ($addrMatch)
+                OR CONCAT_WS(' ', a.notes, a.person_receives) LIKE :tn
             )
         ORDER BY 
-            a.order_id DESC";
+            a.order_id DESC
+        LIMIT $limit";
 $db->cdp_query($sql);
-$db->bind(':t1', $like);
-$db->bind(':t2', $like);
+foreach (array(':tu', ':tr', ':ti', ':ta', ':tn') as $ph) { $db->bind($ph, $like); }
 $orders = $db->cdp_registros();
 
-// Customer packages: owner's locker, or any item description, matches.
+// Customer packages
 $db->cdp_query("SELECT a.order_id, a.order_prefix, a.order_no, a.order_date, a.sender_id,
             a.status_courier, a.is_consolidate, a.total_weight, a.total_order, b.mod_style, b.color,
             (SELECT GROUP_CONCAT(d.order_item_description SEPARATOR ', ')
                FROM cdb_customers_packages_detail AS d WHERE d.order_id = a.order_id) AS descriptions
         FROM cdb_customers_packages AS a
         INNER JOIN cdb_styles AS b ON a.status_courier = b.id
-        WHERE a.sender_id IN (SELECT u.id FROM cdb_users AS u WHERE u.locker LIKE :t1)
-           OR a.order_id IN (SELECT d2.order_id FROM cdb_customers_packages_detail AS d2 WHERE d2.order_item_description LIKE :t2)
-        ORDER BY a.order_id DESC");
-$db->bind(':t1', $like);
-$db->bind(':t2', $like);
+        WHERE 1 = 1
+            $scopePkg
+            AND (
+                a.sender_id IN ($userMatch)
+                OR a.order_id IN (SELECT d2.order_id FROM cdb_customers_packages_detail AS d2 WHERE d2.order_item_description LIKE :ti)
+                OR CONCAT(a.order_prefix, a.order_no) IN ($addrMatch)
+                OR CONCAT_WS(' ', a.notes, a.person_receives, a.provider_purchase) LIKE :tn
+            )
+        ORDER BY a.order_id DESC
+        LIMIT $limit");
+foreach (array(':tu', ':ti', ':ta', ':tn') as $ph) { $db->bind($ph, $like); }
 $packages = $db->cdp_registros();
 
 // Consolidation membership for the whole list in one query: a shipment inside a
@@ -85,13 +120,13 @@ $packages = $db->cdp_registros();
 cdp_prefetchConsolidations(array_map(function ($r) { return $r->order_no; }, $orders ?: array()));
 
 if (!$orders && !$packages) {
-    echo '<div class="alert alert-warning">No packages match this locker ID or description.</div>';
+    echo '<div class="alert alert-warning">No shipments or packages match &ldquo;' . htmlspecialchars($term) . '&rdquo;.</div>';
     exit;
 }
 ?>
 
 <?php if ($orders) { ?>
-<h5 class="mt-2"><?php echo $lang['lockersearch']; ?> &mdash; Shipments (<?php echo count($orders); ?>)</h5>
+<h5 class="mt-2">Shipments (<?php echo count($orders) >= $limit ? 'first ' . $limit : count($orders); ?>)</h5>
 <div class="table-responsive">
     <table id="zero_config" class="table table-condensed table-hover table-striped custom-table-checkbox">
         <thead>
@@ -343,7 +378,7 @@ if (!$orders && !$packages) {
     // Consolidation membership for customer packages (they live in their own table).
     cdp_prefetchConsolidations(array_map(function ($r) { return $r->order_no; }, $packages), true);
 ?>
-<h5 class="mt-4">Packages (<?php echo count($packages); ?>)</h5>
+<h5 class="mt-4">Packages (<?php echo count($packages) >= $limit ? 'first ' . $limit : count($packages); ?>)</h5>
 <div class="table-responsive">
     <table class="table table-condensed table-hover table-striped">
         <thead>

@@ -8,6 +8,13 @@ $(function () {
 
 
 
+// Search runs across many fields; wait for a pause in typing before querying.
+var cdp_searchTimer = null;
+function cdp_searchDebounced() {
+  clearTimeout(cdp_searchTimer);
+  cdp_searchTimer = setTimeout(function () { cdp_load(1); }, 350);
+}
+
 //Cargar datos AJAX
 function cdp_load(page) {
     localStorage.setItem('currentTablePage-Locker', page);
