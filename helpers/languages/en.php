@@ -1269,7 +1269,7 @@ $lang = array(
 	"left214" => "Qty",
 	"left21550" => "Update Status",
 	"left21551" => "the tracking number",
-    "left21552" => "the locker id",
+    "left21552" => "Locker ID or package description",
 	"left21553" => "the postal tracking number / tracking number",
 
 

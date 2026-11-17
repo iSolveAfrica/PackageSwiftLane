@@ -11,33 +11,20 @@ require_permission('view_shipment_list');
 $db    = new Conexion;
 $core  = new Core;
 
-// Get and sanitize the locker id from the request
-$locker = cdp_sanitize($_REQUEST['search']);
+// The search box takes a locker ID or a package description. Tracking and
+// packaging numbers are deliberately NOT matched here: this page answers
+// "whose locker / what item", not "which waybill". Every package in the system
+// whose owner's locker or any item description matches is returned.
+$term = trim((string) ($_REQUEST['search'] ?? ''));
 
-if (empty($locker)) {
-    echo '<div class="alert alert-info">Please enter a locker ID.</div>';
+if ($term === '') {
+    echo '<div class="alert alert-info">Please enter a locker ID or a package description.</div>';
     exit;
 }
 
-// Check if the locker exists in cdb_users
-$db->cdp_query("SELECT * FROM cdb_users WHERE locker LIKE '%$locker%'");
-$userRecord = $db->cdp_registro();
+$like = '%' . str_replace(array('\\', '%', '_'), array('\\\\', '\\%', '\\_'), $term) . '%';
 
-if (!$userRecord) {
-    echo '<div class="alert alert-danger">Locker ID not found.</div>';
-    exit;
-}
-
-$userId = $userRecord->id;
-
-$page = (isset($_REQUEST['page']) && !empty($_REQUEST['page'])) ? $_REQUEST['page'] : 1;
-$per_page = (($_REQUEST['per_page'] ?? '') === 'all') ? 1000000000 : (in_array((int)($_REQUEST['per_page'] ?? 0), [25, 50, 100], true) ? (int)$_REQUEST['per_page'] : 25); //how much records you want to show
-$offset = ($page - 1) * $per_page;
-
-// Define $sWhere if it is not already set (adjust if needed)
-$sWhere = "";
-
-// Get orders for the sender (locker)
+// Courier shipments: sender's locker, or any item description, matches.
 $sql = "SELECT 
             a.order_incomplete,
             a.status_invoice,
@@ -68,23 +55,43 @@ $sql = "SELECT
             cdb_package_tracking_number AS c ON a.order_id = c.order_id
         WHERE 
             a.status_courier != 14
-            AND a.sender_id = '$userId'
-        $sWhere
+            AND (
+                a.sender_id IN (SELECT u.id FROM cdb_users AS u WHERE u.locker LIKE :t1)
+                OR a.order_id IN (SELECT i.order_id FROM cdb_add_order_item AS i WHERE i.order_item_description LIKE :t2)
+            )
         ORDER BY 
             a.order_id DESC";
 $db->cdp_query($sql);
+$db->bind(':t1', $like);
+$db->bind(':t2', $like);
 $orders = $db->cdp_registros();
+
+// Customer packages: owner's locker, or any item description, matches.
+$db->cdp_query("SELECT a.order_id, a.order_prefix, a.order_no, a.order_date, a.sender_id,
+            a.status_courier, a.is_consolidate, a.total_weight, a.total_order, b.mod_style, b.color,
+            (SELECT GROUP_CONCAT(d.order_item_description SEPARATOR ', ')
+               FROM cdb_customers_packages_detail AS d WHERE d.order_id = a.order_id) AS descriptions
+        FROM cdb_customers_packages AS a
+        INNER JOIN cdb_styles AS b ON a.status_courier = b.id
+        WHERE a.sender_id IN (SELECT u.id FROM cdb_users AS u WHERE u.locker LIKE :t1)
+           OR a.order_id IN (SELECT d2.order_id FROM cdb_customers_packages_detail AS d2 WHERE d2.order_item_description LIKE :t2)
+        ORDER BY a.order_id DESC");
+$db->bind(':t1', $like);
+$db->bind(':t2', $like);
+$packages = $db->cdp_registros();
 
 // Consolidation membership for the whole list in one query: a shipment inside a
 // consolidation reports the CONSOLIDATION's status and ETA.
 cdp_prefetchConsolidations(array_map(function ($r) { return $r->order_no; }, $orders ?: array()));
 
-if (!$orders) {
-    echo '<div class="alert alert-warning">No orders found for this locker.</div>';
+if (!$orders && !$packages) {
+    echo '<div class="alert alert-warning">No packages match this locker ID or description.</div>';
     exit;
 }
 ?>
 
+<?php if ($orders) { ?>
+<h5 class="mt-2"><?php echo $lang['lockersearch']; ?> &mdash; Shipments (<?php echo count($orders); ?>)</h5>
 <div class="table-responsive">
     <table id="zero_config" class="table table-condensed table-hover table-striped custom-table-checkbox">
         <thead>
@@ -330,3 +337,46 @@ if (!$orders) {
     </table>
     <script src="<?= cdp_asset('dataJs/locker_ajax.js') ?>"></script>
 </div>
+<?php } ?>
+
+<?php if ($packages) {
+    // Consolidation membership for customer packages (they live in their own table).
+    cdp_prefetchConsolidations(array_map(function ($r) { return $r->order_no; }, $packages), true);
+?>
+<h5 class="mt-4">Packages (<?php echo count($packages); ?>)</h5>
+<div class="table-responsive">
+    <table class="table table-condensed table-hover table-striped">
+        <thead>
+            <tr>
+                <th><b><?php echo $lang['ltracking']; ?></b></th>
+                <th><b><?php echo $lang['ddate']; ?></b></th>
+                <th><b><?php echo $lang['ncustomer']; ?></b></th>
+                <th><b>Locker</b></th>
+                <th><b>Description</b></th>
+                <th><b>Weight</b></th>
+                <th><b><?php echo $lang['lstatusshipment']; ?></b></th>
+                <th><b><?php echo $lang['ship-all5']; ?></b></th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($packages as $pk) {
+                $db->cdp_query("SELECT fname, lname, locker FROM cdb_users WHERE id = :id");
+                $db->bind(':id', (int) $pk->sender_id);
+                $owner = $db->cdp_registro();
+                $peff = cdp_getEffectiveStatus($pk->order_no, $pk->status_courier, $pk->is_consolidate, true);
+            ?>
+                <tr>
+                    <td><b><a href="customer_packages_view.php?id=<?php echo (int) $pk->order_id; ?>"><?php echo htmlspecialchars($pk->order_prefix . $pk->order_no); ?></a></b></td>
+                    <td><?php echo htmlspecialchars((string) $pk->order_date); ?></td>
+                    <td><?php echo $owner ? htmlspecialchars($owner->fname . ' ' . $owner->lname) : ''; ?></td>
+                    <td><?php echo $owner ? htmlspecialchars((string) $owner->locker) : ''; ?></td>
+                    <td><?php echo htmlspecialchars((string) $pk->descriptions); ?></td>
+                    <td><?php echo htmlspecialchars((string) $pk->total_weight); ?></td>
+                    <td><span style="background: <?php echo $peff->color; ?>;" class="label label-large"><?php echo $peff->mod_style; ?></span></td>
+                    <td><b><?php echo $core->currency; ?></b> <?php echo cdb_money_format($pk->total_order); ?></td>
+                </tr>
+            <?php } ?>
+        </tbody>
+    </table>
+</div>
+<?php } ?>
