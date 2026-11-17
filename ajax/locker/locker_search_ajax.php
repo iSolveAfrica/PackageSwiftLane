@@ -59,15 +59,29 @@ if ($fromAt !== '' && $toAt !== '' && $fromAt > $toAt) {
 }
 $hasDate = ($fromAt !== '' || $toAt !== '');
 
-$fType    = in_array(($_REQUEST['type'] ?? ''), array('ship', 'pickup', 'pkg'), true) ? $_REQUEST['type'] : '';
 $fStatus  = (int) ($_REQUEST['status'] ?? 0);
-$fInvoice = in_array((int) ($_REQUEST['invoice'] ?? 0), array(1, 2, 3), true) ? (int) $_REQUEST['invoice'] : 0;
 
-$hasTerm   = strlen($term) >= 2;
-$hasFilter = $hasDate || $fType !== '' || $fStatus > 0 || $fInvoice > 0;
+// Keyword search: the phrase is split into words and EVERY word has to match
+// somewhere on the same shipment/package (any field), so "john sneakers"
+// finds John's shipment that contains sneakers, and "doe kumasi" finds Doe's
+// parcel going to Kumasi. Up to 6 words; single letters are ignored.
+$tokens = array();
+// A whole phone number typed with spaces ("024 555 1234") is one word.
+$phoneLike = preg_match('/^[\d\s\+\-\(\)\.]+$/', $term) && strlen(preg_replace('/\D+/', '', $term)) >= 6;
+foreach (($phoneLike ? array($term) : preg_split('/\s+/u', $term)) as $tk) {
+    $tk = trim($tk, " \t\n\r\0\x0B,;");
+    if (strlen($tk) >= 2 && !in_array(mb_strtolower($tk, 'UTF-8'), array_map(function ($x) { return mb_strtolower($x, 'UTF-8'); }, $tokens), true)) {
+        $tokens[] = $tk;
+    }
+    if (count($tokens) >= 6) { break; }
+}
+if (!$tokens && strlen($term) >= 2) { $tokens = array($term); }
+
+$hasTerm   = (bool) $tokens;
+$hasFilter = $hasDate || $fStatus > 0;
 
 if (!$hasTerm && !$hasFilter) {
-    echo '<div class="alert alert-info mb-0">Start typing to search (2+ characters): customer name, locker ID, phone, e-mail, item description, address, notes&hellip; or use the date, time and other filters.</div>';
+    echo '<div class="alert alert-info mb-0">Start typing to search: customer name, locker ID, phone, e-mail, item description, address, notes&hellip; Several words are combined (e.g. <i>john sneakers</i>). Or use the date, time and status filters.</div>';
     exit;
 }
 
@@ -76,7 +90,6 @@ $dateWhere = '';
 $dateBinds = array();
 if ($fromAt !== '') { $dateWhere .= " AND $entryAt >= :df"; $dateBinds[':df'] = $fromAt; }
 if ($toAt !== '')   { $dateWhere .= " AND $entryAt <= :dt"; $dateBinds[':dt'] = $toAt; }
-if ($fInvoice > 0)  { $dateWhere .= ' AND a.status_invoice = ' . $fInvoice; }
 
 $shipWhere = $dateWhere;
 $pkgWhere  = $dateWhere;
@@ -84,10 +97,6 @@ if ($fStatus > 0) {
     $shipWhere .= ' AND ' . cdp_effectiveStatusSql('a') . ' = ' . $fStatus;
     $pkgWhere  .= ' AND ' . cdp_effectiveStatusSql('a', true) . ' = ' . $fStatus;
 }
-if ($fType === 'ship')   { $shipWhere .= ' AND a.is_pickup = 0'; }
-if ($fType === 'pickup') { $shipWhere .= ' AND a.is_pickup = 1'; }
-$wantShip = ($fType !== 'pkg');
-$wantPkg  = ($fType === '' || $fType === 'pkg');
 
 // Entry time (12-hour, AM/PM) of a row, from order_datetime; '—' when only a date is known.
 function cdp_srchEntryTime($row) {
@@ -100,9 +109,8 @@ function cdp_srchEntryDate($row) {
     return $ts ? date('Y-m-d', strtotime($ts)) : '';
 }
 
-$like  = '%' . str_replace(array('\\', '%', '_'), array('\\\\', '\\%', '\\_'), $term) . '%';
 $limit = 100;   // rows shown per section
-$cap   = 2000;  // ids collected per source table
+$cap   = 2000;  // ids collected per source table, per word
 
 $searchErrors = array();
 
@@ -129,41 +137,70 @@ $ids = function ($rows, $field) {
     return array_values(array_unique($out));
 };
 
-$userIds = $recipIds = $shipItemIds = $pkgItemIds = $tracks = array();
-if ($hasTerm) {
-// 1) Customers (senders / package owners)
-$userIds = array_map('intval', $ids($cdp_srch(array(
-    "SELECT id FROM cdb_users WHERE CONCAT_WS(' ', fname, lname, locker, email, phone, document_number, username) LIKE :t LIMIT $cap",
-    "SELECT id FROM cdb_users WHERE CONCAT_WS(' ', fname, lname, locker, email, phone) LIKE :t LIMIT $cap",
-), array(':t' => $like)), 'id'));
+$inInts = function ($list) { return $list ? implode(',', array_map('intval', $list)) : '0'; };
+$escLike = function ($t) { return '%' . str_replace(array('\\', '%', '_'), array('\\\\', '\\%', '\\_'), $t) . '%'; };
 
-// 2) Recipients
-$recipIds = array_map('intval', $ids($cdp_srch(array(
-    "SELECT id FROM cdb_recipients WHERE CONCAT_WS(' ', fname, lname, email, phone) LIKE :t LIMIT $cap",
-), array(':t' => $like)), 'id'));
+// Per word: which customers, recipients, items and addresses mention it.
+// The word's condition on a shipment/package is "any of those, or its own
+// notes"; the conditions of all words are AND-ed together.
+$termBinds = array();
+$shipConds = array();   // [ [cond with notes, cond without notes], ... ]
+$pkgConds  = array();
+foreach ($tokens as $n => $tk) {
+    $tp   = ':t' . $n;
+    $like = $escLike($tk);
+    $termBinds[$tp] = $like;
 
-// 3) Item descriptions
-$shipItemIds = array_map('intval', $ids($cdp_srch(array(
-    "SELECT DISTINCT order_id FROM cdb_add_order_item WHERE order_item_description LIKE :t LIMIT $cap",
-), array(':t' => $like)), 'order_id'));
-$pkgItemIds = array_map('intval', $ids($cdp_srch(array(
-    "SELECT DISTINCT order_id FROM cdb_customers_packages_detail WHERE order_item_description LIKE :t LIMIT $cap",
-), array(':t' => $like)), 'order_id'));
+    // Phone numbers are matched ignoring spaces, dashes, brackets and '+'.
+    $digits   = preg_replace('/\D+/', '', $tk);
+    $phoneSql = '';
+    if (strlen($digits) >= 4 && strlen($digits) >= strlen(preg_replace('/[\s\-\+\(\)\.]/', '', $tk))) {
+        // A local number typed with its leading 0 (024...) also finds the
+        // number stored in international form (+233 24...).
+        $core_digits = ltrim($digits, '0');
+        $termBinds[':p' . $n] = '%' . (strlen($core_digits) >= 4 ? $core_digits : $digits) . '%';
+        $phoneSql = " OR REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone, ' ', ''), '-', ''), '+', ''), '(', ''), ')', '') LIKE :p$n";
+    }
+    $b = array($tp => $like) + (isset($termBinds[':p' . $n]) ? array(':p' . $n => $termBinds[':p' . $n]) : array());
 
-// 4) Addresses (linked by the full order number, e.g. AWB100900)
-$tracks = $ids($cdp_srch(array(
-    "SELECT DISTINCT order_track FROM cdb_address_shipments
-      WHERE CONCAT_WS(' ', sender_country, sender_state, sender_city, sender_zip_code, sender_address,
-                           recipient_country, recipient_state, recipient_city, recipient_zip_code, recipient_address) LIKE :t
-      LIMIT $cap",
-), array(':t' => $like)), 'order_track');
+    $userIds = $ids($cdp_srch(array(
+        "SELECT id FROM cdb_users WHERE CONCAT_WS(' ', fname, lname, locker, email, phone, document_number, username) LIKE $tp $phoneSql LIMIT $cap",
+        "SELECT id FROM cdb_users WHERE CONCAT_WS(' ', fname, lname, locker, email, phone) LIKE $tp $phoneSql LIMIT $cap",
+    ), $b), 'id');
+    $recipIds = $ids($cdp_srch(array(
+        "SELECT id FROM cdb_recipients WHERE CONCAT_WS(' ', fname, lname, email, phone) LIKE $tp $phoneSql LIMIT $cap",
+    ), $b), 'id');
+    $shipItemIds = $ids($cdp_srch(array(
+        "SELECT DISTINCT order_id FROM cdb_add_order_item WHERE order_item_description LIKE $tp LIMIT $cap",
+    ), $b), 'order_id');
+    $pkgItemIds = $ids($cdp_srch(array(
+        "SELECT DISTINCT order_id FROM cdb_customers_packages_detail WHERE order_item_description LIKE $tp LIMIT $cap",
+    ), $b), 'order_id');
+    $tracks = $ids($cdp_srch(array(
+        "SELECT DISTINCT order_track FROM cdb_address_shipments
+          WHERE CONCAT_WS(' ', sender_country, sender_state, sender_city, sender_zip_code, sender_address,
+                               recipient_country, recipient_state, recipient_city, recipient_zip_code, recipient_address) LIKE $tp
+          LIMIT $cap",
+    ), $b), 'order_track');
+
+    $trackPh = array();
+    foreach ($tracks as $i => $t) { $ph = ':k' . $n . '_' . $i; $trackPh[] = $ph; $termBinds[$ph] = (string) $t; }
+    $trackIn = $trackPh ? implode(',', $trackPh) : "''";
+
+    $shipBase = "a.sender_id IN (" . $inInts($userIds) . ")
+               OR a.receiver_id IN (" . $inInts($recipIds) . ")
+               OR a.order_id IN (" . $inInts($shipItemIds) . ")
+               OR CONCAT(a.order_prefix, a.order_no) IN ($trackIn)";
+    $pkgBase = "a.sender_id IN (" . $inInts($userIds) . ")
+               OR a.order_id IN (" . $inInts($pkgItemIds) . ")
+               OR CONCAT(a.order_prefix, a.order_no) IN ($trackIn)";
+    $shipConds[] = array("($shipBase OR CONCAT_WS(' ', a.notes, a.person_receives) LIKE $tp)", "($shipBase)");
+    $pkgConds[]  = array("($pkgBase OR CONCAT_WS(' ', a.notes, a.person_receives, a.provider_purchase) LIKE $tp)", "($pkgBase)");
 }
-
-$inInts = function ($list) { return $list ? implode(',', $list) : '0'; };
-$trackBinds = array();
-$trackPh = array();
-foreach ($tracks as $i => $t) { $trackPh[] = ':k' . $i; $trackBinds[':k' . $i] = (string) $t; }
-$trackIn = $trackPh ? implode(',', $trackPh) : "''";
+$allOf = function ($conds, $k) {
+    if (!$conds) { return ''; }
+    return 'AND ' . implode(' AND ', array_map(function ($c) use ($k) { return $c[$k]; }, $conds));
+};
 
 // Same visibility rules as the shipment / package lists: a customer sees only
 // their own, a driver only those assigned to them, an agency its own branch.
@@ -188,22 +225,14 @@ $shipSelect = "SELECT
         %s
         WHERE a.status_courier != 14 $scope $shipWhere
           %s
-        ORDER BY a.order_id DESC
+        ORDER BY COALESCE(a.order_datetime, a.order_date) DESC, a.order_id DESC
         LIMIT $limit";
-$shipMatch = function ($extra) use ($hasTerm, $inInts, $userIds, $recipIds, $shipItemIds, $trackIn) {
-    if (!$hasTerm) { return ''; }
-    return "AND (a.sender_id IN (" . $inInts($userIds) . ")
-               OR a.receiver_id IN (" . $inInts($recipIds) . ")
-               OR a.order_id IN (" . $inInts($shipItemIds) . ")
-               OR CONCAT(a.order_prefix, a.order_no) IN ($trackIn)
-               $extra)";
-};
 $joinTn = "LEFT JOIN cdb_package_tracking_number AS c ON a.order_id = c.order_id";
-$orders = !$wantShip ? array() : $cdp_srch(array(
-    sprintf($shipSelect, "COALESCE(NULLIF(c.tracking_number, ''), a.tracking_num)", 'c.estimated_eta', $joinTn, $shipMatch("OR CONCAT_WS(' ', a.notes, a.person_receives) LIKE :t")),
-    sprintf($shipSelect, "COALESCE(NULLIF(c.tracking_number, ''), a.tracking_num)", 'c.estimated_eta', $joinTn, $shipMatch('')),
-    sprintf($shipSelect, "''", "''", '', $shipMatch('')),
-), array(':t' => $like) + $trackBinds + $dateBinds);
+$orders = $cdp_srch(array(
+    sprintf($shipSelect, "COALESCE(NULLIF(c.tracking_number, ''), a.tracking_num)", 'c.estimated_eta', $joinTn, $allOf($shipConds, 0)),
+    sprintf($shipSelect, "COALESCE(NULLIF(c.tracking_number, ''), a.tracking_num)", 'c.estimated_eta', $joinTn, $allOf($shipConds, 1)),
+    sprintf($shipSelect, "''", "''", '', $allOf($shipConds, 1)),
+), $termBinds + $dateBinds);
 
 // Customer packages
 $pkgSelect = "SELECT a.order_id, a.order_prefix, a.order_no, a.order_date, a.order_datetime, a.sender_id,
@@ -214,19 +243,12 @@ $pkgSelect = "SELECT a.order_id, a.order_prefix, a.order_no, a.order_date, a.ord
         INNER JOIN cdb_styles AS b ON a.status_courier = b.id
         WHERE 1 = 1 $scope $pkgWhere
           %s
-        ORDER BY a.order_id DESC
+        ORDER BY COALESCE(a.order_datetime, a.order_date) DESC, a.order_id DESC
         LIMIT $limit";
-$pkgMatch = function ($extra) use ($hasTerm, $inInts, $userIds, $pkgItemIds, $trackIn) {
-    if (!$hasTerm) { return ''; }
-    return "AND (a.sender_id IN (" . $inInts($userIds) . ")
-               OR a.order_id IN (" . $inInts($pkgItemIds) . ")
-               OR CONCAT(a.order_prefix, a.order_no) IN ($trackIn)
-               $extra)";
-};
-$packages = !$wantPkg ? array() : $cdp_srch(array(
-    sprintf($pkgSelect, $pkgMatch("OR CONCAT_WS(' ', a.notes, a.person_receives, a.provider_purchase) LIKE :t")),
-    sprintf($pkgSelect, $pkgMatch('')),
-), array(':t' => $like) + $trackBinds + $dateBinds);
+$packages = $cdp_srch(array(
+    sprintf($pkgSelect, $allOf($pkgConds, 0)),
+    sprintf($pkgSelect, $allOf($pkgConds, 1)),
+), $termBinds + $dateBinds);
 
 if ($searchErrors && $userData->userlevel != 1) {
     echo '<div class="alert alert-danger">Part of the search failed: ' . htmlspecialchars(implode(' | ', array_filter($searchErrors))) . '</div>';
@@ -237,7 +259,7 @@ if ($searchErrors && $userData->userlevel != 1) {
 cdp_prefetchConsolidations(array_map(function ($r) { return $r->order_no; }, $orders ?: array()));
 
 if (!$orders && !$packages) {
-    echo '<div class="alert alert-warning">No shipments or packages match' . ($hasTerm ? ' &ldquo;' . htmlspecialchars($term) . '&rdquo;' : '') . ($fromAt !== '' ? ' from ' . date('Y-m-d g:i A', strtotime($fromAt)) : '') . ($toAt !== '' ? ' to ' . date('Y-m-d g:i A', strtotime($toAt)) : '') . (($fType !== '' || $fStatus || $fInvoice) ? ' with the selected filters' : '') . '.</div>';
+    echo '<div class="alert alert-warning">No shipments or packages match' . ($hasTerm ? ' &ldquo;' . htmlspecialchars($term) . '&rdquo;' : '') . ($fromAt !== '' ? ' from ' . date('Y-m-d g:i A', strtotime($fromAt)) : '') . ($toAt !== '' ? ' to ' . date('Y-m-d g:i A', strtotime($toAt)) : '') . ($fStatus ? ' with the selected status' : '') . '.</div>';
     exit;
 }
 ?>
@@ -270,9 +292,6 @@ if (!$orders && !$packages) {
                 <?php } ?>
                 <th><b><?php echo $lang['ldestination']; ?></b></th>
                 <th><b><?php echo $lang['lstatusshipment']; ?></b></th>
-                <th><b><?php echo $lang['ship-all5']; ?></b></th>
-                <th></th>
-                <th><b><?php echo $lang['global-3']; ?></b></th>
                 <th><b></b></th>
             </tr>
         </thead>
@@ -382,21 +401,6 @@ if (!$orders && !$packages) {
                                     <?php echo $lang['left1018']; ?>
                                 </span>
                             <?php } ?>
-                        </td>
-                        <td>
-                            <b><?php echo $core->currency; ?></b> <?php echo cdb_money_format($row->total_order); ?>
-                        </td>
-                        <td>
-                            <?php if ($row->status_invoice == 2 && $userData->userlevel == 1) { ?>
-                                <a style="background: #34e89e;" class="label" href="add_payment_gateways_courier.php?id_order=<?php echo $row->order_id; ?>">
-                                    <i style="color:#343a40" class="fas fa-dollar-sign"></i>&nbsp;<?php echo $lang['leftorder35']; ?>
-                                </a>
-                            <?php } ?>
-                        </td>
-                        <td>
-                            <span class="label label-large <?php echo $label_class; ?>">
-                                <?php echo $text_status; ?>
-                            </span>
                         </td>
                         <td align='center'>
                             <div class="btn-group">
@@ -511,7 +515,6 @@ if (!$orders && !$packages) {
                 <th><b>Description</b></th>
                 <th><b>Weight</b></th>
                 <th><b><?php echo $lang['lstatusshipment']; ?></b></th>
-                <th><b><?php echo $lang['ship-all5']; ?></b></th>
             </tr>
         </thead>
         <tbody>
@@ -530,7 +533,6 @@ if (!$orders && !$packages) {
                     <td><?php echo htmlspecialchars((string) $pk->descriptions); ?></td>
                     <td><?php echo htmlspecialchars((string) $pk->total_weight); ?></td>
                     <td><span style="background: <?php echo $peff->color; ?>;" class="label label-large"><?php echo $peff->mod_style; ?></span></td>
-                    <td><b><?php echo $core->currency; ?></b> <?php echo cdb_money_format($pk->total_order); ?></td>
                 </tr>
             <?php } ?>
         </tbody>

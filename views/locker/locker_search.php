@@ -101,7 +101,15 @@ $statusrow = $core->cdp_getStatus();
                                     $srch_status = $core->cdp_getStatusByType(1) ?: array();
                                     $srch_today  = date('Y-m-d');
                                 ?>
-                                <div class="col-sm-12 col-md-6 mb-2">
+<?php
+                                    // 12-hour time choices every 15 minutes; the value sent is HH:MM (24h).
+                                    $srch_times = '';
+                                    for ($m = 0; $m < 1440; $m += 15) {
+                                        $v = sprintf('%02d:%02d', intdiv($m, 60), $m % 60);
+                                        $srch_times .= '<option value="' . $v . '">' . date('g:i A', strtotime('2000-01-01 ' . $v)) . '</option>';
+                                    }
+                                ?>
+                                <div class="col-sm-12 col-md-12 mb-2 order-md-last">
                                     <div class="row">
                                         <div class="col-6 col-lg-3 pr-1">
                                             <label for="date_from" class="small mb-0">From date</label>
@@ -109,7 +117,7 @@ $statusrow = $core->cdp_getStatus();
                                         </div>
                                         <div class="col-6 col-lg-3 pl-1 pr-lg-1">
                                             <label for="time_from" class="small mb-0">From time</label>
-                                            <input type="time" id="time_from" class="form-control input-sm srch-filter">
+                                            <select id="time_from" class="form-control custom-select srch-filter"><option value="">Any time</option><?php echo $srch_times; ?></select>
                                         </div>
                                         <div class="col-6 col-lg-3 pr-1 pl-lg-1">
                                             <label for="date_to" class="small mb-0">To date</label>
@@ -117,7 +125,7 @@ $statusrow = $core->cdp_getStatus();
                                         </div>
                                         <div class="col-6 col-lg-3 pl-1">
                                             <label for="time_to" class="small mb-0">To time</label>
-                                            <input type="time" id="time_to" class="form-control input-sm srch-filter">
+                                            <select id="time_to" class="form-control custom-select srch-filter"><option value="">Any time</option><?php echo $srch_times; ?></select>
                                         </div>
                                     </div>
                                     <div class="mt-1 small">
@@ -131,16 +139,7 @@ $statusrow = $core->cdp_getStatus();
                                     </div>
                                 </div><!-- /.col -->
 
-                                <div class="col-6 col-md-3 mb-2">
-                                    <label for="f_type" class="small mb-0">Type</label>
-                                    <select id="f_type" class="form-control custom-select srch-filter">
-                                        <option value="">All</option>
-                                        <option value="ship">Shipments</option>
-                                        <option value="pickup">Pickups</option>
-                                        <option value="pkg">Customer packages</option>
-                                    </select>
-                                </div>
-                                <div class="col-6 col-md-3 mb-2">
+                                <div class="col-8 col-md-4 mb-2">
                                     <label for="f_status" class="small mb-0">Status</label>
                                     <select id="f_status" class="form-control custom-select srch-filter">
                                         <option value="0">All statuses</option>
@@ -149,16 +148,7 @@ $statusrow = $core->cdp_getStatus();
                                         <?php } ?>
                                     </select>
                                 </div>
-                                <div class="col-6 col-md-3 mb-2">
-                                    <label for="f_invoice" class="small mb-0">Invoice</label>
-                                    <select id="f_invoice" class="form-control custom-select srch-filter">
-                                        <option value="0">All invoices</option>
-                                        <option value="1"><?php echo $lang['invoice_paid'] ?? 'Paid'; ?></option>
-                                        <option value="2"><?php echo $lang['invoice_pending'] ?? 'Pending'; ?></option>
-                                        <option value="3"><?php echo $lang['verify_payment'] ?? 'Verify payment'; ?></option>
-                                    </select>
-                                </div>
-                                <div class="col-6 col-md-3 mb-2 d-flex align-items-end">
+                                <div class="col-4 col-md-2 mb-2 d-flex align-items-end">
                                     <button type="button" id="filters-reset" class="btn btn-outline-secondary btn-block"><i class="fa fa-undo"></i> Reset all</button>
                                 </div>
 

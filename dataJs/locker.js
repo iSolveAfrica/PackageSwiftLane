@@ -16,7 +16,7 @@ $(function () {
     e.preventDefault(); clearTimeout(cdp_searchTimer); cdp_load(1);
   });
 
-  // Filters (date, time, type, status, invoice) apply straight away, alone or
+  // Filters (date, time, status) apply straight away, alone or
   // together with the search term.
   $(".srch-filter").on("change", function () { clearTimeout(cdp_searchTimer); cdp_load(1); });
   $("#date-clear").on("click", function (e) {
@@ -25,7 +25,7 @@ $(function () {
   $("#filters-reset").on("click", function (e) {
     e.preventDefault();
     $("#search, #date_from, #date_to, #time_from, #time_to").val("");
-    $("#f_type").val(""); $("#f_status, #f_invoice").val("0");
+    $("#f_status").val("0");
     cdp_load(1);
   });
   $(".date-preset").on("click", function (e) {
@@ -46,12 +46,26 @@ $(function () {
       from.setDate(to.getDate() - parseInt($p.data("days"), 10));
     }
     $("#date_from").val(ymd(from)); $("#date_to").val(ymd(to));
-    $("#time_from").val(tFrom); $("#time_to").val(tTo);
+    cdp_setTime("#time_from", tFrom); cdp_setTime("#time_to", tTo);
     cdp_load(1);
   });
 });
 
 
+
+// Time pickers list quarter hours; a preset like "Last hour" can need an exact
+// minute, which is added as an AM/PM option on the fly.
+function cdp_setTime(sel, hhmm) {
+  var $s = $(sel);
+  if (hhmm && !$s.find('option[value="' + hhmm + '"]').length) {
+    var p = hhmm.split(":"), h = parseInt(p[0], 10), ap = h < 12 ? "AM" : "PM";
+    var label = ((h % 12) || 12) + ":" + p[1] + " " + ap;
+    var $after = $s.find("option").filter(function () { return this.value && this.value < hhmm; }).last();
+    var $o = $('<option>').val(hhmm).text(label);
+    if ($after.length) { $after.after($o); } else { $s.find("option").first().after($o); }
+  }
+  $s.val(hhmm || "");
+}
 
 // Search runs across many fields; wait for a short pause in typing before querying.
 var cdp_searchTimer = null;
@@ -73,9 +87,7 @@ function cdp_load(page) {
     'search': search,
     'date_from': dateFrom, 'date_to': dateTo,
     'time_from': $("#time_from").val() || "", 'time_to': $("#time_to").val() || "",
-    'type': $("#f_type").val() || "",
-    'status': $("#f_status").val() || "0",
-    'invoice': $("#f_invoice").val() || "0"
+    'status': $("#f_status").val() || "0"
   };
   var key = JSON.stringify(params);
   if (key === cdp_lastSearch && cdp_searchXhr) { return; } // same query already loading
@@ -84,7 +96,7 @@ function cdp_load(page) {
   // Only the newest search may paint the results.
   if (cdp_searchXhr) { cdp_searchXhr.abort(); }
 
-  if (search.length >= 2 || dateFrom || dateTo || params.time_from || params.time_to || params.type || params.status !== "0" || params.invoice !== "0") {
+  if (search.length >= 2 || dateFrom || dateTo || params.time_from || params.time_to || params.status !== "0") {
     $("#search-status").html('<i class="fa fa-spinner fa-spin"></i> Searching&hellip;').removeClass('d-none');
   }
 
