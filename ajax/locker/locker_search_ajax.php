@@ -14,106 +14,143 @@ $user  = new User;
 $userData = $user->cdp_getUserData();
 
 // Platform-wide search. One term is matched against most text fields of a
-// package: customer (name, locker, email, phone, ID document, username),
-// recipient (name, email, phone), item descriptions, sender/recipient address
+// package: customer (name, locker, e-mail, phone, ID document, username),
+// recipient (name, e-mail, phone), item descriptions, sender/recipient address
 // (country, state, city, zip, street), notes, the person who received it and
 // the online-store provider. Tracking and packaging numbers are deliberately
 // NOT matched.
+//
+// Each source table is scanned ONCE for the term (small, flat queries) and the
+// matching ids are then used to pick the shipments/packages. A field that does
+// not exist on this installation's schema is skipped instead of failing the
+// whole search, and any database error is reported rather than swallowed.
 $term = trim((string) ($_REQUEST['search'] ?? ''));
 
-if (mb_strlen($term) < 2) {
-    echo '<div class="alert alert-info">Type at least 2 characters to search: name, locker ID, phone, email, description, address, notes&hellip;</div>';
+if (strlen($term) < 2) {
+    echo '<div class="alert alert-info mb-0">Start typing to search (2+ characters): customer name, locker ID, phone, e-mail, item description, address, notes&hellip;</div>';
     exit;
 }
 
-$like = '%' . str_replace(array('\\', '%', '_'), array('\\\\', '\\%', '\\_'), $term) . '%';
-$limit = 100; // per section; the term can be very broad
+$like  = '%' . str_replace(array('\\', '%', '_'), array('\\\\', '\\%', '\\_'), $term) . '%';
+$limit = 100;   // rows shown per section
+$cap   = 2000;  // ids collected per source table
+
+$searchErrors = array();
+
+// Run the first SQL variant that the database accepts; returns rows (array).
+$cdp_srch = function (array $variants, array $binds) use ($db, &$searchErrors) {
+    $last = '';
+    foreach ($variants as $sql) {
+        $db->cdp_query($sql);
+        foreach ($binds as $k => $v) {
+            if (strpos($sql, $k) !== false) { $db->bind($k, $v); }
+        }
+        if ($db->cdp_execute()) {
+            return $db->cdp_registros() ?: array();
+        }
+        $last = $db->cdp_error();
+    }
+    $searchErrors[] = $last;
+    return array();
+};
+
+$ids = function ($rows, $field) {
+    $out = array();
+    foreach ($rows as $r) { $out[] = $r->$field; }
+    return array_values(array_unique($out));
+};
+
+// 1) Customers (senders / package owners)
+$userIds = array_map('intval', $ids($cdp_srch(array(
+    "SELECT id FROM cdb_users WHERE CONCAT_WS(' ', fname, lname, locker, email, phone, document_number, username) LIKE :t LIMIT $cap",
+    "SELECT id FROM cdb_users WHERE CONCAT_WS(' ', fname, lname, locker, email, phone) LIKE :t LIMIT $cap",
+), array(':t' => $like)), 'id'));
+
+// 2) Recipients
+$recipIds = array_map('intval', $ids($cdp_srch(array(
+    "SELECT id FROM cdb_recipients WHERE CONCAT_WS(' ', fname, lname, email, phone) LIKE :t LIMIT $cap",
+), array(':t' => $like)), 'id'));
+
+// 3) Item descriptions
+$shipItemIds = array_map('intval', $ids($cdp_srch(array(
+    "SELECT DISTINCT order_id FROM cdb_add_order_item WHERE order_item_description LIKE :t LIMIT $cap",
+), array(':t' => $like)), 'order_id'));
+$pkgItemIds = array_map('intval', $ids($cdp_srch(array(
+    "SELECT DISTINCT order_id FROM cdb_customers_packages_detail WHERE order_item_description LIKE :t LIMIT $cap",
+), array(':t' => $like)), 'order_id'));
+
+// 4) Addresses (linked by the full order number, e.g. AWB100900)
+$tracks = $ids($cdp_srch(array(
+    "SELECT DISTINCT order_track FROM cdb_address_shipments
+      WHERE CONCAT_WS(' ', sender_country, sender_state, sender_city, sender_zip_code, sender_address,
+                           recipient_country, recipient_state, recipient_city, recipient_zip_code, recipient_address) LIKE :t
+      LIMIT $cap",
+), array(':t' => $like)), 'order_track');
+
+$inInts = function ($list) { return $list ? implode(',', $list) : '0'; };
+$trackBinds = array();
+$trackPh = array();
+foreach ($tracks as $i => $t) { $trackPh[] = ':k' . $i; $trackBinds[':k' . $i] = (string) $t; }
+$trackIn = $trackPh ? implode(',', $trackPh) : "''";
 
 // Same visibility rules as the shipment / package lists: a customer sees only
 // their own, a driver only those assigned to them, an agency its own branch.
-$scopeShip = '';
-$scopePkg  = '';
+$scope = '';
 if ($userData->userlevel == 1) {
-    $scopeShip = $scopePkg = ' AND a.sender_id = ' . (int) $_SESSION['userid'];
+    $scope = ' AND a.sender_id = ' . (int) $_SESSION['userid'];
 } elseif ($userData->userlevel == 3) {
-    $scopeShip = $scopePkg = ' AND a.driver_id = ' . (int) $_SESSION['userid'];
+    $scope = ' AND a.driver_id = ' . (int) $_SESSION['userid'];
 } elseif ($userData->userlevel == 6) {
-    $agency = (int) cdp_getAgencyBranchIdForUser($userData->name_off ?? '');
-    $scopeShip = $scopePkg = ' AND a.agency = ' . $agency;
+    $scope = ' AND a.agency = ' . (int) cdp_getAgencyBranchIdForUser($userData->name_off ?? '');
 }
 
-$userMatch = "SELECT u.id FROM cdb_users AS u
-              WHERE CONCAT_WS(' ', u.fname, u.lname, u.locker, u.email, u.phone, u.document_number, u.username) LIKE :tu";
-$addrMatch = "SELECT s.order_track FROM cdb_address_shipments AS s
-              WHERE CONCAT_WS(' ', s.sender_country, s.sender_state, s.sender_city, s.sender_zip_code, s.sender_address,
-                                   s.recipient_country, s.recipient_state, s.recipient_city, s.recipient_zip_code, s.recipient_address) LIKE :ta";
-
 // Courier shipments
-$sql = "SELECT 
-            a.order_incomplete,
-            a.status_invoice,
-            a.is_consolidate,
-            a.is_pickup,
-            a.total_order,
-            a.order_id,
-            a.order_prefix,
-            a.order_no,
-            a.order_date,
-            a.sender_id,
-            a.receiver_id,
-            a.order_courier,
-            a.order_pay_mode,
-            a.status_courier,
-            a.driver_id,
-            a.order_service_options,
-            a.order_deli_time,
-            b.mod_style,
-            b.color,
-            COALESCE(NULLIF(c.tracking_number, ''), a.tracking_num) AS tracking_number,
-            c.estimated_eta
-        FROM
-            cdb_add_order AS a
-        INNER JOIN 
-            cdb_styles AS b ON a.status_courier = b.id
-        LEFT JOIN 
-            cdb_package_tracking_number AS c ON a.order_id = c.order_id
-        WHERE 
-            a.status_courier != 14
-            $scopeShip
-            AND (
-                a.sender_id IN ($userMatch)
-                OR a.receiver_id IN (SELECT r.id FROM cdb_recipients AS r
-                                     WHERE CONCAT_WS(' ', r.fname, r.lname, r.email, r.phone) LIKE :tr)
-                OR a.order_id IN (SELECT i.order_id FROM cdb_add_order_item AS i WHERE i.order_item_description LIKE :ti)
-                OR CONCAT(a.order_prefix, a.order_no) IN ($addrMatch)
-                OR CONCAT_WS(' ', a.notes, a.person_receives) LIKE :tn
-            )
-        ORDER BY 
-            a.order_id DESC
+$shipSelect = "SELECT 
+            a.order_incomplete, a.status_invoice, a.is_consolidate, a.is_pickup, a.total_order,
+            a.order_id, a.order_prefix, a.order_no, a.order_date, a.sender_id, a.receiver_id,
+            a.order_courier, a.order_pay_mode, a.status_courier, a.driver_id,
+            a.order_service_options, a.order_deli_time, b.mod_style, b.color,
+            %s AS tracking_number, %s AS estimated_eta
+        FROM cdb_add_order AS a
+        INNER JOIN cdb_styles AS b ON a.status_courier = b.id
+        %s
+        WHERE a.status_courier != 14 $scope
+          AND (a.sender_id IN (" . $inInts($userIds) . ")
+               OR a.receiver_id IN (" . $inInts($recipIds) . ")
+               OR a.order_id IN (" . $inInts($shipItemIds) . ")
+               OR CONCAT(a.order_prefix, a.order_no) IN ($trackIn)
+               %s)
+        ORDER BY a.order_id DESC
         LIMIT $limit";
-$db->cdp_query($sql);
-foreach (array(':tu', ':tr', ':ti', ':ta', ':tn') as $ph) { $db->bind($ph, $like); }
-$orders = $db->cdp_registros();
+$joinTn = "LEFT JOIN cdb_package_tracking_number AS c ON a.order_id = c.order_id";
+$orders = $cdp_srch(array(
+    sprintf($shipSelect, "COALESCE(NULLIF(c.tracking_number, ''), a.tracking_num)", 'c.estimated_eta', $joinTn, "OR CONCAT_WS(' ', a.notes, a.person_receives) LIKE :t"),
+    sprintf($shipSelect, "COALESCE(NULLIF(c.tracking_number, ''), a.tracking_num)", 'c.estimated_eta', $joinTn, ''),
+    sprintf($shipSelect, "''", "''", '', ''),
+), array(':t' => $like) + $trackBinds);
 
 // Customer packages
-$db->cdp_query("SELECT a.order_id, a.order_prefix, a.order_no, a.order_date, a.sender_id,
+$pkgSelect = "SELECT a.order_id, a.order_prefix, a.order_no, a.order_date, a.sender_id,
             a.status_courier, a.is_consolidate, a.total_weight, a.total_order, b.mod_style, b.color,
             (SELECT GROUP_CONCAT(d.order_item_description SEPARATOR ', ')
                FROM cdb_customers_packages_detail AS d WHERE d.order_id = a.order_id) AS descriptions
         FROM cdb_customers_packages AS a
         INNER JOIN cdb_styles AS b ON a.status_courier = b.id
-        WHERE 1 = 1
-            $scopePkg
-            AND (
-                a.sender_id IN ($userMatch)
-                OR a.order_id IN (SELECT d2.order_id FROM cdb_customers_packages_detail AS d2 WHERE d2.order_item_description LIKE :ti)
-                OR CONCAT(a.order_prefix, a.order_no) IN ($addrMatch)
-                OR CONCAT_WS(' ', a.notes, a.person_receives, a.provider_purchase) LIKE :tn
-            )
+        WHERE 1 = 1 $scope
+          AND (a.sender_id IN (" . $inInts($userIds) . ")
+               OR a.order_id IN (" . $inInts($pkgItemIds) . ")
+               OR CONCAT(a.order_prefix, a.order_no) IN ($trackIn)
+               %s)
         ORDER BY a.order_id DESC
-        LIMIT $limit");
-foreach (array(':tu', ':ti', ':ta', ':tn') as $ph) { $db->bind($ph, $like); }
-$packages = $db->cdp_registros();
+        LIMIT $limit";
+$packages = $cdp_srch(array(
+    sprintf($pkgSelect, "OR CONCAT_WS(' ', a.notes, a.person_receives, a.provider_purchase) LIKE :t"),
+    sprintf($pkgSelect, ''),
+), array(':t' => $like) + $trackBinds);
+
+if ($searchErrors && $userData->userlevel != 1) {
+    echo '<div class="alert alert-danger">Part of the search failed: ' . htmlspecialchars(implode(' | ', array_filter($searchErrors))) . '</div>';
+}
 
 // Consolidation membership for the whole list in one query: a shipment inside a
 // consolidation reports the CONSOLIDATION's status and ETA.
@@ -194,6 +231,7 @@ if (!$orders && !$packages) {
                     $db->cdp_query("SELECT * FROM cdb_styles WHERE id = '13'");
                     $status_style_consolidate = $db->cdp_registro();
 
+                    $text_status = ""; $label_class = "";
                     if ($row->status_invoice == 1) {
                         $text_status = $lang['invoice_paid'];
                         $label_class = "label-success";

@@ -4,34 +4,65 @@
 $(function () {
   cdp_load(1);
 
+  // Live search: results update while typing (also on paste, autofill and
+  // mobile keyboards, which do not always send key events). Enter and the
+  // search button run it immediately.
+  $("#search")
+    .on("input", cdp_searchDebounced)
+    .on("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); clearTimeout(cdp_searchTimer); cdp_load(1); }
+    });
+  $("#search-btn").on("click", function (e) {
+    e.preventDefault(); clearTimeout(cdp_searchTimer); cdp_load(1);
+  });
 });
 
 
 
-// Search runs across many fields; wait for a pause in typing before querying.
+// Search runs across many fields; wait for a short pause in typing before querying.
 var cdp_searchTimer = null;
 function cdp_searchDebounced() {
   clearTimeout(cdp_searchTimer);
-  cdp_searchTimer = setTimeout(function () { cdp_load(1); }, 350);
+  cdp_searchTimer = setTimeout(function () { cdp_load(1); }, 300);
 }
+
+var cdp_searchXhr = null;
+var cdp_lastSearch = null;
 
 //Cargar datos AJAX
 function cdp_load(page) {
-    localStorage.setItem('currentTablePage-Locker', page);
-  var search = $("#search").val();
-  var status_courier = $("#status_courier").val();
-  var filterby = $("#filterby").val();
-  var parametros = {'search': search };
-  $("#loader").fadeIn('slow');
-  $.ajax({
+  try { localStorage.setItem('currentTablePage-Locker', page); } catch (e) {}
+  var search = $.trim($("#search").val() || "");
+  if (search === cdp_lastSearch && cdp_searchXhr) { return; } // same term already loading
+  cdp_lastSearch = search;
+
+  // Only the newest search may paint the results.
+  if (cdp_searchXhr) { cdp_searchXhr.abort(); }
+
+  if (search.length >= 2) {
+    $("#search-status").html('<i class="fa fa-spinner fa-spin"></i> Searching&hellip;').removeClass('d-none');
+  }
+
+  cdp_searchXhr = $.ajax({
     url: './ajax/locker/locker_search_ajax.php',
-    data: parametros,
-    beforeSend: function (objeto) {
-    },
+    data: { 'search': search },
+    cache: false,
     success: function (data) {
-      $(".outer_divx").html(data).fadeIn('slow');
+      $(".outer_divx").html(data).show();
+    },
+    error: function (xhr, status) {
+      if (status === 'abort') { return; }
+      var msg = xhr.status === 401 ? 'Your session has expired. Please log in again.'
+              : xhr.status === 403 ? 'You do not have permission to search.'
+              : 'Search failed (' + (xhr.status || status) + '). Please try again.';
+      $(".outer_divx").html('<div class="alert alert-danger">' + msg + '</div>').show();
+    },
+    complete: function (xhr, status) {
+      if (status === 'abort') { return; }
+      cdp_searchXhr = null;
+      $("#search-status").addClass('d-none').empty();
     }
-  })
+  });
 }
  
 

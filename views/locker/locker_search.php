@@ -86,12 +86,13 @@ $statusrow = $core->cdp_getStatus();
 
                                 <div class=" col-sm-12 col-md-6 mb-2">
                                     <div class="input-group">
-                                        <input type="text" name="search" id="search" class="form-control input-sm float-right" placeholder="<?php echo $lang['left21552'] ?>" onkeyup="cdp_searchDebounced();">
+                                        <input type="search" name="search" id="search" class="form-control input-sm float-right" placeholder="<?php echo $lang['left21552'] ?>" autocomplete="off" autofocus>
                                         <div class="input-group-append input-sm">
-                                            <button type="submit" class="btn btn-outline-dark"><i class="fa fa-search"></i></button>
+                                            <button type="button" id="search-btn" class="btn btn-outline-dark" aria-label="Search"><i class="fa fa-search"></i></button>
                                         </div>
 
                                     </div>
+                                    <small id="search-status" class="text-muted d-none" aria-live="polite"></small>
                                 </div><!-- /.col -->
 
                                 
