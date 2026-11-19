@@ -100,6 +100,7 @@ if ($numrows > 0) { ?>
 					<th><b><?php echo $lang['ltracking'] ?></b></th>
 					<th><b>Carrier Tracking</b></th>
 					<th><b><?php echo $lang['ddate'] ?></b></th>
+					<th><b><?php echo $lang['left498'] ?></b></th>
 					<th><b><?php echo $lang['left499'] ?></b></th>
 					<th><b><?php echo $lang['ldestination'] ?></b></th>
 					<?php if ($userData->userlevel == 1) { // customers see their package weight ?>
@@ -185,6 +186,7 @@ if ($numrows > 0) { ?>
 							<td>
 								<?php echo $row->order_date; ?>
 							</td>
+							<td><?php echo htmlspecialchars(trim(($sender_data->fname ?? '') . ' ' . ($sender_data->lname ?? '')) ?: '—', ENT_QUOTES, 'UTF-8'); ?></td>
 
 							<td>
 								<?php echo $recipient_type == 'user' ? ($sender_data->fname ?? '') : ($receiver_data->fname ?? ''); ?> <?php echo $recipient_type == 'user' ? ($sender_data->lname ?? '') : ($receiver_data->lname ?? ''); ?>
