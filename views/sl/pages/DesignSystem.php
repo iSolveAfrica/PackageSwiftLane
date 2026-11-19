@@ -19,6 +19,7 @@ if (!isset($d)) { $d = []; }
       <div class="sl-brand"><span class="sl-logo"><i></i></span>Swift Lane</div>
       <h1 style="font-size: 44px; font-weight: 500; letter-spacing: -.02em; line-height: 1.1">Warm Ledger design system</h1>
       <p class="mut" style="font-size: 16px; max-width: 640px">Warm paper surfaces, hairline borders, dotted tick meters and one dark action. Extracted from the Overview reference and applied to every Swift Lane screen on this canvas.</p>
+      <a class="sl-btn soft" href="#charts">Browse chart library</a>
     </header>
 
     <section class="col g16" aria-labelledby="p">
@@ -107,6 +108,46 @@ if (!isset($d)) { $d = []; }
       <div class="grid" style="grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px">
         <?php foreach ((array) sl_get($d, 'icons', []) as $__i => $n): ?><div class="sl-card col g8" style="align-items: center; padding: 14px 8px"><i class="ic ic-lg <?= sl_v($n, 'cls') ?>" aria-hidden="true"></i><span class="mono mut" style="font-size: 11px"><?= sl_v($n, 'name') ?></span></div><?php endforeach; ?>
       </div>
+    </section>
+
+    <section class="col g16" aria-labelledby="chart-cards-title">
+      <div class="col g8"><h2 id="chart-cards-title" class="sl-title">Chart cards</h2><p class="mut">One clear number, a short explanation, then a chart. These are sample layouts; dashboard and report cards use live data.</p></div>
+      <div class="sl-chart-recipes">
+        <div class="sl-viz-card sl-viz-card--blue"><div class="sl-viz-card__head"><div><span class="sl-viz-card__eyebrow">Registration trend</span><h3>84 <small>parcels today</small></h3></div><span class="sl-viz-card__period">Sample</span></div><p class="sl-viz-card__sub"><span class="sl-viz-card__delta">+12%</span> versus the previous period</p><div class="sl-chart-recipes__bars" aria-hidden="true"><?php foreach ([36,58,42,74,55,88,68,92,62,79,100,71] as $height): ?><i style="height:<?= (int) $height ?>%"></i><?php endforeach; ?></div><div class="sl-viz-card__legend"><span><i class="sl-viz-card__key sl-viz-card__key--blue"></i>Shipments registered</span></div></div>
+        <div class="sl-viz-card sl-viz-card--violet"><div class="sl-viz-card__head"><div><span class="sl-viz-card__eyebrow">Status mix</span><h3>412 <small>shipments</small></h3></div><span class="sl-viz-card__period">Sample</span></div><p class="sl-viz-card__sub">Progress through the delivery journey</p><div class="sl-chart-recipes__donut" aria-hidden="true"><span>412<small>total</small></span></div><div class="sl-viz-card__legend"><span><i class="sl-viz-card__key" style="background:var(--ch-1)"></i>Delivered</span><span><i class="sl-viz-card__key" style="background:var(--ch-4)"></i>In transit</span></div></div>
+        <div class="sl-viz-card sl-viz-card--amber"><div class="sl-viz-card__head"><div><span class="sl-viz-card__eyebrow">Daily intake</span><h3>14 <small>days</small></h3></div><span class="sl-viz-card__period">Sample</span></div><p class="sl-viz-card__sub">Colour shows quiet and busy days</p><div class="sl-chart-recipes__heat" aria-hidden="true"><?php foreach ([0,1,1,2,3,2,1,0,1,2,3,3,2,1,0,1,2,2,3,2,1,0,1,1,2,3,2,1] as $level): ?><i class="h<?= (int) $level ?>"></i><?php endforeach; ?></div><div class="sl-viz-card__legend"><span>Quiet</span><span><i class="sl-viz-card__key sl-viz-card__key--amber"></i>Busy</span></div></div>
+      </div>
+    </section>
+
+    <section class="col g16 sl-chart-library" id="charts" aria-labelledby="charts-title">
+      <div class="col g8">
+        <h2 id="charts-title" class="sl-title">Chart library</h2>
+        <p class="mut">Browse <?= count((array) sl_get($d, 'charts', [])) ?> animated chart references. They show layout and motion with sample values. For a live page, use the matching pattern with real data, the <code>--ch-1</code> to <code>--ch-6</code> colour tokens, and the shared chart helpers.</p>
+      </div>
+      <div class="sl-chart-library__tools">
+        <label class="sl-field" for="chart-library-search"><span class="sl-lab">Find a chart</span><input class="sl-in" id="chart-library-search" type="search" placeholder="Search names or categories" autocomplete="off"></label>
+        <div class="sl-chart-library__filters" role="group" aria-label="Chart categories">
+          <button type="button" class="sl-chart-library__filter is-active" data-chart-filter="all" aria-pressed="true">All</button>
+          <?php foreach (array_unique(array_column((array) sl_get($d, 'charts', []), 'group')) as $group): ?>
+          <button type="button" class="sl-chart-library__filter" data-chart-filter="<?= h($group) ?>" aria-pressed="false"><?= h($group) ?></button>
+          <?php endforeach; ?>
+        </div>
+      </div>
+      <p class="mut sm" id="chart-library-count" aria-live="polite"></p>
+      <div class="sl-chart-library__grid" id="chart-library-grid">
+        <?php foreach ((array) sl_get($d, 'charts', []) as $chart): ?>
+        <figure class="sl-chart-library__item" data-chart-group="<?= h($chart['group']) ?>" data-chart-name="<?= h(strtolower($chart['title'] . ' ' . $chart['id'])) ?>">
+          <a class="sl-chart-library__preview" href="<?= h(cdp_asset($chart['gif'])) ?>" target="_blank" rel="noopener" aria-label="Open <?= h($chart['title']) ?> animated reference">
+            <picture>
+              <source media="(prefers-reduced-motion: reduce)" srcset="<?= h(cdp_asset($chart['poster'])) ?>">
+              <img src="<?= h(cdp_asset($chart['gif'])) ?>" alt="<?= h($chart['title']) ?> chart reference with sample data" loading="lazy" width="320" height="200">
+            </picture>
+          </a>
+          <figcaption><strong><?= h($chart['title']) ?></strong><span><?= h($chart['group']) ?></span><code><?= h($chart['id']) ?></code></figcaption>
+        </figure>
+        <?php endforeach; ?>
+      </div>
+      <p class="mut" id="chart-library-empty" hidden>No charts match that search.</p>
     </section>
 
     <section class="col g16" aria-labelledby="co">

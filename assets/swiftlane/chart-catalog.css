@@ -1,0 +1,36 @@
+/* Animated chart references on the Design System board. */
+.sl-chart-recipes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.sl-chart-recipes .sl-viz-card{min-height:300px}
+.sl-chart-recipes__bars{height:100px;display:flex;align-items:end;gap:7px;margin-top:auto;border-bottom:1px solid var(--ch-grid)}
+.sl-chart-recipes__bars i{flex:1;border-radius:4px 4px 0 0;background:var(--ch-2)}
+.sl-chart-recipes__donut{position:relative;width:112px;height:112px;border-radius:50%;background:conic-gradient(var(--ch-1) 0 55%,var(--ch-4) 55% 85%,var(--ch-3) 85% 100%);display:grid;place-items:center;margin:auto}
+.sl-chart-recipes__donut::before{content:"";position:absolute;width:72px;height:72px;border-radius:50%;background:var(--card)}
+.sl-chart-recipes__donut span{position:relative;font:600 22px var(--font);text-align:center}
+.sl-chart-recipes__donut small{display:block;color:var(--muted);font:500 11px var(--font)}
+.sl-chart-recipes__heat{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin:auto 0}
+.sl-chart-recipes__heat i{aspect-ratio:1;border-radius:5px;background:var(--ch-muted)}
+.sl-chart-recipes__heat .h1{background:color-mix(in srgb,var(--ch-3) 35%,var(--card))}
+.sl-chart-recipes__heat .h2{background:color-mix(in srgb,var(--ch-3) 65%,var(--card))}
+.sl-chart-recipes__heat .h3{background:var(--ch-3)}
+.sl-chart-library{scroll-margin-top:24px}
+.sl-chart-library code{font:12px 'JetBrains Mono',monospace}
+.sl-chart-library__tools{display:flex;align-items:end;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.sl-chart-library__tools .sl-field{min-width:min(100%,260px);flex:1 1 260px}
+.sl-chart-library__filters{display:flex;flex-wrap:wrap;gap:8px}
+.sl-chart-library__filter{border:1px solid var(--line-2);border-radius:100px;background:var(--card);color:var(--ink-2);padding:8px 12px;font:500 13px var(--font);cursor:pointer}
+.sl-chart-library__filter:hover{background:var(--hover)}
+.sl-chart-library__filter.is-active{background:var(--ink);border-color:var(--ink);color:var(--inverse)}
+.sl-chart-library__filter:focus-visible,.sl-chart-library__preview:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.sl-chart-library__grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr));gap:16px}
+.sl-chart-library__item{min-width:0;margin:0;border:1px solid var(--line);border-radius:18px;background:var(--card);overflow:hidden}
+.sl-chart-library__item[hidden]{display:none}
+.sl-chart-library__preview{display:block;background:#0e0e0e;line-height:0;aspect-ratio:8/5}
+.sl-chart-library__preview picture,.sl-chart-library__preview img{display:block;width:100%;height:100%}
+.sl-chart-library__preview img{object-fit:contain}
+.sl-chart-library__item figcaption{display:flex;align-items:center;flex-wrap:wrap;gap:4px 10px;padding:12px 14px}
+.sl-chart-library__item figcaption strong{font-size:14px;font-weight:600;color:var(--ink)}
+.sl-chart-library__item figcaption span{font-size:12px;color:var(--muted)}
+.sl-chart-library__item figcaption code{margin-left:auto;color:var(--muted)}
+@media(max-width:640px){.sl-chart-library__tools .sl-field{flex-basis:100%}.sl-chart-library__grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,240px),1fr))}}
+@media(max-width:980px){.sl-chart-recipes{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.sl-chart-recipes{grid-template-columns:1fr}}

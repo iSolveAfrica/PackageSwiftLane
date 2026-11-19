@@ -8,10 +8,12 @@ require_once CDP_ROOT . '/helpers/sl_charts.php';
 require_once CDP_ROOT . '/helpers/finance_switch.php';
 require_once CDP_ROOT . '/helpers/sl_nav.php';
 require_once CDP_ROOT . '/helpers/rbac.php';
+require_once __DIR__ . '/overview_charts.php';
 
 function sl_overviewData($user, $core, $userData): array
 {
     $d = [];
+    $d['insights'] = sl_overviewChartsData($user);
     $uid = (int) $_SESSION['userid'];
     $agency = sl_navAgencyWhere('a');
     $hasApprove = sl_columnExists('cdb_users', 'approve');
@@ -176,69 +178,6 @@ function sl_overviewData($user, $core, $userData): array
         if ($r) $deps[] = ['icon' => $icon, 'title' => ($tbl === 'cdb_consolidate' ? 'Next air · ' : 'Next sea · ') . $r->c_prefix . $r->c_no, 'sub' => $r->eta ? 'ETA ' . sl_date($r->eta) : 'No ETA set', 'n' => (int) $r->n];
     }
     $d['departures'] = $deps;
-
-    // ── Activity heatmaps ──────────────────────────────────────────────────
-    $daily182 = sl_dailyCounts('cdb_add_order', 'order_date', 182, ' AND is_deleted = 0');
-    $peak = max(1, max($daily182));
-    $peakDay = array_search(max($daily182), $daily182, true);
-    $d['heat'] = array_map(fn($day, $n) => ['c' => sl_heatLevel($n, $peak), 't' => $day . ': ' . $n . ' parcels'], array_keys($daily182), array_values($daily182));
-    $d['heatRange'] = date('M', strtotime('-181 days')) . ' – ' . date('M Y');
-    $d['heatMonths'] = [];
-    for ($i = 5; $i >= 0; $i--) $d['heatMonths'][] = date('M', strtotime("-$i months"));
-    $d['peak'] = ['n' => max($daily182), 'day' => $peakDay ? date('M j', strtotime($peakDay)) : ''];
-    $daily364 = sl_dailyCounts('cdb_add_order', 'order_date', 364, ' AND is_deleted = 0');
-    $peakY = max(1, max($daily364));
-    $peakYDay = array_search(max($daily364), $daily364, true);
-    $d['year'] = array_map(fn($day, $n) => ['c' => sl_heatLevel($n, $peakY), 't' => $day . ': ' . $n . ' parcels'], array_keys($daily364), array_values($daily364));
-    $d['yearMonths'] = [];
-    for ($i = 11; $i >= 0; $i--) $d['yearMonths'][] = date('M', strtotime("-$i months"));
-    $d['yearPeak'] = ['n' => max($daily364), 'day' => $peakYDay ? date('M j', strtotime($peakYDay)) : ''];
-
-    // ── Parcels received (7 days) and destinations ─────────────────────────
-    $week = array_values(sl_dailyCounts('cdb_add_order', 'order_date', 7, ' AND is_deleted = 0'));
-    $weekKg = (float) sl_scalar("SELECT COALESCE(SUM(a.total_weight),0) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.order_date >= CURDATE() - INTERVAL 6 DAY $agency");
-    $maxW = max(1, max($week));
-    $d['week'] = ['values' => $week, 'avg' => round(array_sum($week) / 7, 1), 'kg' => $weekKg, 'path' => sl_svgLinePath($week, 400, 188, 10, $maxW), 'axis' => [sl_num($maxW), sl_num($maxW * .75), sl_num($maxW * .5), sl_num($maxW * .25), '0'], 'days' => []];
-    for ($i = 6; $i >= 0; $i--) $d['week']['days'][] = date('D', strtotime("-$i days"));
-    $lastPt = explode(' ', sl_svgPoints($week, 400, 188, 10, $maxW));
-    $d['week']['dot'] = end($lastPt) ?: '400,188';
-    $dest = sl_rows("SELECT COALESCE(NULLIF(s.recipient_city,''), 'Other') AS city, COUNT(*) AS n FROM cdb_add_order a LEFT JOIN cdb_address_shipments s ON s.order_id = a.order_id WHERE a.is_deleted = 0 AND a.order_date >= CURDATE() - INTERVAL 30 DAY GROUP BY city ORDER BY n DESC LIMIT 8");
-    $dmax = $dest ? max(array_map(fn($r) => (int) $r->n, $dest)) : 1;
-    $dtot = array_sum(array_map(fn($r) => (int) $r->n, $dest)) ?: 1;
-    $d['dest'] = array_map(fn($r) => ['code' => strtoupper(mb_substr(preg_replace('/[^A-Za-z]/', '', $r->city) ?: 'OT', 0, 2)), 'city' => $r->city, 'n' => (int) $r->n, 'h' => sl_pct($r->n, $dmax)], $dest);
-    $d['destTop'] = $dest ? ['city' => $dest[0]->city, 'n' => (int) $dest[0]->n, 'pct' => sl_pct($dest[0]->n, $dtot)] : null;
-
-    // ── Monthly volume ─────────────────────────────────────────────────────
-    $year = (int) ($_GET['year'] ?? date('Y'));
-    $ship = sl_monthlyCounts('cdb_add_order', 'order_date', $year, ' AND is_deleted = 0 AND is_pickup = 0');
-    $pick = sl_monthlyCounts('cdb_add_order', 'order_date', $year, ' AND is_deleted = 0 AND is_pickup = 1');
-    $cons = sl_monthlyCounts('cdb_consolidate', 'c_date', $year);
-    $mmax = max(1, max($ship), max($pick), max($cons));
-    $d['monthly'] = ['year' => $year, 'ship' => $ship, 'pick' => $pick, 'cons' => $cons,
-        'areaShip' => sl_svgAreaPath($ship, 750, 220, 20, $mmax, 50), 'lineShip' => sl_svgLinePath($ship, 750, 220, 20, $mmax, 50),
-        'linePick' => sl_svgLinePath($pick, 750, 220, 20, $mmax, 50), 'lineCons' => sl_svgLinePath($cons, 750, 220, 20, $mmax, 50),
-        'axis' => [sl_num($mmax), sl_num($mmax * .75), sl_num($mmax * .5), sl_num($mmax * .25)]];
-
-    // ── Status mix and on-time ─────────────────────────────────────────────
-    $mix = [
-        ['In transit', '#2F7FC8', (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (3,5) $agency")],
-        ['At warehouse', '#6C4BDD', (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (2,4,6,32) $agency")],
-        ['Out for delivery', '#F2C400', (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (7,14) $agency")],
-        ['Delivered', '#0EAD78', (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (8,15) AND a.order_date >= CURDATE() - INTERVAL 30 DAY $agency")],
-        ['Exceptions', '#E5484D', $held],
-    ];
-    $mtot = array_sum(array_column($mix, 2)) ?: 1;
-    $d['mix'] = ['total' => array_sum(array_column($mix, 2)), 'conic' => sl_conic(array_map(fn($m) => [$m[1], $m[2]], $mix)), 'rows' => array_map(fn($m) => ['label' => $m[0], 'color' => $m[1], 'n' => $m[2], 'pct' => sl_pct($m[2], $mtot)], $mix)];
-    $ontime = [];
-    for ($w = 11; $w >= 0; $w--) {
-        $from = date('Y-m-d', strtotime("-" . ($w * 7 + 6) . " days"));
-        $to = date('Y-m-d', strtotime("-" . ($w * 7) . " days"));
-        $tot = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (8,15) AND a.order_date BETWEEN :f AND :t", [':f' => $from, ':t' => $to]);
-        $late = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (8,15) AND a.order_date BETWEEN :f AND :t AND a.due_date IS NOT NULL AND a.payment_date > a.due_date", [':f' => $from, ':t' => $to]);
-        $ontime[] = $tot ? round(($tot - $late) / $tot * 100, 1) : 100;
-    }
-    $d['ontime'] = ['series' => $ontime, 'now' => end($ontime), 'path' => sl_svgLinePath($ontime, 400, 140, 20, 100), 'from' => date('M j', strtotime('-83 days')), 'to' => date('M j')];
-    $d['ontime']['dot'] = (function () use ($ontime) { $p = explode(' ', sl_svgPoints($ontime, 400, 140, 20, 100)); return end($p); })();
 
     // ── Payment gateways ───────────────────────────────────────────────────
     $gw = [];

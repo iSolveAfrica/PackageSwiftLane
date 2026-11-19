@@ -51,6 +51,7 @@ if (!defined('SL_PAGEVIEW_LOGGED')) { define('SL_PAGEVIEW_LOGGED', true); cdp_ac
 <link href="<?= cdp_asset('assets/swiftlane/swiftlane.css') ?>" rel="stylesheet">
 <link href="<?= cdp_asset('assets/swiftlane/app.css') ?>" rel="stylesheet">
 <link href="<?= cdp_asset('assets/swiftlane/color.css') ?>" rel="stylesheet">
+<link href="<?= cdp_asset('assets/swiftlane/chart-cards.css') ?>" rel="stylesheet">
 <link href="<?= cdp_asset('assets/swiftlane/legacy-bridge.css') ?>" rel="stylesheet">
 <link href="<?= cdp_asset('assets/swiftlane/experience.css') ?>" rel="stylesheet">
 <script defer src="<?= cdp_asset('assets/swiftlane/experience.js') ?>"></script>

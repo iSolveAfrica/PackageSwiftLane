@@ -6,7 +6,7 @@
       $peak = max(1, ...array_merge(...array_column($chart['series'], 'values')));
       $total = array_sum(array_map(fn($s) => array_sum($s['values']), $chart['series']));
   ?>
-    <section class="sl-card rp-analytics-card col g12">
+    <section class="sl-card sl-viz-card sl-viz-card--blue rp-analytics-card col g12">
       <div><h3 class="sl-ct"><?= h($chart['title']) ?></h3><p class="mut sm rp-chart-description"><?= h($chart['sub']) ?></p></div>
       <?php if (!$total): ?><div class="rp-chart-empty"><i class="ic i-chart" aria-hidden="true"></i><span>No records for these dates.</span></div>
       <?php elseif ($chart['kind'] === 'line'): ?>
