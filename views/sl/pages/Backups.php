@@ -13,7 +13,33 @@
 </div>
 <?php if ($d['ok']): ?><div class="sl-banner ok"><i class="ic ic-sm i-check" aria-hidden="true"></i>Backup created. Download it and keep a copy somewhere safe.</div><?php endif; ?>
 <?php if ($d['demo']): ?><div class="sl-banner warn"><i class="ic ic-sm i-alert" aria-hidden="true"></i>Backups are switched off in the demo version.</div><?php endif; ?>
-<div class="sl-banner info"><i class="ic ic-sm i-info" aria-hidden="true"></i>Restoring replaces every table with the copy in the file. Make a fresh backup first; this cannot be undone.</div>
+<?php if ($d['migrationEnabled']): ?>
+<section class="sl-card" style="padding:20px;margin-bottom:20px">
+  <h2 class="sl-ct">Import main database data into temp</h2>
+  <p class="mut sm">Upload a MySQL .sql export to compare its tables, columns, and types with temp. The import accepts data only and requires empty destination tables.</p>
+  <?php if ($d['migrationMessage'] !== ''): ?><div class="sl-banner info"><?= h($d['migrationMessage']) ?></div><?php endif; ?>
+  <form method="post" enctype="multipart/form-data" class="col g8">
+    <input type="hidden" name="_csrf_token" value="<?= h(cdp_csrf_token()) ?>">
+    <input type="hidden" name="migration_action" value="preview">
+    <label class="sm fw5" for="database_file">SQL export (up to 64 MB)</label>
+    <input id="database_file" type="file" name="database_file" accept=".sql" required>
+    <button type="submit" class="sl-btn">Upload and check schema</button>
+  </form>
+  <?php if ($d['migrationPlan']): ?>
+    <p class="sm"><?= count($d['migrationPlan']['tables']) ?> tables contain import data.</p>
+    <?php if ($d['migrationPlan']['issues']): ?><div class="sl-banner warn"><div><b>Import blocked</b><ul><?php foreach ($d['migrationPlan']['issues'] as $issue): ?><li><?= h($issue) ?></li><?php endforeach; ?></ul></div></div>
+    <?php else: ?>
+    <form method="post" class="col g8" onsubmit="return confirm('Import data into the empty tables on this database?');">
+      <input type="hidden" name="_csrf_token" value="<?= h(cdp_csrf_token()) ?>">
+      <input type="hidden" name="migration_action" value="apply">
+      <label class="sm fw5" for="confirm_import">Type IMPORT to confirm</label>
+      <input id="confirm_import" name="confirm_import" autocomplete="off" required>
+      <button type="submit" class="sl-btn">Import data</button>
+    </form>
+    <?php endif; ?>
+  <?php endif; ?>
+</section>
+<?php endif; ?>
 <section class="sl-card flush">
   <div class="sl-tw"><table class="sl-table">
     <thead><tr><th>File</th><th>Created</th><th>Size</th><th style="width:240px"></th></tr></thead>
@@ -25,7 +51,6 @@
         <td class="mono sm"><?= h(sl_fileSize((int) $f['size'])) ?></td>
         <td><span class="row g4" style="justify-content:flex-end">
           <a class="sl-btn ghost sm" href="download.php?file=<?= h(rawurlencode($f['name'])) ?>"><i class="ic ic-sm i-download" aria-hidden="true"></i>Download</a>
-          <button class="sl-btn ghost sm" type="button" data-bk="restore" data-file="<?= h($f['name']) ?>"><i class="ic ic-sm i-refresh" aria-hidden="true"></i>Restore</button>
           <button class="sl-ib sm" type="button" aria-label="Delete <?= h($f['name']) ?>" data-bk="delete" data-file="<?= h($f['name']) ?>"><i class="ic ic-sm i-trash" aria-hidden="true"></i></button>
         </span></td>
       </tr>
@@ -37,13 +62,13 @@
 <script>
 document.addEventListener('click', function (e) {
   var b = e.target.closest('[data-bk]'); if (!b) return;
-  var del = b.getAttribute('data-bk') === 'delete', file = b.getAttribute('data-file');
-  if (!confirm(del ? 'Delete ' + file + '? This cannot be undone.' : 'Restore the database from ' + file + '? Every table is replaced and this cannot be undone.')) return;
-  var data = {}; data[del ? 'deleteBackup' : 'restoreBackup'] = file;
-  b.classList.add('loading'); if (!del) SL.toast('Restoring the database, please wait…');
-  SL.post(del ? 'ajax/tools/backup/backup_delete_ajax.php' : 'ajax/tools/backup/backup_restore_ajax.php', data).then(function (j) {
+  var file = b.getAttribute('data-file');
+  if (!confirm('Delete ' + file + '? This cannot be undone.')) return;
+  var data = {deleteBackup: file};
+  b.classList.add('loading');
+  SL.post('ajax/tools/backup/backup_delete_ajax.php', data).then(function (j) {
     SL.toast(j.message || (j.success ? 'Done' : 'Failed'), !j.success);
-    if (j.success && del) setTimeout(function () { location.reload(); }, 400);
+    if (j.success) setTimeout(function () { location.reload(); }, 400);
   }).catch(function () { SL.toast('Network error', true); }).finally(function () { b.classList.remove('loading'); });
 });
 </script>

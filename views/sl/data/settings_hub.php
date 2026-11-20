@@ -10,7 +10,8 @@ function sl_settingsIndex($user): array
             ['Company and system', 'Name, address, sign-up rules, lockers', 'settings_form.php?f=system', 'view_tools'], ['Language, currency and rate', 'Language, time zone, money format, USD rate', 'tools.php#language', 'view_tools'],
             ['Logo and images', 'Logo, web logo, favicon', 'settings_form.php?f=logo', 'view_tools'], ['Search and sharing (SEO)', 'Meta description, keywords, share card', 'settings_form.php?f=seo', 'view_tools'], ['Google Maps', 'API key and map centre', 'settings_form.php?f=google', 'view_tools'], ['Taxes and fees', 'Tax, insurance, declared value, weight units', 'taxesadnfees.php', 'view_tools'],
             ['Tracking and invoice numbers', 'Prefixes, digits, terms and signatures', 'track_invoice.php', 'view_tools'], ['New shipment defaults', 'Default service, packaging, courier, payment', 'info_ship_default.php', 'view_tools'],
-            ['Backup', 'Download or restore a database backup', 'backup.php', 'view_tools']]],
+            ['Backup', 'Download a database backup', 'backup.php', 'view_tools'],
+            ...((int)$user->userlevel === 9 && defined('CDP_DB_IMPORT_ENABLED') && CDP_DB_IMPORT_ENABLED === true ? [['Database import', 'Upload and check a main database export', 'backup.php', 'view_tools']] : [])]],
         ['label' => 'Messaging', 'icon' => 'i-message', 'items' => [
             ['SMS providers', 'Hubtel, mNotify, default and fallback', 'tools.php#messaging', 'view_tools'], ['SMS (legacy Nexmo / Twilio)', 'Older SMS gateways', 'config_sms.php', 'view_tools'],
             ['Twilio', 'Twilio account', 'config_twilio.php', 'view_tools'], ['WhatsApp API', 'URL and token', 'api_connections.php?p=whatsapp', 'manage_api_settings'],
