@@ -46,6 +46,11 @@ foreach (['CDP_DB_HOST', 'CDP_DB_NAME', 'CDP_DB_USER', 'CDP_DB_PASS'] as $cdpCon
 if (!defined('CDP_APP_MODE_DEMO')) {
     define('CDP_APP_MODE_DEMO', false);
 }
+// The temp branch enables the reviewed database import page by default.
+// A deployment can explicitly disable it in its private config/config.php.
+if (!defined('CDP_DB_IMPORT_ENABLED')) {
+    define('CDP_DB_IMPORT_ENABLED', true);
+}
 unset($cdpConfigFile, $cdpConst);
 
 // ── 2. PHP runtime defaults ────────────────────────────────────────────────────
