@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['migration_action'])) 
         exit('Database import is available only to the super administrator on an enabled temp environment.');
     }
     try {
-        @set_time_limit(600);
+        @set_time_limit(3600);
         $db = new Conexion();
         if (!($db->dbh instanceof PDO)) throw new RuntimeException('Database connection unavailable.');
         $db->dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);

@@ -2,7 +2,7 @@
 /** Data-only SQL import for the superadmin migration page. Schema changes are never run. */
 
 /** Extract exactly one SQL file without trusting paths or expanding an unbounded ZIP. */
-function cdp_import_extract_zip($archivePath, $destination, $maxBytes = 536870912)
+function cdp_import_extract_zip($archivePath, $destination, $maxBytes = 2147483648)
 {
     if (!class_exists('ZipArchive')) {
         throw new RuntimeException('ZIP upload needs the PHP zip extension on the temp server.');
@@ -29,7 +29,7 @@ function cdp_import_extract_zip($archivePath, $destination, $maxBytes = 53687091
                 throw new RuntimeException('A ZIP must contain exactly one .sql file and no other files.');
             }
             if (($stat['size'] ?? 0) > $maxBytes || ($stat['size'] ?? 0) <= 0) {
-                throw new RuntimeException('The SQL file inside the ZIP must be under 512 MB.');
+                throw new RuntimeException('The SQL file inside the ZIP must be under 2 GB.');
             }
             $entry = $name;
         }
@@ -50,7 +50,7 @@ function cdp_import_extract_zip($archivePath, $destination, $maxBytes = 53687091
                 if ($chunk === false) throw new RuntimeException('Could not read the ZIP contents.');
                 if ($chunk === '' && !feof($input)) throw new RuntimeException('The ZIP stream stopped before extraction finished.');
                 $bytes += strlen($chunk);
-                if ($bytes > $maxBytes) throw new RuntimeException('The extracted SQL exceeds 512 MB.');
+                if ($bytes > $maxBytes) throw new RuntimeException('The extracted SQL exceeds 2 GB.');
                 if ($chunk !== '' && fwrite($output, $chunk) !== strlen($chunk)) throw new RuntimeException('Could not write the extracted SQL file.');
             }
         } finally {
@@ -64,7 +64,7 @@ function cdp_import_extract_zip($archivePath, $destination, $maxBytes = 53687091
 }
 
 /** Decompress a gzip SQL export into the private temporary import file. */
-function cdp_import_extract_gzip($archivePath, $destination, $maxBytes = 536870912)
+function cdp_import_extract_gzip($archivePath, $destination, $maxBytes = 2147483648)
 {
     if (!function_exists('gzopen')) {
         throw new RuntimeException('Gzip upload needs the PHP zlib extension on the temp server.');
@@ -84,7 +84,7 @@ function cdp_import_extract_gzip($archivePath, $destination, $maxBytes = 5368709
                 throw new RuntimeException('Could not decompress the .sql.gz file.');
             }
             $bytes += strlen($chunk);
-            if ($bytes > $maxBytes) throw new RuntimeException('The decompressed SQL exceeds 512 MB.');
+            if ($bytes > $maxBytes) throw new RuntimeException('The decompressed SQL exceeds 2 GB.');
             if ($chunk !== '' && fwrite($output, $chunk) !== strlen($chunk)) {
                 throw new RuntimeException('Could not write the decompressed SQL file.');
             }
@@ -106,7 +106,7 @@ function cdp_import_statements($path, $callback)
     $quote = '';
     $escaped = false;
     try {
-        while (($line = fgets($handle)) !== false) {
+        while (($line = fgets($handle, 1024 * 1024)) !== false) {
             $trim = ltrim($line);
             if (trim($statement) === '' && ($trim === '' || strncmp($trim, '--', 2) === 0 || $trim[0] === '#' || strncmp($trim, '/*', 2) === 0)) {
                 $statement = '';
