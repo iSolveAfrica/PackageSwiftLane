@@ -21,7 +21,7 @@
   <form method="post" enctype="multipart/form-data" class="col g8">
     <input type="hidden" name="_csrf_token" value="<?= h(cdp_csrf_token()) ?>">
     <input type="hidden" name="migration_action" value="preview">
-    <label class="sm fw5" for="database_file">SQL export (up to 64 MB)</label>
+    <label class="sm fw5" for="database_file">SQL export (up to 128 MB)</label>
     <input id="database_file" type="file" name="database_file" accept=".sql" required>
     <button type="submit" class="sl-btn">Upload and check schema</button>
   </form>

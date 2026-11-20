@@ -17,18 +17,22 @@ if (!$user->cdp_is_Admin()) {
 }
 $migrationMessage = '';
 $migrationPlan = null;
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($_POST) && (int)($_SERVER['CONTENT_LENGTH'] ?? 0) > 0) {
+    $migrationMessage = 'The upload exceeded the server request limit. Set upload_max_filesize to 128M and post_max_size above 128M.';
+}
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['migration_action'])) {
     if ((int)$user->userlevel !== 9 || !defined('CDP_DB_IMPORT_ENABLED') || CDP_DB_IMPORT_ENABLED !== true || !cdp_csrf_validate_request() || CDP_APP_MODE_DEMO !== false) {
         http_response_code(403);
         exit('Database import is available only to the super administrator on an enabled temp environment.');
     }
     try {
+        @set_time_limit(600);
         $db = new Conexion();
         if (!($db->dbh instanceof PDO)) throw new RuntimeException('Database connection unavailable.');
         $db->dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         if ($_POST['migration_action'] === 'preview') {
-            if (!isset($_FILES['database_file']) || $_FILES['database_file']['error'] !== UPLOAD_ERR_OK || $_FILES['database_file']['size'] > 64 * 1024 * 1024 || $_FILES['database_file']['size'] === 0) {
-                throw new RuntimeException('Select a SQL file under 64 MB. Check the server upload limit if the upload fails.');
+            if (!isset($_FILES['database_file']) || $_FILES['database_file']['error'] !== UPLOAD_ERR_OK || $_FILES['database_file']['size'] > 128 * 1024 * 1024 || $_FILES['database_file']['size'] === 0) {
+                throw new RuntimeException('Select a SQL file up to 128 MB. Check the server upload limit if the upload fails.');
             }
             $name = (string)$_FILES['database_file']['name'];
             if (!preg_match('/\.sql$/i', $name)) throw new RuntimeException('Only .sql files are accepted.');
