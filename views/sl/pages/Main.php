@@ -25,35 +25,43 @@ $wh = $d['warehouse']; $pk = $d['pickups']; $rv = $d['revenue'];
           </div>
         </section>
 
-        <div class="grid cols3">
+        <div class="sl-data-grid">
           <?php if (cdp_financeEnabled() && cdp_canViewMoney($user, 'dashboard')): ?>
-          <a class="sl-card sl-metric" data-surface-tone="amber" href="<?= sl_route('FinancialOverview') ?>">
-            <div class="sl-ml"><span><i class="ic ic-sm i-dollar" aria-hidden="true"></i>Revenue &amp; billing</span><i class="ic ic-sm i-right" aria-hidden="true"></i></div>
-            <div class="sl-mv"><?= h(sl_money($rv['value'])) ?> <i><?= $rv['target'] > 0 ? '/ ' . h(sl_money($rv['target'])) . ' target' : 'this month' ?> (<?= sl_num($rv['parcels']) ?> parcels)</i></div>
-            <div class="sl-ticks" role="img" aria-label="<?= (int) $rv['pct'] ?> percent of revenue target"><i style="width: <?= (int) $rv['pct'] ?>%"></i></div>
-            <div class="sl-mf">Next settlement: <?= h($rv['next']) ?> <i class="ic ic-sm i-ext" aria-hidden="true"></i></div>
+          <a class="sl-data-card sl-data-card--amber" href="<?= sl_route('FinancialOverview') ?>">
+            <header><h2 class="sl-data-card__title">Revenue &amp; billing</h2><span class="sl-data-card__period">This month</span></header>
+            <p class="sl-data-card__value"><?= h(sl_money($rv['value'])) ?></p>
+            <p class="sl-data-card__detail"><?= sl_num($rv['parcels']) ?> parcels · next settlement <?= h($rv['next']) ?></p>
+            <?php if ($rv['target'] > 0): ?>
+              <div class="sl-data-meter" role="img" aria-label="<?= (int) $rv['pct'] ?>% of target"><i style="width:<?= (int) $rv['pct'] ?>%"></i></div>
+              <p class="sl-data-card__detail">Target <?= h(sl_money($rv['target'])) ?></p>
+            <?php endif; ?>
           </a>
-          <?php else: ?>
-          <a class="sl-card sl-metric" data-surface-tone="blue" href="<?= sl_route('AirShipments') ?>">
-            <div class="sl-ml"><span><i class="ic ic-sm i-plane" aria-hidden="true"></i>Shipments this month</span><i class="ic ic-sm i-right" aria-hidden="true"></i></div>
-            <div class="sl-mv"><?= sl_num($rv['parcels']) ?> <i>registered since <?= h(date('M 1')) ?></i></div>
-            <div class="sl-ticks" role="img" aria-label="Shipments registered this month"><i style="width: <?= sl_pct(date('j'), date('t')) ?>%"></i></div>
-            <div class="sl-mf"><?= sl_pct(date('j'), date('t')) ?>% of the month gone <i class="ic ic-sm i-ext" aria-hidden="true"></i></div>
+          <?php elseif ($user->cdp_hasPermission(['view_shipment_list', 'view_general_shipments'])): ?>
+          <a class="sl-data-card" href="<?= sl_route('AirShipments') ?>">
+            <header><h2 class="sl-data-card__title">Shipments registered</h2><span class="sl-data-card__period">This month</span></header>
+            <p class="sl-data-card__value"><?= sl_num($rv['parcels']) ?></p>
+            <p class="sl-data-card__detail">Since <?= h(date('M 1')) ?></p>
           </a>
           <?php endif; ?>
-          <a class="sl-card sl-metric" data-surface-tone="violet" href="<?= sl_route('Pickups') ?>">
-            <div class="sl-ml"><span><i class="ic ic-sm i-truck" aria-hidden="true"></i>Pickups</span><i class="ic ic-sm i-right" aria-hidden="true"></i></div>
-            <div class="sl-mv"><?= (int) $pk['done'] ?> / <?= (int) $pk['total'] ?> <i>completed today</i></div>
-            <div class="sl-ticks y" role="img" aria-label="<?= (int) $pk['done'] ?> of <?= (int) $pk['total'] ?> pickups completed"><i style="width: <?= (int) $pk['pct'] ?>%"></i></div>
-            <div class="sl-mf"><?= (int) $pk['drivers'] ?> drivers on route · <?= (int) $pk['unassigned'] ?> unassigned <i class="ic ic-sm i-ext" aria-hidden="true"></i></div>
+          <?php if ($user->cdp_hasPermission(['view_pickup_list', 'view_general_pickups'])): ?>
+          <a class="sl-data-card sl-data-card--violet" href="<?= sl_route('Pickups') ?>">
+            <header><h2 class="sl-data-card__title">Pickup completion</h2><span class="sl-data-card__period">Today</span></header>
+            <p class="sl-data-card__value"><?= sl_num($pk['done']) ?> / <?= sl_num($pk['total']) ?></p>
+            <div class="sl-data-meter" role="img" aria-label="<?= (int) $pk['pct'] ?>% completed"><i style="width:<?= (int) $pk['pct'] ?>%"></i></div>
+            <p class="sl-data-card__detail"><?= sl_num($pk['drivers']) ?> drivers on route · <?= sl_num($pk['unassigned']) ?> unassigned</p>
           </a>
-          <a class="sl-card sl-metric" data-surface-tone="mint" href="<?= sl_route('Warehouse') ?>">
-            <div class="sl-ml"><span><i class="ic ic-sm i-warehouse" aria-hidden="true"></i>Warehouse</span><i class="ic ic-sm i-right" aria-hidden="true"></i></div>
-            <div class="sl-mv"><?= (int) $wh['used'] ?><?= $wh['capacity'] ? ' / ' . (int) $wh['capacity'] : '' ?> <i><?= $wh['capacity'] ? 'locker bays full (' . (int) $wh['pct'] . '%)' : 'parcels in the bays' ?></i></div>
-            <div class="sl-ticks <?= $wh['pct'] >= 90 ? 'r' : ($wh['pct'] >= 70 ? 'y' : '') ?>" role="img" aria-label="<?= (int) $wh['pct'] ?> percent of bays used"><i style="width: <?= (int) $wh['pct'] ?>%"></i></div>
-            <div class="sl-mf"><?= (int) $wh['arriving'] ?> arriving now · <?= (int) $wh['awaiting'] ?> awaiting pickup <i class="ic ic-sm i-ext" aria-hidden="true"></i></div>
+          <?php endif; ?>
+          <?php if ($user->cdp_hasPermission(['warehouse_view', 'view_warehouse_delivery'])): ?>
+          <a class="sl-data-card sl-data-card--mint" href="<?= sl_route('Warehouse') ?>">
+            <header><h2 class="sl-data-card__title">Warehouse capacity</h2><span class="sl-data-card__period">Current</span></header>
+            <p class="sl-data-card__value"><?= sl_num($wh['used']) ?><?= $wh['capacity'] ? ' / ' . sl_num($wh['capacity']) : '' ?></p>
+            <?php if ($wh['capacity']): ?><div class="sl-data-meter" role="img" aria-label="<?= (int) $wh['pct'] ?>% of capacity used"><i style="width:<?= (int) $wh['pct'] ?>%"></i></div><?php endif; ?>
+            <p class="sl-data-card__detail"><?= sl_num($wh['arriving']) ?> arriving · <?= sl_num($wh['awaiting']) ?> awaiting pickup</p>
           </a>
+          <?php endif; ?>
         </div>
+
+        <?php include __DIR__ . '/partials/overview_insights.php'; ?>
 
         <section class="mn-brief" aria-label="Smart briefing" data-sl-scope><div class="mn-bh"><span class="mn-ai"><i class="ic i-ai" aria-hidden="true"></i></span><div class="col grow"><b class="fw5">Good <?= date('G') < 12 ? 'morning' : (date('G') < 17 ? 'afternoon' : 'evening') ?>, <?= h($userData->fname ?? '') ?>. <?= h($d['briefLead']) ?></b><span class="mut sm">Picked from shipments, payments, riders, messages and the warehouse · updated just now</span></div><a class="sl-btn ghost sm" href="<?= sl_route('StaffAI') ?>"><i class="ic ic-sm i-spark" aria-hidden="true"></i>Ask AI</a></div>
 <div class="mn-sum" data-sl-filter-seg><?php foreach ($d['bfil'] as $f): ?><button type="button" class="mn-chip <?= h($f['cls']) ?>" data-f="<?= h($f['f']) ?>"><span class="mn-dot"></span><?= h($f['label']) ?></button><?php endforeach; ?></div>
@@ -72,7 +80,6 @@ $wh = $d['warehouse']; $pk = $d['pickups']; $rv = $d['revenue'];
 <div class="col g8" style="margin-top:6px"><?php foreach ($d['departures'] as $dep): ?><div class="up7-dep"><i class="ic ic-sm <?= h($dep['icon']) ?>" aria-hidden="true"></i><div class="grow"><div class="fw5 sm"><?= h($dep['title']) ?></div><div class="mut" style="font-size:14px"><?= h($dep['sub']) ?></div></div><span class="mono sm"><?= (int) $dep['n'] ?> pkgs</span></div><?php endforeach; ?></div></div></div>
 </section>
         <?php endif; ?>
-<?php include __DIR__ . '/partials/overview_insights.php'; ?>
 
         <section class="sl-card" aria-label="Quick actions">
           <h2 class="sl-ct" style="margin-bottom: 12px">Quick Actions</h2>

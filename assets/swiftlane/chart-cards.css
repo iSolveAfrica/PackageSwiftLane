@@ -18,3 +18,54 @@
 .sl-viz-card__key--blue{background:var(--ch-2)}
 .sl-viz-card__key--amber{background:var(--ch-3)}
 html.sl-dark .sl-viz-card{--sl-viz-tint:color-mix(in srgb,var(--sl-viz-accent) 13%,var(--card))}
+
+/* Data cards lead with the figure and keep the colour in the visualization. */
+.sl-data-card {
+  --data-accent: var(--ch-2);
+  --data-ink: var(--sky-ink);
+  --data-track: color-mix(in srgb, var(--data-accent) 10%, var(--card));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: clamp(16px, 2.2vw, 24px);
+  border: 1px solid color-mix(in srgb, var(--data-accent) 24%, var(--line));
+  border-radius: var(--r-xl);
+  background: var(--card);
+  color: var(--ink);
+}
+.sl-data-card--violet { --data-accent: var(--ch-4); --data-ink: var(--violet-ink); }
+.sl-data-card--mint { --data-accent: var(--ch-1); --data-ink: var(--green-ink); }
+.sl-data-card--amber { --data-accent: var(--ch-3); --data-ink: var(--amber-ink); }
+.sl-data-card > header { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 6px 12px; }
+.sl-data-card__title { font-size: 15px; font-weight: 600; color: var(--data-ink); }
+.sl-data-card__value {
+  font-size: clamp(28px, 3vw, 42px);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -.04em;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+.sl-data-card__period, .sl-data-card__detail { color: var(--muted); font-size: 13px; }
+.sl-data-card__detail { overflow-wrap: anywhere; }
+.sl-data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 226px), 1fr)); gap: 14px; min-width: 0; }
+.sl-data-meter { height: 10px; border-radius: 12px; overflow: hidden; background: var(--data-track); }
+.sl-data-meter > i { display: block; height: 100%; background: var(--data-accent); }
+.sl-data-columns { display: flex; align-items: stretch; gap: clamp(3px, 1vw, 9px); height: 83px; margin-top: auto; }
+.sl-data-columns__track { position: relative; flex: 1; min-width: 0; border-radius: 6px; background: var(--data-track); overflow: hidden; }
+.sl-data-columns__track > i { position: absolute; inset: auto 0 0; background: var(--data-accent); }
+.sl-data-columns__axis { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 12px; }
+.sl-data-card__plot { width: 100%; height: auto; display: block; overflow: visible; }
+.sl-data-card__area { fill: var(--data-track); }
+.sl-data-card__line { stroke: var(--data-accent); fill: none; stroke-width: 2.5; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.sl-data-card__point { fill: var(--data-accent); stroke: var(--card); stroke-width: 2; }
+.sl-data-card .sl-bar > span { background: color-mix(in srgb, var(--data-accent) 68%, var(--card)); }
+.sl-data-card .sl-bar.hi > span { background: var(--data-accent); }
+.sl-data-bays { gap: 3px; }
+.sl-data-bays > b { max-width: 100%; height: auto; aspect-ratio: 1; }
+@media (forced-colors: active) {
+  .sl-data-meter, .sl-data-columns__track { border: 1px solid CanvasText; }
+  .sl-data-meter > i, .sl-data-columns__track > i { background: Highlight; forced-color-adjust: none; }
+  .sl-data-card__line { stroke: Highlight; }
+}

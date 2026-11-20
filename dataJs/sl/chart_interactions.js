@@ -190,4 +190,38 @@
   window.addEventListener('scroll', function () { if (active) { position(active.root); positionGuide(active.chart, active.index); } }, true);
   (window.SL = window.SL || {}).initCharts = init;
   init();
+
+  // Refresh the read-only overview without replacing a chart being explored.
+  var overview = document.querySelector('[data-overview-refresh]');
+  if (!overview) return;
+  var refreshAllowed = true;
+  function canRefresh() {
+    return !document.hidden && !overview.contains(document.activeElement)
+      && (!active || !overview.contains(active.root));
+  }
+  async function refreshOverview() {
+    try {
+      if (!canRefresh()) return;
+      var response = await fetch(overview.dataset.overviewRefresh, { cache: 'no-store', redirect: 'error' });
+      if (response.status === 401 || response.status === 403) {
+        refreshAllowed = false;
+        return;
+      }
+      if (!response.ok) return;
+      var html = new DOMParser().parseFromString(await response.text(), 'text/html');
+      var updated = html.querySelector('[data-overview-refresh]');
+      if (updated && canRefresh() && updated.dataset.overviewRefresh === overview.dataset.overviewRefresh) {
+        overview.replaceWith(updated);
+        overview = updated;
+        init();
+      }
+    } catch (error) {
+      // Keep the most recent figures when the connection drops.
+    }
+  }
+  async function scheduleRefresh() {
+    await refreshOverview();
+    if (refreshAllowed) window.setTimeout(scheduleRefresh, 90000);
+  }
+  window.setTimeout(scheduleRefresh, 90000);
 })();

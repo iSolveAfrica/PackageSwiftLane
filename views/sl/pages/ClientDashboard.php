@@ -15,6 +15,27 @@ $steps = sl_get($d, 'latestSteps');
           <div class="row g8 wrap"><?php if (sl_get($d, 'canPrealert')): ?><a class="sl-btn ghost" href="<?= sl_route('PreAlerts') ?>"><i class="ic ic-sm i-inbox" aria-hidden="true"></i>Add Pre-Alert</a><?php endif; ?><?php if (sl_get($d, 'canShip')): ?><a class="sl-btn" href="courier_add_client.php"><i class="ic ic-sm i-plus" aria-hidden="true"></i>New Shipment</a><?php endif; ?></div>
         </div>
         <?php include __DIR__ . '/partials/mobile_dashboard.php'; ?>
+        <?php if (!empty($d['parcelActivity'])): ?>
+          <section class="sl-data-card sl-data-card--violet" aria-labelledby="parcel-activity-title">
+            <header><h2 id="parcel-activity-title" class="sl-data-card__title">My parcel activity</h2><span class="sl-data-card__period">Last 14 days</span></header>
+            <p class="sl-data-card__value"><?= sl_num(array_sum($d['parcelActivity'])) ?></p>
+            <p class="sl-data-card__detail">Air shipments and packages registered to your account</p>
+            <?php
+            $columnValues = array_values($d['parcelActivity']);
+            $columnLabels = array_map(fn($date) => sl_date($date, 'M j'), array_keys($d['parcelActivity']));
+            $columnTitle = 'My registered parcels per day';
+            $chartPeak = max(1, max($columnValues));
+            $lastPoint = sl_chartScale([end($columnValues)], 80, 8, $chartPeak)[0];
+            ?>
+            <svg class="sl-data-card__plot" viewBox="0 0 560 88" role="img" aria-label="<?= h($columnTitle) ?>"
+                 <?= sl_chartAttrs([['name' => 'Registered parcels', 'values' => $columnValues, 'color' => 'var(--ch-4)']], $columnLabels, $columnTitle, 4, 554) ?>>
+              <path class="sl-data-card__area" d="<?= h(sl_svgAreaPath($columnValues, 554, 80, 8, $chartPeak, 4)) ?>"/>
+              <path class="sl-data-card__line" d="<?= h(sl_svgLinePath($columnValues, 554, 80, 8, $chartPeak, 4)) ?>"/>
+              <circle class="sl-data-card__point" cx="554" cy="<?= h($lastPoint) ?>" r="4"/>
+            </svg>
+            <div class="sl-data-columns__axis"><span><?= h(reset($columnLabels)) ?></span><span><?= h(end($columnLabels)) ?></span></div>
+          </section>
+        <?php endif; ?>
         <div class="sl-dashboard-detail">
         <div class="grid cols3">
           <a class="sl-card sl-metric" href="<?= sl_route('AirShipments') ?>" style="color:inherit"><div class="sl-ml"><span><i class="ic ic-sm i-plane" aria-hidden="true"></i>Active shipments</span></div><div class="sl-mv"><?= (int) sl_get($d, 'active') ?> <i>/ <?= (int) sl_get($d, 'year') ?> this year</i></div><div class="sl-ticks"><i style="width: <?= sl_pct(sl_get($d, 'active'), max(1, (int) sl_get($d, 'year'))) ?>%"></i></div></a>

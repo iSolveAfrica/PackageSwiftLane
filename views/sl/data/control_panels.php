@@ -28,25 +28,17 @@ function sl_controlPanelsData($user, $core): array
         $attn[] = ['href' => sl_route('Customers', ['filter' => 'unapproved']), 'l' => 'Awaiting approval', 'n' => end($s), 's' => $s];
     }
     if ($ok(['warehouse_view', 'view_shipment_list'])) {
-        $s = $daily("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (12,25,28,29) AND a.order_date <= :d $w");
+        $s = $daily("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (12,25,28,29) AND a.order_date < DATE_ADD(:d, INTERVAL 1 DAY) $w");
         $attn[] = ['href' => sl_route('Warehouse', ['filter' => 'exceptions']), 'l' => 'Held parcels', 'n' => end($s), 's' => $s];
     }
     if ($ok('view_pickup_list')) {
-        $s = $daily("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.is_pickup = 1 AND a.status_courier IN (1,14) AND (a.driver_id IS NULL OR a.driver_id = 0) AND a.order_date <= :d $w");
+        $s = $daily("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.is_pickup = 1 AND a.status_courier IN (1,14) AND (a.driver_id IS NULL OR a.driver_id = 0) AND a.order_date < DATE_ADD(:d, INTERVAL 1 DAY) $w");
         $attn[] = ['href' => sl_route('Pickups'), 'l' => 'Unassigned pickups', 'n' => end($s), 's' => $s];
     }
     if ($ok('prealert_list')) {
         $s = $daily("SELECT COUNT(*) FROM cdb_pre_alert WHERE is_package = 0 AND DATE(prealert_date) <= :d");
         $attn[] = ['href' => sl_route('PreAlerts'), 'l' => 'Open pre-alerts', 'n' => end($s), 's' => $s];
     }
-    foreach ($attn as &$a) {
-        $prev = $a['s'][5] ?? 0; $diff = $a['n'] - $prev; $mx = max(1, max($a['s']));
-        $a['d'] = $diff === 0 ? 'Same as yesterday' : (($diff > 0 ? '▲ ' : '▼ ') . abs($diff) . ' vs yesterday');
-        $a['up'] = $diff > 0;
-        $a['bars'] = array_map(fn($v) => 'height:' . max(4, sl_pct($v, $mx)) . '%', $a['s']);
-        $a['aria'] = 'Last 7 days: ' . implode(', ', $a['s']);
-    }
-    unset($a);
     $d['attn'] = $attn;
     // health
     $gwOn = (int) sl_scalar("SELECT COUNT(*) FROM cdb_met_payment WHERE is_active = 1 AND id <> 1 AND COALESCE(secret_key,'') <> ''");

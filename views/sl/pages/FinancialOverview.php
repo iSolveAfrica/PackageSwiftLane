@@ -10,17 +10,27 @@ $k = $d['kpi'];
           <div><h1 class="sl-title">Financial Overview</h1><p class="sl-lede">Revenue, costs and margin for <?= h($d['hub']) ?> · <?= h($d['rangeLabel']) ?></p></div>
           <div class="row g8 wrap"><div class="sl-seg boxed"><?php foreach ($d['ranges'] as $r): ?><a class="<?= h($r['cls']) ?>" href="<?= h(sl_url(['range' => $r['f']])) ?>"><?= h($r['label']) ?></a><?php endforeach; ?></div><a class="sl-btn ghost" href="<?= sl_route('Transactions', ['export' => 'csv']) ?>"><i class="ic ic-sm i-download" aria-hidden="true"></i>Export</a></div>
         </div>
-        <div class="grid cols3">
-          <div class="sl-card sl-metric"><div class="sl-ml"><span><i class="ic ic-sm i-dollar" aria-hidden="true"></i>Revenue</span></div><div class="sl-mv"><?= h($k['revenue']['v']) ?> <i><?= h($k['revenue']['sub']) ?></i></div><div class="sl-ticks"><i style="width: <?= (int) $k['revenue']['pct'] ?>%"></i></div><div class="sl-mf"><?= h($k['revenue']['foot']) ?></div></div>
-          <div class="sl-card sl-metric"><div class="sl-ml"><span><i class="ic ic-sm i-truck" aria-hidden="true"></i>Carrier and delivery costs</span></div><div class="sl-mv"><?= h($k['cost']['v']) ?> <i><?= h($k['cost']['sub']) ?></i></div><div class="sl-ticks y"><i style="width: <?= (int) $k['cost']['pct'] ?>%"></i></div><div class="sl-mf"><?= h($k['cost']['foot']) ?></div></div>
-          <div class="sl-card sl-metric"><div class="sl-ml"><span><i class="ic ic-sm i-chart" aria-hidden="true"></i>Gross margin</span></div><div class="sl-mv"><?= h($k['margin']['v']) ?> <i><?= h($k['margin']['sub']) ?></i></div><div class="sl-ticks v"><i style="width: <?= (int) $k['margin']['pct'] ?>%"></i></div><div class="sl-mf"><?= h($k['margin']['foot']) ?></div></div>
+        <div class="sl-data-grid">
+          <?php foreach ([
+              'revenue' => ['Revenue', 'mint'],
+              'cost' => ['Carrier and delivery costs', 'amber'],
+              'margin' => ['Gross margin', 'violet'],
+          ] as $metric => [$label, $tone]): $figure = $k[$metric]; ?>
+            <section class="sl-data-card sl-data-card--<?= h($tone) ?>">
+              <header><h2 class="sl-data-card__title"><?= h($label) ?></h2><span class="sl-data-card__period"><?= h($d['rangeLabel']) ?></span></header>
+              <p class="sl-data-card__value"><?= h($figure['v']) ?></p>
+              <p class="sl-data-card__detail"><?= h($figure['sub']) ?></p>
+              <div class="sl-data-meter" aria-hidden="true"><i style="width:<?= max(0, min(100, (int) $figure['pct'])) ?>%"></i></div>
+              <p class="sl-data-card__detail"><?= h($figure['foot']) ?></p>
+            </section>
+          <?php endforeach; ?>
         </div>
         <div class="split">
-          <section class="a sl-card"><div class="sl-ch"><h2 class="sl-ct">Revenue by month</h2><span class="mut sm">Last 12 months</span></div>
+          <section class="a sl-data-card sl-data-card--mint"><header><h2 class="sl-data-card__title">Revenue by month</h2><span class="sl-data-card__period">Last 12 months</span></header>
             <div class="sl-bars" style="height: 200px"><?php foreach ($d['months'] as $m): ?><div class="sl-bar <?= h($m['hi']) ?>" title="<?= h($m['tip']) ?>"><span style="<?= h($m['sty']) ?>"></span></div><?php endforeach; ?></div>
             <div class="row between mut sm" style="margin-top: 8px"><?php foreach ($d['monthLabels'] as $l): ?><span><?= h($l) ?></span><?php endforeach; ?></div>
           </section>
-          <aside class="b sl-card col g12"><h2 class="sl-ct">Revenue by gateway</h2>
+          <aside class="b sl-data-card sl-data-card--violet"><header><h2 class="sl-data-card__title">Revenue by gateway</h2><span class="sl-data-card__period"><?= h($d['rangeLabel']) ?></span></header>
             <?php foreach ($d['gw'] as $g): ?><div class="col g6"><div class="row between sm"><span class="fw5"><?= h($g['n']) ?></span><span class="mut"><?= h($g['v']) ?></span></div><div class="sl-ticks <?= h($g['c']) ?>"><i style="<?= h($g['sty']) ?>"></i></div></div><?php endforeach; ?>
             <?php if (!$d['gw']): ?><div class="sl-empty">No payments in this period.</div><?php endif; ?>
           </aside>

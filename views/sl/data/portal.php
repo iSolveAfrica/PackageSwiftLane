@@ -283,6 +283,32 @@ function sl_clientDashboardData($user, $core, $userData): array
         + (int) sl_scalar('SELECT COUNT(*) FROM cdb_customers_packages WHERE sender_id = :u AND YEAR(order_date) = YEAR(CURDATE())', [':u' => $uid]);
     $d['atWh'] = (int) sl_scalar('SELECT COUNT(*) FROM cdb_add_order WHERE sender_id = :u AND is_deleted = 0 AND status_courier IN (2,4,10)', [':u' => $uid])
         + (int) sl_scalar('SELECT COUNT(*) FROM cdb_customers_packages WHERE sender_id = :u AND status_courier IN (2,4,10)', [':u' => $uid]);
+    $today = new DateTimeImmutable('today');
+    $activity = [];
+    for ($day = $today->modify('-13 days'); $day <= $today; $day = $day->modify('+1 day')) {
+        $activity[$day->format('Y-m-d')] = 0;
+    }
+    $registrations = sl_rows(
+        'SELECT registered_day, SUM(parcel_count) AS parcel_count FROM (
+            SELECT DATE(order_date) AS registered_day, COUNT(*) AS parcel_count FROM cdb_add_order
+            WHERE sender_id = :air_user AND is_deleted = 0 AND is_pickup = 0
+                AND order_date >= :air_start AND order_date < :air_end
+            GROUP BY DATE(order_date)
+            UNION ALL
+            SELECT DATE(order_date) AS registered_day, COUNT(*) AS parcel_count FROM cdb_customers_packages
+            WHERE sender_id = :sea_user AND order_date >= :sea_start AND order_date < :sea_end
+            GROUP BY DATE(order_date)
+        ) AS parcels GROUP BY registered_day',
+        [
+            ':air_user' => $uid, ':sea_user' => $uid,
+            ':air_start' => array_key_first($activity), ':sea_start' => array_key_first($activity),
+            ':air_end' => $today->modify('+1 day')->format('Y-m-d'), ':sea_end' => $today->modify('+1 day')->format('Y-m-d'),
+        ]
+    );
+    foreach ($registrations as $registration) {
+        $activity[$registration->registered_day] = (int) $registration->parcel_count;
+    }
+    $d['parcelActivity'] = $activity;
     $billed = $d['finance'] ? (float) sl_scalar('SELECT COALESCE(SUM(total_order),0) FROM cdb_add_order WHERE sender_id = :u AND is_deleted = 0 AND status_courier <> 21', [':u' => $uid]) : 0;
     $d['duePct'] = sl_pct($d['dueAmt'], max(1, $billed));
     $d['rows'] = sl_portalShipments($uid, 6);

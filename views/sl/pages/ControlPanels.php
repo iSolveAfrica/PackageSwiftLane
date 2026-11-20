@@ -11,13 +11,28 @@ $otherSections = array_values(array_filter($d['sections'], fn($section) => !$sec
 ?>
 <div class="cpx-hero"><div><h1><i class="ic i-grid" aria-hidden="true"></i>Control panels</h1><p class="sl-lede" style="font-size:14.5px;margin-top:6px">Every module in your workspace, grouped by the work it supports</p></div><label class="cpx-find"><i class="ic ic-sm i-search" aria-hidden="true"></i><input aria-label="Find a panel or action" placeholder="Find a panel or action" id="cpx-q"><kbd>⌘K</kbd></label></div>
 <div class="row wrap g8 cpx-pins"><span class="up" style="margin-right:4px">Pinned</span><?php foreach ($d['pins'] as $p): ?><a class="chipbtn" href="<?= h($p['href']) ?>"><i class="ic ic-sm <?= h($p['icon']) ?>" aria-hidden="true"></i><?= h($p['label']) ?></a><?php endforeach; ?><span class="grow"></span><a class="chipbtn" href="<?= sl_route('SettingsHub') ?>"><i class="ic ic-sm i-sliders" aria-hidden="true"></i>Customise</a></div>
-<div class="split">
-<section class="a sl-card col g12"><div class="row between"><h2 class="sl-ct">Needs attention</h2><span class="mut sm">Updated <?= h($d['updated']) ?></span></div><div class="cpx-attn">
-<?php foreach ($d['attn'] as $a): ?><a href="<?= h($a['href']) ?>"><span class="up"><?= h($a['l']) ?></span><b><?= sl_num($a['n']) ?></b><span class="d"<?= $a['up'] ? ' style="color:var(--amber-ink)"' : '' ?>><?= h($a['d']) ?></span><div class="cpx-mb" <?= sl_chartAttrs([['name' => $a['l'], 'values' => $a['s']]], array_map(fn($i) => date('M j, Y', strtotime('-' . (6 - $i) . ' days')), range(0, 6)), $a['l']) ?> role="img" aria-label="<?= h($a['aria']) ?>"><?php foreach ($a['bars'] as $b): ?><i style="<?= h($b) ?>"></i><?php endforeach; ?></div><div class="cpx-hl"><span>6d ago</span><span>Today</span></div></a><?php endforeach; ?>
-</div><?php if (!$d['attn']): ?><div class="sl-empty">Nothing needs your attention.</div><?php endif; ?></section>
+<section class="col g12" aria-labelledby="attention-title">
+  <div class="row between wrap g8"><h2 class="sl-ct" id="attention-title">Needs attention</h2><span class="mut sm">Updated <?= h($d['updated']) ?></span></div>
+  <?php if ($d['attn']): ?>
+    <div class="sl-data-grid">
+      <?php foreach ($d['attn'] as $index => $attention): ?>
+        <article class="sl-data-card sl-data-card--<?= ['violet', 'amber', 'blue', 'mint'][$index % 4] ?>">
+          <header><h3 class="sl-data-card__title"><a href="<?= h($attention['href']) ?>"><?= h($attention['l']) ?> ↗</a></h3><span class="sl-data-card__period">Open now</span></header>
+          <p class="sl-data-card__value"><?= sl_num($attention['n']) ?></p>
+          <p class="sl-data-card__detail">Open items created by each date</p>
+          <?php
+          $columnValues = $attention['s'];
+          $columnLabels = array_map(fn($i) => date('M j', strtotime("-$i days")), range(6, 0));
+          $columnTitle = $attention['l'] . ' by creation cutoff';
+          include __DIR__ . '/partials/data_columns.php';
+          ?>
+        </article>
+      <?php endforeach; ?>
+    </div>
+  <?php else: ?><div class="sl-empty">Nothing needs your attention.</div><?php endif; ?>
+</section>
 <section class="b sl-card col g8"><h2 class="sl-ct">Workspace health</h2>
 <?php foreach ($d['health'] as $hh): ?><div class="row g10 sm"><span class="cpx-dot <?= h($hh['c']) ?>" aria-hidden="true"></span><span class="grow"><?= h($hh['t']) ?></span><span<?= $hh['c'] ? ' style="color:var(--amber-ink)"' : ' class="mut"' ?>><?= h($hh['s']) ?></span></div><?php endforeach; ?></section>
-</div>
 <div id="cpx-groups">
 <?php if ($featuredSections): ?><section class="cpx-group" id="cpx-featured"><div class="cpx-group-head"><div><span class="up">Your workspace</span><h2>Centers &amp; teams</h2><p>Open a destination below, or search all panels above.</p></div><nav class="cpx-jump" aria-label="Jump to a center or team"><?php foreach ($featuredSections as $s): ?><a href="#<?= h($s['id']) ?>"><?= h($s['t']) ?><i class="ic ic-sm i-right" aria-hidden="true"></i></a><?php endforeach; ?></nav></div><div class="cpx-featured-grid"><?php foreach ($featuredSections as $s) include __DIR__ . '/partials/control_panel_section.php'; ?></div></section><?php endif; ?>
 <?php if ($otherSections): ?><section class="cpx-group" id="cpx-other"><div class="cpx-group-head"><div><span class="up">Explore</span><h2>All workspace panels</h2><p>Shipping, people, finance and platform tools.</p></div></div><div class="cpx-cols"><?php foreach ($otherSections as $s) include __DIR__ . '/partials/control_panel_section.php'; ?></div></section><?php endif; ?>

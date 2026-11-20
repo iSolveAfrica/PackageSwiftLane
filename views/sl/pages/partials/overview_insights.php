@@ -11,12 +11,12 @@
         $priorPath .= ($i ? ' L' : 'M') . round($x, 2) . ',' . round($y, 2);
     }
 ?>
-<section class="sl-insights" aria-labelledby="insights-title">
+<section class="sl-insights" aria-labelledby="insights-title" data-overview-refresh="ajax/sl/overview_insights.php?chart_days=<?= (int) $ch['days'] ?>">
   <div class="sl-insights__head">
-    <div><span class="up">Across the system</span><h2 id="insights-title" class="sl-title">Operations in focus</h2><p class="mut sm">Registration and delivery patterns · <?= h($ch['range']) ?> · scoped to your access</p></div>
+    <div><span class="up">Across the system</span><h2 id="insights-title" class="sl-title">Operations in focus</h2><p class="mut sm"><?= h($ch['range']) ?> · updated <time datetime="<?= h(date(DATE_ATOM)) ?>"><?= h(date('H:i')) ?></time></p></div>
     <nav class="sl-insights__periods" aria-label="Chart period">
       <?php foreach ([7 => '7 days', 14 => '14 days', 30 => '30 days'] as $days => $label): ?>
-      <a class="<?= $ch['days'] === $days ? 'is-active' : '' ?>" href="<?= h(sl_url(['chart_days' => $days])) ?>"<?= $ch['days'] === $days ? ' aria-current="page"' : '' ?>><?= h($label) ?></a>
+      <a class="<?= $ch['days'] === $days ? 'is-active' : '' ?>" href="?chart_days=<?= (int) $days ?>"<?= $ch['days'] === $days ? ' aria-current="page"' : '' ?>><?= h($label) ?></a>
       <?php endforeach; ?>
     </nav>
   </div>
@@ -29,8 +29,8 @@
       </p>
       <?php if (!$ch['total']): ?><p class="mut sm">No registrations in this period.</p><?php endif; ?>
       <div class="sl-insights__plot">
-        <svg <?= sl_chartAttrs([['name' => 'This period', 'values' => $ch['current']], ['name' => 'Previous period', 'values' => $ch['previous']]], $ch['labels'], 'Daily registrations', $plotLeft, $plotRight) ?> viewBox="0 0 760 220" role="img" aria-label="Daily registrations for <?= (int) $ch['days'] ?> days compared with the previous period">
-          <?php foreach ([0, .5, 1] as $fraction): $y = $plotBottom - ($plotBottom - $plotTop) * $fraction; ?><line class="sl-insights__gridline" x1="<?= $plotLeft ?>" x2="<?= $plotRight ?>" y1="<?= $y ?>" y2="<?= $y ?>"/><text class="sl-insights__axis" x="30" y="<?= $y + 4 ?>" text-anchor="end"><?= sl_num($ch['peak'] * $fraction) ?></text><?php endforeach; ?>
+        <svg <?= sl_chartAttrs([['name' => 'This period', 'values' => $ch['current'], 'color' => 'var(--ch-2)'], ['name' => 'Previous period', 'values' => $ch['previous'], 'color' => 'var(--ch-3)']], $ch['labels'], 'Daily registrations', $plotLeft + $step / 2, $plotRight - $step / 2) ?> viewBox="0 0 760 220" role="img" aria-label="Daily registrations for <?= (int) $ch['days'] ?> days compared with the previous period">
+          <?php foreach (array_unique([0, intdiv((int) $ch['peak'], 2), $ch['peak']]) as $tick): $y = $plotBottom - ($plotBottom - $plotTop) * $tick / $ch['peak']; ?><line class="sl-insights__gridline" x1="<?= $plotLeft ?>" x2="<?= $plotRight ?>" y1="<?= $y ?>" y2="<?= $y ?>"/><text class="sl-insights__axis" x="30" y="<?= $y + 4 ?>" text-anchor="end"><?= sl_num($tick) ?></text><?php endforeach; ?>
           <?php foreach ($ch['current'] as $i => $value): $x = $plotLeft + $step * ($i + .5) - $barWidth / 2; $height = ($plotBottom - $plotTop) * $value / $ch['peak']; ?><rect class="sl-insights__bar" x="<?= round($x, 2) ?>" y="<?= round($plotBottom - $height, 2) ?>" width="<?= round($barWidth, 2) ?>" height="<?= round($height, 2) ?>" rx="3"><title><?= h($ch['labels'][$i]) ?>: <?= (int) $value ?> registrations</title></rect><?php endforeach; ?>
           <path class="sl-insights__prior" d="<?= h($priorPath) ?>"/>
           <?php foreach (array_unique([0, (int) floor(($count - 1) / 2), $count - 1]) as $i): ?><text class="sl-insights__axis" x="<?= round($plotLeft + $step * ($i + .5), 2) ?>" y="214" text-anchor="middle"><?= h($ch['labels'][$i]) ?></text><?php endforeach; ?>

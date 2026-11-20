@@ -21,11 +21,12 @@ if (!isset($d)) { $d = []; }
         </section>
         <?php endif; ?>
         <div class="split">
-          <section class="a sl-card">
-            <div class="sl-ch"><h2 class="sl-ct">Locker bays</h2><div class="sl-mv" style="margin: 0; font-size: 16px"><?= (int) $d['full'] ?> / <?= (int) $d['bayN'] ?> <i>full (<?= (int) $d['fullPct'] ?>%)</i></div></div>
-            <div class="sl-ticks <?= $d['fullPct'] >= 90 ? 'r' : ($d['fullPct'] >= 70 ? 'y' : '') ?>" style="margin-bottom: 18px"><i style="width: <?= (int) $d['fullPct'] ?>%"></i></div>
-            <div class="sl-heat" style="grid-template-rows: repeat(<?= (int) ceil($d['bayN'] / 10) ?>, 40px); grid-template-columns: repeat(10, minmax(0, 1fr)); grid-auto-flow: row" role="img" aria-label="Locker bay map, <?= (int) $d['full'] ?> of <?= (int) $d['bayN'] ?> bays occupied">
-              <?php foreach ($d['bays'] as $b): ?><b class="<?= h($b['c']) ?>" title="<?= h($b['t']) ?>" style="width: 30px; height: 30px; border-radius: 8px; opacity: 1"></b><?php endforeach; ?>
+          <section class="a sl-data-card sl-data-card--mint">
+            <header><h2 class="sl-data-card__title">Locker bays</h2><span class="sl-data-card__period">Current occupancy</span></header>
+            <p class="sl-data-card__value"><?= sl_num($d['full']) ?> / <?= sl_num($d['bayN']) ?></p>
+            <p class="sl-data-card__detail"><?= (int) $d['fullPct'] ?>% full · <?= sl_num($d['free']) ?> bays free</p>
+            <div class="sl-heat sl-data-bays" style="grid-template-rows: repeat(<?= (int) ceil($d['bayN'] / 10) ?>, 40px); grid-template-columns: repeat(10, minmax(0, 1fr)); grid-auto-flow: row" role="img" aria-label="Locker bay map, <?= (int) $d['full'] ?> of <?= (int) $d['bayN'] ?> bays occupied">
+              <?php foreach ($d['bays'] as $b): ?><b class="<?= h($b['c']) ?>" title="<?= h($b['t']) ?>" style="width: 30px; border-radius: 6px; opacity: 1"></b><?php endforeach; ?>
             </div>
             <div class="row g16 wrap mut sm" style="margin-top: 14px"><span class="row g6"><b style="width: 12px; height: 12px; border-radius: 3px; background: var(--heat-0)"></b>Free (<?= (int) $d['free'] ?>)</span><span class="row g6"><b style="width: 12px; height: 12px; border-radius: 3px; background: var(--heat-3)"></b>Occupied (<?= (int) $d['busy'] ?>)</span><span class="row g6"><b style="width: 12px; height: 12px; border-radius: 3px; background: var(--heat-1)"></b>Awaiting pickup (<?= (int) $d['wait'] ?>)</span></div>
             <?php if (!$d['hasBay']): ?><p class="mut sm">Bays are recorded once migrations/2026_11_06_warehouse_packages.sql is applied.</p><?php endif; ?>
