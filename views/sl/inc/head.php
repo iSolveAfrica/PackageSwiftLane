@@ -26,6 +26,7 @@ $slBoardCss = $slPage['board'] ? 'assets/swiftlane/pages/' . $slPage['board'] . 
 <link rel="stylesheet" href="<?= h(cdp_asset($slCss)) ?>">
 <?php endforeach; ?>
 <link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/experience.css')) ?>">
+<link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/surface-colors.css')) ?>">
 <script defer src="<?= h(cdp_asset('assets/swiftlane/experience.js')) ?>"></script>
 <script>
 (function(){try{var t=localStorage.getItem('sl.theme');if(t==='dark'||(t==='auto'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('sl-dark');}}catch(e){}})();

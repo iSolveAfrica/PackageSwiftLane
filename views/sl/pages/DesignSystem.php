@@ -49,6 +49,19 @@ if (!isset($d)) { $d = []; }
         <div class="up">Activity heat</div>
         <div class="row g12 wrap"><div class="sl-heat" style="grid-template-rows: 18px; grid-template-columns: repeat(4, 40px)"><b class="h0"></b><b class="h1"></b><b class="h2"></b><b class="h3"></b></div><span class="mono mut sm">#D6D5CF · #BDE9D6 · #6FCDA6 · #0EAD78</span></div>
       </div>
+      <div class="col g8">
+        <h3 class="sl-ct">Surface colours</h3>
+        <p class="mut">Navigation groups set a default tint for cards, table headers and selected tabs. Use a surface tone on a card to give it its own accent.</p>
+        <div class="grid cols4">
+          <?php foreach (['blue' => 'Freight and riders', 'violet' => 'Insights and people', 'mint' => 'Operations and shipping', 'amber' => 'Finance and settings'] as $tone => $example): ?>
+            <div class="sl-card col g8" data-surface-tone="<?= h($tone) ?>">
+              <span class="sl-tile"><i class="ic i-layers" aria-hidden="true"></i></span>
+              <strong><?= h(ucfirst($tone)) ?></strong>
+              <span class="mut sm"><?= h($example) ?></span>
+            </div>
+          <?php endforeach; ?>
+        </div>
+      </div>
     </section>
 
     <section class="col g16" aria-labelledby="t">
