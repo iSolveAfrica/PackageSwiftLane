@@ -31,13 +31,13 @@ if ($numrows > 0) {
     $direction_layout = ($config_lang == "ar") ? "rtl" : "ltr";
 
     // Validar el valor de $config_lang para evitar posibles ataques de inyección de SQL
-    $allowed_languages = array("fr", "br", "ar", "es", "en");
+    $allowed_languages = array("fr", "ar", "es", "en");
     if (!in_array($config_lang, $allowed_languages)) {
         $config_lang = "en"; // Establecer un idioma predeterminado si el valor no es válido
     }
 
     // Incluir el archivo de idioma según la configuración
-    include("languages/$config_lang.php");
+    include __DIR__ . "/languages/$config_lang.php";
 } else {
     $config_lang = "en";
     $direction_layout = "ltr";

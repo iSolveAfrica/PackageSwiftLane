@@ -184,7 +184,7 @@ function sl_pager(int $page, int $perPage, int $total, string $noun = 'rows'): s
  */
 function sl_render(string $view, array $page, array $d = []): void
 {
-    global $user, $core, $lang, $permissions, $userData;
+    global $user, $core, $lang, $permissions, $userData, $config_lang, $direction_layout;
     $page += ['id' => '', 'title' => $core->site_name ?? 'Swift Lane', 'board' => '', 'actions' => '', 'theme' => '', 'plain' => false, 'scripts' => [], 'styles' => []];
     $slPage = $page;
     $viewFile = CDP_ROOT . '/views/sl/pages/' . $view . '.php';
