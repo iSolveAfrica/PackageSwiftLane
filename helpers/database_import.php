@@ -63,6 +63,39 @@ function cdp_import_extract_zip($archivePath, $destination, $maxBytes = 53687091
     }
 }
 
+/** Decompress a gzip SQL export into the private temporary import file. */
+function cdp_import_extract_gzip($archivePath, $destination, $maxBytes = 536870912)
+{
+    if (!function_exists('gzopen')) {
+        throw new RuntimeException('Gzip upload needs the PHP zlib extension on the temp server.');
+    }
+    $input = @gzopen($archivePath, 'rb');
+    $output = fopen($destination, 'wb');
+    if (!$input || !$output) {
+        if ($input) gzclose($input);
+        if ($output) fclose($output);
+        throw new RuntimeException('The .sql.gz file could not be opened.');
+    }
+    $bytes = 0;
+    try {
+        while (!gzeof($input)) {
+            $chunk = gzread($input, 1024 * 1024);
+            if ($chunk === false || ($chunk === '' && !gzeof($input))) {
+                throw new RuntimeException('Could not decompress the .sql.gz file.');
+            }
+            $bytes += strlen($chunk);
+            if ($bytes > $maxBytes) throw new RuntimeException('The decompressed SQL exceeds 512 MB.');
+            if ($chunk !== '' && fwrite($output, $chunk) !== strlen($chunk)) {
+                throw new RuntimeException('Could not write the decompressed SQL file.');
+            }
+        }
+    } finally {
+        gzclose($input);
+        fclose($output);
+    }
+    if ($bytes === 0) throw new RuntimeException('The .sql.gz file is empty.');
+}
+
 function cdp_import_statements($path, $callback)
 {
     $handle = fopen($path, 'rb');

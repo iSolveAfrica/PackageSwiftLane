@@ -16,13 +16,13 @@
 <?php if ($d['migrationEnabled']): ?>
 <section class="sl-card" style="padding:20px;margin-bottom:20px">
   <h2 class="sl-ct">Import main database data into temp</h2>
-  <p class="mut sm">Upload a MySQL .sql export to compare its tables, columns, and types with temp. The import accepts data only and requires empty destination tables.</p>
+  <p class="mut sm">Upload a MySQL .sql, .zip, or .sql.gz export to compare its tables, columns, and types with temp. The import accepts data only and requires empty destination tables.</p>
   <?php if ($d['migrationMessage'] !== ''): ?><div class="sl-banner info"><?= h($d['migrationMessage']) ?></div><?php endif; ?>
   <form method="post" enctype="multipart/form-data" class="col g8">
     <input type="hidden" name="_csrf_token" value="<?= h(cdp_csrf_token()) ?>">
     <input type="hidden" name="migration_action" value="preview">
-    <label class="sm fw5" for="database_file">SQL or ZIP export (up to 128 MB; one SQL file in ZIP)</label>
-    <input id="database_file" type="file" name="database_file" accept=".sql,.zip" required>
+    <label class="sm fw5" for="database_file">SQL, ZIP, or SQL.GZ export (up to 128 MB)</label>
+    <input id="database_file" type="file" name="database_file" accept=".sql,.zip,.sql.gz" required>
     <button type="submit" class="sl-btn">Upload and check schema</button>
   </form>
   <?php if ($d['migrationPlan']): ?>
