@@ -17,7 +17,10 @@
 .sl-viz-card__key{display:inline-block;width:9px;height:9px;border-radius:3px;background:var(--sl-viz-accent)}
 .sl-viz-card__key--blue{background:var(--ch-2)}
 .sl-viz-card__key--amber{background:var(--ch-3)}
-html.sl-dark .sl-viz-card{--sl-viz-tint:color-mix(in srgb,var(--sl-viz-accent) 13%,var(--card))}
+:is(html.sl-dark, .sl-app.dk) .sl-viz-card {
+  background: var(--card);
+  border-color: var(--line);
+}
 
 /* Data cards lead with the figure and keep the colour in the visualization. */
 .sl-data-card {
@@ -33,6 +36,10 @@ html.sl-dark .sl-viz-card{--sl-viz-tint:color-mix(in srgb,var(--sl-viz-accent) 1
   border-radius: var(--r-xl);
   background: var(--card);
   color: var(--ink);
+}
+:is(html.sl-dark, .sl-app.dk) .sl-data-card {
+  --data-track: var(--active);
+  border-color: var(--line);
 }
 .sl-data-card--violet { --data-accent: var(--ch-4); --data-ink: var(--violet-ink); }
 .sl-data-card--mint { --data-accent: var(--ch-1); --data-ink: var(--green-ink); }

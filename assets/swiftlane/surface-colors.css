@@ -5,10 +5,6 @@
   --surface-strength: 11%;
 }
 
-:is(html.sl-dark, .sl-app.dk) {
-  --surface-strength: 16%;
-}
-
 [data-surface-tone="blue"],
 .sl-app:has(.sl-nav-group:is([data-group="freight"], [data-group="riders"], [data-group="account"]) a[aria-current="page"]) {
   --surface-accent: var(--ch-2);
@@ -33,35 +29,35 @@
   --surface-ink: var(--amber-ink);
 }
 
-.sl-app :is(.sl-top, .sl-side, .sl-main) {
+:where(html:not(.sl-dark)) .sl-app:where(:not(.dk)) :is(.sl-top, .sl-side, .sl-main) {
   background-image: linear-gradient(145deg, color-mix(in srgb, var(--surface-accent) 6%, transparent), transparent 72%);
 }
 
-.sl-app .sl-side {
+:where(html:not(.sl-dark)) .sl-app:where(:not(.dk)) .sl-side {
   border-color: color-mix(in srgb, var(--surface-accent) 15%, var(--line));
 }
 
-/* Leave semantic banners, pills, and explicitly styled cards to their own components. */
-.sl-app :is(.sl-card, .sl-legacy :is(.card, .swl-metric, .swl-panel)):not(.sl-viz-card, .flush, [class*="bg-"], [style*="background"]) {
+/* Limit decorative tints to the light theme and let semantic components keep their own colours. */
+:where(html:not(.sl-dark)) .sl-app:where(:not(.dk)) :is(.sl-card, .sl-legacy :is(.card, .swl-metric, .swl-panel)):not(.sl-viz-card, .flush, [class*="bg-"], [style*="background"]) {
   background-image: linear-gradient(145deg, color-mix(in srgb, var(--surface-accent) var(--surface-strength), var(--card)), transparent 66%);
   border-color: color-mix(in srgb, var(--surface-accent) 18%, var(--line));
 }
 
-.sl-app .sl-tile:not(.dk-q .sl-tile, .g, .y, .r, [class*="bg-"], [style*="background"]) {
+:where(html:not(.sl-dark)) .sl-app:where(:not(.dk)) .sl-tile:not(.dk-q .sl-tile, .g, .y, .r, [class*="bg-"], [style*="background"]) {
   background-color: color-mix(in srgb, var(--surface-accent) 16%, var(--card));
   color: var(--surface-ink);
 }
 
-.sl-app :is(.sl-table, .sl-legacy .table) > thead > tr > th {
+:where(html:not(.sl-dark)) .sl-app:where(:not(.dk)) :is(.sl-table, .sl-legacy .table) > thead > tr > th {
   background-color: color-mix(in srgb, var(--surface-accent) 9%, var(--card));
   border-bottom-color: color-mix(in srgb, var(--surface-accent) 20%, var(--line));
 }
 
-.sl-app :is(.sl-table, .sl-legacy .table) > tbody > tr:hover:not(.selected, .active, [aria-selected="true"]) > td {
+:where(html:not(.sl-dark)) .sl-app:where(:not(.dk)) :is(.sl-table, .sl-legacy .table) > tbody > tr:hover:not(.selected, .active, [aria-selected="true"]) > td {
   background-color: color-mix(in srgb, var(--surface-accent) 7%, var(--card));
 }
 
-.sl-app :is(.sl-seg, .sl-tabs) .on:not(:disabled, [aria-disabled="true"]) {
+:where(html:not(.sl-dark)) .sl-app:where(:not(.dk)) :is(.sl-seg, .sl-tabs) .on:not(:disabled, [aria-disabled="true"]) {
   background-color: color-mix(in srgb, var(--surface-accent) 14%, var(--card));
   color: var(--surface-ink);
 }
@@ -71,8 +67,8 @@
 }
 
 @media (forced-colors: active) {
-  .sl-app :is(.sl-top, .sl-side, .sl-main),
-  .sl-app :is(.sl-card, .sl-legacy :is(.card, .swl-metric, .swl-panel)):not(.sl-viz-card, .flush, [class*="bg-"], [style*="background"]) {
+  :where(html:not(.sl-dark)) .sl-app:where(:not(.dk)) :is(.sl-top, .sl-side, .sl-main),
+  :where(html:not(.sl-dark)) .sl-app:where(:not(.dk)) :is(.sl-card, .sl-legacy :is(.card, .swl-metric, .swl-panel)):not(.sl-viz-card, .flush, [class*="bg-"], [style*="background"]) {
     background-image: none;
   }
   .sl-app :is(.sl-main, .sl-side) :focus-visible {
