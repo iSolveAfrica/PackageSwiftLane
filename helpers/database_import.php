@@ -1,6 +1,68 @@
 <?php
 /** Data-only SQL import for the superadmin migration page. Schema changes are never run. */
 
+/** Extract exactly one SQL file without trusting paths or expanding an unbounded ZIP. */
+function cdp_import_extract_zip($archivePath, $destination, $maxBytes = 536870912)
+{
+    if (!class_exists('ZipArchive')) {
+        throw new RuntimeException('ZIP upload needs the PHP zip extension on the temp server.');
+    }
+    $zip = new ZipArchive();
+    if ($zip->open($archivePath) !== true) {
+        throw new RuntimeException('The ZIP file could not be opened.');
+    }
+    try {
+        if ($zip->numFiles > 100) {
+            throw new RuntimeException('The ZIP contains too many entries. Upload one SQL export.');
+        }
+        $entry = null;
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $stat = $zip->statIndex($i);
+            if (!$stat || !isset($stat['name'])) {
+                throw new RuntimeException('The ZIP contains an unreadable entry.');
+            }
+            $name = $stat['name'];
+            if (substr($name, -1) === '/') {
+                continue;
+            }
+            if (!preg_match('/\.sql$/i', $name) || $entry !== null) {
+                throw new RuntimeException('A ZIP must contain exactly one .sql file and no other files.');
+            }
+            if (($stat['size'] ?? 0) > $maxBytes || ($stat['size'] ?? 0) <= 0) {
+                throw new RuntimeException('The SQL file inside the ZIP must be under 512 MB.');
+            }
+            $entry = $name;
+        }
+        if ($entry === null) {
+            throw new RuntimeException('No .sql file was found inside the ZIP.');
+        }
+        $input = $zip->getStream($entry);
+        $output = fopen($destination, 'wb');
+        if (!$input || !$output) {
+            if ($input) fclose($input);
+            if ($output) fclose($output);
+            throw new RuntimeException('The SQL file inside the ZIP could not be extracted.');
+        }
+        $bytes = 0;
+        try {
+            while (!feof($input)) {
+                $chunk = fread($input, 1024 * 1024);
+                if ($chunk === false) throw new RuntimeException('Could not read the ZIP contents.');
+                if ($chunk === '' && !feof($input)) throw new RuntimeException('The ZIP stream stopped before extraction finished.');
+                $bytes += strlen($chunk);
+                if ($bytes > $maxBytes) throw new RuntimeException('The extracted SQL exceeds 512 MB.');
+                if ($chunk !== '' && fwrite($output, $chunk) !== strlen($chunk)) throw new RuntimeException('Could not write the extracted SQL file.');
+            }
+        } finally {
+            fclose($input);
+            fclose($output);
+        }
+        if ($bytes === 0) throw new RuntimeException('The SQL file inside the ZIP is empty.');
+    } finally {
+        $zip->close();
+    }
+}
+
 function cdp_import_statements($path, $callback)
 {
     $handle = fopen($path, 'rb');
