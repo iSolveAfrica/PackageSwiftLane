@@ -25,6 +25,10 @@ $wh = $d['warehouse']; $pk = $d['pickups']; $rv = $d['revenue'];
           </div>
         </section>
 
+        <?php if (!empty($d['tracking']['items'])): $tc = $d['tracking']; $tcTitle = 'Tracking list'; $tcNoun = 'shipments'; $tcExpand = $user->cdp_hasPermission('track_shipment') ? sl_route('ShipmentTracking') : ''; ?>
+        <?php include __DIR__ . '/partials/track_console.php'; ?>
+        <?php endif; ?>
+
         <div class="sl-data-grid">
           <?php if (cdp_financeEnabled() && cdp_canViewMoney($user, 'dashboard')): ?>
           <a class="sl-data-card sl-data-card--amber" href="<?= sl_route('FinancialOverview') ?>">

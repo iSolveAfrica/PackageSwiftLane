@@ -373,6 +373,13 @@ function sl_shipmentTrackingData($user, $core, int $id, string $q = ''): array
     $senders = sl_usersById(array_map(fn($r) => $r->sender_id, $recent));
     $d['recent'] = array_map(fn($r) => ['id' => (int) $r->order_id, 'track' => $r->order_prefix . $r->order_no, 'st' => sl_statusLabel($r->status_courier), 'pc' => sl_statusClass($r->status_courier), 'who' => sl_userName($senders[(int) $r->sender_id] ?? null), 'date' => sl_date($r->order_date)], $recent);
     if ($id <= 0) {
+        require_once __DIR__ . '/track_console.php';
+        $d['tracking'] = sl_trackConsoleData($user, $core, 'shipments', 14);
+        // on this page "open" means the status timeline of the shipment, not its detail page
+        foreach ($d['tracking']['items'] as &$it) {
+            if ($it['mode'] === 'air') $it['href'] = sl_route('ShipmentTracking', ['id' => $it['id']]);
+        }
+        unset($it);
         return $d;
     }
     $s = sl_shipmentLoad($id);

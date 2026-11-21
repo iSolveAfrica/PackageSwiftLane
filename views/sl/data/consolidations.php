@@ -134,6 +134,8 @@ function sl_consolidationsData($user, $core): array
     $d['tot'] = $tot;
     $d['canNew'] = ($canAir && $user->cdp_hasPermission('add_consolidate_shipment')) || ($canSea && $user->cdp_hasPermission('add_consolidate_package'));
     $d['drivers'] = sl_rows('SELECT id, fname, lname FROM cdb_users WHERE userlevel = 3 AND active = 1 ORDER BY fname');
+    require_once __DIR__ . '/track_console.php';
+    $d['tracking'] = $page === 1 && $q === '' ? sl_trackConsoleData($user, $core, 'consolidations', 10) : null;
     return $d;
 }
 

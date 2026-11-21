@@ -15,6 +15,9 @@ $steps = sl_get($d, 'latestSteps');
           <div class="row g8 wrap"><?php if (sl_get($d, 'canPrealert')): ?><a class="sl-btn ghost" href="<?= sl_route('PreAlerts') ?>"><i class="ic ic-sm i-inbox" aria-hidden="true"></i>Add Pre-Alert</a><?php endif; ?><?php if (sl_get($d, 'canShip')): ?><a class="sl-btn" href="courier_add_client.php"><i class="ic ic-sm i-plus" aria-hidden="true"></i>New Shipment</a><?php endif; ?></div>
         </div>
         <?php include __DIR__ . '/partials/mobile_dashboard.php'; ?>
+        <?php if (!empty($d['tracking']['items'])): $tc = $d['tracking']; $tcTitle = 'On the move'; $tcNoun = 'parcels'; $tcExpand = sl_route('UserHome'); ?>
+        <?php include __DIR__ . '/partials/track_console.php'; ?>
+        <?php endif; ?>
         <?php if (!empty($d['parcelActivity'])): ?>
           <section class="sl-data-card sl-data-card--violet" aria-labelledby="parcel-activity-title">
             <header><h2 id="parcel-activity-title" class="sl-data-card__title">My parcel activity</h2><span class="sl-data-card__period">Last 14 days</span></header>
