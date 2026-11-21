@@ -8,6 +8,7 @@ require_once CDP_ROOT . '/helpers/sl_charts.php';
 require_once CDP_ROOT . '/helpers/finance_switch.php';
 require_once CDP_ROOT . '/helpers/sl_nav.php';
 require_once CDP_ROOT . '/helpers/rbac.php';
+require_once __DIR__ . '/ops_common.php';
 require_once __DIR__ . '/overview_charts.php';
 require_once __DIR__ . '/overview_hero.php'; // sl_ovScalar() shared with the hero cards
 
