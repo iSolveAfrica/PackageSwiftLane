@@ -432,12 +432,17 @@ function sl_hoSearch(string $q, int $limit = 30): array
     $w = $q !== '' ? sl_whSearchSql() : '';
     $b = $q !== '' ? [':q' => '%' . $q . '%'] : [];
     $rows = sl_whReady($w, $b, 400);
+    $exactTrk = [];
+    foreach ($rows as $r) if ($q !== '' && (strcasecmp($r->trk, $q) === 0 || strcasecmp((string) ($r->post ?? ''), $q) === 0)) $exactTrk[(int) $r->sender_id] = $r->trk;
+    // count every ready parcel of the matching customers, not only the parcel that matched
+    $sids = array_values(array_unique(array_map(fn($r) => (int) $r->sender_id, $rows)));
+    if ($q !== '' && $sids) $rows = sl_whReady(' AND a.sender_id IN (' . implode(',', array_slice($sids, 0, 200)) . ')', [], 800);
     $by = []; $exact = 0;
     foreach ($rows as $r) {
         $k = (int) $r->sender_id;
         $by[$k] = $by[$k] ?? ['n' => 0, 'since' => $r->ready_at ?: $r->order_date, 'hit' => ''];
         $by[$k]['n']++;
-        if ($q !== '' && (strcasecmp($r->trk, $q) === 0 || strcasecmp((string) ($r->post ?? ''), $q) === 0)) { $exact = $k; $by[$k]['hit'] = $r->trk; }
+        if (isset($exactTrk[$k])) { $exact = $k; $by[$k]['hit'] = $exactTrk[$k]; }
     }
     $users = sl_usersById(array_keys($by));
     $out = [];

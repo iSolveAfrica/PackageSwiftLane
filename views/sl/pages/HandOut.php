@@ -11,7 +11,7 @@ if (!isset($d)) { $d = []; }
 $c = $d['c'];
 ?>
 <div class="sl-head"><div><h1 class="sl-title" style="font-size:22px">Hand out packages</h1><p class="sl-lede">Counter at <?= h($d['office']) ?> · type a name, locker, phone or tracking number: the customer opens by itself.</p></div>
-  <div class="row g8 wrap"><span class="sl-badge row g6"><span style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span><span data-ho-today><?= (int) $d['doneToday'] ?></span>&nbsp;handed out today</span><span class="sl-badge">You: <span data-ho-mine><?= (int) $d['mine'] ?></span></span><a class="sl-btn ghost" href="<?= sl_route('HandoverLog') ?>"><i class="ic ic-sm i-activity" aria-hidden="true"></i>Hand-out Log</a></div></div>
+  <div class="row g8 wrap"><span class="sl-badge row g6"><span style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span><span data-ho-today><?= (int) $d['doneToday'] ?></span>&nbsp;handed out today</span><span class="sl-badge">You:&nbsp;<span data-ho-mine><?= (int) $d['mine'] ?></span></span><a class="sl-btn ghost" href="<?= sl_route('HandoverLog') ?>"><i class="ic ic-sm i-activity" aria-hidden="true"></i>Hand-out Log</a></div></div>
 <div class="ho" id="ho-page" data-open="<?= (int) $d['sel'] ?>">
 <aside class="sl-card col g8 ho-queue" aria-label="Customers with parcels ready">
   <label class="ho-find"><i class="ic i-search" aria-hidden="true"></i><input id="ho-q" value="<?= h($d['q']) ?>" autocomplete="off" autofocus aria-label="Search customer or tracking" placeholder="Name, locker, phone or tracking"><span class="ho-spin" data-ho-spin hidden aria-hidden="true"></span></label>
