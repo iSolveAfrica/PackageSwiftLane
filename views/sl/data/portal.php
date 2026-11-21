@@ -347,6 +347,12 @@ function sl_clientDashboardData($user, $core, $userData): array
     $d['aiOn'] = function_exists('cdp_aiConfigured') && cdp_aiConfigured();
     require_once __DIR__ . '/track_console.php';
     $d['tracking'] = sl_trackConsoleData($user, $core, 'mine', 8);
+    // header card: delivered this year and how long they have shipped with us
+    $d['deliveredYear'] = (int) sl_scalar('SELECT COUNT(*) FROM cdb_add_order WHERE sender_id = :u AND is_deleted = 0 AND status_courier IN (8,15) AND YEAR(order_date) = YEAR(CURDATE())', [':u' => $uid])
+        + (int) sl_scalar('SELECT COUNT(*) FROM cdb_customers_packages WHERE sender_id = :u AND status_courier IN (8,15) AND YEAR(order_date) = YEAR(CURDATE())', [':u' => $uid]);
+    $d['since'] = !empty($userData->created) && $userData->created !== '0000-00-00 00:00:00' ? sl_date($userData->created, 'M Y') : '';
+    $d['onWay'] = max(0, $d['active'] - $d['atWh'] - $d['ready']);
+    $d['canBills'] = $d['finance'] && $user->cdp_hasPermission('view_my_bills');
     return $d;
 }
 

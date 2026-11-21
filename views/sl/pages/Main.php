@@ -6,64 +6,21 @@
 if (!isset($d)) { $d = []; }
 $wh = $d['warehouse']; $pk = $d['pickups']; $rv = $d['revenue'];
 ?>
-        <h1 class="sl-title">Overview</h1>
-<section class="sl-card dk-desk" aria-label="Your desk">
-          <div class="dk-me">
-            <div class="row g12"><span class="sl-av lg dark"><?= h($d['me']['ini']) ?></span><div><div class="fw5" style="font-size:16px"><?= h($d['me']['name']) ?></div><div class="mut sm"><?= h($slSub ?? '') ?></div></div></div>
-            <div class="col g6"><div class="row between sm"><span class="mut"><?= h($d['shift']['label']) ?></span><span class="mono"><?= (int) $d['shift']['pct'] ?>%</span></div><div class="sl-ticks n"><i style="width:<?= (int) $d['shift']['pct'] ?>%"></i></div></div>
-            <div class="row between sm"><span class="mut">Cleared today</span><span><b class="mono"><?= (int) $d['doneToday'] ?></b> <span class="mut">actions · <?= (int) $d['queueTotal'] ?> in queues</span></span></div>
-            <div class="col g8" style="margin-top:auto">
-              <a class="sl-btn sm" href="<?= sl_route('Warehouse') ?>"><i class="ic ic-sm i-scan" aria-hidden="true"></i>Scan package</a>
-              <div class="row g8"><a class="sl-btn sm ghost grow" href="<?= sl_route('RiderDispatch') ?>"><i class="ic ic-sm i-truck" aria-hidden="true"></i>Dispatch</a><a class="sl-btn sm ghost grow" href="<?= sl_route('AirShipments') ?>"><i class="ic ic-sm i-print" aria-hidden="true"></i>Print AWBs</a></div>
-              <div class="row g8"><a class="sl-btn sm ghost grow" href="<?= sl_route('Customers', ['filter' => 'unapproved']) ?>"><i class="ic ic-sm i-user" aria-hidden="true"></i>Approvals</a></div>
-            </div>
-          </div>
+        <?php include __DIR__ . '/partials/overview_hero.php'; ?>
+
+        <?php if (!empty($d['tracking']['items'])): $tc = $d['tracking']; $tcTitle = 'Tracking list'; $tcNoun = 'shipments'; $tcExpand = $user->cdp_hasPermission('track_shipment') ? sl_route('ShipmentTracking') : ''; ?>
+        <?php include __DIR__ . '/partials/track_console.php'; ?>
+        <?php endif; ?>
+
+<?php if ($d['queues'] || $d['deskStats']): ?>
+<section class="sl-card dk-desk solo" aria-label="Your desk">
           <div class="dk-qs">
             <div class="row between" style="margin-bottom:6px"><div class="up row g8"><i class="ic ic-sm i-grid" aria-hidden="true"></i>Your desk · <?= (int) $d['queueTotal'] ?> items in your queues</div><span class="mut sm">Sorted by urgency</span></div>
             <div class="dk-grid"><?php foreach ($d['queues'] as $q): ?><a class="dk-q" href="<?= h($q['href']) ?>"><span class="sl-tile"><i class="ic ic-sm <?= h($q['icon']) ?>" aria-hidden="true"></i></span><span class="grow col"><span class="fw5"><?= h($q['label']) ?></span><span class="sm" style="color:<?= h($q['tone']) ?>"><?= h($q['sub']) ?></span></span><b class="mono"><?= (int) $q['n'] ?></b><i class="ic ic-sm i-right mut" aria-hidden="true"></i></a><?php endforeach; ?><?php if (!$d['queues']): ?><div class="sl-empty">No queues are assigned to your role.</div><?php endif; ?></div>
             <?php include __DIR__ . '/partials/overview_desk_stats.php'; ?>
           </div>
         </section>
-
-        <?php if (!empty($d['tracking']['items'])): $tc = $d['tracking']; $tcTitle = 'Tracking list'; $tcNoun = 'shipments'; $tcExpand = $user->cdp_hasPermission('track_shipment') ? sl_route('ShipmentTracking') : ''; ?>
-        <?php include __DIR__ . '/partials/track_console.php'; ?>
-        <?php endif; ?>
-
-        <div class="sl-data-grid">
-          <?php if (cdp_financeEnabled() && cdp_canViewMoney($user, 'dashboard')): ?>
-          <a class="sl-data-card sl-data-card--amber" href="<?= sl_route('FinancialOverview') ?>">
-            <header><h2 class="sl-data-card__title">Revenue &amp; billing</h2><span class="sl-data-card__period">This month</span></header>
-            <p class="sl-data-card__value"><?= h(sl_money($rv['value'])) ?></p>
-            <p class="sl-data-card__detail"><?= sl_num($rv['parcels']) ?> parcels · next settlement <?= h($rv['next']) ?></p>
-            <?php if ($rv['target'] > 0): ?>
-              <div class="sl-data-meter" role="img" aria-label="<?= (int) $rv['pct'] ?>% of target"><i style="width:<?= (int) $rv['pct'] ?>%"></i></div>
-              <p class="sl-data-card__detail">Target <?= h(sl_money($rv['target'])) ?></p>
-            <?php endif; ?>
-          </a>
-          <?php elseif ($user->cdp_hasPermission(['view_shipment_list', 'view_general_shipments'])): ?>
-          <a class="sl-data-card" href="<?= sl_route('AirShipments') ?>">
-            <header><h2 class="sl-data-card__title">Shipments registered</h2><span class="sl-data-card__period">This month</span></header>
-            <p class="sl-data-card__value"><?= sl_num($rv['parcels']) ?></p>
-            <p class="sl-data-card__detail">Since <?= h(date('M 1')) ?></p>
-          </a>
-          <?php endif; ?>
-          <?php if ($user->cdp_hasPermission(['view_pickup_list', 'view_general_pickups'])): ?>
-          <a class="sl-data-card sl-data-card--violet" href="<?= sl_route('Pickups') ?>">
-            <header><h2 class="sl-data-card__title">Pickup completion</h2><span class="sl-data-card__period">Today</span></header>
-            <p class="sl-data-card__value"><?= sl_num($pk['done']) ?> / <?= sl_num($pk['total']) ?></p>
-            <div class="sl-data-meter" role="img" aria-label="<?= (int) $pk['pct'] ?>% completed"><i style="width:<?= (int) $pk['pct'] ?>%"></i></div>
-            <p class="sl-data-card__detail"><?= sl_num($pk['drivers']) ?> drivers on route · <?= sl_num($pk['unassigned']) ?> unassigned</p>
-          </a>
-          <?php endif; ?>
-          <?php if ($user->cdp_hasPermission(['warehouse_view', 'view_warehouse_delivery'])): ?>
-          <a class="sl-data-card sl-data-card--mint" href="<?= sl_route('Warehouse') ?>">
-            <header><h2 class="sl-data-card__title">Warehouse capacity</h2><span class="sl-data-card__period">Current</span></header>
-            <p class="sl-data-card__value"><?= sl_num($wh['used']) ?><?= $wh['capacity'] ? ' / ' . sl_num($wh['capacity']) : '' ?></p>
-            <?php if ($wh['capacity']): ?><div class="sl-data-meter" role="img" aria-label="<?= (int) $wh['pct'] ?>% of capacity used"><i style="width:<?= (int) $wh['pct'] ?>%"></i></div><?php endif; ?>
-            <p class="sl-data-card__detail"><?= sl_num($wh['arriving']) ?> arriving · <?= sl_num($wh['awaiting']) ?> awaiting pickup</p>
-          </a>
-          <?php endif; ?>
-        </div>
+<?php endif; ?>
 
         <?php include __DIR__ . '/partials/overview_insights.php'; ?>
 
@@ -85,16 +42,6 @@ $wh = $d['warehouse']; $pk = $d['pickups']; $rv = $d['revenue'];
 </section>
         <?php endif; ?>
 
-        <section class="sl-card" aria-label="Quick actions">
-          <h2 class="sl-ct" style="margin-bottom: 12px">Quick Actions</h2>
-          <div class="row wrap g12">
-            <a class="sl-btn soft" href="<?= sl_route('PublicTracking') ?>"><i class="ic ic-sm i-search" aria-hidden="true"></i>Track Shipment <i class="ic ic-sm i-right" aria-hidden="true"></i></a>
-            <a class="sl-btn ghost" style="border-color: transparent; background: transparent" href="<?= sl_route('Warehouse') ?>"><i class="ic ic-sm i-scan" aria-hidden="true"></i>Scan Package <i class="ic ic-sm i-right" aria-hidden="true"></i></a>
-            <a class="sl-btn ghost" style="border-color: transparent; background: transparent" href="<?= sl_route('ComposeMessage') ?>"><i class="ic ic-sm i-send" aria-hidden="true"></i>Send Update <i class="ic ic-sm i-right" aria-hidden="true"></i></a>
-            <span class="grow"></span>
-            <?php if ($user->cdp_hasPermission('add_shipment')): ?><a class="sl-btn" href="<?= sl_route('NewShipment') ?>"><i class="ic ic-sm i-plus" aria-hidden="true"></i>New Shipment</a><?php endif; ?>
-          </div>
-        </section>
 
         <?php if ($d['gateways'] && $user->cdp_hasPermission('manage_payment_modes')): ?>
         <div class="grid cols2">

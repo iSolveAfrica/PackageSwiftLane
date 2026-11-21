@@ -189,5 +189,24 @@ function sl_overviewData($user, $core, $userData): array
     // ── Live tracking console (rows already scoped to the viewer's role) ────
     require_once __DIR__ . '/track_console.php';
     $d['tracking'] = sl_trackConsoleData($user, $core, 'shipments', 10);
+
+    // ── Top of the page: view bar, "you" card, today cards, freight ────────
+    require_once __DIR__ . '/overview_hero.php';
+    $d['view'] = sl_ovView($user);
+    $d['profile'] = sl_ovProfile($user, $userData, $d['view']);
+    $d['cards'] = sl_ovCards($user, $d['view']);
+    if (cdp_financeEnabled() && cdp_canViewMoney($user, 'dashboard')) {
+        $rv = $d['revenue'];
+        $rvDaily = sl_ovZeroDays();
+        foreach (sl_rows("SELECT DATE(a.order_date) AS day, SUM(a.total_order) AS n FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.order_date >= :d $agency GROUP BY DATE(a.order_date)", [':d' => array_key_first($rvDaily)]) as $r) {
+            if (isset($rvDaily[$r->day])) $rvDaily[$r->day] = (float) $r->n;
+        }
+        $d['cards'][] = ['key' => 'billing', 'tone' => 'amber', 'icon' => 'i-dollar', 'eyebrow' => 'Billing this month', 'big' => sl_money($rv['value']),
+            'lede' => sl_num($rv['parcels']) . ' parcels billed · next settlement ' . $rv['next'],
+            'sub' => $rv['target'] > 0 ? [['n' => (int) $rv['pct'] . '%', 'l' => 'Of target'], ['n' => sl_money($rv['target']), 'l' => 'Target']] : [],
+            'bars' => sl_sparkBars(array_values($rvDaily), 4, array_map(fn($x) => date('D j M', strtotime($x)), array_keys($rvDaily))), 'barsL' => 'Billed per day, 14 days', 'barsR' => sl_money(array_sum($rvDaily)),
+            'href' => sl_route('FinancialOverview'), 'alert' => ''];
+    }
+    $d['freight'] = sl_ovFreight($user, $d['view']);
     return $d;
 }

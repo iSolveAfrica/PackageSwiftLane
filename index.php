@@ -59,7 +59,11 @@ if ($user->cdp_loginCheck() == true) {
             sl_render('ClientDashboard', ['id' => 'dash', 'title' => 'Dashboard', 'board' => 'ClientDashboard'], sl_clientDashboardData($user, $core, $userData));
             break;
         case 'driver':
-            include('views/dashboard/dashboard_driver.php');
+            // Rider overview (views/sl/pages/RiderHome.php); the working tool is the Rider app.
+            require_once 'helpers/sl_view.php';
+            require_once 'views/sl/data/rider_home.php';
+            $userData = $user->cdp_getUserData();
+            sl_render('RiderHome', ['id' => 'dash', 'title' => 'Overview', 'board' => 'RiderHome'], sl_riderHomeData($user, $core, $userData));
             break;
         case 'roles':
         default:

@@ -122,7 +122,7 @@ $chip = function (float $x, float $y, string $k, string $v, string $anchor = 'le
               <?php endif; ?>
             </g>
           </g>
-          <?php if ($it['pct'] > 8 && !$it['arrived']): ?><text class="tc-now" x="<?= $v[0] ?>" y="<?= $v[1] + 40 ?>" text-anchor="middle"><?= h($it['where']) ?></text><?php endif; ?>
+          <?php if ($it['pct'] > 8 && !$it['arrived']): ?><text class="tc-now" x="<?= $v[0] ?>" y="<?= $v[1] - 30 ?>" text-anchor="middle"><?= h($it['where']) ?></text><?php endif; ?>
         </g>
         <?php endforeach; ?>
         <rect width="<?= $vw ?>" height="<?= $vh ?>" fill="url(#<?= $tcUid ?>-fade)" pointer-events="none"/>
@@ -147,7 +147,7 @@ $chip = function (float $x, float $y, string $k, string $v, string $anchor = 'le
             <div class="tc-veh-card">
               <svg class="tc-art" viewBox="<?= $it['mode'] === 'sea' ? '0 0 360 120' : '0 0 600 190' ?>" aria-hidden="true"><use href="#<?= $tcUid ?>-<?= $it['mode'] === 'sea' ? 'ship' : 'plane' ?>"/></svg>
               <b><?= h($it['carrier']) ?> / <?= h($it['vehicle']) ?></b>
-              <span><?= $it['flight'] !== '' ? 'Flight ' . h($it['flight']) . ' · ' : '' ?><?= $it['awb'] !== '' ? 'AWB ' . h($it['awb']) : h($it['modeL']) . ' · ' . h($it['weight']) ?> · <?= h($it['customer']) ?></span>
+              <span><?= $it['flight'] !== '' ? 'Flight ' . h($it['flight']) . ' · ' : '' ?><?= $it['awb'] !== '' ? 'AWB ' . h($it['awb']) : h($it['modeL']) . ' · ' . h($it['weight']) ?><?= $it['customer'] !== $it['weight'] ? ' · ' . h($it['customer']) : '' ?></span>
             </div>
             <div class="tc-route-card">
               <div class="tc-rh"><b>Route</b><span>ON THE WAY: <b><?= h($it['onway']) ?></b></span></div>
