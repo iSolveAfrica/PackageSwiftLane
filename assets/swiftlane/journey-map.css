@@ -1,0 +1,24 @@
+/* Journey map (views/sl/pages/partials/journey_map.php): Leaflet map with the aircraft on the route. */
+.jm-map{position:relative;height:380px;border-radius:20px;overflow:hidden;border:1px solid var(--line);background:#E3E8EB;isolation:isolate}
+.jm-map .leaflet-container{width:100%;height:100%;font-family:var(--font,Figtree,system-ui,sans-serif);background:#E3E8EB}
+.jm-map .leaflet-control-attribution{font-size:11px}
+.jm-empty{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--muted);text-align:center;padding:24px}
+.jm-empty .ic{font-size:28px}
+.jm-chip-a,.jm-chip-b{z-index:1000}
+.jm-sub{font-size:13.5px}
+.jm-label{background:var(--card);border:1px solid var(--line-2);border-radius:999px;padding:3px 10px;font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+.jm-dot{width:14px;height:14px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px var(--ink)}
+.jm-dot.done{background:#2F9E5B;box-shadow:0 0 0 2px #2F9E5B}
+.jm-dot.todo{background:#fff}
+.jm-plane{width:64px;height:64px;position:relative;pointer-events:none}
+.jm-plane::before{content:"";position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:50%;background:rgba(226,99,42,.22);animation:jm-pulse 2.2s ease-out infinite}
+.jm-plane svg{position:absolute;left:50%;top:50%;width:40px;height:40px;margin:-20px 0 0 -20px;filter:drop-shadow(0 3px 4px rgba(0,0,0,.35));transition:transform .6s ease}
+.jm-plane.bob svg{animation:jm-bob 2.4s ease-in-out infinite}
+.jm-flow{stroke-dasharray:6 10;animation:jm-flow 1.1s linear infinite}
+@keyframes jm-pulse{0%{transform:scale(.6);opacity:.9}100%{transform:scale(1.6);opacity:0}}
+@keyframes jm-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+@keyframes jm-flow{to{stroke-dashoffset:-32}}
+@media (prefers-reduced-motion:reduce){.jm-plane::before,.jm-plane.bob svg,.jm-flow{animation:none}}
+@media (max-width:640px){.jm-map{height:300px;border-radius:16px}.jm-map .tk-chip{font-size:13px;padding:6px 9px}.jm-chip-b{display:none}}
+.leaflet-tooltip.jm-tip{background:var(--card);border:1px solid var(--line-2);color:var(--ink);font-weight:600;font-size:12.5px;border-radius:999px;padding:2px 10px;box-shadow:0 2px 6px rgba(0,0,0,.12);white-space:nowrap}
+.leaflet-tooltip.jm-tip::before{display:none}

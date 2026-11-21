@@ -26,7 +26,7 @@ $stageAt   = !empty($stageNow['at']) ? $stageNow['at'] : null;
 		<span class="ico" aria-hidden="true"><i class="mdi mdi-transit-connection-variant"></i></span>
 		<h2 class="trk-card__title" id="<?php echo $railId; ?>-title">Shipment Journey</h2>
 		<?php if ($mode === 'air') : ?>
-			<span class="trk-card__hint"><?php echo $e($progress['route']['origin']['code']); ?> → <?php echo $e($progress['route']['transit']['code']); ?> → <?php echo $e($progress['route']['destination']['code']); ?></span>
+			<span class="trk-card__hint"><?php echo $e($progress['route']['origin']['code']); ?> → <?php echo $e($progress['route']['destination']['code']); ?></span>
 		<?php endif; ?>
 	</div>
 

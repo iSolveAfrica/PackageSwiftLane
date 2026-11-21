@@ -1,18 +1,16 @@
 <?php
 /**
- * Air journey — the customer-facing JFK → London → Accra flow.
+ * Air journey: the customer-facing JFK -> Accra flow. The flight is direct
+ * (New York to Accra); there is no London stop.
  *
- * The public tracking pages (views/track.php, views/track_online_shopping.php)
- * render an air shipment as a 16-stage journey:
+ * The public tracking pages render an air shipment as an 11-stage journey:
  *
- *   1  Received at <Company> Warehouse   9  Processing at London Hub
- *   2  Prepared for Airline             10  Scheduled for Accra
- *   3  Delivered to Airline             11  Departed London
- *   4  Accepted by Airline              12  In Transit to Accra
- *   5  Scheduled for Departure          13  Arrived in Accra
- *   6  Departed JFK                     14  Customs / Destination Processing
- *   7  In Transit to London             15  Cleared / Released
- *   8  Arrived in London                16  Ready for Collection
+ *    0  Received at <Company> Warehouse   6  In Transit to Accra
+ *    1  Prepared for Airline              7  Arrived in Accra
+ *    2  Delivered to Airline              8  Customs / Destination Processing
+ *    3  Accepted by Airline               9  Cleared / Released
+ *    4  Scheduled for Departure          10  Ready for Collection
+ *    5  Departed JFK
  *
  * The stage a shipment sits at is derived from its (effective) cdb_styles
  * status; the date/time of each stage comes from cdb_courier_track events.
@@ -20,9 +18,8 @@
  * flight_no / awb_no — see sql/air_journey_tracking.sql). Everything degrades
  * gracefully when the columns or the history table are absent.
  *
- * Hard rule from the business: "Scheduled for Departure" / "Scheduled for
- * Accra" are NOT departures. Only an explicit departed/in-transit status moves
- * a shipment past a "Scheduled" stage.
+ * Hard rule from the business: "Scheduled for Departure" is NOT a departure.
+ * Only an explicit departed/in-transit status moves a shipment past it.
  *
  * The company name is never hard-coded here — it is passed in from settings
  * (cdb_settings.site_name via Core) by the caller.
@@ -37,9 +34,9 @@
 function cdp_airRoute()
 {
     return [
-        'origin'      => ['code' => 'JFK',     'city' => 'New York', 'label' => 'JFK, New York'],
-        'transit'     => ['code' => 'LHR/LGW', 'city' => 'London',   'label' => 'LHR/LGW, London'],
-        'destination' => ['code' => 'ACC',     'city' => 'Accra',    'label' => 'ACC, Accra'],
+        'origin'      => ['code' => 'JFK', 'city' => 'New York', 'label' => 'JFK, New York', 'lat' => 40.6413, 'lon' => -73.7781],
+        'transit'     => null, // direct flight: no connecting stop
+        'destination' => ['code' => 'ACC', 'city' => 'Accra', 'label' => 'ACC, Accra', 'lat' => 5.6052, 'lon' => -0.1668],
     ];
 }
 
@@ -61,12 +58,7 @@ function cdp_airStages($company = '')
         ['key' => 'accepted_air',    'label' => 'Accepted by Airline',              'icon' => '✅', 'desc' => 'Airline has officially received and accepted the cargo for transportation.'],
         ['key' => 'sched_departure', 'label' => 'Scheduled for Departure',          'icon' => '🗓️', 'desc' => 'Shipment assigned/scheduled for its outbound flight.'],
         ['key' => 'departed_jfk',    'label' => 'Departed JFK',                     'icon' => '🛫', 'desc' => 'Shipment has departed New York.'],
-        ['key' => 'transit_london',  'label' => 'In Transit to London',             'icon' => '✈️', 'desc' => 'Shipment is currently en route to the London transit hub.'],
-        ['key' => 'arrived_london',  'label' => 'Arrived in London',                'icon' => '🛬', 'desc' => 'Shipment has arrived at London Heathrow/Gatwick.'],
-        ['key' => 'london_hub',      'label' => 'Processing at London Hub',         'icon' => '🔄', 'desc' => 'Cargo is being transferred/processed for the connecting flight to Accra.'],
-        ['key' => 'sched_accra',     'label' => 'Scheduled for Accra',              'icon' => '🗓️', 'desc' => 'Shipment has been assigned to the Accra-bound flight.'],
-        ['key' => 'departed_london', 'label' => 'Departed London',                  'icon' => '🛫', 'desc' => 'Shipment has departed London for Accra.'],
-        ['key' => 'transit_accra',   'label' => 'In Transit to Accra',              'icon' => '✈️', 'desc' => 'Shipment is currently en route to Ghana.'],
+        ['key' => 'transit_accra',   'label' => 'In Transit to Accra',              'icon' => '✈️', 'desc' => 'Shipment is in the air on the direct flight to Ghana.'],
         ['key' => 'arrived_accra',   'label' => 'Arrived in Accra',                 'icon' => '🛬', 'desc' => 'Shipment has arrived at Kotoka International Airport.'],
         ['key' => 'customs',         'label' => 'Customs / Destination Processing', 'icon' => '🛃', 'desc' => 'Shipment is undergoing customs and destination handling.'],
         ['key' => 'cleared',         'label' => 'Cleared / Released',               'icon' => '🏢', 'desc' => 'Shipment has completed the required clearance and has been released.'],
@@ -113,9 +105,9 @@ function cdp_airStageIndex($statusId, $statusName = '')
             'rejectedbyairlineawaitingnewshipment' => 2,
             'acceptedbyairline' => 3,
             'intransit' => 6,
-            'arrivedincustomsclearance' => 13,
-            'sortingataccraoffice' => 14, 'distribution' => 14, 'invoiced' => 14, 'pendingpayment' => 14,
-            'readyforpickup' => 15, 'readyforcollection' => 15,
+            'arrivedincustomsclearance' => 8,
+            'sortingataccraoffice' => 8, 'distribution' => 8, 'invoiced' => 8, 'pendingpayment' => 8,
+            'readyforpickup' => 10, 'readyforcollection' => 10,
         ];
         $byName += $aliases;
     }
@@ -132,9 +124,9 @@ function cdp_airStageIndex($statusId, $statusName = '')
         28 => 2,
         31 => 3,
         3 => 6,
-        30 => 13,
-        5 => 14, 19 => 14, 23 => 14, 33 => 14, 6 => 14, 7 => 14,
-        8 => 15, 14 => 15, 15 => 15, 16 => 15, 32 => 15, 35 => 15,
+        30 => 8,
+        5 => 8, 19 => 8, 23 => 8, 33 => 8, 6 => 8, 7 => 8,
+        8 => 10, 14 => 10, 15 => 10, 16 => 10, 32 => 10, 35 => 10,
     ];
     $id = (int) $statusId;
     if ($id > 0 && isset($byId[$id])) {
@@ -150,16 +142,13 @@ function cdp_airStageIndex($statusId, $statusName = '')
         return false;
     };
     if ($t === '  ') return null;
-    if ($has(['pickup', 'pick up', 'picked', 'delivered', 'collect', 'auction'])) return 15;
-    if ($has(['cleared', 'released', 'sorting', 'invoic', 'billed', 'payment', 'distribution', 'available', 'on route'])) return 14;
-    if ($has(['customs', 'clearance', 'clearing'])) return 13;
-    if ($has(['scheduled for accra', 'scheduled accra'])) return 9;
+    if ($has(['pickup', 'pick up', 'picked', 'delivered', 'collect', 'auction'])) return 10;
+    if ($has(['cleared', 'released'])) return 9;
+    if ($has(['sorting', 'invoic', 'billed', 'payment', 'distribution', 'available', 'on route', 'customs', 'clearance', 'clearing'])) return 8;
     if ($has(['scheduled'])) return 4;
-    if ($has(['arrived in accra', 'arrived accra', 'kotoka'])) return 12;
-    if ($has(['transit to accra', 'en route to accra', 'en route to ghana'])) return 11;
-    if ($has(['departed london', 'departed lhr', 'departed lgw'])) return 10;
-    if ($has(['london hub', 'processing at london', 'heathrow', 'gatwick'])) return 8;
-    if ($has(['arrived in london', 'arrived london'])) return 7;
+    if ($has(['arrived in accra', 'arrived accra', 'kotoka'])) return 7;
+    // Legacy London legs are part of the same flight now: in transit.
+    if ($has(['transit to accra', 'en route to accra', 'en route to ghana', 'london', 'heathrow', 'gatwick', 'lhr', 'lgw'])) return 6;
     if ($has(['departed jfk', 'departed new york'])) return 5;
     if ($has(['transit', 'en route', 'in flight', 'shipped', 'departed'])) return 6;
     if ($has(['accepted by airline', 'accepted'])) return 3;

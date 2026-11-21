@@ -40,12 +40,13 @@ class TrackUiHelpersTest extends TestCase
 
     public function testAirSummaryMidJourney(): void
     {
-        $p = cdp_airJourney(0, 'In Transit to London', [], 'Swift Lane');
+        // Direct JFK -> Accra flight: 11 stages, in transit is stage 6.
+        $p = cdp_airJourney(0, 'In Transit to Accra', [], 'Swift Lane');
         $s = cdp_trackStageSummary($p);
-        $this->assertSame(7, $s['current']);
-        $this->assertSame(16, $s['count']);
-        $this->assertSame(40, $s['percent']); // 6/15
-        $this->assertSame('Arrived in London', $s['next']);
+        $this->assertSame(7, $s['current']); // 1-based: stage index 6
+        $this->assertSame(11, $s['count']);
+        $this->assertSame(60, $s['percent']); // 6/10
+        $this->assertSame('Arrived in Accra', $s['next']);
     }
 
     public function testSummaryOfEmptyProgressIsSafe(): void

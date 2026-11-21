@@ -100,6 +100,22 @@ function sl_trackData(string $code, $core): array
     $mask = fn($s) => $s !== '' ? mb_substr($s, 0, 1) . '••••' : '';
     $deli = $meta && $meta->order_deli_time ? sl_row('SELECT delitime FROM cdb_delivery_time WHERE id = :id', [':id' => (int) $meta->order_deli_time]) : null;
     $steps = sl_trackSteps($statusId, $air);
+    // Predicted delivery: the consolidation's ETA while the shipment is in one, its own otherwise.
+    $etaRaw = $meta ? (string) cdp_getEffectiveEta((int) $t->order_id, (string) $t->order_no, $meta->order_deli_time ?? null, $meta->is_consolidate ?? null, $isPkg) : '';
+    $etaTs = ($etaRaw !== '' && $etaRaw !== 'N/A') ? strtotime($etaRaw) : false;
+    $etaText = $etaTs ? date('M j, Y', $etaTs) : (($etaRaw !== '' && $etaRaw !== 'N/A') ? $etaRaw : 'Not set');
+    // Air map: the direct JFK -> Accra lane with the plane at its journey stage.
+    $map = null;
+    if ($air) {
+        $j = cdp_airJourney($statusId, (string) ($eff->mod_style ?: $t->mod_style), array_reverse($events), $core->site_name ?? '');
+        $route = $j['route'];
+        $span = max(1, (int) $j['count'] - 1);
+        $map = [
+            'from' => ['lat' => $route['origin']['lat'], 'lon' => $route['origin']['lon'], 'label' => $route['origin']['label']],
+            'to' => ['lat' => $route['destination']['lat'], 'lon' => $route['destination']['lon'], 'label' => $route['destination']['label']],
+            'frac' => round(cdp_isHandedOver($statusId) ? 1 : min(1, max(0, $j['index'] / $span)), 4),
+        ];
+    }
     $pay = $meta ? (in_array((int) $meta->status_invoice, [1, 19], true) ? ['Paid', 'delivered'] : ((int) $meta->status_invoice === 23 || (int) $meta->status_invoice === 2 ? ['Payment due', 'pending'] : ['Not billed yet', 'plain'])) : ['—', 'plain'];
     $from = $addr ? trim(implode(', ', array_filter([(string) $addr->sender_city, (string) $addr->sender_country]))) : '';
     $to = $addr ? trim(implode(', ', array_filter([(string) $addr->recipient_city, (string) $addr->recipient_country]))) : '';
@@ -109,7 +125,8 @@ function sl_trackData(string $code, $core): array
         'st' => $st['label'], 'cls' => $st['cls'],
         'air' => $air, 'mode' => $air ? 'Air freight' : 'Sea freight',
         'from' => $from ?: '—', 'to' => $to ?: '—',
-        'eta' => $meta && $meta->estimated_eta ? sl_date($meta->estimated_eta) : ($deli->delitime ?? '—'),
+        'eta' => $etaText,
+        'map' => $map,
         'steps' => $steps['steps'], 'pct' => $steps['pct'], 'stepIndex' => $steps['index'],
         'events' => $ev,
         'registered' => sl_date($t->order_date ?? ($meta->order_date ?? ''), 'M j, Y'),

@@ -35,7 +35,7 @@ function sl_tcLanes(): array
     return [
         'air' => [
             'from' => ['code' => 'JFK', 'city' => $air['origin']['city'] ?? 'New York', 'country' => 'USA', 'lat' => 40.64, 'lon' => -73.78],
-            'via' => ['code' => 'LHR', 'city' => $air['transit']['city'] ?? 'London', 'country' => 'UK', 'lat' => 51.47, 'lon' => -0.45],
+            'via' => null, // direct flight
             'to' => ['code' => 'ACC', 'city' => $air['destination']['city'] ?? 'Accra', 'country' => 'Ghana', 'lat' => 5.60, 'lon' => -0.17],
         ],
         'sea' => [

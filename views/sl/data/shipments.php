@@ -432,7 +432,13 @@ function sl_shipmentTrackingData($user, $core, int $id, string $q = ''): array
         }
         $d['legNote'] = 'Sea freight · ' . $p['steps'][$p['index']]['label'];
     } else {
-        $groups = [['t' => 'US warehouse', 'icon' => 'i-warehouse', 'from' => 0, 'to' => 4], ['t' => 'Flight to London', 'icon' => 'i-plane', 'from' => 5, 'to' => 8], ['t' => 'London hub', 'icon' => 'i-layers', 'from' => 9, 'to' => 10], ['t' => 'Flight to Accra', 'icon' => 'i-plane', 'from' => 11, 'to' => 12], ['t' => 'Customs', 'icon' => 'i-shield', 'from' => 13, 'to' => 14], ['t' => 'Ready / delivery', 'icon' => 'i-box', 'from' => 15, 'to' => 15]];
+        // Direct flight: warehouse, flight to Accra, customs, collection.
+        $groups = [
+            ['t' => 'US warehouse', 'icon' => 'i-warehouse', 'from' => 0, 'to' => 4],
+            ['t' => 'Flight to Accra', 'icon' => 'i-plane', 'from' => 5, 'to' => 7],
+            ['t' => 'Customs and clearance', 'icon' => 'i-layers', 'from' => 8, 'to' => 9],
+            ['t' => 'Collection', 'icon' => 'i-box', 'from' => 10, 'to' => 10],
+        ];
         foreach ($groups as $g) {
             $cls = $delivered || $idx > $g['to'] ? 'ok' : (($idx >= $g['from'] && $idx <= $g['to']) ? 'warn' : '');
             $legs[] = ['t' => $g['t'], 'icon' => $g['icon'], 'cls' => $cls];
@@ -440,21 +446,19 @@ function sl_shipmentTrackingData($user, $core, int $id, string $q = ''): array
         $d['legNote'] = 'Air · ' . ($journey['steps'][$idx]['label'] ?? $statusName);
     }
     $d['legs'] = $legs;
-    // Map (schematic, three fixed points of the lane)
-    $pins = [['l' => $journey['route']['origin']['label'] ?? 'Origin', 'x' => 150, 'y' => 120], ['l' => $journey['route']['transit']['label'] ?? 'Hub', 'x' => 540, 'y' => 70], ['l' => $journey['route']['destination']['label'] ?? 'Destination', 'x' => 880, 'y' => 240]];
-    $frac = $delivered ? 1 : min(1, max(0.02, $idx / 15));
-    $d['arc'] = 'M150 120 Q 345 20 540 70 Q 760 120 880 240';
-    $pt = function (float $t) {
-        if ($t <= .5) { $u = $t * 2; $x = (1 - $u) * (1 - $u) * 150 + 2 * (1 - $u) * $u * 345 + $u * $u * 540; $y = (1 - $u) * (1 - $u) * 120 + 2 * (1 - $u) * $u * 20 + $u * $u * 70; }
-        else { $u = ($t - .5) * 2; $x = (1 - $u) * (1 - $u) * 540 + 2 * (1 - $u) * $u * 760 + $u * $u * 880; $y = (1 - $u) * (1 - $u) * 70 + 2 * (1 - $u) * $u * 120 + $u * $u * 240; }
-        return [round($x, 1), round($y, 1)];
-    };
-    $pathDone = '';
-    for ($t = 0; $t <= $frac + 0.0001; $t += 0.02) { [$x, $y] = $pt(min($t, $frac)); $pathDone .= ($pathDone === '' ? 'M' : ' L') . $x . ' ' . $y; }
-    $d['arcDone'] = $pathDone;
-    [$d['vx'], $d['vy']] = $pt($frac);
-    $d['pins'] = array_map(fn($p, $i) => $p + ['r' => 7, 'f' => ($i / 2) <= $frac ? '#E2632A' : '#1E1D1A'], $pins, array_keys($pins));
-    $d['vIcon'] = $isSea ? 'i-ship' : ($idx >= 13 || $delivered ? 'i-truck' : ($idx >= 5 ? 'i-plane' : 'i-warehouse'));
+    // Map: the direct lane, JFK to Accra, with the plane at its stage along the route.
+    $d['map'] = null;
+    if (!$isSea) {
+        $route = $journey['route'];
+        $span = max(1, (int) $journey['count'] - 1);
+        $frac = $delivered ? 1.0 : min(1.0, max(0.0, $idx / $span));
+        $d['map'] = [
+            'from' => ['lat' => $route['origin']['lat'], 'lon' => $route['origin']['lon'], 'label' => $route['origin']['label']],
+            'to' => ['lat' => $route['destination']['lat'], 'lon' => $route['destination']['lon'], 'label' => $route['destination']['label']],
+            'frac' => round($frac, 4),
+        ];
+    }
+    $d['vIcon'] = $isSea ? 'i-ship' : ($idx >= 8 || $delivered ? 'i-truck' : ($idx >= 5 ? 'i-plane' : 'i-warehouse'));
     $d['vName'] = $journey['flights'] ? 'Flight ' . implode(' / ', array_slice(array_unique(array_filter($journey['flights'])), 0, 2)) : ($journey['awb'] ? 'AWB ' . $journey['awb'] : ($s['courier']->name_com ?? 'Carrier'));
     $d['vSub'] = $s['carrier']->tracking_number ?? 'No carrier number yet';
     $d['vNow'] = $journey['steps'][$idx]['label'] ?? $statusName;
@@ -467,7 +471,7 @@ function sl_shipmentTrackingData($user, $core, int $id, string $q = ''): array
     $d['msN'] = count($ms);
     // Customs
     $cusIdx = $isSea ? null : $idx;
-    $cusSteps = [['t' => 'Arrived in Accra', 'at' => 12], ['t' => 'Documents lodged', 'at' => 13], ['t' => 'Inspection / duties', 'at' => 13], ['t' => 'Cleared / released', 'at' => 14]];
+    $cusSteps = [['t' => 'Arrived in Accra', 'at' => 7], ['t' => 'Documents lodged', 'at' => 8], ['t' => 'Inspection / duties', 'at' => 8], ['t' => 'Cleared / released', 'at' => 9]];
     $d['cus'] = array_map(fn($c) => ['t' => $c['t'], 'cls' => $delivered || ($cusIdx !== null && $cusIdx > $c['at']) ? 'done' : (($cusIdx !== null && $cusIdx === $c['at']) ? 'now' : '')], $cusSteps);
     $d['cusNote'] = $delivered || $idx >= 15 ? 'Cleared. Duties were settled with the shipment invoice.' : ($idx >= 13 ? 'At customs now. We update this stage as soon as the broker reports.' : 'Customs starts when the flight lands in Accra.');
     $priv = json_decode((string) sl_slSetting('tracking_public_privacy', '{}'), true) ?: [];

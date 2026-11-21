@@ -33,3 +33,27 @@
 .tk-ok{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;background:var(--green-bg);color:var(--green-ink);font-size:15.5px}
 .tk-cov{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.tk-cov span{display:flex;align-items:center;gap:6px;font-size:14px;padding:6px 8px;border-radius:8px;background:var(--field)}
 @media (max-width:900px){.tk-cov{grid-template-columns:repeat(2,1fr)}.tk-m{grid-template-columns:26px 1fr}.tk-m .tk-src{display:none}.tk-pod{grid-template-columns:1fr}}
+
+/* Switches: a real button with no browser chrome, so the knob sits centred in its track */
+.sl-toggle{appearance:none;-webkit-appearance:none;border:0;padding:0;margin:0;cursor:pointer;flex:none;vertical-align:middle;position:relative;width:44px;height:24px;border-radius:999px;background:var(--line-2);transition:background-color .2s}
+.sl-toggle::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:left .2s}
+.sl-toggle.on{background:var(--green)}
+.sl-toggle.on::after{left:23px}
+.sl-toggle:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+.tk-share{gap:12px}
+.tk-copy{display:flex;gap:8px;align-items:center}
+.tk-copy .sl-in{flex:1;min-width:0;height:40px}
+.tk-privs{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.tk-priv{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px;padding:6px 0;border-bottom:1px solid var(--line)}
+.tk-priv-t{font-size:15px;color:var(--ink);line-height:1.3}
+.tk-exp{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding-top:4px}
+.tk-expseg{height:auto;padding:3px;max-width:100%}
+.tk-expseg button{height:34px;padding:0 14px;font-size:14.5px;white-space:nowrap}
+.tk-switch{display:inline-flex;align-items:center;justify-content:space-between;gap:12px;width:100%}
+@media (max-width:640px){
+  .tk-copy{flex-direction:column;align-items:stretch}
+  .tk-copy .sl-btn{width:100%}
+  .tk-expseg{width:100%;display:grid;grid-template-columns:repeat(4,1fr)}
+  .tk-expseg button{padding:0 6px;font-size:13.5px}
+  .tk-exp{flex-direction:column;align-items:stretch}
+}
