@@ -185,5 +185,9 @@ function sl_overviewData($user, $core, $userData): array
         $gw[] = ['name' => $g->name_pay, 'desc' => strip_tags((string) $g->detail_pay), 'active' => (int) $g->is_active === 1, 'configured' => !empty($g->public_key), 'href' => 'payment_mode_list.php'];
     }
     $d['gateways'] = $gw;
+
+    // ── Live tracking console (rows already scoped to the viewer's role) ────
+    require_once __DIR__ . '/track_console.php';
+    $d['tracking'] = sl_trackConsoleData($user, $core, 'shipments', 10);
     return $d;
 }

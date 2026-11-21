@@ -328,6 +328,8 @@ function sl_clientDashboardData($user, $core, $userData): array
         $d['latestSteps'] = sl_trackSteps((int) ($row->status_courier ?? 1), $latest['mode'] === 'Air');
     }
     $d['aiOn'] = function_exists('cdp_aiConfigured') && cdp_aiConfigured();
+    require_once __DIR__ . '/track_console.php';
+    $d['tracking'] = sl_trackConsoleData($user, $core, 'mine', 8);
     return $d;
 }
 
