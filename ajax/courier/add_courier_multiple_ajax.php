@@ -125,11 +125,8 @@ if (empty($errors)) {
     $days = intval($days);
     $due_date = cdp_sumardias($sale_date, $days);
 
-    if ($days == 0) {
-        $status_invoice = 1;
-    } else {
-        $status_invoice = 2;
-    }
+    // Never marked paid on creation: payments are recorded by hand afterwards.
+    $status_invoice = 2;
 
     if (isset($_POST["prefix_check"]) && intval($_POST["prefix_check"]) == 1) {
         $code_prefix = cdp_sanitize($_POST["code_prefix2"]);

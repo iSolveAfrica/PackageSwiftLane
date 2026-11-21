@@ -287,6 +287,37 @@
   if (sd) sd.addEventListener('click', saveDefaults);
   if (ed) ed.addEventListener('click', function () { var t = $('[name="status_courier"]'); if (t) { t.scrollIntoView({ behavior: 'smooth', block: 'center' }); t.focus(); } });
 
+  // ---- label pop-up after save (staff only) ----
+  var labels = { open: null };
+  var lbl = document.getElementById('ns-labels');
+  if (lbl && !client) {
+    var lframe = lbl.querySelector('[data-ns-lframe]'), lsettings = lbl.querySelector('[data-ns-lsettings]');
+    var lstate = { id: 0, next: false, size: '46', mode: 'label' };
+    var labelSrc = function () { return 'print_label_ship.php?id=' + lstate.id + '&size=' + lstate.size + '&type=air'; };
+    var paintSize = function () { lbl.querySelectorAll('[data-ns-lsize-group] button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-v') === lstate.size); }); };
+    var paintSettings = function () { var on = lstate.mode === 'settings'; lsettings.setAttribute('aria-pressed', String(on)); lsettings.querySelector('span').textContent = on ? 'Back to label' : 'Label settings'; };
+    var showFrame = function () { lframe.src = lstate.mode === 'settings' ? f.getAttribute('data-labels') : labelSrc(); };
+    labels.open = function (id, nextAfter) {
+      lstate.id = id; lstate.next = nextAfter; lstate.mode = 'label';
+      lbl.querySelector('[data-ns-lsub]').textContent = 'Shipment saved. Choose a label size, then print.';
+      paintSize(); paintSettings(); showFrame();
+      lbl.hidden = false;
+      lbl.querySelector('[data-ns-lprint]').focus();
+    };
+    lbl.querySelectorAll('[data-ns-lsize-group] button').forEach(function (b) {
+      b.addEventListener('click', function () { lstate.size = b.getAttribute('data-v'); lstate.mode = 'label'; paintSize(); paintSettings(); showFrame(); });
+    });
+    lsettings.addEventListener('click', function () { lstate.mode = lstate.mode === 'settings' ? 'label' : 'settings'; paintSettings(); showFrame(); });
+    lbl.querySelector('[data-ns-lprint]').addEventListener('click', function () {
+      try { lframe.contentWindow.focus(); lframe.contentWindow.print(); } catch (e) { SL.toast('Could not open the print dialog. Try again.', true); }
+    });
+    lbl.querySelector('[data-ns-lnew]').addEventListener('click', function () { location.href = f.getAttribute('data-new'); });
+    lbl.querySelector('[data-ns-lview]').addEventListener('click', function () { location.href = f.getAttribute('data-detail') + '?id=' + encodeURIComponent(lstate.id); });
+    var closeLabels = function () { lbl.hidden = true; lframe.src = 'about:blank'; if (lstate.next) location.href = f.getAttribute('data-new') + '?saved=' + encodeURIComponent(lstate.id); };
+    lbl.querySelector('[data-ns-lclose]').addEventListener('click', closeLabels);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !lbl.hidden) closeLabels(); });
+  }
+
   // ---- submit to the legacy endpoint ----
   var next = false;
   f.addEventListener('click', function (e) { if (e.target.closest('[type="submit"]')) next = !!e.target.closest('[data-ns-next]'); });
@@ -309,6 +340,8 @@
       if (j.success) {
         SL.toast((j.messages || ['Shipment created']).join(' '));
         var id = j.shipment_id;
+        // Staff get the label pop-up here; customers go straight to the shipment.
+        if (!client && id && labels.open) { labels.open(id, next); return; }
         setTimeout(function () { location.href = next ? f.getAttribute('data-new') + '?saved=' + encodeURIComponent(id || '') : f.getAttribute('data-detail') + '?id=' + encodeURIComponent(id); }, 400);
         return;
       }

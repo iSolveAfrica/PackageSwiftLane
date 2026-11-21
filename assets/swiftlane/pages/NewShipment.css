@@ -95,3 +95,7 @@
   .ns-total{align-items:stretch}
   .ns-create{width:100%}
 }
+
+/* Label pop-up after saving a shipment */
+.ns-label-modal{width:min(960px,96vw);max-height:94vh;display:flex;flex-direction:column;gap:12px}
+.ns-label-frame{width:100%;height:min(62vh,640px);border:1px solid var(--line);border-radius:12px;background:#fff}

@@ -28,7 +28,7 @@ $pa = $d['prealert'];
 $unit = h($d['rates']['weight']);
 ?>
 <form id="ns-form" class="col g16 ns-form" action="<?= h($d['endpoint']) ?>" method="post" enctype="multipart/form-data" novalidate
-  data-client="<?= $client ? '1' : '0' ?>" data-prefix="<?= h($d['prefix']) ?>" data-rates="<?= h(json_encode($d['rates'])) ?>" data-detail="<?= h(sl_route('ShipmentDetail')) ?>" data-new="<?= h(sl_self()) ?>">
+  data-client="<?= $client ? '1' : '0' ?>" data-prefix="<?= h($d['prefix']) ?>" data-rates="<?= h(json_encode($d['rates'])) ?>" data-detail="<?= h(sl_route('ShipmentDetail')) ?>" data-new="<?= h(sl_self()) ?>" data-labels="<?= h(sl_route('LabelStudio')) ?>">
   <input type="hidden" name="quick_load_v2" value="1">
 
   <div class="sl-head ns-head">
@@ -225,3 +225,25 @@ $unit = h($d['rates']['weight']);
     </aside>
   </div>
 </form>
+
+<?php if (!$client): ?>
+<div class="sl-dialog" id="ns-labels" hidden>
+  <div class="sl-modal ns-label-modal" role="dialog" aria-modal="true" aria-labelledby="ns-labels-title">
+    <div class="row between wrap g8">
+      <div class="col"><b class="fw5" id="ns-labels-title" style="font-size:18px">Shipment saved</b><span class="mut sm" data-ns-lsub>Choose a label size, then print.</span></div>
+      <button type="button" class="sl-ib" data-ns-lclose aria-label="Close"><i class="ic ic-sm i-x" aria-hidden="true"></i></button>
+    </div>
+    <div class="row g8 wrap">
+      <div class="sl-seg boxed" role="group" aria-label="Label size" data-ns-lsize-group><button type="button" class="on" data-v="46">Large · 4 × 6 in</button><button type="button" data-v="12">Small · 1 × 2 in</button></div>
+      <span class="grow"></span>
+      <button type="button" class="sl-btn ghost sm" data-ns-lsettings aria-pressed="false"><i class="ic ic-sm i-sliders" aria-hidden="true"></i><span>Label settings</span></button>
+    </div>
+    <iframe class="ns-label-frame" data-ns-lframe title="Label preview" src="about:blank"></iframe>
+    <div class="row g8 wrap">
+      <button type="button" class="sl-btn" data-ns-lprint><i class="ic ic-sm i-print" aria-hidden="true"></i>Print label</button>
+      <button type="button" class="sl-btn ghost" data-ns-lnew>New shipment</button>
+      <button type="button" class="sl-btn ghost" data-ns-lview>View shipment</button>
+    </div>
+  </div>
+</div>
+<?php endif; ?>

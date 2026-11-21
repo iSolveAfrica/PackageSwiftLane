@@ -106,11 +106,8 @@ if (empty($errors)) {
     $days = intval($days);
     $due_date = cdp_sumardias($sale_date, $days);
 
-    if ($days == 0) {
-        $status_invoice = 1;
-    } else {
-        $status_invoice = 2;
-    }
+    // Never marked paid on creation: payments are recorded by hand afterwards.
+    $status_invoice = 2;
 
     $tariff_mode = 1; // Tariff table pricing removed: always manual pricing.
 
