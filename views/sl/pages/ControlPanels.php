@@ -28,7 +28,7 @@ $otherSections = array_values(array_filter($d['sections'], fn($section) => !$sec
           <dl class="cpa-ages"><?php foreach ($q['ages'] as $ai => [$al, $av]): ?><div><dt><i class="a<?= $ai ?>"></i><?= h($al) ?></dt><dd><?= sl_num($av) ?></dd></div><?php endforeach; ?></dl>
           <?php endif; ?>
           <div class="cpa-flow">
-            <div class="cpa-bars" role="img" aria-label="New items per day, last 7 days"><?php foreach ($q['new'] as $i => $v): ?><i style="height:<?= max(4, (int) round($v / $newPeak * 100)) ?>%" title="<?= h(date('D j M', strtotime('-' . (6 - $i) . ' days'))) ?>: <?= (int) $v ?> new"></i><?php endforeach; ?></div>
+            <?php $newLabels = array_map(fn($i) => date('M j', strtotime("-$i days")), range(6, 0)); ?><div class="cpa-bars" role="img" aria-label="<?= h($q['l']) ?>: new per day, last 7 days" <?= sl_chartAttrs([['name' => $q['l'], 'values' => $q['new']]], $newLabels, $q['l'] . ' · new per day') ?>><?php foreach ($q['new'] as $i => $v): ?><i style="height:<?= max(4, (int) round($v / $newPeak * 100)) ?>%" title="<?= h(date('D j M', strtotime('-' . (6 - $i) . ' days'))) ?>: <?= (int) $v ?> new"></i><?php endforeach; ?></div>
             <div class="cpa-meta"><span>New / day · 7 d</span><span><?= $q['oldest'] !== null ? 'Oldest ' . (int) $q['oldest'] . ' d' : '—' ?><?= $q['n'] ? ' · ' . (int) $q['stale'] . '% over 30 d' : '' ?></span></div>
           </div>
         </a>

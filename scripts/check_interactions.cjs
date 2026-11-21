@@ -99,7 +99,7 @@ const fixture = rendered.stdout;
   assert.match(await panels.locator('#support .cpx-row:visible').getAttribute('href'), /^knowledge_base\.php$/);
   await panels.locator('#cpx-q').fill('');
   assert.equal(await panels.locator('#cpx-none').isVisible(), false);
-  const chart = page.locator('.cpx-mb').first(), link = chart.locator('..'), tip = page.locator('#sl-chart-tooltip');
+  const chart = page.locator('.cpa-bars').first(), link = chart.locator('xpath=ancestor::a[1]'), tip = page.locator('#sl-chart-tooltip');
   await link.focus(); await page.keyboard.press('ArrowRight');
   assert.match(await tip.innerText(), /Awaiting approval:\s*0/);
   await page.keyboard.press('Space'); assert.equal(await tip.getAttribute('role'), 'dialog');
@@ -108,8 +108,8 @@ const fixture = rendered.stdout;
   assert.match(csvText, /Awaiting approval/); assert.equal(csvText.split('\r\n').length, 8);
   assert.match(csvText, /"0"/); await page.keyboard.press('Escape'); assert.equal(await tip.isVisible(), false);
   assert.match(await link.getAttribute('href'), /courier_list.php/);
-  const original = page.url(); await page.locator('.cpx-mb').nth(1).locator('i').last().tap();
-  assert.match(await tip.innerText(), /Held parcels:\s*160/); assert.equal(page.url(), original);
+  const original = page.url(); await page.locator('.cpa-bars').nth(1).locator('i').last().tap();
+  assert.match(await tip.innerText(), /Held parcels:\s*8/); assert.equal(page.url(), original);
   assert.equal(await tip.getByRole('link', { name: 'Open related view' }).isVisible(), true);
   await tip.getByRole('button', { name: 'Close', exact: true }).click();
   await page.mouse.move(0, 0);
@@ -125,11 +125,11 @@ const fixture = rendered.stdout;
   await page.locator('#test-heat').focus(); await page.keyboard.press('ArrowRight'); assert.match(await tip.innerText(), /Nov 8\s*12 parcels/);
   await page.keyboard.press('Escape'); await page.locator('#test-donut').focus(); await page.keyboard.press('Home'); assert.match(await tip.innerText(), /Parcels:\s*0/);
   await page.keyboard.press('ArrowRight'); assert.match(await tip.innerText(), /Parcels:\s*12/); await page.keyboard.press('Escape');
-  // The actual shipment template uses ETA and shows the recorded time.
+  // The shipment list shows when each shipment was recorded (date and time), not destination or ETA.
   const shipments = page.locator('#shipment-fixture');
   assert.equal(await shipments.getByRole('columnheader', { name: 'Destination', exact: true }).count(), 0);
-  assert.equal(await shipments.getByRole('columnheader', { name: 'ETA', exact: true }).count(), 1);
-  assert.match(await shipments.locator('tbody').innerText(), /Nov 15, 2026/); assert.match(await shipments.locator('tbody').innerText(), /08:03/);
+  assert.equal(await shipments.getByRole('columnheader', { name: 'Date & time', exact: true }).count(), 1);
+  assert.match(await shipments.locator('tbody').innerText(), /Nov 8, 2026/); assert.match(await shipments.locator('tbody').innerText(), /08:03/);
   // Saved responses get full Markdown formatting on page load.
   const saved = page.locator('[data-ai-answer]');
   assert.equal(await page.locator('.ai-m.me .ai-response-actions').count(), 0, 'User messages keep their original plain text display');
