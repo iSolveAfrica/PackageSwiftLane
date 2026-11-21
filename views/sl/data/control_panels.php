@@ -71,7 +71,34 @@ function sl_controlPanelsData($user, $core): array
         ['t' => 'Activity trail', 's' => $logOn ? 'Recording' : 'Not set up', 'c' => $logOn ? '' : 'w', 'i' => 'i-activity', 'x' => $logOn ? 'Every change is logged' : 'Run the activity log migration', 'href' => sl_route('ActivityLogs')],
     ];
     $c = fn(string $sql) => sl_num(sl_scalar($sql));
-    $sections = [
+    $sections = sl_controlPanelSections($c, $w, $money, fn() => $sent);
+    $d['sections'] = [];
+    foreach ($sections as $s) {
+        if (!empty($s['finance']) && !$finance) continue;
+        $rows = [];
+        foreach ($s['rows'] as [$board, $icon, $label, $sub, $perm, $count]) {
+            if ($board === 'Payments' && !$finance) continue;
+            if (!$ok($perm)) continue;
+            $rows[] = ['href' => sl_route($board), 'icon' => $icon, 'label' => $label, 'sub' => $sub, 'n' => $count ? (string) $count() : ''];
+        }
+        if ($rows) $d['sections'][] = ['id' => $s['id'], 'icon' => $s['icon'], 't' => $s['t'], 's' => $s['s'], 'featured' => !empty($s['featured']), 'rows' => $rows];
+    }
+    $pins = [['NewShipment', 'i-newdoc', 'New shipment', 'add_shipment'], ['Warehouse', 'i-scan', 'Scan package', ['warehouse_view', 'view_warehouse_delivery']], ['RecordPayment', 'i-card', 'Record payment', ['fs_record_payment', 'manage_account_payments']], ['PublicTracking', 'i-route', 'Track', null], ['CsInbox', 'i-ticket', 'New ticket', 'cs:agent']];
+    $d['pins'] = [];
+    foreach ($pins as [$b, $i, $l, $p]) if ($ok($p) && ($b !== 'RecordPayment' || $finance)) $d['pins'][] = ['href' => sl_route($b), 'icon' => $i, 'label' => $l];
+    $d['updated'] = date('H:i');
+    return $d;
+}
+
+/**
+ * Every module of the workspace, grouped, with a one-line description: [board, icon, label, description,
+ * permission, count]. Counts are closures, so callers that only need the catalogue (the AI site index,
+ * helpers/ai_site_index.php) pay nothing for them.
+ */
+function sl_controlPanelSections(callable $c, string $w = '', bool $money = false, ?callable $sent = null): array
+{
+    $sent = $sent ?? fn() => 0;
+    return [
         ['id' => 'command-centers', 'icon' => 'i-grid', 't' => 'Command Centers', 's' => 'Key controls and oversight in one place', 'featured' => true, 'rows' => [
             ['ExecDashboard', 'i-chart', 'Management Center', 'Business performance and decisions', ['main_dashboard_index', 'view_exec_dashboard'], null],
             ['AiCenter', 'i-ai', 'AI Automation Center', 'AI tools, rules and automation', 'ai:manage', null],
@@ -107,7 +134,7 @@ function sl_controlPanelsData($user, $core): array
         ['id' => 'warehouse', 'icon' => 'i-warehouse', 't' => 'Warehouse & dispatch', 's' => 'Bays, lockers, riders and routes', 'rows' => [
             ['Warehouse', 'i-warehouse', 'Warehouse', 'Parcels in the bays', ['warehouse_view', 'view_warehouse_delivery'], fn() => sl_num((int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (4,6,32) $w") + (int) sl_scalar("SELECT COUNT(*) FROM cdb_customers_packages a WHERE a.status_courier IN (4,6,32) $w"))],
             ['HandOut', 'i-box', 'Hand out', 'Ready for pickup', ['view_warehouse_delivery', 'warehouse_deliver_package'], fn() => $c("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (6,32) $w")],
-            ['LockerSearch', 'i-search', 'Locker search', 'Find a parcel by locker', 'view_shipment_list', null],
+            ['LockerSearch', 'i-search', 'Smart search', 'Search anything: tracking, customers, lockers, containers', 'view_shipment_list', null],
             ['Pickups', 'i-truck', 'Pickups', 'Today’s pickups done / booked', 'view_pickup_list', fn() => $c("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.is_pickup = 1 AND DATE(a.order_date) = CURDATE() AND a.status_courier NOT IN (1,14) $w") . ' / ' . $c("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.is_pickup = 1 AND DATE(a.order_date) = CURDATE() $w")],
             ['Drivers', 'i-wheel', 'Riders', 'On route / all riders', 'view_user_list', fn() => $c("SELECT COUNT(DISTINCT a.driver_id) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier = 7 AND a.driver_id > 0 $w") . ' / ' . $c('SELECT COUNT(*) FROM cdb_users WHERE userlevel = 3 AND active = 1')],
         ]],
@@ -125,7 +152,7 @@ function sl_controlPanelsData($user, $core): array
         ['id' => 'messages', 'icon' => 'i-message', 't' => 'Messages & support', 's' => 'Every conversation with customers', 'rows' => [
             ['CsInbox', 'i-ticket', 'Support inbox', 'Open tickets', 'cs:agent', fn() => sl_tableExists('cdb_cs_tickets') ? $c("SELECT COUNT(*) FROM cdb_cs_tickets WHERE status NOT IN ('closed','resolved')") : ''],
             ['NotificationCenter', 'i-send', 'Messaging', 'SMS, WhatsApp and e-mail', 'view_tools', null],
-            ['MessageLogs', 'i-clock', 'Message logs', 'Sent in the last 24 hours', 'view_message_logs', fn() => sl_num($sent)],
+            ['MessageLogs', 'i-clock', 'Message logs', 'Sent in the last 24 hours', 'view_message_logs', fn() => sl_num($sent())],
             ['SendPrices', 'i-tag', 'Send prices', 'Tariff sheet to customers', ['send_prices', 'push_notifications'], null],
         ]],
         ['id' => 'insights', 'icon' => 'i-activity', 't' => 'Insights & audit', 's' => 'Reports and the record of who did what', 'rows' => [
@@ -141,20 +168,4 @@ function sl_controlPanelsData($user, $core): array
             ['SettingsHub', 'i-cog', 'Settings', 'Company, brand and system', 'view_tools', null],
         ]],
     ];
-    $d['sections'] = [];
-    foreach ($sections as $s) {
-        if (!empty($s['finance']) && !$finance) continue;
-        $rows = [];
-        foreach ($s['rows'] as [$board, $icon, $label, $sub, $perm, $count]) {
-            if ($board === 'Payments' && !$finance) continue;
-            if (!$ok($perm)) continue;
-            $rows[] = ['href' => sl_route($board), 'icon' => $icon, 'label' => $label, 'sub' => $sub, 'n' => $count ? (string) $count() : ''];
-        }
-        if ($rows) $d['sections'][] = ['id' => $s['id'], 'icon' => $s['icon'], 't' => $s['t'], 's' => $s['s'], 'featured' => !empty($s['featured']), 'rows' => $rows];
-    }
-    $pins = [['NewShipment', 'i-newdoc', 'New shipment', 'add_shipment'], ['Warehouse', 'i-scan', 'Scan package', ['warehouse_view', 'view_warehouse_delivery']], ['RecordPayment', 'i-card', 'Record payment', ['fs_record_payment', 'manage_account_payments']], ['PublicTracking', 'i-route', 'Track', null], ['CsInbox', 'i-ticket', 'New ticket', 'cs:agent']];
-    $d['pins'] = [];
-    foreach ($pins as [$b, $i, $l, $p]) if ($ok($p) && ($b !== 'RecordPayment' || $finance)) $d['pins'][] = ['href' => sl_route($b), 'icon' => $i, 'label' => $l];
-    $d['updated'] = date('H:i');
-    return $d;
 }
