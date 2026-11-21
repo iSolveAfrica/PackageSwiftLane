@@ -308,3 +308,17 @@ function sl_get($data, string $path, $default = null)
     }
     return $cur;
 }
+
+/**
+ * The Swift Lane logo (assets/swiftlane/brand). $variant: color (light backgrounds), white (dark
+ * backgrounds), black (labels and thermal printers) or mark (the arrow S alone, for small spots).
+ */
+function sl_brandLogo(string $variant = 'color', int $height = 34, string $class = ''): string
+{
+    global $core;
+    $file = ['color' => 'swift-logo.png', 'white' => 'swift-logo-white.png', 'black' => 'swift-logo-black.png', 'mark' => 'swift-mark.png'][$variant] ?? 'swift-logo.png';
+    $src = 'assets/swiftlane/brand/' . $file;
+    $src = function_exists('cdp_asset') ? cdp_asset($src) : $src;
+    $ratio = $variant === 'mark' ? 1 : 720 / 400;
+    return '<img class="sl-brand-logo ' . h($class) . '" src="' . h($src) . '" alt="' . h($core->site_name ?? 'Swift Lane Logistics') . '" height="' . $height . '" width="' . (int) round($height * $ratio) . '" decoding="async">';
+}

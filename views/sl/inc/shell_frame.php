@@ -6,7 +6,7 @@
   <input type="checkbox" id="navtg" class="nav-tg" aria-hidden="true" tabindex="-1">
   <header class="sl-top">
     <button class="sl-ib nav-open" type="button" data-sl-nav aria-controls="sl-navigation" aria-expanded="true" aria-label="Close the menu"><i class="ic i-sidebar" aria-hidden="true"></i></button>
-    <a class="sl-switch" href="<?= h($slHome) ?>"><small><?= h(sl_initials($core->site_name ?? 'SL')) ?></small> <?= h($core->site_name ?? 'Swift Lane') ?> · <?= h($slHub) ?> <i class="ic ic-sm i-down" aria-hidden="true"></i></a>
+    <a class="sl-switch" href="<?= h($slHome) ?>"><?= sl_brandLogo('color', 30, 'sl-top-logo on-light') ?><?= sl_brandLogo('white', 30, 'sl-top-logo on-dark') ?><span class="sl-top-hub"><?= h($slHub) ?></span><i class="ic ic-sm i-down" aria-hidden="true"></i></a>
     <?php if ($slRate > 0):
         $rateLink = null;
         if ($slIsClient && cdp_financeEnabled() && $user->cdp_hasPermission('view_my_bills')) {

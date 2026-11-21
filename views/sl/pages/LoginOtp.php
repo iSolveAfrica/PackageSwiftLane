@@ -13,7 +13,7 @@ $signup = $flow === 'signup';
 <div class="sl-auth fp-full">
   <div class="form">
     <div>
-      <div class="sl-brand"><span class="sl-logo"><i></i></span><?= sl_v($d, 'site') ?></div>
+      <div class="sl-brand"><?= sl_brandLogo('color', 40) ?></div>
       <div class="col g8" style="margin-top: 12px">
         <div class="sl-steps" aria-label="Step 2 of 3"><i class="on"></i><i class="on"></i><i></i></div>
         <div class="row between mut sm"><span><?= $signup ? 'Your details' : 'Log in' ?></span><span class="fw5" style="color: var(--ink)">Verify it’s you</span><span><?= $signup ? 'Approval' : ($age ? 'Password check' : 'Done') ?></span></div>

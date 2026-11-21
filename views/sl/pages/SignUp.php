@@ -12,7 +12,7 @@ $docs = (array) sl_get($d, 'docs', []);
 $rules = [['len', '8+ characters'], ['num', 'A number'], ['sym', 'A symbol'], ['case', 'Upper and lower case']];
 ?>
 <div class="su2">
-  <header class="su2-top"><a class="sl-brand" href="<?= sl_route('Login') ?>" style="color:inherit"><span class="sl-logo"><i></i></span><?= sl_v($d, 'site') ?></a><span class="grow"></span><span class="mut sm su2-hide">Already have an account?</span><a class="sl-btn ghost sm" href="<?= sl_route('Login') ?>">Log in</a></header>
+  <header class="su2-top"><a class="sl-brand" href="<?= sl_route('Login') ?>" style="color:inherit"><?= sl_brandLogo('color', 40) ?></a><span class="grow"></span><span class="mut sm su2-hide">Already have an account?</span><a class="sl-btn ghost sm" href="<?= sl_route('Login') ?>">Log in</a></header>
   <main class="su2-main">
     <div class="su2-head"><span class="su2-badge"><i class="ic ic-sm i-pin" aria-hidden="true"></i>Free shipping address · suite <?= sl_v($d, 'prefix') ?> <?= sl_v($d, 'locker') ?> reserved for you</span><h1><?= sl_v($d, 'heading') ?></h1><p>Three short steps. Fields with * are required.</p></div>
     <nav class="su2-steps" aria-label="Sign-up steps"><a href="#su-step1" class="on"><b>1</b><span>Your details</span></a><i></i><a href="#su-step2"><b>2</b><span>Phone</span></a><i></i><a href="#su-step3"><b>3</b><span>Address and ID</span></a></nav>

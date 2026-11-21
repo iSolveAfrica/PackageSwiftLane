@@ -11,7 +11,7 @@ $sections = [
 ?>
 <div class="sl-wrap" style="max-width:880px;margin:0 auto;padding:32px 16px">
   <div class="row between wrap g12" style="margin-bottom:24px">
-    <a class="sl-brand" href="<?= h(sl_route('Login')) ?>" style="color:inherit"><span class="sl-logo"><i></i></span><?= h($d['site']) ?></a>
+    <a class="sl-brand" href="<?= h(sl_route('Login')) ?>" style="color:inherit"><?= sl_brandLogo('color', 40) ?></a>
     <div class="row g8"><a class="sl-btn ghost sm" href="<?= h(sl_route('SignUp')) ?>"><i class="ic ic-sm i-user" aria-hidden="true"></i>Register</a><a class="sl-btn sm" href="<?= h(sl_route('Login')) ?>"><i class="ic ic-sm i-lock" aria-hidden="true"></i>Sign in</a></div>
   </div>
   <section class="sl-card col g16" style="padding:32px">
