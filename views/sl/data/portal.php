@@ -457,6 +457,10 @@ function sl_userHomeData($user, $core, $userData): array
         $act[] = ['icon' => 'i-inbox', 'pre' => true, 'trk' => $p->tracking, 'shop' => (string) $p->provider_shop, 'price' => sl_money($p->purchase_price), 'eta' => sl_date($p->estimated_date, 'M j'), 'at' => sl_date($p->prealert_date, 'M j, H:i')];
     }
     $d['activity'] = $act;
+    // Everything about this customer on one page (views/sl/data/user_360.php).
+    require_once CDP_ROOT . '/views/sl/data/user_360.php';
+    $d['moving'] = sl_u360InMotion($uid);
+    $d['timeline'] = sl_u360Timeline(sl_u360Events($uid, 'customer'), 'customer', (string) ($_GET['k'] ?? ''), max(25, min(1000, (int) ($_GET['n'] ?? 25))));
     return $d;
 }
 
