@@ -8,7 +8,7 @@ if (!isset($d)) { $d = []; }
 $sea = $d['sea']; $can = $d['can'];
 $self = sl_route('ConsolidationDetail', ['id' => $d['cid'], 'type' => $d['type']]);
 ?>
-<div class="row g8 mut sm"><a href="<?= sl_route('Consolidations', ['mode' => $d['type']]) ?>">Consolidations</a><i class="ic ic-sm i-right" aria-hidden="true"></i><span style="color:var(--ink)"><?= h($d['code']) ?></span></div>
+<div class="row g8 mut sm"><a href="<?= sl_route($d['type'] === 'sea' ? 'ConsolidationsSea' : 'ConsolidationsAir') ?>"><?= $d['type'] === 'sea' ? 'Sea Consolidations' : 'Air Consolidations' ?></a><i class="ic ic-sm i-right" aria-hidden="true"></i><span style="color:var(--ink)"><?= h($d['code']) ?></span></div>
 <div class="sl-head"><div><h1 class="sl-title row g8" style="font-size:22px"><span class="sl-tile"><i class="ic <?= $sea ? 'i-ship' : 'i-plane' ?>" aria-hidden="true"></i></span><?= h($d['code']) ?><span class="sl-pill <?= h($d['stCls']) ?>"><?= h($d['st']) ?></span><span class="sl-badge"><?= $sea ? 'Sea' : 'Air' ?> consolidation</span></h1><p class="sl-lede"><?= h($d['lede']) ?></p></div><div class="row g8 wrap">
 <?php if ($d['canEdit']): ?><a class="sl-btn" href="<?= h($d['adding'] ? $self : $self . '&add=1') ?>"><i class="ic ic-sm <?= $d['adding'] ? 'i-x' : 'i-plus' ?>" aria-hidden="true"></i><?= $d['adding'] ? 'Close' : 'Add packages' ?></a><?php endif; ?>
 <?php if ($can['packing']): ?><a class="sl-btn ghost" target="_blank" href="<?= h($can['packing']) ?>"><i class="ic ic-sm i-print" aria-hidden="true"></i>Packing list</a><?php elseif ($can['print']): ?><a class="sl-btn ghost" target="_blank" href="<?= h($can['print']) ?>"><i class="ic ic-sm i-print" aria-hidden="true"></i>Packing list</a><?php endif; ?>

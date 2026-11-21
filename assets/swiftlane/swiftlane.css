@@ -133,6 +133,9 @@ h1,h2,h3,h4,p{margin:0}
 .sl-nav a{display:flex;align-items:center;gap:10px;height:40px;padding:0 10px;border-radius:var(--r-sm);font-size:14.5px;color:var(--ink)}
 .sl-nav a:hover{background:var(--hover)}
 .sl-nav a.is-active{background:var(--active)}
+.sl-nav a.sub{padding-left:24px;height:36px;font-size:14px}
+.sl-nav a.sub>span:not(.cnt){white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.sl-nav a.sub .ic{opacity:.75}
 .sl-nav .ic{color:var(--ink-2)}
 .sl-nav .cnt{margin-left:auto;font-size:14.5px;color:var(--ink)}
 .sl-nav .cnt em{font-style:normal;color:var(--muted)}

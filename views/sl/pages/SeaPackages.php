@@ -8,7 +8,7 @@ $can = $d['can'];
 ?>
         <div class="sl-head">
           <div><h1 class="sl-title"><?= $d['isClient'] ? 'My Packages' : 'Sea Packages' ?></h1><p class="sl-lede"><?= h($d['lede']) ?></p></div>
-          <div class="row g8 wrap"><a class="sl-btn ghost" href="<?= h(sl_url(['export' => 'csv'])) ?>"><i class="ic ic-sm i-download" aria-hidden="true"></i>Export</a><?php if (!$d['isClient']): ?><a class="sl-btn ghost" href="<?= sl_route('Consolidations', ['mode' => 'sea']) ?>"><i class="ic ic-sm i-layers" aria-hidden="true"></i>Containers</a><?php endif; ?><?php if ($d['canAdd']): ?><a class="sl-btn" href="<?= sl_route('NewPackage') ?>"><i class="ic ic-sm i-plus" aria-hidden="true"></i>New Package</a><?php endif; ?></div>
+          <div class="row g8 wrap"><a class="sl-btn ghost" href="<?= h(sl_url(['export' => 'csv'])) ?>"><i class="ic ic-sm i-download" aria-hidden="true"></i>Export</a><?php if (!$d['isClient']): ?><a class="sl-btn ghost" href="<?= sl_route('ConsolidationsSea') ?>"><i class="ic ic-sm i-layers" aria-hidden="true"></i>Sea Consolidations</a><?php endif; ?><?php if ($d['canAdd']): ?><a class="sl-btn" href="<?= sl_route('NewPackage') ?>"><i class="ic ic-sm i-plus" aria-hidden="true"></i>New Package</a><?php endif; ?></div>
         </div>
         <div class="grid cols4">
           <?php foreach ($d['kpi'] as $k): ?>

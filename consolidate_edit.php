@@ -15,4 +15,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 require_once 'views/sl/data/ops_forms.php';
 $d = sl_consolEditData($user, $core, 'consol', (int) ($_GET['id'] ?? 0));
-sl_render('ConsolidationEdit', ['id' => 'consol', 'title' => 'Edit ' . $d['sum']['track'], 'board' => 'ConsolidationDetail', 'scripts' => ['dataJs/sl/ops_forms.js']], $d);
+sl_render('ConsolidationEdit', ['id' => 'consol_air', 'title' => 'Edit ' . $d['sum']['track'], 'board' => 'ConsolidationDetail', 'scripts' => ['dataJs/sl/ops_forms.js']], $d);

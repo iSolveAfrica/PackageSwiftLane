@@ -58,6 +58,8 @@ function sl_routes(): array
         'Pickups'             => 'pickup_list.php',
         'SchedulePickup'      => 'pickup_add_full.php',
         'PickupAging'         => 'pickup_aging.php',
+        'ConsolidationsAir'   => 'consolidate_list.php',
+        'ConsolidationsSea'   => 'consolidate_package_list.php',
         'Consolidations'      => 'consolidate_list.php',
         'ConsolidationDetail' => 'consolidate_view.php',
         'ConsolidationAir'    => 'consolidate_view.php',

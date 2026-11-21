@@ -43,71 +43,107 @@ function sl_conCapClass(int $pct): string
     return $pct >= 95 ? 'r' : ($pct >= 70 ? 'y' : '');
 }
 
-/** Consolidations.dc.html */
-function sl_consolidationsData($user, $core): array
+/**
+ * Status buckets of a consolidation, shared by the filters and the statistics.
+ * open     = still packing at origin (accepting parcels)
+ * transit  = flown / sailed and on the way (3 In transit, 5 Distribution, 7 On route)
+ * arrived  = landed / docked, waiting to be handed over (6 Available, 32 Ready for pick-up)
+ * done     = handed over (8 Delivered, 15 Picked up)
+ */
+function sl_conBuckets(): array
 {
+    return [
+        'open' => "c.status_courier NOT IN ('3','5','7','6','32','8','15','21')",
+        'transit' => "c.status_courier IN ('3','5','7')",
+        'arrived' => "c.status_courier IN ('6','32')",
+        'done' => "c.status_courier IN ('8','15')",
+        'active' => "c.status_courier NOT IN ('8','15','21')",
+    ];
+}
+
+/**
+ * Air Consolidations / Sea Consolidations list (Consolidations.dc.html), one mode per page:
+ * consolidate_list.php = air (cdb_consolidate), consolidate_package_list.php = sea (cdb_consolidate_packages).
+ */
+function sl_consolidationsData($user, $core, string $mode = 'air'): array
+{
+    $mode = $mode === 'sea' ? 'sea' : 'air';
+    $M = sl_conMode($mode);
+    $sea = $M['sea'];
     $canAir = $user->cdp_hasPermission('view_consolidate_list');
     $canSea = $user->cdp_hasPermission('view_consolidate_package_list');
-    $mode = (string) ($_GET['mode'] ?? 'all');
-    if (!in_array($mode, ['all', 'air', 'sea'], true)) $mode = 'all';
-    if ($mode === 'air' && !$canAir) $mode = 'sea';
-    if ($mode === 'sea' && !$canSea) $mode = 'air';
     $q = trim((string) ($_GET['q'] ?? ''));
     $status = (string) ($_GET['filter'] ?? '');
+    $filters = ['open', 'transit', 'arrived', 'done', 'active', 'unpaid', 'nodoc', 'late', 'cancelled'];
+    if (!in_array($status, $filters, true)) $status = '';
     $page = max(1, (int) ($_GET['page'] ?? 1));
     $per = 25;
-    $parts = [];
-    $binds = [];
     $scope = sl_opsScope('c');
-    foreach (['air' => $canAir, 'sea' => $canSea] as $m => $ok) {
-        if (!$ok || ($mode !== 'all' && $mode !== $m)) continue;
-        $M = sl_conMode($m);
-        $w = "1 = 1 $scope";
-        if ($q !== '') {
-            $w .= " AND (CONCAT(c.c_prefix, c.c_no) LIKE :q$m OR c.awb_no LIKE :q$m OR c.seals_package LIKE :q$m OR c.consolidate_id IN (SELECT d.consolidate_id FROM {$M['detail']} d WHERE CONCAT(d.order_prefix, d.order_no) LIKE :q$m))";
-            $binds[":q$m"] = '%' . $q . '%';
-        }
-        if ($status === 'open') $w .= " AND c.status_courier NOT IN ('3','5','7','8','15','21')";
-        if ($status === 'transit') $w .= " AND c.status_courier IN ('3','5','7')";
-        if ($status === 'arrived') $w .= " AND c.status_courier IN ('2','4','6','32','8','15')";
-        $parts[] = "SELECT '$m' AS mode, c.consolidate_id, c.c_prefix, c.c_no, c.c_date, c.status_courier, c.total_weight, c.total_order, c.status_invoice, c.awb_no, c.seals_package, c.order_courier, c.origin_off, c.agency, c.sender_id, c.driver_id, c.estimated_eta,
-            (SELECT COUNT(*) FROM {$M['detail']} d WHERE d.consolidate_id = c.consolidate_id) AS n FROM {$M['head']} c WHERE $w";
+    $B = sl_conBuckets();
+    $monthStart = date('Y-m-01');
+    $code = "CONCAT(c.c_prefix, c.c_no)";
+    $doneMonth = "{$B['done']} AND EXISTS (SELECT 1 FROM cdb_courier_track t WHERE t.order_track = $code AND t.status_courier IN (8,15) AND t.t_date >= '$monthStart')";
+    $noDoc = "(c.awb_no IS NULL OR c.awb_no = '') AND {$B['active']}";
+    $late = "c.estimated_eta IS NOT NULL AND c.estimated_eta < CURDATE() AND c.status_courier NOT IN ('6','32','8','15','21')";
+    $unpaid = "COALESCE(c.status_invoice, 0) NOT IN (1,19) AND c.status_courier <> '21'";
+
+    $binds = [];
+    $w = "1 = 1 $scope";
+    if ($q !== '') {
+        $w .= " AND ($code LIKE :q OR c.awb_no LIKE :q OR c.seals_package LIKE :q OR c.consolidate_id IN (SELECT d.consolidate_id FROM {$M['detail']} d WHERE CONCAT(d.order_prefix, d.order_no) LIKE :q))";
+        $binds[':q'] = '%' . $q . '%';
     }
-    $d = ['mode' => $mode, 'q' => $q, 'filter' => $status, 'page' => $page, 'per' => $per, 'canAir' => $canAir, 'canSea' => $canSea];
-    $rows = [];
-    $count = 0;
-    if ($parts) {
-        $u = implode(' UNION ALL ', $parts);
-        $count = (int) sl_scalar("SELECT COUNT(*) FROM ($u) x", $binds);
-        $rows = sl_rows("SELECT * FROM ($u) x ORDER BY c_date DESC, consolidate_id DESC LIMIT " . (($page - 1) * $per) . ", $per", $binds);
+    switch ($status) {
+        case 'open': case 'transit': case 'arrived': case 'active': $w .= ' AND ' . $B[$status]; break;
+        case 'done': $w .= ' AND ' . $doneMonth; break;
+        case 'unpaid': $w .= ' AND ' . $unpaid; break;
+        case 'nodoc': $w .= ' AND ' . $noDoc; break;
+        case 'late': $w .= ' AND ' . $late; break;
+        case 'cancelled': $w .= " AND c.status_courier = '21'"; break;
     }
+    $count = (int) sl_scalar("SELECT COUNT(*) FROM {$M['head']} c WHERE $w", $binds);
+    $rows = sl_rows("SELECT c.consolidate_id, c.c_prefix, c.c_no, c.c_date, c.status_courier, c.total_weight, c.total_order, c.status_invoice, c.awb_no, c.seals_package, c.order_courier, c.origin_off, c.agency, c.sender_id, c.driver_id, c.estimated_eta,
+            (SELECT COUNT(*) FROM {$M['detail']} d WHERE d.consolidate_id = c.consolidate_id) AS n,
+            (SELECT COALESCE(SUM(d.weight_vol), 0) FROM {$M['detail']} d WHERE d.consolidate_id = c.consolidate_id) AS vol
+        FROM {$M['head']} c WHERE $w ORDER BY c.c_date DESC, c.consolidate_id DESC LIMIT " . (($page - 1) * $per) . ", $per", $binds);
+
+    $d = ['mode' => $mode, 'sea' => $sea, 'q' => $q, 'filter' => $status, 'page' => $page, 'per' => $per, 'canAir' => $canAir, 'canSea' => $canSea,
+        'title' => $sea ? 'Sea Consolidations' : 'Air Consolidations',
+        'unit' => $sea ? 'container' : 'flight load', 'units' => $sea ? 'containers' : 'flight loads',
+        'docL' => $sea ? 'Bill of lading' : 'Master air waybill', 'carrierL' => $sea ? 'Shipping line / seal' : 'Airline / ULD',
+        'colId' => $sea ? 'Container' : 'Consolidation', 'otherHref' => $sea ? ($canAir ? sl_route('ConsolidationsAir') : '') : ($canSea ? sl_route('ConsolidationsSea') : ''),
+        'parentHref' => $sea ? sl_route('SeaPackages') : sl_route('AirShipments'), 'parentL' => $sea ? 'Sea Packages' : 'Air Shipments'];
+
     $couriers = [];
     foreach (sl_rows('SELECT id, name_com FROM cdb_courier_com') as $c) $couriers[(int) $c->id] = $c->name_com;
     $offices = [];
     foreach (sl_rows('SELECT id, name_off, city FROM cdb_offices') as $o) $offices[(int) $o->id] = $o->city ?: $o->name_off;
     $dest = $core->c_city ?: 'Accra';
+    $can = function ($k) use ($user, $M) { return $user->cdp_hasPermission($M['p'][$k]); };
     $list = [];
     foreach ($rows as $r) {
-        $M = sl_conMode($r->mode);
         $pct = sl_pct($r->total_weight, $M['cap']);
         $s = (int) $r->status_courier;
         $done = cdp_isHandedOver($s);
         $id = (int) $r->consolidate_id;
-        $can = function ($k) use ($user, $M) { return $user->cdp_hasPermission($M['p'][$k]); };
+        $etaTs = $r->estimated_eta ? strtotime($r->estimated_eta . ' 23:59:59') : 0;
+        $isLate = $etaTs && $etaTs < time() && !in_array($s, [6, 32, 8, 15, 21], true);
         $list[] = [
-            'id' => $r->c_prefix . $r->c_no, 'cid' => $id, 'type' => $r->mode, 'href' => sl_route('ConsolidationDetail', ['id' => $id, 'type' => $r->mode]),
-            'mode' => $r->mode, 'modeL' => $r->mode === 'sea' ? 'Sea' : 'Air', 'route' => ($offices[(int) $r->origin_off] ?? 'Origin') . ' → ' . $dest,
-            'ship' => $r->c_prefix . $r->c_no, 'awb' => $r->awb_no ?: '—', 'awbType' => $r->awb_no ? ($r->mode === 'sea' ? 'Bill of lading' : 'Master air waybill') : 'Not set yet',
-            'carrier' => $couriers[(int) $r->order_courier] ?? '—', 'voy' => $r->seals_package ? 'Seal ' . $r->seals_package : '',
+            'id' => $r->c_prefix . $r->c_no, 'cid' => $id, 'type' => $mode, 'href' => sl_route('ConsolidationDetail', ['id' => $id, 'type' => $mode]),
+            'mode' => $mode, 'modeL' => $sea ? 'Sea' : 'Air', 'route' => ($offices[(int) $r->origin_off] ?? 'Origin') . ' → ' . $dest,
+            'awb' => $r->awb_no ?: '—', 'awbType' => $r->awb_no ? $d['docL'] : 'Not set yet', 'noDoc' => !$r->awb_no && !$done && $s !== 21,
+            'carrier' => $couriers[(int) $r->order_courier] ?? '—', 'voy' => $r->seals_package ? ($sea ? 'Seal ' : 'ULD ') . $r->seals_package : '',
             'tc' => sl_conCapClass($pct), 'sty' => 'width: ' . $pct . '%', 'fill' => sl_weight($r->total_weight, 0) . ' · ' . $pct . '%',
-            'n' => (int) $r->n, 'dep' => sl_date($r->c_date), 'eta' => $r->estimated_eta ? sl_date($r->estimated_eta) : '—',
-            'st' => sl_statusLabel($s), 'cls' => sl_statusClass($s), 'done' => $done, 'cancelled' => $s === 21, 'unpaid' => (int) $r->status_invoice !== 1, 'verify' => (int) $r->status_invoice === 3,
+            'vol' => number_format((float) $r->vol, 1),
+            'n' => (int) $r->n, 'dep' => sl_date($r->c_date), 'eta' => $r->estimated_eta ? sl_date($r->estimated_eta) : '—', 'late' => $isLate,
+            'st' => sl_statusLabel($s), 'cls' => sl_statusClass($s), 'done' => $done, 'cancelled' => $s === 21,
+            'pay' => sl_payPill($r->status_invoice),
             'act' => [
                 'edit' => $can('edit') && !$done && !sl_userIs('client') ? $M['url']['edit'] . '?id=' . $id : '',
                 'print' => $can('print') && !$done ? $M['url']['print'] . '?id=' . $id : '',
                 'label' => $can('label') && !$done ? $M['url']['label'] . '?id=' . $id : '',
-                'packing' => $can('print') && !sl_userIs('client') && $r->mode === 'air' ? 'consolidate_parking_list.php?id=' . $id : '',
-                'packingX' => $can('print') && !sl_userIs('client') && $r->mode === 'air' ? 'consolidate_parking_list_excel.php?id=' . $id : '',
+                'packing' => $can('print') && !sl_userIs('client') && !$sea ? 'consolidate_parking_list.php?id=' . $id : '',
+                'packingX' => $can('print') && !sl_userIs('client') && !$sea ? 'consolidate_parking_list_excel.php?id=' . $id : '',
                 'track' => $can('track') && !$done && $s !== 21 ? $M['url']['track'] . '?id=' . $id : '',
                 'deliver' => $can('deliver') && !$done && $s !== 21 ? $M['url']['deliver'] . '?id=' . $id : '',
                 'pay' => $can('verify') && (int) $r->status_invoice === 2 ? $M['url']['pay'] . '?id_order=' . $id : '',
@@ -118,24 +154,39 @@ function sl_consolidationsData($user, $core): array
     }
     $d['rows'] = $list;
     $d['count'] = $count;
-    // metrics across the visible modes
-    $tot = 0; $openN = 0; $transit = 0; $arrived = 0;
-    foreach (['air' => $canAir, 'sea' => $canSea] as $m => $ok) {
-        if (!$ok || ($mode !== 'all' && $mode !== $m)) continue;
-        $M = sl_conMode($m);
-        $r = sl_row("SELECT COUNT(*) AS t, SUM(c.status_courier NOT IN ('3','5','7','8','15','21')) AS o, SUM(c.status_courier IN ('3','5','7')) AS tr, SUM(c.status_courier IN ('2','4','6','32','8','15') AND c.c_date >= DATE_FORMAT(CURDATE(), '%Y-%m-01')) AS ar FROM {$M['head']} c WHERE c.status_courier <> '21' $scope");
-        $tot += (int) $r->t; $openN += (int) $r->o; $transit += (int) $r->tr; $arrived += (int) $r->ar;
-    }
+
+    // statistics for this mode only
+    $st = sl_row("SELECT COUNT(*) AS t,
+            SUM({$B['open']}) AS o, SUM({$B['transit']}) AS tr, SUM({$B['arrived']}) AS ar, SUM($doneMonth) AS dm, SUM({$B['done']}) AS dn,
+            SUM($unpaid) AS up, SUM(CASE WHEN $unpaid THEN c.total_order ELSE 0 END) AS upAmt,
+            SUM($noDoc) AS nd, SUM($late) AS lt, SUM(c.status_courier = '21') AS cx,
+            SUM(CASE WHEN {$B['active']} THEN c.total_weight ELSE 0 END) AS w,
+            SUM(CASE WHEN c.c_date >= '$monthStart' AND c.status_courier <> '21' THEN 1 ELSE 0 END) AS cm
+        FROM {$M['head']} c WHERE 1 = 1 $scope");
+    $onBoard = sl_row("SELECT COUNT(*) AS n, COALESCE(SUM(d.weight_vol), 0) AS v FROM {$M['detail']} d JOIN {$M['head']} c ON c.consolidate_id = d.consolidate_id WHERE {$B['active']} $scope");
+    $all = (int) ($st->t ?? 0);
+    $live = $all - (int) ($st->cx ?? 0);
+    $activeN = (int) $st->o + (int) $st->tr + (int) $st->ar;
+    $d['tot'] = $live;
+    $d['all'] = $all;
+    $d['cancelledN'] = (int) ($st->cx ?? 0);
     $d['metrics'] = [
-        ['icon' => 'i-layers', 'l' => 'Open containers', 'n' => $openN, 'sub' => 'still accepting parcels', 'cls' => 'y', 'f' => 'open'],
-        ['icon' => 'i-ship', 'l' => 'In transit', 'n' => $transit, 'sub' => 'at sea or in the air', 'cls' => 'v', 'f' => 'transit'],
-        ['icon' => 'i-check', 'l' => 'Arrived this month', 'n' => $arrived, 'sub' => 'cleared and unloaded', 'cls' => '', 'f' => 'arrived'],
+        ['icon' => 'i-layers', 'l' => $sea ? 'Open containers' : 'Open flight loads', 'n' => (int) $st->o, 'of' => $live, 'sub' => $sea ? 'packing at origin, accepting parcels' : 'building at origin, accepting parcels', 'cls' => 'y', 'f' => 'open'],
+        ['icon' => $sea ? 'i-ship' : 'i-plane', 'l' => $sea ? 'At sea' : 'In the air', 'n' => (int) $st->tr, 'of' => $live, 'sub' => $sea ? 'sailed, on the way to port' : 'flown, on the way to destination', 'cls' => 'v', 'f' => 'transit'],
+        ['icon' => 'i-warehouse', 'l' => $sea ? 'Arrived at port' : 'Landed', 'n' => (int) $st->ar, 'of' => $live, 'sub' => 'cleared, waiting for hand-over', 'cls' => '', 'f' => 'arrived'],
+        ['icon' => 'i-check', 'l' => 'Handed over this month', 'n' => (int) $st->dm, 'of' => (int) $st->dn, 'sub' => sl_num((int) $st->dn) . ' handed over in total', 'cls' => '', 'f' => 'done'],
     ];
-    $d['tot'] = $tot;
-    $d['canNew'] = ($canAir && $user->cdp_hasPermission('add_consolidate_shipment')) || ($canSea && $user->cdp_hasPermission('add_consolidate_package'));
+    $d['metrics2'] = [
+        ['icon' => 'i-box', 'l' => $sea ? 'Parcels in containers' : 'Parcels on flights', 'v' => sl_num((int) $onBoard->n), 'sub' => sl_weight($st->w, 0) . ($sea ? ' · ' . number_format((float) $onBoard->v, 1) . ' vol.' : '') . ' across ' . sl_num($activeN) . ' active', 'f' => 'active', 'warn' => false],
+        ['icon' => 'i-receipt', 'l' => 'Unpaid', 'v' => sl_num((int) $st->up), 'sub' => (function_exists('cdp_canViewMoney') && !cdp_canViewMoney($user)) ? 'awaiting payment' : sl_money($st->upAmt) . ' outstanding', 'f' => 'unpaid', 'warn' => (int) $st->up > 0],
+        ['icon' => 'i-file', 'l' => $sea ? 'No bill of lading' : 'No master air waybill', 'v' => sl_num((int) $st->nd), 'sub' => 'active and missing the document', 'f' => 'nodoc', 'warn' => (int) $st->nd > 0],
+        ['icon' => 'i-clock', 'l' => 'Past ETA', 'v' => sl_num((int) $st->lt), 'sub' => 'not yet ' . ($sea ? 'at port' : 'landed') . ' · ' . sl_num((int) $st->cm) . ' created this month', 'f' => 'late', 'warn' => (int) $st->lt > 0],
+    ];
+    $d['filterL'] = ['open' => $d['metrics'][0]['l'], 'transit' => $d['metrics'][1]['l'], 'arrived' => $d['metrics'][2]['l'], 'done' => 'Handed over this month', 'active' => 'Active', 'unpaid' => 'Unpaid', 'nodoc' => $d['metrics2'][2]['l'], 'late' => 'Past ETA', 'cancelled' => 'Cancelled'][$status] ?? '';
+    $d['canNew'] = $user->cdp_hasPermission($M['p']['add']);
     $d['drivers'] = sl_rows('SELECT id, fname, lname FROM cdb_users WHERE userlevel = 3 AND active = 1 ORDER BY fname');
     require_once __DIR__ . '/track_console.php';
-    $d['tracking'] = $page === 1 && $q === '' ? sl_trackConsoleData($user, $core, 'consolidations', 10) : null;
+    $d['tracking'] = $page === 1 && $q === '' ? sl_trackConsoleData($user, $core, 'consolidations_' . $mode, 10) : null;
     return $d;
 }
 

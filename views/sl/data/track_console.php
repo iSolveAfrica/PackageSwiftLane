@@ -7,6 +7,7 @@
  * sl_trackConsoleData($user, $core, $source) with $source:
  *   'shipments'       open air shipments (cdb_add_order) + sea packages (cdb_customers_packages)
  *   'consolidations'  open air (cdb_consolidate) + sea (cdb_consolidate_packages) consolidations
+ *   'consolidations_air' / 'consolidations_sea'  one mode only (Air / Sea Consolidations pages)
  *   'mine'            the signed-in customer's own shipments and packages (no staff permission needed)
  * Rows are always limited by sl_opsScope() (customer / rider / agency scope) and by the viewer's list
  * permissions, so every role only sees what it may see elsewhere in the app.
@@ -145,9 +146,11 @@ function sl_trackConsoleData($user, $core, string $source = 'shipments', int $li
     $uid = (int) ($_SESSION['userid'] ?? 0);
     $money = $client || (function_exists('cdp_canViewMoney') && cdp_canViewMoney($user));
     $kinds = [];
-    if ($source === 'consolidations') {
-        if ($user->cdp_hasPermission('view_consolidate_list')) $kinds[] = ['air', 'cdb_consolidate', 'c_prefix', 'c_no', 'c_date', 'cdb_consolidate_detail'];
-        if ($user->cdp_hasPermission('view_consolidate_package_list')) $kinds[] = ['sea', 'cdb_consolidate_packages', 'c_prefix', 'c_no', 'c_date', 'cdb_consolidate_packages_detail'];
+    $conSrc = strpos($source, 'consolidations') === 0;
+    if ($conSrc) {
+        // 'consolidations_air' / 'consolidations_sea' keep the console to one mode
+        if ($source !== 'consolidations_sea' && $user->cdp_hasPermission('view_consolidate_list')) $kinds[] = ['air', 'cdb_consolidate', 'c_prefix', 'c_no', 'c_date', 'cdb_consolidate_detail'];
+        if ($source !== 'consolidations_air' && $user->cdp_hasPermission('view_consolidate_package_list')) $kinds[] = ['sea', 'cdb_consolidate_packages', 'c_prefix', 'c_no', 'c_date', 'cdb_consolidate_packages_detail'];
     } else {
         if ($client || $user->cdp_hasPermission(['view_shipment_list', 'view_general_shipments'])) $kinds[] = ['air', 'cdb_add_order', 'order_prefix', 'order_no', 'order_date', null];
         if ($client || $user->cdp_hasPermission('view_package_list')) $kinds[] = ['sea', 'cdb_customers_packages', 'order_prefix', 'order_no', 'order_date', null];
@@ -200,7 +203,7 @@ function sl_trackConsoleData($user, $core, string $source = 'shipments', int $li
             $awb = (string) ($f->awb_no ?? '');
         }
         $id = (int) $r->id;
-        $isCon = $source === 'consolidations';
+        $isCon = $conSrc;
         if ($client) {
             $href = sl_route('PublicTracking', ['order_track' => $r->code]);
         } elseif ($isCon) {

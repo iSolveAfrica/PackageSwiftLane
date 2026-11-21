@@ -9,6 +9,6 @@ sl_gate($type === 'sea' ? ['view_consolidate_package', 'view_consolidate_package
 // The old ?legacy=1 view is retired; the parameter is ignored and the design page renders.
 require_once 'views/sl/data/consolidations.php';
 $d = sl_consolidationDetailData($user, $core, (int) ($_GET['id'] ?? 0), $type);
-if (!$d) { header('Location: ' . sl_route('Consolidations', ['mode' => $type])); exit; }
+if (!$d) { header('Location: ' . sl_route($type === 'sea' ? 'ConsolidationsSea' : 'ConsolidationsAir')); exit; }
 $board = $type === 'sea' ? 'ConsolidationDetail' : 'ConsolidationAir';
-sl_render($board, ['id' => 'consol', 'title' => $d['code'], 'board' => $board, 'styles' => ['assets/swiftlane/pages/ops.css']], $d);
+sl_render($board, ['id' => 'consol_' . $type, 'title' => $d['code'], 'board' => $board, 'styles' => ['assets/swiftlane/pages/ops.css']], $d);

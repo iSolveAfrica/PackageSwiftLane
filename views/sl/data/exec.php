@@ -103,7 +103,7 @@ function sl_execData($user, $core): array
     if (!$money) $d['reps'] = array_slice($d['reps'], 0, 2);
     // where things live
     $cov = [
-        ['Shipments and volume', 'Air Shipments', sl_route('AirShipments')], ['Sea packages', 'Sea Packages', sl_route('SeaPackages')], ['Consolidations', 'Consolidations', sl_route('Consolidations')],
+        ['Shipments and volume', 'Air Shipments', sl_route('AirShipments')], ['Sea packages', 'Sea Packages', sl_route('SeaPackages')], ['Air consolidations', 'Air Consolidations', sl_route('ConsolidationsAir')], ['Sea consolidations', 'Sea Consolidations', sl_route('ConsolidationsSea')],
         ['Revenue and margin', 'Financial Overview', sl_route('FinancialOverview')], ['Payments', 'Payments', sl_route('Payments')], ['Receivables', 'Accounts Receivable', sl_route('AccountsReceivable')],
         ['Operating costs', 'Operating costs', sl_route('CostSettings')], ['Warehouse', 'Warehouse', sl_route('Warehouse')],
         ['Riders', 'Rider dispatch', sl_route('RiderDispatch')], ['Customers', 'Customers', sl_route('Customers')], ['Staff productivity', 'Staff productivity', sl_route('StaffProductivity')],
