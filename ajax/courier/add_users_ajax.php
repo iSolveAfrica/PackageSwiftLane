@@ -118,8 +118,16 @@ if (!isset($response['status'])) {
         $data['username'] = cdp_sanitize($_POST['username']);
     }
 
+    // An agency-restricted caller's new customer belongs to that agency. Without agency_id the
+    // agency-scoped address/recipient endpoints (add_address_users_ajax.php, add_recipients_ajax.php)
+    // refuse the very customer that caller just created.
+    $scopeNewCtx = cdp_getAgencyContext();
+    $scopeNewAgency = (!empty($scopeNewCtx['is_restricted']) && $scopeNewCtx['agency_id'] !== null)
+        ? (int) $scopeNewCtx['agency_id'] : 0;
+
     $db->cdp_query('INSERT INTO cdb_users
               (   
+                  ' . ($scopeNewAgency > 0 ? 'agency_id,' : '') . '
                   username,
                   password,
                   locker,
@@ -133,6 +141,7 @@ if (!isset($response['status'])) {
               )
 
               VALUES (
+                  ' . ($scopeNewAgency > 0 ? ':agency_id,' : '') . '
                   :username,
                   :password,
                   :locker,
@@ -155,6 +164,9 @@ if (!isset($response['status'])) {
     $db->bind(':username', $data['username']);
     $db->bind(':password', $data['password']);
     $db->bind(':created', $data['created']);
+    if ($scopeNewAgency > 0) {
+        $db->bind(':agency_id', $scopeNewAgency);
+    }
 
     $db->cdp_execute();
 

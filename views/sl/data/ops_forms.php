@@ -252,7 +252,10 @@ function sl_shipFormData($user, $core, string $mode, int $id = 0): array
         }
         $itemTable = $r['K']['items'];
         $d['items'] = array_map(fn($i) => ['qty' => (float) $i->order_item_quantity, 'description' => (string) $i->order_item_description, 'weight' => (float) $i->order_item_weight, 'length' => (float) $i->order_item_length, 'width' => (float) $i->order_item_width, 'height' => (float) $i->order_item_height, 'declared_value' => (float) $i->order_item_declared_value, 'fixed_value' => (float) $i->order_item_fixed_value, 'custom_price' => isset($i->custom_price) && $i->custom_price !== null ? (float) $i->custom_price : ''], sl_rows("SELECT * FROM $itemTable WHERE order_id = :id", [':id' => $id]));
-        $d['files'] = sl_rows("SELECT id, url, name, date_file FROM {$r['K']['files']} WHERE order_id = :id ORDER BY date_file", [':id' => $id]);
+        // cdb_order_files also holds consolidation attachments (is_consolidate = 1) keyed by consolidate_id
+        // in order_id; list only this shipment's own files, as views/sl/data/shipments.php does.
+        $fileScope = $r['K']['files'] === 'cdb_order_files' ? ' AND COALESCE(is_consolidate, 0) = 0' : '';
+        $d['files'] = sl_rows("SELECT id, url, name, date_file FROM {$r['K']['files']} WHERE order_id = :id$fileScope ORDER BY date_file", [':id' => $id]);
         $d['fileDel'] = $r['K']['fileDel'];
         if ($mode === 'accept' || $mode === 'pickup') {
             // Accepting assigns the final shipment number (the legacy forms showed the next free one).

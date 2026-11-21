@@ -58,6 +58,14 @@ $numrows = $db->cdp_rowCount();
 $db->cdp_query($sql);
 $data = $db->cdp_registro();
 
+// The list permission above is customer-facing, so the id alone must not reveal another
+// customer's (or another agency's) payment: same ownership rule as the print pages.
+// A row outside the caller's scope gets the same empty answer as a missing one.
+require_once(__DIR__ . '/../../helpers/print_access.php');
+if (!$data || !cdp_printRowInScope($data, (int) $user->uid, (int) $user->userlevel)) {
+    exit;
+}
+
 
 
 $db->cdp_query("SELECT * FROM cdb_met_payment where id= '" . $data->order_pay_mode . "'");

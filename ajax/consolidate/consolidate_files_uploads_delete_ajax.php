@@ -44,8 +44,10 @@ if ($cdpFileId <= 0) {
     $errors['id'] = 'Please select file';
 } else {
     // Only consolidation files, and only for a consolidation inside the caller's agency.
-    // order_id holds a consolidate_id of either table (air or sea), so every consolidation
-    // with that id must be in scope.
+    // order_id holds a consolidate_id of either table (air or sea). The two tables have
+    // independent AUTO_INCREMENT ids, so the same number usually exists in both; requiring
+    // every match to be in scope would refuse restricted staff on their own consolidation.
+    // Accept when at least one consolidation with that id is in the caller's scope.
     $cdpDb = new Conexion;
     $cdpDb->cdp_query("SELECT id, order_id FROM cdb_order_files WHERE id = :id AND is_consolidate = 1 LIMIT 1");
     $cdpDb->bind(':id', $cdpFileId);
@@ -63,14 +65,9 @@ if ($cdpFileId <= 0) {
             }
         }
     }
+    $cdpScopeRows = array_filter($cdpScopeRows, 'cdp_ajaxRowInAgencyScope');
     if (!$cdpScopeRows) {
         $errors['id'] = 'Please select file';
-    }
-    foreach ($cdpScopeRows as $cdpScopeRow) {
-        if (!cdp_ajaxRowInAgencyScope($cdpScopeRow)) {
-            $errors['id'] = 'Please select file';
-            break;
-        }
     }
 }
 

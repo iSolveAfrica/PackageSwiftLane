@@ -57,6 +57,30 @@ if ($scopeRank < 2 && ($scopeRank === 0 || cdp_roleIsClient($scopeLevel) || !$us
     exit;
 }
 
+// Agency-restricted callers (agency users, and staff tied to an agency) may only book for their own
+// agency and for customers of that agency, as add_courier_ajax.php enforces. Without this the bulk
+// form would trust the posted agency and sender_id and create shipments under any agency/customer.
+$scopeCtx = cdp_getAgencyContext();
+if ($scopeCtx['is_restricted']) {
+    $scopeSenderAgency = null;
+    if ($scopeCtx['agency_id'] !== null) {
+        $scopeDb = new Conexion;
+        $scopeDb->cdp_query('SELECT agency_id FROM cdb_users WHERE id = :id LIMIT 1');
+        $scopeDb->bind(':id', (int) ($_POST['sender_id'] ?? 0));
+        $scopeDb->cdp_execute();
+        $scopeSenderRow = $scopeDb->cdp_registro();
+        $scopeSenderAgency = $scopeSenderRow ? (int) $scopeSenderRow->agency_id : null;
+    }
+    if ($scopeCtx['agency_id'] === null || $scopeSenderAgency !== (int) $scopeCtx['agency_id']) {
+        header('HTTP/1.1 403 Forbidden');
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
+        exit;
+    }
+    // Force the caller's own agency into the insert below.
+    $_POST['agency'] = (int) $scopeCtx['agency_id'];
+}
+
 if (empty($_POST['sender_id']))
 
     $errors['sender_id'] = $lang['validate_field_ajax150'];

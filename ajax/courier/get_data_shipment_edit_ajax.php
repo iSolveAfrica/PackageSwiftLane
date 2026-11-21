@@ -30,8 +30,22 @@ require_permission('view_shipment_list');
 
 $db = new Conexion;
 
-$order_id = cdp_sanitize($_GET['id']);
+$order_id = (int) ($_GET['id'] ?? 0);
 $list = array();
+
+// view_shipment_list is also granted to customers, drivers and agency users, and the id comes from
+// the request: only list the items of a shipment the caller may see (same rule as the print pages,
+// helpers/print_access.php). Out of scope gets the answer of a shipment with no items: [].
+require_once(__DIR__ . '/../../helpers/print_access.php');
+$user = new User;
+$db->cdp_query("SELECT sender_id, driver_id, agency FROM cdb_add_order WHERE order_id = :id LIMIT 1");
+$db->bind(':id', $order_id);
+$db->cdp_execute();
+$scopeRow = $db->cdp_registro();
+if (!cdp_printRowInScope($scopeRow, (int) $user->uid, (int) $user->userlevel)) {
+    echo json_encode($list);
+    exit;
+}
 
 $sql = "SELECT * FROM cdb_add_order_item  WHERE  order_id='" . $order_id . "'";
 

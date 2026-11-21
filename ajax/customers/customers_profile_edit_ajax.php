@@ -76,6 +76,11 @@ $row = $current['data'];
 if (!cdp_roleIsClient((int) $row->userlevel)) {
     cdp_profileRespond('error', 'This page can only edit customer accounts.');
 }
+// Another customer's profile (email, password): the caller must outrank the target, so a
+// self-service account that somehow holds edit_client can never take over a peer's account.
+if ($targetId !== (int) $user->uid && !cdp_canManageUser($user, (int) $row->userlevel)) {
+    cdp_profileRespond('error', 'You can only edit your own profile.');
+}
 
 // ── Validation ───────────────────────────────────────────────────────────────
 $errors = [];

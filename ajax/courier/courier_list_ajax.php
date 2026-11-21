@@ -62,7 +62,12 @@ if ($scopeRank === 0) {
 		$scopeCtx = cdp_getAgencyContext();
 		$agency_branch_id = (int) ($scopeCtx['agency_id'] ?? 0);
 	}
-	$sWhere .= " and  a.agency = '" . $agency_branch_id . "'";
+	if ($agency_branch_id <= 0) {
+		$agency_branch_id = (int) ($userData->agency_id ?? 0);
+	}
+	// No agency at all: show nothing. Filtering on agency 0 would list every unassigned
+	// shipment, across all customers (same fail-closed rule as load_account_receivable_ajax.php).
+	$sWhere .= $agency_branch_id > 0 ? " and  a.agency = '" . $agency_branch_id . "'" : " and 1=0";
 } else {
 	$scopeCtx = cdp_getAgencyContext();
 	if (!empty($scopeCtx['is_restricted'])) {

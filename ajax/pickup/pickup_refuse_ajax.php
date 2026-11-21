@@ -50,8 +50,14 @@ if (!empty($_POST['id'])) {
         _ajax_guard_send(404, ['success' => false, 'error' => 'Not found', 'message' => 'Pickup not found']);
     }
     if ($cdpRefuseRank < 2) {
+        // Same agency set as the pickup list (pickup_list_ajax.php): cdb_users.agency_id plus the
+        // name_off branch for agency users (userlevel 6).
         $cdpRefuseCtx = cdp_getAgencyContext();
-        $cdpOwnAgency = !empty($cdpRefuseCtx['agency_id']) && (int) $cdpRefuseRow->agency === (int) $cdpRefuseCtx['agency_id'];
+        $cdpRefuseAgencies = array_filter([
+            (int) ($cdpRefuseCtx['agency_id'] ?? 0),
+            ((int) ($userData->userlevel ?? 0) === 6) ? (int) cdp_getAgencyBranchIdForUser($userData->name_off ?? '') : 0,
+        ]);
+        $cdpOwnAgency = in_array((int) $cdpRefuseRow->agency, $cdpRefuseAgencies, true);
         $cdpOwnDriver = (int) $cdpRefuseRow->driver_id > 0 && (int) $cdpRefuseRow->driver_id === (int) ($_SESSION['userid'] ?? 0);
         $cdpRefuseOk = $cdpOwnAgency || $cdpOwnDriver;
     } else {

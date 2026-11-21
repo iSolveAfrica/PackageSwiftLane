@@ -25,6 +25,9 @@ require_once("../../loader.php");
 require_once("../../helpers/querys.php");
 require_once("../../helpers/ajax_guard.php");
 require_login();
+// Default WhatsApp templates are system settings: same gate as the page (templates_default.php),
+// so a signed-in customer or driver cannot rewire which template every notification uses.
+require_permission('view_tools');
 $db = new Conexion;
 
 $errors = array();

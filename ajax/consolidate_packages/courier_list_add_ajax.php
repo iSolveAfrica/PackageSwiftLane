@@ -117,6 +117,21 @@ if ($numrows > 0) { ?>
 
 					<?php
 
+					// Item descriptions are customer-entered and may be stored raw or already
+					// HTML-encoded (cdp_sanitize). Normalise to one HTML-safe encoding so neither
+					// this table nor cdp_add_item() (which builds HTML from the values it gets
+					// through data-* / onclick) can be used for stored XSS on the staff screen.
+					$cdpHtml = function ($v) {
+						return htmlspecialchars(html_entity_decode((string) $v, ENT_QUOTES | ENT_HTML5, 'UTF-8'), ENT_QUOTES, 'UTF-8');
+					};
+					// data-* attribute: getAttribute() returns the HTML-safe text.
+					$cdpAttr = function ($v) use ($cdpHtml) {
+						return htmlspecialchars($cdpHtml($v), ENT_QUOTES, 'UTF-8');
+					};
+					// JS string inside onclick: the JS value is the HTML-safe text.
+					$cdpJs = function ($v) use ($cdpHtml) {
+						return htmlspecialchars(addslashes($cdpHtml($v)), ENT_QUOTES, 'UTF-8');
+					};
 					$count = 0;
 					foreach ($data as $row) {
                         // Get package total price.
@@ -165,24 +180,24 @@ if ($numrows > 0) { ?>
 							data-length="<?php echo $length; ?>"
 							data-width="<?php echo $width; ?>"
 							data-height="<?php echo $height; ?>"
-							data-tracking="<?php echo $tracking; ?>"
-							data-order-no="<?php echo $row->order_no; ?>"
-							data-order-prefix="<?php echo $row->order_prefix; ?>"
+							data-tracking="<?php echo $cdpAttr($tracking); ?>"
+							data-order-no="<?php echo $cdpAttr($row->order_no); ?>"
+							data-order-prefix="<?php echo $cdpAttr($row->order_prefix); ?>"
                             data-sender="<?php echo htmlspecialchars(cdp_nameWithLocker($sender), ENT_QUOTES, 'UTF-8'); ?>"
-                            data-description="<?php echo ($description->order_item_description ?? ''); ?>"
+                            data-description="<?php echo $cdpAttr(($description->order_item_description ?? '')); ?>"
                             data-total-order="<?php echo cdb_money_format($row->total_order); ?>"
                             >
 
 							<td><?php echo htmlspecialchars(cdp_nameWithLocker($sender), ENT_QUOTES, 'UTF-8'); ?></td>
 
-							<td><?php echo $row->order_prefix . $row->order_no; ?></td>
+							<td><?php echo $cdpHtml($row->order_prefix . $row->order_no); ?></td>
 							<?php
 							$db->cdp_query("SELECT tracking_purchase FROM cdb_customers_packages WHERE order_id = '" . $row->order_id . "'");
 							$__pt = $db->cdp_registro();
 							?>
 							<td><?php echo ($__pt && !empty($__pt->tracking_purchase)) ? htmlspecialchars((string) $__pt->tracking_purchase) : 'N/A'; ?></td>
 
-                            <td><?php echo ($description->order_item_description ?? ''); ?></td>
+                            <td><?php echo $cdpHtml(($description->order_item_description ?? '')); ?></td>
 
 							<td><?php echo $weight; ?></td>
 
@@ -207,7 +222,7 @@ if ($numrows > 0) { ?>
 
 							<td class="text-right">
 								<button type="button" name="add_row" id="add_row" 
-									onclick="cdp_add_item('<?php echo $row->order_id; ?>','<?php echo $total_metric; ?>', '<?php echo $weight; ?>', '<?php echo $length; ?>', '<?php echo $width; ?>', '<?php echo $height; ?>', '<?php echo $tracking; ?>', '<?php echo $row->order_no; ?>','<?php echo $row->order_prefix; ?>', '<?php echo htmlspecialchars(addslashes(cdp_nameWithLocker($sender)), ENT_QUOTES, 'UTF-8'); ?>', '<?php echo ($description->order_item_description ?? ''); ?>', '<?php echo cdb_money_format($row->total_order); ?>'); 
+									onclick="cdp_add_item('<?php echo $row->order_id; ?>','<?php echo $total_metric; ?>', '<?php echo $weight; ?>', '<?php echo $length; ?>', '<?php echo $width; ?>', '<?php echo $height; ?>', '<?php echo $cdpJs($tracking); ?>', '<?php echo $cdpJs($row->order_no); ?>','<?php echo $cdpJs($row->order_prefix); ?>', '<?php echo htmlspecialchars(addslashes(cdp_nameWithLocker($sender)), ENT_QUOTES, 'UTF-8'); ?>', '<?php echo $cdpJs(($description->order_item_description ?? '')); ?>', '<?php echo cdb_money_format($row->total_order); ?>'); 
 									$('#tb_row_id_<?php echo $row->order_id; ?>').addClass('marked-row').hide();" 
 									class="btn btn-outline-success btn-sm add_row">
 									<i class="fa fa-plus"></i>

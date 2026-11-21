@@ -8291,7 +8291,9 @@ function cdp_updateItemConsolidatePackages($datos)
 
     $db = new Conexion;
 
-    $db->cdp_query("UPDATE cdb_consolidate_packages SET                
+    // The package rows (cdb_customers_packages) carry order_id / is_consolidate;
+    // cdb_consolidate_packages has neither column, so the old target always failed.
+    $db->cdp_query("UPDATE cdb_customers_packages SET                
            
             is_consolidate ='0'          
 
@@ -8311,7 +8313,9 @@ function cdp_updateConsolidateDeletePackages($id)
 
     $db = new Conexion;
 
-    $db->cdp_query("UPDATE cdb_consolidate_packages SET                
+    // The package rows (cdb_customers_packages) carry order_id / is_consolidate;
+    // cdb_consolidate_packages has neither column, so the old target always failed.
+    $db->cdp_query("UPDATE cdb_customers_packages SET                
            
             is_consolidate ='0'          
 

@@ -52,6 +52,73 @@ if (cdp_roleRankById((int) ($scopeUser->userlevel ?? 0)) < 2) {
         echo json_encode(['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
         exit;
     }
+
+    // The scope check above only covers the row as stored. The UPDATE below writes sender, agency
+    // and driver from the request, so a caller below staff rank could otherwise move the shipment
+    // to another customer or agency (out of their scope, into someone else's notifications) or
+    // pick any user as its driver. Keep the stored values for them (same rule as accept_courier_ajax.php).
+    $_POST['sender_id'] = (int) $scopeRow->sender_id;
+    if ((int) $scopeRow->agency > 0) {
+        $_POST['agency'] = (int) $scopeRow->agency;
+    } elseif ($scopeAgencies) {
+        $_POST['agency'] = (int) reset($scopeAgencies);
+    } else {
+        $_POST['agency'] = (int) $scopeRow->agency;
+    }
+    if (!$user->cdp_hasPermission('assign_drivers')) {
+        $_POST['driver_id'] = (int) $scopeRow->driver_id;
+    }
+
+    // The recipient, the sender address and the recipient address must belong to that sender
+    // (or to its recipient), so another customer's contact or address cannot be attached to,
+    // and printed on, this shipment. The type is normalised once, as it is loaded further down.
+    $scopeSender = (int) $scopeRow->sender_id;
+    $scopeRecipient = (int) ($_POST['recipient_id'] ?? 0);
+    $scopeType = cdp_sanitize($_POST['recipient_type'] ?? 'recipient');
+    $_POST['recipient_type'] = $scopeType;
+    if ($scopeType === 'user') {
+        $scopeRecipientOk = $scopeRecipient === $scopeSender;
+    } else {
+        $scopeDb->cdp_query("SELECT sender_id, agency_id FROM cdb_recipients WHERE id = :id LIMIT 1");
+        $scopeDb->bind(':id', $scopeRecipient);
+        $scopeDb->cdp_execute();
+        $scopeRec = $scopeDb->cdp_registro();
+        $scopeRecipientOk = $scopeRec && (
+            (int) $scopeRec->sender_id === $scopeSender
+            || in_array((int) ($scopeRec->agency_id ?? 0), $scopeAgencies, true)
+        );
+    }
+    $scopeAddrOk = true;
+    $scopeAddrId = (int) ($_POST['sender_address_id'] ?? 0);
+    if ($scopeAddrId > 0) {
+        $scopeDb->cdp_query("SELECT user_id FROM cdb_senders_addresses WHERE id_addresses = :id LIMIT 1");
+        $scopeDb->bind(':id', $scopeAddrId);
+        $scopeDb->cdp_execute();
+        $scopeAddr = $scopeDb->cdp_registro();
+        $scopeAddrOk = $scopeAddr && (int) $scopeAddr->user_id === $scopeSender;
+    }
+    $scopeRAddrId = (int) ($_POST['recipient_address_id'] ?? 0);
+    if ($scopeRAddrId > 0) {
+        if ($scopeType === 'user') {
+            $scopeDb->cdp_query("SELECT user_id AS owner_id FROM cdb_senders_addresses WHERE id_addresses = :id LIMIT 1");
+            $scopeRAddrOwner = $scopeSender;
+        } else {
+            $scopeDb->cdp_query("SELECT recipient_id AS owner_id FROM cdb_recipients_addresses WHERE id_addresses = :id LIMIT 1");
+            $scopeRAddrOwner = $scopeRecipient;
+        }
+        $scopeDb->bind(':id', $scopeRAddrId);
+        $scopeDb->cdp_execute();
+        $scopeRAddr = $scopeDb->cdp_registro();
+        if (!$scopeRAddr || (int) $scopeRAddr->owner_id !== $scopeRAddrOwner) {
+            $scopeAddrOk = false;
+        }
+    }
+    if (($scopeRecipient > 0 && !$scopeRecipientOk) || !$scopeAddrOk) {
+        header('HTTP/1.1 403 Forbidden');
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
+        exit;
+    }
 }
 
 // =======================

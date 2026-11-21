@@ -31,8 +31,18 @@ $errors = array();
 session_start();
 
 
-if (empty($_POST['order_id_confirm_payment']))
+$cdpConsId = (int) ($_POST['order_id_confirm_payment'] ?? 0);
+$cdpCons   = null;
+
+if ($cdpConsId <= 0) {
     $errors['order_id_confirm_payment'] = 'Please select invoice';
+} else {
+    // Agency-restricted staff confirm payments only on their own agency's consolidations.
+    $cdpCons = cdp_getConsolidatePrint($cdpConsId)['data'];
+    if (!$cdpCons || !cdp_ajaxRowInAgencyScope($cdpCons)) {
+        $errors['order_id_confirm_payment'] = 'Please select invoice';
+    }
+}
 
 
 $status_invoice = 1;
@@ -42,7 +52,7 @@ $status_invoice = 1;
 if (empty($errors)) {
 
     $data = array(
-        'order_id' => trim($_POST['order_id_confirm_payment']),
+        'order_id' => $cdpConsId,
         'status_invoice' => $status_invoice
     );
 
@@ -77,7 +87,7 @@ if (empty($errors)) {
 
 
         $db->bind(':user_id',  $_SESSION['userid']);
-        $db->bind(':order_id', $_POST["order_id_confirm_payment"]);
+        $db->bind(':order_id', $cdpConsId);
         $db->bind(':notification_description', $lang['notification_shipment24']);
         $db->bind(':shipping_type', '2');
         $db->bind(':notification_date',  date("Y-m-d H:i:s"));
@@ -95,7 +105,8 @@ if (empty($errors)) {
             cdp_insertNotificationsUsers($notification_id, $key->id);
         }
 
-        cdp_insertNotificationsUsers($notification_id, $_POST['customer_id_confirm_payment']);
+        // Notify the consolidation's own customer, not a user id taken from the request.
+        cdp_insertNotificationsUsers($notification_id, (int) $cdpCons->sender_id);
     } else {
 
         $errors['critical_error'] = $lang['message_ajax_error1'];

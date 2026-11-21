@@ -55,6 +55,14 @@ $numrows = $db->cdp_rowCount();
 $db->cdp_query($sql);
 $data = $db->cdp_registro();
 
+// view_shipment_list is also granted to customers, drivers and agency users, and the id comes from
+// the request: only show the payment of a shipment the caller may see (same rule as the print
+// pages, helpers/print_access.php). Out of scope is answered like a missing shipment: nothing.
+require_once(__DIR__ . '/../../helpers/print_access.php');
+if (!$data || !cdp_printRowInScope($data, (int) $user->uid, (int) $user->userlevel)) {
+    exit;
+}
+
 
 
 $db->cdp_query("SELECT * FROM cdb_met_payment where id= '" . $data->order_pay_mode . "'");

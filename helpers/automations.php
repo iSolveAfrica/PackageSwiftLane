@@ -33,7 +33,7 @@ function cdp_automationTriggers(): array
         'shipment.created'   => ['label' => 'Shipment registered', 'icon' => 'i-newdoc', 'entity' => 'shipment', 'hook' => 'ajax/courier/add_courier_ajax.php after cdp_insertCourierShipment'],
         'package.status'     => ['label' => 'Sea package status changes', 'icon' => 'i-ship', 'entity' => 'package', 'hook' => 'ajax/customers_packages/customers_packages_update_multiple_ajax.php'],
         'package.created'    => ['label' => 'Sea package registered', 'icon' => 'i-box', 'entity' => 'package', 'hook' => 'ajax/customers_packages/add_customers_packages_ajax.php'],
-        'pickup.requested'   => ['label' => 'Pickup requested', 'icon' => 'i-truck', 'entity' => 'shipment', 'hook' => 'ajax/pickup/add_pickup_ajax.php, add_pickup_client_ajax.php'],
+        'pickup.requested'   => ['label' => 'Pickup requested', 'icon' => 'i-truck', 'entity' => 'shipment', 'hook' => 'ajax/sl/pickup_ajax.php (case create) after the pickup rows are written'],
         'payment.received'   => ['label' => 'Payment received', 'icon' => 'i-card', 'entity' => 'payment', 'hook' => 'ajax/gateway/* after the payment row is written'],
         'invoice.overdue'    => ['label' => 'Invoice overdue (daily check)', 'icon' => 'i-receipt', 'entity' => 'shipment', 'hook' => 'cron/pickup_aging or a daily cron calling cdp_automationsFire per overdue order'],
         'customer.signed_up' => ['label' => 'Customer signs up', 'icon' => 'i-user', 'entity' => 'customer', 'hook' => 'ajax/sign_up_ajax.php after the account is created'],

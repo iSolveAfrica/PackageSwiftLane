@@ -55,8 +55,15 @@ if (!empty($_POST['id_cancel'])) {
     } elseif ($cdpCancelRank < 1) {
         $cdpCancelOk = (int) $cdpCancelRow->sender_id === $cdpUid && (int) $cdpCancelRow->status_courier === 14;
     } else {
+        // Same agency set as the pickup list (pickup_list_ajax.php) and add_courier_tracking.php:
+        // cdb_users.agency_id, plus the name_off branch for agency users (userlevel 6), so a
+        // pickup the user can see in the list can also be cancelled.
         $cdpCancelCtx = cdp_getAgencyContext();
-        $cdpCancelOk = (!empty($cdpCancelCtx['agency_id']) && (int) $cdpCancelRow->agency === (int) $cdpCancelCtx['agency_id'])
+        $cdpCancelAgencies = array_filter([
+            (int) ($cdpCancelCtx['agency_id'] ?? 0),
+            ((int) ($userData->userlevel ?? 0) === 6) ? (int) cdp_getAgencyBranchIdForUser($userData->name_off ?? '') : 0,
+        ]);
+        $cdpCancelOk = in_array((int) $cdpCancelRow->agency, $cdpCancelAgencies, true)
             || ((int) $cdpCancelRow->driver_id > 0 && (int) $cdpCancelRow->driver_id === $cdpUid);
     }
     if (!$cdpCancelOk) {

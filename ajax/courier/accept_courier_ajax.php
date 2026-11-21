@@ -80,6 +80,10 @@ if (cdp_roleRankById((int) ($scopeUser->userlevel ?? 0)) < 2) {
         $_POST['agency'] = (int) $scopeRow->agency;
     } elseif ($scopeAgencies) {
         $_POST['agency'] = (int) reset($scopeAgencies);
+    } else {
+        // Neither the row nor the caller names an agency: keep the stored value (0) rather
+        // than a posted one, so the caller cannot push the shipment into an agency of their choice.
+        $_POST['agency'] = (int) $scopeRow->agency;
     }
     if (!$user->cdp_hasPermission('assign_drivers')) {
         $_POST['driver_id'] = (int) $scopeRow->driver_id;
@@ -89,7 +93,12 @@ if (cdp_roleRankById((int) ($scopeUser->userlevel ?? 0)) < 2) {
     // contact or address cannot be attached to (and printed on) this shipment.
     $scopeSender = (int) $scopeRow->sender_id;
     $scopeRecipient = (int) ($_POST['recipient_id'] ?? 0);
-    if (($_POST['recipient_type'] ?? 'recipient') === 'user') {
+    // Normalise the type once, the same way the receiver and its address are loaded further
+    // down (cdp_sanitize trims), so ' user' cannot pass this check as one kind of id and then
+    // be loaded as the other.
+    $scopeType = cdp_sanitize($_POST['recipient_type'] ?? 'recipient');
+    $_POST['recipient_type'] = $scopeType;
+    if ($scopeType === 'user') {
         $scopeRecipientOk = $scopeRecipient === $scopeSender;
     } else {
         $scopeDb->cdp_query("SELECT sender_id, agency_id FROM cdb_recipients WHERE id = :id LIMIT 1");
@@ -109,6 +118,24 @@ if (cdp_roleRankById((int) ($scopeUser->userlevel ?? 0)) < 2) {
         $scopeDb->cdp_execute();
         $scopeAddr = $scopeDb->cdp_registro();
         $scopeAddrOk = $scopeAddr && (int) $scopeAddr->user_id === $scopeSender;
+    }
+    // The recipient address is stored and printed too: it must belong to that recipient
+    // (for type 'user' the sender doubles as recipient, so one of the sender's addresses).
+    $scopeRAddrId = (int) ($_POST['recipient_address_id'] ?? 0);
+    if ($scopeRAddrId > 0) {
+        if ($scopeType === 'user') {
+            $scopeDb->cdp_query("SELECT user_id AS owner_id FROM cdb_senders_addresses WHERE id_addresses = :id LIMIT 1");
+            $scopeRAddrOwner = $scopeSender;
+        } else {
+            $scopeDb->cdp_query("SELECT recipient_id AS owner_id FROM cdb_recipients_addresses WHERE id_addresses = :id LIMIT 1");
+            $scopeRAddrOwner = $scopeRecipient;
+        }
+        $scopeDb->bind(':id', $scopeRAddrId);
+        $scopeDb->cdp_execute();
+        $scopeRAddr = $scopeDb->cdp_registro();
+        if (!$scopeRAddr || (int) $scopeRAddr->owner_id !== $scopeRAddrOwner) {
+            $scopeAddrOk = false;
+        }
     }
     if (($scopeRecipient > 0 && !$scopeRecipientOk) || !$scopeAddrOk) {
         header('HTTP/1.1 403 Forbidden');
