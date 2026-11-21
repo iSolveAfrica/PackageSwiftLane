@@ -10,6 +10,7 @@ function sl_route($name, $params = []) { return strtolower($name) . '.php' . ($p
 function sl_url($params = []) { return '?' . http_build_query($params); }
 function sl_num($n) { return number_format((float) $n); }
 function sl_pager() { return ''; }
+function cdp_kingName() { return 'King'; }
 function sl_date($value, $fmt = 'M j, Y') { return date($fmt, strtotime((string) $value)); }
 function sl_self() { return 'fixture.php'; }
 function sl_ago($v) { return '1 d ago'; }

@@ -97,7 +97,8 @@
         if (qIn) { qIn.value = ''; state.q = ''; }
         setTierUi(p);
         model.replaceChildren();
-        fillModels(loaded[p] || presets[p] || [], remembered[p]);
+        var btnPresets = {}; try { btnPresets = JSON.parse(b.getAttribute('data-models') || '{}'); } catch (e) {}
+        fillModels(loaded[p] || presets[p] || Object.keys(btnPresets).map(function (id) { return { id: id, name: btnPresets[id] }; }), remembered[p]);
         hint.textContent = 'Choose a model, or load the full list from your provider.'; out.textContent = '';
         document.querySelectorAll('[data-prov]').forEach(function (x) { x.classList.toggle('on', x === b); });
         document.querySelectorAll('[data-key-for]').forEach(function (x) { x.style.display = x.getAttribute('data-key-for') !== p ? 'none' : ''; });
