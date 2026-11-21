@@ -20,6 +20,13 @@ if (CDP_APP_MODE_DEMO === true) {
 }
 $core = new Core();
 $op = (string) ($_POST['op'] ?? '');
+// Customers may only dispute a status and save their own form defaults. Every other
+// op is staff work; 'status_bulk' is gated by the customer-facing 'track_shipment'
+// permission (soft pass for customers), so without this a customer could set their own
+// shipments to Delivered/Cancelled and fire the delivery queue.
+if (sl_userIs('client') && !in_array($op, ['dispute', 'prefs'], true)) {
+    sl_json(['success' => false, 'message' => 'Not allowed'], 403);
+}
 $actor = (int) $_SESSION['userid'];
 $db = new Conexion();
 

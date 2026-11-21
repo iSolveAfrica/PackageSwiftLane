@@ -11,6 +11,7 @@
 
 require_once(__DIR__ . '/../../loader.php');
 require_once(__DIR__ . '/../../helpers/fs_gateways.php');
+require_once(__DIR__ . '/../../helpers/fs_payments.php');
 
 $raw  = file_get_contents('php://input');
 $data = json_decode($raw);
@@ -24,25 +25,23 @@ if (is_object($data)) {
     $status = (string) ($d->Status ?? ($d->status ?? ''));
 }
 
-if ($ref !== '' && function_exists('cdp_fsVerifyHubtel')) {
+if ($ref !== '' && function_exists('cdp_fsRecheckPayment')) {
     try {
-        // Authoritative re-check. The callback body is UNTRUSTED — we NEVER treat
-        // its own "Status" as proof of payment. Only a real success from Hubtel's
-        // Status API grants 'success'; otherwise we mark pending, never success.
-        $v = cdp_fsVerifyHubtel($ref);
-        if (!empty($v['ok'])) {
-            $gs = 'success';
-        } else {
-            $vs = strtolower((string) ($v['status'] ?? ''));
-            $gs = ($vs !== '' && $vs !== 'unconfigured') ? $vs : 'pending';
-        }
+        // Authoritative re-check. The callback body is UNTRUSTED (no signature)
+        // — we NEVER treat its own "Status" as proof of payment.
+        // Only Hubtel rows: cash/Paystack rows share the reference column (cash
+        // stores an operator-typed reference), and a forged callback must not
+        // be able to rewrite their status. cdp_fsRecheckPayment() leaves the
+        // row untouched when Hubtel is unreachable/unconfigured, and applies a
+        // real change through cdp_fsApplyPaymentStatus() so clearance, the
+        // billing cache and the audit trail stay consistent.
         $db = new Conexion;
-        $db->cdp_query("UPDATE cdb_fs_payments SET gateway_status = :s, gateway_payload = :p
-                        WHERE reference = :r");
-        $db->bind(':s', $gs);
-        $db->bind(':p', mb_substr($raw, 0, 4000));
+        $db->cdp_query("SELECT id FROM cdb_fs_payments WHERE reference = :r AND mode = 'hubtel'");
         $db->bind(':r', $ref);
         $db->cdp_execute();
+        foreach ((array) $db->cdp_registros() as $p) {
+            cdp_fsRecheckPayment((int) $p->id, null, 'hubtel_callback');
+        }
     } catch (Throwable $e) {
         // swallow — always 200
     }

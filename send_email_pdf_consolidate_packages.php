@@ -42,14 +42,28 @@ if (!isset($_SESSION['userid'])) {
     exit;
 }
 
-if (isset($_GET['id'])) {
-    $data = cdp_getConsolidatePackage($_GET['id']);
-}
+// The id comes from the query string: cast it once and use only the integer
+// below, so it can never be spliced into SQL.
+$cdp_id = (int) ($_GET['id'] ?? 0);
+$data = cdp_getConsolidatePackage($cdp_id);
 
 
 
 
 $row = $data['data'];
+
+if (!$row) {
+    http_response_code(404);
+    exit;
+}
+
+// Customers may only print/e-mail their own documents; without this any
+// logged-in customer could pull another customer's data by guessing ids.
+require_once(__DIR__ . '/helpers/rbac.php');
+if (cdp_roleRankById((int) ($_SESSION['userlevel'] ?? 0)) < 1 && (int) $row->sender_id !== (int) $_SESSION['userid']) {
+    http_response_code(403);
+    exit;
+}
 
 $core = new Core;
 $db = new Conexion;
@@ -90,7 +104,8 @@ $db->cdp_query("SELECT * FROM cdb_address_shipments where order_track='" . $row-
 $address_order = $db->cdp_registro();
 
 
-$db->cdp_query("SELECT * FROM cdb_consolidate_detail WHERE consolidate_id='" . $_GET['id'] . "'");
+$db->cdp_query("SELECT * FROM cdb_consolidate_detail WHERE consolidate_id=:id");
+$db->bind(':id', $cdp_id);
 $order_items = $db->cdp_registros();
 
 $dias_ = array("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday");

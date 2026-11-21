@@ -7,6 +7,18 @@
 require_once __DIR__ . '/ops_common.php';
 
 /**
+ * sl_scalar() memoised for one request. The Overview body (overview.php) and these cards
+ * show many of the same status counts; identical SQL + binds now hit the database once.
+ */
+function sl_ovScalar(string $sql, array $binds = [], $default = 0)
+{
+    static $memo = [];
+    $k = $sql . "\0" . serialize($binds) . "\0" . serialize($default);
+    if (!array_key_exists($k, $memo)) $memo[$k] = sl_scalar($sql, $binds, $default);
+    return $memo[$k];
+}
+
+/**
  * The view bar: mode (all | air | sea) and period (today | week | month | year | custom from/to).
  * Returns the current range [from, to) and the previous range of the same length.
  */
@@ -133,10 +145,10 @@ function sl_ovProfile($user, $userData, array $view): array
         $p['chips'][] = ['icon' => 'i-ticket', 'l' => 'My open tickets', 'n' => (int) sl_scalar("SELECT COUNT(*) FROM cdb_cs_tickets WHERE assignee_id = :u AND status NOT IN ('resolved','closed','merged')", [':u' => $uid]), 'href' => sl_route('CsInbox', ['view' => 'mine'])];
     }
     if ($user->cdp_hasPermission('view_client_list') && sl_columnExists('cdb_users', 'approve')) {
-        $p['chips'][] = ['icon' => 'i-shield', 'l' => 'Approvals', 'n' => (int) sl_scalar('SELECT COUNT(*) FROM cdb_users WHERE userlevel = 1 AND approve = 0 AND active = 1'), 'href' => sl_route('Customers', ['filter' => 'unapproved'])];
+        $p['chips'][] = ['icon' => 'i-shield', 'l' => 'Approvals', 'n' => (int) sl_ovScalar('SELECT COUNT(*) FROM cdb_users WHERE userlevel = 1 AND approve = 0 AND active = 1'), 'href' => sl_route('Customers', ['filter' => 'unapproved'])];
     }
     if ($user->cdp_hasPermission('prealert_list')) {
-        $p['chips'][] = ['icon' => 'i-inbox', 'l' => 'Pre-alerts', 'n' => (int) sl_scalar('SELECT COUNT(*) FROM cdb_pre_alert WHERE is_package = 0'), 'href' => sl_route('PreAlerts')];
+        $p['chips'][] = ['icon' => 'i-inbox', 'l' => 'Pre-alerts', 'n' => (int) sl_ovScalar('SELECT COUNT(*) FROM cdb_pre_alert WHERE is_package = 0'), 'href' => sl_route('PreAlerts')];
     }
     return $p;
 }
@@ -170,13 +182,13 @@ function sl_ovCards($user, array $view): array
 
     // Deliveries & pickups today
     if ($user->cdp_hasPermission(['view_pickup_list', 'dispatch_riders', 'view_user_list'])) {
-        $outN = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier = 7 $agency");
-        $riders = (int) sl_scalar("SELECT COUNT(DISTINCT a.driver_id) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier = 7 AND a.driver_id > 0 $agency");
+        $outN = (int) sl_ovScalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier = 7 $agency");
+        $riders = (int) sl_ovScalar("SELECT COUNT(DISTINCT a.driver_id) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier = 7 AND a.driver_id > 0 $agency");
         // delivered = a delivered/picked-up tracking event; scoped through the shipment for agency users
         $trk = "FROM cdb_courier_track t" . ($agency !== '' ? " JOIN cdb_add_order a ON t.order_track = CONCAT(a.order_prefix, a.order_no)" : '') . " WHERE t.status_courier IN (8,15)" . ($agency !== '' ? " $agency" : '');
         $delivered = (int) sl_scalar("SELECT COUNT(DISTINCT t.order_track) $trk AND t.t_date >= CURDATE()");
         $pickT = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.is_pickup = 1 AND a.order_date >= CURDATE() $agency");
-        $unass = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.is_pickup = 1 AND a.status_courier IN (1,14) AND (a.driver_id IS NULL OR a.driver_id = 0) $agency");
+        $unass = (int) sl_ovScalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.is_pickup = 1 AND a.status_courier IN (1,14) AND (a.driver_id IS NULL OR a.driver_id = 0) $agency");
         $daily = sl_ovDaily("SELECT DATE(t.t_date) AS day, COUNT(DISTINCT t.order_track) AS n $trk AND t.t_date >= :d0 GROUP BY DATE(t.t_date)", []);
         $cards[] = ['key' => 'delivery', 'tone' => 'amber', 'icon' => 'i-truck', 'eyebrow' => 'Deliveries today', 'big' => sl_num($delivered) . ' handed over',
             'lede' => sl_num($outN) . ' out with ' . sl_num($riders) . ' rider' . ($riders === 1 ? '' : 's') . ($unass ? ' · ' . $unass . ' pickups without a rider' : ''),
@@ -240,12 +252,12 @@ function sl_ovCards($user, array $view): array
 
     // Warehouse now
     if ($user->cdp_hasPermission(['warehouse_view', 'view_warehouse_delivery'])) {
-        $inBay = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (4,6,32) $agency") + (int) sl_scalar("SELECT COUNT(*) FROM cdb_customers_packages a WHERE a.status_courier IN (4,6,32) $agency");
-        $ready = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (6,32) $agency");
-        $arriving = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier = 3 $agency");
-        $held = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (12,25,28,29) $agency");
+        $inBay = (int) sl_ovScalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (4,6,32) $agency") + (int) sl_ovScalar("SELECT COUNT(*) FROM cdb_customers_packages a WHERE a.status_courier IN (4,6,32) $agency");
+        $ready = (int) sl_ovScalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (6,32) $agency");
+        $arriving = (int) sl_ovScalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier = 3 $agency");
+        $held = (int) sl_ovScalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (12,25,28,29) $agency");
         $old = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (6,32) AND a.order_date < CURDATE() - INTERVAL 30 DAY $agency");
-        $cap = sl_tableExists('cdb_sl_settings') ? (int) sl_scalar("SELECT setting_value FROM cdb_sl_settings WHERE setting_key = 'warehouse_bays'", [], 0) : 0;
+        $cap = sl_tableExists('cdb_sl_settings') ? (int) sl_ovScalar("SELECT setting_value FROM cdb_sl_settings WHERE setting_key = 'warehouse_bays'", [], 0) : 0;
         $daily = $agency === '' && sl_tableExists('cdb_warehouse_scans') ? sl_ovDaily('SELECT DATE(created_at) AS day, COUNT(*) AS n FROM cdb_warehouse_scans WHERE created_at >= :d0 GROUP BY DATE(created_at)', []) : [];
         $cards[] = ['key' => 'warehouse', 'tone' => 'mint', 'icon' => 'i-warehouse', 'eyebrow' => 'Warehouse now', 'big' => sl_num($inBay) . ($cap ? ' / ' . sl_num($cap) : '') . ' in bays',
             'lede' => sl_num($arriving) . ' arriving · ' . sl_num($ready) . ' ready for pickup' . ($cap ? ' · ' . sl_pct($inBay, $cap) . '% full' : ''),
@@ -254,6 +266,21 @@ function sl_ovCards($user, array $view): array
             'href' => sl_route('Warehouse'), 'alert' => $held ? $held . ' parcels held' : ''];
     }
     return $cards;
+}
+
+/** Short-lived per-session cache for slow, slowly-changing counters (falls back to a live query). */
+function sl_ovCachedInt(string $key, int $ttl, callable $fn): int
+{
+    if (session_status() !== PHP_SESSION_ACTIVE) return (int) $fn();
+    $k = md5($key);
+    $hit = $_SESSION['sl_ov_cache'][$k] ?? null;
+    if (is_array($hit) && ($hit[0] ?? 0) > time() - $ttl) return (int) $hit[1];
+    $n = (int) $fn();
+    $cache = is_array($_SESSION['sl_ov_cache'] ?? null) ? $_SESSION['sl_ov_cache'] : [];
+    $cache = array_filter($cache, fn($v) => is_array($v) && ($v[0] ?? 0) > time() - 3600);
+    $cache[$k] = [time(), $n];
+    $_SESSION['sl_ov_cache'] = $cache;
+    return $n;
 }
 
 /** Air & sea freight for the chosen view: total, change, split and a per-day (hour, month) chart. */
@@ -294,8 +321,11 @@ function sl_ovFreight($user, array $view): array
         $pmap = [];
         foreach (sl_rows("SELECT DATE_FORMAT($bucketCol, '$fmt') AS b, COUNT(*) AS n FROM {$s['tbl']} a WHERE a.order_date >= :f AND a.order_date < :t {$s['w']} $agency GROUP BY b", [':f' => $view['prevFrom'], ':t' => $view['prevTo']]) as $r) $pmap[$r->b] = (int) $r->n;
         foreach ($prevKeys as $i => $key) $prev[$i] += $pmap[$key] ?? 0;
-        $ptot += (int) sl_scalar("SELECT COUNT(*) FROM {$s['tbl']} a WHERE a.order_date >= :f AND a.order_date < :t {$s['w']} $agency", [':f' => $view['prevFrom'], ':t' => $view['prevTo']]);
-        $book += (int) sl_scalar("SELECT COUNT(*) FROM {$s['tbl']} a WHERE 1 = 1 {$s['w']} $agency");
+        // same WHERE as the grouped query above, so its buckets already add up to the period total
+        $ptot += array_sum($pmap);
+        // all-time count is a whole-table scan; it barely moves, so keep it per session for 10 minutes
+        $bookSql = "SELECT COUNT(*) FROM {$s['tbl']} a WHERE 1 = 1 {$s['w']} $agency";
+        $book += sl_ovCachedInt($bookSql, 600, fn() => (int) sl_scalar($bookSql));
     }
     $total = $tot['air'] + $tot['sea'];
     // running totals: is this period ahead of or behind the last one at the same point?

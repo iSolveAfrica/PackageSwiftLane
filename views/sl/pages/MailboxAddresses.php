@@ -17,7 +17,14 @@
   <section class="sl-card col g12">
     <div class="sl-ch" style="margin:0"><div class="row g10"><span class="sl-tile mono"><?= h($a['cc'] ?: '··') ?></span><h2 class="sl-ct"><?= h($a['country']) ?></h2></div><button class="sl-btn ghost sm" type="button" data-sl-copy="<?= h($a['plain']) ?>"><i class="ic ic-sm i-copy" aria-hidden="true"></i>Copy</button></div>
     <div class="sl-kv">
-      <div><span>Address</span><span style="text-align:right"><?= $a['html'] /* cdp_mailboxAddressHtml() escapes plain addresses; HTML ones are admin-authored */ ?></span></div>
+      <div><span>Address</span><span style="text-align:right"><?php
+        // The address text is stored as posted, and cdp_mailboxAddressHtml() returns HTML addresses
+        // unescaped, so markup here is not trusted. Keep only the line breaks and print the rest as text.
+        $addrText = preg_replace('~<\s*br\s*/?\s*>|<\s*/\s*(p|div|li)\s*>~i', "\n", (string) $a['html']);
+        $addrText = html_entity_decode(strip_tags($addrText), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $addrText = implode("\n", array_filter(array_map('trim', explode("\n", $addrText)), 'strlen'));
+        echo nl2br(h($addrText), false);
+      ?></span></div>
       <div><span>Locker ID</span><span class="mono row g6"><?= h($d['locker']) ?><button class="sl-ib sm" type="button" aria-label="Copy locker" data-sl-copy="<?= h($d['locker']) ?>"><i class="ic ic-sm i-copy" aria-hidden="true"></i></button></span></div>
       <div><span>City</span><span><?= h($a['city']) ?: '—' ?></span></div>
       <div><span>Postcode</span><span class="mono"><?= h($a['postcode']) ?: '—' ?></span></div>

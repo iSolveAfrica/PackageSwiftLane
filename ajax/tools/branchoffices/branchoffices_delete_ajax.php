@@ -27,9 +27,19 @@ require_once(__DIR__ . '/../../../helpers/ajax_guard.php');
 require_login();
 require_permission('view_tools');
 
+// Deletes must arrive as POST: require_login() only checks the CSRF token on
+// POST, so a GET link (e.g. ?id=5 in an email) must never reach the delete.
+if (strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+    http_response_code(405);
+    header('Allow: POST');
+    header('Content-type: application/json; charset=UTF-8');
+    echo json_encode(['status' => 'error', 'message' => 'POST required']);
+    exit;
+}
+
 $db = new Conexion;
 
-$id = $_REQUEST['id'];
+$id = $_POST['id'] ?? '';
 
 $errors = array();
 

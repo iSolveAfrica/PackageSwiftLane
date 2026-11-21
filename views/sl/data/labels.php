@@ -120,8 +120,9 @@ function sl_labelFor(int $id, string $type = 'air'): ?array
     $phone = (string) ($recip->phone ?? '');
     $masked = strlen($phone) > 6 ? substr($phone, 0, max(3, strlen($phone) - 7)) . ' *** ' . substr($phone, -4) : $phone;
     $bay = '';
-    if (sl_columnExists($type === 'sea' ? 'cdb_customers_packages' : 'cdb_add_order', 'bay')) {
-        $bay = (string) ($o->bay ?? '');
+    // the column is warehouse_bay (migrations/2026_11_06_warehouse_packages.sql), not bay
+    if (sl_columnExists($type === 'sea' ? 'cdb_customers_packages' : 'cdb_add_order', 'warehouse_bay')) {
+        $bay = (string) ($o->warehouse_bay ?? '');
     }
     return [
         'id' => $id, 'type' => $type, 'track' => $track, 'carrier' => $courier->name_com ?? '', 'carrierNo' => $carrierNo,

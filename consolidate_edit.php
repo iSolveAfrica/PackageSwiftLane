@@ -7,6 +7,11 @@ require_once 'helpers/sl_view.php';
 sl_gate('edit_consolidate');
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // The old view's POST handler, moved verbatim (views/sl/handlers/consolidate_edit.php); replies JSON.
+    // This POST path does not go through ajax_guard, so check the CSRF token here (ops_forms.js sends X-CSRF-Token).
+    require_once 'helpers/csrf.php';
+    if (!cdp_csrf_validate_request()) {
+        sl_json(['success' => false, 'message' => 'CSRF token missing or invalid'], 419);
+    }
     require_once 'helpers/sl_legacy_post.php';
     $db = new Conexion;
     sl_legacyPostBegin();

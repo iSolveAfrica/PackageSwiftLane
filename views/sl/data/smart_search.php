@@ -184,7 +184,11 @@ function sl_smartSearchData($user, $core): array
 /** The customer card: details, open parcels, virtual mailbox and recent activity. */
 function sl_ssCustomer($user, $core, int $id): ?array
 {
-    $u = sl_row('SELECT id, fname, lname, locker, email, phone, active, approve, created FROM cdb_users WHERE id = :id AND userlevel = 1', [':id' => $id]);
+    // ?cust= is user input: apply the same agency scope as the customers search group, so restricted
+    // staff cannot open the card (contact details, parcels, mailbox) of another agency's customer.
+    $ctx = function_exists('cdp_getAgencyContext') ? cdp_getAgencyContext() : [];
+    $cs = !empty($ctx['is_restricted']) && !empty($ctx['agency_id']) ? ' AND agency_id = ' . (int) $ctx['agency_id'] : '';
+    $u = sl_row("SELECT id, fname, lname, locker, email, phone, active, approve, created FROM cdb_users WHERE id = :id AND userlevel = 1$cs", [':id' => $id]);
     if (!$u) return null;
     $name = sl_userName($u);
     $bayA = sl_columnExists('cdb_add_order', 'warehouse_bay') ? 'a.warehouse_bay' : 'NULL';

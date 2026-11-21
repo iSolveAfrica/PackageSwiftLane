@@ -7,6 +7,28 @@
     require_login();
     notify_after_response(); // email + WhatsApp go out after the response (helpers/after_response.php)
     require_permission('approve_client'); // approve/activate/deactivate a client — was login-only
+    require_once("../../helpers/rbac.php");
+    // Staff only, whatever CDP_RBAC_MODE says: a customer must never (de)activate or approve accounts.
+    if (cdp_roleRankById((int) $user->userlevel) < 2) {
+        header('HTTP/1.1 403 Forbidden');
+        echo json_encode(['status' => 'error', 'message' => 'No permission for this action']);
+        exit;
+    }
+    // Target must be a client account in the caller's agency scope; this endpoint was able to
+    // deactivate or approve any account id (staff and admins included).
+    if (isset($_POST['id'])) {
+        $tdb = new Conexion;
+        $tdb->cdp_query("SELECT userlevel, agency_id FROM cdb_users WHERE id = :id LIMIT 1");
+        $tdb->bind(':id', (int) $_POST['id']);
+        $tdb->cdp_execute();
+        $trow = $tdb->cdp_registro();
+        $ctx = cdp_getAgencyContext();
+        if (!$trow || !cdp_roleIsClient((int) $trow->userlevel)
+            || (!empty($ctx['is_restricted']) && (int) $trow->agency_id !== (int) $ctx['agency_id'])) {
+            echo json_encode(['status' => 'error', 'message' => 'This action only applies to client accounts you manage.']);
+            exit;
+        }
+    }
 
 
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {

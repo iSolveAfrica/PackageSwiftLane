@@ -1,6 +1,12 @@
 <?php
 // ajax/select2_user_orders.php
 require_once("../loader.php");
+// Login + the Broadcast page's permission required (security fix 2026-11-21): anonymous
+// callers could walk sender_id and harvest every customer's tracking numbers. The
+// permission is not customer-facing, so customers/drivers/agencies are refused.
+require_once(__DIR__ . '/../helpers/ajax_guard.php');
+require_login();
+require_permission('push_notifications');
 
 $db = new Conexion();
 

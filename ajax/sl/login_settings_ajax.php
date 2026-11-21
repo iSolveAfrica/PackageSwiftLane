@@ -11,6 +11,8 @@ require_once __DIR__ . '/../../helpers/ajax_guard.php';
 require_once __DIR__ . '/../../helpers/sl_view.php';
 require_once __DIR__ . '/../../helpers/sl_auth.php';
 require_once __DIR__ . '/../../helpers/activity_log.php';
+// require_login() is what validates the CSRF token on POST; require_permission() alone does not.
+require_login();
 require_permission('view_tools');
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     sl_json(['success' => false, 'message' => 'POST required'], 405);

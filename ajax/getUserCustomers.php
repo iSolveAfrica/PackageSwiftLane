@@ -22,14 +22,27 @@
 
 
 require_once("../loader.php");
+// Login + staff rank required (security fix 2026-11-21): anonymous callers could
+// search the customer directory here. Customers, drivers and agencies are refused.
+$__u = new User();
+if (!$__u->cdp_loginCheck()) { http_response_code(401); header('Content-Type: application/json'); echo json_encode(['success' => false, 'message' => 'Session required']); exit; }
+require_once(__DIR__ . '/../helpers/rbac.php');
+if (cdp_roleRankById((int) $__u->userlevel) < 2) { http_response_code(403); header('Content-Type: application/json'); echo json_encode(['success' => false, 'message' => 'No permission for this action']); exit; }
+require_once(__DIR__ . '/../helpers/querys.php');
+// Agency-restricted staff only see their own agency's customers.
+$__ctx = cdp_getAgencyContext();
+if ($__ctx['is_restricted'] && $__ctx['agency_id'] === null) { echo json_encode([]); exit; }
+$__agencyWhere = $__ctx['is_restricted'] ? " AND agency_id = " . (int) $__ctx['agency_id'] : "";
 
 $db = new Conexion;
 
-$search = cdp_sanitize($_REQUEST['term']);
+$search = (string) ($_REQUEST['term'] ?? '');
 
-$sql = "SELECT CONCAT(fname, ' ', lname) as label, id, fname, lname, email, phone, address,country, city, postal FROM cdb_users WHERE fname LIKE '%" . $search . "%'";
+// Customers only (userlevel 1): staff/admin accounts must never be listed here.
+$sql = "SELECT CONCAT(fname, ' ', lname) as label, id, fname, lname, email, phone, address,country, city, postal FROM cdb_users WHERE userlevel = '1' AND fname LIKE :term" . $__agencyWhere;
 
 $db->cdp_query($sql);
+$db->bind(':term', '%' . $search . '%');
 $db->cdp_execute();
 
 $data = $db->cdp_registros();

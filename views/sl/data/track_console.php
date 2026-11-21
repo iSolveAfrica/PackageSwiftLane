@@ -224,7 +224,9 @@ function sl_trackConsoleData($user, $core, string $source = 'shipments', int $li
         if ($f === 'con' && $kind !== 'consolidation') continue;
         $eta = sl_columnExists($tbl, 'estimated_eta') ? 'a.estimated_eta' : 'NULL';
         $statusW = $f === 'done' ? 'a.status_courier IN (8,15)' : ($f === 'ready' ? 'a.status_courier IN (6,32)' : ($q !== '' ? 'a.status_courier <> 21' : $openW));
-        if ($f === 'late') $statusW .= $eta === 'NULL' ? ' AND 1 = 0' : " AND $eta IS NOT NULL AND $eta < CURDATE()";
+        // 'late' = not yet arrived (stage < 4) and past ETA, with or without a search term;
+        // matches the per-item $late rule and the Overview "running late" brief count
+        if ($f === 'late') $statusW = 'a.status_courier NOT IN (6,32,8,15,21,12)' . ($eta === 'NULL' ? ' AND 1 = 0' : " AND $eta IS NOT NULL AND $eta < CURDATE()");
         $b = [];
         $qW = '';
         if ($q !== '') {
@@ -257,6 +259,18 @@ function sl_trackConsoleData($user, $core, string $source = 'shipments', int $li
     // parcels that sit inside a consolidation
     $inCon = ['air' => sl_consolidationsFor(array_map(fn($r) => $r->id, array_filter($rows, fn($r) => $r->kind === 'shipment')), false),
         'sea' => sl_consolidationsFor(array_map(fn($r) => $r->id, array_filter($rows, fn($r) => $r->kind === 'package')), true)];
+    // latest flight / AWB per air code in one query instead of one lookup per row
+    $flights = [];
+    if ($hasFlight) {
+        $fb = [];
+        foreach (array_values(array_unique(array_map(fn($r) => (string) $r->code, array_filter($rows, fn($r) => $r->mode === 'air')))) as $i => $c) $fb[':fc' . $i] = $c;
+        if ($fb) {
+            foreach (sl_rows('SELECT order_track, flight_no, awb_no FROM cdb_courier_track WHERE order_track IN (' . implode(', ', array_keys($fb)) . ') AND (flight_no <> \'\' OR awb_no <> \'\') ORDER BY t_date DESC', $fb) as $fl) {
+                $fk = mb_strtoupper((string) $fl->order_track);
+                if (!isset($flights[$fk])) $flights[$fk] = $fl;
+            }
+        }
+    }
     $services = [];
     if (sl_tableExists('cdb_shipping_mode')) foreach (sl_rows('SELECT id, ship_mode FROM cdb_shipping_mode') as $sm) $services[(int) $sm->id] = $sm->ship_mode;
 
@@ -280,7 +294,7 @@ function sl_trackConsoleData($user, $core, string $source = 'shipments', int $li
         $flight = '';
         $awb = '';
         if ($hasFlight && $r->mode === 'air') {
-            $fl = sl_row('SELECT flight_no, awb_no FROM cdb_courier_track WHERE order_track = :t AND (flight_no <> \'\' OR awb_no <> \'\') ORDER BY t_date DESC', [':t' => $r->code]);
+            $fl = $flights[mb_strtoupper((string) $r->code)] ?? null;
             $flight = (string) ($fl->flight_no ?? '');
             $awb = (string) ($fl->awb_no ?? '');
         }

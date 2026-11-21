@@ -11,14 +11,36 @@
  */
 require_once __DIR__ . '/sl_view.php';
 
-/** Lightweight count helper used by nav counters (errors return 0). */
+/**
+ * Lightweight count helper used by nav counters (errors return 0).
+ * The shell renders ~20 of these on every page, so results are kept in the
+ * session for a short time (per user + query) instead of re-querying each click.
+ */
 function sl_navCount(string $sql, array $binds = []): int
 {
+    $ttl = 45;
+    $key = null;
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        global $user;
+        $key = md5((int) ($user->uid ?? 0) . '|' . $sql . '|' . json_encode($binds));
+        $hit = $_SESSION['sl_nav_counts'][$key] ?? null;
+        if (is_array($hit) && ($hit[0] ?? 0) > time() - $ttl) {
+            return (int) $hit[1];
+        }
+    }
     try {
-        return (int) sl_scalar($sql, $binds, 0);
+        $n = (int) sl_scalar($sql, $binds, 0);
     } catch (Throwable $e) {
         return 0;
     }
+    if ($key !== null) {
+        $cache = is_array($_SESSION['sl_nav_counts'] ?? null) ? $_SESSION['sl_nav_counts'] : [];
+        // drop stale entries so the session does not grow without bound
+        $cache = array_filter($cache, fn($v) => is_array($v) && ($v[0] ?? 0) > time() - $ttl);
+        $cache[$key] = [time(), $n];
+        $_SESSION['sl_nav_counts'] = $cache;
+    }
+    return $n;
 }
 
 function sl_navAgencyWhere(string $alias = 'a'): string
@@ -49,7 +71,7 @@ function sl_navStaff(): array
                 'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_pre_alert WHERE is_package = 0")],
             ['id' => 'pickup', 'label' => 'Pickups', 'icon' => 'truck', 'board' => 'Pickups', 'perm' => 'view_pickup_list',
                 'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_pickup = 1 AND a.is_deleted = 0 AND a.status_courier IN (1,14) $w"),
-                'count2' => fn() => '/ ' . sl_navCount("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_pickup = 1 AND a.is_deleted = 0 AND DATE(a.order_date) = CURDATE() $w")],
+                'count2' => fn() => '/ ' . sl_navCount("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_pickup = 1 AND a.is_deleted = 0 AND a.order_date >= CURDATE() AND a.order_date < CURDATE() + INTERVAL 1 DAY $w")],
             ['id' => 'livetrack', 'label' => 'Live Tracking', 'icon' => 'route', 'board' => 'LiveTracking', 'perm' => ['view_shipment_list', 'view_general_shipments', 'view_package_list', 'view_general_package_records', 'view_consolidate_list', 'view_consolidate_package_list']],
             ['id' => 'shiptrack', 'label' => 'Shipment Tracking', 'icon' => 'track', 'board' => 'ShipmentTracking', 'perm' => 'track_shipment'],
             ['id' => 'consol', 'label' => 'Consolidations', 'icon' => 'layers', 'board' => 'Consolidations', 'perm' => ['view_consolidate_list', 'view_consolidate_package_list'],
@@ -142,7 +164,7 @@ function sl_navStaff(): array
             ['id' => 'sendp', 'label' => 'Send Prices', 'icon' => 'send', 'board' => 'SendPrices', 'perm' => 'send_prices'],
             ['id' => 'ar', 'label' => 'Accounts Receivable', 'icon' => 'receipt', 'board' => 'AccountsReceivable', 'perm' => 'view_receivable_accounts'],
             ['id' => 'fin', 'label' => 'Financial Overview', 'icon' => 'dollar', 'board' => 'FinancialOverview', 'perm' => 'view_financial_overview', 'ok' => true,
-                'count' => fn() => sl_money(sl_navCount("SELECT COALESCE(SUM(a.total_order),0) FROM cdb_add_order a WHERE a.is_deleted = 0 AND MONTH(a.order_date) = MONTH(CURDATE()) AND YEAR(a.order_date) = YEAR(CURDATE()) $w"))],
+                'count' => fn() => sl_money(sl_navCount("SELECT COALESCE(SUM(a.total_order),0) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.order_date >= DATE_FORMAT(CURDATE(), '%Y-%m-01') AND a.order_date < DATE_FORMAT(CURDATE(), '%Y-%m-01') + INTERVAL 1 MONTH $w"))],
         ]],
         ['label' => 'Insights', 'items' => [
             ['id' => 'reports', 'label' => 'Reports', 'icon' => 'chart', 'board' => 'Reports', 'perm' => 'view_general_reports'],

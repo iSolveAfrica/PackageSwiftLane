@@ -31,6 +31,11 @@ if (!$__u->cdp_loginCheck()) { http_response_code(401); header('Content-Type: ap
 $db = new Conexion;
 
 $sender = (int) ($_REQUEST['id'] ?? 0);
+// Customers may only read their own saved addresses (security fix 2026-11-21).
+require_once(__DIR__ . '/../helpers/rbac.php');
+if (cdp_roleRankById((int) $__u->userlevel) < 1) {
+	$sender = (int) $__u->uid;
+}
 
 $list = array();
 

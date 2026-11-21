@@ -9,6 +9,7 @@ require_once CDP_ROOT . '/helpers/finance_switch.php';
 require_once CDP_ROOT . '/helpers/sl_nav.php';
 require_once CDP_ROOT . '/helpers/rbac.php';
 require_once __DIR__ . '/overview_charts.php';
+require_once __DIR__ . '/overview_hero.php'; // sl_ovScalar() shared with the hero cards
 
 function sl_overviewData($user, $core, $userData): array
 {
@@ -26,27 +27,27 @@ function sl_overviewData($user, $core, $userData): array
     $shiftStart = 8; $shiftEnd = 17; // working day used for the shift meter
     $h = (int) date('G') + (int) date('i') / 60;
     $d['shift'] = ['label' => sprintf('Shift %02d:00–%02d:00', $shiftStart, $shiftEnd), 'pct' => (int) max(0, min(100, round(($h - $shiftStart) / ($shiftEnd - $shiftStart) * 100)))];
-    $doneToday = sl_tableExists('cdb_activity_log') ? (int) sl_scalar('SELECT COUNT(*) FROM cdb_activity_log WHERE user_id = :u AND DATE(created_at) = CURDATE() AND outcome = :o', [':u' => $uid, ':o' => 'ok']) : 0;
+    $doneToday = sl_tableExists('cdb_activity_log') ? (int) sl_scalar('SELECT COUNT(*) FROM cdb_activity_log WHERE user_id = :u AND created_at >= CURDATE() AND created_at < CURDATE() + INTERVAL 1 DAY AND outcome = :o', [':u' => $uid, ':o' => 'ok']) : 0;
 
     $queues = [];
-    $kyc = $hasApprove ? (int) sl_scalar('SELECT COUNT(*) FROM cdb_users WHERE userlevel = 1 AND approve = 0 AND active = 1') : 0;
+    $kyc = $hasApprove ? (int) sl_ovScalar('SELECT COUNT(*) FROM cdb_users WHERE userlevel = 1 AND approve = 0 AND active = 1') : 0;
     $kycOld = $hasApprove ? (int) sl_scalar('SELECT COUNT(*) FROM cdb_users WHERE userlevel = 1 AND approve = 0 AND active = 1 AND created < NOW() - INTERVAL 1 DAY') : 0;
     if ($user->cdp_hasPermission('view_client_list')) {
         $queues[] = ['href' => sl_route('Customers', ['filter' => 'unapproved']), 'icon' => 'i-shield', 'label' => 'KYC to review', 'sub' => $kycOld ? "$kycOld waiting over 24h" : 'All reviewed within a day', 'tone' => $kycOld ? 'var(--amber-ink)' : 'var(--muted)', 'n' => $kyc];
     }
-    $prealerts = (int) sl_scalar('SELECT COUNT(*) FROM cdb_pre_alert WHERE is_package = 0');
+    $prealerts = (int) sl_ovScalar('SELECT COUNT(*) FROM cdb_pre_alert WHERE is_package = 0');
     if ($user->cdp_hasPermission('prealert_list')) {
         $queues[] = ['href' => sl_route('PreAlerts'), 'icon' => 'i-upload', 'label' => 'Pre-alerts to match', 'sub' => 'Waiting for a package', 'tone' => 'var(--muted)', 'n' => $prealerts];
     }
-    $toPrint = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (1,2) AND DATE(a.order_date) = CURDATE() $agency");
+    $toPrint = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (1,2) AND a.order_date >= CURDATE() AND a.order_date < CURDATE() + INTERVAL 1 DAY $agency");
     if ($user->cdp_hasPermission('view_shipment_list')) {
         $queues[] = ['href' => sl_route('AirShipments', ['status' => 'new']), 'icon' => 'i-print', 'label' => 'Labels to print', 'sub' => 'Registered today', 'tone' => 'var(--muted)', 'n' => $toPrint];
     }
-    $held = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (12,25,28,29) $agency");
+    $held = (int) sl_ovScalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (12,25,28,29) $agency");
     if ($user->cdp_hasPermission(['warehouse_view', 'view_shipment_list'])) {
         $queues[] = ['href' => sl_route('Warehouse', ['filter' => 'exceptions']), 'icon' => 'i-alert', 'label' => 'Warehouse exceptions', 'sub' => $held ? 'Held, rejected or not shipped' : 'No exceptions', 'tone' => $held ? 'var(--red-ink)' : 'var(--muted)', 'n' => $held];
     }
-    $driversOut = (int) sl_scalar("SELECT COUNT(DISTINCT a.driver_id) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier = 7 AND a.driver_id > 0 $agency");
+    $driversOut = (int) sl_ovScalar("SELECT COUNT(DISTINCT a.driver_id) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier = 7 AND a.driver_id > 0 $agency");
     if ($user->cdp_hasPermission('view_user_list')) {
         $queues[] = ['href' => sl_route('Drivers'), 'icon' => 'i-wheel', 'label' => 'Riders on route', 'sub' => 'Deliveries in progress', 'tone' => 'var(--muted)', 'n' => $driversOut];
     }
@@ -63,16 +64,16 @@ function sl_overviewData($user, $core, $userData): array
     $parcelsMonth = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.order_date >= :m $agency", [':m' => $monthStart]);
     $target = sl_tableExists('cdb_sl_settings') ? (float) sl_scalar("SELECT setting_value FROM cdb_sl_settings WHERE setting_key = 'revenue_target_month'", [], 0) : 0;
     $d['revenue'] = ['value' => $revenue, 'parcels' => $parcelsMonth, 'target' => $target, 'pct' => $target > 0 ? sl_pct($revenue, $target) : 0, 'next' => date('M j, Y', strtotime('first day of next month'))];
-    $pickupsToday = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.is_pickup = 1 AND DATE(a.order_date) = CURDATE() $agency");
-    $pickupsDone = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.is_pickup = 1 AND DATE(a.order_date) = CURDATE() AND a.status_courier NOT IN (1,14) $agency");
-    $pickupsUnassigned = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.is_pickup = 1 AND a.status_courier IN (1,14) AND (a.driver_id IS NULL OR a.driver_id = 0) $agency");
+    $pickupsToday = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.is_pickup = 1 AND a.order_date >= CURDATE() AND a.order_date < CURDATE() + INTERVAL 1 DAY $agency");
+    $pickupsDone = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.is_pickup = 1 AND a.order_date >= CURDATE() AND a.order_date < CURDATE() + INTERVAL 1 DAY AND a.status_courier NOT IN (1,14) $agency");
+    $pickupsUnassigned = (int) sl_ovScalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.is_pickup = 1 AND a.status_courier IN (1,14) AND (a.driver_id IS NULL OR a.driver_id = 0) $agency");
     $d['pickups'] = ['done' => $pickupsDone, 'total' => $pickupsToday, 'pct' => sl_pct($pickupsDone, $pickupsToday), 'drivers' => $driversOut, 'unassigned' => $pickupsUnassigned];
-    $inBay = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (4,6,32) $agency") + (int) sl_scalar("SELECT COUNT(*) FROM cdb_customers_packages a WHERE a.status_courier IN (4,6,32) $agency");
-    $capacity = sl_tableExists('cdb_sl_settings') ? (int) sl_scalar("SELECT setting_value FROM cdb_sl_settings WHERE setting_key = 'warehouse_bays'", [], 0) : 0;
-    $arriving = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier = 3 $agency");
-    $awaiting = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (6,32) $agency");
+    $inBay = (int) sl_ovScalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (4,6,32) $agency") + (int) sl_ovScalar("SELECT COUNT(*) FROM cdb_customers_packages a WHERE a.status_courier IN (4,6,32) $agency");
+    $capacity = sl_tableExists('cdb_sl_settings') ? (int) sl_ovScalar("SELECT setting_value FROM cdb_sl_settings WHERE setting_key = 'warehouse_bays'", [], 0) : 0;
+    $arriving = (int) sl_ovScalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier = 3 $agency");
+    $awaiting = (int) sl_ovScalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (6,32) $agency");
     $d['warehouse'] = ['used' => $inBay, 'capacity' => $capacity, 'pct' => $capacity > 0 ? sl_pct($inBay, $capacity) : 0, 'arriving' => $arriving, 'awaiting' => $awaiting];
-    $registeredToday = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND DATE(a.order_date) = CURDATE() $agency");
+    $registeredToday = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.order_date >= CURDATE() AND a.order_date < CURDATE() + INTERVAL 1 DAY $agency");
     $d['deskStats'] = [];
     if ($user->cdp_hasPermission('view_shipment_list')) {
         $handedToday = (int) sl_scalar("SELECT COUNT(DISTINCT a.order_id) FROM cdb_add_order a JOIN cdb_courier_track t ON t.order_track = CONCAT(a.order_prefix, a.order_no) WHERE a.is_deleted = 0 AND t.status_courier IN (8,15) AND t.t_date >= CURDATE() AND t.t_date < CURDATE() + INTERVAL 1 DAY $agency");
@@ -102,7 +103,7 @@ function sl_overviewData($user, $core, $userData): array
     if ($hasEta) {
         $lateR = sl_row("SELECT COUNT(*) AS n, MIN(a.estimated_eta) AS worst FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.estimated_eta IS NOT NULL AND a.estimated_eta < CURDATE() AND a.status_courier NOT IN (6,32,8,15,21,12) $agency");
         if ($lateR && (int) $lateR->n) {
-            $arrivals = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND DATE(a.estimated_eta) = CURDATE() AND a.status_courier NOT IN (6,32,8,15,21) $agency");
+            $arrivals = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.estimated_eta >= CURDATE() AND a.estimated_eta < CURDATE() + INTERVAL 1 DAY AND a.status_courier NOT IN (6,32,8,15,21) $agency");
             $brief[] = ['lvl' => 'hi', 'rank' => 2, 'icon' => 'i-clock', 'tag' => 'Transit', 'sev' => 'Late', 'big' => sl_num($lateR->n), 'bigS' => 'past their ETA',
                 't' => 'Shipments running late', 'd' => 'The promised date has passed and they have not reached the warehouse. Update the ETA or tell the customer.',
                 'facts' => [['Latest by', $ageD($lateR->worst) . ' d'], ['Due today', sl_num($arrivals)]], 'cta' => 'Live tracking', 'href' => sl_route('LiveTracking', ['f' => 'late']), 'cat' => 'ops'];
@@ -162,10 +163,10 @@ function sl_overviewData($user, $core, $userData): array
 
     // ── Live pulse ─────────────────────────────────────────────────────────
     $d['pulse'] = [
-        ['l' => 'In transit', 'v' => sl_num(sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier = 3 $agency")), 's' => 'air + road', 'href' => sl_route('AirShipments', ['status' => 3]), 'a' => ''],
+        ['l' => 'In transit', 'v' => sl_num($arriving), 's' => 'air + road', 'href' => sl_route('AirShipments', ['status' => 3]), 'a' => ''],
         ['l' => 'In warehouse', 'v' => sl_num($inBay), 's' => 'bays used', 'href' => sl_route('Warehouse'), 'a' => ''],
-        ['l' => 'Out for delivery', 'v' => sl_num(sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier = 7 $agency")), 's' => "$driversOut riders", 'href' => sl_route('DeliveryTracking'), 'a' => ''],
-        ['l' => 'Delivered today', 'v' => sl_num(sl_scalar("SELECT COUNT(*) FROM cdb_courier_track t WHERE t.status_courier IN (8,15) AND DATE(t.t_date) = CURDATE()")), 's' => 'since midnight', 'href' => sl_route('AirShipments', ['status' => 8]), 'a' => 'g'],
+        ['l' => 'Out for delivery', 'v' => sl_num(sl_ovScalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier = 7 $agency")), 's' => "$driversOut riders", 'href' => sl_route('DeliveryTracking'), 'a' => ''],
+        ['l' => 'Delivered today', 'v' => sl_num(sl_scalar("SELECT COUNT(*) FROM cdb_courier_track t WHERE t.status_courier IN (8,15) AND t.t_date >= CURDATE() AND t.t_date < CURDATE() + INTERVAL 1 DAY")), 's' => 'since midnight', 'href' => sl_route('AirShipments', ['status' => 8]), 'a' => 'g'],
         ['l' => 'Registered today', 'v' => sl_num($registeredToday), 's' => 'new shipments', 'href' => sl_route('AirShipments'), 'a' => ''],
         ['l' => 'Open tickets', 'v' => sl_num(sl_tableExists('cdb_cs_tickets') ? sl_scalar("SELECT COUNT(*) FROM cdb_cs_tickets WHERE status NOT IN ('closed','resolved')") : 0), 's' => 'customer service', 'href' => sl_route('CsInbox'), 'a' => ''],
     ];
@@ -205,14 +206,14 @@ function sl_overviewData($user, $core, $userData): array
     // ── US packages pipeline (sea / locker packages) ───────────────────────
     $pk = fn(string $where) => (int) sl_scalar("SELECT COUNT(*) FROM cdb_customers_packages a WHERE $where $agency");
     $d['pipe'] = [
-        ['icon' => 'i-bell', 'n' => $prealerts, 'label' => 'Pre-alerted', 'sub' => (int) sl_scalar('SELECT COUNT(*) FROM cdb_pre_alert WHERE is_package = 1 AND DATE(prealert_date) = CURDATE()') . ' matched today'],
-        ['icon' => 'i-warehouse', 'n' => $pk('a.status_courier = 2'), 'label' => 'Collected US', 'sub' => $pk('a.status_courier = 2 AND DATE(a.order_date) = CURDATE()') . ' today'],
-        ['icon' => 'i-upload', 'n' => $pk('DATE(a.order_date) >= CURDATE() - INTERVAL 14 DAY'), 'label' => 'Input', 'sub' => 'last 14 days'],
+        ['icon' => 'i-bell', 'n' => $prealerts, 'label' => 'Pre-alerted', 'sub' => (int) sl_scalar('SELECT COUNT(*) FROM cdb_pre_alert WHERE is_package = 1 AND prealert_date >= CURDATE() AND prealert_date < CURDATE() + INTERVAL 1 DAY') . ' matched today'],
+        ['icon' => 'i-warehouse', 'n' => $pk('a.status_courier = 2'), 'label' => 'Collected US', 'sub' => $pk('a.status_courier = 2 AND a.order_date >= CURDATE() AND a.order_date < CURDATE() + INTERVAL 1 DAY') . ' today'],
+        ['icon' => 'i-upload', 'n' => $pk('a.order_date >= CURDATE() - INTERVAL 14 DAY'), 'label' => 'Input', 'sub' => 'last 14 days'],
         ['icon' => 'i-layers', 'n' => $pk('a.is_consolidate = 1 AND a.status_courier NOT IN (8,15)'), 'label' => 'Consolidated', 'sub' => (int) sl_scalar("SELECT COUNT(*) FROM cdb_consolidate_packages WHERE status_courier NOT IN ('3','8','15','21')") . ' boxes open'],
         ['icon' => 'i-plane', 'n' => $pk('a.status_courier = 3'), 'label' => 'On the way', 'sub' => 'in transit'],
         ['icon' => 'i-pin', 'n' => $pk('a.status_courier = 4'), 'label' => 'Arrived', 'sub' => 'in warehouse'],
         ['icon' => 'i-check', 'n' => $pk('a.status_courier IN (6,32)'), 'label' => 'Ready for pickup', 'sub' => 'codes sent'],
-        ['icon' => 'i-user', 'n' => (int) sl_scalar("SELECT COUNT(*) FROM cdb_courier_track t WHERE t.status_courier = 15 AND DATE(t.t_date) = CURDATE()"), 'label' => 'Picked up', 'sub' => 'today'],
+        ['icon' => 'i-user', 'n' => (int) sl_scalar("SELECT COUNT(*) FROM cdb_courier_track t WHERE t.status_courier = 15 AND t.t_date >= CURDATE() AND t.t_date < CURDATE() + INTERVAL 1 DAY"), 'label' => 'Picked up', 'sub' => 'today'],
     ];
     $collected = array_values(sl_dailyCounts('cdb_customers_packages', 'order_date', 14));
     $input = array_values(sl_dailyCounts('cdb_add_order', 'order_date', 14, ' AND is_deleted = 0'));

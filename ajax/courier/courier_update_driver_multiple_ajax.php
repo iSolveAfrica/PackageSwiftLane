@@ -33,8 +33,23 @@ session_start();
 
 $db = new Conexion;
 
-$driver = intval($_GET['driver']);
-$data = json_decode($_GET['checked_data']);
+// CSRF: require_login() validates the token only on POST, but the list screens
+// (dataJs/courier_ajax.js, locker_ajax.js, customer_view_ajax.js, pickup_client_ajax.js)
+// still send this as a jQuery GET. A GET is therefore accepted only as a
+// same-origin XHR or with a valid token: a cross-site link, redirect or <img>
+// cannot add the X-Requested-With header, and browsers flag it in Sec-Fetch-Site.
+// POST (token already checked by require_login()) is accepted as well.
+$cdpIsPost = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST';
+if (!$cdpIsPost && !cdp_csrf_validate_request()) {
+    $cdpXrw  = strtolower((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? ''));
+    $cdpSite = strtolower((string) ($_SERVER['HTTP_SEC_FETCH_SITE'] ?? ''));
+    if ($cdpXrw !== 'xmlhttprequest' || ($cdpSite !== '' && $cdpSite !== 'same-origin')) {
+        _ajax_guard_send(403, ['success' => false, 'error' => 'Forbidden', 'message' => 'This action must be sent from the application.']);
+    }
+}
+
+$driver = intval($_POST['driver'] ?? $_GET['driver'] ?? 0);
+$data = json_decode((string) ($_POST['checked_data'] ?? $_GET['checked_data'] ?? ''));
 
 foreach ($data as $key) {
 

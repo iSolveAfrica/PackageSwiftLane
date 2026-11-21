@@ -2,7 +2,9 @@
 /**
  * AuthHandler – login, logout, current-user endpoints.
  *
- * POST  /api/v1/auth/login   → issue API token
+ * POST  /api/v1/auth/login   → issue API token (two steps when OTP is on:
+ *                               first call returns otp_required + otp_challenge_id,
+ *                               second call adds otp_challenge_id + otp_code)
  * POST  /api/v1/auth/logout  → revoke current token
  * GET   /api/v1/auth/me      → return authenticated user profile
  */
@@ -22,24 +24,82 @@ class AuthHandler
             ApiResponse::validationError($errors);
         }
 
-        $user = new User();
-        // cdp_login returns true | false | 'otp_required'
-        // For the API, we skip OTP to allow machine-to-machine auth.
-        // Credentials are validated via cdp_checkStatus; OTP is browser-flow only.
-        $status = $user->cdp_checkStatus(cdp_sanitize($data['username']), $data['password']);
+        $user     = new User();
+        $username = cdp_sanitize($data['username']);
+
+        // Brute-force protection shared with the web login (lib/User.php):
+        // too many recent failures for this account or address are refused
+        // before the password is even checked.
+        if ($user->cdp_loginThrottled($username)) {
+            ApiResponse::error('too_many_attempts', 'Too many failed sign-in attempts. Please wait 15 minutes and try again.', 429);
+        }
+
+        $status = $user->cdp_checkStatus($username, $data['password']);
 
         // 0 = wrong credentials, 2 = inactive
         if ($status === 0) {
+            $user->cdp_loginRecordFailure($username);
             ApiResponse::error('invalid_credentials', 'Incorrect username or password.', 401);
         }
         if ($status === 2) {
             ApiResponse::error('account_inactive', 'Your account is not active.', 403);
         }
+        $user->cdp_loginClearFailures($username);
 
         // Load user info
-        $userInfo = $user->cdp_getUserInfo(cdp_sanitize($data['username']));
+        $userInfo = $user->cdp_getUserInfo($username);
         if (!$userInfo) {
             ApiResponse::serverError('Could not load user profile.');
+        }
+
+        // Security: when one-time codes are switched on, the API must ask for
+        // the same second factor as the web login; otherwise a stolen password
+        // alone would buy a bearer token (up to 30 days) and bypass the 2FA.
+        // Step 1: POST username + password            -> 401 otp_required + otp_challenge_id
+        // Step 2: POST username + password + otp_challenge_id + otp_code -> token
+        if (!function_exists('cdp_otpEnabled')) {
+            require_once __DIR__ . '/../../../helpers/otp_settings.php';
+        }
+        if (cdp_otpEnabled()) {
+            if (!class_exists('OtpService')) {
+                require_once __DIR__ . '/../../../lib/OtpService.php';
+            }
+            $otp = new OtpService();
+            $challengeId = isset($data['otp_challenge_id']) ? (int)$data['otp_challenge_id'] : 0;
+            $otpCode     = isset($data['otp_code']) && is_scalar($data['otp_code']) ? trim((string)$data['otp_code']) : '';
+
+            if ($challengeId > 0 && $otpCode !== '') {
+                $verify = $otp->verifyChallenge($challengeId, $otpCode, 'login');
+                if (empty($verify['ok']) || (int)($verify['user_id'] ?? 0) !== (int)$userInfo->id) {
+                    ApiResponse::error('otp_invalid', $verify['error'] ?? 'Invalid one-time code.', 401);
+                }
+            } else {
+                $challenge = $otp->createChallenge((int)$userInfo->id, 'login', [
+                    'email' => $userInfo->email,
+                    'api'   => true,
+                ]);
+                if (!empty($challenge['blocked'])) {
+                    if (!empty($challenge['existing_id'])) {
+                        // A code was sent less than a minute ago and is still valid.
+                        ApiResponse::send([
+                            'success' => false,
+                            'error'   => 'otp_required',
+                            'message' => 'Enter the one-time code already sent to you.',
+                            'data'    => ['otp_challenge_id' => (int)$challenge['existing_id']],
+                        ], 401);
+                    }
+                    ApiResponse::error('otp_rate_limited', (string)($challenge['error'] ?? 'Please wait before requesting a new code.'), 429);
+                }
+                $fullName = trim($userInfo->fname . ' ' . $userInfo->lname);
+                $otp->sendOtpEmail($userInfo->email, $fullName, $challenge['code'], 'login');
+                $otp->sendOtpWhatsApp($userInfo->email, $fullName, $challenge['code'], 'login');
+                ApiResponse::send([
+                    'success' => false,
+                    'error'   => 'otp_required',
+                    'message' => 'A one-time code has been sent. Repeat the request with otp_challenge_id and otp_code.',
+                    'data'    => ['otp_challenge_id' => (int)$challenge['id']],
+                ], 401);
+            }
         }
 
         // Issue token

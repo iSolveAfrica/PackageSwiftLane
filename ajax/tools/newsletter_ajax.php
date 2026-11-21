@@ -195,6 +195,29 @@ switch ($action) {
             cdp_nlFail(['Enter a valid e-mail address.']);
         }
         $db = new Conexion;
+        // The id comes straight from the form, and the 'staff' audience lists staff and admin rows,
+        // so check the target: customers need edit_client, any other account needs edit_user AND a
+        // strictly higher rank (otherwise an edit_client user could rewrite an admin's e-mail and
+        // take the account over with a password reset). Agency-restricted users stay in their agency.
+        require_once("../../helpers/rbac.php");
+        $db->cdp_query('SELECT id, userlevel, agency_id FROM cdb_users WHERE id = :id LIMIT 1');
+        $db->bind(':id', $id);
+        $db->cdp_execute();
+        $target = $db->cdp_registro();
+        if (!$target) {
+            cdp_nlFail(['That account no longer exists.']);
+        }
+        $targetIsClient = cdp_roleIsClient((int) $target->userlevel);
+        $mayEdit = $targetIsClient
+            ? $user->cdp_hasPermission('edit_client')
+            : ($user->cdp_hasPermission('edit_user') && cdp_canManageUser($user, (int) $target->userlevel));
+        $ctx = cdp_getAgencyContext();
+        if (!empty($ctx['is_restricted']) && (int) $target->agency_id !== (int) $ctx['agency_id']) {
+            $mayEdit = false;
+        }
+        if (!$mayEdit) {
+            cdp_nlFail(['You may not edit this account.']);
+        }
         $db->cdp_query('SELECT id FROM cdb_users WHERE LOWER(email) = :e AND id <> :id LIMIT 1');
         $db->bind(':e', $email);
         $db->bind(':id', $id);

@@ -23,6 +23,13 @@
 
 
 require_once("../loader.php");
+// Login required and customers refused (security fix 2026-11-21): this report filter
+// lookup let anonymous callers search the whole customer directory. Staff and agency
+// users keep it (agency users stay scoped by cdp_getAgencyContext below).
+$__u = new User();
+if (!$__u->cdp_loginCheck()) { http_response_code(401); header('Content-Type: application/json'); echo json_encode(['success' => false, 'message' => 'Session required']); exit; }
+require_once(__DIR__ . '/../helpers/rbac.php');
+if (cdp_roleRankById((int) $__u->userlevel) < 1) { http_response_code(403); header('Content-Type: application/json'); echo json_encode(['success' => false, 'message' => 'No permission for this action']); exit; }
 require_once(__DIR__ . '/../helpers/querys.php');
 
 $user = new User();

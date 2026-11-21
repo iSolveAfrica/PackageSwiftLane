@@ -45,16 +45,20 @@ if ($userData->userlevel == 1) {
 	$sWhere .= "";
 }
 
+// gateway is user input: bind it instead of concatenating, otherwise a quote
+// in it could break out of the customer scope above (SQL injection).
+$cdp_bindGateway = false;
 if ($gateway != '0') {
 
-	$sWhere .= " and  gateway = '" . $gateway . "'";
+	$sWhere .= " and  gateway = :gateway";
+	$cdp_bindGateway = true;
 }
 
 
 
 
 // // pagination variables
-$page = (isset($_REQUEST['page']) && !empty($_REQUEST['page'])) ? $_REQUEST['page'] : 1;
+$page = (isset($_REQUEST['page']) && !empty($_REQUEST['page'])) ? max(1, (int) $_REQUEST['page']) : 1;
 $per_page = (($_REQUEST['per_page'] ?? '') === 'all') ? 1000000000 : (in_array((int)($_REQUEST['per_page'] ?? 0), [25, 50, 100], true) ? (int)$_REQUEST['per_page'] : 25); //how much records you want to show
 $adjacents  = 4; //gap between pages after number of adjacents
 $offset = ($page - 1) * $per_page;
@@ -66,11 +70,17 @@ $sql = "SELECT * FROM cdb_payments_gateway  where type_transaccition_courier= 'p
 
 
 $db->cdp_query("SELECT COUNT(*) AS cdp_total FROM (" . $sql . ") AS cdp_cnt");
+if ($cdp_bindGateway) {
+	$db->bind(':gateway', (string) $gateway);
+}
 $cdp_cnt_row = $db->cdp_registro();
 $numrows = $cdp_cnt_row ? (int) $cdp_cnt_row->cdp_total : 0;
 
 
 $db->cdp_query($sql . " limit $offset, $per_page");
+if ($cdp_bindGateway) {
+	$db->bind(':gateway', (string) $gateway);
+}
 $data = $db->cdp_registros();
 
 $total_pages = ceil($numrows / $per_page);

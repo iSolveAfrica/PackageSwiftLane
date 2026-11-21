@@ -112,6 +112,36 @@ if (empty($_POST['order_pay_mode']))
 if (empty($_POST['order_payment_method']))
     $errors['order_payment_method'] = $lang['validate_field_ajax158'];
 
+// Attachments are saved in order_files/, which the web server serves from the
+// app's own origin. The client's file name and extension were kept as sent, so
+// an .html/.svg (stored XSS for staff opening it) or .php file could be stored.
+// Only invoices/photos are accepted (the form asks for image/* and PDF), checked
+// by extension and by content.
+$allowedUploadTypes = [
+    'pdf' => ['application/pdf', 'application/x-pdf'],
+    'jpg' => ['image/jpeg'], 'jpeg' => ['image/jpeg'],
+    'png' => ['image/png'], 'gif' => ['image/gif'], 'webp' => ['image/webp'],
+];
+if (isset($_FILES['filesMultiple']['name']) && is_array($_FILES['filesMultiple']['name'])) {
+    $skipFileIds = !empty($_POST['deleted_file_ids']) ? explode(",", (string) $_POST['deleted_file_ids']) : array();
+    $finfo = function_exists('finfo_open') ? finfo_open(FILEINFO_MIME_TYPE) : false;
+    foreach ($_FILES['filesMultiple']['name'] as $key => $fname) {
+        if ($fname === '' || in_array($key, $skipFileIds) || (int) $_FILES['filesMultiple']['size'][$key] <= 0) {
+            continue;
+        }
+        $ext = strtolower(pathinfo((string) $fname, PATHINFO_EXTENSION));
+        $tmp = (string) $_FILES['filesMultiple']['tmp_name'][$key];
+        $mime = ($finfo && is_uploaded_file($tmp)) ? (string) finfo_file($finfo, $tmp) : '';
+        if (!isset($allowedUploadTypes[$ext]) || ($finfo && !in_array($mime, $allowedUploadTypes[$ext], true))) {
+            $errors['filesMultiple'] = 'Attachments must be PDF or image files (JPG, PNG, GIF, WEBP).';
+            break;
+        }
+    }
+    if ($finfo) {
+        finfo_close($finfo);
+    }
+}
+
 if (empty($errors)) {
 
     $settings = cdp_getSettingsCourier();
@@ -326,7 +356,11 @@ if (empty($errors)) {
             foreach ($_FILES["filesMultiple"]['tmp_name'] as $key => $tmp_name) {
 
                 if (!in_array($key, $deleted_file_ids)) {
-                    $image_name = $order_track .  date("Y-m-d") . "_" . basename($_FILES["filesMultiple"]["name"][$key]);
+                    // Stored name: tracking + date + a cleaned copy of the client's name, with the
+                    // extension already checked against the allow-list above (never the raw name).
+                    $origName = pathinfo(basename((string) $_FILES["filesMultiple"]["name"][$key]), PATHINFO_FILENAME);
+                    $origName = substr(trim(preg_replace('/[^A-Za-z0-9._-]+/', '_', $origName), '._'), 0, 60);
+                    $image_name = $order_track .  date("Y-m-d") . "_" . bin2hex(random_bytes(4)) . "_" . ($origName !== '' ? $origName : 'file') . "." . strtolower(pathinfo((string) $_FILES["filesMultiple"]["name"][$key], PATHINFO_EXTENSION));
                     $target_file = $target_dir . $image_name;
                     $imageFileType = pathinfo($target_file, PATHINFO_EXTENSION);
                     $imageFileZise = $_FILES["filesMultiple"]["size"][$key];

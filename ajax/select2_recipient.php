@@ -23,11 +23,20 @@
  
 
 require_once("../loader.php");
+// Login required (security fix 2026-11-21): anonymous callers could read any user's
+// contact details and saved recipients by walking ids.
+$__u = new User();
+if (!$__u->cdp_loginCheck()) { http_response_code(401); header('Content-Type: application/json'); echo json_encode(['success' => false, 'message' => 'Session required']); exit; }
 require_once(__DIR__ . '/../helpers/querys.php');
+require_once(__DIR__ . '/../helpers/rbac.php');
 
 $db = new Conexion;
 
 $sender_id = (int)($_REQUEST['id'] ?? 0);
+// Customers only ever load their own recipients: force the sender to the signed-in user.
+if (cdp_roleRankById((int) $__u->userlevel) < 1) {
+    $sender_id = (int) $__u->uid;
+}
 $search = isset($_REQUEST['q']) ? cdp_sanitize($_REQUEST['q']) : '';
 
 $data = [];

@@ -15,6 +15,13 @@
  *   0 * * * * php /var/www/html/PackageSwiftLane/cron/pickup_aging.php >> /var/log/pickup_aging.log 2>&1
  */
 
+// Command line only: over HTTP anyone could drive the aging state machine
+// (packages moved to Not Picked Up / Auction) and read the counters.
+if (PHP_SAPI !== 'cli') {
+    http_response_code(403);
+    exit;
+}
+
 require_once __DIR__ . '/../loader.php';
 require_once __DIR__ . '/../helpers/querys.php';
 require_once __DIR__ . '/../helpers/pickup_aging.php';

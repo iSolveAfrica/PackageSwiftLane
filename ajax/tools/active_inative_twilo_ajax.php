@@ -25,6 +25,8 @@ require_once("../../loader.php");
 require_once("../../helpers/querys.php");
 require_once("../../helpers/ajax_guard.php");
 require_login();
+// Turning the Twilio SMS/WhatsApp integration on or off is an admin setting, not a self-service action.
+require_permission('view_tools');
 
 $errors = array();
 

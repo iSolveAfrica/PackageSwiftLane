@@ -18,18 +18,27 @@
     $email = is_string($_POST['email'] ?? null) ? trim($_POST['email']) : '';
     if (empty($email)) $errors['email'] = 'Enter a valid email address';
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors['email'] = 'The email address you entered is invalid.';
-    if (empty($errors) && !$user->cdp_emailExists($email)) $errors['email'] = 'The email address you entered does not exist.';
 
     if (!empty($errors)) {
         echo json_encode(['success' => false, 'errors' => implode(' ', $errors)]);
         exit;
     }
 
+    // Security: answer the same way whether or not the address has an account,
+    // so this endpoint cannot be used to discover registered emails. A code is
+    // only created and sent when the account exists.
+    $genericReply = [
+        'success'  => true,
+        'messages' => 'If an account exists for that email, a reset code has been sent to it.',
+        'redirect' => 'auth-otp.php?flow=forgot'
+    ];
+
     $db->cdp_query("SELECT id,fname,lname,email FROM cdb_users WHERE email=:email LIMIT 1");
     $db->bind(':email', $email);
     $u = $db->cdp_registro();
     if (!$u) {
-        echo json_encode(['success' => false, 'errors' => 'Unable to process request.']);
+        unset($_SESSION['otp_forgot_challenge'], $_SESSION['otp_forgot_user_id']);
+        echo json_encode($genericReply);
         exit;
     }
 
@@ -42,11 +51,7 @@
         if (!empty($challenge['existing_id'])) {
             $_SESSION['otp_forgot_challenge'] = (int)$challenge['existing_id'];
             $_SESSION['otp_forgot_user_id']   = (int)$u->id;
-            echo json_encode([
-                'success'  => true,
-                'messages' => 'A reset code was already sent recently. Enter it to continue.',
-                'redirect' => 'auth-otp.php?flow=forgot'
-            ]);
+            echo json_encode($genericReply);
             exit;
         }
         echo json_encode(['success' => false, 'errors' => $challenge['error']]);
@@ -68,8 +73,4 @@
         exit;
     }
 
-    echo json_encode([
-        'success' => true,
-        'messages' => 'OTP sent to your email. Verify it to continue password reset.',
-        'redirect' => 'auth-otp.php?flow=forgot'
-    ]);
+    echo json_encode($genericReply);

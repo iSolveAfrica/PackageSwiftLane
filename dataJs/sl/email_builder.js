@@ -283,10 +283,25 @@
     };
     var GLOB = [['bodyBg', 'Page'], ['contentBg', 'E-mail'], ['textColor', 'Text'], ['headingColor', 'Headings'], ['linkColor', 'Links'], ['accent', 'Buttons']];
 
+    /* A saved design (server, draft or template) is untrusted JSON. The renderer puts the block id, align,
+       weight and the global font/colours into HTML attributes unescaped, so force them to safe values here. */
+    var ALIGNS = { left: 1, center: 1, right: 1, justify: 1 };
+    function safeSettings(st) {
+        var d = blankSettings(), out = Object.assign({}, d, st || {});
+        Object.keys(d).forEach(function (k) { if (k !== 'font') out[k] = col(out[k], d[k]); });
+        out.font = /^[A-Za-z0-9 ,'-]{1,120}$/.test(String(out.font || '')) ? out.font : d.font;
+        return out;
+    }
+    function safeProps(p, d) {
+        if (p.align !== undefined && !ALIGNS.hasOwnProperty(String(p.align))) p.align = d.align || 'left';
+        if (p.weight !== undefined && !/^[1-9]00$/.test(String(p.weight))) p.weight = d.weight || '700';
+        if (p.side !== undefined && p.side !== 'left' && p.side !== 'right') p.side = 'left';
+        return p;
+    }
     function load(design, meta) {
         meta = meta || {};
-        S.design = { settings: Object.assign(blankSettings(), design.settings || {}), blocks: (design.blocks || []).filter(function (b) { return b && TYPES[b.type]; }) };
-        S.design.blocks.forEach(function (b) { b.id = b.id || uid(); b.props = Object.assign({}, clone(TYPES[b.type].d), b.props || {}); if (b.type === 'columns' && !b.props.cols) b.props.cols = defaultCols(2); });
+        S.design = { settings: safeSettings(design.settings), blocks: (design.blocks || []).filter(function (b) { return b && typeof b.type === 'string' && TYPES.hasOwnProperty(b.type); }) };
+        S.design.blocks.forEach(function (b) { b.id = /^[A-Za-z0-9_-]{1,40}$/.test(String(b.id || '')) ? b.id : uid(); b.props = safeProps(Object.assign({}, clone(TYPES[b.type].d), b.props || {}), TYPES[b.type].d); if (b.type === 'columns' && !b.props.cols) b.props.cols = defaultCols(2); });
         S.selected = null; S.designId = meta.id || 0; S.name = meta.name || ''; S.undo = [];
         if (meta.subject !== undefined) $('eb-subj').value = meta.subject || '';
         if (meta.preheader !== undefined) $('eb-pre').value = meta.preheader || '';

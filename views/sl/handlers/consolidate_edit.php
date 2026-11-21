@@ -35,6 +35,9 @@ if ($userData->userlevel == 1)
 
 
 if (isset($_GET['id'])) {
+    // Force an integer id: MySQL casts '5'' UNION ...' to 5 so the lookup below would pass and the
+    // raw value would then reach later queries.
+    $_GET['id'] = (int) $_GET['id'];
     $data = cdp_getConsolidatePrint($_GET['id']);
 }
 
@@ -53,7 +56,8 @@ if (isset($userData->userlevel) && (int)$userData->userlevel === 6) {
 
 $row_order = $data['data'];
 
-$db->cdp_query("SELECT * FROM cdb_consolidate_detail WHERE consolidate_id='" . $_GET['id'] . "'");
+$db->cdp_query("SELECT * FROM cdb_consolidate_detail WHERE consolidate_id = :cid");
+$db->bind(':cid', (int) $_GET['id']);
 $order_items = $db->cdp_registros();
 
 $db->cdp_query("SELECT * FROM cdb_users where id= '" . $row_order->sender_id . "'");
@@ -301,7 +305,9 @@ if (isset($_POST["total_item"])) {
     // ADDRESS UPDATES
     // ═════════════════════════════════════════════════════════════════════
 
-    $db->cdp_query("SELECT * FROM cdb_senders_addresses where id_addresses= '" . $_POST["sender_address_id"] . "'");
+    // Bound integer: the posted address id was concatenated into SQL before.
+    $db->cdp_query("SELECT * FROM cdb_senders_addresses where id_addresses = :aid");
+    $db->bind(':aid', (int) ($_POST["sender_address_id"] ?? 0));
     $sender_address_data = $db->cdp_registro();
 
     if ($sender_address_data) {
@@ -321,7 +327,9 @@ if (isset($_POST["total_item"])) {
         $final_sender_city = $sender_city['data'];
     }
 
-    $db->cdp_query("SELECT * FROM cdb_recipients_addresses where id_addresses= '" . $_POST["recipient_address_id"] . "'");
+    // Bound integer: the posted address id was concatenated into SQL before.
+    $db->cdp_query("SELECT * FROM cdb_recipients_addresses where id_addresses = :aid");
+    $db->bind(':aid', (int) ($_POST["recipient_address_id"] ?? 0));
     $recipient_address_data = $db->cdp_registro();
 
     if ($recipient_address_data) {

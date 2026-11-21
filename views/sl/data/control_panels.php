@@ -175,7 +175,10 @@ function sl_controlPanelSections(callable $c, string $w = '', bool $money = fals
         ['id' => 'shipments', 'icon' => 'i-plane', 't' => 'Shipping & freight', 's' => 'Everything moving between the US and Ghana', 'rows' => [
             ['AirShipments', 'i-plane', 'Air shipments', 'Not yet delivered', 'view_shipment_list', fn() => $c("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.is_pickup = 0 AND a.status_courier NOT IN (8,15,21) $w")],
             ['SeaPackages', 'i-ship', 'Sea packages', 'Containers and LCL boxes', 'view_package_list', fn() => $c("SELECT COUNT(*) FROM cdb_customers_packages a WHERE a.status_courier NOT IN (8,15,21) $w")],
-            ['Consolidations', 'i-layers', 'Consolidations', 'Open air and sea consolidations', ['view_consolidate_list', 'view_consolidate_package_list'], fn() => sl_num((int) sl_scalar("SELECT COUNT(*) FROM cdb_consolidate WHERE status_courier NOT IN ('8','15','21')") + (int) sl_scalar("SELECT COUNT(*) FROM cdb_consolidate_packages WHERE status_courier NOT IN ('8','15','21')"))],
+            ['Consolidations', 'i-layers', 'Consolidations', 'Open air and sea consolidations', ['view_consolidate_list', 'view_consolidate_package_list'], fn() => sl_num(
+                // agency-scoped like the other counts, and only the modes the user may open
+                (sl_navAllowed('view_consolidate_list', []) ? (int) sl_scalar("SELECT COUNT(*) FROM cdb_consolidate a WHERE a.status_courier NOT IN ('8','15','21') $w") : 0)
+                + (sl_navAllowed('view_consolidate_package_list', []) ? (int) sl_scalar("SELECT COUNT(*) FROM cdb_consolidate_packages a WHERE a.status_courier NOT IN ('8','15','21') $w") : 0))],
             ['PreAlerts', 'i-inbox', 'Pre-alerts', 'Parcels customers told us about', 'prealert_list', fn() => $c('SELECT COUNT(*) FROM cdb_pre_alert WHERE is_package = 0')],
             ['PublicTracking', 'i-route', 'Public tracking', 'What customers see', null, null],
         ]],

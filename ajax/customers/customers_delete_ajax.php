@@ -27,6 +27,12 @@ require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_once(__DIR__ . '/../../helpers/rbac.php');
 require_login();
 require_permission('delete_client');
+// Staff only, whatever CDP_RBAC_MODE says: a customer must never delete other customers.
+if (cdp_roleRankById((int) $user->userlevel) < 2) {
+    header('HTTP/1.1 403 Forbidden');
+    echo json_encode(['status' => 'error', 'message' => 'No permission for this action']);
+    exit;
+}
 
 $db = new Conexion;
 
@@ -34,11 +40,14 @@ $id = $_REQUEST['id'];
 
 // Only ever delete CLIENT accounts here — never staff.
 $tdb = new Conexion;
-$tdb->cdp_query("SELECT userlevel FROM cdb_users WHERE id = :id LIMIT 1");
+$tdb->cdp_query("SELECT userlevel, agency_id FROM cdb_users WHERE id = :id LIMIT 1");
 $tdb->bind(':id', (int) $id);
 $tdb->cdp_execute();
 $trow = $tdb->cdp_registro();
-if (!$trow || !cdp_roleIsClient((int) $trow->userlevel)) {
+// Agency-restricted staff may only delete their own agency's clients.
+$ctx = cdp_getAgencyContext();
+if (!$trow || !cdp_roleIsClient((int) $trow->userlevel)
+    || (!empty($ctx['is_restricted']) && (int) $trow->agency_id !== (int) $ctx['agency_id'])) {
     echo json_encode(['status' => 'error', 'message' => 'This action can only delete client accounts.']);
     exit;
 }

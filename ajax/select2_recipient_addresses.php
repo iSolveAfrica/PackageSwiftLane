@@ -35,6 +35,24 @@ $type = $_REQUEST['type'] ?? 'recipient';
 
 $data = [];
 
+// Customers may only read their own addresses and those of their own recipients
+// (security fix 2026-11-21): ids were otherwise taken from the request unchecked.
+require_once(__DIR__ . '/../helpers/rbac.php');
+if (cdp_roleRankById((int) $__u->userlevel) < 1) {
+    if ($type === "user") {
+        $id = (int) $__u->uid;
+    } else {
+        $db->cdp_query("SELECT sender_id FROM cdb_recipients WHERE id = :rid LIMIT 1");
+        $db->bind(':rid', $id);
+        $db->cdp_execute();
+        $owner = $db->cdp_registro();
+        if (!$owner || (int) $owner->sender_id !== (int) $__u->uid) {
+            echo json_encode([]);
+            exit;
+        }
+    }
+}
+
 if ($type === "user") {
     $sql = "SELECT * FROM cdb_senders_addresses WHERE user_id='$id'";
 

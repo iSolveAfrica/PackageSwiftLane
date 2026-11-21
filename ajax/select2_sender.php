@@ -28,6 +28,7 @@ $__u = new User();
 if (!$__u->cdp_loginCheck()) { http_response_code(401); header('Content-Type: application/json'); echo json_encode(['success' => false, 'message' => 'Session required']); exit; }
 
 require_once(__DIR__ . '/../helpers/querys.php');
+require_once(__DIR__ . '/../helpers/rbac.php');
 
 $user = new User();
 $db = new Conexion;
@@ -45,6 +46,11 @@ if ($ctx['is_restricted']) {
 		exit;
 	}
 	$extraWhere = " AND agency_id = " . (int)$ctx['agency_id'];
+}
+// A customer may only pick themselves as sender (security fix 2026-11-21): without this a
+// customer could search every other customer's email, phone and locker code.
+if (cdp_roleRankById((int) $__u->userlevel) < 1) {
+	$extraWhere .= " AND id = " . (int) $__u->uid;
 }
 
 $sql = "SELECT * FROM cdb_users

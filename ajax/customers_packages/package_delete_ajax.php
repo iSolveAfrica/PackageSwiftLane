@@ -25,7 +25,8 @@ require_once("../../loader.php");
 require_once("../../helpers/querys.php");
 require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_login();
-require_permission('view_client_list');
+// Deleting is destructive: require the delete permission (staff only), not the list permission.
+require_permission('delete_package');
 
 $db = new Conexion;
 $user = new User;
@@ -41,10 +42,28 @@ if (empty($_POST['id_delete']))
 
 
 
-if (empty($errors)) {
+$id_delete = (int) ($_POST['id_delete'] ?? 0);
+if (empty($errors) && $id_delete <= 0)
 
-    $db->cdp_query("SELECT * FROM cdb_customers_packages where order_id=" . $_POST['id_delete'] . "");
+    $errors['id_delete'] = 'Please select shipment package';
+
+$trackings_order = null;
+if (empty($errors)) {
+    // Bound integer id (the raw POST value was concatenated into SQL before).
+    $db->cdp_query("SELECT * FROM cdb_customers_packages where order_id = :id");
+    $db->bind(':id', $id_delete);
     $trackings_order = $db->cdp_registro();
+
+    // The record must exist and, for an agency-restricted user, belong to their agency.
+    $agencyCtx = cdp_getAgencyContext();
+    if (!$trackings_order) {
+        $errors['id_delete'] = 'Please select shipment package';
+    } elseif (!empty($agencyCtx['is_restricted']) && (int) ($trackings_order->agency ?? 0) !== (int) $agencyCtx['agency_id']) {
+        $errors['id_delete'] = 'Please select shipment package';
+    }
+}
+
+if (empty($errors)) {
 
 
     $track_resulta = $trackings_order->order_prefix . $trackings_order->order_no;
@@ -52,7 +71,7 @@ if (empty($errors)) {
 
     $data = array(
 
-        'id' => trim($_POST['id_delete'])
+        'id' => $id_delete
     );
 
 
@@ -88,7 +107,7 @@ if (empty($errors)) {
 
 
 
-        $db->bind(':order_id',  $_POST['id_delete']);
+        $db->bind(':order_id',  $id_delete);
         $db->bind(':user_id',  $_SESSION['userid']);
         $db->bind(':action', $lang['notification_shipment0888'] . $track_resulta . '');
         $db->bind(':date_history',  trim($date));
@@ -98,7 +117,7 @@ if (empty($errors)) {
             'module'       => 'packages',
             'verb'         => 'delete',
             'entity_type'  => 'package',
-            'entity_id'    => (int) $_POST['id_delete'],
+            'entity_id'    => $id_delete,
             'entity_label' => $track_resulta,
             'status_id'    => (int) ($trackings_order->status_courier ?? 0) ?: null,
             'status_name'  => cdp_activityStatusName($trackings_order->status_courier ?? 0) ?: null,

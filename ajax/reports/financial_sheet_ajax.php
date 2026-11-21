@@ -47,6 +47,24 @@ if ($uname === '') {
 
 $action = isset($_REQUEST['action']) ? cdp_sanitize($_REQUEST['action']) : 'list';
 
+// CSRF: require_login() validates the token only on POST, and every action reads
+// $_REQUEST, so a GET link (?action=clear_debt&...) would otherwise book money with
+// no token. Actions that change data are POST-only (dataJs/sl/financial_sheet.js
+// already POSTs them via SL.post). 'unlock' stays allowed on GET: it only releases
+// the caller's own edit lock and is sent by a keepalive GET fetch on pagehide.
+$fsWriteActions = [
+    'save_item', 'save_group', 'clear_group', 'bill_customer', 'gateway_init',
+    'record_payment', 'clear_debt', 'apply_discount', 'remove_discount',
+    'clear_package', 'set_weight_rate', 'lock', 'check_payment', 'check_intent',
+];
+if (in_array($action, $fsWriteActions, true) && strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+    http_response_code(405);
+    header('Allow: POST');
+    header('Content-Type: application/json; charset=UTF-8');
+    echo json_encode(['ok' => false, 'success' => false, 'message' => 'POST required']);
+    exit;
+}
+
 // Per-action RBAC: viewing needs 'financial_sheet'; each mutation needs its own
 // permission so the Accounts department can delegate who may price / bill /
 // take payment / discount. Superadmin (userlevel 9) passes via the wildcard.
@@ -309,6 +327,38 @@ function fs_consol_summary($cid)
         // Consolidation-level "Received" is displayed in USD.
         'paid_usd'     => round(cdp_ghsToUsd($paidGhs, $rate), 2),
     ];
+}
+
+/** Why an online (non-cash) gateway reference cannot be booked again, or ''.
+ *  One real gateway transaction must be counted once: without this, the same
+ *  Paystack/Hubtel reference could be recorded against several customers or
+ *  consolidations (each insert counts as received money and clears packages),
+ *  or re-recorded after the customer's own checkout intent already booked it. */
+function fs_reference_taken($mode, $reference)
+{
+    if ($mode === 'cash' || $reference === '') {
+        return '';
+    }
+    $db = new Conexion;
+    $db->cdp_query("SELECT id FROM cdb_fs_payments WHERE reference = :r LIMIT 1");
+    $db->bind(':r', $reference);
+    $db->cdp_execute();
+    if ($db->cdp_registro()) {
+        return 'This payment reference has already been recorded. Each gateway payment can be booked only once.';
+    }
+    // A customer self-service checkout with this reference is booked by its own
+    // intent (webhook / "Check" button); recording it here as well would count it twice.
+    try {
+        $db->cdp_query("SELECT id FROM cdb_fs_payment_intents WHERE reference = :r LIMIT 1");
+        $db->bind(':r', $reference);
+        $db->cdp_execute();
+        if ($db->cdp_registro()) {
+            return 'This reference belongs to a customer checkout. Use Check payment to confirm it instead of recording it again.';
+        }
+    } catch (Throwable $e) {
+        // Intents table not migrated yet: no self-service checkouts to collide with.
+    }
+    return '';
 }
 
 /** Pricing is locked for a (consolidation, customer) pair once it is in the
@@ -1585,6 +1635,11 @@ if ($action === 'record_payment') {
     }
     // ---- Verify first (cash is a manual in-person receipt; online modes are
     // confirmed against the gateway). --------------------------------------------
+    $refTaken = fs_reference_taken($mode, $reference);
+    if ($refTaken !== '') {
+        echo json_encode(['ok' => false, 'error' => 'duplicate_reference', 'message' => $refTaken]);
+        exit;
+    }
     $verify = cdp_fsVerifyPayment($mode, $reference, null);
     if (empty($verify['ok'])) {
         echo json_encode(['ok' => false, 'error' => 'verify_failed',
@@ -1863,6 +1918,11 @@ if ($action === 'clear_debt') {
     }
     $reference = trim((string) ($_REQUEST['reference'] ?? ''));
 
+    $refTaken = fs_reference_taken($mode, $reference);
+    if ($refTaken !== '') {
+        echo json_encode(['ok' => false, 'error' => 'duplicate_reference', 'message' => $refTaken]);
+        exit;
+    }
     $verify = cdp_fsVerifyPayment($mode, $reference, null);
     if (empty($verify['ok'])) {
         echo json_encode(['ok' => false, 'error' => 'verify_failed',

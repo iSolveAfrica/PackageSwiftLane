@@ -450,13 +450,17 @@ if (!function_exists('cdp_fsCompleteIntent')) {
 
         $db = new Conexion;
 
-        // ---- Atomic claim: pending -> processing. Only the caller whose
+        // ---- Atomic claim: pending/failed -> processing. Only the caller whose
         // UPDATE actually matches a row may proceed to insert money. -------
+        // 'failed' is claimable too: Paystack lets a customer retry a declined
+        // MoMo prompt on the SAME reference, so a later success (webhook or
+        // return URL) must still be booked. Re-verification below decides;
+        // a genuinely failed intent just goes back to 'failed'.
         $claimed = false;
         try {
             $db->cdp_query("UPDATE cdb_fs_payment_intents
                             SET status = 'processing'
-                            WHERE reference = :r AND status = 'pending'");
+                            WHERE reference = :r AND status IN ('pending', 'failed')");
             $db->bind(':r', $reference);
             $db->cdp_execute();
             $claimed = ($db->cdp_rowCount() > 0);
@@ -491,7 +495,10 @@ if (!function_exists('cdp_fsCompleteIntent')) {
             // be on the MoMo prompt, so release the claim and let the webhook
             // or a later poll finish the job. Anything else is terminal.
             $gwStatus = strtolower((string) ($verify['status'] ?? 'failed'));
-            $retryable = in_array($gwStatus, ['pending', 'ongoing', 'processing', 'abandoned'], true);
+            // Could not reach the gateway: not knowing is not "not paid", so
+            // keep the intent open for the webhook or a later poll.
+            $retryable = !empty($verify['unreachable'])
+                || in_array($gwStatus, ['pending', 'ongoing', 'processing', 'abandoned'], true);
             cdp_fsMarkIntent($reference, $retryable ? 'pending' : 'failed',
                              $verify['message'] ?? 'Not confirmed.', $verify['payload'] ?? null);
             return ['ok' => false, 'status' => $retryable ? 'pending' : 'failed', 'amount' => null,

@@ -21,14 +21,35 @@ require_login();
 $op = (string) ($_REQUEST['op'] ?? '');
 $uid = (int) $_SESSION['userid'];
 
+/**
+ * Agency filter for customer lookups. The GET lookups below run before the POST client block and
+ * add_package is soft-allowed for customers, so without this anyone signed in could read every
+ * customer's addresses (or pre-alert owners) by id/tracking.
+ */
+function slp_lookupScope(): string
+{
+    // Same rule as the NewPackage page (customer_packages_add.php): customers never get this screen.
+    if (sl_userIs('client')) {
+        sl_json(['success' => false, 'message' => 'Not allowed'], 403);
+    }
+    $ctx = function_exists('cdp_getAgencyContext') ? cdp_getAgencyContext() : ['is_restricted' => false];
+    return !empty($ctx['is_restricted']) ? ' AND u.agency_id = ' . (int) ($ctx['agency_id'] ?? 0) : '';
+}
+
 if ($op === 'addresses') {
     require_permission(['add_package', 'edit_package']);
-    sl_json(['success' => true, 'addresses' => sl_opsAddresses((int) ($_GET['id'] ?? 0))]);
+    $scope = slp_lookupScope();
+    $custId = (int) ($_GET['id'] ?? 0);
+    if (!sl_row("SELECT u.id FROM cdb_users u WHERE u.id = :id AND u.userlevel = 1$scope", [':id' => $custId])) {
+        sl_json(['success' => false, 'message' => 'Customer not found'], 404);
+    }
+    sl_json(['success' => true, 'addresses' => sl_opsAddresses($custId)]);
 }
 if ($op === 'prealert') {
     require_permission(['add_package', 'edit_package']);
+    $scope = slp_lookupScope();
     $t = trim((string) ($_GET['tracking'] ?? ''));
-    $p = $t !== '' ? sl_row('SELECT p.*, u.fname, u.lname FROM cdb_pre_alert p LEFT JOIN cdb_users u ON u.id = p.customer_id WHERE p.tracking = :t AND p.is_package = 0', [':t' => $t]) : null;
+    $p = $t !== '' ? sl_row("SELECT p.*, u.fname, u.lname FROM cdb_pre_alert p LEFT JOIN cdb_users u ON u.id = p.customer_id WHERE p.tracking = :t AND p.is_package = 0$scope", [':t' => $t]) : null;
     sl_json(['success' => true, 'prealert' => $p ? ['id' => (int) $p->pre_alert_id, 'shop' => $p->provider_shop, 'what' => $p->package_description, 'customer' => trim($p->fname . ' ' . $p->lname), 'customer_id' => (int) $p->customer_id] : null]);
 }
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
