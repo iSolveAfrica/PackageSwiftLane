@@ -310,7 +310,7 @@ function sl_shipmentDetailData($user, $core, int $id): array
     $kg = 0;
     foreach ($s['items'] as $it) {
         $kg += (float) $it->order_item_weight * max(1, (float) $it->order_item_quantity);
-        $items[] = ['qty' => (float) $it->order_item_quantity == (int) $it->order_item_quantity ? (int) $it->order_item_quantity : (float) $it->order_item_quantity, 'desc' => $it->order_item_description, 'kg' => (float) $it->order_item_weight > 0 ? sl_weight($it->order_item_weight, 2) : '—', 'val' => sl_money($it->order_item_declared_value), 'dims' => (float) $it->order_item_length > 0 ? (float) $it->order_item_length . ' × ' . (float) $it->order_item_width . ' × ' . (float) $it->order_item_height : '—'];
+        $items[] = ['qty' => (float) $it->order_item_quantity == (int) $it->order_item_quantity ? (int) $it->order_item_quantity : (float) $it->order_item_quantity, 'desc' => $it->order_item_description, 'kg' => (float) $it->order_item_weight > 0 ? sl_weight($it->order_item_weight, 2) : '—', 'custom' => (float) ($it->custom_price ?? 0) > 0 ? sl_money($it->custom_price) : '—', 'val' => sl_money($it->order_item_declared_value), 'dims' => (float) $it->order_item_length > 0 ? (float) $it->order_item_length . ' × ' . (float) $it->order_item_width . ' × ' . (float) $it->order_item_height : '—'];
     }
     $events = [];
     $rev = array_reverse($s['events']);
@@ -327,6 +327,7 @@ function sl_shipmentDetailData($user, $core, int $id): array
         'items' => $items, 'kg' => (float) $o->total_weight > 0 ? sl_weight($o->total_weight) : sl_weight($kg),
         'sender' => ['name' => sl_userName($s['sender']), 'ini' => sl_initials(sl_userName($s['sender'])), 'mail' => $s['sender']->email ?? '', 'phone' => $s['sender']->phone ?? '—', 'locker' => $s['sender']->locker ?? '', 'id' => (int) $o->sender_id, 'addr' => $s['addr'] ? trim(implode(', ', array_filter([$s['addr']->sender_address, $s['addr']->sender_city, $s['addr']->sender_state])), ', ') : '—'],
         'recip' => ['name' => $s['recip'] ? trim($s['recip']->fname . ' ' . $s['recip']->lname) : '—', 'ini' => sl_initials($s['recip'] ? $s['recip']->fname . ' ' . $s['recip']->lname : '?'), 'mail' => $s['recip']->email ?? '', 'phone' => $s['recip']->phone ?? '—', 'addr' => $s['addr'] ? trim(implode(', ', array_filter($s['rtype'] === 'user' ? [$s['addr']->sender_address, $s['addr']->sender_city, $s['addr']->sender_state] : [$s['addr']->recipient_address, $s['addr']->recipient_city, $s['addr']->recipient_state])), ', ') : '—'],
+        'pickup' => sl_pickupInfo($id), 'activity' => sl_shipmentActivity($id, (string) $s['track'], (int) $o->sender_id),
         'files' => array_map(fn($f) => ['name' => $f->name, 'url' => $f->url, 'img' => in_array(strtolower((string) $f->file_type), ['jpg', 'jpeg', 'png', 'gif', 'webp'], true)], $s['files']),
         'total' => sl_money($o->total_order), 'pay' => $payLabel, 'payCls' => $payCls, 'payMethod' => $s['payMode']->name_pay ?? ($s['payLabel']->label ?? '—'), 'terms' => $s['payLabel']->label ?? '',
         'payRef' => $s['gateway']->payment_transaction ?? ($s['charge']->number_reference ?? '—'), 'paidOn' => $o->payment_date ? sl_date($o->payment_date) : ($s['charge'] ? sl_date($s['charge']->charge_date) : '—'), 'due' => $o->due_date ? sl_date($o->due_date) : '—',
@@ -535,6 +536,91 @@ function sl_shipmentTrackingData($user, $core, int $id, string $q = ''): array
     $d['statusId'] = (int) $o->status_courier;
     $d['cov'] = ['Live status from every scan', 'Predicted delivery date', 'Delay risk', 'Flight and AWB numbers', 'Customs stage', 'Proof of delivery', 'Delivery attempts', 'Notifications log', 'Public tracking link', 'Privacy controls', 'Status disputes', 'Sibling packages', 'Pickup code state', 'Exceptions and holds', 'Carrier number check'];
     return $d;
+}
+
+/** Pickup code state for one air shipment: assigned when created, sent when ready for pickup. */
+function sl_pickupInfo(int $id): array
+{
+    $none = ['assigned' => false];
+    if (!is_file(CDP_ROOT . '/helpers/pickup_code.php')) {
+        return $none;
+    }
+    require_once CDP_ROOT . '/helpers/pickup_code.php';
+    if (!function_exists('cdp_pickupCodeLiveFor') || !cdp_pickupCodeEnsureTables()) {
+        return $none;
+    }
+    $rows = cdp_pickupCodeLiveFor('air', [$id]);
+    if (!$rows) {
+        return $none;
+    }
+    $r = $rows[0];
+    return [
+        'assigned' => true,
+        'code' => (string) $r->code,
+        'created' => sl_date($r->created_at, 'M j, Y · g:i A'),
+        'sent' => $r->last_sent_at ? sl_date($r->last_sent_at, 'M j, Y · g:i A') : '',
+        'channels' => trim((string) $r->channels),
+    ];
+}
+
+/**
+ * Everything that happened on one shipment, newest first: the shipment's own
+ * activity (edits, status, views, prints, pickup codes), the customer's
+ * activity, and the package history (who changed what, and every scan).
+ */
+function sl_shipmentActivity(int $id, string $track, int $senderId): array
+{
+    $rows = [];
+    $ts = fn($v) => $v ? (int) strtotime((string) $v) : 0;
+    $fmt = fn($v) => sl_date($v, 'M j, Y · g:i A');
+    $changes = function ($raw): string {
+        $c = is_string($raw) ? json_decode($raw, true) : $raw;
+        if (!is_array($c)) {
+            return '';
+        }
+        $parts = [];
+        foreach ($c as $k => $v) {
+            if (is_array($v) && count($v) === 2 && array_key_exists(0, $v) && array_key_exists(1, $v)) {
+                $parts[] = $k . ': ' . ($v[0] === null || $v[0] === '' ? '—' : $v[0]) . ' → ' . ($v[1] === null || $v[1] === '' ? '—' : $v[1]);
+            } elseif (!is_array($v)) {
+                $parts[] = $k . ': ' . $v;
+            }
+        }
+        return implode(' · ', array_slice($parts, 0, 12));
+    };
+    if (sl_tableExists('cdb_activity_log')) {
+        $sql = "SELECT created_at, actor_name, action_label, summary, outcome, entity_type, changes, verb FROM cdb_activity_log
+                WHERE (entity_type = 'shipment' AND entity_id = :id) OR (entity_type = 'customer' AND entity_id = :s)
+                   OR (entity_type = 'pickup_code' AND summary LIKE :tr)
+                ORDER BY id DESC LIMIT 300";
+        foreach (sl_rows($sql, [':id' => (string) $id, ':s' => (string) $senderId, ':tr' => '%' . $track . '%']) as $r) {
+            $rows[] = [
+                'ts' => $ts($r->created_at), 'when' => $fmt($r->created_at), 'who' => $r->actor_name ?: 'System',
+                'kind' => $r->entity_type === 'customer' ? 'Customer' : ($r->entity_type === 'pickup_code' ? 'Pickup code' : 'Shipment'),
+                'what' => $r->summary ?: $r->action_label, 'detail' => $changes($r->changes), 'outcome' => (string) $r->outcome,
+            ];
+        }
+    }
+    if (sl_tableExists('cdb_order_user_history')) {
+        foreach (sl_rows('SELECT h.date_history, h.action, u.fname, u.lname FROM cdb_order_user_history h LEFT JOIN cdb_users u ON u.id = h.user_id WHERE h.order_id = :id ORDER BY h.date_history DESC LIMIT 300', [':id' => $id]) as $r) {
+            $who = trim(($r->fname ?? '') . ' ' . ($r->lname ?? ''));
+            $rows[] = ['ts' => $ts($r->date_history), 'when' => $fmt($r->date_history), 'who' => $who !== '' ? $who : 'System', 'kind' => 'Package', 'what' => (string) $r->action, 'detail' => '', 'outcome' => ''];
+        }
+    }
+    foreach (sl_rows('SELECT t.t_date, t.t_city, t.t_dest, t.comments, s.mod_style, u.fname, u.lname FROM cdb_courier_track t LEFT JOIN cdb_styles s ON s.id = t.status_courier LEFT JOIN cdb_users u ON u.id = t.user_id WHERE t.order_track = :t ORDER BY t.t_date DESC LIMIT 300', [':t' => $track]) as $r) {
+        $where = trim(implode(', ', array_filter([(string) $r->t_city, (string) $r->t_dest])));
+        $who = trim(($r->fname ?? '') . ' ' . ($r->lname ?? ''));
+        $rows[] = ['ts' => $ts($r->t_date), 'when' => $fmt($r->t_date), 'who' => $who !== '' ? $who : 'System', 'kind' => 'Package',
+            'what' => 'Status: ' . str_replace('_', ' ', (string) ($r->mod_style ?: 'Update')),
+            'detail' => trim(implode(' · ', array_filter([$where, (string) $r->comments]))), 'outcome' => ''];
+    }
+    usort($rows, fn($a, $b) => $b['ts'] <=> $a['ts']);
+    $rows = array_slice($rows, 0, 400);
+    $counts = ['all' => count($rows), 'Shipment' => 0, 'Package' => 0, 'Customer' => 0, 'Pickup code' => 0];
+    foreach ($rows as $r) {
+        $counts[$r['kind']] = ($counts[$r['kind']] ?? 0) + 1;
+    }
+    return ['rows' => $rows, 'counts' => $counts];
 }
 
 /** Delivery tracking board: shipments out for delivery (status 7) with driver and last scan. */

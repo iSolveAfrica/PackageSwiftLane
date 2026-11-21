@@ -20,5 +20,10 @@ $opt = sl_labelOptions();
 $size = (string) ($_GET['size'] ?? ($opt['big']['size'] === '12' ? '12' : '46'));
 $size = $size === '12' ? '12' : '46';
 $type = ($_GET['type'] ?? 'air') === 'sea' ? 'sea' : 'air';
+foreach ($ids as $printId) {
+    cdp_activityLog(['module' => 'shipments', 'verb' => 'print', 'action' => 'label.print',
+        'entity_type' => $type === 'sea' ? 'package' : 'shipment', 'entity_id' => (int) $printId,
+        'summary' => 'Printed ' . ($_GET['size'] ?? '') . ' label']);
+}
 $board = $size === '12' ? 'Label1x2' : 'Label4x6';
 sl_render($board, ['id' => 'air', 'title' => 'Label', 'board' => $board, 'plain' => true], sl_labelPrintData($ids, $size, $type));

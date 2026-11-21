@@ -195,6 +195,7 @@ if (empty($errors)) {
     );
 
     $shipment_id = cdp_insertCourierShipment($dataShipment);
+    if ($shipment_id !== null) { require_once __DIR__ . '/../../helpers/pickup_code.php'; cdp_pickupCodeAssignOnCreate('air', (int) $shipment_id); }
 
     if ($shipment_id !== null) {
 

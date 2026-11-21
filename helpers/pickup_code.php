@@ -316,6 +316,7 @@ if (!function_exists('cdp_pickupCodeEnsureTables')) {
             $db->cdp_execute();
         }
 
+        cdp_pickupCodeLog($module, $ids, 'pickup_code.assigned', 'Pickup code assigned (' . $context . ')');
         return $base + ['success' => true, 'message' => 'Pickup code created.', 'code' => $code, 'code_id' => $codeId, 'reused' => false];
     }
 
@@ -346,15 +347,54 @@ if (!function_exists('cdp_pickupCodeEnsureTables')) {
                     foreach ($ids as $oid) {
                         $out[$oid] = (string) $r['code'];
                     }
-                    if (empty($r['reused'])) {
-                        cdp_pickupCodeMarkSent((int) $r['code_id']);
-                    }
+                    // Sent with the ready message, whether the code is new or assigned at creation.
+                    cdp_pickupCodeMarkSent((int) $r['code_id']);
+                    cdp_pickupCodeLog($module, $ids, 'pickup_code.sent', 'Pickup code sent automatically: package ready for pickup (' . $context . ')');
                 }
             }
         } catch (Throwable $e) {
             error_log('pickup code for ready message: ' . $e->getMessage());
         }
         return $out;
+    }
+
+    /** One activity-log row per package for a pickup code event. Never throws. */
+    function cdp_pickupCodeLog($module, array $orderIds, $action, $summary)
+    {
+        try {
+            if (!function_exists('cdp_activityLog')) {
+                require_once __DIR__ . '/activity_log.php';
+            }
+            $type = cdp_pickupCodeModule($module) === 'sea' ? 'package' : 'shipment';
+            foreach (array_unique(array_map('intval', $orderIds)) as $oid) {
+                if ($oid <= 0) continue;
+                cdp_activityLog([
+                    'module' => 'shipments', 'verb' => 'pickup', 'action' => $action,
+                    'entity_type' => $type, 'entity_id' => $oid, 'summary' => $summary,
+                ]);
+            }
+        } catch (Throwable $e) {
+            error_log('pickup code log: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Give a package its pickup code the moment it is created. The code is
+     * stored against the package but NOT sent: it goes to the owner when the
+     * package becomes ready for pickup (cdp_pickupCodeForReady reuses it).
+     * Never throws.
+     */
+    function cdp_pickupCodeAssignOnCreate($module, $orderId)
+    {
+        try {
+            if ((int) $orderId <= 0) {
+                return null;
+            }
+            return cdp_pickupCodeIssue($module, [(int) $orderId], 'created', (int) ($_SESSION['userid'] ?? 0));
+        } catch (Throwable $e) {
+            error_log('pickup code on create: ' . $e->getMessage());
+            return null;
+        }
     }
 
     /** The one line a ready message carries. Empty when there is no code. */
@@ -440,6 +480,7 @@ if (!function_exists('cdp_pickupCodeEnsureTables')) {
             }
         }
         cdp_pickupCodeMarkSent($codeId);
+        cdp_pickupCodeLog($module, $orderIds, 'pickup_code.resent', 'Pickup code sent by staff');
 
         $code      = (string) $res['code'];
         $trackings = $res['trackings'];

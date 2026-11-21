@@ -67,6 +67,7 @@ if ($action === 'verify') {
         $respond(false, 'No package specified.');
     }
     $res = cdp_pickupCodeVerify($module, $orderIds, (string) ($_POST['code'] ?? ''), $uid);
+    cdp_pickupCodeLog($module, $orderIds, empty($res['success']) ? 'pickup_code.check_failed' : 'pickup_code.verified', empty($res['success']) ? 'Pickup code entry did not match' : 'Pickup code verified at hand-over desk'); 
     $respond(!empty($res['success']), $res['message']);
 }
 
