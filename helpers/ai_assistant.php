@@ -422,7 +422,6 @@ if (!function_exists('cdp_aiPageCatalogue')) {
             ['courier_add.php', 'Create Shipment', 'Register a new air/sea shipment for a customer.', 'add_shipment'],
             ['courier_list.php', 'Shipments List', 'All shipments with status, payment state and actions. Filter by air (?mode=air) or sea (?mode=sea).', 'view_shipment_list'],
             ['courier_view.php?id=', 'Shipment Details', 'One shipment: sender, recipient, items, charges, tracking history.', 'view_shipment_list'],
-            ['import_excel_add_courier.php', 'Import Shipments from Excel', 'Create many shipments at once from a spreadsheet.', 'add_multiple_shipments'],
             ['payments_gateways_courier_list.php', 'Shipment Payments', 'Online payments received for shipments.', 'view_payment_shipment_list'],
             ['dashboard_admin_shipments.php', 'Shipments Dashboard', 'Charts and counts for shipments.', 'view_dashboard_ship'],
             ['prealert_list.php', 'Pre-Alerts', 'Packages customers told us are on the way, before they arrive.', 'prealert_list'],
