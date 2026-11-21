@@ -19,7 +19,7 @@ function sl_modules(): array
         'prealerts'     => ['label' => 'Pre-alerts', 'group' => 'ops', 'desc' => 'Customers announce parcels before they arrive', 'nav' => ['prealert'], 'customer' => true, 'api' => ['pre-alerts']],
         'pickups'       => ['label' => 'Pickups', 'group' => 'ops', 'desc' => 'Pickup requests, aging and riders', 'nav' => ['pickup', 'lastmile', 'drvapp'], 'customer' => true, 'api' => []],
         'consolidation' => ['label' => 'Consolidations', 'group' => 'ops', 'desc' => 'Group shipments and packages into one load', 'nav' => ['consol_air', 'consol_sea'], 'customer' => false, 'api' => []],
-        'warehouse'     => ['label' => 'Warehouse', 'group' => 'ops', 'desc' => 'Intake, hand-out and locker search', 'nav' => ['warehouse', 'handout', 'locker'], 'customer' => false, 'api' => []],
+        'warehouse'     => ['label' => 'Warehouse', 'group' => 'ops', 'desc' => 'Intake, hand-out and locker search', 'nav' => ['warehouse', 'handout', 'locker', 'whlog'], 'customer' => false, 'api' => []],
         'freight'       => ['label' => 'Freight', 'group' => 'ops', 'desc' => 'Departures, waybills, exceptions, insurance, partners', 'nav' => ['frhub', 'frsched', 'frwb', 'frex', 'frins', 'frpart'], 'customer' => false, 'api' => []],
         // People
         'customers'     => ['label' => 'Customers', 'group' => 'people', 'desc' => 'Customer accounts and recipients', 'nav' => ['cust', 'recip'], 'customer' => false, 'api' => ['customers', 'recipients'], 'core' => true],

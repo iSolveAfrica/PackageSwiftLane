@@ -1,7 +1,7 @@
 <?php /** Render the permission-filtered navigation groups from sl_navResolve(). */
-$groupIcons = ['Operations'=>'gauge','RIDERS'=>'truck','Command Centers'=>'grid','Developer'=>'terminal','Support'=>'ticket','Freight'=>'plane','People'=>'users','Finance'=>'card','Insights'=>'chart','Settings'=>'cog','My shipping'=>'box','Account'=>'user'];
+$groupIcons = ['Operations'=>'gauge','Warehouse'=>'warehouse','RIDERS'=>'truck','Command Centers'=>'grid','Developer'=>'terminal','Support'=>'ticket','Freight'=>'plane','People'=>'users','Finance'=>'card','Insights'=>'chart','Settings'=>'cog','My shipping'=>'box','Account'=>'user'];
 // colour key per group (assets/swiftlane/color.css reads data-group)
-$groupKeys = ['Operations'=>'ops','RIDERS'=>'riders','Command Centers'=>'centers','Developer'=>'dev','Support'=>'support','Freight'=>'freight','People'=>'people','Finance'=>'finance','Insights'=>'insights','Settings'=>'settings','My shipping'=>'shipping','Account'=>'account'];
+$groupKeys = ['Operations'=>'ops','Warehouse'=>'warehouse','RIDERS'=>'riders','Command Centers'=>'centers','Developer'=>'dev','Support'=>'support','Freight'=>'freight','People'=>'people','Finance'=>'finance','Insights'=>'insights','Settings'=>'settings','My shipping'=>'shipping','Account'=>'account'];
 ?>
 <?php foreach ($slNav as $g): ?>
   <details class="sl-nav-group" data-group="<?= h($groupKeys[$g['label']] ?? 'ops') ?>"<?= $g['open'] ? ' open' : '' ?>>

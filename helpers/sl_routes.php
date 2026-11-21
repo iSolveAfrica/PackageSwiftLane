@@ -68,6 +68,7 @@ function sl_routes(): array
         'WarehouseDelivery'   => 'warehouse_delivery.php',
         'WarehousePickups'    => 'warehouse_pickups.php',
         'HandOut'             => 'pickup_client.php',
+        'HandoverLog'         => 'handover_log.php',
         'LockerSearch'        => 'locker_search.php',
         'LabelStudio'         => 'label_studio.php',
         'Label4x6'            => 'print_label_ship.php',
