@@ -40,6 +40,16 @@
     });
   }
 
+  // details pop-up: the selected record's template, with edit and every action the role allows
+  function openPop(tc) {
+    var dlg = tc.querySelector('[data-tc-dialog]'), body = tc.querySelector('[data-tc-body].on'), tpl = body && body.querySelector('template[data-tc-pop]');
+    if (!dlg || !tpl || typeof dlg.showModal !== 'function') return;
+    var box = dlg.querySelector('[data-tc-dialog-body]');
+    box.textContent = '';
+    box.appendChild(tpl.content.cloneNode(true));
+    if (!dlg.open) dlg.showModal();
+  }
+
   function filter(tc) {
     var fb = tc.querySelector('[data-tc-f].on');
     var f = fb ? fb.getAttribute('data-tc-f') : 'all';
@@ -59,8 +69,11 @@
   document.addEventListener('click', function (e) {
     var tc = e.target.closest('[data-tc]');
     if (!tc) return;
+    if (e.target.closest('[data-tc-close]')) { var dl = tc.querySelector('[data-tc-dialog]'); if (dl) dl.close(); return; }
+    if (e.target.matches('[data-tc-dialog]')) { e.target.close(); return; } // click on the backdrop
     var card = e.target.closest('[data-tc-key]');
-    if (card) { select(tc, card.getAttribute('data-tc-key')); return; }
+    if (card) { select(tc, card.getAttribute('data-tc-key')); openPop(tc); return; }
+    if (e.target.closest('[data-tc-pop-open]')) { openPop(tc); return; }
     var tab = e.target.closest('[data-tc-tab]');
     if (tab) { showTab(tc, tab.getAttribute('data-tc-tab')); return; }
     var f = e.target.closest('[data-tc-f]');

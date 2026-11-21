@@ -312,6 +312,33 @@ function sl_trackConsoleData($user, $core, string $source = 'shipments', int $li
             if ($user->cdp_hasPermission('print_label')) $docs[] = ['Label', 'print_label_package.php?id=' . $id, 'i-tag'];
         }
         if (!$client && $con) $docs[] = ['Consolidation ' . $con['code'], sl_route('ConsolidationDetail', ['id' => $con['id'], 'type' => $r->mode]), 'i-layers'];
+        // what the viewer can do with this record, for the details pop-up
+        $acts = [];
+        $closed = in_array($st, [8, 15, 21], true);
+        if ($client) {
+            $acts[] = ['Tracking page', $href, 'i-route', true];
+        } elseif ($isCon) {
+            require_once __DIR__ . '/consolidations.php';
+            $M = sl_conMode($r->mode);
+            $acts[] = ['Open consolidation', $href, 'i-eye', false];
+            if (!$closed && $user->cdp_hasPermission($M['p']['edit'])) $acts[] = ['Edit', $M['url']['edit'] . '?id=' . $id, 'i-edit', true];
+            if ($user->cdp_hasPermission($M['p']['track'])) $acts[] = ['Add tracking event', $M['url']['track'] . '?id=' . $id, 'i-refresh', false];
+            if (!$closed && $user->cdp_hasPermission($M['p']['deliver'])) $acts[] = ['Deliver', $M['url']['deliver'] . '?id=' . $id, 'i-check', false];
+            if (!$closed && $user->cdp_hasPermission($M['p']['driver'])) $acts[] = ['Assign rider', $href . '#driver', 'i-truck', false];
+        } elseif ($r->mode === 'air') {
+            $acts[] = ['Open shipment', $href, 'i-eye', false];
+            if (!$closed && $user->cdp_hasPermission('edit_shipment')) $acts[] = ['Edit', 'courier_edit.php?id=' . $id, 'i-edit', true];
+            if ($user->cdp_hasPermission('track_shipment')) $acts[] = ['Add tracking event', sl_route('ShipmentTracking', ['id' => $id]), 'i-refresh', false];
+            if (!$closed && $user->cdp_hasPermission('deliver_shipment')) $acts[] = ['Deliver', 'courier_deliver_shipment.php?id=' . $id, 'i-check', false];
+            if (!$closed && $user->cdp_hasPermission('assign_drivers')) $acts[] = ['Assign rider', $href . '#driver', 'i-truck', false];
+        } else {
+            $acts[] = ['Open package', $href, 'i-eye', false];
+            if (!$closed && $user->cdp_hasPermission('edit_package')) $acts[] = ['Edit', 'customer_package_edit.php?id=' . $id, 'i-edit', true];
+            if ($user->cdp_hasPermission(['track_package', 'track_shipment'])) $acts[] = ['Add tracking event', 'customer_package_tracking.php?id=' . $id, 'i-refresh', false];
+            if (!$closed && $user->cdp_hasPermission('deliver_package')) $acts[] = ['Deliver', 'customer_package_deliver.php?id=' . $id, 'i-check', false];
+            if (!$closed && $user->cdp_hasPermission('assign_driver_package')) $acts[] = ['Assign rider', $href . '#driver', 'i-truck', false];
+        }
+        if (!$client) $acts[] = ['Customer tracking page', sl_route('PublicTracking', ['order_track' => $r->code]), 'i-route', false];
         [$payL, $payC] = sl_payPill($r->inv);
         $u = $senders[(int) $r->sender_id] ?? null;
         $rcv = $senders[(int) $r->receiver_id] ?? null;
@@ -388,7 +415,7 @@ function sl_trackConsoleData($user, $core, string $source = 'shipments', int $li
             'estimate' => $arrived ? 'Arrived' : ($late ? 'Late' : ($eta ? 'On time' : 'No ETA')), 'estCls' => $arrived ? 'ok' : ($late ? 'bad' : ($eta ? 'ok' : 'mut')),
             'money' => $money, 'total' => sl_money($r->amt), 'sub' => sl_money($r->sub), 'tax' => sl_money($r->tax), 'pay' => $payL, 'payCls' => $payC === 'paid' ? 'ok' : ($payC === 'overdue' ? 'bad' : 'warn'),
             'pct' => (int) round($p * 100), 'where' => $where,
-            'geo' => $g, 'docs' => $docs, 'details' => $det, 'contents' => $contents, 'con' => $con, 'fk' => $mk,
+            'geo' => $g, 'docs' => $docs, 'actions' => $acts, 'details' => $det, 'contents' => $contents, 'con' => $con, 'fk' => $mk,
             'hist' => array_map(fn($h) => ['t' => str_replace('_', ' ', (string) ($h->mod_style ?: 'Update')), 'c' => (string) $h->comments, 'at' => sl_date($h->t_date, 'M j, H:i'), 'loc' => trim((string) $h->t_city)], array_slice($hist, 0, 12)),
             'prio' => ['score' => $score, 'label' => $score >= 3 ? 'High' : ($score >= 1 ? 'Normal' : 'Low'), 'cls' => $score >= 3 ? 'bad' : ($score >= 1 ? 'warn' : 'ok'), 'days' => $daysOpen, 'etaDelta' => $etaDelta],
         ];
