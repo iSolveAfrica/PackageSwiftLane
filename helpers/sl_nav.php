@@ -60,7 +60,7 @@ function sl_navStaff(): array
                 'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (6,32) $w")],
             ['id' => 'intake', 'label' => 'Package Intake', 'icon' => 'scan', 'board' => 'PackageIntake', 'perm' => ['package_intake', 'add_package']],
             ['id' => 'docs', 'label' => 'Documents', 'icon' => 'file', 'board' => 'Documents', 'perm' => ['view_documents', 'view_general_reports']],
-            ['id' => 'locker', 'label' => 'Locker Search', 'icon' => 'lock', 'board' => 'LockerSearch', 'perm' => 'view_shipment_list'],
+            ['id' => 'locker', 'label' => 'Smart Search', 'icon' => 'search', 'board' => 'LockerSearch', 'perm' => ['view_shipment_list', 'view_package_list', 'view_client_list', 'view_consolidate_list', 'prealert_list', 'view_user_list']],
         ]],
         ['label' => 'RIDERS', 'items' => [
             ['id' => 'drivers', 'label' => 'Riders', 'icon' => 'wheel', 'board' => 'Drivers', 'perm' => 'view_user_list',
