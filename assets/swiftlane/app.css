@@ -121,3 +121,14 @@ form.sl-inline{display:contents}
  .sl-app .sl-side{position:sticky;top:12px;align-self:flex-start;height:auto;max-height:calc(100dvh - 24px);overflow-y:auto;flex-shrink:0}
  .sl-app .sl-rail{position:sticky;top:12px;align-self:flex-start;height:calc(100dvh - 24px)}
 }
+/* Developer log surfaces follow the current application theme. */
+.sl-app .term,.sl-app .code,.sl-app .tail{background:var(--card);color:var(--ink);border-color:var(--line)}
+.sl-app .term .src,.sl-app .term .msg,.sl-app .code code{color:var(--ink)}
+.sl-app .term .t{color:var(--muted)}
+html:not(.sl-dark) .sl-app:not(.dk) :is(.term,.code,.tail){background:#fff}
+.sl-app .term .ln{grid-template-columns:minmax(140px,auto) 130px 62px minmax(260px,1fr);min-width:680px}
+.sl-app .term .ts{color:var(--muted)}
+.sl-app .term .ln:hover{background:var(--hover)}
+.sl-app .code .k,.sl-app .tail .k{color:var(--sky-ink)}
+.sl-app .code .s,.sl-app .tail .ok{color:var(--green-ink)}
+.sl-app .code .n,.sl-app .tail .w{color:var(--amber-ink)}

@@ -176,3 +176,25 @@
 .ovh-kl,.ovh-ku{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}
 .ovh-kind{grid-template-columns:minmax(100px,1fr) minmax(50px,1.2fr) auto}
 .ovh-kind>span:first-child{white-space:normal;overflow:visible}
+/* Freight performance: one headline, one plot, a quiet row of supporting facts. */
+.ovh-freight--focus{display:flex;flex-direction:column;gap:24px;padding:26px 28px;background:var(--card);box-shadow:0 8px 28px -24px rgba(0,0,0,.18)}
+.ovh-freight-head{display:flex;justify-content:space-between;gap:24px;align-items:center;padding-bottom:20px;border-bottom:1px solid var(--line)}
+.ovh-freight--focus .ovh-huge{font-size:clamp(36px,4vw,52px);letter-spacing:-.04em}
+.ovh-freight--focus .ovh-eyebrow{font-size:12px;letter-spacing:.07em}
+.ovh-freight--focus .ovh-delta{font-size:14px;margin:0}
+.ovh-freight-modes{display:flex;flex-direction:column;gap:10px;min-width:180px;max-width:300px}
+.ovh-freight--focus .ovh-split{height:5px;margin:0}
+.ovh-freight--focus .ovh-chart{max-height:260px;min-height:160px}
+.ovh-freight--focus .ovh-chart .a{opacity:.22}
+.ovh-freight--focus .ovh-chart .p{stroke:var(--faint);stroke-width:1.8}
+.ovh-freight--focus .ovh-legend .prev{background:var(--faint)}
+.ovh-freight--focus .ovh-fstats{grid-template-columns:repeat(4,minmax(0,1fr));gap:0;border-top:1px solid var(--line);padding-top:20px}
+.ovh-freight--focus .ovh-fstats>div{border-radius:0;background:none;border-right:1px solid var(--line);padding:0 20px;gap:6px}
+.ovh-freight--focus .ovh-fstats>div:first-child{padding-left:0}
+.ovh-freight--focus .ovh-fstats>div:last-child{border-right:0}
+.ovh-freight--focus .ovh-fstats span{font-size:12px;letter-spacing:0;text-transform:none}
+.ovh-freight--focus .ovh-fstats small{white-space:normal}
+.ovh-daily-detail summary{cursor:pointer;color:var(--muted);font-size:13px;padding:10px 0}
+.ovh-daily-detail .ovh-daily{margin-top:10px}
+.ovh-freight--focus .ovh-daily svg{background:none}
+@media(max-width:640px){.ovh-freight--focus{padding:20px 16px;gap:18px}.ovh-freight-head{align-items:stretch;flex-direction:column;gap:16px}.ovh-freight-modes{max-width:none}.ovh-freight--focus .ovh-fstats{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.ovh-freight--focus .ovh-fstats>div{padding:0;border:0}}
