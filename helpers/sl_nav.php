@@ -101,6 +101,7 @@ function sl_navStaff(): array
             ['id' => 'masterview', 'label' => 'Gerald Master View', 'icon' => 'gauge', 'board' => 'MasterView', 'perm' => 'ops:mgmt'],
             ['id' => 'aicenter', 'label' => 'AI Automation Center', 'icon' => 'ai', 'board' => 'AiCenter', 'perm' => 'ai:manage'],
             ['id' => 'notifc', 'label' => 'Notification Control', 'icon' => 'bell', 'board' => 'NotificationCenter', 'perm' => ['manage_notification_rules', 'view_tools']],
+            ['id' => 'notifystudio', 'label' => 'Notification Studio', 'icon' => 'send', 'board' => 'NotifyStudio', 'perm' => ['manage_notification_rules', 'view_tools']],
             ['id' => 'pay', 'label' => 'Payment Gateways', 'icon' => 'card', 'board' => 'Payments', 'perm' => 'view_global_payments', 'finance' => true],
             ['id' => 'loyalty', 'label' => 'Loyalty & Referrals', 'icon' => 'star', 'board' => 'LoyaltyRewards', 'perm' => 'manage_loyalty'],
             ['id' => 'supporthub', 'label' => 'Customer Care', 'icon' => 'ticket', 'board' => 'SupportHub', 'perm' => 'cs:agent'],

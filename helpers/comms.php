@@ -705,9 +705,22 @@ if (!function_exists('cdp_commQuietUntil')) {
                 continue;
             }
             $subject = cdp_commRender(isset($o['subject']) ? (string) $o['subject'] : ($tpl ? (string) $tpl->subject : ''), $vars);
-            $text = cdp_commRender($body, $vars);
+            // An e-mail built in the Notification Studio is HTML (marked): fill it with
+            // escaped values and send it as built. Every other body is plain text.
+            $isHtml = $ch === 'email' && strpos($body, '<!--sl-html-->') === 0;
+            if ($isHtml) {
+                require_once __DIR__ . '/notify_studio.php';
+                $text = '<!--sl-html-->' . cdp_notifyRender(substr($body, strlen('<!--sl-html-->')), $vars, true);
+            } else {
+                $text = cdp_commRender($body, $vars);
+            }
             if ($kind === 'marketing') {
-                $text .= $ch === 'email' ? "\n\nUnsubscribe or change what you receive: " . $vars['prefs_url'] : "\n\nReply STOP to opt out.";
+                if ($isHtml) {
+                    $text .= '<p style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#8A867E;text-align:center">Unsubscribe or change what you receive: <a href="'
+                        . htmlspecialchars((string) $vars['prefs_url'], ENT_QUOTES, 'UTF-8') . '">your preferences</a></p>';
+                } else {
+                    $text .= $ch === 'email' ? "\n\nUnsubscribe or change what you receive: " . $vars['prefs_url'] : "\n\nReply STOP to opt out.";
+                }
             }
             $waParams = null;
             if ($tpl && $ch === 'whatsapp' && !empty($tpl->wa_template_name)) {
@@ -818,9 +831,16 @@ if (!function_exists('cdp_commSendNow')) {
         if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
             return ['success' => false, 'message' => 'No valid e-mail address.'];
         }
-        $html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#1f2937">'
-            . preg_replace('~(https?://[^\s<]+)~', '<a href="$1">$1</a>', nl2br(htmlspecialchars((string) $text, ENT_QUOTES, 'UTF-8')))
-            . '</div>';
+        $isHtml = strpos((string) $text, '<!--sl-html-->') === 0;
+        if ($isHtml) {
+            // Built in the Notification Studio: already HTML with escaped values.
+            $html = substr((string) $text, strlen('<!--sl-html-->'));
+            $text = trim(html_entity_decode(strip_tags(preg_replace('~<(br|/p|/tr|/div)[^>]*>~i', "\n", $html)), ENT_QUOTES, 'UTF-8'));
+        } else {
+            $html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#1f2937">'
+                . preg_replace('~(https?://[^\s<]+)~', '<a href="$1">$1</a>', nl2br(htmlspecialchars((string) $text, ENT_QUOTES, 'UTF-8')))
+                . '</div>';
+        }
         try {
             if (($settings->mailer ?? '') === 'PHP') {
                 $from = (string) $settings->email_address;

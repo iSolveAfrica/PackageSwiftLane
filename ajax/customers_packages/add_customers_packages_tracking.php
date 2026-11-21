@@ -225,13 +225,46 @@ if (empty($errors)) {
         // SMS box was left unticked (helpers/hubtel_sms.php).
         $cdp_sms_event = cdp_statusSmsEvent($status, $add_status);
         $cdp_code_line = cdp_pickupCodeReadyLine('sea', [$shipment_id], $status, $add_status);
-        if ($cdp_code_line !== '') {
-            $newbody .= cdp_pickupCodeReadyLine('sea', [$shipment_id], $status, $add_status, true);
+        $nsCodeHtml = $cdp_code_line !== '' ? cdp_pickupCodeReadyLine('sea', [$shipment_id], $status, $add_status, true) : '';
+        $newbody .= $nsCodeHtml;
+
+        // Notification Studio (helpers/notify_studio.php): per-status content and channel
+        // switches. With nothing saved for this status the built-in messages go out unchanged.
+        // WhatsApp is handled inside cdp_sendStatusUpdateWhatsApp.
+        require_once __DIR__ . '/../../helpers/notify_studio.php';
+        $nsKey = 'status:' . (int) $status;
+        $nsVars = cdp_notifyBaseVars($sender_data, $fullshipment, $app_url) + cdp_notifyPackageVars((int) $shipment_id, 'sea') + [
+            'status' => (string) $add_status,
+            'location' => trim(cdp_sanitize($_POST['country'] ?? '') . ' | ' . cdp_sanitize($_POST['address'] ?? ''), ' |'),
+            'comment' => (string) cdp_sanitize($_POST['comments'] ?? ''),
+            'pickup_code' => (string) $cdp_code_line,
+            'pickup_code_html' => (string) $nsCodeHtml,
+        ];
+        $nsEmail = cdp_notifyResolve($nsKey, 'email', $nsVars);
+        if ($nsEmail['custom']) {
+            $subject = $nsEmail['subject'] !== '' ? $nsEmail['subject'] : $subject;
+            $newbody = $nsEmail['body'];
+        }
+        $nsIn = cdp_notifyResolve($nsKey, 'inapp', $nsVars);
+        if (!$nsIn['on'] || $nsIn['custom']) {
+            $dbNs = new Conexion;
+            if (!$nsIn['on']) {
+                $dbNs->cdp_query('DELETE FROM cdb_notifications_users WHERE notification_id = :n AND user_id = :u');
+                $dbNs->bind(':n', (int) $notification_id);
+                $dbNs->bind(':u', (int) $shipment->sender_id);
+            } else {
+                $dbNs->cdp_query('UPDATE cdb_notifications SET notification_description = :d WHERE notification_id = :n');
+                $dbNs->bind(':d', mb_substr($nsIn['body'], 0, 350));
+                $dbNs->bind(':n', (int) $notification_id);
+            }
+            $dbNs->cdp_execute();
         }
 
         //SENDMAIL PHP
 
-        if ($check_mail == 'PHP') {
+        if (!$nsEmail['on']) {
+            // E-mail switched off for this status in the Notification Studio.
+        } elseif ($check_mail == 'PHP') {
 
             $message = $newbody;
             $to = $sender_data->email;
@@ -308,6 +341,13 @@ if (empty($errors)) {
             $newbodyS_sender = generateSMSBody($sender_data, $fullshipment, $add_status, $app_url, $templatessender);
             if ($cdp_code_line !== '') {
                 $newbodyS_sender .= "\n" . $cdp_code_line;
+            }
+            $nsSms = cdp_notifyResolve($nsKey, 'sms', $nsVars);
+            if ($nsSms['custom']) {
+                $newbodyS_sender = $nsSms['body'];
+            }
+            if (!$nsSms['on']) {
+                $notify_sms_sender = false;
             }
             // Llamar a la función para enviar la notificación SMS al remitente
             sendNotificationSMS($sender_data, $newbodyS_sender, $notify_sms_sender);
