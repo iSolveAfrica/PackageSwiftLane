@@ -214,7 +214,7 @@
     }
     function insights(refresh) {
         var p = params(), req = refresh ? OPS.post(URL + '?action=insights', $.extend({ action: 'insights', refresh: 1 }, p)) : OPS.get(URL, $.extend({ action: 'insights' }, p));
-        $('#mv_ai').html('<p class="swl-ops-muted">' + (refresh ? 'Asking King to analyse the figures…' : 'Loading…') + '</p>');
+        $('#mv_ai').html('<p class="swl-ops-muted">' + (refresh ? ('Asking ' + (window.SL_KING || 'King') + ' to analyse the figures…') : 'Loading…') + '</p>');
         req.then(function (r) {
             var h = '';
             if (r.text) { h += '<div class="swl-ops-insight">' + md(r.text) + '<div class="swl-ops-small swl-ops-muted">AI analysis of the figures on this page' + (r.at ? ', ' + esc(r.at) : '') + '. Check before acting.</div></div>'; }

@@ -37,7 +37,7 @@
                 + (t.user_id ? '<a class="btn btn-sm btn-outline-secondary" href="comms_center.php#customers">History</a>' : '') + '</div></div>';
             var msgs = '<div class="swl-ops-chat" id="ib_chat" aria-live="polite">' + r.messages.map(function (m) {
                 var cls = m.direction === 'in' ? 'is-in' : (m.author_type === 'bot' ? 'is-bot' : 'is-out');
-                var who = m.direction === 'in' ? 'Customer' : (m.author_type === 'bot' ? 'King' : (m.author_type === 'agent' ? (m.author_name || 'Staff') : 'Automatic'));
+                var who = m.direction === 'in' ? 'Customer' : (m.author_type === 'bot' ? ((window.SL_KING || 'King')) : (m.author_type === 'agent' ? (m.author_name || 'Staff') : 'Automatic'));
                 return '<div class="swl-ops-msg ' + cls + '">' + esc(m.body) + '<div class="swl-ops-msg__meta">' + esc(who) + ' · ' + esc(m.created_at) + (m.status === 'failed' ? ' · not delivered' : '') + '</div></div>';
             }).join('') + '</div>';
             var warn = (r.provider === 'cloud' && !r.window_open) ? '<div class="swl-ops-banner mt-2">The customer has not written in the last 24 hours, so WhatsApp only accepts approved templates. Send one from Communication Center › Send Message.</div>' : '';

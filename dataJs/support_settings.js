@@ -58,8 +58,8 @@
         var total = Object.keys(runs).reduce(function (a, k) { return a + (+runs[k].n); }, 0);
         var h = '<form id="cs_king_form" autocomplete="off">';
         h += '<div class="swl-cs-banner ' + (S.ai_ready ? 'is-info' : '') + '">' + (S.ai_ready
-            ? 'AI provider: <b>' + CS.esc(S.ai_provider) + '</b>' + (S.ai_model ? ' · model <b>' + CS.esc(S.ai_model) + '</b>' : '') + '. King uses this same provider for staff and for customers.'
-            : 'The AI provider is not set up yet. Set the provider, key and model on <a href="ai_assistant_settings.php">Tools › King</a> before switching King on.') + '</div>';
+            ? 'AI provider: <b>' + CS.esc(S.ai_provider) + '</b>' + (S.ai_model ? ' · model <b>' + CS.esc(S.ai_model) + '</b>' : '') + ('. ' + (window.SL_KING || 'King') + ' uses this same provider for staff and for customers.')
+            : ('The AI provider is not set up yet. Set the provider, key and model on <a href="ai_assistant_settings.php">Tools › ' + (window.SL_KING || 'King') + '</a> before switching ' + (window.SL_KING || 'King') + ' on.')) + '</div>';
         h += heading('What King does');
         h += '<div class="row">' + [
             ['off', 'Off', 'Customers always reach a person. No AI anywhere.'],
@@ -72,8 +72,8 @@
         h += '<div class="row">'
             + field('Assistant name', '<input class="form-control" id="cs_k_name" name="king_name" maxlength="40" value="' + CS.esc(s.king_name) + '"' + dis() + '>', '', 'cs_k_name', 'col-md-4')
             + field('Answers per conversation before handing over', '<input type="number" min="1" max="50" class="form-control" id="cs_k_turns" name="king_max_turns" value="' + CS.esc(s.king_max_turns) + '"' + dis() + '>', '', 'cs_k_turns', 'col-md-4')
-            + field('King answers per day (0 = no cap)', '<input type="number" min="0" class="form-control" id="cs_k_budget" name="king_daily_budget" value="' + CS.esc(s.king_daily_budget) + '"' + dis() + '>', 'When the cap is reached, new questions go straight to a person.', 'cs_k_budget', 'col-md-4')
-            + field('Greeting', '<textarea class="form-control" rows="3" id="cs_k_greet" name="king_greeting"' + dis() + '>' + CS.esc(s.king_greeting) + '</textarea>', 'Shown when a customer opens a new chat. Introduce King by name.', 'cs_k_greet', 'col-md-6')
+            + field(((window.SL_KING || 'King') + ' answers per day (0 = no cap)'), '<input type="number" min="0" class="form-control" id="cs_k_budget" name="king_daily_budget" value="' + CS.esc(s.king_daily_budget) + '"' + dis() + '>', 'When the cap is reached, new questions go straight to a person.', 'cs_k_budget', 'col-md-4')
+            + field('Greeting', '<textarea class="form-control" rows="3" id="cs_k_greet" name="king_greeting"' + dis() + '>' + CS.esc(s.king_greeting) + '</textarea>', ('Shown when a customer opens a new chat. Introduce ' + (window.SL_KING || 'King') + ' by name.'), 'cs_k_greet', 'col-md-6')
             + field('Extra instructions for King', '<textarea class="form-control" rows="3" id="cs_k_instr" name="king_instructions" placeholder="e.g. Storage is free for 14 days; mention the Accra warehouse closes at 5 pm."' + dis() + '>' + CS.esc(s.king_instructions) + '</textarea>', 'Added to King\'s rules. It cannot widen what King may see or do.', 'cs_k_instr', 'col-md-6')
             + field('Lookups per answer', '<input type="number" min="1" max="10" class="form-control" id="cs_k_rounds" name="king_max_rounds" value="' + CS.esc(s.king_max_rounds) + '"' + dis() + '>', '', 'cs_k_rounds', 'col-md-4')
             + '<div class="col-md-8 form-group"><label>Languages King answers in</label><div>' + Object.keys(V.languages).map(function (k) {

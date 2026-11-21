@@ -35,7 +35,7 @@
   }
   function thinking() {
     var b = document.createElement('div'); b.className = 'sl-ai-msg bot wait'; b.innerHTML = '<span></span><span></span><span></span>';
-    b.setAttribute('aria-label', 'King is thinking'); log.appendChild(b); log.scrollTop = log.scrollHeight; return b;
+    b.setAttribute('aria-label', ((window.SL_KING || 'King') + ' is thinking')); log.appendChild(b); log.scrollTop = log.scrollHeight; return b;
   }
   /* What is on screen: the visible text of the page's main area (tables come through row by row). */
   function pageText() {
@@ -74,7 +74,7 @@
       wait.remove();
       if (j && j.conversation_id) { conv = j.conversation_id; try { sessionStorage.setItem(key, String(conv)); } catch (e) {} }
       if (j && j.ok) bubble('bot', j.answer);
-      else { var b = bubble('bot', (j && (j.error || j.message)) || 'King could not answer.'); b.classList.add('bad'); }
+      else { var b = bubble('bot', (j && (j.error || j.message)) || ((window.SL_KING || 'King') + ' could not answer.')); b.classList.add('bad'); }
     }).catch(function (e) { wait.remove(); var b = bubble('bot', (e && e.message) || 'Network error. Please try again.'); b.classList.add('bad'); })
       .then(function () { busy = false; input.focus(); });
   }

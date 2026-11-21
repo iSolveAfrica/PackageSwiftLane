@@ -280,7 +280,8 @@ if (!function_exists('cdp_kingName')) {
       }
       if (function_exists('cdp_csSetting')) {
         try {
-          $v = trim((string) cdp_csSetting('king_name', 'King'));
+          // Plain text only: the name is placed into HTML and scripts across the site.
+          $v = trim(str_replace(['<', '>', '&', '"', '`', '\\'], '', (string) cdp_csSetting('king_name', 'King')));
           if ($v !== '') {
             $name = $v;
           }
