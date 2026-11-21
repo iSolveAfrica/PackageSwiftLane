@@ -32,17 +32,18 @@ $user = new User;
 $core = new Core;
 $userData = $user->cdp_getUserData();
 
-$search = cdp_sanitize($_REQUEST['search']);
+$search = cdp_sanitize($_REQUEST['search'] ?? '');
 $gateway = ($_REQUEST['gateway'] ?? '');
 
 
 $sWhere = "";
 
-if ($userData->userlevel == 1) {
-
-	$sWhere .= " and  order_track_customer_id = '" . $_SESSION['userid'] . "'";
-} else {
-	$sWhere .= "";
+// Scope by role rank, not the seed id 1: a customer on a custom role used to fall into the
+// unscoped branch and list every online payment. Customers see their own; drivers and agency
+// users have no gateway payments of their own and see none (the table has no agency column).
+require_once(__DIR__ . '/../../helpers/rbac.php');
+if (cdp_roleRankById((int) $userData->userlevel) < 2) {
+	$sWhere .= cdp_ajaxListScopeSql('order_track_customer_id', null, null);
 }
 
 // gateway is user input: bind it instead of concatenating, otherwise a quote
@@ -130,14 +131,15 @@ if ($numrows > 0) { ?>
 						}
 
 
-						$db->cdp_query("SELECT * FROM cdb_customers_packages  where CONCAT(order_prefix, order_no)= '" . $row->order_track . "'");
+						$db->cdp_query("SELECT * FROM cdb_customers_packages WHERE CONCAT(order_prefix, order_no) = :track");
+						$db->bind(':track', (string) $row->order_track);
 						$order_ = $db->cdp_registro();
 
 
 					?>
 						<tr class="card-hovera">
 
-							<td><b><a href="customer_packages_view.php?id=<?php echo $order_->order_id; ?>"><?php echo $row->order_track; ?></a></b></td>
+							<td><b><a href="customer_packages_view.php?id=<?php echo (int) ($order_->order_id ?? 0); ?>"><?php echo htmlspecialchars((string) $row->order_track, ENT_QUOTES, 'UTF-8'); ?></a></b></td>
 							<td class="text-center">
 								<?php echo date('Y-m-d h:i A', strtotime($row->date_payment)); ?>
 							</td>

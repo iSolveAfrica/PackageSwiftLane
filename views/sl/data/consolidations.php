@@ -230,7 +230,10 @@ function sl_consolidationDetailData($user, $core, int $id, string $type): ?array
             'notify' => $user->cdp_hasPermission('push_notifications'),
             'delete' => $user->cdp_hasPermission($M['p']['delete']) && !cdp_isHandedOver($s) && $s !== 21 && !sl_userIs('client'),
         ],
-        'files' => array_map(fn($f) => ['url' => $f->url, 'name' => $f->name], sl_rows('SELECT url, name FROM cdb_order_files WHERE order_id = :id AND is_consolidate = 1 ORDER BY id DESC', [':id' => $id])),
+        // is_consolidate 1 = air, 2 = sea (air and sea ids collide). Legacy sea files were stored
+        // as 1: sea still shows those, but only when no air consolidation has the same id, so
+        // air #N's attachments never appear on sea #N (and vice versa).
+        'files' => array_map(fn($f) => ['url' => $f->url, 'name' => $f->name], sl_rows('SELECT url, name FROM cdb_order_files WHERE order_id = :id AND ' . ($M['sea'] ? '(is_consolidate = 2 OR (is_consolidate = 1 AND NOT EXISTS (SELECT 1 FROM cdb_consolidate x WHERE x.consolidate_id = cdb_order_files.order_id)))' : 'is_consolidate = 1') . ' ORDER BY id DESC', [':id' => $id])),
         'other' => [],
     ];
     $d['avail'] = $d['adding'] ? sl_conAvailable($M, $d['q'], 40, $M['sea'] ? -1 : (int) ($c->is_dangerous_good ?? 0)) : [];

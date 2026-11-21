@@ -50,7 +50,22 @@ require_once(__DIR__ . '/../../helpers/rbac.php');
 // writing the sanitised string back let 'us\\er' be checked below as a cdb_recipients id and
 // then, sanitised again further down, loaded as 'user' (another user's name and address on this
 // shipment). Further down only 'user' vs anything else matters, so this keeps behaviour.
-$scopeType = (cdp_sanitize($_POST['recipient_type'] ?? 'recipient') === 'user') ? 'user' : 'recipient';
+// 'customer' (SL customer pickups, ajax/sl/pickup_ajax.php) stores a cdb_users id and one of the
+// sender's cdb_senders_addresses ids, exactly like 'user', so it takes the 'user' path: checking it
+// as a cdb_recipients id refused legitimate edits and loaded an unrelated recipient. The stored
+// type is never rewritten by this endpoint. When the field is not posted, use the stored type
+// (as the fallbacks further down used to) instead of assuming 'recipient'.
+if (isset($_POST['recipient_type'])) {
+    $scopeRawType = cdp_sanitize($_POST['recipient_type']);
+} else {
+    $scopeTypeDb = new Conexion;
+    $scopeTypeDb->cdp_query("SELECT recipient_type FROM cdb_add_order WHERE order_id = :id LIMIT 1");
+    $scopeTypeDb->bind(':id', (int) ($_POST['order_id'] ?? 0));
+    $scopeTypeDb->cdp_execute();
+    $scopeTypeRow = $scopeTypeDb->cdp_registro();
+    $scopeRawType = (string) ($scopeTypeRow->recipient_type ?? 'recipient');
+}
+$scopeType = in_array($scopeRawType, ['user', 'customer'], true) ? 'user' : 'recipient';
 $_POST['recipient_type'] = $scopeType;
 
 $scopeUser = $user->cdp_getUserData();
@@ -108,8 +123,12 @@ if (cdp_roleRankById((int) ($scopeUser->userlevel ?? 0)) < 2) {
         $_POST['driver_id'] = (int) $scopeRow->driver_id;
     }
     $scopeSender = (int) $scopeRow->sender_id;
+    $scopeStoredDriver = (int) $scopeRow->driver_id;
     $scopeCheckParties = true;
 } else {
+    // Staff were only checked for view_shipment_list, so a read-only staff role could still
+    // write here. Require the same permission as the page that posts here.
+    require_permission('complete_client_shipment');
     // Agency-restricted staff (userlevel 2/4 tied to an agency) passed every check above, so they
     // could edit any agency's shipment by order_id and move it out of (or into) their agency. Same
     // rule as the other courier write endpoints: the stored row must be in their agency, the agency
@@ -117,7 +136,7 @@ if (cdp_roleRankById((int) ($scopeUser->userlevel ?? 0)) < 2) {
     $scopeCtx = cdp_getAgencyContext();
     if (!empty($scopeCtx['is_restricted'])) {
         $scopeDb = new Conexion;
-        $scopeDb->cdp_query("SELECT sender_id, agency FROM cdb_add_order WHERE order_id = :id LIMIT 1");
+        $scopeDb->cdp_query("SELECT sender_id, driver_id, agency FROM cdb_add_order WHERE order_id = :id LIMIT 1");
         $scopeDb->bind(':id', (int) ($_POST['order_id'] ?? 0));
         $scopeDb->cdp_execute();
         $scopeRow = $scopeDb->cdp_registro();
@@ -125,11 +144,14 @@ if (cdp_roleRankById((int) ($scopeUser->userlevel ?? 0)) < 2) {
         $scopeSender = (int) ($_POST['sender_id'] ?? 0);
         $scopeOk = $scopeRow && $scopeAgencyId > 0 && cdp_ajaxRowInAgencyScope($scopeRow);
         if ($scopeOk && $scopeSender !== (int) $scopeRow->sender_id) {
-            $scopeDb->cdp_query("SELECT agency_id FROM cdb_users WHERE id = :id LIMIT 1");
+            // A changed sender must be a customer (rank 0) of this agency, not a staff or driver
+            // account that happens to carry the agency_id (add_courier_ajax.php checks the same).
+            $scopeDb->cdp_query("SELECT agency_id, userlevel FROM cdb_users WHERE id = :id LIMIT 1");
             $scopeDb->bind(':id', $scopeSender);
             $scopeDb->cdp_execute();
             $scopeSenderRow = $scopeDb->cdp_registro();
-            $scopeOk = $scopeSenderRow && (int) $scopeSenderRow->agency_id === $scopeAgencyId;
+            $scopeOk = $scopeSenderRow && (int) $scopeSenderRow->agency_id === $scopeAgencyId
+                && cdp_roleRankById((int) $scopeSenderRow->userlevel) === 0;
         }
         if (!$scopeOk) {
             header('HTTP/1.1 403 Forbidden');
@@ -139,6 +161,7 @@ if (cdp_roleRankById((int) ($scopeUser->userlevel ?? 0)) < 2) {
         }
         $_POST['agency'] = $scopeAgencyId;
         $scopeAgencies = [$scopeAgencyId];
+        $scopeStoredDriver = (int) $scopeRow->driver_id;
         $scopeCheckParties = true;
     }
 }
@@ -183,6 +206,18 @@ if ($scopeCheckParties) {
         $scopeDb->cdp_execute();
         $scopeRAddr = $scopeDb->cdp_registro();
         if (!$scopeRAddr || (int) $scopeRAddr->owner_id !== $scopeRAddrOwner) {
+            $scopeAddrOk = false;
+        }
+    }
+    // The driver is notified and then passes the driver_id scope of edit/accept/print, so a newly
+    // named driver must be an active driver account (what the form offers, as add_courier_ajax.php
+    // requires), not any user id. An unchanged stored driver is left alone.
+    $scopeDriver = (int) ($_POST['driver_id'] ?? 0);
+    if ($scopeDriver > 0 && $scopeDriver !== $scopeStoredDriver) {
+        $scopeDb->cdp_query("SELECT id FROM cdb_users WHERE id = :id AND userlevel = 3 AND active = 1 LIMIT 1");
+        $scopeDb->bind(':id', $scopeDriver);
+        $scopeDb->cdp_execute();
+        if (!$scopeDb->cdp_registro()) {
             $scopeAddrOk = false;
         }
     }

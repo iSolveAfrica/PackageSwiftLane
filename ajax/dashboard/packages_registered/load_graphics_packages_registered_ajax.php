@@ -32,19 +32,13 @@ require_permission('view_dashboard');
 	$user = new User;
 	$core = new Core;
 	$userData = $user->cdp_getUserData();
-	$ctx = cdp_getAgencyContext();
 
 	$year = date('Y');
 	$sWhere = '';
-	if ($userData->userlevel == 3) {
-		$sWhere = " and driver_id = " . (int)$_SESSION['userid'];
-	} else if ($userData->userlevel == 1) {
-		$sWhere = " and sender_id = " . (int)$_SESSION['userid'];
-	} else if ($ctx['is_restricted'] && $ctx['agency_id'] !== null) {
-		$sWhere = " and agency = " . (int)$ctx['agency_id'];
-	} else if ($ctx['is_restricted']) {
-		$sWhere = " and 1=0";
-	}
+	// Row scope by role rank (any customer level -> own rows, driver -> assigned, agency user /
+	// agency-restricted staff -> their agency). The old userlevel 3/1 checks let customers and
+	// agency users on other levels read every row through this view_dashboard endpoint.
+	$sWhere = cdp_ajaxListScopeSql('sender_id', 'driver_id', 'agency');
 
 	$data = array();
 

@@ -42,12 +42,27 @@ $cdpAcceptRank = cdp_roleRankById((int) $user->userlevel);
 if ($cdpAcceptRank < 1 || !$user->cdp_hasPermission('pickup_accept')) {
     _ajax_guard_send(403, ['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
 }
+$cdpAcceptDb = new Conexion;
+$cdpAcceptDb->cdp_query("SELECT sender_id, agency, driver_id, recipient_type FROM cdb_add_order WHERE order_id = :id LIMIT 1");
+$cdpAcceptDb->bind(':id', (int) ($_POST['order_id'] ?? 0));
+$cdpAcceptDb->cdp_execute();
+$cdpAcceptRow = $cdpAcceptDb->cdp_registro();
+$cdpAcceptCtx = cdp_getAgencyContext();
+
+// Canonical recipient type, written back once. cdp_sanitize() is not idempotent (stripslashes) and
+// was applied again further down, so 'us\\er' could be checked as one type and loaded as another.
+// 'customer' (SL customer pickups, ajax/sl/pickup_ajax.php) stores a cdb_users id and one of the
+// sender's cdb_senders_addresses ids, exactly like 'user', so it takes the 'user' path (reading it
+// from cdb_recipients picked an unrelated person). Not posted: the stored type, as before.
+$cdpRawType = isset($_POST['recipient_type']) && $_POST['recipient_type'] !== ''
+    ? cdp_sanitize($_POST['recipient_type'])
+    : (string) ($cdpAcceptRow->recipient_type ?? 'recipient');
+$cdpScopeType = in_array($cdpRawType, ['user', 'customer'], true) ? 'user' : 'recipient';
+$_POST['recipient_type'] = $cdpScopeType;
+
+$cdpCheckParties = false;
+$cdpScopeAgencies = [];
 if ($cdpAcceptRank < 2) {
-    $cdpAcceptDb = new Conexion;
-    $cdpAcceptDb->cdp_query("SELECT agency, driver_id FROM cdb_add_order WHERE order_id = :id LIMIT 1");
-    $cdpAcceptDb->bind(':id', (int) ($_POST['order_id'] ?? 0));
-    $cdpAcceptRow = $cdpAcceptDb->cdp_registro();
-    $cdpAcceptCtx = cdp_getAgencyContext();
     $cdpOwnAgency = !empty($cdpAcceptCtx['agency_id']) && $cdpAcceptRow && (int) $cdpAcceptRow->agency === (int) $cdpAcceptCtx['agency_id'];
     $cdpOwnDriver = $cdpAcceptRow && (int) $cdpAcceptRow->driver_id > 0 && (int) $cdpAcceptRow->driver_id === (int) ($_SESSION['userid'] ?? 0);
     if (!$cdpOwnAgency && !$cdpOwnDriver) {
@@ -55,6 +70,108 @@ if ($cdpAcceptRank < 2) {
     }
     if ($cdpOwnAgency) {
         $_POST['agency'] = (int) $cdpAcceptCtx['agency_id']; // cannot move it to another agency
+        $cdpScopeAgencies = [(int) $cdpAcceptCtx['agency_id']];
+    } elseif ((int) $cdpAcceptRow->agency > 0) {
+        // Matched only as its driver: the pickup stays with its agency.
+        $_POST['agency'] = (int) $cdpAcceptRow->agency;
+    } else {
+        // No agency on the row yet: accept a posted agency only if it is a real branch office.
+        $cdpPostedAgency = (int) ($_POST['agency'] ?? 0);
+        $cdpAgencyExists = false;
+        if ($cdpPostedAgency > 0) {
+            $cdpAcceptDb->cdp_query("SELECT id FROM cdb_branchoffices WHERE id = :id LIMIT 1");
+            $cdpAcceptDb->bind(':id', $cdpPostedAgency);
+            $cdpAcceptDb->cdp_execute();
+            $cdpAgencyExists = (bool) $cdpAcceptDb->cdp_registro();
+        }
+        $_POST['agency'] = $cdpAgencyExists ? $cdpPostedAgency : 0;
+    }
+    // The scope check covers the row as stored, but the update writes sender and driver from the
+    // request: keep the stored sender (else the pickup moves to another customer and into their
+    // notifications) and the stored driver unless the caller may assign drivers.
+    $_POST['sender_id'] = (int) $cdpAcceptRow->sender_id;
+    if (!$user->cdp_hasPermission('assign_drivers')) {
+        $_POST['driver_id'] = (int) $cdpAcceptRow->driver_id;
+    }
+    $cdpCheckParties = true;
+} elseif (!empty($cdpAcceptCtx['is_restricted'])) {
+    // Agency-restricted staff (userlevel 2/4 tied to an agency) could accept and re-price any
+    // agency's pickup by order_id. The stored row must be in their agency, the agency written stays
+    // theirs, and a changed sender must be a customer of that agency (as accept_courier_ajax.php).
+    $cdpAgencyId = (int) ($cdpAcceptCtx['agency_id'] ?? 0);
+    $cdpScopeOk = $cdpAcceptRow && $cdpAgencyId > 0 && cdp_ajaxRowInAgencyScope($cdpAcceptRow);
+    $cdpPostedSender = (int) ($_POST['sender_id'] ?? 0);
+    if ($cdpScopeOk && $cdpPostedSender !== (int) $cdpAcceptRow->sender_id) {
+        $cdpAcceptDb->cdp_query("SELECT agency_id, userlevel FROM cdb_users WHERE id = :id LIMIT 1");
+        $cdpAcceptDb->bind(':id', $cdpPostedSender);
+        $cdpAcceptDb->cdp_execute();
+        $cdpSenderRow = $cdpAcceptDb->cdp_registro();
+        $cdpScopeOk = $cdpSenderRow && (int) $cdpSenderRow->agency_id === $cdpAgencyId
+            && cdp_roleRankById((int) $cdpSenderRow->userlevel) === 0;
+    }
+    if (!$cdpScopeOk) {
+        _ajax_guard_send(403, ['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
+    }
+    $_POST['agency'] = $cdpAgencyId;
+    $cdpScopeAgencies = [$cdpAgencyId];
+    $cdpCheckParties = true;
+}
+
+if ($cdpCheckParties) {
+    // The recipient, the sender address and the recipient address must belong to that sender (or
+    // to its recipient), so another customer's contact or address cannot be attached to, and
+    // printed on, this pickup. A newly named driver must be an active driver account.
+    $cdpSender = (int) ($_POST['sender_id'] ?? 0);
+    $cdpRecipient = (int) ($_POST['recipient_id'] ?? 0);
+    if ($cdpScopeType === 'user') {
+        $cdpRecipientOk = $cdpRecipient === $cdpSender;
+    } else {
+        $cdpAcceptDb->cdp_query("SELECT sender_id, agency_id FROM cdb_recipients WHERE id = :id LIMIT 1");
+        $cdpAcceptDb->bind(':id', $cdpRecipient);
+        $cdpAcceptDb->cdp_execute();
+        $cdpRec = $cdpAcceptDb->cdp_registro();
+        $cdpRecipientOk = $cdpRec && (
+            (int) $cdpRec->sender_id === $cdpSender
+            || in_array((int) ($cdpRec->agency_id ?? 0), $cdpScopeAgencies, true)
+        );
+    }
+    $cdpPartiesOk = true;
+    $cdpAddrId = (int) ($_POST['sender_address_id'] ?? 0);
+    if ($cdpAddrId > 0) {
+        $cdpAcceptDb->cdp_query("SELECT user_id FROM cdb_senders_addresses WHERE id_addresses = :id LIMIT 1");
+        $cdpAcceptDb->bind(':id', $cdpAddrId);
+        $cdpAcceptDb->cdp_execute();
+        $cdpAddr = $cdpAcceptDb->cdp_registro();
+        $cdpPartiesOk = $cdpAddr && (int) $cdpAddr->user_id === $cdpSender;
+    }
+    // For type 'user' the sender doubles as recipient, so the address is one of the sender's.
+    $cdpRAddrId = (int) ($_POST['recipient_address_id'] ?? 0);
+    if ($cdpRAddrId > 0) {
+        if ($cdpScopeType === 'user') {
+            $cdpAcceptDb->cdp_query("SELECT user_id AS owner_id FROM cdb_senders_addresses WHERE id_addresses = :id LIMIT 1");
+            $cdpRAddrOwner = $cdpSender;
+        } else {
+            $cdpAcceptDb->cdp_query("SELECT recipient_id AS owner_id FROM cdb_recipients_addresses WHERE id_addresses = :id LIMIT 1");
+            $cdpRAddrOwner = $cdpRecipient;
+        }
+        $cdpAcceptDb->bind(':id', $cdpRAddrId);
+        $cdpAcceptDb->cdp_execute();
+        $cdpRAddr = $cdpAcceptDb->cdp_registro();
+        if (!$cdpRAddr || (int) $cdpRAddr->owner_id !== $cdpRAddrOwner) {
+            $cdpPartiesOk = false;
+        }
+    }
+    $cdpDriver = (int) ($_POST['driver_id'] ?? 0);
+    if ($cdpDriver > 0 && $cdpDriver !== (int) $cdpAcceptRow->driver_id) {
+        $cdpAcceptDb->cdp_query("SELECT id FROM cdb_users WHERE id = :id AND userlevel = 3 AND active = 1 LIMIT 1");
+        $cdpAcceptDb->bind(':id', $cdpDriver);
+        $cdpAcceptDb->cdp_execute();
+        if (!$cdpAcceptDb->cdp_registro()) {
+            $cdpPartiesOk = false;
+        }
+    }
+    if (($cdpRecipient > 0 && !$cdpRecipientOk) || !$cdpPartiesOk) {
+        _ajax_guard_send(403, ['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
     }
 }
 

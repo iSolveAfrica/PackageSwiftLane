@@ -396,7 +396,9 @@ if (isset($_POST["total_item"])) {
                 $cdpUp = cdp_uploadStore(cdp_uploadPick($_FILES['filesMultiple'], (int) $key), 'order_files', 'consolidate', 'office');
                 if ($cdpUp['ok']) {
                     $image_name = $cdpUp['name'];
-                    cdp_insertOrdersFiles($order_id, $target_dir . $image_name, $image_name, date("Y-m-d H:i:s"), '1', pathinfo($image_name, PATHINFO_EXTENSION));
+                    // Sea attachments are is_consolidate = 2 (air keeps 1): air and sea consolidation
+                    // ids collide, so the kind tells readers and the delete endpoint which table owns the file.
+                    cdp_insertOrdersFiles($order_id, $target_dir . $image_name, $image_name, date("Y-m-d H:i:s"), '2', pathinfo($image_name, PATHINFO_EXTENSION));
                 }
             }
         }

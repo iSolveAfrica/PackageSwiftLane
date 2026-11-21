@@ -56,6 +56,11 @@ if ($scopeRank < 2 && ($scopeRank === 0 || cdp_roleIsClient($scopeLevel) || !$us
     echo json_encode(['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
     exit;
 }
+// Staff were only checked for view_shipment_list, so a read-only staff role could still create
+// shipments here. Require the permission of the page that posts here for them too.
+if ($scopeRank >= 2) {
+    require_permission('add_shipment');
+}
 
 // Canonical recipient type for everyone. cdp_sanitize() is not idempotent (stripslashes), so a
 // value like 'us\\er' could pass the check below as a cdb_recipients id and then, sanitised again
@@ -67,7 +72,9 @@ $_POST['recipient_type'] = $scopeType;
 // the recipient, both addresses and the driver came from POST unchecked, so another customer's or
 // agency's contact/address could be attached to, printed on and notified for this shipment (the
 // same rule edit_courier_ajax.php and accept_courier_ajax.php enforce).
-if ($scopeRank < 2 || !empty($ctx['is_restricted'])) {
+// Skipped without a sender: the 'sender_id' validation below then reports the missing field
+// (same empty() test, so nothing is inserted without one) instead of a misleading 403.
+if (($scopeRank < 2 || !empty($ctx['is_restricted'])) && !empty($_POST['sender_id'])) {
     $scopeDb = new Conexion;
     $scopeSender = (int) ($_POST['sender_id'] ?? 0);
     $scopeAgencies = array_filter([(int) ($ctx['agency_id'] ?? 0)]);

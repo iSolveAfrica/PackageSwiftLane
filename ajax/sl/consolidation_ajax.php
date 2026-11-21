@@ -123,7 +123,10 @@ switch ($op) {
             require_once CDP_ROOT . '/helpers/uploads.php';
             foreach ($_FILES['files']['tmp_name'] as $k => $tmp) {
                 $up = cdp_uploadStore(cdp_uploadPick($_FILES['files'], (int) $k), CDP_ROOT . '/order_files', $code, 'docs', 5242880);
-                if ($up['ok']) cdp_insertOrdersFiles($cid, 'order_files/' . $up['name'], $up['name'], date('Y-m-d H:i:s'), '1', pathinfo($up['name'], PATHINFO_EXTENSION));
+                // is_consolidate 1 = air (cdb_consolidate), 2 = sea (cdb_consolidate_packages): the
+                // two tables' ids collide, so the kind is what keeps air #N's files off sea #N
+                // (readers, and the delete endpoints' agency check) — see migrations/2026_11_23_consolidation_file_kind.sql.
+                if ($up['ok']) cdp_insertOrdersFiles($cid, 'order_files/' . $up['name'], $up['name'], date('Y-m-d H:i:s'), $M['sea'] ? '2' : '1', pathinfo($up['name'], PATHINFO_EXTENSION));
             }
         }
         slc_notify($M, $cid, $code, $status);

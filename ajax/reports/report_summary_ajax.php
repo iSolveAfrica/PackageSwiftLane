@@ -42,17 +42,10 @@ $customer_id = intval($_REQUEST['customer_id']);
 
 $sWhere = "";
 
-if (isset($userData->userlevel)) {
-	if ($userData->userlevel == 3) {
-		$sWhere .= " and driver_id = '" . (int)$_SESSION['userid'] . "'";
-	} elseif ($userData->userlevel == 1) {
-		$sWhere .= " and sender_id = '" . (int)$_SESSION['userid'] . "'";
-	} elseif ($userData->userlevel == 6) {
-		$aid = (int) cdp_getAgencyBranchIdForUser($userData->name_off ?? '');
-		$sWhere .= " and agency = '" . $aid . "'";
-	}
-}
-if ($agency_courier > 0 && (!isset($userData->userlevel) || (int)$userData->userlevel !== 6)) {
+// Row scope by role rank. $sWhere below is not used by the billing ledger query, so the
+// scope is applied to its rows further down (per consolidation agency/owner/driver).
+$scopeSql = cdp_ajaxListScopeSql('a.sender_id', 'a.driver_id', 'a.agency');
+if ($agency_courier > 0) {
 
 	$sWhere .= " and agency = '" . $agency_courier . "'";
 }
@@ -92,6 +85,19 @@ $data = cdp_fsBillingSummary([
 	'customer_id' => $customer_id,
 	'range'       => $range,
 ]);
+// cdp_fsBillingSummary() has no agency filter: an agency-restricted user (or any scoped
+// role) only sees bills whose consolidation falls inside their scope. '' = unrestricted staff.
+if ($scopeSql !== '' && $data) {
+	$db->cdp_query("SELECT a.consolidate_id FROM cdb_consolidate a WHERE 1=1 $scopeSql");
+	$db->cdp_execute();
+	$allowed = [];
+	foreach ((array) $db->cdp_registros() as $r) {
+		$allowed[(int) $r->consolidate_id] = true;
+	}
+	$data = array_values(array_filter($data, function ($b) use ($allowed) {
+		return isset($allowed[(int) $b->consolidate_id]);
+	}));
+}
 $numrows = count($data);
 
 

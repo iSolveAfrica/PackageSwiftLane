@@ -154,7 +154,13 @@ function sl_consolEditData($user, $core, string $kind, int $id): array
     $rows = sl_rows("SELECT d.*, c.status_courier AS st, c.sender_id AS sid FROM {$K['detail']} d LEFT JOIN {$K['child']} c ON c.order_id = CAST(d.order_id AS UNSIGNED) WHERE d.consolidate_id = :id ORDER BY d.detail_id", [':id' => $id]);
     $owners = sl_usersById(array_map(fn($x) => (int) $x->sid, $rows));
     $items = array_map(fn($x) => ['order_id' => (int) $x->order_id, 'prefix' => (string) $x->order_prefix, 'no' => (string) $x->order_no, 'weight' => (float) $x->weight, 'length' => (float) $x->length, 'width' => (float) $x->width, 'height' => (float) $x->height, 'weight_vol' => (float) $x->weight_vol, 'owner' => sl_userName($owners[(int) $x->sid] ?? null), 'st' => sl_statusLabel($x->st), 'pc' => sl_statusClass($x->st)], $rows);
-    $files = sl_rows("SELECT id, url, name, date_file FROM cdb_order_files WHERE order_id = :id AND is_consolidate = '1' ORDER BY date_file", [':id' => $id]);
+    // is_consolidate 1 = air, 2 = sea (air and sea consolidation ids collide). Legacy sea files
+    // were stored as 1: sea still lists those, but only when no air consolidation has the same
+    // id, so air #N's attachments are never listed (or offered for delete) on sea #N.
+    $fileKind = $kind === 'consol'
+        ? "is_consolidate = 1"
+        : "(is_consolidate = 2 OR (is_consolidate = 1 AND NOT EXISTS (SELECT 1 FROM cdb_consolidate x WHERE x.consolidate_id = cdb_order_files.order_id)))";
+    $files = sl_rows("SELECT id, url, name, date_file FROM cdb_order_files WHERE order_id = :id AND $fileKind ORDER BY date_file", [':id' => $id]);
     $look = sl_opsLookups();
     return [
         'kind' => $kind, 'id' => $id, 'sum' => sl_opsSummary($r), 'items' => $items, 'files' => $files, 'fileDel' => $K['fileDel'],
@@ -252,7 +258,7 @@ function sl_shipFormData($user, $core, string $mode, int $id = 0): array
         }
         $itemTable = $r['K']['items'];
         $d['items'] = array_map(fn($i) => ['qty' => (float) $i->order_item_quantity, 'description' => (string) $i->order_item_description, 'weight' => (float) $i->order_item_weight, 'length' => (float) $i->order_item_length, 'width' => (float) $i->order_item_width, 'height' => (float) $i->order_item_height, 'declared_value' => (float) $i->order_item_declared_value, 'fixed_value' => (float) $i->order_item_fixed_value, 'custom_price' => isset($i->custom_price) && $i->custom_price !== null ? (float) $i->custom_price : ''], sl_rows("SELECT * FROM $itemTable WHERE order_id = :id", [':id' => $id]));
-        // cdb_order_files also holds consolidation attachments (is_consolidate = 1) keyed by consolidate_id
+        // cdb_order_files also holds consolidation attachments (is_consolidate = 1 air, 2 sea) keyed by consolidate_id
         // in order_id; list only this shipment's own files, as views/sl/data/shipments.php does.
         $fileScope = $r['K']['files'] === 'cdb_order_files' ? ' AND COALESCE(is_consolidate, 0) = 0' : '';
         $d['files'] = sl_rows("SELECT id, url, name, date_file FROM {$r['K']['files']} WHERE order_id = :id$fileScope ORDER BY date_file", [':id' => $id]);

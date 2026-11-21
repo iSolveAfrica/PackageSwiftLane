@@ -41,39 +41,10 @@ $status_courier = intval(($_REQUEST['status_courier'] ?? ''));
 
 $sWhere = "";
 
-// Row scope by role TYPE, not by the seed role ids 1/3/6: a department role created under
-// Customer, Driver or Agency (its own flags 0, typed through parent_role_id) has a different id
-// and used to fall through to the unscoped staff branch, listing every customer's shipments.
-// Agency-restricted staff (cdp_getAgencyContext) see only their agency's shipments.
-require_once(__DIR__ . '/../../helpers/rbac.php');
-$scopeLevel = (int) $userData->userlevel;
-$scopeRank = cdp_roleRankById($scopeLevel);
-$scopeUid = (int) ($_SESSION['userid'] ?? 0);
-if ($scopeRank === 0) {
-
-	$sWhere .= " and  a.sender_id = '" . $scopeUid . "'";
-} else if ($scopeRank === 1 && ($scopeLevel === 3 || cdp_roleHasFlag($scopeLevel, 'is_driver'))) {
-
-	$sWhere .= " and  a.driver_id = '" . $scopeUid . "'";
-} else if ($scopeRank === 1) {
-
-	$agency_branch_id = (int) cdp_getAgencyBranchIdForUser($userData->name_off);
-	if ($agency_branch_id <= 0) {
-		$scopeCtx = cdp_getAgencyContext();
-		$agency_branch_id = (int) ($scopeCtx['agency_id'] ?? 0);
-	}
-	if ($agency_branch_id <= 0) {
-		$agency_branch_id = (int) ($userData->agency_id ?? 0);
-	}
-	// No agency at all: show nothing. Filtering on agency 0 would list every unassigned
-	// shipment, across all customers (same fail-closed rule as load_account_receivable_ajax.php).
-	$sWhere .= $agency_branch_id > 0 ? " and  a.agency = '" . $agency_branch_id . "'" : " and 1=0";
-} else {
-	$scopeCtx = cdp_getAgencyContext();
-	if (!empty($scopeCtx['is_restricted'])) {
-		$sWhere .= !empty($scopeCtx['agency_id']) ? " and  a.agency = '" . (int) $scopeCtx['agency_id'] . "'" : " and 1=0";
-	}
-}
+// Row scope by role RANK (customer -> own rows, driver -> assigned rows, agency user and
+// agency-restricted staff -> their agency, nothing without one), via the shared helper so a
+// custom Customer/Driver/Agency role can never fall through to the unscoped staff branch.
+$sWhere .= cdp_ajaxListScopeSql('a.sender_id', 'a.driver_id', 'a.agency');
 if ($search != null) {
 
 	$sWhere .= " and  " . cdp_trackingSearchSql($search, 'a');
