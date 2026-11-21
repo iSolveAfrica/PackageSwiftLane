@@ -8,7 +8,7 @@ $wh = $d['warehouse']; $pk = $d['pickups']; $rv = $d['revenue'];
 ?>
         <?php include __DIR__ . '/partials/overview_hero.php'; ?>
 
-        <?php if (!empty($d['tracking']['items'])): $tc = $d['tracking']; $tcTitle = 'Tracking list'; $tcNoun = 'shipments'; $tcExpand = $user->cdp_hasPermission('track_shipment') ? sl_route('ShipmentTracking') : ''; ?>
+        <?php if (!empty($d['tracking']['items'])): $tc = $d['tracking']; $tcTitle = 'Tracking list'; $tcNoun = 'shipments'; $tcExpand = sl_route('LiveTracking'); ?>
         <?php include __DIR__ . '/partials/track_console.php'; ?>
         <?php endif; ?>
 

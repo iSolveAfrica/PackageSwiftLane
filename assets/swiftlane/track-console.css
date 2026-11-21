@@ -177,3 +177,21 @@
   .tc-panel { margin: -28px 6px 0; }
   .tc-legend { display: none; }
 }
+
+/* record kind on list cards, details grid and consolidation contents */
+.tc-c1 { gap: 8px; }
+.tc-kind { min-width: 0; overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; padding: 2px 7px; border-radius: 6px; color: #bbb; border: 1px solid var(--tc-line2); white-space: nowrap; margin-right: auto; }
+.tc-kind.consolidation { color: #f0c27a; border-color: rgba(245,184,74,.35); }
+.tc-kind.package { color: #b9a8ff; border-color: rgba(150,130,255,.35); }
+.tc-det dd { font-size: 15.5px; word-break: break-word; }
+.tc-items { display: flex; flex-direction: column; border: 1px solid var(--tc-line); border-radius: 12px; overflow: hidden; max-height: 340px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #333 transparent; }
+.tc-ir { display: grid; grid-template-columns: minmax(0, 1.2fr) repeat(var(--c, 4), minmax(0, 1fr)); gap: 10px; align-items: center; padding: 10px 14px; border-top: 1px solid var(--tc-line); font-size: 14px; color: #ddd; }
+.tc-ir:first-child { border-top: 0; }
+.tc-ir.h { background: #232323; color: var(--tc-mut); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; position: sticky; top: 0; }
+.tc-ir .tc-st { justify-self: start; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.tc-ir > span, .tc-ir > b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@container tcp (max-width: 560px) { .tc-ir { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr); } .tc-ir > :nth-child(n+4):not(:last-child) { display: none; } }
+.tc-muted b { color: #eee; }
+
+/* full page: a taller console */
+.tc-wrap.full .tc-list { max-height: 980px; }

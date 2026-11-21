@@ -9,7 +9,7 @@ if (!isset($d)) { $d = []; }
           <div><h1 class="sl-title">Consolidations</h1><p class="sl-lede">Group parcels into containers and flights before they leave the US · <?= sl_num($d['tot']) ?> in the list</p></div>
           <div class="row g8 wrap"><?php if ($d['canNew']): ?><a class="sl-btn" href="<?= sl_route('NewConsolidation', ['type' => $d['mode'] === 'sea' || !$d['canAir'] ? 'sea' : 'air']) ?>"><i class="ic ic-sm i-plus" aria-hidden="true"></i>New Consolidation</a><?php endif; ?></div>
         </div>
-        <?php if (!empty($d['tracking']['items'])): $tc = $d['tracking']; $tcTitle = 'Loads in motion'; $tcNoun = 'consolidations'; $tcExpand = ''; ?>
+        <?php if (!empty($d['tracking']['items'])): $tc = $d['tracking']; $tcTitle = 'Loads in motion'; $tcNoun = 'consolidations'; $tcExpand = sl_route('LiveTracking', ['f' => 'con']); ?>
         <?php include __DIR__ . '/partials/track_console.php'; ?>
         <?php endif; ?>
         <div class="grid cols3">

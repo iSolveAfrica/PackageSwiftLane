@@ -55,7 +55,7 @@
       <?php else: ?><p class="sl-empty">No air shipments in this period.</p><?php endif; ?>
     </section>
 
-    <section class="sl-viz-card sl-viz-card--amber" aria-label="Daily air shipment intake">
+    <section class="sl-viz-card sl-viz-card--amber sl-insights__intake" aria-label="Daily air shipment intake">
       <div class="sl-viz-card__head"><div><span class="sl-viz-card__eyebrow">Daily intake</span><h3>Last 12 weeks</h3></div><span class="sl-viz-card__period">Peak <?= sl_num($ch['heatPeak']) ?> / day</span></div>
       <p class="sl-viz-card__sub">Air shipments registered each day</p>
       <div class="sl-insights__heat" role="img" aria-label="Daily air shipment registrations over the last 84 days">

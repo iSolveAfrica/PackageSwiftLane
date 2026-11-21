@@ -46,7 +46,7 @@
     var q = ((tc.querySelector('[data-tc-q]') || {}).value || '').trim().toLowerCase();
     var firstVisible = null, selVisible = false, shown = 0;
     tc.querySelectorAll('[data-tc-key]').forEach(function (c) {
-      var ok = (f === 'all' || (f === 'late' ? c.getAttribute('data-late') === '1' : c.getAttribute('data-mode') === f)) &&
+      var ok = (f === 'all' || (f === 'late' ? c.getAttribute('data-late') === '1' : f === 'con' ? c.getAttribute('data-kind') === 'consolidation' : c.getAttribute('data-mode') === f)) &&
         (!q || (c.getAttribute('data-text') || '').indexOf(q) !== -1);
       c.hidden = !ok;
       if (ok) { shown++; if (!firstVisible) firstVisible = c; if (c.classList.contains('on')) selVisible = true; }

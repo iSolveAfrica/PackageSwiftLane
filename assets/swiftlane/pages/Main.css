@@ -113,3 +113,7 @@ body{margin:0}.dk-desk{display:flex;flex-wrap:wrap;gap:20px;padding:20px}
 .sl-insights__heat-key .h3{background:var(--ch-3)}
 @media(max-width:960px){.sl-insights__grid{grid-template-columns:1fr 1fr}.sl-insights__trend{grid-column:1/-1}}
 @media(max-width:640px){.sl-insights__grid{grid-template-columns:1fr}.sl-insights__trend{grid-column:auto}.sl-insights__periods{width:100%;justify-content:space-between}.sl-insights__mix{gap:16px}.sl-insights__heat{gap:3px}.sl-viz-card{padding:18px}}
+/* daily intake runs the full width of the insights grid; cells become wide, short week columns */
+.sl-insights__intake{grid-column:1/-1}
+.sl-insights__intake .sl-insights__heat{gap:5px}
+.sl-insights__intake .sl-insights__heat span{aspect-ratio:auto;height:clamp(14px,2.2vw,26px)}
