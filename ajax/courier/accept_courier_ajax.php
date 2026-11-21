@@ -45,7 +45,16 @@ $errors = array();
 // ('complete_client_shipment') and the shipment must be theirs (sender or driver) or
 // their agency's.
 require_once(__DIR__ . '/../../helpers/rbac.php');
+
+// Canonical recipient type for everyone. cdp_sanitize() is not idempotent (stripslashes), so
+// writing the sanitised string back let 'us\\er' be checked below as a cdb_recipients id and
+// then, sanitised again further down, loaded as 'user' (another user's name and address on this
+// shipment). Further down only 'user' vs anything else matters, so this keeps behaviour.
+$scopeType = (cdp_sanitize($_POST['recipient_type'] ?? 'recipient') === 'user') ? 'user' : 'recipient';
+$_POST['recipient_type'] = $scopeType;
+
 $scopeUser = $user->cdp_getUserData();
+$scopeCheckParties = false;
 if (cdp_roleRankById((int) ($scopeUser->userlevel ?? 0)) < 2) {
     $scopeId = (int) ($_POST['order_id'] ?? 0);
     $scopeDb = new Conexion;
@@ -81,23 +90,64 @@ if (cdp_roleRankById((int) ($scopeUser->userlevel ?? 0)) < 2) {
     } elseif ($scopeAgencies) {
         $_POST['agency'] = (int) reset($scopeAgencies);
     } else {
-        // Neither the row nor the caller names an agency: keep the stored value (0) rather
-        // than a posted one, so the caller cannot push the shipment into an agency of their choice.
-        $_POST['agency'] = (int) $scopeRow->agency;
+        // Neither the row (legacy/customer pickup with agency 0) nor the caller names an agency:
+        // the caller matched as sender or driver, so choosing an agency moves nothing into their
+        // own scope. Accept a posted agency only if it is a real branch office; otherwise keep 0
+        // and let the 'agency required' validation below ask for one.
+        $scopePostedAgency = (int) ($_POST['agency'] ?? 0);
+        $scopeAgencyExists = false;
+        if ($scopePostedAgency > 0) {
+            $scopeDb->cdp_query("SELECT id FROM cdb_branchoffices WHERE id = :id LIMIT 1");
+            $scopeDb->bind(':id', $scopePostedAgency);
+            $scopeDb->cdp_execute();
+            $scopeAgencyExists = (bool) $scopeDb->cdp_registro();
+        }
+        $_POST['agency'] = $scopeAgencyExists ? $scopePostedAgency : (int) $scopeRow->agency;
     }
     if (!$user->cdp_hasPermission('assign_drivers')) {
         $_POST['driver_id'] = (int) $scopeRow->driver_id;
     }
-
-    // The recipient and the sender address must belong to that sender, so another customer's
-    // contact or address cannot be attached to (and printed on) this shipment.
     $scopeSender = (int) $scopeRow->sender_id;
+    $scopeCheckParties = true;
+} else {
+    // Agency-restricted staff (userlevel 2/4 tied to an agency) passed every check above, so they
+    // could edit any agency's shipment by order_id and move it out of (or into) their agency. Same
+    // rule as the other courier write endpoints: the stored row must be in their agency, the agency
+    // written stays theirs, and a changed sender must be one of their agency's customers.
+    $scopeCtx = cdp_getAgencyContext();
+    if (!empty($scopeCtx['is_restricted'])) {
+        $scopeDb = new Conexion;
+        $scopeDb->cdp_query("SELECT sender_id, agency FROM cdb_add_order WHERE order_id = :id LIMIT 1");
+        $scopeDb->bind(':id', (int) ($_POST['order_id'] ?? 0));
+        $scopeDb->cdp_execute();
+        $scopeRow = $scopeDb->cdp_registro();
+        $scopeAgencyId = (int) ($scopeCtx['agency_id'] ?? 0);
+        $scopeSender = (int) ($_POST['sender_id'] ?? 0);
+        $scopeOk = $scopeRow && $scopeAgencyId > 0 && cdp_ajaxRowInAgencyScope($scopeRow);
+        if ($scopeOk && $scopeSender !== (int) $scopeRow->sender_id) {
+            $scopeDb->cdp_query("SELECT agency_id FROM cdb_users WHERE id = :id LIMIT 1");
+            $scopeDb->bind(':id', $scopeSender);
+            $scopeDb->cdp_execute();
+            $scopeSenderRow = $scopeDb->cdp_registro();
+            $scopeOk = $scopeSenderRow && (int) $scopeSenderRow->agency_id === $scopeAgencyId;
+        }
+        if (!$scopeOk) {
+            header('HTTP/1.1 403 Forbidden');
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
+            exit;
+        }
+        $_POST['agency'] = $scopeAgencyId;
+        $scopeAgencies = [$scopeAgencyId];
+        $scopeCheckParties = true;
+    }
+}
+
+if ($scopeCheckParties) {
+    // The recipient, the sender address and the recipient address must belong to that sender
+    // (or to its recipient), so another customer's contact or address cannot be attached to,
+    // and printed on, this shipment. $scopeType is the canonical value used further down.
     $scopeRecipient = (int) ($_POST['recipient_id'] ?? 0);
-    // Normalise the type once, the same way the receiver and its address are loaded further
-    // down (cdp_sanitize trims), so ' user' cannot pass this check as one kind of id and then
-    // be loaded as the other.
-    $scopeType = cdp_sanitize($_POST['recipient_type'] ?? 'recipient');
-    $_POST['recipient_type'] = $scopeType;
     if ($scopeType === 'user') {
         $scopeRecipientOk = $scopeRecipient === $scopeSender;
     } else {
@@ -110,8 +160,8 @@ if (cdp_roleRankById((int) ($scopeUser->userlevel ?? 0)) < 2) {
             || in_array((int) ($scopeRec->agency_id ?? 0), $scopeAgencies, true)
         );
     }
-    $scopeAddrId = (int) ($_POST['sender_address_id'] ?? 0);
     $scopeAddrOk = true;
+    $scopeAddrId = (int) ($_POST['sender_address_id'] ?? 0);
     if ($scopeAddrId > 0) {
         $scopeDb->cdp_query("SELECT user_id FROM cdb_senders_addresses WHERE id_addresses = :id LIMIT 1");
         $scopeDb->bind(':id', $scopeAddrId);
@@ -119,8 +169,7 @@ if (cdp_roleRankById((int) ($scopeUser->userlevel ?? 0)) < 2) {
         $scopeAddr = $scopeDb->cdp_registro();
         $scopeAddrOk = $scopeAddr && (int) $scopeAddr->user_id === $scopeSender;
     }
-    // The recipient address is stored and printed too: it must belong to that recipient
-    // (for type 'user' the sender doubles as recipient, so one of the sender's addresses).
+    // For type 'user' the sender doubles as recipient, so the address is one of the sender's.
     $scopeRAddrId = (int) ($_POST['recipient_address_id'] ?? 0);
     if ($scopeRAddrId > 0) {
         if ($scopeType === 'user') {

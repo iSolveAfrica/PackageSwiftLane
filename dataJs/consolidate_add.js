@@ -760,6 +760,18 @@ function cdp_cal_final_total_old() {
   $("#total_envio_input").val(total_envio.toFixed(2));
 }
 
+// cdp_add_item() builds its row HTML by string concatenation, and tracking, sender and
+// description come from customer-entered data (courier_list_add_ajax.php hands over the
+// plain text), so every text value is HTML-escaped here before it goes into the markup.
+function cdp_escHtml(v) {
+  return String(v === null || v === undefined ? "" : v)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 function cdp_add_item(id, total_vol, weight, length, width, height, tracking, order_no, order_prefix, sender, description, total_price, quantity, total_price_raw) {
   if (selected.includes(id)) {
     Swal.fire({
@@ -787,18 +799,18 @@ function cdp_add_item(id, total_vol, weight, length, width, height, tracking, or
     var html_code = "";
     html_code += '<tr class="card-hover " id="row_id_' + id + '">';
 
-    html_code += '<td><b>' + sender + "</b></td>";
-    html_code += '<td><b>' + tracking + "</b></td>";
+    html_code += '<td><b>' + cdp_escHtml(sender) + "</b></td>";
+    html_code += '<td><b>' + cdp_escHtml(tracking) + "</b></td>";
     html_code += '<td class="text-right">' + parseInt(quantity) + '</td>';
-    html_code += '<td><b>' + description + "</b></td>";
+    html_code += '<td><b>' + cdp_escHtml(description) + "</b></td>";
     html_code += '<td><b>' + weight + "</b></td>";
     html_code += '<td></td>';
     html_code += '<td><b>' + total_price + "</b></td>";
     html_code += '<td></td>';
 
     html_code += '<input type="hidden"  id="total_vol_' + id + '"  value="' + total_vol + '" name="weight_vol[]">';
-    html_code += '<input type="hidden"   value="' + order_prefix + '" name="prefix[]">';
-    html_code += '<input type="hidden"   value="' + order_no + '" name="order_no_item[]">';
+    html_code += '<input type="hidden"   value="' + cdp_escHtml(order_prefix) + '" name="prefix[]">';
+    html_code += '<input type="hidden"   value="' + cdp_escHtml(order_no) + '" name="order_no_item[]">';
     html_code += '<input type="hidden" id="weight_' + id + '"   value="' + weight + '" name="weight[]">';
     html_code += '<input type="hidden" id="total_price_' + id + '"   value="' + (total_price_raw || total_price) + '" name="total_price[]">';
 

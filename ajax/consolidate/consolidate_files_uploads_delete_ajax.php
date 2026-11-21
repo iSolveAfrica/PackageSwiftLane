@@ -26,10 +26,10 @@ require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_login();
 require_permission('view_consolidate_list');
 // The view permission above is soft-passed for customers, drivers and agency users, and
-// cdp_deleteFileCourier() deletes ANY cdb_order_files row by id: staff only, with an edit
-// permission (the air and sea edit screens both post here).
+// cdp_deleteFileCourier() deletes ANY cdb_order_files row by id: staff only, with the
+// air edit permission (only the air consolidation edit screen posts to this copy).
 require_staff();
-require_permission(['edit_consolidate', 'edit_consolidate_package']);
+require_permission('edit_consolidate');
 
 require_once("../../helpers/querys.php");
 
@@ -43,30 +43,25 @@ if ($cdpFileId <= 0) {
 
     $errors['id'] = 'Please select file';
 } else {
-    // Only consolidation files, and only for a consolidation inside the caller's agency.
-    // order_id holds a consolidate_id of either table (air or sea). The two tables have
-    // independent AUTO_INCREMENT ids, so the same number usually exists in both; requiring
-    // every match to be in scope would refuse restricted staff on their own consolidation.
-    // Accept when at least one consolidation with that id is in the caller's scope.
+    // Only consolidation files, and only for a air consolidation inside the caller's agency.
+    // order_id holds a consolidate_id of either table (air or sea) and cdb_order_files does
+    // not record which one. The air and sea screens each post to their own copy of this
+    // endpoint, so this copy checks ONLY cdb_consolidate: checking both tables and accepting
+    // any match let staff of agency A delete agency B's file when the other table's row with
+    // the same number belonged to agency A (the other copy is ajax/consolidate_packages/).
     $cdpDb = new Conexion;
     $cdpDb->cdp_query("SELECT id, order_id FROM cdb_order_files WHERE id = :id AND is_consolidate = 1 LIMIT 1");
     $cdpDb->bind(':id', $cdpFileId);
     $cdpDb->cdp_execute();
     $cdpFile = $cdpDb->cdp_registro();
-    $cdpScopeRows = [];
+    $cdpCons = null;
     if ($cdpFile) {
-        foreach (['cdb_consolidate', 'cdb_consolidate_packages'] as $cdpTable) {
-            $cdpDb->cdp_query("SELECT consolidate_id, agency FROM $cdpTable WHERE consolidate_id = :cid LIMIT 1");
-            $cdpDb->bind(':cid', (int) $cdpFile->order_id);
-            $cdpDb->cdp_execute();
-            $cdpCons = $cdpDb->cdp_registro();
-            if ($cdpCons) {
-                $cdpScopeRows[] = $cdpCons;
-            }
-        }
+        $cdpDb->cdp_query("SELECT consolidate_id, agency FROM cdb_consolidate WHERE consolidate_id = :cid LIMIT 1");
+        $cdpDb->bind(':cid', (int) $cdpFile->order_id);
+        $cdpDb->cdp_execute();
+        $cdpCons = $cdpDb->cdp_registro();
     }
-    $cdpScopeRows = array_filter($cdpScopeRows, 'cdp_ajaxRowInAgencyScope');
-    if (!$cdpScopeRows) {
+    if (!$cdpCons || !cdp_ajaxRowInAgencyScope($cdpCons)) {
         $errors['id'] = 'Please select file';
     }
 }

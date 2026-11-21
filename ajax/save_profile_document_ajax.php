@@ -30,7 +30,7 @@ if (!cdp_profileCanEdit($user, $targetId, 'edit_client_document')) {
     exit;
 }
 
-$db->cdp_query("SELECT id, document_type, document_number, document_photo, fname, lname, userlevel FROM cdb_users WHERE id = :id LIMIT 1");
+$db->cdp_query("SELECT id, document_type, document_number, document_photo, fname, lname, userlevel, agency_id FROM cdb_users WHERE id = :id LIMIT 1");
 $db->bind(':id', $targetId);
 $row = $db->cdp_registro();
 if (!$row) {
@@ -39,10 +39,12 @@ if (!$row) {
 }
 // Someone else's document: edit_client_document is for customer accounts, and the caller must
 // outrank the target, so a customer or junior staff member holding the permission can never
-// rewrite an administrator's (or a peer's) ID document.
+// rewrite an administrator's (or a peer's) ID document. Agency-restricted staff also stay
+// inside their own agency.
 if ($targetId !== (int) $user->uid
     && (!cdp_canManageUser($user, (int) $row->userlevel)
-        || (!$user->cdp_is_Admin() && !cdp_roleIsClient((int) $row->userlevel)))) {
+        || (!$user->cdp_is_Admin() && !cdp_roleIsClient((int) $row->userlevel))
+        || !cdp_ajaxRowInAgencyScope((object) ['agency' => $row->agency_id]))) {
     echo json_encode(['status' => 'error', 'message' => 'You can only update your own document.']);
     exit;
 }

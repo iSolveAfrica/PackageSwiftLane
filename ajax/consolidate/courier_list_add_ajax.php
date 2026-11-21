@@ -126,20 +126,24 @@ if ($numrows > 0) { ?>
 
 					<?php
 
-					// Item descriptions are customer-entered and may be stored raw or already
-					// HTML-encoded (cdp_sanitize). Normalise to one HTML-safe encoding so neither
-					// this table nor cdp_add_item() (which builds HTML from the values it gets
-					// through data-* / onclick) can be used for stored XSS on the staff screen.
-					$cdpHtml = function ($v) {
-						return htmlspecialchars(html_entity_decode((string) $v, ENT_QUOTES | ENT_HTML5, 'UTF-8'), ENT_QUOTES, 'UTF-8');
+					// Item descriptions and customer names are customer-entered and may be stored raw or
+					// already HTML-encoded (cdp_sanitize). Normalise to the plain text once ($cdpText),
+					// encode it once for this table, and hand cdp_add_item() the plain text: it escapes
+					// every text value itself before building its row HTML (dataJs/consolidate*_add/edit.js),
+					// so neither path can be used for stored XSS on the staff screen.
+					$cdpText = function ($v) {
+						return html_entity_decode((string) $v, ENT_QUOTES | ENT_HTML5, 'UTF-8');
 					};
-					// data-* attribute: getAttribute() returns the HTML-safe text.
-					$cdpAttr = function ($v) use ($cdpHtml) {
-						return htmlspecialchars($cdpHtml($v), ENT_QUOTES, 'UTF-8');
+					$cdpHtml = function ($v) use ($cdpText) {
+						return htmlspecialchars($cdpText($v), ENT_QUOTES, 'UTF-8');
 					};
-					// JS string inside onclick: the JS value is the HTML-safe text.
-					$cdpJs = function ($v) use ($cdpHtml) {
-						return htmlspecialchars(addslashes($cdpHtml($v)), ENT_QUOTES, 'UTF-8');
+					// data-* attribute: getAttribute() returns the plain text.
+					$cdpAttr = $cdpHtml;
+					// JS string literal inside onclick: the JS value is the plain text. Line breaks and
+					// U+2028/2029 are escaped too, or a multi-line description breaks the literal.
+					$cdpJs = function ($v) use ($cdpText) {
+						$js = str_replace(["\r", "\n", "\u{2028}", "\u{2029}"], ['\\r', '\\n', '\\u2028', '\\u2029'], addslashes($cdpText($v)));
+						return htmlspecialchars($js, ENT_QUOTES, 'UTF-8');
 					};
 					$count = 0;
 					foreach ($data as $row) {
@@ -197,7 +201,7 @@ if ($numrows > 0) { ?>
 							data-tracking="<?php echo $cdpAttr($tracking); ?>"
 							data-order-no="<?php echo $cdpAttr($row->order_no); ?>"
 							data-order-prefix="<?php echo $cdpAttr($row->order_prefix); ?>"
-                            data-sender="<?php echo htmlspecialchars(cdp_nameWithLocker($sender), ENT_QUOTES, 'UTF-8'); ?>"
+                            data-sender="<?php echo $cdpAttr(cdp_nameWithLocker($sender)); ?>"
                             data-description="<?php echo $cdpAttr($description->order_item_description); ?>"
                             data-quantity="<?php echo $quantity->order_item_quantity; ?>"
                             data-total-order="<?php echo cdb_money_format($row->total_order); ?>"
@@ -211,7 +215,7 @@ if ($numrows > 0) { ?>
 										<label class="custom-control-label" for="pkg_<?php echo $row->order_id; ?>"></label>
 									</div>
 								</td>
-							<td><?php echo htmlspecialchars(cdp_nameWithLocker($sender), ENT_QUOTES, 'UTF-8'); ?></td>
+							<td><?php echo $cdpHtml(cdp_nameWithLocker($sender)); ?></td>
 
 							<td><?php echo $cdpHtml($row->order_prefix . $row->order_no); ?></td>
 							<?php $__pt = cdp_getPackageTrackingLegacyAware((int) $row->order_id); ?>
@@ -243,7 +247,7 @@ if ($numrows > 0) { ?>
 
 							<td class="text-right">
 								<button type="button" name="add_row" id="add_row"
-									onclick="cdp_add_item('<?php echo $row->order_id; ?>','<?php echo $total_metric; ?>', '<?php echo $weight; ?>', '<?php echo $length; ?>', '<?php echo $width; ?>', '<?php echo $height; ?>', '<?php echo $cdpJs($tracking); ?>', '<?php echo $cdpJs($row->order_no); ?>','<?php echo $cdpJs($row->order_prefix); ?>', '<?php echo htmlspecialchars(addslashes(cdp_nameWithLocker($sender)), ENT_QUOTES, 'UTF-8'); ?>', '<?php echo $cdpJs($description->order_item_description); ?>', '<?php echo cdb_money_format(($row->total_order)); ?>', '<?php echo $quantity->order_item_quantity; ?>', '<?php echo $row->total_order; ?>');
+									onclick="cdp_add_item('<?php echo $row->order_id; ?>','<?php echo $total_metric; ?>', '<?php echo $weight; ?>', '<?php echo $length; ?>', '<?php echo $width; ?>', '<?php echo $height; ?>', '<?php echo $cdpJs($tracking); ?>', '<?php echo $cdpJs($row->order_no); ?>','<?php echo $cdpJs($row->order_prefix); ?>', '<?php echo $cdpJs(cdp_nameWithLocker($sender)); ?>', '<?php echo $cdpJs($description->order_item_description); ?>', '<?php echo cdb_money_format(($row->total_order)); ?>', '<?php echo $quantity->order_item_quantity; ?>', '<?php echo $row->total_order; ?>');
 									$('#tb_row_id_<?php echo $row->order_id; ?>').remove();"
 									class="btn btn-outline-success btn-sm add_row">
 									<i class="fa fa-plus"></i>

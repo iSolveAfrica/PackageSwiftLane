@@ -37,7 +37,8 @@ $errors = array();
 $messages = array();
 
 // Load the address with its owner. Customers, drivers and agency users (rank < 2) may only
-// delete their OWN saved addresses (the "My details" page); staff need view_client_list, must
+// delete their OWN saved addresses (the "My details" page); staff need view_client_list (plus
+// edit_client for someone else's address), must
 // outrank the owner and stay inside their agency.
 $cdpAddrDb = new Conexion;
 $cdpAddrDb->cdp_query('SELECT sa.user_id, u.userlevel, u.agency_id AS agency
@@ -52,6 +53,11 @@ if (cdp_roleRankById((int) $user->userlevel) < 2) {
     $cdpAddrOk = $cdpAddrOwn;
 } else {
     require_permission('view_client_list');
+    // Removing ANOTHER account's address is a client edit: a view-only permission is not
+    // enough (ajax/sl/customer_profile_ajax.php address_delete also requires edit_client).
+    if (!$cdpAddrOwn) {
+        require_permission('edit_client');
+    }
     $cdpAddrOk = $cdpAddrOwn || ($cdpAddrRow && $cdpAddrRow->userlevel !== null
         && cdp_canManageUser($user, (int) $cdpAddrRow->userlevel)
         && cdp_ajaxRowInAgencyScope($cdpAddrRow));

@@ -39,18 +39,37 @@ $search = cdp_sanitize($_REQUEST['search']);
 
 $sWhere = "";
 
-if ($userData->userlevel == 3) {
+// Row scope by role TYPE, not by the seed role ids 1/3/6 (same block as courier_list_ajax.php):
+// view_pickup_list is customer-facing, and a Customer/Driver/Agency department role with its own
+// id used to fall through to the unscoped staff branch and list every pickup. Agency-restricted
+// staff (cdp_getAgencyContext) see only their agency's pickups.
+require_once(__DIR__ . '/../../helpers/rbac.php');
+$scopeLevel = (int) $userData->userlevel;
+$scopeRank = cdp_roleRankById($scopeLevel);
+$scopeUid = (int) ($_SESSION['userid'] ?? 0);
+if ($scopeRank === 0) {
 
-	$sWhere .= " and  a.driver_id = '" . $_SESSION['userid'] . "'";
-} else if ($userData->userlevel == 1) {
+	$sWhere .= " and  a.sender_id = '" . $scopeUid . "'";
+} else if ($scopeRank === 1 && ($scopeLevel === 3 || cdp_roleHasFlag($scopeLevel, 'is_driver'))) {
 
-	$sWhere .= " and  a.sender_id = '" . $_SESSION['userid'] . "'";
-} else if ($userData->userlevel == 6) {
+	$sWhere .= " and  a.driver_id = '" . $scopeUid . "'";
+} else if ($scopeRank === 1) {
 
-	$agency_branch_id = cdp_getAgencyBranchIdForUser($userData->name_off);
-	$sWhere .= " and  a.agency = '" . (int)$agency_branch_id . "'";
+	$agency_branch_id = (int) cdp_getAgencyBranchIdForUser($userData->name_off);
+	if ($agency_branch_id <= 0) {
+		$scopeCtx = cdp_getAgencyContext();
+		$agency_branch_id = (int) ($scopeCtx['agency_id'] ?? 0);
+	}
+	if ($agency_branch_id <= 0) {
+		$agency_branch_id = (int) ($userData->agency_id ?? 0);
+	}
+	// No agency at all: show nothing. Filtering on agency 0 would list every unassigned pickup.
+	$sWhere .= $agency_branch_id > 0 ? " and  a.agency = '" . $agency_branch_id . "'" : " and 1=0";
 } else {
-	$sWhere .= "";
+	$scopeCtx = cdp_getAgencyContext();
+	if (!empty($scopeCtx['is_restricted'])) {
+		$sWhere .= !empty($scopeCtx['agency_id']) ? " and  a.agency = '" . (int) $scopeCtx['agency_id'] . "'" : " and 1=0";
+	}
 }
 if ($search != null) {
 
@@ -59,7 +78,7 @@ if ($search != null) {
 
 
 // // pagination variables
-$page = (isset($_REQUEST['page']) && !empty($_REQUEST['page'])) ? $_REQUEST['page'] : 1;
+$page = max(1, (int) ($_REQUEST['page'] ?? 1));
 $per_page = (($_REQUEST['per_page'] ?? '') === 'all') ? 1000000000 : (in_array((int)($_REQUEST['per_page'] ?? 0), [25, 50, 100], true) ? (int)$_REQUEST['per_page'] : 25); //how much records you want to show
 $adjacents  = 4; //gap between pages after number of adjacents
 $offset = ($page - 1) * $per_page;

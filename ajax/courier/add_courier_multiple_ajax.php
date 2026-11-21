@@ -81,6 +81,78 @@ if ($scopeCtx['is_restricted']) {
     $_POST['agency'] = (int) $scopeCtx['agency_id'];
 }
 
+// Canonical recipient type for everyone. cdp_sanitize() is not idempotent (stripslashes), so a
+// value like 'us\\er' could pass the check below as a cdb_recipients id and then, sanitised again
+// further down, be loaded as 'user'. Further down only 'user' vs anything else matters.
+$scopeType = (cdp_sanitize($_POST['recipient_type'] ?? 'recipient') === 'user') ? 'user' : 'recipient';
+$_POST['recipient_type'] = $scopeType;
+
+// Callers below staff rank and agency-restricted staff: the sender (and agency) is checked, but
+// the recipient, both addresses and the driver came from POST unchecked, so another customer's or
+// agency's contact/address could be attached to, printed on and notified for this shipment (the
+// same rule edit_courier_ajax.php and accept_courier_ajax.php enforce).
+if ($scopeRank < 2 || !empty($scopeCtx['is_restricted'])) {
+    $scopeDb = new Conexion;
+    $scopeSender = (int) ($_POST['sender_id'] ?? 0);
+    $scopeAgencies = array_filter([(int) ($scopeCtx['agency_id'] ?? 0)]);
+    $scopeRecipient = (int) ($_POST['recipient_id'] ?? 0);
+    if ($scopeType === 'user') {
+        $scopeRecipientOk = $scopeRecipient === $scopeSender;
+    } else {
+        $scopeDb->cdp_query("SELECT sender_id, agency_id FROM cdb_recipients WHERE id = :id LIMIT 1");
+        $scopeDb->bind(':id', $scopeRecipient);
+        $scopeDb->cdp_execute();
+        $scopeRec = $scopeDb->cdp_registro();
+        $scopeRecipientOk = $scopeRec && (
+            (int) $scopeRec->sender_id === $scopeSender
+            || in_array((int) ($scopeRec->agency_id ?? 0), $scopeAgencies, true)
+        );
+    }
+    $scopeAddrOk = true;
+    $scopeAddrId = (int) ($_POST['sender_address_id'] ?? 0);
+    if ($scopeAddrId > 0) {
+        $scopeDb->cdp_query("SELECT user_id FROM cdb_senders_addresses WHERE id_addresses = :id LIMIT 1");
+        $scopeDb->bind(':id', $scopeAddrId);
+        $scopeDb->cdp_execute();
+        $scopeAddr = $scopeDb->cdp_registro();
+        $scopeAddrOk = $scopeAddr && (int) $scopeAddr->user_id === $scopeSender;
+    }
+    // For type 'user' the sender doubles as recipient, so the address is one of the sender's.
+    $scopeRAddrId = (int) ($_POST['recipient_address_id'] ?? 0);
+    if ($scopeRAddrId > 0) {
+        if ($scopeType === 'user') {
+            $scopeDb->cdp_query("SELECT user_id AS owner_id FROM cdb_senders_addresses WHERE id_addresses = :id LIMIT 1");
+            $scopeRAddrOwner = $scopeSender;
+        } else {
+            $scopeDb->cdp_query("SELECT recipient_id AS owner_id FROM cdb_recipients_addresses WHERE id_addresses = :id LIMIT 1");
+            $scopeRAddrOwner = $scopeRecipient;
+        }
+        $scopeDb->bind(':id', $scopeRAddrId);
+        $scopeDb->cdp_execute();
+        $scopeRAddr = $scopeDb->cdp_registro();
+        if (!$scopeRAddr || (int) $scopeRAddr->owner_id !== $scopeRAddrOwner) {
+            $scopeAddrOk = false;
+        }
+    }
+    // The driver gets a notification for this shipment: only an active driver (what the add form
+    // offers, User::cdp_userAllDriver) may be named, not any user id.
+    $scopeDriver = (int) ($_POST['driver_id'] ?? 0);
+    if ($scopeDriver > 0) {
+        $scopeDb->cdp_query("SELECT id FROM cdb_users WHERE id = :id AND userlevel = 3 AND active = 1 LIMIT 1");
+        $scopeDb->bind(':id', $scopeDriver);
+        $scopeDb->cdp_execute();
+        if (!$scopeDb->cdp_registro()) {
+            $scopeAddrOk = false;
+        }
+    }
+    if (($scopeRecipient > 0 && !$scopeRecipientOk) || !$scopeAddrOk) {
+        header('HTTP/1.1 403 Forbidden');
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
+        exit;
+    }
+}
+
 if (empty($_POST['sender_id']))
 
     $errors['sender_id'] = $lang['validate_field_ajax150'];
@@ -500,7 +572,11 @@ if (empty($errors)) {
                 $sender_city = cdp_getCity($sender_city);
                 $final_sender_city = $sender_city['data'];
 
-                $recipient_address_data = cdp_getRecipientAddress(intval($_POST["recipient_address_id"]));
+                // Load the address from the table the ownership check above validated it against
+                // (type 'user': a sender address), as add_courier_ajax.php does.
+                $recipient_address_data = ($_POST['recipient_type'] === 'user')
+                    ? cdp_getSenderAddress(intval($_POST["recipient_address_id"]))
+                    : cdp_getRecipientAddress(intval($_POST["recipient_address_id"]));
 
                 $recipient_address = $recipient_address_data->address;
                 $recipient_country = $recipient_address_data->country;

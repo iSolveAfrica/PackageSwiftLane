@@ -293,7 +293,8 @@ function require_safe_write() {
 /**
  * True when a shipment / package / consolidation row (any table with an `agency` column) is
  * inside the signed-in user's agency. Agency-restricted staff (helpers/querys.php
- * cdp_getAgencyContext) may only act on their own agency's rows; everyone else sees all.
+ * cdp_getAgencyContext) may only act on their own agency's rows (none when no agency is on
+ * file); everyone else sees all.
  */
 function cdp_ajaxRowInAgencyScope($row): bool {
     static $ctx = null;
@@ -303,8 +304,13 @@ function cdp_ajaxRowInAgencyScope($row): bool {
         }
         $ctx = cdp_getAgencyContext();
     }
-    if (empty($ctx['is_restricted']) || empty($ctx['agency_id'])) {
+    if (empty($ctx['is_restricted'])) {
         return true;
+    }
+    // Restricted but with no agency on file (e.g. an agency user whose agency_id is empty):
+    // fail closed, like the sl/ data scopes, instead of granting every agency's rows.
+    if (empty($ctx['agency_id'])) {
+        return false;
     }
     return is_object($row) && (int) ($row->agency ?? 0) === (int) $ctx['agency_id'];
 }
