@@ -1,40 +1,38 @@
 <?php
 /**
- * HandOut - from docs/handover/artifact-source/HandOut.dc.html. Counter hand-out by pickup code or tracking.
- * Data: views/sl/data/warehouse.php (sl_handOutData). Steps: pick the customer from the queue (or search name, locker,
- * phone or tracking) → enter the code they show → fetch from the bay and scan each label → checks → hand over (Picked up).
- * Writes: ajax/sl/warehouse_ajax.php (verify_customer, send_customer, handover). Search by tracking: pickup_client.php?tracking=.
+ * HandOut - counter hand-out (Warehouse menu). Data: views/sl/data/warehouse.php (sl_handOutData).
+ * Left: live search (dataJs/sl/handout.js → ajax/sl/handout_ajax.php op=search) filters while you type and opens
+ * the customer as soon as there is one match or an exact tracking number. Right: the customer panel
+ * (partials/handout_panel.php): the pickup code checks itself on the 6th digit, managers can skip it, each
+ * package opens in a pop-up (contents, payment, history) and is ticked with one click, then Hand over.
+ * Writes: ajax/sl/warehouse_ajax.php (verify_customer, send_customer, handover). Every hand-over lands in the Hand-out Log.
  */
 if (!isset($d)) { $d = []; }
 $c = $d['c'];
-$st = !$c ? 1 : 2;
 ?>
-<div class="sl-head"><div><h1 class="sl-title" style="font-size:22px">Hand out packages</h1><p class="sl-lede">Counter at <?= h($d['office']) ?> · enter the pickup code, fetch from the bay, scan each package to confirm, hand over.</p></div><div class="row g8 wrap"><span class="sl-badge row g6"><span class="pr-dot" style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span><?= (int) $d['doneToday'] ?> handed out today</span><a class="sl-btn ghost" href="<?= sl_route('WarehousePickups') ?>"><i class="ic ic-sm i-clock" aria-hidden="true"></i>Today's hand-outs</a></div></div>
-<div class="ho-steps"><?php foreach (['Customer', 'Pickup code', 'Scan packages', 'Hand over'] as $i => $t): ?><span class="<?= $i + 1 < $st ? 'done' : ($i + 1 === $st ? 'on' : '') ?>"><b><?= $i + 1 ?></b><?= h($t) ?></span><?php endforeach; ?></div>
-<div class="ho">
-<aside class="sl-card col g8 ho-queue" aria-label="Customers ready for collection"><div class="row between"><b class="fw5">Waiting at the counter</b><span class="sl-badge"><?= (int) $d['qN'] ?></span></div><span class="mut" style="font-size:14px">Customers with parcels ready</span>
-<form method="get" class="sl-search" style="max-width:none;min-width:0;margin-top:6px"><i class="ic ic-sm i-search" aria-hidden="true"></i><input name="q" value="<?= h($d['q']) ?>" aria-label="Find customer" placeholder="Search customer or tracking"></form>
-<div class="ho-queue-list">
-<?php foreach ($d['queue'] as $q): ?><a class="ho-q <?= h($q['cls']) ?>" href="<?= h($q['href']) ?>" style="color:inherit"><span class="sl-av"><?= h($q['ini']) ?></span><span class="col grow" style="min-width:0"><b class="fw5 sm ho-queue-name"><?= h($q['name']) ?></b><span class="mut ho-queue-meta"><?= h($q['lock']) ?> · <?= h($q['n']) ?></span><span class="mut ho-queue-meta"><?= h($q['wait']) ?></span></span><span class="sl-pill <?= h($q['pc']) ?>"><?= h($q['st']) ?></span></a><?php endforeach; ?>
-<?php if (!$d['queue']): ?><span class="mut sm">Nobody has a parcel ready<?= $d['q'] !== '' ? ' for this search' : '' ?>.</span><?php endif; ?>
-</div></aside>
-<section class="ho-big" id="ho-flow" data-customer="<?= (int) ($c['id'] ?? 0) ?>">
-<?php if (!$c): ?><div class="col g6"><h2 style="margin:0;font-size:22px;font-weight:600">Who is collecting?</h2><span class="mut">Pick the customer from the queue, or search by name, locker, phone or a tracking number.</span></div><div class="sl-empty"><span class="sl-tile"><i class="ic i-user" aria-hidden="true"></i></span>No customer selected</div>
-<?php else: ?>
-<div class="ho-cust"><span class="sl-av lg"><?= h($c['ini']) ?></span><span class="col grow"><b class="fw5" style="font-size:18px"><?= h($c['name']) ?></b><span class="mut sm"><?= h($c['lock']) ?> · <?= h(cdp_pickupCodeMask($c['phone'])) ?> · <?= count($c['pkgs']) ?> parcel(s) ready</span></span><span class="sl-pill <?= h($c['payCls']) ?>"><?= h($c['payL']) ?></span></div>
-<div class="col g6 ho-hide-done"><h2 style="margin:0;font-size:22px;font-weight:600">Ask for the pickup code</h2><span class="mut"><?= $c['code']['live'] ? 'Sent ' . h($c['code']['live']['sent_at']) . ($c['code']['live']['channels'] ? ' by ' . h(implode(', ', $c['code']['live']['channels'])) : '') : 'No code sent yet: send one and ask the customer to read it out.' ?></span></div>
-<div class="ho-code-inputs ho-hide-done" role="group" aria-label="Pickup code"><?php for ($i = 1; $i <= 6; $i++): ?><input class="sl-in mono ho-digit ops-digit" inputmode="numeric" maxlength="1" aria-label="Digit <?= $i ?>" autocomplete="off"><?php endfor; ?></div>
-<div class="ho-bad ho-hide-done" id="ho-bad" hidden><i class="ic i-x" aria-hidden="true"></i><span></span></div>
-<div class="row g8 wrap ho-hide-done ho-code-actions"><?php if ($d['canCode']): ?><button class="sl-btn" type="button" id="ho-verify"><i class="ic ic-sm i-key" aria-hidden="true"></i>Check code</button><button class="sl-btn ghost" type="button" id="ho-send"><i class="ic ic-sm i-message" aria-hidden="true"></i>Send pickup code</button><?php endif; ?><span class="mut sm ho-code-help">Codes are sent through configured channels. Check their ID if they have no code. Five incorrect attempts void the code.</span></div>
-<div class="row between ho-hide-done"><b class="fw5">Fetch from the bay, then scan each package</b></div>
-<?php foreach ($c['pkgs'] as $p): ?><label class="ho-pk ho-hide-done" data-item="<?= h($p['module'] . ':' . $p['oid']) ?>" data-trk="<?= h($p['id']) ?>" data-cleared="<?= $p['cleared'] ? 1 : 0 ?>"><span class="ho-bay"><small>BAY</small><b><?= h($p['bay']) ?></b></span><span class="col" style="min-width:0"><b class="fw5"><?= h($p['id']) ?></b><span class="mut sm"><?= h($p['what']) ?> · <?= h($p['w']) ?> · <?= $p['module'] === 'sea' ? 'sea' : 'air' ?><?= $p['cleared'] ? '' : ' · awaiting clearance' ?></span></span><span class="mono sm"><?= h($p['days']) ?></span><input class="ho-package-check" type="checkbox" disabled aria-label="Hand over <?= h($p['id']) ?>"></label><?php endforeach; ?>
-<label class="ho-scan ho-hide-done"><span class="ho-beam" aria-hidden="true"></span><input id="ho-scan-in" aria-label="Scan barcode" placeholder="Scan the label barcode or type the tracking number"><span class="mut sm">Scanner ready</span></label>
-<div class="ho-bad ho-hide-done" id="ho-scanbad" hidden><i class="ic i-x" aria-hidden="true"></i><span></span></div>
-<div class="grid cols3 ho-hide-done" style="gap:8px"><button type="button" class="ho-chk ho-need"><span class="sl-chk" aria-hidden="true"></span>ID card checked</button><button type="button" class="ho-chk <?= $c['unpaid'] ? 'ho-need' : '' ?>" <?= $c['unpaid'] ? '' : 'disabled aria-disabled="true"' ?>><span class="sl-chk <?= $c['unpaid'] ? '' : 'on' ?>" aria-hidden="true"></span><?= $c['unpaid'] ? 'Balance settled' : 'Nothing to pay' ?></button><button type="button" class="ho-chk ho-need"><span class="sl-chk" aria-hidden="true"></span>Customer signed</button></div>
-<div id="ho-step2" hidden class="ho-hide-done"></div>
-<?php if ($d['canPkg']): ?><button class="ho-pri ho-hide-done" type="button" id="ho-go" disabled><i class="ic i-check" aria-hidden="true"></i><span>Hand over</span></button><?php endif; ?><span class="mut sm ho-hide-done" id="ho-left"></span>
-<a class="sl-btn ghost ho-hide-done" href="<?= sl_route('HandOut') ?>">Cancel · back to the queue</a>
-<div class="ho-done" id="ho-done" hidden><span class="sl-tile" style="width:72px;height:72px;border-radius:22px;background:var(--green-bg);color:var(--green-ink)"><i class="ic i-check" aria-hidden="true"></i></span><h2 style="margin:0;font-size:26px;font-weight:600"></h2><span class="mut">Receipt sent by WhatsApp and e-mail · logged in Warehouse Pickups</span><a class="ho-pri" style="max-width:360px" href="<?= sl_route('HandOut') ?>"><i class="ic i-right" aria-hidden="true"></i>Next customer</a></div>
-<?php endif; ?>
-</section></div>
-<?php $slPreVerified = $c['verifiedItems'] ?? []; include CDP_ROOT . '/views/sl/inc/handover_js.php'; ?>
+<div class="sl-head"><div><h1 class="sl-title" style="font-size:22px">Hand out packages</h1><p class="sl-lede">Counter at <?= h($d['office']) ?> · type a name, locker, phone or tracking number: the customer opens by itself.</p></div>
+  <div class="row g8 wrap"><span class="sl-badge row g6"><span style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span><span data-ho-today><?= (int) $d['doneToday'] ?></span>&nbsp;handed out today</span><span class="sl-badge">You: <span data-ho-mine><?= (int) $d['mine'] ?></span></span><a class="sl-btn ghost" href="<?= sl_route('HandoverLog') ?>"><i class="ic ic-sm i-activity" aria-hidden="true"></i>Hand-out Log</a></div></div>
+<div class="ho" id="ho-page" data-open="<?= (int) $d['sel'] ?>">
+<aside class="sl-card col g8 ho-queue" aria-label="Customers with parcels ready">
+  <label class="ho-find"><i class="ic i-search" aria-hidden="true"></i><input id="ho-q" value="<?= h($d['q']) ?>" autocomplete="off" autofocus aria-label="Search customer or tracking" placeholder="Name, locker, phone or tracking"><span class="ho-spin" data-ho-spin hidden aria-hidden="true"></span></label>
+  <div class="row between"><span class="mut sm" data-ho-count><?= (int) $d['qN'] ?> customer<?= (int) $d['qN'] === 1 ? '' : 's' ?> with parcels ready</span></div>
+  <div class="ho-queue-list" id="ho-list" role="listbox" aria-label="Matching customers">
+    <?php foreach ($d['queue'] as $q): ?><button type="button" class="ho-q <?= $q['id'] === $d['sel'] ? 'on' : '' ?>" data-ho-cust="<?= (int) $q['id'] ?>" role="option"><span class="sl-av"><?= h($q['ini']) ?></span><span class="col grow" style="min-width:0;text-align:left"><b class="fw5 sm ho-queue-name"><?= h($q['name']) ?></b><span class="mut ho-queue-meta"><?= h($q['lock'] ?: '—') ?> · <?= h($q['nL']) ?></span><span class="mut ho-queue-meta">ready <?= h($q['wait']) ?></span></span><span class="sl-pill delivered"><?= (int) $q['n'] ?></span></button><?php endforeach; ?>
+    <?php if (!$d['queue']): ?><span class="mut sm">Nobody has a parcel ready<?= $d['q'] !== '' ? ' for this search' : '' ?>.</span><?php endif; ?>
+  </div>
+</aside>
+<section class="ho-big" id="ho-panel" aria-live="polite">
+  <?php if ($c): include __DIR__ . '/partials/handout_panel.php'; else: ?>
+  <div class="ho-empty"><span class="sl-tile"><i class="ic i-user" aria-hidden="true"></i></span><h2 style="margin:0;font-size:20px;font-weight:600">Who is collecting?</h2><span class="mut">Start typing on the left. With one match, or a full tracking number, the customer opens here.</span></div>
+  <?php endif; ?>
+</section>
+</div>
+
+<div class="sl-dialog" id="ho-pkg" hidden><div class="sl-modal ho-pkgmodal" role="dialog" aria-modal="true" aria-labelledby="ho-pkg-t">
+  <div class="row between g8"><div class="col"><b class="fw5 mono" id="ho-pkg-t" style="font-size:20px"></b><span class="mut sm" data-p="sub"></span></div><button type="button" class="sl-ib" data-sl-close aria-label="Close"><i class="ic i-x" aria-hidden="true"></i></button></div>
+  <div class="row g8 wrap" data-p="pills"></div>
+  <div class="sl-kv" data-p="kv"></div>
+  <div class="col g6"><b class="fw5">What is inside</b><div class="ho-items" data-p="items"></div></div>
+  <div class="col g6"><b class="fw5">Latest tracking</b><div class="col g4 sm" data-p="hist"></div></div>
+  <div class="row g8 wrap"><button type="button" class="sl-btn" data-p="tick"><i class="ic ic-sm i-check" aria-hidden="true"></i><span>Check this package</span></button><a class="sl-btn ghost" data-p="receipt" target="_blank">Receipt</a><a class="sl-btn ghost" data-p="view" target="_blank">Full details</a></div>
+</div></div>
