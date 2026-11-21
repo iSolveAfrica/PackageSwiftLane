@@ -58,3 +58,4 @@ dev_reports/
 # Stageshow demos: dependencies are installed per machine
 stageshow/node_modules/
 .agents/skills/stageshow/node_modules/
+.phpunit.result.cache
