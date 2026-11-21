@@ -70,6 +70,52 @@ if (cdp_roleRankById((int) ($scopeUser->userlevel ?? 0)) < 2) {
         echo json_encode(['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
         exit;
     }
+
+    // The scope check above only covers the row as stored. The UPDATE below writes sender, agency
+    // and driver from the request, so a caller below staff rank could otherwise move the shipment
+    // to another customer or agency (out of their scope, into someone else's notifications) or
+    // pick any user as its driver. Keep the stored values for them.
+    $_POST['sender_id'] = (int) $scopeRow->sender_id;
+    if ((int) $scopeRow->agency > 0) {
+        $_POST['agency'] = (int) $scopeRow->agency;
+    } elseif ($scopeAgencies) {
+        $_POST['agency'] = (int) reset($scopeAgencies);
+    }
+    if (!$user->cdp_hasPermission('assign_drivers')) {
+        $_POST['driver_id'] = (int) $scopeRow->driver_id;
+    }
+
+    // The recipient and the sender address must belong to that sender, so another customer's
+    // contact or address cannot be attached to (and printed on) this shipment.
+    $scopeSender = (int) $scopeRow->sender_id;
+    $scopeRecipient = (int) ($_POST['recipient_id'] ?? 0);
+    if (($_POST['recipient_type'] ?? 'recipient') === 'user') {
+        $scopeRecipientOk = $scopeRecipient === $scopeSender;
+    } else {
+        $scopeDb->cdp_query("SELECT sender_id, agency_id FROM cdb_recipients WHERE id = :id LIMIT 1");
+        $scopeDb->bind(':id', $scopeRecipient);
+        $scopeDb->cdp_execute();
+        $scopeRec = $scopeDb->cdp_registro();
+        $scopeRecipientOk = $scopeRec && (
+            (int) $scopeRec->sender_id === $scopeSender
+            || in_array((int) ($scopeRec->agency_id ?? 0), $scopeAgencies, true)
+        );
+    }
+    $scopeAddrId = (int) ($_POST['sender_address_id'] ?? 0);
+    $scopeAddrOk = true;
+    if ($scopeAddrId > 0) {
+        $scopeDb->cdp_query("SELECT user_id FROM cdb_senders_addresses WHERE id_addresses = :id LIMIT 1");
+        $scopeDb->bind(':id', $scopeAddrId);
+        $scopeDb->cdp_execute();
+        $scopeAddr = $scopeDb->cdp_registro();
+        $scopeAddrOk = $scopeAddr && (int) $scopeAddr->user_id === $scopeSender;
+    }
+    if (($scopeRecipient > 0 && !$scopeRecipientOk) || !$scopeAddrOk) {
+        header('HTTP/1.1 403 Forbidden');
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
+        exit;
+    }
 }
 
 if (empty($_POST['sender_id']))

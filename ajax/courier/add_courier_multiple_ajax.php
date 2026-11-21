@@ -42,6 +42,21 @@ $user = new User;
 $core = new Core;
 $errors = array();
 
+// view_shipment_list (the only permission checked above) is also soft-passed for customers,
+// drivers and agency users. This is the staff bulk-booking form (views/sl/data/ops_forms.php):
+// without this a customer could post here directly and create shipments under any sender, agency
+// or price. Same rule as add_courier_ajax.php: below staff rank the caller needs 'add_shipment'
+// and must not be a customer role (rank 0 follows the parent_role_id chain).
+require_once(__DIR__ . '/../../helpers/rbac.php');
+$scopeLevel = (int) ($_SESSION['userlevel'] ?? 0);
+$scopeRank = cdp_roleRankById($scopeLevel);
+if ($scopeRank < 2 && ($scopeRank === 0 || cdp_roleIsClient($scopeLevel) || !$user->cdp_hasPermission('add_shipment'))) {
+    header('HTTP/1.1 403 Forbidden');
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
+    exit;
+}
+
 if (empty($_POST['sender_id']))
 
     $errors['sender_id'] = $lang['validate_field_ajax150'];

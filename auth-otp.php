@@ -398,8 +398,10 @@ $d = [
     'message' => $message,
     'error' => $error,
     'email' => sl_maskEmail((string) ($otpUser->email ?? ($forgotDecoy['email'] ?? ''))),
-    'phone' => sl_maskPhone((string) ($otpUser->phone ?? '')),
-    'hasPhone' => !empty($otpUser->phone) && !empty($core->active_whatsapp),
+    // Forgot flow: never show the phone. The decoy (unknown email) has no user,
+    // so a WhatsApp card would only appear for real accounts (enumeration).
+    'phone' => $flow === 'forgot' ? '' : sl_maskPhone((string) ($otpUser->phone ?? '')),
+    'hasPhone' => $flow !== 'forgot' && !empty($otpUser->phone) && !empty($core->active_whatsapp),
     'countdownEnd' => $challengeCreatedAt > 0 ? $challengeCreatedAt + 60 : 0,
     'canResend' => $challengeCreatedAt <= 0 || $challengeCreatedAt + 60 <= time(),
     'remember' => !empty($_SESSION['otp_login_remember']),

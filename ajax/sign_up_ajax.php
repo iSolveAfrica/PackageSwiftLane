@@ -174,6 +174,7 @@ if (empty($error)) {
                     ORDER BY id DESC LIMIT 1");
     $db->bind(':e', cdp_sanitize($_POST['email']));
     $resume = $db->cdp_registro();
+    $reusedAbandoned = false;
 
     if (!$resume) {
         // An abandoned (never email-verified, older than the hold window) row
@@ -190,6 +191,7 @@ if (empty($error)) {
         $db->bind(':d', cdp_sanitize($_POST['document_number']));
         $resume = $db->cdp_registro();
         if ($resume) {
+            $reusedAbandoned = true;
             // Restart the hold window so the reused row is held for this applicant.
             $db->cdp_query("UPDATE cdb_users SET created = :c WHERE id = :id");
             $db->bind(':c', date('Y-m-d H:i:s'));
@@ -223,13 +225,23 @@ if (empty($error)) {
         $db->bind(':id',              $userId);
         $db->cdp_execute();
 
-        if ($avatarPath !== '') {
+        if ($reusedAbandoned) {
+            // The abandoned row may belong to a different person: drop their
+            // avatar and ID photo (uploads are optional, so they would otherwise
+            // survive) and give the row the locker just claimed for this applicant.
+            $db->cdp_query('UPDATE cdb_users SET avatar = :a, document_photo = :d, locker = :l WHERE id = :id');
+            $db->bind(':a', $avatarPath);
+            $db->bind(':d', $documentPhotoPath);
+            $db->bind(':l', cdp_sanitize($prefixlk . ' ' . $_POST['locker']));
+            $db->bind(':id', $userId);
+            $db->cdp_execute();
+        } elseif ($avatarPath !== '') {
             $db->cdp_query('UPDATE cdb_users SET avatar = :a WHERE id = :id');
             $db->bind(':a', $avatarPath);
             $db->bind(':id', $userId);
             $db->cdp_execute();
         }
-        if ($documentPhotoPath !== '') {
+        if (!$reusedAbandoned && $documentPhotoPath !== '') {
             $db->cdp_query('UPDATE cdb_users SET document_photo = :d WHERE id = :id');
             $db->bind(':d', $documentPhotoPath);
             $db->bind(':id', $userId);

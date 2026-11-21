@@ -25,6 +25,11 @@ require_once("../../loader.php");
 require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_login();
 require_permission('view_consolidate_list');
+// The view permission above is soft-passed for customers, drivers and agency users, and
+// cdp_deleteFileCourier() deletes ANY cdb_order_files row by id: staff only, with an edit
+// permission (the air and sea edit screens both post here).
+require_staff();
+require_permission(['edit_consolidate', 'edit_consolidate_package']);
 
 require_once("../../helpers/querys.php");
 
@@ -32,15 +37,48 @@ $errors = array();
 
 
 
-if (empty($_POST['id']))
+$cdpFileId = (int) ($_POST['id'] ?? 0);
+
+if ($cdpFileId <= 0) {
 
     $errors['id'] = 'Please select file';
+} else {
+    // Only consolidation files, and only for a consolidation inside the caller's agency.
+    // order_id holds a consolidate_id of either table (air or sea), so every consolidation
+    // with that id must be in scope.
+    $cdpDb = new Conexion;
+    $cdpDb->cdp_query("SELECT id, order_id FROM cdb_order_files WHERE id = :id AND is_consolidate = 1 LIMIT 1");
+    $cdpDb->bind(':id', $cdpFileId);
+    $cdpDb->cdp_execute();
+    $cdpFile = $cdpDb->cdp_registro();
+    $cdpScopeRows = [];
+    if ($cdpFile) {
+        foreach (['cdb_consolidate', 'cdb_consolidate_packages'] as $cdpTable) {
+            $cdpDb->cdp_query("SELECT consolidate_id, agency FROM $cdpTable WHERE consolidate_id = :cid LIMIT 1");
+            $cdpDb->bind(':cid', (int) $cdpFile->order_id);
+            $cdpDb->cdp_execute();
+            $cdpCons = $cdpDb->cdp_registro();
+            if ($cdpCons) {
+                $cdpScopeRows[] = $cdpCons;
+            }
+        }
+    }
+    if (!$cdpScopeRows) {
+        $errors['id'] = 'Please select file';
+    }
+    foreach ($cdpScopeRows as $cdpScopeRow) {
+        if (!cdp_ajaxRowInAgencyScope($cdpScopeRow)) {
+            $errors['id'] = 'Please select file';
+            break;
+        }
+    }
+}
 
 if (empty($errors)) {
 
     $data = array(
 
-        'id' => trim($_POST['id'])
+        'id' => $cdpFileId
     );
 
     $insert = cdp_deleteFileCourier($data);

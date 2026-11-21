@@ -22,10 +22,13 @@ if ($op === 'addresses') {
     // without these checks anyone signed in could read any user's saved addresses by id. Customers get
     // their own addresses server-side on SchedulePickup, and drivers do not schedule for customers.
     if ($isClient || sl_userIs('driver')) sl_json(['success' => false, 'message' => 'Not allowed'], 403);
-    // Only customer accounts, and only the caller's agency (same condition as sl_opsCustomers(), which
-    // fills the customer picker).
+    // Only customer accounts, and only the caller's agency. A restricted user without an agency has no
+    // customers here: fail closed (404 below) rather than dropping the filter and exposing everyone.
     $ctx = function_exists('cdp_getAgencyContext') ? cdp_getAgencyContext() : ['is_restricted' => false];
-    $scope = !empty($ctx['is_restricted']) && !empty($ctx['agency_id']) ? ' AND u.agency_id = ' . (int) $ctx['agency_id'] : '';
+    $scope = '';
+    if (!empty($ctx['is_restricted'])) {
+        $scope = !empty($ctx['agency_id']) ? ' AND u.agency_id = ' . (int) $ctx['agency_id'] : ' AND 1 = 0';
+    }
     $custId = (int) ($_GET['id'] ?? 0);
     if (!sl_row("SELECT u.id FROM cdb_users u WHERE u.id = :id AND u.userlevel = 1$scope", [':id' => $custId])) {
         sl_json(['success' => false, 'message' => 'Customer not found'], 404);

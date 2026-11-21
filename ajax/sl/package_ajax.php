@@ -34,10 +34,17 @@ function slp_lookupScope(): string
     if (sl_userIs('client') || sl_userIs('driver')) {
         sl_json(['success' => false, 'message' => 'Not allowed'], 403);
     }
-    // Same condition as sl_opsCustomers(), which fills the customer picker on NewPackage: a restricted
-    // user is filtered by agency only when they have one, so the lookup matches the list they see.
+    // A restricted user only reaches customers of their own agency. One without an agency (an agency
+    // user whose agency_id is empty) has no customers to look up: fail closed instead of dropping the
+    // filter, which would hand them every customer's addresses / pre-alert owner.
     $ctx = function_exists('cdp_getAgencyContext') ? cdp_getAgencyContext() : ['is_restricted' => false];
-    return !empty($ctx['is_restricted']) && !empty($ctx['agency_id']) ? ' AND u.agency_id = ' . (int) $ctx['agency_id'] : '';
+    if (empty($ctx['is_restricted'])) {
+        return '';
+    }
+    if (empty($ctx['agency_id'])) {
+        sl_json(['success' => false, 'message' => 'Not allowed'], 403);
+    }
+    return ' AND u.agency_id = ' . (int) $ctx['agency_id'];
 }
 
 if ($op === 'addresses') {
@@ -132,13 +139,14 @@ switch ($op) {
         }
         // files
         if (!empty($_FILES['files']['name'][0])) {
-            $dir = CDP_ROOT . '/order_files/';
-            foreach ($_FILES['files']['tmp_name'] as $k => $tmp) {
-                if (!is_uploaded_file($tmp) || (int) $_FILES['files']['size'][$k] <= 0 || (int) $_FILES['files']['size'][$k] > 5242880) continue;
-                $ext = strtolower(pathinfo((string) $_FILES['files']['name'][$k], PATHINFO_EXTENSION));
-                if (!in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf'], true)) continue;
-                $name = preg_replace('/[^A-Za-z0-9_.-]/', '_', $track . '_' . date('Ymd_His') . '_' . $k . '.' . $ext);
-                if (move_uploaded_file($tmp, $dir . $name)) cdp_insertCustomerPackagesFiles($id, 'order_files/' . $name, $name, date('Y-m-d H:i:s'), $ext);
+            // The type is checked from the file contents (cdp_uploadStore), not from the client's file
+            // name, so an HTML/SVG file renamed .pdf is not stored and served from order_files/.
+            require_once CDP_ROOT . '/helpers/uploads.php';
+            foreach (array_keys((array) $_FILES['files']['tmp_name']) as $k) {
+                if ((int) ($_FILES['files']['size'][$k] ?? 0) <= 0) continue;
+                $up = cdp_uploadStore(cdp_uploadPick($_FILES['files'], (int) $k), CDP_ROOT . '/order_files', $track, 'docs', 5242880);
+                if (empty($up['ok'])) continue;
+                cdp_insertCustomerPackagesFiles($id, 'order_files/' . $up['name'], $up['name'], date('Y-m-d H:i:s'), strtolower(pathinfo($up['name'], PATHINFO_EXTENSION)));
             }
         }
         cdp_insertCourierShipmentTrack(['user_id' => $uid, 'order_id' => $id, 'order_track' => $track, 't_date' => date('Y-m-d H:i:s'), 'status_courier' => $status, 'comments' => 'Package registered', 'office' => (int) $_POST['origin_off']]);

@@ -24,7 +24,9 @@
 require_once("../../loader.php");
 require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_login();
-require_permission('view_dashboard');
+// Lists every driver's name, e-mail and vehicle: same permission as the drivers_list.php page
+// (sl_gate('view_user_list')) and users_list_ajax.php, not the customer-facing view_dashboard.
+require_permission('view_user_list');
 
 
 $db = new Conexion;

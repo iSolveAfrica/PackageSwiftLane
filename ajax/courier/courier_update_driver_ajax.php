@@ -26,6 +26,11 @@ require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_login();
 notify_after_response(); // email + WhatsApp go out after the response (helpers/after_response.php)
 require_permission('view_shipment_list');
+// view_shipment_list is soft-passed for customers, drivers and agency users, and id_shipment below
+// is any shipment id: without these a signed-in customer could reassign the rider on anyone's
+// shipment. Same gate as the bulk sibling courier_update_driver_multiple_ajax.php.
+require_staff();
+require_permission('assign_drivers');
 
 require_once("../../helpers/querys.php");
 
@@ -39,22 +44,31 @@ $errors = array();
 
 
 if (empty($_POST['driver_id']))
-    $errors['driver_id'] = $lang = ['validate_field_ajax164'];
+    $errors['driver_id'] = $lang['validate_field_ajax164'];
+
+$cdpShipmentId = (int) ($_POST['id_shipment'] ?? 0);
+$cdpDriverId = (int) ($_POST['driver_id'] ?? 0);
+$customer_packages = null;
+if (empty($errors)) {
+    // id_shipment is a cdb_add_order id. Agency-restricted staff assign riders only on their own
+    // agency's shipments, so a row outside the scope reads as not found.
+    $customer_packages = $cdpShipmentId > 0 ? (cdp_getPackagePrint($cdpShipmentId)['data'] ?? null) : null;
+    if (!$customer_packages || !cdp_ajaxRowInAgencyScope($customer_packages)) {
+        $errors['id_shipment'] = $lang['message_ajax_error1'] ?? 'Shipment not found';
+    }
+}
 
 
 if (empty($errors)) {
 
-    // id_shipment is a cdb_add_order id.
-    $customer_packages = cdp_getPackagePrint(cdp_sanitize($_POST['id_shipment']))['data'];
-
     $sender_id = $customer_packages->sender_id;
     $sender_data = cdp_getSenderCourier($sender_id);
 
-    $driver_data = cdp_getSenderCourier(cdp_sanitize($_POST['driver_id']));
+    $driver_data = cdp_getSenderCourier($cdpDriverId);
 
     // Inside a consolidation the shipment quotes the CONSOLIDATION's ETA.
     $eta_value = cdp_getEffectiveEta(
-        (int) cdp_sanitize($_POST['id_shipment']),
+        $cdpShipmentId,
         $customer_packages->order_no ?? '',
         $customer_packages->order_deli_time ?? null,
         $customer_packages->is_consolidate ?? null
@@ -62,8 +76,8 @@ if (empty($errors)) {
     $eta = ($eta_value !== '' && $eta_value !== 'N/A') ? "*Estimated Time of Arrival:* " . $eta_value . "\n\n" : "\n";
 
     $data = array(
-        'id_shipment' => trim($_POST['id_shipment']),
-        'driver_id' => trim($_POST['driver_id']),
+        'id_shipment' => $cdpShipmentId,
+        'driver_id' => $cdpDriverId,
     );
 
     $insert = cdp_updateDriverCourier($data);
@@ -97,7 +111,7 @@ if (empty($errors)) {
 
 
         $db->bind(':user_id',  $_SESSION['userid']);
-        $db->bind(':order_id',  $_POST['id_shipment']);
+        $db->bind(':order_id',  $cdpShipmentId);
         $db->bind(':notification_description',  $lang['notification_shipment15']);
         $db->bind(':shipping_type', '1');
         $db->bind(':notification_date',  date("Y-m-d H:i:s"));
@@ -109,7 +123,7 @@ if (empty($errors)) {
 
         //NOTIFICATION TO DRIVER
 
-        cdp_insertNotificationsUsers($notification_id, $_POST["driver_id"]);
+        cdp_insertNotificationsUsers($notification_id, $cdpDriverId);
 
 
         //NOTIFICATION TO ADMIN AND EMPLOYEES
@@ -123,7 +137,8 @@ if (empty($errors)) {
 
         //NOTIFICATION TO CUSTOMER
 
-        cdp_insertNotificationsUsers($notification_id, $_POST['id_senderclient_driver_update']);
+        // The shipment's own sender, not a posted id, so the notice cannot be sent to another customer.
+        cdp_insertNotificationsUsers($notification_id, (int) $sender_id);
 
         try {
             require_once("../notify_whatsapp/api_whatsapp_service_v2.php");
@@ -143,11 +158,11 @@ if (empty($errors)) {
 
                 // Log result (don't fail shipment if WhatsApp fails)
                 if (!$wa_result['success']) {
-                    error_log("WhatsApp notification failed for order {$order_id}: " . $wa_result['message']);
+                    error_log("WhatsApp notification failed for order {$cdpShipmentId}: " . $wa_result['message']);
                 }
             }
         } catch (Exception $e) {
-            error_log('WhatsApp notification error for order ' . $order_id . ': ' . $e->getMessage());
+            error_log('WhatsApp notification error for order ' . $cdpShipmentId . ': ' . $e->getMessage());
         }
 
     } else {

@@ -37,7 +37,7 @@ $month = date('m');
 $year = date('Y');
 
 // // pagination variables
-$page = (isset($_REQUEST['page']) && !empty($_REQUEST['page'])) ? $_REQUEST['page'] : 1;
+$page = max(1, (int) ($_REQUEST['page'] ?? 1));
 $per_page = (($_REQUEST['per_page'] ?? '') === 'all') ? 1000000000 : (in_array((int)($_REQUEST['per_page'] ?? 0), [25, 50, 100], true) ? (int)$_REQUEST['per_page'] : 25); //how much records you want to show
 $adjacents  = 4; //gap between pages after number of adjacents
 $offset = ($page - 1) * $per_page;
@@ -46,11 +46,20 @@ $offset = ($page - 1) * $per_page;
 if (!function_exists('cdp_markOverdueInvoices')) { $d = __DIR__; while ($d !== dirname($d) && !is_file($d . '/helpers/overdue_invoices.php')) { $d = dirname($d); } if (is_file($d . '/helpers/overdue_invoices.php')) require_once $d . '/helpers/overdue_invoices.php'; }
 cdp_markOverdueInvoices($db);
 
+// Row scope by role TYPE, not by the seed role ids 1/3: a department role created under Customer
+// or Driver (its own flags 0, typed through parent_role_id) used to fall through to the unscoped
+// branch and see every customer's receivables. An agency user with no agency sees nothing.
+require_once(__DIR__ . '/../../../helpers/rbac.php');
+$scopeLevel = (int) $userData->userlevel;
+$scopeRank = cdp_roleRankById($scopeLevel);
 $sWhereExtra = "";
-if ($userData->userlevel == 3) {
+if ($scopeRank === 1 && ($scopeLevel === 3 || cdp_roleHasFlag($scopeLevel, 'is_driver'))) {
 	$sWhereExtra = " and driver_id = " . (int)$_SESSION['userid'];
-} else if ($userData->userlevel == 1) {
+} else if ($scopeRank === 0) {
 	$sWhereExtra = " and sender_id = " . (int)$_SESSION['userid'];
+} else if ($scopeRank === 1 && !$ctx['is_restricted']) {
+	// Agency-typed role outside cdp_getAgencyContext()'s seed id 6: scope by its own agency.
+	$sWhereExtra = !empty($userData->agency_id) ? " and agency = " . (int) $userData->agency_id : " and 1=0";
 } else if ($ctx['is_restricted'] && $ctx['agency_id'] !== null) {
 	$sWhereExtra = " and agency = " . (int)$ctx['agency_id'];
 } else if ($ctx['is_restricted']) {

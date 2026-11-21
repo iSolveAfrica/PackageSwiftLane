@@ -26,20 +26,37 @@ require_once("../../helpers/querys.php");
 require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_login();
 require_permission(['view_consolidate_package', 'view_consolidate_package_list']);
+// The view permission above is soft-passed for customers, drivers and agency users, and this
+// deletes any posted consolidation (and releases its items): staff only, with the delete permission.
+require_staff();
+require_permission(['delete_consolidate_package']);
 
 $errors = array();
 
 
 
-if (empty($_POST['id']))
+$cdpConsId = (int) ($_POST['id'] ?? 0);
+
+if ($cdpConsId <= 0) {
 
     $errors['id'] = 'Please select shipment';
+} else {
+    // Agency-restricted staff may only delete their own agency's consolidations.
+    $cdpDb = new Conexion;
+    $cdpDb->cdp_query("SELECT consolidate_id, agency FROM cdb_consolidate_packages WHERE consolidate_id = :id LIMIT 1");
+    $cdpDb->bind(':id', $cdpConsId);
+    $cdpDb->cdp_execute();
+    $cdpCons = $cdpDb->cdp_registro();
+    if (!$cdpCons || !cdp_ajaxRowInAgencyScope($cdpCons)) {
+        $errors['id'] = 'Please select shipment';
+    }
+}
 
 if (empty($errors)) {
 
     $data = array(
 
-        'id' => trim($_POST['id'])
+        'id' => $cdpConsId
     );
 
     $insert = cdp_deleteConsolidatePackages($data);

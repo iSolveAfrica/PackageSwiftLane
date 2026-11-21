@@ -2,7 +2,10 @@
 // WhatsApp helper library, included by helpers (whatsapp, comms, push_notify, pickup_code) and signed-in endpoints.
 // It sits under ajax/ but is not an endpoint: requested directly it would run with no login or permission check, so refuse it.
 // Including it from another script is unaffected.
-if (realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) {
+// Fail closed: when SCRIPT_FILENAME cannot be resolved (path-mapped FPM, chroot) the realpath test alone
+// would let a direct request through, so also refuse unless loader.php (which defines CDP_ROOT) ran first.
+if ((!defined('CDP_ROOT') && realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === false)
+    || realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) {
     http_response_code(403);
     exit;
 }

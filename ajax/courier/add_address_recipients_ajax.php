@@ -31,6 +31,40 @@ $user = new User;
 $core = new Core;
 $errors = array();
 
+// view_shipment_list (checked above) is soft-passed for customers, drivers and agency users and the
+// recipient id comes from the query string: without this anyone signed in could add an address to
+// another customer's recipient. A customer may only touch their own recipients; drivers and agency
+// users, and agency-restricted staff, only recipients of their agency (the recipient's own agency or
+// its sender's).
+$_GET['recipient'] = (int) ($_GET['recipient'] ?? 0);
+require_once(__DIR__ . '/../../helpers/rbac.php');
+$scopeRank = cdp_roleRankById((int) ($_SESSION['userlevel'] ?? 0));
+$scopeDb = new Conexion;
+$scopeDb->cdp_query('SELECT r.id, r.sender_id, r.agency_id, u.agency_id AS sender_agency
+    FROM cdb_recipients r LEFT JOIN cdb_users u ON u.id = r.sender_id WHERE r.id = :id LIMIT 1');
+$scopeDb->bind(':id', $_GET['recipient']);
+$scopeDb->cdp_execute();
+$scopeRec = $scopeDb->cdp_registro();
+if (!$scopeRec) {
+    $scopeOk = false;
+} elseif ($scopeRank === 0) {
+    $scopeOk = (int) $scopeRec->sender_id === (int) ($_SESSION['userid'] ?? 0);
+} else {
+    $scopeOk = cdp_ajaxRowInAgencyScope((object) ['agency' => $scopeRec->agency_id])
+        || cdp_ajaxRowInAgencyScope((object) ['agency' => $scopeRec->sender_agency]);
+    if ($scopeOk && $scopeRank === 1) {
+        $scopeCtx = cdp_getAgencyContext();
+        $scopeAid = (int) ($scopeCtx['agency_id'] ?? 0);
+        $scopeOk = $scopeAid > 0 && ((int) $scopeRec->agency_id === $scopeAid || (int) $scopeRec->sender_agency === $scopeAid);
+    }
+}
+if (!$scopeOk) {
+    header('HTTP/1.1 403 Forbidden');
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
+    exit;
+}
+
 
 if (empty($_POST['address_modal_recipient_address']))
 
@@ -84,13 +118,13 @@ if (!isset($response['status'])) {
     $db->bind(':city',  cdp_sanitize($_POST["city_modal_recipient_address"]));
     $db->bind(':address',  cdp_sanitize($_POST["address_modal_recipient_address"]));
     $db->bind(':zip_code',  cdp_sanitize($_POST["postal_modal_recipient_address"]));
-    $db->bind(':recipient_id',  $_GET["recipient"]);
+    $db->bind(':recipient_id',  (int) $_GET["recipient"]);
 
     $insert = $db->cdp_execute();
 
     $last_address_id = $db->dbh->lastInsertId();
 
-    $db->cdp_query("SELECT * FROM cdb_recipients_addresses where id_addresses= '" . $last_address_id . "'");
+    $db->cdp_query("SELECT * FROM cdb_recipients_addresses where id_addresses= '" . (int) $last_address_id . "'");
     $customer_address = $db->cdp_registro();
 
 

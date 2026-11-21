@@ -45,9 +45,12 @@ $ctx = cdp_getAgencyContext();
 // them there). Posting here instead let a customer create a shipment under any
 // sender at any price and attach files to it. Below staff rank the caller needs
 // the page's permission ('add_shipment') and must not be a customer role.
+// Rank 0 follows the parent_role_id chain, so a department role created under Customer (own
+// is_client flag 0) is refused too; cdp_roleIsClient() reads only the role's own flag.
 require_once(__DIR__ . '/../../helpers/rbac.php');
 $scopeLevel = (int) ($_SESSION['userlevel'] ?? 0);
-if (cdp_roleRankById($scopeLevel) < 2 && (cdp_roleIsClient($scopeLevel) || !$user->cdp_hasPermission('add_shipment'))) {
+$scopeRank = cdp_roleRankById($scopeLevel);
+if ($scopeRank < 2 && ($scopeRank === 0 || cdp_roleIsClient($scopeLevel) || !$user->cdp_hasPermission('add_shipment'))) {
     header('HTTP/1.1 403 Forbidden');
     header('Content-Type: application/json; charset=utf-8');
     echo json_encode(['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);

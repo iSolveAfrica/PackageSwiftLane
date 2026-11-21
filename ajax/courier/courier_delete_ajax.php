@@ -26,25 +26,38 @@ require_once("../../helpers/querys.php");
 require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_login();
 require_permission('view_shipment_list');
+// view_shipment_list is soft-passed for customers, drivers and agency users and the id below is
+// any shipment: without these a signed-in customer could cancel anyone's shipment. Every caller
+// is a staff list screen (courier, locker, customer view, packages, hand-out).
+require_staff();
+require_permission('delete_shipment');
 
 $errors = array();
 
+$cdpDeleteId = (int) ($_POST['id'] ?? 0);
 
-
-if (empty($_POST['id']))
+if ($cdpDeleteId <= 0)
 
     $errors['id'] = 'Please select shipment';
+
+$cdp_gone = null;
+if (empty($errors)) {
+    // Audit: read the shipment before it goes, so the trail keeps its number. Agency-restricted
+    // staff may only cancel their own agency's shipments; any other id reads as not found.
+    $cdp_gone = cdp_getCourier($cdpDeleteId);
+    if (!$cdp_gone || !cdp_ajaxRowInAgencyScope($cdp_gone)) {
+        $errors['id'] = 'Please select shipment';
+    }
+}
 
 if (empty($errors)) {
 
     $data = array(
 
-        'id' => trim($_POST['id'])
+        'id' => $cdpDeleteId
     );
 
-    // Audit: read the shipment before it goes, so the trail keeps its number.
-    $cdp_gone = cdp_getCourier((int) trim($_POST['id']));
-    $cdp_gone_track = $cdp_gone ? ($cdp_gone->order_prefix . $cdp_gone->order_no) : ('#' . (int) trim($_POST['id']));
+    $cdp_gone_track = $cdp_gone->order_prefix . $cdp_gone->order_no;
 
     $insert = cdp_deleteCourier($data);
 
@@ -53,7 +66,7 @@ if (empty($errors)) {
             'module'       => 'shipments',
             'verb'         => 'delete',
             'entity_type'  => 'shipment',
-            'entity_id'    => (int) trim($_POST['id']),
+            'entity_id'    => $cdpDeleteId,
             'entity_label' => $cdp_gone_track,
             'summary'      => 'Deleted shipment ' . $cdp_gone_track,
         ]);

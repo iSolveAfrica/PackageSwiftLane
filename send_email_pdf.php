@@ -68,6 +68,8 @@ if (!$row) {
 // without this they could pull other customers' data by guessing ids.
 require_once(__DIR__ . '/helpers/print_access.php');
 cdp_printOwnerOr403('shipment', [$cdp_id]);
+// Sends mail to an address from the request: refuse cross-site requests (CSRF).
+cdp_printRequireAppRequest();
 
 $core = new Core;
 $db = new Conexion;

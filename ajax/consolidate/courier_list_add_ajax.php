@@ -26,6 +26,11 @@ require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_once(__DIR__ . '/../../helpers/querys.php');
 require_login();
 require_permission('view_consolidate_list');
+// The view permission above is soft-passed for customers, drivers and agency users, and this
+// lists every customer's unconsolidated shipments (sender names, contents, weights) for the
+// consolidation add/edit screens: staff only, with the add or edit consolidation permission.
+require_staff();
+require_permission(['add_consolidate_shipment', 'edit_consolidate']);
 
 
 $db = new Conexion;
@@ -33,7 +38,7 @@ $user = new User;
 $core = new Core;
 $userData = $user->cdp_getUserData();
 
-$search = cdp_sanitize($_REQUEST['search']);
+$search = cdp_sanitize($_REQUEST['search'] ?? '');
 
 // Dangerous-goods filter. A consolidation may only group ONE kind, so Find
 // Shipments shows either dangerous goods (dg=1) or normal goods (dg=0), never
@@ -47,10 +52,16 @@ if ($search != null) {
 	$sWhere .= " and  CONCAT(a.order_prefix,a.order_no) LIKE '%" . $search . "%'";
 }
 
+// Agency-restricted staff only see (and so only consolidate) their own agency's shipments.
+$cdpAgencyCtx = cdp_getAgencyContext();
+if (!empty($cdpAgencyCtx['is_restricted']) && !empty($cdpAgencyCtx['agency_id'])) {
+	$sWhere .= " and a.agency = " . (int) $cdpAgencyCtx['agency_id'];
+}
+
 
 
 // pagination variables
-$page = (isset($_REQUEST['page']) && !empty($_REQUEST['page'])) ? $_REQUEST['page'] : 1;
+$page = max(1, (int) ($_REQUEST['page'] ?? 1));
 $per_page = (($_REQUEST['per_page'] ?? '') === 'all') ? 1000000000 : (in_array((int)($_REQUEST['per_page'] ?? 0), [25, 50, 100], true) ? (int)$_REQUEST['per_page'] : 25); //how much records you want to show
 $adjacents  = 4; //gap between pages after number of adjacents
 $offset = ($page - 1) * $per_page;

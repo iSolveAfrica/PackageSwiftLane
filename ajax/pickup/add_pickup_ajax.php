@@ -36,6 +36,40 @@ require_login();
 notify_after_response(); // email + WhatsApp go out after the response (helpers/after_response.php)
 require_permission('add_full_pickup');
 
+// 'add_full_pickup' is customer-facing, so require_permission() lets customers and drivers in,
+// and this staff form trusted the posted sender, address and agency. Customers book through
+// the customer form (own account only) and drivers do not book for customers (same rule as
+// ajax/sl/pickup_ajax.php). Agency-restricted users book only for customers of their agency,
+// into their agency, and the sender address must be one of the sender's own addresses.
+require_once(__DIR__ . '/../../helpers/rbac.php');
+$cdpPickRank = cdp_roleRankById((int) $user->userlevel);
+if ($cdpPickRank < 1 || ($cdpPickRank < 2 && cdp_roleHasFlag((int) $user->userlevel, 'is_driver'))) {
+    _ajax_guard_send(403, ['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
+}
+$cdpPickCtx = cdp_getAgencyContext();
+if (!empty($cdpPickCtx['is_restricted'])) {
+    if (empty($cdpPickCtx['agency_id'])) {
+        _ajax_guard_send(403, ['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
+    }
+    $_POST['agency'] = (int) $cdpPickCtx['agency_id'];
+    $cdpPickDb = new Conexion;
+    $cdpPickDb->cdp_query("SELECT agency_id FROM cdb_users WHERE id = :id LIMIT 1");
+    $cdpPickDb->bind(':id', (int) ($_POST['sender_id'] ?? 0));
+    $cdpPickSender = $cdpPickDb->cdp_registro();
+    if (!$cdpPickSender || (int) $cdpPickSender->agency_id !== (int) $cdpPickCtx['agency_id']) {
+        $_POST['sender_id'] = '';   // fails the required-sender check below
+    }
+}
+if (!empty($_POST['sender_id']) && !empty($_POST['sender_address_id'])) {
+    $cdpPickDb = new Conexion;
+    $cdpPickDb->cdp_query("SELECT user_id FROM cdb_senders_addresses WHERE id_addresses = :a LIMIT 1");
+    $cdpPickDb->bind(':a', (int) $_POST['sender_address_id']);
+    $cdpPickAddr = $cdpPickDb->cdp_registro();
+    if (!$cdpPickAddr || (int) $cdpPickAddr->user_id !== (int) $_POST['sender_id']) {
+        $_POST['sender_address_id'] = '';   // fails the required-address check below
+    }
+}
+
 $user = new User;
 $core = new Core;
 $errors = array();
@@ -104,7 +138,7 @@ if (isset($_FILES['filesMultiple']['tmp_name']) && is_array($_FILES['filesMultip
             continue;
         }
         if (!isset($cdpUploadKinds[cdp_uploadDetect((string) $tmp)])) {
-            $errors['filesMultiple'] = 'Attachments must be PDF or image files (JPG, PNG, GIF, WEBP).';
+            $errors['filesMultiple'] = 'Attachments must be a photo or a PDF.';
             break;
         }
     }

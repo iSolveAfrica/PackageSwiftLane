@@ -134,7 +134,7 @@ if (isset($_FILES['filesMultiple']['tmp_name']) && is_array($_FILES['filesMultip
             continue;
         }
         if (!isset($cdpUploadKinds[cdp_uploadDetect((string) $tmp)])) {
-            $errors['filesMultiple'] = 'Attachments must be PDF or image files (JPG, PNG, GIF, WEBP).';
+            $errors['filesMultiple'] = 'Attachments must be a photo or a PDF.';
             break;
         }
     }

@@ -31,6 +31,21 @@ $user = new User;
 $core = new Core;
 $errors = array();
 
+// view_shipment_list (checked above) is soft-passed for customers, drivers and agency users. This
+// endpoint creates a customer account (optionally with a login) from the staff consolidation and
+// pre-alert forms, so a customer must never reach it. Below staff rank the caller must not be a
+// customer role (rank 0 follows parent_role_id) and needs one of those forms' permissions.
+require_once(__DIR__ . '/../../helpers/rbac.php');
+$scopeLevel = (int) ($_SESSION['userlevel'] ?? 0);
+$scopeRank = cdp_roleRankById($scopeLevel);
+if ($scopeRank < 2 && ($scopeRank === 0 || cdp_roleIsClient($scopeLevel)
+    || !$user->cdp_hasPermission(['add_consolidate_shipment', 'add_consolidate_package', 'edit_consolidate', 'edit_consolidate_package', 'create_pre_alert']))) {
+    header('HTTP/1.1 403 Forbidden');
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
+    exit;
+}
+
 
 if (empty($_POST['fname']))
     $errors['fname'] = $lang['validate_field_ajax122'];

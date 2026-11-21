@@ -28,10 +28,42 @@ require_permission('view_recipients');
 
 require_once("../../helpers/querys.php");
 
-$id = $_REQUEST['id'];
+// Deleting is a write: only by POST with the CSRF token (callers already POST).
+require_safe_write();
+
+$id = (int) ($_POST['id'] ?? 0);
 
 $errors = array();
 $messages = array();
+
+// 'view_recipients' is customer-facing, so anyone signed in could delete any recipient
+// address by id. Load the address with its recipient: below staff rank it must be in the
+// caller's own address book (agency users: also their agency's); staff stay in their agency.
+require_once(__DIR__ . '/../../helpers/rbac.php');
+$cdpAddrDb = new Conexion;
+$cdpAddrDb->cdp_query("SELECT r.sender_id, COALESCE(r.agency_id, u.agency_id) AS agency
+    FROM cdb_recipients_addresses a
+    JOIN cdb_recipients r ON r.id = a.recipient_id
+    LEFT JOIN cdb_users u ON u.id = r.sender_id
+    WHERE a.id_addresses = :id LIMIT 1");
+$cdpAddrDb->bind(':id', $id);
+$cdpAddrRow = $cdpAddrDb->cdp_registro();
+$cdpAddrRank = cdp_roleRankById((int) $user->userlevel);
+if (!$cdpAddrRow) {
+    $cdpAddrOk = false;
+} elseif ($cdpAddrRank >= 2) {
+    $cdpAddrOk = cdp_ajaxRowInAgencyScope($cdpAddrRow);
+} else {
+    $cdpAddrOk = (int) $cdpAddrRow->sender_id === (int) ($_SESSION['userid'] ?? 0);
+    if (!$cdpAddrOk && $cdpAddrRank === 1) {
+        $cdpAddrCtx = cdp_getAgencyContext();
+        $cdpAddrOk = !empty($cdpAddrCtx['is_restricted']) && !empty($cdpAddrCtx['agency_id'])
+            && (int) $cdpAddrRow->agency === (int) $cdpAddrCtx['agency_id'];
+    }
+}
+if (!$cdpAddrOk) {
+    $errors['not_found'] = $lang['message_ajax_error1'];
+}
 
 if (CDP_APP_MODE_DEMO === true) {
     // Si está en modo demo, mostrar un mensaje de error

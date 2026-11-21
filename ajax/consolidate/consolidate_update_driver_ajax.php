@@ -27,17 +27,24 @@ require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_login();
 notify_after_response(); // email + WhatsApp go out after the response (helpers/after_response.php)
 require_permission('view_consolidate_list');
+// The view permission above is soft-passed for customers, drivers and agency users, and this
+// changes the rider of any posted consolidation: staff only, with a rider-assignment permission.
+require_staff();
+require_permission(['assign_driver_consolidate', 'assign_drivers']);
 
 session_start();
 
 $db = new Conexion;
 $errors = array();
 
-if (empty($_POST['id_shipment']))
+$cdpConsId   = (int) ($_POST['id_shipment'] ?? 0);
+$cdpDriverId = (int) ($_POST['driver_id'] ?? 0);
+
+if ($cdpConsId <= 0)
     $errors['id_shipment'] = 'Please Enter shipment';
 
 
-if (empty($_POST['driver_id']))
+if ($cdpDriverId <= 0)
     $errors['driver_id'] = $lang['validate_field_ajax164'];
 
 
@@ -46,23 +53,31 @@ if (empty($errors)) {
 
     // id_shipment is a consolidate_id — read the CONSOLIDATION, not the shipment
     // that happens to share the number.
-    $customer_packages = cdp_getConsolidatePrint(cdp_sanitize($_POST['id_shipment']))['data'];
+    $customer_packages = cdp_getConsolidatePrint($cdpConsId)['data'];
+
+    // Agency-restricted staff assign riders only on their own agency's consolidations.
+    if (!$customer_packages || !cdp_ajaxRowInAgencyScope($customer_packages)) {
+        $errors['id_shipment'] = 'Please Enter shipment';
+    }
+}
+
+if (empty($errors)) {
 
     $sender_id = $customer_packages->sender_id;
     $sender_data = cdp_getSenderCourier($sender_id);
 
-    $driver_data = cdp_getSenderCourier(cdp_sanitize($_POST['driver_id']));
+    $driver_data = cdp_getSenderCourier($cdpDriverId);
 
     $tracking_code = $customer_packages->c_prefix . $customer_packages->c_no;
     $tracking_ref  = cdp_consolidationRef($customer_packages, 'consolidate'); // waybill first, then the code
 
     // The consolidation's ETA — every package inside it inherits this.
-    $eta_value = cdp_getConsolidationEtaById(cdp_sanitize($_POST['id_shipment']));
+    $eta_value = cdp_getConsolidationEtaById($cdpConsId);
     $eta = ($eta_value !== '' && $eta_value !== 'N/A') ? "*Estimated Time of Arrival:* " . $eta_value . "\n\n" : "\n";
 
     $data = array(
-        'id_shipment' => trim($_POST['id_shipment']),
-        'driver_id' => trim($_POST['driver_id']),
+        'id_shipment' => $cdpConsId,
+        'driver_id' => $cdpDriverId,
     );
 
     $insert = cdp_updateDriverConsolidate($data);
@@ -95,7 +110,7 @@ if (empty($errors)) {
 
 
         $db->bind(':user_id',  $_SESSION['userid']);
-        $db->bind(':order_id',  $_POST['id_shipment']);
+        $db->bind(':order_id',  $cdpConsId);
         $db->bind(':notification_description',  $lang['notification_shipment15']);
         $db->bind(':shipping_type', '2');
         $db->bind(':notification_date',  date("Y-m-d H:i:s"));
@@ -107,7 +122,7 @@ if (empty($errors)) {
 
         //NOTIFICATION TO DRIVER
 
-        cdp_insertNotificationsUsers($notification_id, $_POST["driver_id"]);
+        cdp_insertNotificationsUsers($notification_id, $cdpDriverId);
 
         // No WhatsApp to the consolidation's own sender: a driver assignment is
         // not news for the package owners, and the consolidation number is never

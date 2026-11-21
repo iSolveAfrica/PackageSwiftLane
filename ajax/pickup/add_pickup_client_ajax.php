@@ -36,15 +36,53 @@ require_permission('view_pickup_list');
 // shipment under another customer, who then got its messages. For customer
 // roles the sender is the session's user and the sender address must be
 // one of theirs. Staff keep choosing the sender.
+// Drivers and agency users (rank 1) also pass the customer-facing permission: drivers do
+// not book for customers, and agency users only for customers of their own agency.
 require_once(__DIR__ . '/../../helpers/rbac.php');
-if (cdp_roleIsClient((int) ($_SESSION['userlevel'] ?? 0))) {
+require_once(__DIR__ . '/../../helpers/querys.php');
+$cdpPcliLevel = (int) ($user->userlevel ?? ($_SESSION['userlevel'] ?? 0));
+$cdpPcliRank = cdp_roleRankById($cdpPcliLevel);
+if ($cdpPcliRank === 1 && cdp_roleHasFlag($cdpPcliLevel, 'is_driver')) {
+    _ajax_guard_send(403, ['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
+}
+if ($cdpPcliRank < 1 || cdp_roleIsClient($cdpPcliLevel)) {
     $_POST['sender_id'] = (int) ($_SESSION['userid'] ?? 0);
+} else {
+    $cdpPcliCtx = cdp_getAgencyContext();
+    if (!empty($cdpPcliCtx['is_restricted'])) {
+        $cdpPcliDb = new Conexion;
+        $cdpPcliDb->cdp_query("SELECT agency_id FROM cdb_users WHERE id = :id LIMIT 1");
+        $cdpPcliDb->bind(':id', (int) ($_POST['sender_id'] ?? 0));
+        $cdpPcliSender = $cdpPcliDb->cdp_registro();
+        if (empty($cdpPcliCtx['agency_id']) || !$cdpPcliSender || (int) $cdpPcliSender->agency_id !== (int) $cdpPcliCtx['agency_id']) {
+            $_POST['sender_id'] = '';   // fails the required-sender check below
+        }
+    }
+}
+if (!empty($_POST['sender_id'])) {
+    // The sender address must exist and be one of the sender's own (an unknown id was let through).
     $cdpAddrDb = new Conexion;
     $cdpAddrDb->cdp_query("SELECT user_id FROM cdb_senders_addresses WHERE id_addresses = :a LIMIT 1");
     $cdpAddrDb->bind(':a', (int) ($_POST['sender_address_id'] ?? 0));
     $cdpAddr = $cdpAddrDb->cdp_registro();
-    if ($cdpAddr && (int) $cdpAddr->user_id !== (int) $_POST['sender_id']) {
+    if (!$cdpAddr || (int) $cdpAddr->user_id !== (int) $_POST['sender_id']) {
         $_POST['sender_address_id'] = '';   // fails the required-address check below
+    }
+    // A saved recipient must come from the sender's own address book, or the booking would
+    // expose another customer's recipient name and address on this shipment.
+    if (($_POST['recipient_type'] ?? 'recipient') === 'recipient' && !empty($_POST['recipient_id'])) {
+        $cdpRcpDb = new Conexion;
+        $cdpRcpDb->cdp_query("SELECT r.sender_id, a.recipient_id FROM cdb_recipients r
+            LEFT JOIN cdb_recipients_addresses a ON a.id_addresses = :a AND a.recipient_id = r.id
+            WHERE r.id = :r LIMIT 1");
+        $cdpRcpDb->bind(':r', (int) $_POST['recipient_id']);
+        $cdpRcpDb->bind(':a', (int) ($_POST['recipient_address_id'] ?? 0));
+        $cdpRcp = $cdpRcpDb->cdp_registro();
+        if (!$cdpRcp || (int) $cdpRcp->sender_id !== (int) $_POST['sender_id']) {
+            $_POST['recipient_id'] = '';           // fails the required-recipient check below
+        } elseif (empty($cdpRcp->recipient_id)) {
+            $_POST['recipient_address_id'] = '';   // address is not this recipient's
+        }
     }
 }
 
@@ -91,7 +129,7 @@ if (isset($_FILES['filesMultiple']['tmp_name']) && is_array($_FILES['filesMultip
             continue;
         }
         if (!isset($cdpUploadKinds[cdp_uploadDetect((string) $tmp)])) {
-            $errors['filesMultiple'] = 'Attachments must be PDF or image files (JPG, PNG, GIF, WEBP).';
+            $errors['filesMultiple'] = 'Attachments must be a photo or a PDF.';
             break;
         }
     }

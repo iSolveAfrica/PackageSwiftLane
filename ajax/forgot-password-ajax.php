@@ -67,6 +67,20 @@
         // Hard cap reached: answer exactly like the unknown-email path so the
         // limit cannot be used to confirm the account exists; log it instead.
         error_log('forgot-password: OTP request refused for user ' . (int)$u->id . ': ' . (string)($challenge['error'] ?? ''));
+        // A code already sent and still valid stays usable: switching this
+        // session to the decoy would make the real code in the mailbox fail.
+        $db->cdp_query("SELECT id FROM cdb_auth_otp_challenges
+            WHERE user_id = :u AND purpose = 'forgot' AND status = 'pending' AND expires_at > :now
+            ORDER BY created_at DESC LIMIT 1");
+        $db->bind(':u', (int)$u->id);
+        $db->bind(':now', date('Y-m-d H:i:s'));
+        $live = $db->cdp_registro();
+        if ($live) {
+            $_SESSION['otp_forgot_challenge'] = (int)$live->id;
+            $_SESSION['otp_forgot_user_id']   = (int)$u->id;
+            echo json_encode($genericReply);
+            exit;
+        }
         $startDecoy();
         echo json_encode($genericReply);
         exit;

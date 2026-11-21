@@ -15,9 +15,11 @@ $public = [
     'ajax/select2_countries.php', 'ajax/select2_states.php', 'ajax/select2_cities.php',
 ];
 // The last alternative is the direct-request stop of a library that lives under ajax/ but is only
-// ever included (ajax/notify_*/api_*_service*.php, ajax/reports/financial_sheet_sl.php):
-//   if (realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) { http_response_code(403); exit; }
-$guards = '/require_login\s*\(|require_permission\s*\(|sl_gate\s*\(|cdp_loginCheck\s*\(|cdp_requireLogin|sl_ajaxRequire|require_once[^;]*_guard\.php[^;]*;\s*\w+\s*\(|ApiAuth::|hash_equals\s*\(|realpath\(\s*\$_SERVER\[\'SCRIPT_FILENAME\'\][^)]*\)\s*===\s*__FILE__/';
+// ever included (ajax/notify_*/api_*_service*.php, ajax/reports/financial_sheet_sl.php). Only the
+// fail-closed form counts (it also refuses when SCRIPT_FILENAME cannot be resolved and loader.php did not run):
+//   if ((!defined('CDP_ROOT') && realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === false)
+//       || realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) { http_response_code(403); exit; }
+$guards = '/require_login\s*\(|require_permission\s*\(|sl_gate\s*\(|cdp_loginCheck\s*\(|cdp_requireLogin|sl_ajaxRequire|require_once[^;]*_guard\.php[^;]*;\s*\w+\s*\(|ApiAuth::|hash_equals\s*\(|!defined\(\s*\'CDP_ROOT\'\s*\)[^{]*realpath\(\s*\$_SERVER\[\'SCRIPT_FILENAME\'\][^)]*\)\s*===\s*__FILE__/';
 $missing = [];
 $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root . '/ajax', FilesystemIterator::SKIP_DOTS));
 foreach ($it as $f) {
