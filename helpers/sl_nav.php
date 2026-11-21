@@ -303,6 +303,11 @@ function sl_navResolve(string $activeId): array
             $out[] = ['label' => $g['label'], 'items' => $items, 'open' => in_array($activeId, array_column($items, 'id'), true)];
         }
     }
+    // one group open at a time: the first that holds the current page, or the first group
+    $seen = false;
+    foreach ($out as &$o) { $o['open'] = $o['open'] && !$seen; $seen = $seen || $o['open']; }
+    unset($o);
+    if (!$seen && $out) $out[0]['open'] = true;
     return $out;
 }
 
