@@ -84,17 +84,81 @@ function sl_overviewData($user, $core, $userData): array
     }
 
     // ── Smart briefing: rule based cards from live figures ─────────────────
+    // Each card: level (hi needs action, md soon, ok fine, in info), the figure, why it matters, 2-3 facts
+    // that explain it (age, split, money), an optional meter and two ways in. Sorted most urgent first.
     $brief = [];
-    if ($held) $brief[] = ['lvl' => 'red', 'icon' => 'i-alert', 'tag' => 'Warehouse', 'sev' => 'Needs action', 'big' => $held, 'bigS' => 'held', 't' => 'Parcels on hold', 'd' => 'Rejected, held or not shipped. Clear them before the next departure.', 'cta' => 'Open warehouse', 'href' => sl_route('Warehouse', ['filter' => 'exceptions']), 'cat' => 'ops'];
-    if ($pickupsUnassigned) $brief[] = ['lvl' => 'amber', 'icon' => 'i-truck', 'tag' => 'Pickups', 'sev' => 'Today', 'big' => $pickupsUnassigned, 'bigS' => 'unassigned', 't' => 'Pickups without a rider', 'd' => 'Assign riders so every window is covered.', 'cta' => 'Dispatch board', 'href' => sl_route('RiderDispatch'), 'cat' => 'ops'];
-    $overdue = cdp_financeEnabled() ? (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_invoice = 23 AND a.due_date < CURDATE() $agency") : 0;
-    if ($overdue) $brief[] = ['lvl' => 'amber', 'icon' => 'i-receipt', 'tag' => 'Finance', 'sev' => 'Overdue', 'big' => $overdue, 'bigS' => 'invoices', 't' => 'Invoices past due', 'd' => 'Send reminders or record the payments that came in.', 'cta' => 'Accounts receivable', 'href' => sl_route('AccountsReceivable'), 'cat' => 'money'];
-    if ($kyc) $brief[] = ['lvl' => 'blue', 'icon' => 'i-shield', 'tag' => 'Customers', 'sev' => $kycOld ? 'Waiting' : 'New', 'big' => $kyc, 'bigS' => 'to verify', 't' => 'New sign-ups to approve', 'd' => 'Check the ID and approve so they can ship.', 'cta' => 'Review customers', 'href' => sl_route('Customers', ['filter' => 'unapproved']), 'cat' => 'people'];
-    if ($awaiting) $brief[] = ['lvl' => 'green', 'icon' => 'i-check', 'tag' => 'Warehouse', 'sev' => 'Ready', 'big' => $awaiting, 'bigS' => 'ready', 't' => 'Parcels ready for pickup', 'd' => 'Customers can collect; remind the ones that have not come.', 'cta' => 'Hand out', 'href' => sl_route('HandOut'), 'cat' => 'ops'];
-    if (!$brief) $brief[] = ['lvl' => 'green', 'icon' => 'i-check', 'tag' => 'All clear', 'sev' => 'Now', 'big' => '0', 'bigS' => 'issues', 't' => 'Nothing needs your attention', 'd' => 'Queues are empty and no exceptions are open.', 'cta' => 'See activity', 'href' => sl_route('ActivityLogs'), 'cat' => 'ops'];
+    $ageD = fn($dt) => $dt ? max(0, (int) floor((time() - strtotime((string) $dt)) / 86400)) : 0;
+    $plural = fn($n, $w) => sl_num($n) . ' ' . $w . ((int) $n === 1 ? '' : 's');
+    $hasEta = sl_columnExists('cdb_add_order', 'estimated_eta');
+    if ($held) {
+        $split = sl_rows("SELECT a.status_courier AS st, COUNT(*) AS n, MIN(a.order_date) AS oldest FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (12,25,28,29) $agency GROUP BY a.status_courier ORDER BY n DESC");
+        $oldest = min(array_map(fn($r) => (string) $r->oldest, $split) ?: ['']);
+        $facts = array_map(fn($r) => [ucfirst(strtolower(sl_statusLabel($r->st))), sl_num($r->n)], array_slice($split, 0, 2));
+        $facts[] = ['Oldest', $ageD($oldest) . ' d'];
+        $brief[] = ['lvl' => 'hi', 'rank' => 1, 'icon' => 'i-alert', 'tag' => 'Warehouse', 'sev' => 'Needs action', 'big' => sl_num($held), 'bigS' => 'parcels held',
+            't' => 'Parcels on hold', 'd' => 'Rejected, held or not shipped. Clear them before the next departure so they do not miss the flight.',
+            'facts' => $facts, 'cta' => 'Open exceptions', 'href' => sl_route('Warehouse', ['filter' => 'exceptions']), 'cat' => 'ops'];
+    }
+    if ($hasEta) {
+        $lateR = sl_row("SELECT COUNT(*) AS n, MIN(a.estimated_eta) AS worst FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.estimated_eta IS NOT NULL AND a.estimated_eta < CURDATE() AND a.status_courier NOT IN (6,32,8,15,21,12) $agency");
+        if ($lateR && (int) $lateR->n) {
+            $arrivals = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND DATE(a.estimated_eta) = CURDATE() AND a.status_courier NOT IN (6,32,8,15,21) $agency");
+            $brief[] = ['lvl' => 'hi', 'rank' => 2, 'icon' => 'i-clock', 'tag' => 'Transit', 'sev' => 'Late', 'big' => sl_num($lateR->n), 'bigS' => 'past their ETA',
+                't' => 'Shipments running late', 'd' => 'The promised date has passed and they have not reached the warehouse. Update the ETA or tell the customer.',
+                'facts' => [['Latest by', $ageD($lateR->worst) . ' d'], ['Due today', sl_num($arrivals)]], 'cta' => 'Live tracking', 'href' => sl_route('LiveTracking', ['f' => 'late']), 'cat' => 'ops'];
+        }
+    }
+    if ($pickupsUnassigned) {
+        $pToday = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.is_pickup = 1 AND a.status_courier IN (1,14) AND (a.driver_id IS NULL OR a.driver_id = 0) AND a.order_date >= CURDATE() $agency");
+        $ridersOn = (int) sl_scalar('SELECT COUNT(*) FROM cdb_users WHERE userlevel = 3 AND active = 1');
+        $pOld = $pickupsUnassigned - $pToday;
+        $brief[] = ['lvl' => $pOld > 0 ? 'hi' : 'md', 'rank' => $pOld > 0 ? 3 : 5, 'icon' => 'i-truck', 'tag' => 'Pickups', 'sev' => $pOld > 0 ? 'Overdue' : 'Today', 'big' => sl_num($pickupsUnassigned), 'bigS' => 'without a rider',
+            't' => 'Pickups waiting for a rider', 'd' => $pOld > 0 ? $plural($pOld, 'pickup') . ' booked before today still have nobody assigned.' : 'Assign riders so every window today is covered.',
+            'facts' => [['Today', sl_num($pToday)], ['Earlier', sl_num($pOld)], ['Riders on', sl_num($ridersOn)]],
+            'meter' => ['pct' => $ridersOn ? min(100, (int) round($pickupsUnassigned / max(1, $ridersOn * 8) * 100)) : 100, 'l' => $ridersOn ? '≈ ' . round($pickupsUnassigned / max(1, $ridersOn), 1) . ' per rider' : 'No active riders'],
+            'cta' => 'Dispatch board', 'href' => sl_route('RiderDispatch'), 'cat' => 'ops'];
+    }
+    if (sl_tableExists('cdb_cs_tickets') && function_exists('cdp_csIsAgent') && cdp_csIsAgent($user)) {
+        $wait = sl_row("SELECT COUNT(*) AS n, MIN(created_at) AS oldest, SUM(created_at < NOW() - INTERVAL 30 MINUTE) AS slow FROM cdb_cs_tickets WHERE status NOT IN ('resolved','closed','merged') AND human_first_response_at IS NULL");
+        if ($wait && (int) $wait->n) {
+            $mins = (int) floor((time() - strtotime((string) $wait->oldest)) / 60);
+            $brief[] = ['lvl' => (int) $wait->slow ? 'hi' : 'md', 'rank' => (int) $wait->slow ? 2 : 6, 'icon' => 'i-message', 'tag' => 'Customers', 'sev' => (int) $wait->slow ? 'Slow reply' : 'Waiting', 'big' => sl_num($wait->n), 'bigS' => 'waiting for a person',
+                't' => 'Customers waiting for a reply', 'd' => 'No one from the team has answered yet.',
+                'facts' => [['Longest', $mins >= 60 ? floor($mins / 60) . ' h ' . ($mins % 60) . ' m' : $mins . ' min'], ['Over 30 min', sl_num($wait->slow)]], 'cta' => 'Support desk', 'href' => sl_route('CsInbox'), 'cat' => 'people'];
+        }
+    }
+    $overdue = 0;
+    if (cdp_financeEnabled()) {
+        $od = sl_row("SELECT COUNT(*) AS n, COALESCE(SUM(a.total_order), 0) AS amt, MIN(a.due_date) AS oldest FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_invoice = 23 AND a.due_date < CURDATE() $agency");
+        $overdue = (int) ($od->n ?? 0);
+        if ($overdue) $brief[] = ['lvl' => 'md', 'rank' => 4, 'icon' => 'i-receipt', 'tag' => 'Finance', 'sev' => 'Overdue', 'big' => sl_num($overdue), 'bigS' => 'invoices past due',
+            't' => 'Invoices past due', 'd' => 'Send reminders or record the payments that came in.',
+            'facts' => array_values(array_filter([cdp_canViewMoney($user) ? ['Outstanding', sl_money($od->amt)] : null, ['Oldest', $ageD($od->oldest) . ' d late']])), 'cta' => 'Accounts receivable', 'href' => sl_route('AccountsReceivable'), 'cat' => 'money'];
+    }
+    if ($kyc) {
+        $kOld = sl_scalar('SELECT MIN(created) FROM cdb_users WHERE userlevel = 1 AND approve = 0 AND active = 1', [], null);
+        $brief[] = ['lvl' => $kycOld ? 'md' : 'in', 'rank' => $kycOld ? 6 : 8, 'icon' => 'i-shield', 'tag' => 'Customers', 'sev' => $kycOld ? 'Waiting' : 'New', 'big' => sl_num($kyc), 'bigS' => 'to verify',
+            't' => 'New sign-ups to approve', 'd' => 'Check the ID and approve so they can ship.',
+            'facts' => [['Over a day', sl_num($kycOld)], ['Oldest', $ageD($kOld) . ' d']], 'cta' => 'Review customers', 'href' => sl_route('Customers', ['filter' => 'unapproved']), 'cat' => 'people'];
+    }
+    if ($awaiting) {
+        $rd = sl_row("SELECT SUM(a.order_date < CURDATE() - INTERVAL 7 DAY) AS w7, SUM(a.order_date < CURDATE() - INTERVAL 30 DAY) AS w30, SUM(a.status_invoice NOT IN (1,19)) AS unpaid FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (6,32) $agency");
+        $w30 = (int) ($rd->w30 ?? 0);
+        $brief[] = ['lvl' => $w30 ? 'md' : 'ok', 'rank' => $w30 ? 7 : 9, 'icon' => 'i-check', 'tag' => 'Warehouse', 'sev' => $w30 ? 'Slow to collect' : 'Ready', 'big' => sl_num($awaiting), 'bigS' => 'ready to collect',
+            't' => 'Parcels ready for pickup', 'd' => 'Customers can collect. Remind the ones that have not come; long stays fill the bays.',
+            'facts' => [['7 d+', sl_num($rd->w7 ?? 0)], ['30 d+', sl_num($w30)], ['Unpaid', sl_num($rd->unpaid ?? 0)]],
+            'meter' => $capacity ? ['pct' => min(100, sl_pct($inBay, $capacity)), 'l' => sl_pct($inBay, $capacity) . '% of bays in use'] : null,
+            'cta' => 'Hand out', 'href' => sl_route('HandOut'), 'cat' => 'ops'];
+    }
+    if (!$brief) $brief[] = ['lvl' => 'ok', 'rank' => 9, 'icon' => 'i-check', 'tag' => 'All clear', 'sev' => 'Now', 'big' => '0', 'bigS' => 'issues', 't' => 'Nothing needs your attention', 'd' => 'Queues are empty and no exceptions are open.', 'facts' => [], 'cta' => 'See activity', 'href' => sl_route('ActivityLogs'), 'cat' => 'ops'];
+    usort($brief, fn($x, $y) => $x['rank'] <=> $y['rank']);
     $d['brief'] = $brief;
-    $d['briefLead'] = count($brief) === 1 && $brief[0]['tag'] === 'All clear' ? 'Everything is on track.' : count($brief) . ' thing' . (count($brief) > 1 ? 's' : '') . ' to look at today.';
-    $d['bfil'] = [['label' => 'All', 'cls' => 'on', 'f' => 'all'], ['label' => 'Operations', 'cls' => '', 'f' => 'ops'], ['label' => 'Money', 'cls' => '', 'f' => 'money'], ['label' => 'People', 'cls' => '', 'f' => 'people']];
+    $urgent = count(array_filter($brief, fn($b) => $b['lvl'] === 'hi'));
+    $d['briefLead'] = count($brief) === 1 && $brief[0]['tag'] === 'All clear' ? 'Everything is on track.'
+        : count($brief) . ' thing' . (count($brief) > 1 ? 's' : '') . ' to look at today' . ($urgent ? ', ' . $urgent . ' need' . ($urgent === 1 ? 's' : '') . ' action now.' : '.');
+    $catN = array_count_values(array_column($brief, 'cat'));
+    $d['bfil'] = [['label' => 'All', 'n' => count($brief), 'cls' => 'on', 'f' => 'all']];
+    foreach (['ops' => 'Operations', 'money' => 'Money', 'people' => 'People'] as $ck => $cl) if (!empty($catN[$ck])) $d['bfil'][] = ['label' => $cl, 'n' => $catN[$ck], 'cls' => '', 'f' => $ck];
 
     // ── Live pulse ─────────────────────────────────────────────────────────
     $d['pulse'] = [

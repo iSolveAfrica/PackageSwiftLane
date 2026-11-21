@@ -26,7 +26,7 @@ body{margin:0}.dk-desk{display:flex;flex-wrap:wrap;gap:20px;padding:20px}
 .mn-chip.on{background:var(--ink);color:var(--inverse);border-color:var(--ink)}
 .mn-dot{width:8px;height:8px;border-radius:50%;background:var(--faint);flex:none}
 .hi .mn-dot{background:var(--red)}.md .mn-dot{background:var(--yellow)}.ok .mn-dot{background:var(--green)}
-.mn-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(230px,100%),1fr));gap:12px}
+.mn-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(290px,100%),1fr));gap:12px}
 .mn-c{display:flex;flex-direction:column;gap:12px;padding:16px;border:1px solid var(--line);border-radius:18px;background:var(--card);color:var(--ink);position:relative;overflow:hidden;transition:transform .15s,box-shadow .15s,border-color .15s}
 .mn-c::after{content:"";position:absolute;right:-30px;top:-30px;width:110px;height:110px;border-radius:50%;background:var(--active);opacity:.6;pointer-events:none}
 .mn-c.hi::after{background:var(--red-bg);opacity:1}.mn-c.md::after{background:#FBF0D9;opacity:1}.mn-c.ok::after{background:var(--green-bg);opacity:1}
@@ -161,3 +161,20 @@ body{margin:0}.dk-desk{display:flex;flex-wrap:wrap;gap:20px;padding:20px}
 @container gh (max-width:760px){.sl-gh__body{grid-template-columns:1fr}.sl-gh__list{grid-template-columns:1fr}}
 /* on the Overview the trend card is hidden, so the status mix takes its own full row */
 .sl-insights__grid>.sl-viz-card--violet{grid-column:1/-1}
+/* smart briefing: severity stripe, facts row, meter, info level, chip counts */
+.mn-c{border-left-width:4px}
+.mn-c.hi{border-left-color:var(--red)}.mn-c.md{border-left-color:#E9B949}.mn-c.ok{border-left-color:var(--green)}.mn-c.in{border-left-color:var(--sky)}
+.mn-c.in::after{background:var(--sky-bg);opacity:1}.mn-c.in .mn-ic{background:var(--sky-bg);color:var(--sky-ink);border-color:transparent}.mn-c.in .mn-sev{background:var(--sky);color:#fff}
+.mn-facts{display:grid;grid-template-columns:repeat(var(--n,3),minmax(0,1fr));gap:6px;margin:0;position:relative;z-index:1}
+.mn-facts div{padding:8px 10px;border-radius:10px;background:var(--hover);min-width:0}
+.mn-facts dt{font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mn-facts dd{margin:2px 0 0;font:600 15.5px var(--font);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mn-c.hi .mn-facts div{background:color-mix(in srgb,var(--red) 7%,var(--hover))}
+.mn-meter{display:flex;flex-direction:column;gap:4px}
+.mn-meter span{height:6px;border-radius:99px;background:var(--hover);overflow:hidden}
+.mn-meter i{display:block;height:100%;border-radius:inherit;background:var(--ink)}
+.mn-c.hi .mn-meter i{background:var(--red)}.mn-c.md .mn-meter i{background:#E9B949}.mn-c.ok .mn-meter i{background:var(--green)}
+.mn-meter small{font-size:12.5px;color:var(--muted)}
+.mn-cn{font-weight:600;font-size:12.5px;padding:1px 7px;border-radius:99px;background:var(--hover);color:var(--ink)}
+.mn-chip.on .mn-cn{background:rgba(255,255,255,.18);color:inherit}
+.mn-cards [hidden]{display:none}
