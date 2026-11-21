@@ -2,6 +2,7 @@
 /** Data for the staff customer 360 (CustomerProfile.dc.html). */
 require_once CDP_ROOT . '/helpers/sl_view.php';
 require_once CDP_ROOT . '/helpers/finance_switch.php';
+require_once CDP_ROOT . '/views/sl/data/user_360.php';
 
 /** Is the viewer allowed to see this customer (agency scope)? */
 function sl_cpInScope(int $agencyId): bool
@@ -34,11 +35,14 @@ function sl_customerProfileData($user, $core, int $id): ?array
     $spend = (float) sl_scalar('SELECT COALESCE(SUM(total_order),0) FROM cdb_add_order WHERE sender_id = :u AND is_deleted = 0 AND status_courier <> 21', [':u' => $id]) + (float) sl_scalar('SELECT COALESCE(SUM(total_order),0) FROM cdb_customers_packages WHERE sender_id = :u AND status_courier <> 21', [':u' => $id]);
     $due = (float) sl_scalar('SELECT COALESCE(SUM(total_order),0) FROM cdb_add_order WHERE sender_id = :u AND is_deleted = 0 AND status_invoice = 23 AND status_courier <> 21', [':u' => $id]) + (float) sl_scalar('SELECT COALESCE(SUM(total_order),0) FROM cdb_customers_packages WHERE sender_id = :u AND status_invoice = 23 AND status_courier <> 21', [':u' => $id]);
     $waiting = (int) sl_scalar('SELECT COUNT(*) FROM cdb_customers_packages WHERE sender_id = :u AND status_courier IN (4,6,32)', [':u' => $id]);
-    $tab = (string) ($_GET['tab'] ?? 'ship');
-    if (!in_array($tab, ['ship', 'pkg', 'pay', 'msg', 'recip'], true)) $tab = 'ship';
+    $tab = (string) ($_GET['tab'] ?? 'all');
+    if (!in_array($tab, ['all', 'ship', 'pkg', 'pay', 'msg', 'recip'], true)) $tab = 'all';
     $page = max(1, (int) ($_GET['page'] ?? 1)); $per = 15; $off = ($page - 1) * $per;
     $rows = []; $count = 0;
-    if ($tab === 'ship') {
+    $timeline = null;
+    if ($tab === 'all') {
+        $timeline = sl_u360Timeline(sl_u360Events($id, 'staff'), 'staff', (string) ($_GET['k'] ?? ''), max(40, min(1000, (int) ($_GET['n'] ?? 40))));
+    } elseif ($tab === 'ship') {
         $count = $nShip;
         foreach (sl_rows("SELECT o.order_id, o.order_prefix, o.order_no, o.order_date, o.total_weight, o.total_order, o.status_courier, s.mod_style, (SELECT ci.name FROM cdb_recipients_addresses ra LEFT JOIN cdb_cities ci ON ci.id = ra.city WHERE ra.recipient_id = o.receiver_id LIMIT 1) AS dest FROM cdb_add_order o LEFT JOIN cdb_styles s ON s.id = o.status_courier WHERE o.sender_id = :u AND o.is_deleted = 0 ORDER BY o.order_id DESC LIMIT $off, $per", [':u' => $id]) as $r)
             $rows[] = ['href' => sl_route('ShipmentDetail', ['id' => $r->order_id]), 'trk' => $r->order_prefix . $r->order_no, 'date' => sl_date($r->order_date, 'M j'), 'dest' => $r->dest ?: '—', 'kg' => (float) $r->total_weight . ' kg', 'amt' => $finance ? sl_money($r->total_order) : '', 'st' => $r->mod_style, 'cls' => sl_statusClass($r->status_courier)];
@@ -71,12 +75,30 @@ function sl_customerProfileData($user, $core, int $id): ?array
     for ($i = 5; $i >= 0; $i--) { $ym = date('Y-m', strtotime("first day of -$i months")); $act[] = ['l' => date('M', strtotime($ym . '-01')), 'h' => 'height:' . max(3, sl_pct($map[$ym] ?? 0, $mx)) . '%', 'n' => $map[$ym] ?? 0, 'hi' => $i === 0 ? 'hi' : '']; }
     $docUrl = !empty($u->document_photo) ? (preg_match('#^(https?:|/)#', $u->document_photo) ? $u->document_photo : (is_file(CDP_ROOT . '/' . ltrim($u->document_photo, '/')) ? ltrim($u->document_photo, '/') : 'assets/' . ltrim($u->document_photo, '/'))) : '';
     $hist = sl_tableExists('cdb_profile_update_history') ? sl_rows('SELECT h.*, CONCAT(x.fname, " ", x.lname) AS by_name FROM cdb_profile_update_history h LEFT JOIN cdb_users x ON x.id = h.update_by WHERE h.user_id = :u ORDER BY h.id DESC LIMIT 3', [':u' => $id]) : [];
-    return ['id' => $id, 'name' => $name, 'ini' => sl_initials($name), 'locker' => $u->locker ?: '—', 'since' => sl_date($u->created, 'M Y'), 'city' => $u->city ?? '', 'mail' => $u->email, 'phone' => $u->phone ?: '—', 'username' => $u->username,
+    // Account and engagement facts for the side panel.
+    $lastAuth = sl_tableExists('cdb_activity_log') ? sl_row("SELECT created_at, ip, user_agent FROM cdb_activity_log WHERE user_id = :u AND module = 'auth' AND outcome = 'success' ORDER BY id DESC", [':u' => $id]) : null;
+    $failed30 = sl_tableExists('cdb_activity_log') ? (int) sl_scalar("SELECT COUNT(*) FROM cdb_activity_log WHERE module = 'auth' AND outcome <> 'success' AND (user_id = :u OR actor_username = :n) AND created_at >= NOW() - INTERVAL 30 DAY", [':u' => $id, ':n' => (string) $u->username]) : 0;
+    $devices = sl_tableExists('cdb_auth_trusted_devices') ? (int) sl_scalar('SELECT COUNT(*) FROM cdb_auth_trusted_devices WHERE user_id = :u AND revoked_at IS NULL AND expires_at > NOW()', [':u' => $id]) : 0;
+    $loyal = sl_tableExists('cdb_loyalty_accounts') ? sl_row('SELECT points_balance, lifetime_points, tier, referral_code FROM cdb_loyalty_accounts WHERE user_id = :u', [':u' => $id]) : null;
+    $openTickets = sl_tableExists('cdb_cs_tickets') ? (int) sl_scalar("SELECT COUNT(*) FROM cdb_cs_tickets WHERE customer_id = :u AND status NOT IN ('resolved', 'closed')", [':u' => $id]) : 0;
+    $nMsg = sl_tableExists('cdb_message_log') ? (int) sl_scalar('SELECT COUNT(*) FROM cdb_message_log WHERE recipient_user_id = :u', [':u' => $id]) : 0;
+    $nRecip = (int) sl_scalar('SELECT COUNT(*) FROM cdb_recipients WHERE sender_id = :u', [':u' => $id]);
+    $lastShip = sl_scalar('SELECT MAX(d) FROM (SELECT MAX(order_date) AS d FROM cdb_add_order WHERE sender_id = :u AND is_deleted = 0 UNION ALL SELECT MAX(order_date) FROM cdb_customers_packages WHERE sender_id = :u2) x', [':u' => $id, ':u2' => $id], '');
+    $lastSeen = max((string) ($u->lastlogin ?? ''), (string) ($lastAuth->created_at ?? ''));
+    if (strpos($lastSeen, '0000') === 0) $lastSeen = '';
+    $return = ['id' => $id, 'name' => $name, 'ini' => sl_initials($name), 'locker' => $u->locker ?: '—', 'since' => sl_date($u->created, 'M Y'), 'city' => $u->city ?? '', 'mail' => $u->email, 'phone' => $u->phone ?: '—', 'username' => $u->username,
         'company' => $u->company ?? '', 'docType' => $u->document_type, 'docNo' => $u->document_number, 'docUrl' => $docUrl, 'approve' => $approve, 'phoneV' => (bool) $phoneV, 'newsletter' => (int) $u->newsletter, 'notes' => $u->notes,
         'blocked' => $blocked, 'block' => $block ? ['reason' => $block->reason, 'by' => trim((string) $block->by_name) ?: 'staff', 'at' => sl_ago($block->blocked_at)] : null,
         'st' => $blocked ? ['Blocked', 'overdue'] : (!$approve ? ['Awaiting approval', 'pending'] : ['Active', 'delivered']),
         'nShip' => $nShip, 'nPkg' => $nPkg, 'spend' => $finance ? sl_money($spend) : '—', 'due' => $finance ? sl_money($due) : '—', 'dueN' => $due, 'waiting' => $waiting, 'finance' => $finance,
         'tab' => $tab, 'rows' => $rows, 'count' => $count, 'page' => $page, 'per' => $per, 'act' => $act, 'addresses' => sl_cpAddresses($id), 'hist' => array_map(fn($h) => ['by' => trim((string) $h->by_name), 'at' => sl_date($h->datetime), 'why' => $h->remarks], $hist),
         'countries' => sl_rows('SELECT id, name FROM cdb_countries WHERE is_active = 1 ORDER BY name LIMIT 300'),
+        'timeline' => $timeline, 'moving' => sl_u360InMotion($id), 'heat' => sl_u360Heatmap($id),
+        'tabCounts' => ['ship' => $nShip, 'pkg' => $nPkg, 'pay' => null, 'msg' => $nMsg, 'recip' => $nRecip],
+        'lastLogin' => $lastSeen ? sl_ago($lastSeen) : 'Never', 'lastLoginAt' => $lastSeen ? sl_date($lastSeen, 'j M Y, H:i') : '',
+        'lastIp' => $lastAuth->ip ?? ($u->lastip ?? ''), 'lastDevice' => $lastAuth ? sl_u360Device((string) $lastAuth->user_agent) : '', 'failed30' => $failed30, 'devices' => $devices,
+        'loyalty' => $loyal ? ['pts' => (int) $loyal->points_balance, 'life' => (int) $loyal->lifetime_points, 'tier' => ucfirst((string) $loyal->tier), 'code' => (string) $loyal->referral_code] : null,
+        'openTickets' => $openTickets, 'lastShip' => $lastShip ? sl_ago($lastShip) : 'Never', 'created' => sl_date($u->created, 'j M Y'),
         'canEdit' => $user->cdp_hasPermission('edit_client'), 'canApprove' => isset($u->approve) && $user->cdp_hasPermission(['approve_client', 'edit_client']), 'canDelete' => $user->cdp_hasPermission('delete_client'), 'canShip' => $user->cdp_hasPermission('add_shipment'), 'canRecip' => $user->cdp_hasPermission('recipients_add'), 'canViewAs' => function_exists('cdp_canViewAs') && cdp_canViewAs((int) $user->userlevel, 1)];
+    return $return;
 }

@@ -72,3 +72,4 @@ if ($direction_layout == 'rtl') {
 ?>
 
 <?php require_once __DIR__ . '/../../helpers/pwa.php'; sl_pwa_head(); ?>
+<script>window.SL_KING = <?= json_encode(function_exists('cdp_kingName') ? cdp_kingName() : 'King', JSON_HEX_TAG | JSON_HEX_AMP) ?>;</script>

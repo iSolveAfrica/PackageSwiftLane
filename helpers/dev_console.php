@@ -385,7 +385,7 @@ function sl_devIntegrations(): array
         if (function_exists('cdp_aiSetting')) {
             $prov = (string) cdp_aiSetting('provider', 'claude');
             $key = (string) cdp_aiSetting('key_' . $prov, '');
-            $list[] = ['key' => 'ai', 'name' => 'AI assistant (' . $prov . ')', 'icon' => 'i-ai', 'group' => 'AI', 'configured' => $key !== '' && (string) cdp_aiSetting('enabled', '0') === '1', 'detail' => 'model ' . cdp_aiSetting('model', '') . ' · key ' . sl_devMask($key) . ' · ' . ((string) cdp_aiSetting('enabled', '0') === '1' ? 'enabled' : 'disabled'), 'href' => sl_route('AiCenter'), 'usage' => ''];
+            $list[] = ['key' => 'ai', 'name' => 'King (' . $prov . ')', 'icon' => 'i-ai', 'group' => 'AI', 'configured' => $key !== '' && (string) cdp_aiSetting('enabled', '0') === '1', 'detail' => 'model ' . cdp_aiSetting('model', '') . ' · key ' . sl_devMask($key) . ' · ' . ((string) cdp_aiSetting('enabled', '0') === '1' ? 'enabled' : 'disabled'), 'href' => sl_route('AiCenter'), 'usage' => ''];
         }
     }
     $apiTokens = sl_tableExists('cdb_api_tokens') ? (int) sl_scalar('SELECT COUNT(*) FROM cdb_api_tokens WHERE revoked_at IS NULL AND expires_at > NOW()') : 0;

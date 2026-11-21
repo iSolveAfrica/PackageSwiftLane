@@ -20,18 +20,8 @@
     <?php endif; ?>
     <?php if ($slIsClient || sl_userIs('driver')): ?><a class="sl-phone-identity" href="<?= h($slIsClient ? sl_route('Main') : sl_route('DriverApp')) ?>"><?= h($core->site_name ?? 'Swift Lane') ?><small><?= $slIsClient ? 'Your shipping companion' : 'Rider workspace' ?></small></a><?php endif; ?>
     <span class="grow"></span>
-    <?php if (!empty($slAiPopup)): ?><button type="button" class="sl-ai-top" data-sl-ai aria-label="Ask AI about this page" title="Ask AI about this page (Ctrl+J)"><i class="ic ic-sm i-spark" aria-hidden="true"></i><span>Ask AI</span><kbd>Ctrl J</kbd></button><?php endif; ?>
-    <?php if ($slHasSupport || $slCanAskAI): ?><details class="aitop"><summary aria-label="Help and support"><span class="o"><i class="ic i-ai" aria-hidden="true"></i></span>Help</summary><div class="pop" role="menu">
-<div class="me"><span class="sl-av sm dark"><?= h($slInitials) ?></span><div class="grow"><div class="fw5 sm"><?= h($slName) ?></div><div class="mut" style="font-size:14px"><?= h($slSub) ?></div></div><a class="sl-btn sm ghost" href="<?= h($slProfileUrl) ?>">Edit</a></div>
-<a class="ask" href="<?= h($slAssistantUrl) ?>"<?= !empty($slAiPopup) ? ' data-sl-ai' : '' ?>><i class="ic ic-sm i-spark" aria-hidden="true"></i><?= $slCanAskAI ? 'Ask AI for help on this page' : 'Open help and support' ?><b><i class="ic ic-sm i-send" aria-hidden="true"></i></b></a>
-<div class="hd">Your profile</div>
-<a class="it" role="menuitem" href="<?= h($slProfileUrl) ?>#st-avatar"><span class="t"><i class="ic ic-sm i-wand" aria-hidden="true"></i></span><span>Upload a profile photo<small>Choose a photo from your device</small></span></a>
-<a class="it" role="menuitem" href="<?= h($slProfileUrl) ?>#name"><span class="t"><i class="ic ic-sm i-edit" aria-hidden="true"></i></span><span>Change my name<small>Update the name on shipping labels</small></span></a>
-<a class="it" role="menuitem" href="<?= h($slProfileUrl) ?>#icon"><span class="t"><i class="ic ic-sm i-user" aria-hidden="true"></i></span><span>Choose my icon<small>Avatar from your photo or initials</small></span></a>
-<div class="hd">Help</div>
-<a class="it" role="menuitem" href="<?= h($slAssistantUrl) ?>"<?= !empty($slAiPopup) ? ' data-sl-ai="Explain this page"' : '' ?>><span class="t"><i class="ic ic-sm i-help" aria-hidden="true"></i></span><span><?= $slCanAskAI || !empty($slAiPopup) ? 'Explain this page' : 'Help and support' ?></span></a>
-<?php if ($slHasSupport): ?><a class="it" role="menuitem" href="<?= h($slHelpUrl) ?>"><span class="t"><i class="ic ic-sm i-message" aria-hidden="true"></i></span><span>Talk to a person</span></a><?php endif; ?>
-</div></details><?php endif; ?>
+    <?php if (!empty($slAiPopup)): ?><button type="button" class="sl-ai-top" data-sl-ai aria-label="Ask <?= h(cdp_kingName()) ?> about this page" title="Ask <?= h(cdp_kingName()) ?> about this page (Ctrl+J)"><i class="ic ic-sm i-spark" aria-hidden="true"></i><span>Ask <?= h(cdp_kingName()) ?></span><kbd>Ctrl J</kbd></button><?php endif; ?>
+    <?php if (empty($slAiPopup) && $slCanAskAI): ?><a class="sl-ai-top" href="<?= h(sl_route('StaffAI')) ?>" title="Ask <?= h(cdp_kingName()) ?>"><i class="ic ic-sm i-spark" aria-hidden="true"></i><span>Ask <?= h(cdp_kingName()) ?></span></a><?php endif; ?>
     <a class="sl-ib sl-bell" aria-label="Notifications<?= $slUnread ? ', ' . $slUnread . ' unread' : '' ?>" href="<?= h(sl_route('Notifications')) ?>"><i class="ic i-bell" aria-hidden="true"></i><?php if ($slUnread): ?><b class="sl-bell-n"><?= $slUnread > 99 ? '99+' : $slUnread ?></b><?php endif; ?></a>
     <button class="sl-ib" type="button" aria-label="Switch theme" data-sl-theme><i class="ic i-sun" aria-hidden="true"></i></button>
     <?php if (!$slIsClient && $user->cdp_hasPermission(['view_documents', 'view_general_reports'])): ?><a class="sl-ib" aria-label="Documents" href="<?= h(sl_route('Documents')) ?>"><i class="ic i-file" aria-hidden="true"></i></a><?php endif; ?>
@@ -60,7 +50,7 @@
       <a href="<?= h(sl_route('PublicTracking')) ?>" aria-label="Tracking" title="Tracking"><i class="ic i-route" aria-hidden="true"></i></a>
       <?php else: ?>
       <?php if ($user->cdp_hasPermission('add_shipment')): ?><a class="<?= ($slPage['id'] ?? '') === 'new' ? 'is-on' : '' ?>" href="<?= h(sl_route('NewShipment')) ?>" aria-label="New shipment" title="New shipment"><i class="ic i-newdoc" aria-hidden="true"></i></a><?php endif; ?>
-      <?php if (sl_navAllowed('ai:use', [])): ?><a href="<?= h(sl_route('StaffAI')) ?>" aria-label="AI assistant" title="AI assistant"><i class="ic i-ai" aria-hidden="true"></i></a><?php endif; ?>
+      <?php if (sl_navAllowed('ai:use', [])): ?><a href="<?= h(sl_route('StaffAI')) ?>" aria-label="Ask <?= h(cdp_kingName()) ?>" title="Ask <?= h(cdp_kingName()) ?>"><i class="ic i-ai" aria-hidden="true"></i></a><?php endif; ?>
       <a href="<?= h(sl_route('PublicTracking')) ?>" aria-label="Tracking" title="Tracking"><i class="ic i-track" aria-hidden="true"></i></a>
       <?php if ($user->cdp_hasPermission('view_shipment_list')): ?><a href="<?= h(sl_route('LockerSearch')) ?>" aria-label="Search tracking number" title="Search tracking number"><i class="ic i-tsearch" aria-hidden="true"></i></a><?php endif; ?>
       <?php if ($user->cdp_hasPermission(['view_consolidate_list', 'view_consolidate_package_list'])): ?><a href="<?= h(sl_route('Consolidations')) ?>" aria-label="Consolidation" title="Consolidation"><i class="ic i-layers" aria-hidden="true"></i></a><?php endif; ?>

@@ -231,11 +231,11 @@ function sl_ovCards($user, array $view): array
         if ($hasQ) foreach (sl_ovDaily('SELECT DATE(created_at) AS day, COUNT(*) AS n FROM cdb_ai_questions WHERE created_at >= :d0 GROUP BY DATE(created_at)', []) as $k => $v) $daily[$k] += $v;
         $tok = $tokens >= 1000000 ? round($tokens / 1000000, 1) . 'M' : ($tokens >= 1000 ? round($tokens / 1000, 1) . 'k' : (string) $tokens);
         $cards[] = ['key' => 'ai', 'tone' => 'violet', 'icon' => 'i-ai', 'eyebrow' => 'AI across the system', 'big' => sl_num($chats + $staffQ) . ' handled',
-            'lede' => !$on ? 'The AI assistant is switched off · turn it on in the AI Automation Center'
+            'lede' => !$on ? cdp_kingName() . ' is switched off · turn it on in the AI Automation Center'
                 : ($chats ? sl_pct($aiOnly, $chats) . '% of customer chats closed without a person' : 'No customer chats yet today') . ($model !== '' ? ' · ' . $model : ''),
             'sub' => [['n' => sl_num($chats), 'l' => 'Customer chats'], ['n' => sl_num($handed), 'l' => 'Handed to staff'], ['n' => sl_num($staffQ), 'l' => 'Staff questions'], ['n' => $latency === null ? $tok : number_format((float) $latency / 1000, 1) . ' s', 'l' => $latency === null ? 'Tokens' : 'Avg reply']],
             'bars' => sl_sparkBars(array_values($daily), 4, array_map(fn($d) => date('D j M', strtotime($d)), array_keys($daily))), 'barsL' => 'AI conversations per day, 14 days', 'barsR' => $tok . ' tokens today',
-            'href' => sl_ovAllowed($user, 'ai:manage') ? sl_route('AiCenter') : sl_route('StaffAI'), 'alert' => $failed ? $failed . ' AI errors today' : (!$on ? 'AI is off' : '')];
+            'href' => sl_ovAllowed($user, 'ai:manage') ? sl_route('AiCenter') : sl_route('StaffAI'), 'alert' => $failed ? $failed . ' AI errors today' : (!$on ? cdp_kingName() . ' is off' : '')];
     }
 
     // Warehouse now

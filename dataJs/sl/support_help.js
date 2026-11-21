@@ -70,7 +70,7 @@
   var thread = $('hp-thread'), scroll = $('hp-scroll'), text = $('hp-text');
   function header() {
     var s = st.owner, name = king.name || 'King', line;
-    if (s === 'ai_active') line = 'AI assistant · ask for a person any time';
+    if (s === 'ai_active') line = 'Ask for a person any time';
     else if (s === 'handoff_queued') { name = 'Support team'; line = 'Waiting for a person · we reply here'; }
     else if (s === 'human_active') { name = st.ownerName ? st.ownerName + ' · Support team' : 'Support team'; line = 'You are chatting with a person'; }
     else { name = 'Support'; line = 'Resolved · write again to reopen'; }
@@ -78,7 +78,7 @@
     $('hp-av').textContent = s === 'ai_active' ? name.charAt(0) : '';
     if (s !== 'ai_active') $('hp-av').innerHTML = '<i class="ic ic-sm i-user" aria-hidden="true"></i>';
     $('hp-human').hidden = s === 'handoff_queued' || s === 'human_active';
-    $('hp-disclose').textContent = s === 'ai_active' ? name + ' is an AI assistant. It reads your own account only and can make mistakes; a person checks anything it cannot answer.' : 'Never share passwords, one-time codes or card numbers in chat.';
+    $('hp-disclose').textContent = s === 'ai_active' ? name + ' is our automated helper and reads your own account only. ' + name + ' can make mistakes; a person checks anything ' + name + ' cannot answer.' : 'Never share passwords, one-time codes or card numbers in chat.';
   }
   function state(r) { if (!r) return; if (r.owner) st.owner = r.owner; st.ownerName = r.owner_name || ''; st.ticketRef = r.ticket_ref || ''; header(); }
   function bubble(m) {

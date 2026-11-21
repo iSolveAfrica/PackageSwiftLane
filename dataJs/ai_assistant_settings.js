@@ -30,7 +30,7 @@
         });
         $('#ai_notes').on('click', '[data-del]', function () {
             var id = $(this).data('del');
-            confirmBox('Remove this fact?', 'The assistant will no longer know it.', function () { post({ action: 'knowledge_delete', id: id }); });
+            confirmBox('Remove this fact?', ((window.SL_KING || 'King') + ' will no longer know it.'), function () { post({ action: 'knowledge_delete', id: id }); });
         });
         $('#ai_ideas').on('change', '[data-status]', function () {
             post({ action: 'idea_status', id: $(this).data('status'), status: $(this).val() });
@@ -41,11 +41,11 @@
         });
         $('#ai_analyse_btn').on('click', analyse);
 
-        $.getJSON(CFG.url).done(render).fail(function () { notice('danger', 'Could not load the assistant settings.'); });
+        $.getJSON(CFG.url).done(render).fail(function () { notice('danger', ('Could not load ' + (window.SL_KING || 'King') + ' settings.')); });
     });
 
     function render(r) {
-        if (!r || !r.ok) { notice('danger', (r && r.error) || 'Could not load the assistant settings.'); return; }
+        if (!r || !r.ok) { notice('danger', (r && r.error) || ('Could not load ' + (window.SL_KING || 'King') + ' settings.')); return; }
         data = r;
         if (r.settings) { renderSettings(r.settings, r.configured); }
         if (r.can_insights) {
@@ -76,7 +76,7 @@
         $('#ai_status').html(configured
             ? '<span class="label label-success">On</span> Answering with <b>' + esc(label) + '</b> · <code>' + esc(s.model) + '</code>'
             : (s.enabled ? '<span class="label label-warning">Incomplete</span> Add the API key for ' + esc(label) + '.'
-                         : '<span class="label label-default">Off</span> The assistant is switched off.'));
+                         : ('<span class="label label-default">Off</span> ' + (window.SL_KING || 'King') + ' is switched off.')));
     }
 
     function provider() { return $('input[name="provider"]:checked').val() || 'claude'; }
@@ -213,7 +213,7 @@
 
     function renderIdeas(ideas) {
         if (!ideas.length) {
-            $('#ai_ideas').html('<div class="swl-ai-empty">No ideas yet. They appear as people use the assistant, or press Analyse Questions.</div>');
+            $('#ai_ideas').html(('<div class="swl-ai-empty">No ideas yet. They appear as people ask ' + (window.SL_KING || 'King') + ', or press Analyse Questions.</div>'));
             return;
         }
         var statuses = { 'new': 'New', planned: 'Planned', built: 'Built', dismissed: 'Dismissed' };

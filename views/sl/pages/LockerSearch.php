@@ -28,7 +28,7 @@ $kindL = ['tracking' => 'Looks like a tracking number', 'phone' => 'Looks like a
 
 <?php if ($d['q'] === ''): ?>
 <section class="ss-tips"><span class="mut sm">Try</span><?php foreach ($d['tips'] as [$tq, $tl]): ?><a href="<?= h(sl_url(['q' => $tq])) ?>"><b><?= h($tq) ?></b><span><?= h($tl) ?></span></a><?php endforeach; ?></section>
-<?php if ($d['canAi']): ?><a class="ss-ai" href="<?= sl_route('StaffAI') ?>"><span class="ss-ai-ic"><i class="ic i-ai" aria-hidden="true"></i></span><span class="col"><b>Ask the AI assistant</b><span class="mut sm">“How many parcels are waiting more than 30 days?” · “Which customers owe the most?” · “What landed yesterday?”</span></span><i class="ic ic-sm i-right" aria-hidden="true"></i></a><?php endif; ?>
+<?php if ($d['canAi']): ?><a class="ss-ai" href="<?= sl_route('StaffAI') ?>"><span class="ss-ai-ic"><i class="ic i-ai" aria-hidden="true"></i></span><span class="col"><b>Ask <?= h(cdp_kingName()) ?></b><span class="mut sm">“How many parcels are waiting more than 30 days?” · “Which customers owe the most?” · “What landed yesterday?”</span></span><i class="ic ic-sm i-right" aria-hidden="true"></i></a><?php endif; ?>
 <?php else: ?>
 
 <?php if ($d['best']): $b = $d['best']; ?>
@@ -75,7 +75,7 @@ $kindL = ['tracking' => 'Looks like a tracking number', 'phone' => 'Looks like a
 <?php endforeach; ?>
 </div>
 <?php if (!$d['groups']): ?><div class="sl-card"><div class="sl-empty"><span class="sl-tile"><i class="ic i-search" aria-hidden="true"></i></span>Nothing found for “<?= h($d['q']) ?>”. Check the spelling, try part of the number, or ask the AI assistant.</div></div><?php endif; ?>
-<?php if ($d['canAi']): ?><a class="ss-ai" href="<?= sl_route('StaffAI', ['q' => $d['q']]) ?>"><span class="ss-ai-ic"><i class="ic i-ai" aria-hidden="true"></i></span><span class="col"><b>Ask the AI about “<?= h($d['q']) ?>”</b><span class="mut sm">The assistant reads shipments, payments, riders and messages, and answers in plain words with links.</span></span><i class="ic ic-sm i-right" aria-hidden="true"></i></a><?php endif; ?>
+<?php if ($d['canAi']): ?><a class="ss-ai" href="<?= sl_route('StaffAI', ['q' => $d['q']]) ?>"><span class="ss-ai-ic"><i class="ic i-ai" aria-hidden="true"></i></span><span class="col"><b>Ask <?= h(cdp_kingName()) ?> about “<?= h($d['q']) ?>”</b><span class="mut sm"><?= h(cdp_kingName()) ?> reads shipments, payments, riders and messages, and answers in plain words with links.</span></span><i class="ic ic-sm i-right" aria-hidden="true"></i></a><?php endif; ?>
 <?php endif; ?>
 <style>
 .ss-hero{display:flex;flex-direction:column;gap:12px;padding:26px;border-radius:var(--r-xl);background:var(--panel);border:1px solid var(--line)}

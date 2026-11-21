@@ -1020,6 +1020,6 @@ if (!function_exists('cdp_aiModules')) {
             return ['error' => 'Only administrators can teach the assistant.'];
         }
         $id = cdp_aiKnowledgeAdd((string) ($a['fact'] ?? ''), $ctx['uid'], 'chat');
-        return $id ? ['ok' => true, 'note' => 'Saved. It is listed under Tools > AI Assistant > What the assistant knows.'] : ['error' => 'Nothing to save.'];
+        return $id ? ['ok' => true, 'note' => 'Saved. It is listed under Tools > King > What King knows.'] : ['error' => 'Nothing to save.'];
     }
 }

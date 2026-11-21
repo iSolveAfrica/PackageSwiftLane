@@ -572,7 +572,7 @@ if (!function_exists('cdp_devQ')) {
         $re = $runs ? (int) $runs->e : 0;
         $add('ai', 'AI provider (King)', $aiProv ?: 'Not set up', 'external', !$aiOn ? 'not_configured' : ($rn >= 5 && $re / $rn > 0.2 ? 'degraded' : 'operational'), [
             'latency_ms' => $runs && $runs->l !== null ? round((float) $runs->l) : null, 'error_rate' => $rn ? round($re / $rn * 100, 2) : 0,
-            'throughput' => $rn . ' calls today', 'detail' => $aiOn ? $re . ' errors in 24 h' : 'Set the key in Tools › AI Assistant']);
+            'throughput' => $rn . ' calls today', 'detail' => $aiOn ? $re . ' errors in 24 h' : 'Set the key in Tools › King']);
         // Messaging channels
         foreach (['email' => ['E-mail (SMTP)', 'PHPMailer'], 'sms' => ['SMS', 'Hubtel / mNotify / Twilio'], 'whatsapp' => ['WhatsApp', 'WhatsApp API']] as $k => $label) {
             $c = $ch[$k] ?? null;
@@ -1475,7 +1475,7 @@ if (!function_exists('cdp_devUsers')) {
         $bundle = cdp_devDiagBundle($scope, $window, $paths);
         $rules = cdp_devDiagRules($bundle);
         $question = trim(mb_substr((string) $question, 0, 2000));
-        $ai = ['ok' => false, 'error' => 'AI provider not set up (Tools › AI Assistant). The report holds the automatic findings and the evidence only.'];
+        $ai = ['ok' => false, 'error' => 'AI provider not set up (Tools › King). The report holds the automatic findings and the evidence only.'];
         $provider = $model = null;
         if (!function_exists('cdp_aiComplete')) {
             @include_once __DIR__ . '/ai_assistant.php';

@@ -93,9 +93,9 @@ if (!function_exists('cdp_aiHttp')) {
         }
         $hint = '';
         if ($r['status'] === 401 || $r['status'] === 403) {
-            $hint = ' Check the API key on Tools > AI Assistant.';
+            $hint = ' Check the API key on Tools > King.';
         } elseif ($r['status'] === 404) {
-            $hint = ' Check the model name on Tools > AI Assistant.';
+            $hint = ' Check the model name on Tools > King.';
         } elseif ($r['status'] === 429) {
             $hint = ' The provider is rate-limiting or the account is out of credit; try again shortly.';
         } elseif ($r['status'] >= 500 || $r['status'] === 529) {
@@ -124,7 +124,9 @@ if (!function_exists('cdp_aiHttp')) {
         $mods = cdp_aiModules();
         $areas = array_map(function ($k) use ($mods) { return $mods[$k]['label']; }, cdp_aiAllowedModules($ctx));
 
-        $p = "You are the assistant built into $site, a courier and freight management system (air and sea shipments, customer packages bought online, pickups, consolidations, pre-alerts, warehouse, payments, reports).\n\n"
+        $king = cdp_kingName();
+        $p = "You are $king, the colleague built into $site, a courier and freight management system (air and sea shipments, customer packages bought online, pickups, consolidations, pre-alerts, warehouse, payments, reports).\n\n"
+           . cdp_kingPersona($king) . "\n"
            . "You are talking to $name, role \"$role\". $scopeText\n"
            . 'Areas they can see: ' . ($areas ? implode(', ', $areas) : 'none') . ".\n"
            . 'Today is ' . date('l j F Y') . ' (' . date('Y-m-d') . ").\n\n"
@@ -516,7 +518,7 @@ if (!function_exists('cdp_aiHttp')) {
             'tools'      => cdp_aiToolDefinitions($ctx),
         ];
         if ($opt['key'] === '') {
-            return ['ok' => false, 'error' => 'No API key is set for ' . cdp_aiProviderLabel($provider) . '. A super admin adds it on Tools > AI Assistant.', 'tools' => []];
+            return ['ok' => false, 'error' => 'No API key is set for ' . cdp_aiProviderLabel($provider) . '. A super admin adds it on Tools > King.', 'tools' => []];
         }
         @set_time_limit(300);
         if ($provider === 'claude') {
@@ -577,42 +579,150 @@ if (!function_exists('cdp_aiHttp')) {
         return ['ok' => true, 'text' => trim((string) ($j->choices[0]->message->content ?? '')), 'model' => $j->model ?? $model];
     }
 
-    /** The provider's live model list (ids), for the settings picker. */
+    /**
+     * The provider's full live model catalogue, for the settings picker.
+     * Every model comes back with: id, name, tier (free|paid, OpenRouter only), price (per 1M tokens),
+     * ctx (context window), tools (can call tools; King needs this to look things up), badges.
+     */
     function cdp_aiListModels($provider, $key)
     {
         if ($key === '') {
             return ['ok' => false, 'error' => 'Enter the API key first.'];
         }
+        $out = [];
         if ($provider === 'claude') {
-            $r = cdp_aiHttp('GET', cdp_aiBaseUrl('claude') . '/models?limit=100',
-                ['x-api-key' => $key, 'anthropic-version' => '2023-06-01'], null, 30);
+            $after = '';
+            for ($page = 0; $page < 5; $page++) {
+                $r = cdp_aiHttp('GET', cdp_aiBaseUrl('claude') . '/models?limit=1000' . ($after !== '' ? '&after_id=' . rawurlencode($after) : ''),
+                    ['x-api-key' => $key, 'anthropic-version' => '2023-06-01'], null, 30);
+                if ($r['status'] < 200 || $r['status'] >= 300) {
+                    if ($page === 0) return ['ok' => false, 'error' => cdp_aiHttpError($r, $provider)];
+                    break;
+                }
+                $j = json_decode($r['body'], true);
+                foreach ((array) ($j['data'] ?? []) as $m) {
+                    $id = (string) ($m['id'] ?? '');
+                    if ($id !== '') $out[] = ['id' => $id, 'name' => (string) ($m['display_name'] ?? $id), 'tools' => true, 'created' => (string) ($m['created_at'] ?? '')];
+                }
+                if (empty($j['has_more']) || empty($j['last_id'])) break;
+                $after = (string) $j['last_id'];
+            }
         } elseif ($provider === 'openai') {
             $r = cdp_aiHttp('GET', cdp_aiBaseUrl('openai') . '/models', ['Authorization' => 'Bearer ' . $key], null, 30);
+            if ($r['status'] < 200 || $r['status'] >= 300) {
+                return ['ok' => false, 'error' => cdp_aiHttpError($r, $provider)];
+            }
+            $j = json_decode($r['body'], true);
+            foreach ((array) ($j['data'] ?? []) as $m) {
+                $id = (string) ($m['id'] ?? '');
+                // Chat-capable models only: embeddings, audio, image and moderation models cannot answer questions.
+                if ($id === '' || !preg_match('/^(gpt-|o\d|chatgpt-)/', $id) || preg_match('/(audio|realtime|tts|transcribe|image|embedding|moderation|dall-e|whisper)/', $id)) {
+                    continue;
+                }
+                $out[] = ['id' => $id, 'name' => $id, 'tools' => !preg_match('/search/', $id), 'created' => isset($m['created']) ? date('Y-m-d', (int) $m['created']) : ''];
+            }
         } else {
-            $r = cdp_aiHttp('GET', cdp_aiBaseUrl('openrouter') . '/models?supported_parameters=tools', ['Authorization' => 'Bearer ' . $key], null, 30);
-        }
-        if ($r['status'] < 200 || $r['status'] >= 300) {
-            return ['ok' => false, 'error' => cdp_aiHttpError($r, $provider)];
-        }
-        $j = json_decode($r['body'], true);
-        $out = [];
-        foreach ((array) ($j['data'] ?? []) as $m) {
-            $id = (string) ($m['id'] ?? '');
-            if ($id === '') {
-                continue;
+            // All OpenRouter models (no tools filter), with price and context.
+            $r = cdp_aiHttp('GET', cdp_aiBaseUrl('openrouter') . '/models', ['Authorization' => 'Bearer ' . $key], null, 40);
+            if ($r['status'] < 200 || $r['status'] >= 300) {
+                return ['ok' => false, 'error' => cdp_aiHttpError($r, $provider)];
             }
-            if ($provider === 'openai' && !preg_match('/^(gpt-|o\d|chatgpt-)/', $id)) {
-                continue; // embeddings, audio, images …
+            $j = json_decode($r['body'], true);
+            foreach ((array) ($j['data'] ?? []) as $m) {
+                $id = (string) ($m['id'] ?? '');
+                if ($id === '') continue;
+                $in = (float) ($m['pricing']['prompt'] ?? 0);
+                $outP = (float) ($m['pricing']['completion'] ?? 0);
+                $free = substr($id, -5) === ':free' || ($in <= 0 && $outP <= 0);
+                if ($in < 0 || $outP < 0) continue; // router meta-models with variable pricing
+                $out[] = ['id' => $id, 'name' => (string) ($m['name'] ?? $id), 'tier' => $free ? 'free' : 'paid',
+                    'price' => $free ? 'Free' : cdp_aiPerMillion($in) . ' in · ' . cdp_aiPerMillion($outP) . ' out per 1M tokens',
+                    'in' => $in * 1e6, 'ctx' => (int) ($m['context_length'] ?? 0),
+                    'tools' => in_array('tools', (array) ($m['supported_parameters'] ?? []), true),
+                    'created' => isset($m['created']) ? date('Y-m-d', (int) $m['created']) : ''];
             }
-            if ($provider === 'openai' && preg_match('/(audio|realtime|tts|transcribe|image|search|embedding)/', $id)) {
-                continue;
+        }
+        $out = cdp_aiDecorateModels($provider, $out);
+        $free = count(array_filter($out, function ($m) { return ($m['tier'] ?? '') === 'free'; }));
+        return ['ok' => true, 'models' => $out, 'count' => count($out), 'free' => $free, 'paid' => $provider === 'openrouter' ? count($out) - $free : null];
+    }
+
+    function cdp_aiPerMillion($perToken)
+    {
+        $v = $perToken * 1e6;
+        return '$' . ($v >= 10 ? number_format($v, 0) : rtrim(rtrim(number_format($v, 2), '0'), '.'));
+    }
+
+    /** "5.5" from claude-opus-5-5 / gpt-5.1 / anthropic/claude-sonnet-4-5 (0 when none). */
+    function cdp_aiModelVersion($id)
+    {
+        $id = preg_replace('/-20\d{6}$/', '', strtolower((string) $id));
+        if (preg_match('/(\d+)(?:[.-](\d{1,2}))?(?!\d)/', $id, $m)) {
+            return (float) ($m[1] . '.' . ($m[2] ?? '0'));
+        }
+        return 0.0;
+    }
+
+    /**
+     * Marks the best and recommended models and sorts the list (badged first, then newest first).
+     * best = most capable · recommended = suggested for King (strong tool use at a sensible price)
+     * value = good results at the lowest cost · freebest = best free model (OpenRouter).
+     */
+    function cdp_aiDecorateModels($provider, array $models)
+    {
+        $pick = function (array $list, $re, $needTools = true) {
+            $best = null; $bv = -1.0;
+            foreach ($list as $i => $m) {
+                if (!preg_match($re, strtolower($m['id'])) || ($needTools && empty($m['tools']))) continue;
+                if (preg_match('/(preview|beta|exp|-latest$|:extended|:beta)/', strtolower($m['id']))) continue;
+                $v = cdp_aiModelVersion(preg_replace('#^[a-z0-9-]+/#', '', $m['id']));
+                if ($v > $bv || ($v === $bv && $best !== null && strlen($m['id']) < strlen($list[$best]['id']))) { $bv = $v; $best = $i; }
             }
-            $out[] = ['id' => $id, 'name' => (string) ($m['display_name'] ?? ($m['name'] ?? $id))];
+            return $best;
+        };
+        foreach ($models as &$m) {
+            $m += ['tier' => '', 'price' => '', 'ctx' => 0, 'tools' => true, 'created' => ''];
+            $m['badges'] = [];
         }
-        if ($provider === 'openai') {
-            usort($out, function ($a, $b) { return strcmp($b['id'], $a['id']); });
+        unset($m);
+        $mark = function ($i, $badge) use (&$models) { if ($i !== null && !in_array($badge, $models[$i]['badges'], true)) $models[$i]['badges'][] = $badge; };
+
+        if ($provider === 'claude') {
+            $mark($pick($models, '/^claude-fable/') ?? $pick($models, '/^claude-opus/'), 'best');
+            $mark($pick($models, '/^claude-opus/') ?? $pick($models, '/^claude-sonnet/'), 'recommended');
+            $mark($pick($models, '/^claude-haiku/') ?? $pick($models, '/^claude-sonnet/'), 'value');
+        } elseif ($provider === 'openai') {
+            $flag = '/^gpt-\d+(\.\d+)?$/';
+            $mark($pick($models, '/^gpt-\d+(\.\d+)?-pro$/') ?? $pick($models, $flag), 'best');
+            $mark($pick($models, $flag), 'recommended');
+            $mark($pick($models, '/^gpt-\d+(\.\d+)?-mini$/'), 'value');
+        } else {
+            $paid = array_filter($models, function ($m) { return $m['tier'] === 'paid'; });
+            $mark($pick($paid, '#^anthropic/claude-fable#') ?? $pick($paid, '#^anthropic/claude-opus#'), 'best');
+            $mark($pick($paid, '#^anthropic/claude-opus#') ?? $pick($paid, '#^anthropic/claude-sonnet#') ?? $pick($paid, '#^openai/gpt-\d+(\.\d+)?$#'), 'recommended');
+            $mark($pick($paid, '#^anthropic/claude-sonnet#') ?? $pick($paid, '#^openai/gpt-\d+(\.\d+)?-mini$#'), 'value');
+            // Best free: a free model that can use tools, from a strong family, largest context.
+            $freeBest = null; $score = -1;
+            $families = ['deepseek/', 'qwen/', 'meta-llama/', 'google/', 'mistralai/', 'openai/', 'moonshotai/', 'z-ai/', 'nvidia/'];
+            foreach ($models as $i => $m) {
+                if ($m['tier'] !== 'free' || empty($m['tools'])) continue;
+                $rank = count($families);
+                foreach ($families as $fi => $fam) if (strpos($m['id'], $fam) === 0) { $rank = $fi; break; }
+                $sc = (count($families) - $rank) * 1e7 + min(9e6, (int) $m['ctx']);
+                if ($sc > $score) { $score = $sc; $freeBest = $i; }
+            }
+            $mark($freeBest, 'freebest');
         }
-        return ['ok' => true, 'models' => array_slice($out, 0, 400)];
+        $order = ['recommended' => 0, 'best' => 1, 'value' => 2, 'freebest' => 3];
+        usort($models, function ($a, $b) use ($order) {
+            $ra = $a['badges'] ? min(array_map(function ($x) use ($order) { return $order[$x]; }, $a['badges'])) : 9;
+            $rb = $b['badges'] ? min(array_map(function ($x) use ($order) { return $order[$x]; }, $b['badges'])) : 9;
+            if ($ra !== $rb) return $ra - $rb;
+            if ($a['tools'] !== $b['tools']) return $a['tools'] ? -1 : 1;
+            $c = strcmp((string) $b['created'], (string) $a['created']);
+            return $c !== 0 ? $c : strcmp($a['name'], $b['name']);
+        });
+        return $models;
     }
 
     /**

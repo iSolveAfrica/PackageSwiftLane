@@ -33,7 +33,7 @@ function sl_modules(): array
         'automations'   => ['label' => 'Automations', 'group' => 'messaging', 'desc' => 'When this happens, do that', 'nav' => ['auto'], 'customer' => false, 'api' => []],
         // Support and AI
         'support'       => ['label' => 'Customer service', 'group' => 'support', 'desc' => 'Tickets, rules, playbook, channels', 'nav' => ['supporthub', 'servicepanel', 'tickets', 'csrules', 'playbook', 'knowledge', 'csrep', 'cschan', 'cssupai'], 'customer' => true, 'api' => []],
-        'ai'            => ['label' => 'AI assistant', 'group' => 'support', 'desc' => 'Staff assistant and AI Centre', 'nav' => ['aicenter', 'csai'], 'customer' => false, 'api' => []],
+        'ai'            => ['label' => 'King', 'group' => 'support', 'desc' => 'Staff assistant and AI Centre', 'nav' => ['aicenter', 'csai'], 'customer' => false, 'api' => []],
         // Insights and developer
         'reports'       => ['label' => 'Reports and logs', 'group' => 'insights', 'desc' => 'Reports, activity and system logs', 'nav' => ['reports', 'activity', 'execdash', 'security'], 'customer' => false, 'api' => []],
         'developer'     => ['label' => 'Developer pages', 'group' => 'insights', 'desc' => 'Dev overview, services, deployments, alerts', 'nav' => ['devov', 'devsvc', 'devlogs', 'devmet', 'devinfra', 'devdep', 'devalert', 'devissues', 'devint'], 'customer' => false, 'api' => []],

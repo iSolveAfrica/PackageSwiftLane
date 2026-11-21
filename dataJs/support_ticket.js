@@ -514,7 +514,7 @@
         'ticket.created': 'Ticket created', 'ticket.updated': 'Changed', 'ticket.reopened': 'Reopened', 'ticket.resolved': 'Resolved', 'ticket.merged': 'Merged',
         'ticket.tags': 'Tags', 'ticket.linked': 'Record linked', 'ticket.unlinked': 'Record unlinked', 'ticket.assigned': 'Assigned',
         'ownership.handoff_queued': 'Waiting for a person', 'ownership.human_active': 'A person took the chat', 'ownership.ai_active': 'Chat back with King',
-        'ownership.resolved': 'Chat resolved', 'ownership.transferred': 'Chat taken over', 'conversation.started': 'Chat started', 'king.discarded': 'Late AI answer discarded',
+        'ownership.resolved': 'Chat resolved', 'ownership.transferred': 'Chat taken over', 'conversation.started': 'Chat started', 'king.discarded': 'Late answer from ' + (V.king || 'King') + ' discarded',
         'ticket.acknowledged': 'Customer acknowledged', 'task.created': 'Task added', 'ai.summary': 'AI summary', 'rule.ran': 'Automation ran',
         'proposal.approved': 'Approved', 'proposal.declined': 'Declined', 'bulk.update': 'Bulk change',
         'sla.warning': 'SLA warning', 'sla.breached': 'SLA missed', 'proposal.created': 'Approval asked', 'proposal.decided': 'Approval decided',
@@ -579,7 +579,7 @@
                 case 'accept': post({ action: 'accept' }); break;
                 case 'takeover': CS.confirm('Take over this chat?', 'The colleague who has it is replaced. They will see the change.', 'Take over', function () { post({ action: 'accept', takeover: 1 }); }); break;
                 case 'requeue': post({ action: 'requeue' }); break;
-                case 'release': CS.confirm('Hand the chat back to ' + V.king + '?', 'The customer is told the AI assistant is back. They can ask for a person again at any time.', 'Hand back', function () { post({ action: 'release' }); }); break;
+                case 'release': CS.confirm('Hand the chat back to ' + V.king + '?', 'The customer is told ' + V.king + ' is back. They can ask for a person again at any time.', 'Hand back', function () { post({ action: 'release' }); }); break;
                 case 'follow': post({ action: 'follow', on: D.following ? 0 : 1 }, function () { load(); }); break;
                 case 'mine': update({ assignee_id: V.me }); break;
                 case 'archive': update({ disposition: 'archived' }); break;

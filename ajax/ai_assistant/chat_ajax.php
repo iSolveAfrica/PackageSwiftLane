@@ -31,7 +31,7 @@ $reply = function (array $body, $code = 200) {
 
 $user->cdp_getUserPermissions();
 if (!cdp_aiCanUse($user)) {
-    $reply(['ok' => false, 'error' => 'The AI Assistant is not available for your account.'], 403);
+    $reply(['ok' => false, 'error' => cdp_kingName() . ' is not available for your account.'], 403);
 }
 if (!cdp_aiEnsureTables()) {
     $reply(['ok' => false, 'error' => 'The assistant tables could not be created. The database user needs the CREATE privilege once.']);
@@ -64,7 +64,7 @@ if ($action === 'rename') {
 
 // ── send ────────────────────────────────────────────────────────────────────
 if (!cdp_aiConfigured()) {
-    $reply(['ok' => false, 'error' => 'The assistant is not set up yet. A super admin chooses the provider, API key and model on Tools > AI Assistant.']);
+    $reply(['ok' => false, 'error' => cdp_kingName() . ' is not set up yet. A super admin chooses the provider, API key and model on Tools > King.']);
 }
 
 $question = trim((string) ($_POST['message'] ?? ''));

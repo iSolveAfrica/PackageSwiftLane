@@ -43,3 +43,16 @@
 .hb-out{padding:12px 14px;border-radius:12px;background:var(--field);border:1px solid var(--line);font-size:15.5px;white-space:pre-line}
 .hb-mini{display:flex;align-items:flex-end;gap:3px;height:60px}.hb-mini i{flex:1;border-radius:3px 3px 0 0;background:var(--faint)}.hb-mini i.f{background:#E2632A;opacity:.75}
 .hb-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none;background:var(--green)}.hb-dot.w{background:var(--yellow)}.hb-dot.e{background:var(--red)}
+
+/* Model picker: search on top, Free / Paid filter, details of the chosen model */
+.aic-mp{gap:8px}
+.aic-mp-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.aic-mp-q{flex:1 1 200px;min-width:0;max-width:none}
+.aic-mp-q input{width:100%}
+.aic-mp-tier{display:inline-flex;gap:4px;padding:3px;border-radius:999px;background:var(--active)}
+.aic-mp-tier[hidden]{display:none}
+.aic-mp-tier button{height:30px;padding:0 12px;border:0;border-radius:999px;background:transparent;font:inherit;font-size:14px;color:var(--ink-2);cursor:pointer;white-space:nowrap}
+.aic-mp-tier button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08);font-weight:500}
+.aic-mp-info{font-size:13.5px;color:var(--muted);overflow-wrap:anywhere}
+.aic-mp-info.warn{color:var(--amber-ink)}
+@media (min-width:900px){.aic-mp{grid-column:span 2}}

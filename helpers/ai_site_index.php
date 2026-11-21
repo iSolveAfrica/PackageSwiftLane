@@ -45,7 +45,7 @@ if (!function_exists('cdp_aiSiteIndex')) {
             'Main' => 'Overview: your productivity, today\'s parcels, deliveries, customer service, AI, freight trend, Ghana destinations and the daily briefing.',
             'ShipmentTracking' => 'Tracking for one shipment: journey timeline, add tracking events.',
             'HandOut' => 'Hand parcels to customers at the counter: ready parcels, payment and pickup codes.',
-            'StaffAI' => 'The full AI assistant with saved conversations.',
+            'StaffAI' => 'Chat with King, with saved conversations.',
         ];
         $aboutUrl = [];
         foreach ($about as $board => $text) $aboutUrl[strtolower(strtok(sl_route($board), '#'))] = $text;
