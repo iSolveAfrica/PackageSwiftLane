@@ -21,7 +21,9 @@
     </nav>
   </div>
   <div class="sl-insights__grid">
-    <section class="sl-viz-card sl-viz-card--blue sl-insights__trend" aria-label="Daily registrations">
+    <details class="sl-viz-card sl-viz-card--blue sl-insights__trend sl-insights__comparison">
+      <summary><span class="fw5">Daily registration comparison</span><span class="mut sm">Show daily counts, previous period and mode totals · <?= h($ch['range']) ?></span></summary>
+      <div class="sl-insights__comparison-body">
       <div class="sl-viz-card__head"><div><span class="sl-viz-card__eyebrow">Daily registrations</span><h3><?= sl_num($ch['total']) ?> <small>registered</small></h3></div><span class="sl-viz-card__period"><?= h($ch['range']) ?></span></div>
       <p class="sl-viz-card__sub">
         <?php if ($ch['change'] !== null): ?><span class="sl-viz-card__delta <?= $ch['change'] < 0 ? 'is-down' : '' ?>"><?= $ch['change'] > 0 ? '+' : '' ?><?= h($ch['change']) ?>%</span> versus the previous <?= (int) $ch['days'] ?> days
@@ -38,7 +40,8 @@
       </div>
       <div class="sl-viz-card__legend"><span><i class="sl-viz-card__key sl-viz-card__key--blue"></i>This period</span><span><i class="sl-viz-card__key sl-viz-card__key--amber"></i>Previous period</span></div>
       <div class="sl-insights__totals"><?php foreach ($ch['series'] as $series): ?><span><?= h($series['name']) ?> <strong><?= sl_num($series['total']) ?></strong></span><?php endforeach; ?></div>
-    </section>
+      </div>
+    </details>
 
     <?php if (!empty($ch['status'])): ?>
     <section class="sl-viz-card sl-viz-card--violet" aria-label="Air shipment status mix">

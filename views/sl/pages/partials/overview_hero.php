@@ -67,20 +67,19 @@ $bars = function (array $bars, string $cls = '') {
     </div>
     <?php if ($hp['logOn']):
         $tiles = [
-            ['Today', sl_num($hp['today']), 'actions', $hp['todayVsAvg'], 'vs avg'],
-            ['This week', sl_num($hp['week']), 'actions', $hp['weekDelta'], 'vs last wk'],
-            ['Per working day', sl_num($hp['perDay']), 'avg, 14 days', null, ''],
-            ['Active days', (int) $hp['active'] . '<small>/30</small>', '', null, ''],
-            ['Team rank', $hp['rank'] ? '#' . (int) $hp['rank'] : '—', $hp['team'] ? 'of ' . (int) $hp['team'] . ' this week' : 'no activity yet', null, ''],
-            [($hv['period'] === 'custom' ? 'I registered' : 'Mine · ' . strtolower(str_replace('This ', '', $hv['label']))), sl_num($hp['mine']), ($hv['mode'] === 'sea' ? 'packages' : 'shipments'), null, ''],
+            ['Logged actions today', sl_num($hp['today']), 'activity log entries today', null, ''],
+            ['Logged actions this week', sl_num($hp['week']), 'since Monday', null, ''],
+            ['Days with activity', (int) $hp['active'] . '<small>/30</small>', 'days with recorded activity', null, ''],
+            ['Registered by me', sl_num($hp['mine']), ($hv['mode'] === 'sea' ? 'sea packages' : ($hv['mode'] === 'all' ? 'air shipments + sea packages' : 'air shipments')) . ' · ' . $hv['label'], null, ''],
         ];
     ?>
+    <p class="mut sm">Your recorded activity. Action counts are log entries, not unique parcels or completed deliveries.</p>
     <div class="ovh-kpis">
       <?php foreach ($tiles as $i => [$tl, $tv, $tu, $td, $tdl]): ?>
       <div class="ovh-kpi">
         <span class="ovh-kl"><?= h($tl) ?></span>
         <b><?= $tv ?></b>
-        <?php if ($i === 3): ?><span class="ovh-meter" role="img" aria-label="Active on <?= (int) $hp['active'] ?> of the last 30 days"><i style="width:<?= (int) round($hp['active'] / 30 * 100) ?>%"></i></span>
+        <?php if ($i === 2): ?><span class="ovh-meter" role="img" aria-label="Active on <?= (int) $hp['active'] ?> of the last 30 days"><i style="width:<?= (int) round($hp['active'] / 30 * 100) ?>%"></i></span>
         <?php elseif ($td !== null): ?><span class="ovh-ku"><span class="<?= $td < 0 ? 'dn' : 'up' ?>"><?= $td < 0 ? '▼' : '▲' ?> <?= abs($td) > 999 ? '999+' : abs($td) ?>%</span> <?= h($tdl) ?></span>
         <?php else: ?><span class="ovh-ku"><?= h($tu) ?></span><?php endif; ?>
       </div>
@@ -88,12 +87,12 @@ $bars = function (array $bars, string $cls = '') {
     </div>
     <?php if ($hp['kinds']): ?>
     <div class="ovh-kinds">
-      <div class="row between sm"><span class="fw5">My work this week</span><?php if ($hp['peak']): ?><span class="mut"><i class="ic ic-sm i-clock" aria-hidden="true"></i> Busiest <?= h($hp['peak']) ?></span><?php endif; ?></div>
-      <?php foreach ($hp['kinds'] as $k): ?><div class="ovh-kind"><span><?= h($k['l']) ?></span><span class="ovh-kbar"><i style="width:<?= (int) $k['w'] ?>%"></i></span><b><?= sl_num($k['n']) ?></b></div><?php endforeach; ?>
+      <div class="row between sm"><span class="fw5">Recorded actions this week</span><?php if ($hp['peak']): ?><span class="mut"><i class="ic ic-sm i-clock" aria-hidden="true"></i> Most active hour <?= h($hp['peak']) ?></span><?php endif; ?></div>
+      <?php foreach ($hp['kinds'] as $k): ?><div class="ovh-kind"><span><?= h($k['l']) ?> events</span><span class="ovh-kbar"><i style="width:<?= (int) $k['w'] ?>%"></i></span><b><?= sl_num($k['n']) ?></b></div><?php endforeach; ?>
     </div>
     <?php endif; ?>
     <div class="ovh-me-bars">
-      <div class="row between sm"><span class="mut">My actions, 14 days</span><?php if ($hp['lastLabel']): ?><span class="mut ovh-last" title="<?= h($hp['lastLabel']) ?>">Last: <?= h($hp['lastLabel']) ?> · <?= h($hp['lastAgo']) ?></span><?php endif; ?></div>
+      <div class="row between sm"><span class="mut">Activity log entries · last 14 days</span><?php if ($hp['lastLabel']): ?><span class="mut ovh-last" title="<?= h($hp['lastLabel']) ?>">Last: <?= h($hp['lastLabel']) ?> · <?= h($hp['lastAgo']) ?></span><?php endif; ?></div>
       <?= $bars($hp['bars'], 'violet') ?>
     </div>
     <?php endif; ?>

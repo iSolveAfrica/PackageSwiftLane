@@ -122,10 +122,7 @@ function sl_ovProfile($user, $userData, array $view): array
         $p['bars'] = sl_sparkBars(array_values($daily), 4, array_map(fn($d) => date('D j M', strtotime($d)), array_keys($daily)));
         $p['perDay'] = (int) round(array_sum($daily) / max(1, count(array_filter($daily))), 0);
         $p['todayVsAvg'] = $p['perDay'] > 0 ? (int) round(($p['today'] - $p['perDay']) / $p['perDay'] * 100) : null;
-        // where I stand among staff this week (by actions logged)
         $wk = date('Y-m-d', strtotime('monday this week'));
-        $p['team'] = (int) sl_scalar("SELECT COUNT(DISTINCT user_id) FROM cdb_activity_log WHERE created_at >= :w AND action <> 'page_view' AND user_id > 0", [':w' => $wk]);
-        if ($p['week'] > 0) $p['rank'] = 1 + (int) sl_scalar("SELECT COUNT(*) FROM (SELECT user_id FROM cdb_activity_log WHERE created_at >= :w AND action <> 'page_view' AND user_id > 0 GROUP BY user_id HAVING COUNT(*) > :n) x", [':w' => $wk, ':n' => $p['week']]);
         // busiest hour over 30 days
         $pk = sl_rows("SELECT HOUR(created_at) AS h, COUNT(*) AS n FROM cdb_activity_log WHERE user_id = :u AND created_at >= :f AND action <> 'page_view' GROUP BY HOUR(created_at) ORDER BY n DESC LIMIT 1", [':u' => $uid, ':f' => date('Y-m-d', strtotime('-29 days'))]);
         if ($pk) $p['peak'] = sprintf('%02d:00–%02d:00', (int) $pk[0]->h, ((int) $pk[0]->h + 1) % 24);

@@ -194,3 +194,7 @@ body{margin:0}.dk-desk{display:flex;flex-wrap:wrap;gap:20px;padding:20px}
 .sl-gh.is-zoomed .sl-gh__reg.on{display:none}
 .sl-gh__detail ul{max-height:340px;overflow-y:auto}
 .sl-gh__detail li span{white-space:normal;overflow-wrap:anywhere}
+/* The freight card owns the headline; daily comparison remains available on demand. */
+.sl-insights__comparison summary{cursor:pointer;display:flex;flex-direction:column;gap:5px;padding:4px 0;list-style:disclosure-closed}
+.sl-insights__comparison[open] summary{padding-bottom:18px;list-style:disclosure-open}
+.sl-insights__comparison-body{min-width:0}

@@ -274,5 +274,7 @@ function sl_overviewData($user, $core, $userData): array
             'href' => sl_route('FinancialOverview'), 'alert' => ''];
     }
     $d['freight'] = sl_ovFreight($user, $d['view']);
+    require_once __DIR__ . '/overview_layout.php';
+    $d = sl_overviewConsolidate($d);
     return $d;
 }

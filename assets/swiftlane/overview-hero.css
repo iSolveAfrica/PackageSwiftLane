@@ -170,3 +170,9 @@
   .ovh-name { font-size: 21px; }
   .ovh-sub { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* Explain every metric without clipping its unit or time period. */
+.ovh-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+.ovh-kl,.ovh-ku{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}
+.ovh-kind{grid-template-columns:minmax(100px,1fr) minmax(50px,1.2fr) auto}
+.ovh-kind>span:first-child{white-space:normal;overflow:visible}
