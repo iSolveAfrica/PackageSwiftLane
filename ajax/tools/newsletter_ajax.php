@@ -144,7 +144,76 @@ switch ($action) {
             $n = trim($r['fname'] . ' ' . $r['lname']);
             return $n !== '' ? $n . ' <' . $r['email'] . '>' : $r['email'];
         }, array_slice($list, 0, 5));
-        cdp_nlReply(['total' => count($list), 'sample' => $sample, 'invalid' => $parsed['invalid']]);
+        $people = array_map(fn($r) => ['id' => (int) $r['user_id'], 'name' => trim($r['fname'] . ' ' . $r['lname']), 'email' => $r['email']], array_slice($list, 0, 5));
+        // cost estimate from the e-mail rate set in Message Costs
+        require_once __DIR__ . '/../../helpers/message_cost.php';
+        $rate = function_exists('cdp_notifyCostPerMessage') ? (float) cdp_notifyCostPerMessage('email') : 0.0;
+        $cur = function_exists('cdp_notifyCostCurrency') ? (string) cdp_notifyCostCurrency() : '';
+        cdp_nlReply(['total' => count($list), 'sample' => $sample, 'people' => $people, 'invalid' => $parsed['invalid'],
+            'cost' => ['rate' => $rate, 'currency' => $cur, 'total' => round($rate * count($list), 4)]]);
+        break;
+
+    // ── Everyone in the audience, a page at a time, for the "See all" pop-up ─
+    case 'people':
+        $audience = (string) ($_POST['audience'] ?? '');
+        if (!isset(cdp_nlAudiences()[$audience])) {
+            cdp_nlFail(['Choose who receives the newsletter.']);
+        }
+        $list = cdp_nlRecipients($audience, (string) ($_POST['emails'] ?? ''));
+        $q = mb_strtolower(trim((string) ($_POST['q'] ?? '')));
+        if ($q !== '') {
+            $list = array_values(array_filter($list, fn($r) => str_contains(mb_strtolower($r['fname'] . ' ' . $r['lname'] . ' ' . $r['email']), $q)));
+        }
+        $page = max(1, (int) ($_POST['page'] ?? 1));
+        $per = 50;
+        $slice = array_slice($list, ($page - 1) * $per, $per);
+        $ids = array_filter(array_map(fn($r) => (int) $r['user_id'], $slice));
+        $extra = [];
+        if ($ids) {
+            $db = new Conexion;
+            $db->cdp_query('SELECT id, phone, locker, newsletter FROM cdb_users WHERE id IN (' . implode(',', $ids) . ')');
+            $db->cdp_execute();
+            foreach ((array) $db->cdp_registros() as $u) $extra[(int) $u->id] = $u;
+        }
+        global $user;
+        cdp_nlReply(['total' => count($list), 'page' => $page, 'per' => $per, 'canEdit' => $user->cdp_hasPermission(['edit_client', 'edit_user']),
+            'people' => array_map(function ($r) use ($extra) {
+                $x = $extra[(int) $r['user_id']] ?? null;
+                return ['id' => (int) $r['user_id'], 'fname' => $r['fname'], 'lname' => $r['lname'], 'email' => $r['email'], 'phone' => (string) ($x->phone ?? ''), 'locker' => (string) ($x->locker ?? ''), 'news' => $x ? (int) $x->newsletter : 1];
+            }, $slice)]);
+        break;
+
+    // ── Edit one person from the pop-up (name, e-mail, phone, newsletter opt-in) ─
+    case 'person_save':
+        global $user;
+        if (!$user->cdp_hasPermission(['edit_client', 'edit_user'])) {
+            cdp_nlFail(['You may not edit customers.']);
+        }
+        $id = (int) ($_POST['id'] ?? 0);
+        $email = strtolower(trim((string) ($_POST['email'] ?? '')));
+        if ($id <= 0 || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            cdp_nlFail(['Enter a valid e-mail address.']);
+        }
+        $db = new Conexion;
+        $db->cdp_query('SELECT id FROM cdb_users WHERE LOWER(email) = :e AND id <> :id LIMIT 1');
+        $db->bind(':e', $email);
+        $db->bind(':id', $id);
+        $db->cdp_execute();
+        if ((array) $db->cdp_registros()) {
+            cdp_nlFail(['Another account already uses that e-mail address.']);
+        }
+        $db->cdp_query('UPDATE cdb_users SET fname = :f, lname = :l, email = :e, phone = :p, newsletter = :n WHERE id = :id');
+        $db->bind(':f', mb_substr(trim(strip_tags((string) ($_POST['fname'] ?? ''))), 0, 100));
+        $db->bind(':l', mb_substr(trim(strip_tags((string) ($_POST['lname'] ?? ''))), 0, 100));
+        $db->bind(':e', $email);
+        $db->bind(':p', mb_substr(preg_replace('/[^0-9+ ]/', '', (string) ($_POST['phone'] ?? '')), 0, 32));
+        $db->bind(':n', !empty($_POST['news']) ? 1 : 0);
+        $db->bind(':id', $id);
+        $ok = $db->cdp_execute();
+        if ($ok && function_exists('cdp_activityLog')) {
+            cdp_activityLog(['module' => 'customers', 'verb' => 'update', 'action' => 'customers.edit', 'summary' => 'Edited contact details from the newsletter audience', 'entity_type' => 'user', 'entity_id' => $id]);
+        }
+        cdp_nlReply(['saved' => (bool) $ok], (bool) $ok);
         break;
 
     // ── Test send ──────────────────────────────────────────────────────────

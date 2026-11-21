@@ -82,6 +82,7 @@ function sl_navStaff(): array
             ['id' => 'pay', 'label' => 'Payment Gateways', 'icon' => 'card', 'board' => 'Payments', 'perm' => 'view_global_payments', 'finance' => true],
             ['id' => 'loyalty', 'label' => 'Loyalty & Referrals', 'icon' => 'star', 'board' => 'LoyaltyRewards', 'perm' => 'manage_loyalty'],
             ['id' => 'supporthub', 'label' => 'Customer Care', 'icon' => 'ticket', 'board' => 'SupportHub', 'perm' => 'cs:agent'],
+            ['id' => 'campaigns', 'label' => 'Campaigns', 'icon' => 'send', 'board' => 'Campaigns', 'perm' => ['view_message_logs', 'manage_newsletter', 'push_notifications']],
             ['id' => 'commshub', 'label' => 'Communications', 'icon' => 'message', 'board' => 'CommsHub', 'perm' => ['push_notifications', 'manage_newsletter', 'view_message_logs']],
             ['id' => 'commscenter', 'label' => 'Communication Center', 'icon' => 'send', 'board' => 'CommsCenter', 'perm' => 'ops:staff'],
             ['id' => 'commsinbox', 'label' => 'WhatsApp Inbox', 'icon' => 'message', 'board' => 'CommsInbox', 'perm' => 'ops:staff'],
@@ -99,6 +100,7 @@ function sl_navStaff(): array
                 'count' => fn() => sl_tableExists('cdb_dev_alerts') ? sl_navCount("SELECT COUNT(*) FROM cdb_dev_alerts WHERE status = 'active'") : 0],
             ['id' => 'devissues', 'label' => 'Issues & Change Log', 'icon' => 'bug', 'board' => 'DevIssues', 'perm' => 'view_developer',
                 'count' => fn() => sl_tableExists('cdb_dev_issues') ? sl_navCount("SELECT COUNT(*) FROM cdb_dev_issues WHERE status IN ('open','in_progress')") : 0],
+            ['id' => 'devbilling', 'label' => 'Message Costs', 'icon' => 'dollar', 'board' => 'DevBilling', 'perm' => ['view_developer', 'view_message_logs']],
             ['id' => 'devint', 'label' => 'Integrations', 'icon' => 'puzzle', 'board' => 'DevIntegrations', 'perm' => 'view_developer'],
         ]],
         ['label' => 'Support', 'items' => [

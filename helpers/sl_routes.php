@@ -128,6 +128,7 @@ function sl_routes(): array
         'EmailBuilder'          => 'newsletter.php',
         'MessageTemplates'      => 'templates_sms.php',
         'CommsHub'              => 'comms_hub.php',
+        'Campaigns'             => 'campaigns.php',
         'Automations'           => 'automations.php',
 
         // Customer service
