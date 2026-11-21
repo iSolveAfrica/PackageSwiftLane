@@ -216,7 +216,7 @@ function sl_airShipmentsData($user, $core): array
         if ((int) $r->is_dangerous_good) $badges[] = 'Dangerous goods';
         if ((int) $r->order_incomplete === 0 && !(int) $r->is_pickup) $badges[] = $client ? 'Awaiting acceptance' : 'Customer booking';
         $list[] = [
-            'id' => (int) $r->order_id, 'track' => $track, 'carrier' => $carriers[(int) $r->order_id]->tracking_number ?? '', 'date' => sl_date($r->order_datetime ?? null) ?: sl_date($r->order_date), 'time' => sl_date($r->order_datetime ?? null, 'H:i'),
+            'id' => (int) $r->order_id, 'track' => $track, 'carrier' => $carriers[(int) $r->order_id]->tracking_number ?? '', 'date' => sl_date($r->order_datetime ?? null) ?: sl_date($r->order_date), 'time' => sl_date($r->order_datetime ?? null, 'g:i A'),
             'eta' => cdp_getEffectiveEta((int) $r->order_id, $r->order_no, $r->order_deli_time ?? null, $r->is_consolidate),
             'sender' => sl_userName($s), 'from' => $s->locker ?? '', 'sender_id' => (int) $r->sender_id,
             'name' => $rc ? trim(($rc->fname ?? '') . ' ' . ($rc->lname ?? '')) : sl_userName($s) . ' (self)', 'ini' => sl_initials($rc ? ($rc->fname . ' ' . $rc->lname) : sl_userName($s)),
