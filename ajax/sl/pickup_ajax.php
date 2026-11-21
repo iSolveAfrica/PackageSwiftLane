@@ -151,6 +151,42 @@ switch ($op) {
         slk_log('assign_driver', $p, 'Driver #' . $drv . ' assigned to pickup ' . $p->order_prefix . $p->order_no);
         sl_json(['success' => true, 'message' => 'Driver assigned']);
         break;
+    // Home pickup lifecycle: requested (14) -> scheduled (1) -> collected from the home (15) -> received at
+    // the US warehouse (4, In warehouse). Riders mark "collected" in the Rider app (ajax/sl/rider_ajax.php);
+    // these two let the office record the same steps. The warehouse scanner treats 15 as closed, so a
+    // collected pickup is booked into the warehouse here.
+    case 'collected':
+        require_permission(['complete_pickup', 'dispatch_riders']);
+        if ($isClient) sl_json(['success' => false, 'message' => 'Not allowed'], 403);
+        $p = slk_pickup((int) ($_POST['id'] ?? 0));
+        if (!in_array((int) $p->status_courier, [1, 14], true)) sl_json(['success' => false, 'message' => 'Only a requested or scheduled pickup can be marked collected'], 409);
+        $from = mb_substr(trim(cdp_sanitize($_POST['person'] ?? '')), 0, 150);
+        if ($from === '') sl_json(['success' => false, 'message' => 'Who handed it over?', 'errors' => ['person' => 'Required']], 422);
+        $db = new Conexion;
+        $db->cdp_query('UPDATE cdb_add_order SET status_courier = 15, person_receives = :p WHERE order_id = :id');
+        $db->bind(':p', $from); $db->bind(':id', (int) $p->order_id); $db->cdp_execute();
+        cdp_insertCourierShipmentTrack(['user_id' => $uid, 'order_id' => (int) $p->order_id, 'order_track' => $p->order_prefix . $p->order_no, 't_date' => date('Y-m-d H:i:s'), 'status_courier' => 15, 'comments' => 'Collected from the customer\'s home · handed over by ' . $from, 'office' => (int) $p->origin_off]);
+        slk_log('collected', $p, 'Collected pickup ' . $p->order_prefix . $p->order_no . ' from ' . $from);
+        sl_json(['success' => true, 'message' => $p->order_prefix . $p->order_no . ' collected']);
+        break;
+    case 'received':
+        require_permission(['warehouse_receive', 'add_shipment']);
+        if ($isClient) sl_json(['success' => false, 'message' => 'Not allowed'], 403);
+        $p = slk_pickup((int) ($_POST['id'] ?? 0));
+        if (!in_array((int) $p->status_courier, [1, 14, 15], true)) sl_json(['success' => false, 'message' => 'This pickup is already past the warehouse'], 409);
+        $bay = mb_substr(strtoupper(trim(cdp_sanitize($_POST['bay'] ?? ''))), 0, 12);
+        $trk = $p->order_prefix . $p->order_no;
+        $db = new Conexion;
+        $db->cdp_query('UPDATE cdb_add_order SET status_courier = 4 WHERE order_id = :id'); $db->bind(':id', (int) $p->order_id); $db->cdp_execute();
+        if ($bay !== '' && sl_columnExists('cdb_add_order', 'warehouse_bay')) { $db->cdp_query('UPDATE cdb_add_order SET warehouse_bay = :b WHERE order_id = :id'); $db->bind(':b', $bay); $db->bind(':id', (int) $p->order_id); $db->cdp_execute(); }
+        cdp_insertCourierShipmentTrack(['user_id' => $uid, 'order_id' => (int) $p->order_id, 'order_track' => $trk, 't_date' => date('Y-m-d H:i:s'), 'status_courier' => 4, 'comments' => 'Received at the US warehouse from a home pickup' . ($bay ? ' · bay ' . $bay : ''), 'office' => (int) $p->origin_off]);
+        if (sl_tableExists('cdb_warehouse_scans')) {
+            $db->cdp_query('INSERT INTO cdb_warehouse_scans (module, order_id, tracking, action, bay, note, user_id, created_at) VALUES (\'air\', :o, :t, \'receive\', :b, \'home pickup\', :u, NOW())');
+            $db->bind(':o', (int) $p->order_id); $db->bind(':t', $trk); $db->bind(':b', $bay ?: null); $db->bind(':u', $uid); $db->cdp_execute();
+        }
+        slk_log('received', $p, 'Pickup ' . $trk . ' received at the US warehouse' . ($bay ? ' (bay ' . $bay . ')' : ''));
+        sl_json(['success' => true, 'message' => $trk . ' received at the warehouse']);
+        break;
     default:
         sl_json(['success' => false, 'message' => 'Unknown operation'], 422);
 }
