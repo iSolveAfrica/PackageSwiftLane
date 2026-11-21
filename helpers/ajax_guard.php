@@ -142,6 +142,14 @@ function require_permission($permission) {
     }
     $isStaffUp = cdp_roleRankById((int)$user->userlevel) >= 2;
     $shouldEnforce = ($mode === 'enforce') && $isStaffUp;
+    // Customers, drivers and agency users keep the soft pass ONLY for the customer-facing permission
+    // names their own screens still use (viewing/adding their own shipments, packages, pickups,
+    // recipients, pre-alerts). Anything else (settings, roles, payments, other people's accounts,
+    // deletes, reports) is refused for them in every mode except 'off', so a self-service account
+    // can never reach a staff endpoint. Those endpoints must still scope rows to the owner.
+    if (!$isStaffUp && !array_intersect($perms, cdp_ajaxCustomerFacingPerms())) {
+        $shouldEnforce = true;
+    }
 
     if (!$shouldEnforce) {
         error_log(sprintf(
@@ -203,3 +211,21 @@ function _ajax_guard_require_csrf() {
         _ajax_guard_send(419, ['success' => false, 'error' => 'Invalid CSRF token', 'message' => 'CSRF token missing or invalid']);
     }
 }
+
+/**
+ * Permission names that customer, driver and agency screens historically use for their OWN records.
+ * Only these are soft-allowed (audit-logged) for those roles by require_permission(); every other
+ * permission is enforced for them. Keep this list short and add a name only for an endpoint that
+ * scopes every row to the signed-in owner.
+ */
+function cdp_ajaxCustomerFacingPerms(): array
+{
+    return [
+        'view_shipment_list', 'view_package_list', 'view_pickup_list', 'track_shipment', 'print_label',
+        'add_shipment', 'courier_add_client', 'add_package', 'pickup_add', 'add_full_pickup', 'cancel_pickup',
+        'view_recipients', 'recipients_add', 'recipients_edit', 'delete_recipient',
+        'prealert_list', 'prealert_add', 'view_my_bills', 'view_dashboard',
+        'view_consolidate', 'view_consolidate_list', 'view_consolidate_package', 'view_consolidate_package_list',
+    ];
+}
+

@@ -79,15 +79,21 @@ if (CDP_APP_MODE_DEMO === true) {
             $file_tmp = $_FILES['document']['tmp_name'];
             $file_type = $_FILES['document']['type'];
 
-            // Verifica el tipo de archivo (ajusta esto según tus necesidades)
-            $allowed_types = ['image/jpeg', 'image/png', 'image/gif'];
-            if (!in_array($file_type, $allowed_types)) {
-                $response = array('success' => false, 'message' => 'File type not allowed. Upload a JPEG, PNG or GIF image.');
+            // The file must really be an image (the browser's type and the name are not trusted), and it
+            // is stored under a name we choose with the extension of the detected type, so nothing
+            // uploaded here can run as code or overwrite someone else's file.
+            $user_id = (int) ($_POST['id'] ?? 0);
+            $img = @getimagesize($file_tmp);
+            $exts = [IMAGETYPE_JPEG => 'jpg', IMAGETYPE_PNG => 'png', IMAGETYPE_GIF => 'gif', IMAGETYPE_WEBP => 'webp'];
+            require_once __DIR__ . '/../../helpers/rbac.php';
+            $isCustomer = cdp_roleRankById((int) $user->userlevel) < 2; // customers, drivers, agencies: own document only
+            if ($user_id <= 0 || ($isCustomer && $user_id !== (int) ($userData->id ?? 0))) {
+                $response = array('success' => false, 'message' => 'You can only change your own document.');
+            } elseif (!$img || !isset($exts[$img[2]])) {
+                $response = array('success' => false, 'message' => 'File type not allowed. Upload a JPEG, PNG, GIF or WEBP image.');
             } else {
-                // Genera un nombre único para el archivo
-                $user_id = $_POST['id']; // Ajusta según tu lógica de obtener el ID
                 $current_document = $_POST['current_document'] ?? '';
-                $file_name = $user_id . '_' . time() . '_' . $file_name;
+                $file_name = $user_id . '_' . time() . '_' . bin2hex(random_bytes(6)) . '.' . $exts[$img[2]];
 
                 // Ruta completa donde se guardará el archivo
                 $upload_path = $upload_dir . $file_name;
@@ -112,7 +118,7 @@ if (CDP_APP_MODE_DEMO === true) {
 
                 } else {
                     // Error al mover el archivo
-                    $response = array('success' => false, 'message' => 'Error uploading file. ' . error_get_last()['message']);
+                    $response = array('success' => false, 'message' => 'Error uploading file.');
                 }
             }
         } else {

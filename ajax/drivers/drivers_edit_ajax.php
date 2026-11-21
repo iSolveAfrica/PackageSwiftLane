@@ -25,11 +25,23 @@ require_once("../../loader.php");
 require_once("../../helpers/querys.php");
 require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_login();
-require_permission('view_dashboard');
+require_permission(['drivers_edit', 'edit_user']);
 
 $user = new User;
 $core = new Core;
 $errors = array();
+
+// Only staff who manage riders may change one, and only rider accounts they rank above
+// (this endpoint used to accept any user id: any account's password and e-mail could be changed).
+$riderTarget = cdp_getUserEdit4bozo((int) ($_POST['id'] ?? $_REQUEST['id'] ?? 0));
+$riderRow = ($riderTarget && $riderTarget['rowCount'] == 1) ? $riderTarget['data'] : null;
+require_once __DIR__ . '/../../helpers/rbac.php';
+if (!$riderRow || !((int) $riderRow->userlevel === 3 || (function_exists('cdp_roleHasFlag') && cdp_roleHasFlag((int) $riderRow->userlevel, 'is_driver')))
+    || (function_exists('cdp_canManageUser') && !cdp_canManageUser($user, (int) $riderRow->userlevel))) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'You can only change rider accounts you manage.']);
+    exit;
+}
 
 
 // Partial saves: a field left blank keeps the driver's stored value, so a

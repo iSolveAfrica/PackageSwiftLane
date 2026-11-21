@@ -130,7 +130,10 @@ if (!function_exists('cdp_trackingSearchSql')) {
     function cdp_trackingSearchSql($search, $alias = 'a')
     {
         $p = ($alias !== '') ? ($alias . '.') : '';
-        $s = $search;
+        $p = preg_match('/^[A-Za-z_][A-Za-z0-9_]*\.$|^$/', $p) ? $p : '';
+        // Callers paste this into SQL, so the term is reduced to what tracking numbers contain
+        // (letters, digits, space, - _ . / #). Quotes, backslashes and % can never reach the query.
+        $s = preg_replace('/[^A-Za-z0-9 _\-.\/#]/', '', (string) $search);
         return "("
             . "CONCAT({$p}order_prefix, {$p}order_no) LIKE '%{$s}%'"
             . " OR {$p}tracking_num LIKE '%{$s}%'"
@@ -241,7 +244,10 @@ function cdp_sanitize($string, $trim = false, $int = false, $str = false)
 	$string = trim($string);
 	$string = stripslashes($string);
 	$string = strip_tags($string);
-	$string = str_replace(array('‘', '’', '“', '”'), array("'", "'", '"', '"'), $string);
+	// Typographic quotes become the same encoded quotes htmlspecialchars() produced above. Turning them
+	// into raw ' or " here (after escaping) re-opened SQL injection in every list endpoint that
+	// concatenates the sanitised value into SQL.
+	$string = str_replace(array('‘', '’', '“', '”'), array('&#039;', '&#039;', '&quot;', '&quot;'), $string);
 
 	if ($trim)
 		$string = substr($string, 0, $trim);

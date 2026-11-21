@@ -21,6 +21,14 @@
 
 
 
+// Database backups are the whole customer database: only a signed-in administrator may download one
+// (the same rule as backup.php, which lists them).
+require_once(__DIR__ . "/loader.php");
+$user = new User();
+if (!$user->cdp_loginCheck() || !$user->cdp_is_Admin()) {
+ http_response_code(403);
+ exit('Not allowed.');
+}
 if (!isset($_GET['file']) || empty($_GET['file'])) {
  exit();
 }
@@ -42,9 +50,7 @@ if (is_file($path)) {
  $type = "application/force-download";
  }
  // Audit: a database backup leaving the server is worth a row of its own.
- require_once(__DIR__ . "/loader.php");
  require_once(__DIR__ . "/helpers/activity_log.php");
- new User(); // opens the session the actor is read from
  cdp_activityLog([
      'module'      => 'system',
      'verb'        => 'export',
