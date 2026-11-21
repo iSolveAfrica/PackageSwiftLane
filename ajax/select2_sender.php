@@ -63,7 +63,7 @@ $datas = $db->cdp_registros();
 
 foreach ($datas as $key) {
 
-	$data[] = array('id' => $key->id, 'text' => $key->fname . " " . $key->lname . " · " . implode(" · ", array_filter([$key->locker, $key->email, $key->phone])));
+	$data[] = array('id' => $key->id, 'text' => $key->fname . " " . $key->lname . " · " . implode(" · ", array_filter([$key->locker, $key->email, $key->phone])), 'name' => trim($key->fname . ' ' . $key->lname), 'phone' => (string) ($key->phone ?? ''), 'locker' => (string) ($key->locker ?? ''), 'email' => (string) ($key->email ?? ''));
 }
 
 echo json_encode($data);

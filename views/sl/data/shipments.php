@@ -239,6 +239,7 @@ function sl_airShipmentsData($user, $core): array
     $d['canLabel'] = $user->cdp_hasPermission('print_label');
     $d['canAdd'] = $client ? $user->cdp_hasPermission('courier_add_client') : $user->cdp_hasPermission('add_shipment');
     $d['canImport'] = !$client && $user->cdp_hasPermission('add_multiple_shipments');
+    $d['canExport'] = sl_userIs('admin') || sl_userIs('superadmin');
     return $d;
 }
 

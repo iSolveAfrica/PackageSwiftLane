@@ -68,7 +68,7 @@ foreach ($users as $row) {
     $sender_email = $row->email ?? '';
     $data[] = [
         'id' => $row->id,
-        'text' => $row->fname . " " . $row->lname . " · " . implode(" · ", array_filter([$row->email, $row->phone])),
+        'text' => $row->fname . " " . $row->lname . " · " . implode(" · ", array_filter([$row->email, $row->phone])), 'name' => trim($row->fname . ' ' . $row->lname), 'phone' => (string) ($row->phone ?? ''), 'locker' => (string) ($row->locker ?? ''), 'email' => (string) ($row->email ?? ''),
         'type' => 'user'
     ];
 }
@@ -109,7 +109,7 @@ $recipients = $db->cdp_registros();
 foreach ($recipients as $row) {
     $data[] = [
         'id' => $row->id,
-        'text' => $row->fname . " " . $row->lname . " · " . implode(" · ", array_filter([$row->email, $row->phone])),
+        'text' => $row->fname . " " . $row->lname . " · " . implode(" · ", array_filter([$row->email, $row->phone])), 'name' => trim($row->fname . ' ' . $row->lname), 'phone' => (string) ($row->phone ?? ''), 'locker' => (string) ($row->locker ?? ''), 'email' => (string) ($row->email ?? ''),
         'type' => 'recipient'
     ];
 }

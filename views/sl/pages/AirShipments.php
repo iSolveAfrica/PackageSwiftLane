@@ -8,7 +8,7 @@ $client = !empty($d['client']);
 ?>
         <div class="sl-head">
           <div><h1 class="sl-title"><?= $client ? 'My Shipments' : 'Air Shipments' ?></h1><p class="sl-lede row g8" style="align-items:center"><span class="chan v"><i class="ic ic-sm i-spark" aria-hidden="true"></i></span><span><b class="fw5">Insight</b> · <?= sl_num($d['month']) ?> registered this month<?php if ($d['attention']): ?> · <?= (int) $d['attention'] ?> need attention: <?php $bits = []; if ($d['customs']) $bits[] = '<a href="' . h(sl_url(['filter' => 'customs', 'page' => null])) . '">' . (int) $d['customs'] . ' held / at customs</a>'; if ($d['unpaid']) $bits[] = '<a href="' . h(sl_url(['filter' => 'unpaid', 'page' => null])) . '">' . (int) $d['unpaid'] . ' unpaid</a>'; if ($d['noCarrier']) $bits[] = '<a href="' . h(sl_url(['filter' => 'nocarrier', 'page' => null])) . '">' . (int) $d['noCarrier'] . ' missing a carrier number</a>'; echo implode(', ', $bits); ?><?php else: ?> · nothing needs attention<?php endif; ?></span></p></div>
-          <div class="row g8 wrap"><?php if (!$client): ?><a class="sl-btn ghost" href="<?= sl_route('SeaPackages') ?>"><i class="ic ic-sm i-layers" aria-hidden="true"></i>Package management</a><a class="sl-btn ghost" href="<?= sl_route('StaffAI', ['q' => 'Which air shipments need attention today?']) ?>"><i class="ic ic-sm i-spark" aria-hidden="true"></i>Ask AI</a><?php endif; ?><?php if ($d['canImport']): ?><a class="sl-btn ghost" href="<?= sl_route('ImportData') ?>"><i class="ic ic-sm i-upload" aria-hidden="true"></i>Import Excel</a><?php endif; ?><a class="sl-btn ghost" href="<?= h(sl_url(['export' => 'csv'])) ?>"><i class="ic ic-sm i-download" aria-hidden="true"></i>Export</a><?php if ($d['canAdd']): ?><a class="sl-btn" href="<?= $client ? 'courier_add_client.php' : sl_route('NewShipment') ?>">New Shipment</a><?php endif; ?></div>
+          <div class="row g8 wrap"><?php if (!$client): ?><a class="sl-btn ghost" href="<?= sl_route('SeaPackages') ?>"><i class="ic ic-sm i-layers" aria-hidden="true"></i>Package management</a><button type="button" class="sl-btn ghost" data-sl-open="as-ai"><i class="ic ic-sm i-spark" aria-hidden="true"></i>Ask AI</button><?php endif; ?><?php if ($d['canExport']): ?><button type="button" class="sl-btn ghost" data-sl-open="as-export"><i class="ic ic-sm i-download" aria-hidden="true"></i>Export</button><?php endif; ?><?php if ($d['canAdd']): ?><a class="sl-btn" href="<?= $client ? 'courier_add_client.php' : sl_route('NewShipment') ?>">New Shipment</a><?php endif; ?></div>
         </div>
 
         <div class="grid cols4">
@@ -77,8 +77,55 @@ $client = !empty($d['client']);
   <div class="row g8"><button type="submit" class="sl-btn">Update</button><button type="button" class="sl-btn ghost" data-sl-close>Cancel</button></div>
 </form></div>
 <?php endif; ?>
+<?php if (!$client): ?>
+<div class="sl-dialog" id="as-ai" hidden><div class="sl-modal as-ai-modal" role="dialog" aria-label="Ask AI about air shipments">
+  <div class="row g10"><span class="sl-tile"><i class="ic i-spark" aria-hidden="true"></i></span><div class="col grow"><b class="fw5">Ask AI about air shipments</b><span class="mut sm">Ask about tracking numbers, status, payments, customs holds or senders. It can look into other areas for more detail.</span></div><button type="button" class="sl-ib" data-sl-close aria-label="Close"><i class="ic ic-sm i-x" aria-hidden="true"></i></button></div>
+  <div class="as-ai-log" id="as-ai-log" aria-live="polite"><div class="as-ai-msg bot">Hi. Ask me anything about air shipments, for example: “Which packages are unpaid this week?” or “Where is tracking number …?”</div></div>
+  <form id="as-ai-form" class="row g8" autocomplete="off"><input class="sl-in grow" name="q" placeholder="Type your question" aria-label="Your question" required><button type="submit" class="sl-btn">Ask</button></form>
+</div></div>
+<div class="sl-dialog" id="as-export" hidden><form class="sl-modal" id="as-export-form" method="get" action="<?= h(sl_self()) ?>" role="dialog" aria-label="Export shipments">
+  <input type="hidden" name="export" value="csv">
+  <div class="row g10"><span class="sl-tile"><i class="ic i-download" aria-hidden="true"></i></span><div class="col grow"><b class="fw5">Export shipments</b><span class="mut sm">Choose what to include. Up to 100 matching shipments are exported as a CSV file.</span></div></div>
+  <div class="grid cols2">
+    <label class="sl-field"><span class="sl-lab">Period</span><span class="sl-sel native"><select name="period"><?php foreach ([['all', 'All time'], ['30d', 'Last 30 days'], ['7d', 'Last 7 days'], ['today', 'Today']] as $p): ?><option value="<?= h($p[0]) ?>" <?= $p[0] === $d['period'] ? 'selected' : '' ?>><?= h($p[1]) ?></option><?php endforeach; ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></span></label>
+    <label class="sl-field"><span class="sl-lab">Status</span><span class="sl-sel native"><select name="status"><option value="">All statuses</option><?php foreach ($d['statuses'] as $s): ?><option value="<?= (int) $s->id ?>" <?= (int) $s->id === $d['status'] ? 'selected' : '' ?>><?= h(str_replace('_', ' ', $s->mod_style)) ?></option><?php endforeach; ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></span></label>
+    <label class="sl-field"><span class="sl-lab">Show</span><span class="sl-sel native"><select name="filter"><?php foreach ($d['filters'] as $x): ?><option value="<?= h($x['f']) ?>" <?= $x['f'] === $d['filter'] ? 'selected' : '' ?>><?= h($x['label']) ?></option><?php endforeach; ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></span></label>
+    <label class="sl-field"><span class="sl-lab">Rider</span><span class="sl-sel native"><select name="driver"><option value="">All riders</option><?php foreach ($d['drivers'] as $dr): ?><option value="<?= (int) $dr->id ?>" <?= (int) $dr->id === $d['driver'] ? 'selected' : '' ?>><?= h(trim($dr->fname . ' ' . $dr->lname)) ?></option><?php endforeach; ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></span></label>
+    <label class="sl-field" style="grid-column: 1 / -1"><span class="sl-lab">Search</span><input class="sl-in" name="q" value="<?= h($d['q']) ?>" placeholder="Tracking, recipient or sender"></label>
+  </div>
+  <div class="row g8"><button type="submit" class="sl-btn"><i class="ic ic-sm i-download" aria-hidden="true"></i>Export CSV</button><button type="button" class="sl-btn ghost" data-sl-close>Cancel</button></div>
+</form></div>
+<?php endif; ?>
 <script>
 (function () {
+  // Ask AI pop-up: stays on this page, scoped to air shipments.
+  var aiForm = document.getElementById('as-ai-form');
+  if (aiForm) {
+    var aiLog = document.getElementById('as-ai-log'), aiConv = 0, aiBusy = false;
+    var addMsg = function (who, text) { var b = document.createElement('div'); b.className = 'as-ai-msg ' + who; b.textContent = text; aiLog.appendChild(b); aiLog.scrollTop = aiLog.scrollHeight; return b; };
+    aiForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var q = aiForm.elements.q.value.trim();
+      if (!q || aiBusy) return;
+      aiBusy = true; aiForm.elements.q.value = '';
+      addMsg('you', q);
+      var pending = addMsg('bot', 'Looking that up…');
+      var fd = new FormData();
+      fd.append('action', 'send'); fd.append('message', q); fd.append('scope', 'air_shipments');
+      if (aiConv) fd.append('conversation_id', String(aiConv));
+      fetch('ajax/ai_assistant/chat_ajax.php', { method: 'POST', body: fd, credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          if (j.conversation_id) aiConv = j.conversation_id;
+          if (j.ok) { pending.textContent = j.answer; } else { pending.textContent = j.error || 'The assistant could not answer.'; pending.classList.add('bad'); }
+        })
+        .catch(function () { pending.textContent = 'Network error. Please try again.'; pending.classList.add('bad'); })
+        .finally(function () { aiBusy = false; aiLog.scrollTop = aiLog.scrollHeight; });
+    });
+  }
+  var exForm = document.getElementById('as-export-form');
+  if (exForm) exForm.addEventListener('submit', function () { setTimeout(function () { document.getElementById('as-export').hidden = true; }, 50); });
+
   var picks = function () { return Array.prototype.slice.call(document.querySelectorAll('[data-as-pick]:checked')); };
   var bulk = document.getElementById('as-bulk');
   function sync() {

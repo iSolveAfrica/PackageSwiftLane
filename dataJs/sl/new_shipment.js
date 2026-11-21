@@ -10,6 +10,8 @@
   var $ = function (s) { return f.querySelector(s); };
   var num = function (v) { v = parseFloat(String(v || '').replace(/[^0-9.\-]/g, '')); return isFinite(v) ? v : 0; };
   var money = function (v) { return (R.currency === 'USD' ? '$' : R.currency + ' ') + v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); };
+  var el = function (tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined && text !== null) e.textContent = text; return e; };
+  var trim = function (v) { return String(v || '').trim(); };
 
   function fill(sel, rows, empty, keep) {
     var cur = keep ? sel.value : '';
@@ -21,81 +23,172 @@
   }
   var get = function (u) { return fetch(u, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } }).then(function (r) { return r.json(); }).catch(function () { return []; }); };
 
-  // ---- sender search (locker, name, phone, e-mail) ----
+  // ---- person rows: name, phone and locker ID side by side ----
+  function personCells(p) {
+    return [
+      el('span', 'ns-p-name', p.name || p.text || 'Unnamed'),
+      el('span', 'ns-p-phone mono', p.phone || '—'),
+      el('span', 'ns-p-locker mono', p.locker || '—')
+    ];
+  }
+  function personHead() {
+    var h = el('div', 'ns-person ns-person-head');
+    ['Name', 'Phone', 'Locker ID'].forEach(function (t) { h.appendChild(el('span', '', t)); });
+    return h;
+  }
+  function personButton(p, onPick) {
+    var b = el('button', 'ns-person-btn'); b.type = 'button';
+    personCells(p).forEach(function (c) { b.appendChild(c); });
+    b.addEventListener('click', function () { onPick(p); });
+    return b;
+  }
+  function personRow(p) { var d = el('div', 'ns-person'); personCells(p).forEach(function (c) { d.appendChild(c); }); return d; }
+  function renderResults(box, rows, onPick, emptyText) {
+    box.replaceChildren();
+    if (!rows.length) { box.hidden = false; box.appendChild(el('p', 'sm mut', emptyText)); return; }
+    box.hidden = false;
+    box.appendChild(personHead());
+    rows.forEach(function (p) { box.appendChild(personButton(p, onPick)); });
+  }
+
+  // ---- sender and recipient ----
   var sSel = $('[data-ns-sender]'), saSel = $('[data-ns-saddr]'), rSel = $('[data-ns-recip]'), raSel = $('[data-ns-raddr]');
-  var senderSummary = $('[data-ns-sender-summary]');
-  function showSender() {
-    if (!senderSummary || !sSel || !sSel.value) return;
-    senderSummary.hidden = false;
-    senderSummary.textContent = (sSel.selectedOptions[0]?.textContent || 'Sender') + ' · ' + (saSel.selectedOptions[0]?.textContent || 'No address on file');
-    $('[data-ns-change-sender]').hidden = false;
+  var findInput = $('[data-ns-find]'), findBtn = $('[data-ns-findbtn]'), senderResults = $('[data-ns-results]');
+  var searchBlock = $('[data-ns-search]'), senderFields = $('[data-ns-sender-fields]'), senderSummary = $('[data-ns-sender-summary]'), changeSender = $('[data-ns-change-sender]');
+  var recipPanel = $('[data-ns-recipient-panel]'), recipResults = $('[data-ns-rec-results]'), recipEmpty = $('[data-ns-rec-empty]');
+  var recipFields = $('[data-ns-recipient-fields]'), recipSummary = $('[data-ns-recipient-summary]'), changeRecip = $('[data-ns-change-recip]');
+  var senderInfo = null, recipInfo = null, recipRows = [];
+
+  function renderSenderSummary() {
+    if (!senderSummary || !senderInfo) return;
+    senderSummary.replaceChildren(personRow(senderInfo));
+    var addr = saSel && saSel.selectedOptions[0] ? saSel.selectedOptions[0].textContent : '';
+    senderSummary.appendChild(el('div', 'ns-p-addr sm mut', addr || 'No address on file yet'));
+  }
+  function showSender() { renderSenderSummary(); quote(); }
+
+  function pickSender(p) {
+    senderInfo = p;
+    fill(sSel, [{ id: p.id, text: p.text }], null, false);
+    sSel.value = String(p.id);
+    senderResults.hidden = true;
+    searchBlock.hidden = true;
+    senderFields.hidden = false;
+    recipPanel.hidden = false;
+    sSel.dispatchEvent(new Event('change'));
   }
   function findSender() {
-    var q = ($('[data-ns-find]') || {}).value || '';
-    if (q.trim().length < 2) { SL.toast('Type at least 2 characters', true); return; }
-    var requested = q.trim();
-    get('ajax/select2_sender.php?q=' + encodeURIComponent(requested)).then(function (rows) {
-      if ($('[data-ns-find]').value.trim() !== requested) return;
-      rows = Array.isArray(rows) ? rows : [];
-      var results = $('[data-ns-results]'); results.replaceChildren(); results.hidden = false;
-      if (!rows.length) results.textContent = 'No customer matches';
-      rows.forEach(function (row) {
-        var button = document.createElement('button'); button.type = 'button'; button.className = 'sl-btn ghost';
-        button.textContent = row.text;
-        button.addEventListener('click', function () {
-          fill(sSel, [row], null, false); results.hidden = true;
-          sSel.dispatchEvent(new Event('change'));
-        }); results.appendChild(button);
-      });
+    var q = trim(findInput && findInput.value);
+    if (q.length < 2) { SL.toast('Type at least 2 characters', true); return; }
+    get('ajax/select2_sender.php?q=' + encodeURIComponent(q)).then(function (rows) {
+      if (trim(findInput.value) !== q) return;
+      renderResults(senderResults, Array.isArray(rows) ? rows : [], pickSender, 'No customer matches');
     });
   }
-  if (!client) {
-    $('[data-ns-findbtn]').addEventListener('click', findSender);
-    $('[data-ns-find]').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); findSender(); } });
-  }
-  function senderId() { return client ? $('[name="sender_id"]').value : sSel.value; }
   function loadSender() {
-    var id = senderId();
+    var id = client ? $('[name="sender_id"]').value : (sSel && sSel.value);
     if (!id) return;
-    $('[data-ns-recipient-panel]').hidden = false;
+    recipPanel.hidden = false;
     if (!client) {
-
-      get('ajax/select2_sender_addresses.php?id=' + encodeURIComponent(id)).then(function (rows) { fill(saSel, (rows || []).map(function (a) { return { id: a.id, text: [a.text, a.city, a.country].filter(Boolean).join(', ') }; }), rows && rows.length ? null : 'This customer has no address', false); showSender(); quote(); });
+      get('ajax/select2_sender_addresses.php?id=' + encodeURIComponent(id)).then(function (rows) {
+        fill(saSel, (rows || []).map(function (a) { return { id: a.id, text: [a.text, a.city, a.country].filter(Boolean).join(', ') }; }), rows && rows.length ? null : 'This customer has no address', false);
+        showSender();
+      });
     }
     get('ajax/select2_recipient.php?id=' + encodeURIComponent(id) + '&q=').then(function (rows) {
-      rows = (rows || []).map(function (r) { return { id: r.id, text: r.text + (r.type === 'user' ? ' (sender)' : ''), type: r.type || 'recipient' }; });
-      fill(rSel, rows, rows.length ? null : 'No recipient', false);
-      rSel.dispatchEvent(new Event('change'));
+      recipRows = (rows || []).map(function (r) { return { id: r.id, text: r.text, name: r.name, phone: r.phone, locker: r.locker, type: r.type || 'recipient' }; });
+      recipFields.hidden = true;
+      recipSummary.replaceChildren();
+      renderResults(recipResults, recipRows, pickRecipient, '');
+      recipEmpty.hidden = recipRows.length > 0;
+      recipResults.hidden = recipRows.length === 0;
     });
   }
-  if (sSel) sSel.addEventListener('change', loadSender);
+  function pickRecipient(p) {
+    recipInfo = p;
+    fill(rSel, [{ id: p.id, text: p.text, type: p.type }], null, false);
+    rSel.value = String(p.id);
+    recipResults.hidden = true;
+    recipEmpty.hidden = true;
+    recipFields.hidden = false;
+    rSel.dispatchEvent(new Event('change'));
+  }
+
+  if (!client) {
+    findBtn.addEventListener('click', findSender);
+    findInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); findSender(); } });
+    var findTimer;
+    findInput.addEventListener('input', function () { clearTimeout(findTimer); if (trim(this.value).length >= 2) findTimer = setTimeout(findSender, 350); });
+    changeSender.addEventListener('click', function () {
+      senderFields.hidden = true; recipPanel.hidden = true; recipFields.hidden = true; recipInfo = null;
+      searchBlock.hidden = false; senderResults.hidden = true; findInput.focus(); findInput.select();
+    });
+    if (findInput.value) findSender();
+  }
   if (saSel) saSel.addEventListener('change', showSender);
-  if ($('[data-ns-change-sender]')) $('[data-ns-change-sender]').addEventListener('click', function () { $('[data-ns-sender-fields]').hidden = false; sSel.focus(); });
+  changeRecip.addEventListener('click', function () {
+    recipFields.hidden = true; recipInfo = null;
+    renderResults(recipResults, recipRows, pickRecipient, '');
+    recipResults.hidden = recipRows.length === 0;
+  });
   rSel.addEventListener('change', function () {
     var o = rSel.options[rSel.selectedIndex]; var type = o ? (o.getAttribute('data-type') || 'recipient') : 'recipient';
     $('[data-ns-rtype]').value = type;
     if (!rSel.value) { fill(raSel, [], 'Pick the recipient first'); return; }
     get('ajax/select2_recipient_addresses.php?id=' + encodeURIComponent(rSel.value) + '&type=' + type).then(function (rows) {
       fill(raSel, (rows || []).map(function (a) { return { id: a.id, text: [a.text, a.city, a.country].filter(Boolean).join(', ') }; }), rows && rows.length ? null : 'No address on file', false);
-      $('[data-ns-recipient-summary]').textContent = (rSel.selectedOptions[0]?.textContent || '') + ' · ' + (raSel.selectedOptions[0]?.textContent || 'No address on file');
+      recipSummary.replaceChildren();
+      if (recipInfo) recipSummary.appendChild(personRow(recipInfo));
+      var addr = raSel.selectedOptions[0] ? raSel.selectedOptions[0].textContent : '';
+      recipSummary.appendChild(el('div', 'ns-p-addr sm mut', addr || 'No address on file yet'));
       quote();
     });
   });
-  if (client || (sSel && sSel.value)) loadSender();
-  else if ($('[data-ns-find]') && $('[data-ns-find]').value) findSender();
-  if (!client) { var findTimer; $('[data-ns-find]').addEventListener('input', function () { clearTimeout(findTimer); if (this.value.trim().length >= 2) findTimer = setTimeout(findSender, 350); }); }
+  if (sSel) sSel.addEventListener('change', loadSender);
+  if (client) loadSender();
+  else if (sSel && sSel.value) { senderInfo = { id: sSel.value, name: sSel.selectedOptions[0] ? sSel.selectedOptions[0].textContent : 'Sender', text: sSel.selectedOptions[0] ? sSel.selectedOptions[0].textContent : '' }; senderFields.hidden = false; searchBlock.hidden = true; renderSenderSummary(); loadSender(); }
 
-  var country = $('[data-ns-country]'), prefix = $('[name="code_prefix"]');
+  // ---- shipment number and country ----
+  var country = $('[data-ns-country]'), prefix = $('[name="code_prefix"]'), tag = $('[data-ns-country-tag]');
+  var setTag = function () { if (!tag) return; var v = country ? country.value : ''; tag.hidden = !v; tag.textContent = v ? 'Number country: ' + country.options[country.selectedIndex].textContent : ''; };
   if (country) {
-    $('[data-ns-number-change]').addEventListener('click', function () { var panel = $('.ns-number-edit'); panel.hidden = !panel.hidden; if (!panel.hidden) country.focus(); });
-    country.addEventListener('change', function () { prefix.value = this.value ? f.dataset.prefix + this.value.toUpperCase() + '-' : f.dataset.prefix; $('[data-ns-prefix]').textContent = prefix.value; });
+    var numBtn = $('[data-ns-number-change]');
+    numBtn.addEventListener('click', function () {
+      var panel = $('.ns-number-edit'); panel.hidden = !panel.hidden;
+      numBtn.setAttribute('aria-expanded', String(!panel.hidden));
+      if (!panel.hidden) country.focus();
+    });
+    country.addEventListener('change', function () {
+      prefix.value = this.value ? f.dataset.prefix + this.value.toUpperCase() + '-' : f.dataset.prefix;
+      $('[data-ns-prefix]').textContent = prefix.value;
+      setTag();
+    });
   }
   if ($('[data-ns-edit-rate]')) $('[data-ns-edit-rate]').addEventListener('click', function () { var rate = $('[name="price_lb"]'); rate.readOnly = false; rate.focus(); rate.select(); });
-  var tracking = $('[name="tracking_number"]'), trackingTimer, trackingVersion = 0, detectedTracking = null;
+
+  // ---- tracking numbers: each one is kept with Enter (or a scan) ----
+  var trackInput = $('[data-ns-track-input]'), trackValue = $('[data-ns-track-value]'), trackChips = $('[data-ns-track-chips]');
+  var tracks = trim(trackValue.value).split(/\r?\n/).map(trim).filter(Boolean);
+  var trackingTimer, detectedTracking = null, trackingVersion = 0;
+  function renderTracks() {
+    trackChips.replaceChildren();
+    tracks.forEach(function (t, i) {
+      var chip = el('span', 'ns-tchip mono', t);
+      var x = el('button', 'ns-tchip-x', '×'); x.type = 'button'; x.setAttribute('aria-label', 'Remove ' + t);
+      x.addEventListener('click', function () { tracks.splice(i, 1); renderTracks(); detectPrealert(); });
+      chip.appendChild(x); trackChips.appendChild(chip);
+    });
+    trackValue.value = tracks.join('\n');
+  }
+  function addTracks(text) {
+    String(text).split(/[\r\n,;]+/).map(trim).filter(Boolean).forEach(function (v) { if (tracks.indexOf(v) < 0) tracks.push(v); });
+    renderTracks();
+  }
+  function flushTrack() { if (trim(trackInput.value)) { addTracks(trackInput.value); trackInput.value = ''; } }
   function detectPrealert() {
-    if (tracking.value === detectedTracking) return Promise.resolve();
-    var scannedValue = tracking.value;
-    var values = tracking.value.split(/[\r\n,;]+/).map(function (v) { return v.trim(); }).filter(Boolean);
+    if (trackValue.value === detectedTracking) return Promise.resolve();
+    var scannedValue = trackValue.value;
+    var values = tracks.slice();
     var version = ++trackingVersion;
     return Promise.all(values.map(function (value) { return get('ajax/sl/shipment_prealert_ajax.php?tracking=' + encodeURIComponent(value)); })).then(function (matches) {
       if (version !== trackingVersion) return;
@@ -110,9 +203,10 @@
       if (!p) return;
       note.textContent = 'Pre-alert linked: ' + p.tracking;
       if (!client) {
-        sSel.replaceChildren(new Option(p.customer || p.locker || 'Sender', String(p.customer_id), true, true));
-        $('[data-ns-find]').value = p.locker || p.customer || '';
-        $('[data-ns-results]').hidden = true;
+        senderInfo = { id: p.customer_id, name: p.customer || p.locker || 'Sender', locker: p.locker || '', phone: '', text: p.customer || '' };
+        sSel.replaceChildren(new Option(senderInfo.name, String(p.customer_id), true, true));
+        findInput.value = p.locker || p.customer || '';
+        searchBlock.hidden = true; senderResults.hidden = true; senderFields.hidden = false; recipPanel.hidden = false;
         sSel.dispatchEvent(new Event('change'));
       }
       if (p.courier_id) $('[name="order_courier"]').value = String(p.courier_id);
@@ -121,9 +215,22 @@
       quote();
     });
   }
-  tracking.addEventListener('input', function () { clearTimeout(trackingTimer); trackingVersion++; trackingTimer = setTimeout(detectPrealert, 300); });
-  tracking.addEventListener('change', detectPrealert);
-  tracking.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); detectPrealert(); } });
+  renderTracks();
+  trackInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); if (trim(trackInput.value)) { flushTrack(); detectPrealert(); } }
+    else if (e.key === 'Backspace' && !trackInput.value && tracks.length) { tracks.pop(); renderTracks(); }
+  });
+  trackInput.addEventListener('paste', function () { setTimeout(function () { if (/[\r\n,;]/.test(trackInput.value)) { flushTrack(); detectPrealert(); } }, 0); });
+  trackInput.addEventListener('change', function () { if (trim(trackInput.value)) { flushTrack(); detectPrealert(); } });
+  trackInput.addEventListener('input', function () { clearTimeout(trackingTimer); trackingTimer = setTimeout(function () { if (/[\r\n,;]/.test(trackInput.value)) { flushTrack(); detectPrealert(); } }, 250); });
+  $('[data-ns-track-box]').addEventListener('click', function (e) { if (e.target === this) trackInput.focus(); });
+  if (tracks.length) detectPrealert();
+
+  // ---- dangerous goods ----
+  var dangerBox = $('[data-ns-danger-box]'), dangerCb = $('[data-ns-danger]');
+  var paintDanger = function () { dangerBox.classList.toggle('on', dangerCb.checked); };
+  dangerCb.addEventListener('change', paintDanger);
+  paintDanger();
 
   // ---- items ----
   var tb = $('[data-ns-items]');
@@ -138,14 +245,13 @@
     }).filter(function (p) { return p.description !== '' || p.weight > 0 || p.custom_price > 0; });
   }
 
-  // ---- toggles and chips ----
+  // ---- notification chips ----
   f.addEventListener('change', function (e) { if (e.target.matches('[data-ns-chip]')) e.target.closest('.nt-ch').classList.toggle('on', e.target.checked); });
   var dtype = $('[data-ns-dtype]');
   if (dtype) dtype.addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; dtype.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); }); $('[name="discount_type"]').value = b.getAttribute('data-v'); quote(); });
   f.querySelectorAll('[data-ns-files]').forEach(function (inp) { inp.addEventListener('change', function () { var n = 0; f.querySelectorAll('[data-ns-files]').forEach(function (x) { n += x.files.length; }); $('[data-ns-fname]').textContent = n ? n + ' file(s) attached' : 'Invoices, receipts, up to 10 MB each'; }); });
 
   // ---- quote (mirrors ajax/courier/add_courier_ajax.php) ----
-  var qt;
   function quote() {
     var p = items(), w = 0, base = 0, decl = 0, pcs = 0, priceLb = num(($('[name="price_lb"]') || {}).value) || R.price_lb;
     p.forEach(function (i) { pcs += i.qty; w += i.weight * i.qty; decl += i.declared_value * i.qty; base += i.use_custom_price ? i.custom_price * i.qty : i.weight * i.qty * priceLb; });
@@ -161,7 +267,7 @@
     var ins = num(($('[name="insured_value"]') || {}).value) > 0 ? (R.insurance_mode === 'fixed' ? num(R.insurance_fixed) : num($('[name="insured_value"]').value) * R.insurance / 100) : 0;
     var re = num(($('[name="reexpedicion_value"]') || {}).value);
     var total = Math.round(((freight - disc) + ins + re) * 100) / 100;
-    var set = function (k, v) { var el = f.querySelector('[data-q="' + k + '"]'); if (el) el.textContent = v; };
+    var set = function (k, v) { var el2 = f.querySelector('[data-q="' + k + '"]'); if (el2) el2.textContent = v; };
     set('w', w.toFixed(2) + ' ' + R.weight); set('rate', money(rate)); set('freight', money(freight)); set('decl', money(decl)); set('ins', money(ins)); set('total', money(total));
     if (R.rate > 0) set('ghs', '₵' + (total * R.rate).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','));
     set('note', 'Final price is confirmed on save' + (client ? ' and when the parcel is weighed' : '') + '.');
@@ -174,12 +280,12 @@
   var sd = $('[data-ns-savedef]'), ed = f.querySelector('[data-ns-edit]');
   function saveDefaults() {
     var keys = ['order_courier', 'status_courier'], prefs = {};
-    keys.forEach(function (k) { var el = $('[name="' + k + '"]'); if (el && el.value) prefs[k] = el.value; });
+    keys.forEach(function (k) { var el2 = $('[name="' + k + '"]'); if (el2 && el2.value) prefs[k] = el2.value; });
     prefs.notify_whatsapp_sender = $('[name="notify_whatsapp_sender"]').checked ? 1 : 0; prefs.notify_sms_receiver = $('[name="notify_sms_receiver"]').checked ? 1 : 0;
     SL.post('ajax/sl/shipment_action_ajax.php', { op: 'prefs', prefs: JSON.stringify(prefs) }).then(function (j) { SL.toast(j.message || 'Saved', !j.success); var s = f.querySelector('[data-ns-saved]'); if (s && j.success) s.style.display = ''; });
   }
   if (sd) sd.addEventListener('click', saveDefaults);
-  if (ed) ed.addEventListener('click', function () { var t = $('[name="status_courier"]'); if (t) { t.scrollIntoView({ behavior: 'smooth', block: 'center' }); t.focus(); } SL.toast('Adjust your defaults here, then use the settings icon to save them.'); });
+  if (ed) ed.addEventListener('click', function () { var t = $('[name="status_courier"]'); if (t) { t.scrollIntoView({ behavior: 'smooth', block: 'center' }); t.focus(); } });
 
   // ---- submit to the legacy endpoint ----
   var next = false;
@@ -187,18 +293,19 @@
   f.addEventListener('submit', async function (e) {
     e.preventDefault();
     clearTimeout(trackingTimer);
+    flushTrack();
     await detectPrealert();
     quote();
     f.querySelectorAll('.sl-err').forEach(function (x) { x.remove(); });
     f.querySelectorAll('.is-invalid').forEach(function (x) { x.classList.remove('is-invalid'); });
     var miss = [];
-    ['sender_id', 'sender_address_id', 'recipient_id', 'recipient_address_id'].forEach(function (k) { var el = $('[name="' + k + '"]'); if (el && !el.value) { miss.push(k); (el.closest('.sl-sel') || el).classList.add('is-invalid'); } });
+    ['sender_id', 'sender_address_id', 'recipient_id', 'recipient_address_id'].forEach(function (k) { var el2 = $('[name="' + k + '"]'); if (el2 && !el2.value) { miss.push(k); (el2.closest('.sl-sel') || el2).classList.add('is-invalid'); } });
     if (!items().length) miss.push('items');
     if (miss.length) { SL.toast(miss.indexOf('items') >= 0 && miss.length === 1 ? 'Add at least one item' : 'Fill in the sender, recipient and their addresses', true); return; }
     var btns = f.querySelectorAll('[type="submit"]'); btns.forEach(function (b) { b.disabled = true; b.classList.add('loading'); });
     SL.post(f.getAttribute('action'), new FormData(f)).then(function (j) {
       // A PHP notice printed before the JSON would hide the payload: recover it.
-      if (j.shipment_id === undefined && typeof j.message === 'string' && j.message.indexOf('{') >= 0) { try { j = JSON.parse(j.message.slice(j.message.indexOf('{"'))); } catch (e) {} }
+      if (j.shipment_id === undefined && typeof j.message === 'string' && j.message.indexOf('{') >= 0) { try { j = JSON.parse(j.message.slice(j.message.indexOf('{"'))); } catch (e2) {} }
       if (j.success) {
         SL.toast((j.messages || ['Shipment created']).join(' '));
         var id = j.shipment_id;
@@ -208,9 +315,9 @@
       var errs = j.errors || {}, first = '';
       Object.keys(errs).forEach(function (k) {
         var msg = Array.isArray(errs[k]) ? errs[k].join(' ') : errs[k]; first = first || msg;
-        var el = $('[name="' + k + '"]'); if (!el) return;
-        (el.closest('.sl-sel') || el).classList.add('is-invalid');
-        var s = document.createElement('span'); s.className = 'sl-err'; s.textContent = msg; (el.closest('.sl-field') || el.parentNode).appendChild(s);
+        var el2 = $('[name="' + k + '"]'); if (!el2) return;
+        (el2.closest('.sl-sel') || el2).classList.add('is-invalid');
+        var s = document.createElement('span'); s.className = 'sl-err'; s.textContent = msg; (el2.closest('.sl-field') || el2.parentNode).appendChild(s);
       });
       SL.toast(first || j.message || j.error || 'The shipment could not be saved', true);
     }).catch(function () { SL.toast('Network error. Please try again.', true); })

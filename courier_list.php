@@ -12,6 +12,11 @@ require_once 'helpers/sl_view.php';
 sl_gate(sl_userIs('client') ? null : 'view_shipment_list');
 require_once 'views/sl/data/shipments.php';
 if (($_GET['export'] ?? '') === 'csv') {
+    // Exports are for administrators and super administrators only.
+    if (!(sl_userIs('admin') || sl_userIs('superadmin'))) {
+        http_response_code(403);
+        exit('Export is for administrators only.');
+    }
     require 'views/sl/export/shipments_csv.php';
     exit;
 }
