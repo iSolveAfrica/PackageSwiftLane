@@ -61,6 +61,23 @@ if (!function_exists('cdp_getAgencyBranchIdForUser')) {
     }
 }
 
+if (!function_exists('cdp_getEffectiveStatus')) {
+    /** Unit-test stand-in for helpers/querys.php: a parcel that is not in a consolidation keeps its own status. */
+    function cdp_getEffectiveStatus($order_no, $status_courier, $is_consolidate = null, $isPackage = false)
+    {
+        return (object) ['status_id' => (int) $status_courier, 'mod_style' => '', 'color' => null, 'in_consolidation' => false,
+            'inherits' => false, 'consolidate_id' => 0, 'consolidate_code' => ''];
+    }
+}
+
+if (!function_exists('cdp_getEffectiveEta')) {
+    /** Unit-test stand-in: no consolidation, so no ETA is looked up. */
+    function cdp_getEffectiveEta($order_id, $order_no, $order_deli_time = null, $is_consolidate = null, $isPackage = false)
+    {
+        return null;
+    }
+}
+
 // ── API classes ───────────────────────────────────────────────────────────────
 require_once $root . '/api/v1/ApiResponse.php';
 require_once $root . '/api/v1/ApiValidator.php';
