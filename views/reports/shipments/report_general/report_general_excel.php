@@ -76,10 +76,11 @@ if ($method > 0) {
 	$sWhere .= " and a.order_payment_method = '" . $method . "'";
 }
 
-if ($userData->userlevel == 3) {
-
-	$sWhere .= " and  a.driver_id = '" . $_SESSION['userid'] . "'";
-}
+// Row scope by role rank, same call as the matching ajax/reports/*_general_ajax.php list,
+// so the export never holds rows the on-screen report hides (the old userlevel 3 check
+// left agency-restricted staff and custom roles unscoped).
+require_once(dirname(__DIR__, 4) . '/helpers/ajax_guard.php');
+$sWhere .= cdp_ajaxListScopeSql('a.sender_id', 'a.driver_id', 'a.agency');
 
 
 

@@ -23,6 +23,10 @@ if (!empty($range)) {
     $end_date   = date('Y-m-d', strtotime(str_replace('/', '-', $parts[1])));
     $sWhere = " AND DATE(a.order_date) BETWEEN '$start_date' AND '$end_date'";
 }
+// Row scope by role rank (agency-restricted staff -> their agency), like the other report
+// lists: without it a restricted user saw the top customer and shipments of every agency.
+$sWhere .= cdp_ajaxListScopeSql('a.sender_id', 'a.driver_id', 'a.agency');
+$cpScope = cdp_ajaxListScopeSql('cp.sender_id', 'cp.driver_id', 'cp.agency');
 
 switch ($page) {
     case 'topshipper':
@@ -426,7 +430,7 @@ switch ($page) {
             FROM cdb_add_order AS cp
             WHERE
             cp.sender_id       = {$topShipper->sender_id}
-            AND cp.status_courier IN (27, 15)";
+            AND cp.status_courier IN (27, 15) $cpScope";
         break;
 
     case 'topinvoice':
@@ -434,7 +438,7 @@ switch ($page) {
             FROM cdb_add_order AS cp
             WHERE
             cp.sender_id       = {$topShipper->sender_id}
-            AND cp.status_invoice = 1";
+            AND cp.status_invoice = 1 $cpScope";
         break;
 }
 
@@ -450,7 +454,7 @@ switch ($page) {
             FROM cdb_add_order AS cp
             WHERE
             cp.sender_id       = {$topShipper->sender_id}
-            AND cp.status_courier IN (27, 15)
+            AND cp.status_courier IN (27, 15) $cpScope
             ORDER BY cp.order_date DESC
             LIMIT $offset, $per_page";
         break;
@@ -460,7 +464,7 @@ switch ($page) {
             FROM cdb_add_order AS cp
             WHERE
             cp.sender_id       = {$topShipper->sender_id}
-            AND cp.status_invoice = 1
+            AND cp.status_invoice = 1 $cpScope
             ORDER BY cp.order_date DESC
             LIMIT $offset, $per_page";
         break;

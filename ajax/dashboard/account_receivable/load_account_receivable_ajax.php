@@ -46,25 +46,11 @@ $offset = ($page - 1) * $per_page;
 if (!function_exists('cdp_markOverdueInvoices')) { $d = __DIR__; while ($d !== dirname($d) && !is_file($d . '/helpers/overdue_invoices.php')) { $d = dirname($d); } if (is_file($d . '/helpers/overdue_invoices.php')) require_once $d . '/helpers/overdue_invoices.php'; }
 cdp_markOverdueInvoices($db);
 
-// Row scope by role TYPE, not by the seed role ids 1/3: a department role created under Customer
-// or Driver (its own flags 0, typed through parent_role_id) used to fall through to the unscoped
-// branch and see every customer's receivables. An agency user with no agency sees nothing.
-require_once(__DIR__ . '/../../../helpers/rbac.php');
-$scopeLevel = (int) $userData->userlevel;
-$scopeRank = cdp_roleRankById($scopeLevel);
-$sWhereExtra = "";
-if ($scopeRank === 1 && ($scopeLevel === 3 || cdp_roleHasFlag($scopeLevel, 'is_driver'))) {
-	$sWhereExtra = " and driver_id = " . (int)$_SESSION['userid'];
-} else if ($scopeRank === 0) {
-	$sWhereExtra = " and sender_id = " . (int)$_SESSION['userid'];
-} else if ($scopeRank === 1 && !$ctx['is_restricted']) {
-	// Agency-typed role outside cdp_getAgencyContext()'s seed id 6: scope by its own agency.
-	$sWhereExtra = !empty($userData->agency_id) ? " and agency = " . (int) $userData->agency_id : " and 1=0";
-} else if ($ctx['is_restricted'] && $ctx['agency_id'] !== null) {
-	$sWhereExtra = " and agency = " . (int)$ctx['agency_id'];
-} else if ($ctx['is_restricted']) {
-	$sWhereExtra = " and 1=0";
-}
+// Row scope by role rank (customer -> own, driver -> assigned, agency user / agency-restricted
+// staff -> their agency) through the shared helper the shipment lists use, so this widget and
+// those lists cannot disagree. Replaces a hand-written copy that resolved an agency user's
+// agency differently (agency_id only) from cdp_ajaxListScopeSql().
+$sWhereExtra = cdp_ajaxListScopeSql('sender_id', 'driver_id', 'agency');
 
 $sql = "SELECT * FROM cdb_add_order where order_payment_method >1 
 			and order_date >= '$year-$month-01' AND order_date < DATE('$year-$month-01') + INTERVAL 1 MONTH 
