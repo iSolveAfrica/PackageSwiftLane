@@ -27,8 +27,8 @@
 .ovh-grid > .ovh-card:last-child:nth-child(even) { grid-column: 1 / -1; }
 .ovh-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 
-.ovh-me { position: relative; display: flex; flex-direction: column; gap: 18px; padding: 22px; border-radius: var(--r-xl); border: 1px solid color-mix(in srgb, var(--violet) 22%, var(--line));
-  background: radial-gradient(120% 80% at 0% 0%, color-mix(in srgb, var(--violet) 16%, var(--card)), color-mix(in srgb, var(--violet) 7%, var(--card))); overflow: hidden; }
+/* same surface as the main menu container (.sl-side) */
+.ovh-me { position: relative; display: flex; flex-direction: column; gap: 18px; padding: 22px; border-radius: var(--r-xl); border: 1px solid var(--line); background: var(--panel); overflow: hidden; }
 .ovh-me-top { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .ovh-me-top .me-pic { flex: none; border-radius: 50%; display: inline-grid; place-items: center; color: var(--inverse); box-shadow: 0 0 0 3px var(--card), 0 0 0 4px color-mix(in srgb, var(--violet) 40%, transparent); }
 .ovh-name { font-size: 24px; font-weight: 600; letter-spacing: -.01em; line-height: 1.2; }
@@ -46,9 +46,26 @@
 .ovh-stats .dn, .ovh-delta .dn { color: var(--red-ink); font-weight: 500; }
 .ovh-stats b.ok { color: var(--green-ink); } .ovh-stats b.bad { color: var(--red-ink); }
 .ovh-client { margin-bottom: 2px; }
-.ovh-me-bars { display: flex; flex-direction: column; gap: 8px; padding-top: 14px; border-top: 1px solid color-mix(in srgb, var(--violet) 18%, var(--line)); }
+.ovh-me-bars { display: flex; flex-direction: column; gap: 8px; padding-top: 14px; border-top: 1px solid var(--line); }
+.ovh-last { max-width: 60%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ovh-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.ovh-kpi { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border-radius: 14px; background: var(--card); border: 1px solid var(--line); min-width: 0; }
+.ovh-kl { font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ovh-kpi > b { font-size: 26px; font-weight: 600; letter-spacing: -.02em; line-height: 1.1; }
+.ovh-kpi > b small { font-size: 14px; color: var(--muted); font-weight: 500; }
+.ovh-ku { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ovh-ku .up { color: var(--green-ink); font-weight: 500; } .ovh-ku .dn { color: var(--red-ink); font-weight: 500; }
+.ovh-meter { display: block; height: 6px; border-radius: 999px; background: color-mix(in srgb, var(--violet) 16%, transparent); overflow: hidden; margin-top: 6px; }
+.ovh-meter i { display: block; height: 100%; border-radius: inherit; background: var(--violet); }
+.ovh-kinds { display: flex; flex-direction: column; gap: 8px; }
+.ovh-kinds .ic { vertical-align: -2px; }
+.ovh-kind { display: grid; grid-template-columns: 110px 1fr auto; align-items: center; gap: 10px; font-size: 14px; color: var(--ink-2); }
+.ovh-kind > span:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ovh-kbar { height: 8px; border-radius: 999px; background: var(--hover); overflow: hidden; }
+.ovh-kbar i { display: block; height: 100%; border-radius: inherit; background: color-mix(in srgb, var(--violet) 70%, var(--sky)); }
+.ovh-kind b { font-weight: 600; min-width: 36px; text-align: right; }
 .ovh-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; }
-.ovh-chips a { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 12px; background: var(--field); border: 1px solid color-mix(in srgb, var(--violet) 22%, var(--line)); font-size: 14.5px; color: var(--ink-2); }
+.ovh-chips a { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 12px; background: var(--field); border: 1px solid var(--line-2); font-size: 14.5px; color: var(--ink-2); }
 .ovh-chips a b { color: var(--ink); font-weight: 600; }
 .ovh-chips a:hover { border-color: var(--violet); }
 
@@ -63,7 +80,7 @@
 .ovh-card { --tone: var(--sky); position: relative; display: flex; flex-direction: column; gap: 10px; padding: 18px 20px; border-radius: var(--r-xl); color: inherit; background: var(--card); border: 1px solid var(--line); overflow: hidden; min-width: 0; transition: border-color .15s, box-shadow .15s; }
 .ovh-card::before { content: ""; position: absolute; inset: -40% -30% auto auto; width: 70%; height: 90%; background: radial-gradient(closest-side, color-mix(in srgb, var(--tone) 16%, transparent), transparent); pointer-events: none; }
 .ovh-card:hover { border-color: color-mix(in srgb, var(--tone) 45%, var(--line)); box-shadow: 0 10px 30px -18px color-mix(in srgb, var(--tone) 60%, transparent); }
-.ovh-card.t-blue { --tone: var(--sky); } .ovh-card.t-rose { --tone: var(--red); } .ovh-card.t-amber { --tone: var(--orange); } .ovh-card.t-mint { --tone: var(--green); }
+.ovh-card.t-blue { --tone: var(--sky); } .ovh-card.t-rose { --tone: var(--red); } .ovh-card.t-amber { --tone: var(--orange); } .ovh-card.t-mint { --tone: var(--green); } .ovh-card.t-violet { --tone: var(--violet); }
 .ovh-card .ovh-eyebrow .ic { color: var(--tone); }
 .ovh-ch { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 26px; }
 .ovh-go { color: var(--faint); }
@@ -78,10 +95,25 @@
 .ovh-alert { display: inline-flex; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60%; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 999px; font-size: 12.5px; background: var(--red-bg); color: var(--red-ink); border: 1px solid color-mix(in srgb, var(--red) 25%, transparent); box-shadow: 0 6px 16px -8px rgba(0,0,0,.25); }
 
 /* freight */
-.ovh-freight { display: grid; grid-template-columns: minmax(260px, .8fr) 1.6fr; gap: 28px; padding: 22px 24px; border-radius: var(--r-xl); border: 1px solid color-mix(in srgb, var(--violet) 18%, var(--line));
-  background: linear-gradient(135deg, color-mix(in srgb, var(--violet) 9%, var(--card)), var(--card) 60%); }
+.ovh-freight { display: grid; grid-template-columns: minmax(280px, .85fr) 1.6fr; gap: 28px; padding: 22px 24px; border-radius: var(--r-xl); border: 1px solid var(--line); background: var(--card); }
+.ovh-tot { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.ovh-fstats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.ovh-fstats div { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 12px; background: var(--hover); min-width: 0; }
+.ovh-fstats span { font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.ovh-fstats b { font-size: 22px; font-weight: 600; letter-spacing: -.01em; }
+.ovh-fstats b.warn { color: var(--amber-ink); }
+.ovh-fstats small { font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ovh-daily { position: relative; display: flex; flex-direction: column; gap: 4px; padding-bottom: 18px; }
+.ovh-daily svg { width: 100%; height: 40px; display: block; }
+.ovh-daily rect { fill: color-mix(in srgb, var(--sky) 45%, transparent); }
+.ovh-daily rect.top { fill: var(--sky); }
+.ovh-daily rect.zero { fill: var(--line-2); }
+.ovh-daily rect:hover { fill: var(--sky-ink); }
+.ovh-xl { position: absolute; inset: auto 0 0 0; height: 16px; }
+.ovh-xl span { position: absolute; transform: translateX(-50%); font-size: 12px; color: var(--muted); white-space: nowrap; }
+.ovh-xl span:first-child { transform: none; } .ovh-xl span:last-child { transform: translateX(-100%); }
 .ovh-fl { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-.ovh-huge { font-size: clamp(48px, 6vw, 76px); font-weight: 600; letter-spacing: -.04em; line-height: 1; margin-top: 6px; }
+.ovh-huge { font-size: clamp(44px, 5vw, 68px); font-weight: 600; letter-spacing: -.04em; line-height: 1; margin-top: 6px; }
 .ovh-delta span { display: inline-flex; padding: 3px 10px; border-radius: 999px; margin-right: 6px; }
 .ovh-delta .up { background: var(--green-bg); }
 .ovh-delta .dn { background: var(--red-bg); }
@@ -98,9 +130,10 @@
 .ovh-chart { width: 100%; height: auto; display: block; overflow: visible; }
 .ovh-chart .g { stroke: var(--line); stroke-dasharray: 3 4; }
 .ovh-chart .ax { fill: var(--muted); font-size: 12px; font-family: var(--font); }
-.ovh-chart .b { fill: var(--sky); }
-.ovh-chart .b:hover { fill: var(--sky-ink); }
-.ovh-chart .p { fill: none; stroke: var(--yellow); stroke-width: 2.2; stroke-dasharray: 5 5; stroke-linejoin: round; }
+.ovh-chart .c { fill: none; stroke: var(--sky); stroke-width: 2.6; stroke-linejoin: round; stroke-linecap: round; }
+.ovh-chart .p { fill: none; stroke: var(--yellow); stroke-width: 2; stroke-dasharray: 5 5; stroke-linejoin: round; }
+.ovh-chart .dot { fill: var(--sky); stroke: var(--card); stroke-width: 3; }
+.ovh-chart .end { fill: var(--ink); font-size: 13px; font-weight: 600; font-family: var(--font); }
 
 /* the freight section above replaces the insights block's own registrations chart */
 .sl-insights__trend { display: none; }
@@ -123,13 +156,15 @@
 /* container rules last, so they win over the base rules above */
 @container ovh (min-width: 1240px) {
   .ovh-grid { grid-template-columns: minmax(360px, 1.1fr) repeat(2, minmax(0, 1fr)); }
-  .ovh-me { grid-column: auto; grid-row: span 2; }
-  .ovh-grid.few .ovh-me { grid-row: span 1; }
+  .ovh-me { grid-column: 1; grid-row: 1 / span var(--rows, 2); }
+  .ovh-grid > .ovh-card:last-child:nth-child(even) { grid-column: 2 / -1; }
 }
 @container ovh (max-width: 640px) {
   .ovh-grid { grid-template-columns: 1fr; }
   .ovh-me-mid { grid-template-columns: 1fr; justify-items: center; }
   .ovh-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }
+  .ovh-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ovh-kind { grid-template-columns: 90px 1fr auto; }
   .ovh-prof { display: none; }
   .ovh-me { padding: 18px; }
   .ovh-name { font-size: 21px; }

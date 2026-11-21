@@ -16,7 +16,7 @@ if (!isset($d)) { $d = []; }
   <div style="width: 100%; margin: 0 auto; padding: 56px 24px 0; display: flex; flex-direction: column; gap: 56px">
 
     <header class="col g12">
-      <div class="sl-brand"><span class="sl-logo"><i></i></span>Swift Lane</div>
+      <div class="sl-brand"><?= sl_brandLogo('color', 36) ?></div>
       <h1 style="font-size: 44px; font-weight: 500; letter-spacing: -.02em; line-height: 1.1">Warm Ledger design system</h1>
       <p class="mut" style="font-size: 16px; max-width: 640px">Warm paper surfaces, hairline borders, dotted tick meters and one dark action. Extracted from the Overview reference and applied to every Swift Lane screen on this canvas.</p>
       <a class="sl-btn soft" href="#charts">Browse chart library</a>

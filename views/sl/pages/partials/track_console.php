@@ -8,6 +8,7 @@
  *   $tcTitle   list heading, e.g. 'Tracking list'
  *   $tcNoun    'shipments' | 'consolidations'
  *   $tcExpand  optional href for the expand button (the full page)
+ *   $tcFilters optional, false hides the in-console filter chips (the full page filters on the server)
  * Styles: assets/swiftlane/track-console.css · behaviour: assets/swiftlane/track-console.js
  * (both included here so any page can drop the partial in).
  */
@@ -15,6 +16,8 @@ if (empty($tc) || !is_array($tc)) return;
 $tcTitle = $tcTitle ?? 'Tracking list';
 $tcNoun = $tcNoun ?? 'shipments';
 $tcExpand = $tcExpand ?? '';
+$tcFilters = $tcFilters ?? true;
+$tcNounOne = ['shipments' => 'shipment', 'consolidations' => 'consolidation', 'records' => 'record'][$tcNoun] ?? 'record';
 $tcUid = 'tc' . substr(md5($tc['source'] . mt_rand()), 0, 6);
 $items = $tc['items'];
 $first = $items[0] ?? null;
@@ -70,33 +73,36 @@ $chip = function (float $x, float $y, string $k, string $v, string $anchor = 'le
   <aside class="tc-list">
     <div class="tc-lh">
       <h2><?= h($tcTitle) ?></h2>
-      <span class="tc-count"><i class="ic ic-sm <?= $tcNoun === 'consolidations' ? 'i-layers' : 'i-box' ?>" aria-hidden="true"></i><?= sl_num($tc['total']) ?> <?= h($tcNoun) ?></span>
+      <span class="tc-count"><i class="ic ic-sm <?= $tcNoun === 'consolidations' ? 'i-layers' : 'i-box' ?>" aria-hidden="true"></i><?= isset($tc['shown']) && $tc['shown'] < $tc['total'] ? sl_num($tc['shown']) . ' of ' : '' ?><?= sl_num($tc['total']) ?> <?= h($tcNoun) ?></span>
       <span class="grow"></span>
       <?php if ($tcExpand): ?><a class="tc-ib" href="<?= h($tcExpand) ?>" aria-label="Open the full page"><i class="ic ic-sm i-expand" aria-hidden="true"></i></a><?php endif; ?>
     </div>
-    <label class="tc-search"><i class="ic ic-sm i-search" aria-hidden="true"></i><input type="search" data-tc-q placeholder="Search <?= $tcNoun === 'consolidations' ? 'container, carrier' : 'tracking, customer, carrier' ?>…" aria-label="Search the tracking list"></label>
+    <label class="tc-search"><i class="ic ic-sm i-search" aria-hidden="true"></i><input type="search" data-tc-q placeholder="<?= $tcFilters ? 'Search' : 'Narrow' ?> <?= $tcNoun === 'consolidations' ? 'container, carrier' : 'tracking, customer, container' ?>…" aria-label="Search the tracking list"></label>
+    <?php if ($tcFilters): ?>
     <div class="tc-filters" role="group" aria-label="Filter">
       <button type="button" class="on" data-tc-f="all">All <?= $tcNoun === 'consolidations' ? 'loads' : 'shipments' ?></button>
       <?php if ($tc['counts']['air']): ?><button type="button" data-tc-f="air"><i class="ic ic-sm i-plane" aria-hidden="true"></i>Air</button><?php endif; ?>
       <?php if ($tc['counts']['sea']): ?><button type="button" data-tc-f="sea"><i class="ic ic-sm i-ship" aria-hidden="true"></i>Sea</button><?php endif; ?>
+      <?php if (!empty($tc['counts']['con']) && $tcNoun !== 'consolidations'): ?><button type="button" data-tc-f="con"><i class="ic ic-sm i-layers" aria-hidden="true"></i>Consolidations</button><?php endif; ?>
       <?php if ($tc['counts']['late']): ?><button type="button" data-tc-f="late"><i class="ic ic-sm i-alert" aria-hidden="true"></i>Delayed <b><?= (int) $tc['counts']['late'] ?></b></button><?php endif; ?>
     </div>
+    <?php endif; ?>
     <div class="tc-cards" role="listbox" aria-label="<?= h($tcTitle) ?>">
       <?php foreach ($items as $i => $it): ?>
-      <button type="button" role="option" class="tc-card<?= $i === 0 ? ' on' : '' ?>" aria-selected="<?= $i === 0 ? 'true' : 'false' ?>" data-tc-key="<?= h($it['key']) ?>" data-mode="<?= h($it['mode']) ?>" data-late="<?= $it['late'] ? '1' : '' ?>" data-text="<?= h(strtolower($it['code'] . ' ' . $it['customer'] . ' ' . $it['carrier'] . ' ' . $it['st'])) ?>">
-        <span class="tc-c1"><b class="mono"><?= h($it['code']) ?></b><span class="tc-st <?= $it['late'] ? 'late' : h($it['cls']) ?>"><?= h($it['late'] ? 'Delayed' : $it['st']) ?></span></span>
+      <button type="button" role="option" class="tc-card<?= $i === 0 ? ' on' : '' ?>" aria-selected="<?= $i === 0 ? 'true' : 'false' ?>" data-tc-key="<?= h($it['key']) ?>" data-mode="<?= h($it['mode']) ?>" data-kind="<?= h($it['kind'] ?? '') ?>" data-late="<?= $it['late'] ? '1' : '' ?>" data-text="<?= h(strtolower($it['code'] . ' ' . $it['customer'] . ' ' . $it['carrier'] . ' ' . $it['st'] . ' ' . ($it['search'] ?? ''))) ?>">
+        <span class="tc-c1"><b class="mono"><?= h($it['code']) ?></b><?php if (!empty($it['kind'])): ?><span class="tc-kind <?= h($it['kind']) ?>" title="<?= h($it['modeL'] . ' ' . strtolower($it['kindL'])) ?>"><?= h($it['kind'] === 'consolidation' ? 'Consol' : $it['kindL']) ?></span><?php endif; ?><span class="tc-st <?= $it['late'] ? 'late' : h($it['cls']) ?>"><?= h($it['late'] ? 'Delayed' : $it['st']) ?></span></span>
         <span class="tc-c2"><span><?= h($it['from']['code']) ?></span><i class="tc-dots"></i><i class="ic ic-sm <?= $it['mode'] === 'sea' ? 'i-ship' : 'i-plane' ?>" aria-hidden="true"></i><i class="tc-line"><em><?= h($it['transit']) ?></em></i><span><?= h($it['to']['code']) ?></span></span>
         <span class="tc-c3"><span><?= h($it['from']['city']) ?>, <?= h($it['from']['country']) ?></span><span><?= h($it['to']['city']) ?>, <?= h($it['to']['country']) ?></span></span>
         <span class="tc-c4"><span><i class="tc-sw <?= h($it['mode']) ?>"></i><?= h($it['carrier']) ?> · <?= h($it['customer']) ?></span><span><?= $it['arrived'] ? 'Arrived' : 'ETA' ?> <b><?= h($it['etaShort']) ?></b></span></span>
       </button>
       <?php endforeach; ?>
-      <div class="tc-empty" data-tc-empty<?= $items ? ' hidden' : '' ?>>No open <?= h($tcNoun) ?> to track.</div>
+      <div class="tc-empty" data-tc-empty<?= $items ? ' hidden' : '' ?>><?= !empty($tc['q']) ? 'Nothing matches “' . h($tc['q']) . '”.' : 'No open ' . h($tcNoun) . ' to track.' ?></div>
     </div>
   </aside>
 
     <div class="tc-map">
       <img class="tc-world" src="<?= h(cdp_asset('assets/swiftlane/maps/world-dots.svg')) ?>" alt="" aria-hidden="true" loading="lazy">
-      <svg class="tc-over" viewBox="0 0 <?= $vw ?> <?= $vh ?>" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Route map of the selected <?= $tcNoun === 'consolidations' ? 'consolidation' : 'shipment' ?>">
+      <svg class="tc-over" viewBox="0 0 <?= $vw ?> <?= $vh ?>" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Route map of the selected <?= h($tcNounOne) ?>">
         <defs>
           <radialGradient id="<?= $tcUid ?>-glow"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".35" stop-color="#fff" stop-opacity=".12"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
           <radialGradient id="<?= $tcUid ?>-sun"><stop offset="0" stop-color="#FFD43B" stop-opacity=".55"/><stop offset="1" stop-color="#FFD43B" stop-opacity="0"/></radialGradient>
@@ -132,16 +138,30 @@ $chip = function (float $x, float $y, string $k, string $v, string $anchor = 'le
 
     <div class="tc-panel">
       <div class="tc-tabs" role="tablist">
-        <?php foreach (['overview' => 'Overview', 'timeline' => 'Timeline', 'docs' => 'Documents', 'cost' => 'Cost', 'priority' => 'Priority'] as $tk => $tl): ?>
+        <?php foreach (['overview' => 'Overview', 'details' => 'Details', 'contents' => 'Contents', 'timeline' => 'Timeline', 'docs' => 'Documents', 'cost' => 'Cost', 'priority' => 'Priority'] as $tk => $tl): ?>
         <button type="button" role="tab" class="<?= $tk === 'overview' ? 'on' : '' ?>" aria-selected="<?= $tk === 'overview' ? 'true' : 'false' ?>" data-tc-tab="<?= $tk ?>"><?= h($tl) ?></button>
         <?php endforeach; ?>
         <span class="grow"></span>
-        <?php if ($first): ?><a class="tc-ib" data-tc-open href="<?= h($first['href']) ?>" aria-label="Open the selected record"><i class="ic ic-sm i-expand" aria-hidden="true"></i></a><?php endif; ?>
+        <?php if ($first): ?><button type="button" class="tc-more" data-tc-pop-open><i class="ic ic-sm i-edit" aria-hidden="true"></i>Details &amp; actions</button><a class="tc-ib" data-tc-open href="<?= h($first['href']) ?>" aria-label="Open the selected record"><i class="ic ic-sm i-expand" aria-hidden="true"></i></a><?php endif; ?>
       </div>
       <?php foreach ($items as $i => $it): ?>
       <div class="tc-body<?= $i === 0 ? ' on' : '' ?>" data-tc-body="<?= h($it['key']) ?>" data-href="<?= h($it['href']) ?>">
         <div class="tc-idrow"><b class="tc-code mono"><?= h($it['code']) ?></b><span class="tc-badge <?= $it['late'] ? 'late' : h($it['cls']) ?>"><?= h(strtoupper($it['st'])) ?></span><?php if ($it['late']): ?><span class="tc-badge late">DELAYED</span><?php endif; ?></div>
 
+        <template data-tc-pop>
+          <div class="tcp-h"><div class="col"><span class="tcp-k"><?= h(($it['modeL'] ?? '') . ' ' . strtolower($it['kindL'] ?? '')) ?></span><b class="mono"><?= h($it['code']) ?></b></div><span class="tc-badge <?= $it['late'] ? 'late' : h($it['cls']) ?>"><?= h(strtoupper($it['st'])) ?></span><span class="grow"></span><button type="button" class="tc-ib" data-tc-close aria-label="Close"><i class="ic ic-sm i-x" aria-hidden="true"></i></button></div>
+          <?php if (!empty($it['actions'])): ?><div class="tcp-acts"><?php foreach ($it['actions'] as [$al, $ah, $ai, $ap]): ?><a class="<?= $ap ? 'pri' : '' ?>" href="<?= h($ah) ?>"><i class="ic ic-sm <?= h($ai) ?>" aria-hidden="true"></i><?= h($al) ?></a><?php endforeach; ?><?php foreach ($it['docs'] as [$dl, $dh, $di]): ?><a href="<?= h($dh) ?>" target="_blank" rel="noopener"><i class="ic ic-sm <?= h($di) ?>" aria-hidden="true"></i><?= h($dl) ?></a><?php endforeach; ?></div><?php endif; ?>
+          <div class="tcp-route"><div><b><?= h($it['from']['code']) ?></b><span><?= h($it['from']['city']) ?></span></div><div class="tcp-bar"><i style="width:<?= max(2, min(100, (int) $it['pct'])) ?>%"></i><em><?= (int) $it['pct'] ?>% · <?= h($it['where']) ?></em></div><div class="r"><b><?= h($it['to']['code']) ?></b><span><?= h($it['to']['city']) ?> · ETA <?= h($it['etaShort']) ?></span></div></div>
+          <div class="tcp-cols">
+            <div class="col g10"><h4>Details</h4><dl class="tcp-dl"><?php foreach (($it['details'] ?? []) as [$dk, $dv]): ?><div><dt><?= h($dk) ?></dt><dd><?= h((string) $dv) ?></dd></div><?php endforeach; ?>
+              <div><dt>Estimate</dt><dd class="<?= h($it['estCls']) ?>"><?= h($it['estimate']) ?></dd></div><div><dt>On the way</dt><dd><?= h($it['onway']) ?></dd></div>
+              <?php if ($it['money']): ?><div><dt>Total</dt><dd><?= h($it['total']) ?></dd></div><div><dt>Payment</dt><dd class="<?= h($it['payCls']) ?>"><?= h($it['pay']) ?></dd></div><?php endif; ?>
+              <div><dt>Priority</dt><dd class="<?= h($it['prio']['cls']) ?>"><?= h($it['prio']['label']) ?> · open <?= (int) $it['prio']['days'] ?> d</dd></div></dl>
+              <?php if (!empty($it['contents'])): ?><h4>Parcels inside (<?= h($it['customer']) ?>)</h4><div class="tcp-list"><?php foreach ($it['contents'] as $c): ?><div><b class="mono"><?= h($c['code']) ?></b><span><?= h(($c['who'] ?? '') !== '' ? $c['who'] . ' · ' : '') ?><?= h($c['w']) ?></span><span class="tc-st <?= h($c['cls']) ?>"><?= h($c['st']) ?></span></div><?php endforeach; ?></div><?php endif; ?>
+            </div>
+            <div class="col g10"><h4>Timeline</h4><ol class="tc-tl"><?php foreach ($it['hist'] as $hi => $hh): ?><li class="<?= $hi === 0 ? 'now' : '' ?>"><b><?= h($hh['t']) ?></b><span><?= h(trim($hh['c'] . ($hh['loc'] !== '' ? ' · ' . $hh['loc'] : ''), ' ·')) ?></span><time><?= h($hh['at']) ?></time></li><?php endforeach; ?><li class="start"><b>Registered</b><span><?= h($it['from']['city']) ?></span><time><?= h($it['created']) ?></time></li></ol></div>
+          </div>
+        </template>
         <div class="tc-sec on" data-tc-sec="overview">
           <div class="tc-ov">
             <div class="tc-veh-card">
@@ -171,6 +191,22 @@ $chip = function (float $x, float $y, string $k, string $v, string $anchor = 'le
           </div>
         </div>
 
+        <div class="tc-sec" data-tc-sec="details">
+          <?php if (!empty($it['details'])): ?><dl class="tc-dl tc-det"><?php foreach ($it['details'] as [$dk, $dv]): ?><div><dt><?= h($dk) ?></dt><dd><?= h((string) $dv) ?></dd></div><?php endforeach; ?></dl>
+          <?php else: ?><p class="tc-muted">No further details recorded.</p><?php endif; ?>
+        </div>
+
+        <div class="tc-sec" data-tc-sec="contents">
+          <?php if (!empty($it['contents'])): ?>
+          <div class="tc-items" style="--c:<?= isset($it['contents'][0]['who']) ? 4 : 3 ?>"><div class="tc-ir h"><span>Parcel</span><?php if (isset($it['contents'][0]['who'])): ?><span>Customer</span><?php endif; ?><span>Weight</span><span>Size</span><span>Status</span></div>
+            <?php foreach ($it['contents'] as $c): ?><div class="tc-ir"><b class="mono"><?= h($c['code']) ?></b><?php if (isset($c['who'])): ?><span><?= h($c['who']) ?></span><?php endif; ?><span><?= h($c['w']) ?></span><span><?= h($c['dim']) ?></span><span class="tc-st <?= h($c['cls']) ?>"><?= h($c['st']) ?></span></div><?php endforeach; ?>
+          </div>
+          <?php if (count($it['contents']) < (int) $it['customer']): ?><p class="tc-muted">Showing the first <?= count($it['contents']) ?> parcels. Open the record for the full manifest.</p><?php endif; ?>
+          <?php elseif (!empty($it['con'])): ?><p class="tc-muted">Travels inside consolidation <b class="mono"><?= h($it['con']['code']) ?></b> · <?= h(sl_statusLabel($it['con']['status'])) ?>.</p>
+          <?php elseif (($it['kind'] ?? '') === 'consolidation'): ?><p class="tc-muted">No parcels loaded yet.</p>
+          <?php else: ?><p class="tc-muted">A single <?= h(strtolower($it['kindL'] ?? 'parcel')) ?>, not part of a consolidation yet.</p><?php endif; ?>
+        </div>
+
         <div class="tc-sec" data-tc-sec="timeline">
           <ol class="tc-tl">
             <?php foreach ($it['hist'] as $hi => $h): ?><li class="<?= $hi === 0 ? 'now' : '' ?>"><b><?= h($h['t']) ?></b><span><?= h(trim($h['c'] . ($h['loc'] !== '' ? ' · ' . $h['loc'] : ''), ' ·')) ?></span><time><?= h($h['at']) ?></time></li><?php endforeach; ?>
@@ -198,4 +234,5 @@ $chip = function (float $x, float $y, string $k, string $v, string $anchor = 'le
       <?php endforeach; ?>
       <?php if (!$items): ?><div class="tc-body on"><p class="tc-muted">Nothing is moving right now. New <?= h($tcNoun) ?> appear here as soon as they are registered.</p></div><?php endif; ?>
     </div>
+  <dialog class="tcp" data-tc-dialog aria-label="Record details"><div class="tcp-in" data-tc-dialog-body></div></dialog>
 </section></div>

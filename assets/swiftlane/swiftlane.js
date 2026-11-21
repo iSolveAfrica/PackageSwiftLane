@@ -484,10 +484,29 @@
 })();
 
 // Keep native details keyboard behavior while animating sidebar groups both ways.
+// The sidebar is an accordion: opening a group closes every other one.
 (function () {
-  document.querySelectorAll('.sl-nav-group').forEach(function (group) {
+  var groups = Array.prototype.slice.call(document.querySelectorAll('.sl-nav-group'));
+  var closers = new Map();
+  function closeOthers(keep) { groups.forEach(function (g) { if (g !== keep && g.open) { var c = closers.get(g); c ? c() : (g.open = false); } }); }
+  document.addEventListener('toggle', function (e) {
+    if (e.target.classList && e.target.classList.contains('sl-nav-group') && e.target.open) closeOthers(e.target);
+  }, true);
+  groups.forEach(function (group) {
     var summary = group.querySelector('summary'), animation = null, expanded = group.open;
+    function collapse() {
+      if (!group.open) return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !group.animate) { group.open = false; return; }
+      if (animation) animation.cancel();
+      expanded = false;
+      var from = group.getBoundingClientRect().height, to = summary.getBoundingClientRect().height;
+      group.style.overflow = 'hidden';
+      animation = group.animate([{ height: from + 'px' }, { height: to + 'px' }], { duration: 240, easing: 'cubic-bezier(.2,.8,.2,1)' });
+      animation.onfinish = function () { group.open = false; group.style.overflow = ''; animation = null; };
+    }
+    closers.set(group, collapse);
     summary.addEventListener('click', function (event) {
+      if (!group.open) closeOthers(group);
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !group.animate) return;
       event.preventDefault();
       var from = group.getBoundingClientRect().height;

@@ -68,13 +68,16 @@ function sl_overviewChartsData($user): array
         $result['statusTotal'] = array_sum(array_column($result['status'], 'count'));
         $result['statusConic'] = sl_conic(array_map(fn($row) => [$row['color'], $row['count']], $result['status']));
 
-        $destRows = sl_rows("SELECT COALESCE(NULLIF(TRIM(s.recipient_city),''), 'Not recorded') AS city, COUNT(DISTINCT a.order_id) AS n
+        // every recipient city (with its state) for the Ghana map; the top six also feed the ranked list
+        $destRows = sl_rows("SELECT COALESCE(NULLIF(TRIM(s.recipient_city),''), 'Not recorded') AS city, MAX(TRIM(s.recipient_state)) AS state, COUNT(DISTINCT a.order_id) AS n
             FROM cdb_add_order a LEFT JOIN cdb_address_shipments s ON s.order_id = a.order_id
             WHERE a.is_deleted = 0 AND a.is_pickup = 0 AND a.order_date >= :from AND a.order_date < :to $scope
-            GROUP BY city ORDER BY n DESC, city LIMIT 6",
+            GROUP BY city ORDER BY n DESC, city LIMIT 400",
             [':from' => $start->format('Y-m-d'), ':to' => $end->format('Y-m-d')]);
         $destPeak = $destRows ? max(1, (int) $destRows[0]->n) : 1;
-        foreach ($destRows as $row) $result['destinations'][] = ['city' => $row->city, 'count' => (int) $row->n, 'pct' => sl_pct($row->n, $destPeak)];
+        foreach (array_slice($destRows, 0, 6) as $row) $result['destinations'][] = ['city' => $row->city, 'count' => (int) $row->n, 'pct' => sl_pct($row->n, $destPeak)];
+        require_once __DIR__ . '/ghana_map.php';
+        $result['ghana'] = sl_ghDestinations($destRows);
 
         $heatStart = $today->modify('-83 days');
         $heatRows = sl_rows("SELECT DATE(a.order_date) AS day, COUNT(*) AS n FROM cdb_add_order a

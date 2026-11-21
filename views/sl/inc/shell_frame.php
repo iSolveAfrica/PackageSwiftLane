@@ -6,7 +6,7 @@
   <input type="checkbox" id="navtg" class="nav-tg" aria-hidden="true" tabindex="-1">
   <header class="sl-top">
     <button class="sl-ib nav-open" type="button" data-sl-nav aria-controls="sl-navigation" aria-expanded="true" aria-label="Close the menu"><i class="ic i-sidebar" aria-hidden="true"></i></button>
-    <a class="sl-switch" href="<?= h($slHome) ?>"><small><?= h(sl_initials($core->site_name ?? 'SL')) ?></small> <?= h($core->site_name ?? 'Swift Lane') ?> · <?= h($slHub) ?> <i class="ic ic-sm i-down" aria-hidden="true"></i></a>
+    <a class="sl-switch" href="<?= h($slHome) ?>"><?= sl_brandLogo('color', 30, 'sl-top-logo on-light') ?><?= sl_brandLogo('white', 30, 'sl-top-logo on-dark') ?><span class="sl-top-hub"><?= h($slHub) ?></span><i class="ic ic-sm i-down" aria-hidden="true"></i></a>
     <?php if ($slRate > 0):
         $rateLink = null;
         if ($slIsClient && cdp_financeEnabled() && $user->cdp_hasPermission('view_my_bills')) {
@@ -20,15 +20,16 @@
     <?php endif; ?>
     <?php if ($slIsClient || sl_userIs('driver')): ?><a class="sl-phone-identity" href="<?= h($slIsClient ? sl_route('Main') : sl_route('DriverApp')) ?>"><?= h($core->site_name ?? 'Swift Lane') ?><small><?= $slIsClient ? 'Your shipping companion' : 'Rider workspace' ?></small></a><?php endif; ?>
     <span class="grow"></span>
+    <?php if (!empty($slAiPopup)): ?><button type="button" class="sl-ai-top" data-sl-ai aria-label="Ask AI about this page" title="Ask AI about this page (Ctrl+J)"><i class="ic ic-sm i-spark" aria-hidden="true"></i><span>Ask AI</span><kbd>Ctrl J</kbd></button><?php endif; ?>
     <?php if ($slHasSupport || $slCanAskAI): ?><details class="aitop"><summary aria-label="Help and support"><span class="o"><i class="ic i-ai" aria-hidden="true"></i></span>Help</summary><div class="pop" role="menu">
 <div class="me"><span class="sl-av sm dark"><?= h($slInitials) ?></span><div class="grow"><div class="fw5 sm"><?= h($slName) ?></div><div class="mut" style="font-size:14px"><?= h($slSub) ?></div></div><a class="sl-btn sm ghost" href="<?= h($slProfileUrl) ?>">Edit</a></div>
-<a class="ask" href="<?= h($slAssistantUrl) ?>"><i class="ic ic-sm i-spark" aria-hidden="true"></i><?= $slCanAskAI ? 'Ask AI for help on this page' : 'Open help and support' ?><b><i class="ic ic-sm i-send" aria-hidden="true"></i></b></a>
+<a class="ask" href="<?= h($slAssistantUrl) ?>"<?= !empty($slAiPopup) ? ' data-sl-ai' : '' ?>><i class="ic ic-sm i-spark" aria-hidden="true"></i><?= $slCanAskAI ? 'Ask AI for help on this page' : 'Open help and support' ?><b><i class="ic ic-sm i-send" aria-hidden="true"></i></b></a>
 <div class="hd">Your profile</div>
 <a class="it" role="menuitem" href="<?= h($slProfileUrl) ?>#st-avatar"><span class="t"><i class="ic ic-sm i-wand" aria-hidden="true"></i></span><span>Upload a profile photo<small>Choose a photo from your device</small></span></a>
 <a class="it" role="menuitem" href="<?= h($slProfileUrl) ?>#name"><span class="t"><i class="ic ic-sm i-edit" aria-hidden="true"></i></span><span>Change my name<small>Update the name on shipping labels</small></span></a>
 <a class="it" role="menuitem" href="<?= h($slProfileUrl) ?>#icon"><span class="t"><i class="ic ic-sm i-user" aria-hidden="true"></i></span><span>Choose my icon<small>Avatar from your photo or initials</small></span></a>
 <div class="hd">Help</div>
-<a class="it" role="menuitem" href="<?= h($slAssistantUrl) ?>"><span class="t"><i class="ic ic-sm i-help" aria-hidden="true"></i></span><span><?= $slCanAskAI ? 'Explain this page' : 'Help and support' ?></span></a>
+<a class="it" role="menuitem" href="<?= h($slAssistantUrl) ?>"<?= !empty($slAiPopup) ? ' data-sl-ai="Explain this page"' : '' ?>><span class="t"><i class="ic ic-sm i-help" aria-hidden="true"></i></span><span><?= $slCanAskAI || !empty($slAiPopup) ? 'Explain this page' : 'Help and support' ?></span></a>
 <?php if ($slHasSupport): ?><a class="it" role="menuitem" href="<?= h($slHelpUrl) ?>"><span class="t"><i class="ic ic-sm i-message" aria-hidden="true"></i></span><span>Talk to a person</span></a><?php endif; ?>
 </div></details><?php endif; ?>
     <a class="sl-ib sl-bell" aria-label="Notifications<?= $slUnread ? ', ' . $slUnread . ' unread' : '' ?>" href="<?= h(sl_route('Notifications')) ?>"><i class="ic i-bell" aria-hidden="true"></i><?php if ($slUnread): ?><b class="sl-bell-n"><?= $slUnread > 99 ? '99+' : $slUnread ?></b><?php endif; ?></a>

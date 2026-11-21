@@ -65,7 +65,25 @@ function sl_ovDaily(string $sql, array $binds, int $n = 14): array
     return $out;
 }
 
-/** The "you" card: greeting, role, activity streak and this person's own numbers. */
+/** Permission check that understands the nav's special keys (cs:agent, ai:use, ...). */
+function sl_ovAllowed($user, $perm): bool
+{
+    if (function_exists('sl_navAllowed')) return sl_navAllowed($perm, []);
+    return $user->cdp_hasPermission($perm);
+}
+
+/** Short "5 min ago" / "3 h ago" / "2 d ago" label. */
+function sl_ovAgo(?string $when): string
+{
+    if (!$when) return '';
+    $m = max(0, (int) floor((time() - strtotime($when)) / 60));
+    if ($m < 1) return 'just now';
+    if ($m < 60) return $m . ' min ago';
+    if ($m < 1440) return floor($m / 60) . ' h ago';
+    return floor($m / 1440) . ' d ago';
+}
+
+/** The "you" card: greeting, role and this person's own productivity numbers. */
 function sl_ovProfile($user, $userData, array $view): array
 {
     $uid = (int) ($_SESSION['userid'] ?? 0);
@@ -74,7 +92,8 @@ function sl_ovProfile($user, $userData, array $view): array
         'greet' => ($h < 12 ? 'Good morning' : ($h < 17 ? 'Good afternoon' : 'Good evening')) . ' · ' . date('l j M'),
         'name' => trim(($userData->fname ?? '') . ' ' . ($userData->lname ?? '')),
         'last' => !empty($userData->lastlogin) && $userData->lastlogin !== '0000-00-00 00:00:00' ? sl_date($userData->lastlogin, 'j M, H:i') : '',
-        'today' => 0, 'week' => 0, 'weekDelta' => null, 'streak' => 0, 'active' => 0, 'mine' => 0, 'bars' => [], 'logOn' => false,
+        'today' => 0, 'week' => 0, 'weekDelta' => null, 'active' => 0, 'mine' => 0, 'bars' => [], 'logOn' => false,
+        'rank' => null, 'team' => 0, 'peak' => null, 'kinds' => [], 'lastLabel' => '', 'lastAgo' => '', 'perDay' => 0, 'todayVsAvg' => null,
     ];
     if (sl_tableExists('cdb_activity_log')) {
         $p['logOn'] = true;
@@ -85,21 +104,32 @@ function sl_ovProfile($user, $userData, array $view): array
         $lastTo = date('Y-m-d H:i:s', strtotime('-7 days'));
         $last = (int) sl_scalar("SELECT COUNT(*) FROM cdb_activity_log WHERE user_id = :u AND created_at >= :a AND created_at < :b AND action <> 'page_view'", [':u' => $uid, ':a' => $lastFrom, ':b' => $lastTo]);
         $p['weekDelta'] = $last > 0 ? (int) round(($p['week'] - $last) / $last * 100) : null;
-        $days = array_map(fn($r) => $r->day, sl_rows('SELECT DISTINCT DATE(created_at) AS day FROM cdb_activity_log WHERE user_id = :u AND created_at >= :f ORDER BY day DESC', [':u' => $uid, ':f' => date('Y-m-d', strtotime('-60 days'))]));
-        $p['active'] = count(array_filter($days, fn($d) => $d >= date('Y-m-d', strtotime('-29 days'))));
-        $set = array_flip($days);
-        $cur = isset($set[date('Y-m-d')]) ? 0 : 1; // today not active yet does not break the streak
-        while (isset($set[date('Y-m-d', strtotime("-$cur days"))])) { $p['streak']++; $cur++; }
+        $days = array_map(fn($r) => $r->day, sl_rows('SELECT DISTINCT DATE(created_at) AS day FROM cdb_activity_log WHERE user_id = :u AND created_at >= :f', [':u' => $uid, ':f' => date('Y-m-d', strtotime('-29 days'))]));
+        $p['active'] = count($days);
         $daily = sl_ovDaily("SELECT DATE(created_at) AS day, COUNT(*) AS n FROM cdb_activity_log WHERE user_id = :u AND created_at >= :d0 AND action <> 'page_view' GROUP BY DATE(created_at)", [':u' => $uid]);
         $p['bars'] = sl_sparkBars(array_values($daily), 4, array_map(fn($d) => date('D j M', strtotime($d)), array_keys($daily)));
-        $p['perDay'] = round(array_sum($daily) / max(1, count(array_filter($daily))), 0);
+        $p['perDay'] = (int) round(array_sum($daily) / max(1, count(array_filter($daily))), 0);
+        $p['todayVsAvg'] = $p['perDay'] > 0 ? (int) round(($p['today'] - $p['perDay']) / $p['perDay'] * 100) : null;
+        // where I stand among staff this week (by actions logged)
+        $wk = date('Y-m-d', strtotime('monday this week'));
+        $p['team'] = (int) sl_scalar("SELECT COUNT(DISTINCT user_id) FROM cdb_activity_log WHERE created_at >= :w AND action <> 'page_view' AND user_id > 0", [':w' => $wk]);
+        if ($p['week'] > 0) $p['rank'] = 1 + (int) sl_scalar("SELECT COUNT(*) FROM (SELECT user_id FROM cdb_activity_log WHERE created_at >= :w AND action <> 'page_view' AND user_id > 0 GROUP BY user_id HAVING COUNT(*) > :n) x", [':w' => $wk, ':n' => $p['week']]);
+        // busiest hour over 30 days
+        $pk = sl_rows("SELECT HOUR(created_at) AS h, COUNT(*) AS n FROM cdb_activity_log WHERE user_id = :u AND created_at >= :f AND action <> 'page_view' GROUP BY HOUR(created_at) ORDER BY n DESC LIMIT 1", [':u' => $uid, ':f' => date('Y-m-d', strtotime('-29 days'))]);
+        if ($pk) $p['peak'] = sprintf('%02d:00–%02d:00', (int) $pk[0]->h, ((int) $pk[0]->h + 1) % 24);
+        // what kind of work this week
+        $kinds = sl_rows("SELECT COALESCE(NULLIF(verb, ''), 'other') AS v, COUNT(*) AS n FROM cdb_activity_log WHERE user_id = :u AND created_at >= :w AND action <> 'page_view' AND COALESCE(verb, '') NOT IN ('view', 'login') GROUP BY v ORDER BY n DESC LIMIT 5", [':u' => $uid, ':w' => $wk]);
+        $kmax = $kinds ? max(1, (int) $kinds[0]->n) : 1;
+        foreach ($kinds as $k) $p['kinds'][] = ['l' => function_exists('cdp_activityVerbLabel') ? cdp_activityVerbLabel($k->v) : ucfirst($k->v), 'n' => (int) $k->n, 'w' => (int) round((int) $k->n / $kmax * 100)];
+        $last = sl_rows("SELECT action_label, summary, created_at FROM cdb_activity_log WHERE user_id = :u AND action <> 'page_view' AND COALESCE(verb, '') NOT IN ('view', 'login') ORDER BY id DESC LIMIT 1", [':u' => $uid]);
+        if ($last) { $p['lastLabel'] = (string) ($last[0]->summary ?: $last[0]->action_label); $p['lastAgo'] = sl_ovAgo($last[0]->created_at); }
     }
     $mine = 0;
     if ($view['mode'] !== 'sea') $mine += (int) sl_scalar('SELECT COUNT(*) FROM cdb_add_order WHERE user_id = :u AND is_deleted = 0 AND order_date >= :f AND order_date < :t', [':u' => $uid, ':f' => $view['from'], ':t' => $view['to']]);
     if ($view['mode'] !== 'air') $mine += (int) sl_scalar('SELECT COUNT(*) FROM cdb_customers_packages WHERE user_id = :u AND order_date >= :f AND order_date < :t', [':u' => $uid, ':f' => $view['from'], ':t' => $view['to']]);
     $p['mine'] = $mine;
     $p['chips'] = [];
-    if (sl_tableExists('cdb_cs_tickets') && $user->cdp_hasPermission('cs:agent')) {
+    if (sl_tableExists('cdb_cs_tickets') && sl_ovAllowed($user, 'cs:agent')) {
         $p['chips'][] = ['icon' => 'i-ticket', 'l' => 'My open tickets', 'n' => (int) sl_scalar("SELECT COUNT(*) FROM cdb_cs_tickets WHERE assignee_id = :u AND status NOT IN ('resolved','closed','merged')", [':u' => $uid]), 'href' => sl_route('CsInbox', ['view' => 'mine'])];
     }
     if ($user->cdp_hasPermission('view_client_list') && sl_columnExists('cdb_users', 'approve')) {
@@ -138,26 +168,6 @@ function sl_ovCards($user, array $view): array
             'barsR' => 'avg ' . number_format(array_sum($daily) / 14, 1) . ' a day', 'href' => $canAir ? sl_route('AirShipments') : sl_route('SeaPackages')];
     }
 
-    // Support today
-    if (sl_tableExists('cdb_cs_tickets') && $user->cdp_hasPermission('cs:agent')) {
-        $open = "status NOT IN ('resolved','closed','merged')";
-        $waiting = (int) sl_scalar("SELECT COUNT(*) FROM cdb_cs_tickets WHERE $open AND human_first_response_at IS NULL");
-        $oldest = sl_scalar("SELECT MIN(created_at) FROM cdb_cs_tickets WHERE $open AND human_first_response_at IS NULL", [], null);
-        $over30 = (int) sl_scalar("SELECT COUNT(*) FROM cdb_cs_tickets WHERE $open AND human_first_response_at IS NULL AND created_at < NOW() - INTERVAL 30 MINUTE");
-        $openN = (int) sl_scalar("SELECT COUNT(*) FROM cdb_cs_tickets WHERE $open");
-        $started = (int) sl_scalar('SELECT COUNT(*) FROM cdb_cs_tickets WHERE created_at >= CURDATE()');
-        $toStaff = (int) sl_scalar('SELECT COUNT(*) FROM cdb_cs_tickets WHERE created_at >= CURDATE() AND assignee_id IS NOT NULL AND assignee_id > 0');
-        $resolved = (int) sl_scalar('SELECT COUNT(*) FROM cdb_cs_tickets WHERE resolved_at >= CURDATE()');
-        $firstMin = sl_scalar('SELECT AVG(TIMESTAMPDIFF(MINUTE, created_at, COALESCE(human_first_response_at, first_response_at))) FROM cdb_cs_tickets WHERE created_at >= CURDATE() AND COALESCE(human_first_response_at, first_response_at) IS NOT NULL', [], null);
-        $age = $oldest ? (int) floor((time() - strtotime($oldest)) / 60) : 0;
-        $daily = sl_ovDaily('SELECT DATE(created_at) AS day, COUNT(*) AS n FROM cdb_cs_tickets WHERE created_at >= :d0 GROUP BY DATE(created_at)', []);
-        $cards[] = ['key' => 'support', 'tone' => 'rose', 'icon' => 'i-message', 'eyebrow' => 'Support today', 'big' => sl_num($waiting) . ' waiting',
-            'lede' => $waiting ? 'for a person · longest ' . ($age >= 60 ? floor($age / 60) . ' h ' . ($age % 60) . ' min' : $age . ' min') . ($over30 ? ' · ' . $over30 . ' unanswered 30 min+' : '') : 'Everyone has had a reply',
-            'sub' => [['n' => sl_num($started), 'l' => 'Chats started'], ['n' => sl_num($toStaff), 'l' => 'To staff'], ['n' => sl_num($resolved), 'l' => 'Resolved'], ['n' => $firstMin === null ? '—' : (int) round((float) $firstMin) . ' min', 'l' => 'First reply']],
-            'bars' => sl_sparkBars(array_values($daily), 4, array_map(fn($d) => date('D j M', strtotime($d)), array_keys($daily))), 'barsL' => 'New chats per day, 14 days', 'barsR' => sl_num($openN) . ' open tickets',
-            'href' => sl_route('CsInbox'), 'alert' => $over30 ? $over30 . ' unanswered over 30 min' : ''];
-    }
-
     // Deliveries & pickups today
     if ($user->cdp_hasPermission(['view_pickup_list', 'dispatch_riders', 'view_user_list'])) {
         $outN = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier = 7 $agency");
@@ -173,6 +183,59 @@ function sl_ovCards($user, array $view): array
             'sub' => [['n' => sl_num($outN), 'l' => 'Out now'], ['n' => sl_num($riders), 'l' => 'Riders'], ['n' => sl_num($pickT), 'l' => 'Pickups'], ['n' => sl_num($unass), 'l' => 'No rider']],
             'bars' => sl_sparkBars(array_values($daily), 4, array_map(fn($d) => date('D j M', strtotime($d)), array_keys($daily))), 'barsL' => 'Handed over per day, 14 days', 'barsR' => 'avg ' . number_format(array_sum($daily) / 14, 1) . ' a day',
             'href' => sl_route('RiderDispatch'), 'alert' => $unass ? $unass . ' pickups need a rider' : ''];
+    }
+
+    // Support today
+    if (sl_ovAllowed($user, ['cs:agent', 'cs:manage'])) {
+      if (!sl_tableExists('cdb_cs_tickets')) {
+        $cards[] = ['key' => 'support', 'tone' => 'rose', 'icon' => 'i-message', 'eyebrow' => 'Customer service today', 'big' => '0 waiting',
+            'lede' => 'The support desk starts counting after its first conversation', 'sub' => [['n' => '0', 'l' => 'Chats started'], ['n' => '0', 'l' => 'To staff'], ['n' => '0', 'l' => 'Resolved'], ['n' => '—', 'l' => 'First reply']],
+            'bars' => sl_sparkBars(array_fill(0, 14, 0)), 'barsL' => 'New chats per day, 14 days', 'barsR' => '0 open tickets', 'href' => sl_route('CsInbox'), 'alert' => ''];
+      } else {
+        $open = "status NOT IN ('resolved','closed','merged')";
+        $waiting = (int) sl_scalar("SELECT COUNT(*) FROM cdb_cs_tickets WHERE $open AND human_first_response_at IS NULL");
+        $oldest = sl_scalar("SELECT MIN(created_at) FROM cdb_cs_tickets WHERE $open AND human_first_response_at IS NULL", [], null);
+        $over30 = (int) sl_scalar("SELECT COUNT(*) FROM cdb_cs_tickets WHERE $open AND human_first_response_at IS NULL AND created_at < NOW() - INTERVAL 30 MINUTE");
+        $openN = (int) sl_scalar("SELECT COUNT(*) FROM cdb_cs_tickets WHERE $open");
+        $started = (int) sl_scalar('SELECT COUNT(*) FROM cdb_cs_tickets WHERE created_at >= CURDATE()');
+        $toStaff = (int) sl_scalar('SELECT COUNT(*) FROM cdb_cs_tickets WHERE created_at >= CURDATE() AND assignee_id IS NOT NULL AND assignee_id > 0');
+        $resolved = (int) sl_scalar('SELECT COUNT(*) FROM cdb_cs_tickets WHERE resolved_at >= CURDATE()');
+        $firstMin = sl_scalar('SELECT AVG(TIMESTAMPDIFF(MINUTE, created_at, COALESCE(human_first_response_at, first_response_at))) FROM cdb_cs_tickets WHERE created_at >= CURDATE() AND COALESCE(human_first_response_at, first_response_at) IS NOT NULL', [], null);
+        $age = $oldest ? (int) floor((time() - strtotime($oldest)) / 60) : 0;
+        $daily = sl_ovDaily('SELECT DATE(created_at) AS day, COUNT(*) AS n FROM cdb_cs_tickets WHERE created_at >= :d0 GROUP BY DATE(created_at)', []);
+        $cards[] = ['key' => 'support', 'tone' => 'rose', 'icon' => 'i-message', 'eyebrow' => 'Customer service today', 'big' => sl_num($waiting) . ' waiting',
+            'lede' => $waiting ? 'for a person · longest ' . ($age >= 60 ? floor($age / 60) . ' h ' . ($age % 60) . ' min' : $age . ' min') . ($over30 ? ' · ' . $over30 . ' unanswered 30 min+' : '') : 'Everyone has had a reply',
+            'sub' => [['n' => sl_num($started), 'l' => 'Chats started'], ['n' => sl_num($toStaff), 'l' => 'To staff'], ['n' => sl_num($resolved), 'l' => 'Resolved'], ['n' => $firstMin === null ? '—' : (int) round((float) $firstMin) . ' min', 'l' => 'First reply']],
+            'bars' => sl_sparkBars(array_values($daily), 4, array_map(fn($d) => date('D j M', strtotime($d)), array_keys($daily))), 'barsL' => 'New chats per day, 14 days', 'barsR' => sl_num($openN) . ' open tickets',
+            'href' => sl_route('CsInbox'), 'alert' => $over30 ? $over30 . ' unanswered over 30 min' : ''];
+      }
+    }
+
+    // AI across the system: customer chat bot + staff assistant
+    if (sl_ovAllowed($user, ['ai:use', 'ai:manage'])) {
+        $on = function_exists('cdp_aiSetting') && (string) cdp_aiSetting('enabled', '0') === '1';
+        $model = function_exists('cdp_aiSetting') ? (string) cdp_aiSetting('model', '') : '';
+        $hasConv = sl_tableExists('cdb_cs_conversations');
+        $hasQ = sl_tableExists('cdb_ai_questions');
+        $hasRuns = sl_tableExists('cdb_cs_ai_runs');
+        $chats = $hasConv ? (int) sl_scalar('SELECT COUNT(*) FROM cdb_cs_conversations WHERE created_at >= CURDATE()') : 0;
+        $handed = $hasConv ? (int) sl_scalar('SELECT COUNT(*) FROM cdb_cs_conversations WHERE created_at >= CURDATE() AND handover_at IS NOT NULL') : 0;
+        $aiOnly = max(0, $chats - $handed);
+        $staffQ = $hasQ ? (int) sl_scalar('SELECT COUNT(*) FROM cdb_ai_questions WHERE created_at >= CURDATE()') : 0;
+        $failed = $hasRuns ? (int) sl_scalar("SELECT COUNT(*) FROM cdb_cs_ai_runs WHERE created_at >= CURDATE() AND outcome IN ('error','failed','timeout')") : 0;
+        $tokens = $hasRuns ? (int) sl_scalar('SELECT COALESCE(SUM(COALESCE(tokens_in,0) + COALESCE(tokens_out,0)), 0) FROM cdb_cs_ai_runs WHERE created_at >= CURDATE()') : 0;
+        if (sl_tableExists('cdb_ai_messages')) $tokens += (int) sl_scalar('SELECT COALESCE(SUM(COALESCE(tokens_in,0) + COALESCE(tokens_out,0)), 0) FROM cdb_ai_messages WHERE created_at >= CURDATE()');
+        $latency = $hasRuns ? sl_scalar('SELECT AVG(latency_ms) FROM cdb_cs_ai_runs WHERE created_at >= CURDATE() AND latency_ms IS NOT NULL', [], null) : null;
+        $daily = sl_ovZeroDays();
+        if ($hasConv) foreach (sl_ovDaily('SELECT DATE(created_at) AS day, COUNT(*) AS n FROM cdb_cs_conversations WHERE created_at >= :d0 GROUP BY DATE(created_at)', []) as $k => $v) $daily[$k] += $v;
+        if ($hasQ) foreach (sl_ovDaily('SELECT DATE(created_at) AS day, COUNT(*) AS n FROM cdb_ai_questions WHERE created_at >= :d0 GROUP BY DATE(created_at)', []) as $k => $v) $daily[$k] += $v;
+        $tok = $tokens >= 1000000 ? round($tokens / 1000000, 1) . 'M' : ($tokens >= 1000 ? round($tokens / 1000, 1) . 'k' : (string) $tokens);
+        $cards[] = ['key' => 'ai', 'tone' => 'violet', 'icon' => 'i-ai', 'eyebrow' => 'AI across the system', 'big' => sl_num($chats + $staffQ) . ' handled',
+            'lede' => !$on ? 'The AI assistant is switched off · turn it on in the AI Automation Center'
+                : ($chats ? sl_pct($aiOnly, $chats) . '% of customer chats closed without a person' : 'No customer chats yet today') . ($model !== '' ? ' · ' . $model : ''),
+            'sub' => [['n' => sl_num($chats), 'l' => 'Customer chats'], ['n' => sl_num($handed), 'l' => 'Handed to staff'], ['n' => sl_num($staffQ), 'l' => 'Staff questions'], ['n' => $latency === null ? $tok : number_format((float) $latency / 1000, 1) . ' s', 'l' => $latency === null ? 'Tokens' : 'Avg reply']],
+            'bars' => sl_sparkBars(array_values($daily), 4, array_map(fn($d) => date('D j M', strtotime($d)), array_keys($daily))), 'barsL' => 'AI conversations per day, 14 days', 'barsR' => $tok . ' tokens today',
+            'href' => sl_ovAllowed($user, 'ai:manage') ? sl_route('AiCenter') : sl_route('StaffAI'), 'alert' => $failed ? $failed . ' AI errors today' : (!$on ? 'AI is off' : '')];
     }
 
     // Warehouse now
@@ -235,7 +298,28 @@ function sl_ovFreight($user, array $view): array
         $book += (int) sl_scalar("SELECT COUNT(*) FROM {$s['tbl']} a WHERE 1 = 1 {$s['w']} $agency");
     }
     $total = $tot['air'] + $tot['sea'];
+    // running totals: is this period ahead of or behind the last one at the same point?
+    $cumCur = []; $cumPrev = []; $rc = 0; $rp = 0;
+    // buckets still in the future (rest of today's hours) are not drawn on the "this period" line
+    $nowIdx = $unit === 'hour' ? (int) date('G') : count($keys) - 1;
+    foreach ($cur as $i => $v) { $rc += $v; $rp += $prev[$i]; $cumCur[] = $i <= $nowIdx ? $rc : null; $cumPrev[] = $rp; }
+    $prevSame = $cumPrev[min($nowIdx, count($cumPrev) - 1)] ?? 0;
+    $elapsed = array_slice($cur, 0, $nowIdx + 1);
+    $bestI = $elapsed ? array_search(max($elapsed), $elapsed, true) : 0;
+    // forecast to the end of the calendar period at today's pace
+    $forecast = null; $forecastLabel = '';
+    $calEnd = ['week' => 7, 'month' => (int) date('t'), 'year' => 365 + (int) date('L')][$view['period']] ?? 0;
+    if ($calEnd && $view['days'] < $calEnd && $view['days'] > 0) {
+        $forecast = (int) round($total / $view['days'] * $calEnd);
+        $forecastLabel = ['week' => 'by Sunday', 'month' => 'by ' . date('M t'), 'year' => 'by Dec 31'][$view['period']];
+    }
     return [
+        'cumCur' => $cumCur, 'cumPrev' => $cumPrev, 'prevSame' => $prevSame,
+        'pace' => $prevSame > 0 ? round(($total - $prevSame) / $prevSame * 100, 1) : null,
+        'avg' => count($elapsed) ? round($total / count($elapsed), 1) : 0,
+        'best' => $elapsed ? ['n' => (int) $elapsed[$bestI], 'l' => $labels[$bestI] ?? ''] : ['n' => 0, 'l' => ''],
+        'quiet' => count(array_filter($elapsed, fn($v) => $v === 0)), 'buckets' => count($elapsed),
+        'forecast' => $forecast, 'forecastLabel' => $forecastLabel,
         'title' => ($view['mode'] === 'all' ? 'Air & sea freight' : ($view['mode'] === 'air' ? 'Air freight' : 'Sea freight')) . ' — ' . strtolower($view['label']),
         'total' => $total, 'prevTotal' => $ptot, 'book' => $book,
         'change' => $ptot > 0 ? round(($total - $ptot) / $ptot * 100, 1) : null,

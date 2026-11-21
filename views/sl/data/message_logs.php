@@ -38,7 +38,7 @@ function sl_messageLogsData($user, $core): array
     $d['count'] = (int) sl_scalar("SELECT COUNT(*) FROM cdb_message_log l WHERE $where", $binds);
     $rows = sl_rows("SELECT l.id, l.created_at, l.channel, l.source, l.source_label, l.template_id, l.subject, l.recipient_name, l.recipient_to, l.entity_type, l.entity_id, l.entity_label, l.status, l.status_detail, l.batch_id, l.sent_by_name
         FROM cdb_message_log l WHERE $where ORDER BY l.id DESC LIMIT " . (($d['page'] - 1) * $d['per']) . ", " . $d['per'], $binds);
-    $cls = ['sent' => 'delivered', 'failed' => 'overdue', 'skipped' => 'pending', 'queued' => 'sorting'];
+    $cls = ['sent' => 'delivered', 'failed' => 'overdue', 'skipped' => 'skipped', 'queued' => 'sorting'];
     foreach ($rows as $r) {
         $link = '';
         if ($r->entity_type === 'shipment' || $r->entity_type === 'order') {
@@ -50,7 +50,22 @@ function sl_messageLogsData($user, $core): array
         }
         $d['rows'][] = ['t' => sl_date($r->created_at, 'M j, H:i'), 'ini' => sl_initials((string) ($r->recipient_name ?: $r->recipient_to)), 'name' => $r->recipient_name ?: '—', 'to' => $r->recipient_to ?: '', 'ch' => cdp_mlChannelLabel($r->channel),
             'tpl' => ($r->source_label ?: cdp_msgSourceLabel((string) $r->source)) . ($r->template_id ? ' · #' . (int) $r->template_id : ''), 'trk' => $r->entity_label ?: '—', 'link' => $link,
-            'st' => cdp_mlStatusLabel($r->status), 'cls' => $cls[$r->status] ?? 'plain', 'detail' => (string) $r->status_detail, 'by' => (string) ($r->sent_by_name ?: 'System'), 'batch' => (string) $r->batch_id];
+            'st' => cdp_mlStatusLabel($r->status), 'cls' => $cls[$r->status] ?? 'plain', 'detail' => (string) $r->status_detail, 'short' => sl_msgShortDetail((string) $r->status_detail), 'by' => (string) ($r->sent_by_name ?: 'System'), 'batch' => (string) $r->batch_id];
     }
     return $d;
+}
+
+/**
+ * One short line for the status cell: provider message ids and long codes move to the tooltip.
+ * "Accepted by UltraMsg (id 80461)" -> "UltraMsg"; "Accepted by SMTP server" -> "SMTP";
+ * "SMS is switched off (Tools > SMS)." -> "SMS is switched off".
+ */
+function sl_msgShortDetail(string $d): string
+{
+    $d = trim($d);
+    if ($d === '') return '';
+    if (preg_match('/^Accepted by (.+?)(\s*\(.*\))?\.?$/i', $d, $m)) return 'via ' . preg_replace('/\s+server$/i', '', trim($m[1]));
+    $d = preg_replace('/\s*\([^)]*\)\s*/', ' ', $d);
+    $d = trim(rtrim(trim(preg_replace('/\s+/', ' ', $d)), '.'));
+    return mb_strlen($d) > 42 ? mb_substr($d, 0, 40) . '…' : $d;
 }

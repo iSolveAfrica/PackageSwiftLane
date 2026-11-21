@@ -50,6 +50,10 @@ if (!function_exists('cdp_authFrameOpen')) {
     function cdp_authBrandMarkup($core): string
     {
         $name = cdp_authFrameEsc($core->site_name ?? '');
+        // the Swift Lane logo (white lettering: the top bar sits on a photo)
+        if (is_file(__DIR__ . '/../../assets/swiftlane/brand/swift-logo-white.png')) {
+            return '<img src="assets/swiftlane/brand/swift-logo-white.png" alt="' . $name . '" height="40" style="height:40px;width:auto">';
+        }
         if (!empty($core->logo_web)) {
             return '<img src="assets/' . cdp_authFrameEsc($core->logo_web) . '" alt="' . $name . '">';
         }

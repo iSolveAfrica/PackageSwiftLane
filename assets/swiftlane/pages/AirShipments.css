@@ -24,8 +24,3 @@
 .as-a:hover{background:var(--hover);border-color:var(--line-2)}
 .as-a.pri{background:var(--ink);color:var(--inverse);border-color:var(--ink)}
 .as-a.danger{color:var(--red-ink)}
-.as-ai-modal{width:min(560px,94vw)}
-.as-ai-log{display:flex;flex-direction:column;gap:8px;max-height:52vh;min-height:140px;overflow:auto;padding:2px}
-.as-ai-msg{padding:10px 12px;border-radius:12px;background:var(--card);border:1px solid var(--line);line-height:1.45;white-space:pre-wrap;max-width:95%;font-size:15px}
-.as-ai-msg.you{align-self:flex-end;background:var(--ink);color:var(--inverse);border-color:var(--ink)}
-.as-ai-msg.bad{color:var(--red-ink)}

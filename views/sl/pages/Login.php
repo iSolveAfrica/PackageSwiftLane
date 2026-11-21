@@ -10,7 +10,7 @@ $pics = sl_get($d, 'pics', []);
 <div class="lg" style="<?= h($pics['style'] ?? '') ?>" data-sl-slides="<?= (int) ($pics['n'] ?? 0) ?>" data-sl-every="<?= (int) ($pics['every'] ?? 6) ?>">
   <div aria-hidden="true" style="position:absolute;inset:0"><?= $pics['bgs'] ?? '' ?></div>
   <div class="lg-dim" aria-hidden="true" style="opacity:calc(var(--sl-dim,.3) + .5)"></div>
-  <div class="lg-top"><div class="sl-brand" style="color:#fff"><span class="sl-logo"><i></i></span><?= sl_v($d, 'site') ?></div><a class="sm fw5" href="<?= sl_route('PublicTracking') ?>">Track a package →</a></div>
+  <div class="lg-top"><div class="sl-brand" style="color:#fff"><?= sl_brandLogo('white', 44) ?></div><a class="sm fw5" href="<?= sl_route('PublicTracking') ?>">Track a package →</a></div>
   <main class="lg-card">
     <?php if (defined('SL_PWA_ROLE')): ?><span class="pwa-entry-label"><?= SL_PWA_ROLE==='rider'?'SWIFT LANE RIDER':'YOUR SWIFT LANE ACCOUNT' ?></span><?php endif; ?>
     <div class="col g6"><h1 style="font-size:28px;font-weight:500;letter-spacing:-.015em;margin:0"><?= sl_v($d, 'heading') ?></h1><p class="mut" style="margin:0"><?= defined('SL_PWA_ROLE') ? (SL_PWA_ROLE==='rider' ? 'Sign in to your delivery run.' : 'Your parcels, pickup codes and deliveries, together.') : 'Log in to manage shipments, packages and pickups.' ?></p></div>

@@ -10,7 +10,7 @@ $found = (bool) sl_get($d, 'found');
 ?>
 <div class="sl-app">
   <header class="sl-top" style="height: 64px; padding: 0 24px">
-    <a class="sl-brand" href="<?= sl_route(sl_get($d, 'loggedIn') ? 'Main' : 'Login') ?>"><span class="sl-logo"><i></i></span><?= sl_v($d, 'site') ?></a>
+    <a class="sl-brand" href="<?= sl_route(sl_get($d, 'loggedIn') ? 'Main' : 'Login') ?>"><?= sl_brandLogo('color', 40) ?></a>
     <?php if ((float) sl_get($d, 'rate') > 0): ?><span class="fx-chip" title="Exchange rate used for local prices"><i class="ic ic-sm i-dollar" aria-hidden="true"></i><span class="mono">USD 1 = GHS <?= h(number_format((float) sl_get($d, 'rate'), 2)) ?></span></span><?php endif; ?>
     <span class="grow"></span>
     <nav class="row g8 wrap"><a class="sl-btn ghost sm" href="<?= sl_route('QuoteCalculator') ?>">Get a quote</a><?php if (sl_get($d, 'loggedIn')): ?><a class="sl-btn sm" href="<?= sl_route('Main') ?>">My account</a><?php else: ?><a class="sl-btn ghost sm" href="<?= sl_route('SignUp') ?>">Create account</a><a class="sl-btn sm" href="<?= sl_route('Login') ?>">Log in</a><?php endif; ?></nav>

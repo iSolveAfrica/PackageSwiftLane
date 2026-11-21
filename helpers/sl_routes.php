@@ -44,8 +44,8 @@ function sl_routes(): array
         'NewShipment'      => 'courier_add.php',
         'ShipmentDetail'   => 'courier_view.php',
         'ShipmentTracking' => 'courier_shipment_tracking.php',
+        'LiveTracking' => 'live_tracking.php',
         'DeliveryTracking' => 'delivery_tracking.php',
-        'ImportData'       => 'import_excel_add_courier.php',
 
         // Sea freight and pre-alerts
         'SeaPackages'   => 'customer_packages_list.php',
@@ -128,6 +128,7 @@ function sl_routes(): array
         'EmailBuilder'          => 'newsletter.php',
         'MessageTemplates'      => 'templates_sms.php',
         'CommsHub'              => 'comms_hub.php',
+        'Campaigns'             => 'campaigns.php',
         'Automations'           => 'automations.php',
 
         // Customer service

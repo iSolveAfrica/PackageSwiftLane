@@ -54,7 +54,7 @@ $bars = function (array $bars, string $cls = '') {
 </form>
 <?php endif; ?>
 
-<div class="ovh-wrap"><div class="ovh-grid<?= count($hc) <= 2 ? ' few' : '' ?>">
+<div class="ovh-wrap"><div class="ovh-grid<?= count($hc) <= 2 ? ' few' : '' ?>" style="--rows:<?= max(1, (int) ceil(count($hc) / 2)) ?>">
   <section class="ovh-me" aria-label="You">
     <div class="ovh-me-top">
       <?= $slPic(64, false) ?>
@@ -65,24 +65,42 @@ $bars = function (array $bars, string $cls = '') {
       </div>
       <a class="sl-btn sm ghost ovh-prof" href="<?= h($slProfileUrl ?? '#') ?>"><i class="ic ic-sm i-user" aria-hidden="true"></i>My profile</a>
     </div>
-    <?php if ($hp['logOn']): ?>
-    <div class="ovh-me-mid">
-      <div class="ovh-ring" style="--p:<?= (int) round($hp['active'] / 30 * 100) ?>" role="img" aria-label="Active on <?= (int) $hp['active'] ?> of the last 30 days"><b><?= (int) $hp['active'] ?></b><span>active days<br>of 30</span></div>
-      <dl class="ovh-stats">
-        <div><dt>Today</dt><dd><b><?= sl_num($hp['today']) ?></b> actions</dd></div>
-        <div><dt>This week</dt><dd><b><?= sl_num($hp['week']) ?></b><?php if ($hp['weekDelta'] !== null): ?> <span class="<?= $hp['weekDelta'] < 0 ? 'dn' : 'up' ?>"><?= $hp['weekDelta'] < 0 ? '▼' : '▲' ?> <?= abs($hp['weekDelta']) ?>%</span><?php endif; ?></dd></div>
-        <div><dt>Streak</dt><dd><b><?= (int) $hp['streak'] ?></b> day<?= (int) $hp['streak'] === 1 ? '' : 's' ?> in a row</dd></div>
-        <div><dt>I registered · <?= h($hv['period'] === 'custom' ? 'in range' : strtolower($hv['label'])) ?></dt><dd><b><?= sl_num($hp['mine']) ?></b> <?= $hv['mode'] === 'sea' ? 'packages' : 'shipments' ?></dd></div>
-      </dl>
+    <?php if ($hp['logOn']):
+        $tiles = [
+            ['Today', sl_num($hp['today']), 'actions', $hp['todayVsAvg'], 'vs avg'],
+            ['This week', sl_num($hp['week']), 'actions', $hp['weekDelta'], 'vs last wk'],
+            ['Per working day', sl_num($hp['perDay']), 'avg, 14 days', null, ''],
+            ['Active days', (int) $hp['active'] . '<small>/30</small>', '', null, ''],
+            ['Team rank', $hp['rank'] ? '#' . (int) $hp['rank'] : '—', $hp['team'] ? 'of ' . (int) $hp['team'] . ' this week' : 'no activity yet', null, ''],
+            [($hv['period'] === 'custom' ? 'I registered' : 'Mine · ' . strtolower(str_replace('This ', '', $hv['label']))), sl_num($hp['mine']), ($hv['mode'] === 'sea' ? 'packages' : 'shipments'), null, ''],
+        ];
+    ?>
+    <div class="ovh-kpis">
+      <?php foreach ($tiles as $i => [$tl, $tv, $tu, $td, $tdl]): ?>
+      <div class="ovh-kpi">
+        <span class="ovh-kl"><?= h($tl) ?></span>
+        <b><?= $tv ?></b>
+        <?php if ($i === 3): ?><span class="ovh-meter" role="img" aria-label="Active on <?= (int) $hp['active'] ?> of the last 30 days"><i style="width:<?= (int) round($hp['active'] / 30 * 100) ?>%"></i></span>
+        <?php elseif ($td !== null): ?><span class="ovh-ku"><span class="<?= $td < 0 ? 'dn' : 'up' ?>"><?= $td < 0 ? '▼' : '▲' ?> <?= abs($td) > 999 ? '999+' : abs($td) ?>%</span> <?= h($tdl) ?></span>
+        <?php else: ?><span class="ovh-ku"><?= h($tu) ?></span><?php endif; ?>
+      </div>
+      <?php endforeach; ?>
     </div>
+    <?php if ($hp['kinds']): ?>
+    <div class="ovh-kinds">
+      <div class="row between sm"><span class="fw5">My work this week</span><?php if ($hp['peak']): ?><span class="mut"><i class="ic ic-sm i-clock" aria-hidden="true"></i> Busiest <?= h($hp['peak']) ?></span><?php endif; ?></div>
+      <?php foreach ($hp['kinds'] as $k): ?><div class="ovh-kind"><span><?= h($k['l']) ?></span><span class="ovh-kbar"><i style="width:<?= (int) $k['w'] ?>%"></i></span><b><?= sl_num($k['n']) ?></b></div><?php endforeach; ?>
+    </div>
+    <?php endif; ?>
     <div class="ovh-me-bars">
-      <div class="row between sm"><span class="mut">My actions, 14 days<?= !empty($hp['perDay']) ? ' · ' . (int) $hp['perDay'] . ' a working day' : '' ?></span></div>
+      <div class="row between sm"><span class="mut">My actions, 14 days</span><?php if ($hp['lastLabel']): ?><span class="mut ovh-last" title="<?= h($hp['lastLabel']) ?>">Last: <?= h($hp['lastLabel']) ?> · <?= h($hp['lastAgo']) ?></span><?php endif; ?></div>
       <?= $bars($hp['bars'], 'violet') ?>
     </div>
     <?php endif; ?>
-    <?php if ($hp['chips']): ?>
+    <?php if ($hp['chips'] || $hp['logOn']): ?>
     <div class="ovh-chips">
       <?php foreach ($hp['chips'] as $c): ?><a href="<?= h($c['href']) ?>"><i class="ic ic-sm <?= h($c['icon']) ?>" aria-hidden="true"></i><?= h($c['l']) ?> <b><?= sl_num($c['n']) ?></b></a><?php endforeach; ?>
+      <?php if ($hp['logOn']): ?><a href="<?= h(sl_route('ActivityLogs')) ?>"><i class="ic ic-sm i-activity" aria-hidden="true"></i>My activity</a><?php endif; ?>
     </div>
     <?php endif; ?>
   </section>
@@ -101,35 +119,58 @@ $bars = function (array $bars, string $cls = '') {
 
 <?php if ($hf):
     $n = count($hf['cur']);
-    $L = 40; $R = 748; $T = 16; $B = 186;
-    $step = ($R - $L) / max(1, $n);
-    $bw = min(26, $step * .6);
-    $prior = '';
-    foreach ($hf['prev'] as $i => $v) $prior .= ($i ? ' L' : 'M') . round($L + $step * ($i + .5), 1) . ',' . round($B - ($B - $T) * $v / $hf['peak'], 1);
-    $ticks = array_values(array_unique([0, (int) round($hf['peak'] / 2), (int) $hf['peak']]));
+    $L = 44; $R = 748; $T = 14; $B = 176;
+    $step = ($R - $L) / max(1, $n - 1);
+    $peak = max(1, max(array_filter($hf['cumCur'], fn($v) => $v !== null) ?: [0]), max($hf['cumPrev'] ?: [0]));
+    $x = fn($i) => round($n > 1 ? $L + $step * $i : ($L + $R) / 2, 1);
+    $y = fn($v) => round($B - ($B - $T) * $v / $peak, 1);
+    $curLine = ''; $lastI = 0;
+    foreach ($hf['cumCur'] as $i => $v) { if ($v === null) break; $curLine .= ($i ? ' L' : 'M') . $x($i) . ',' . $y($v); $lastI = $i; }
+    $area = $curLine !== '' ? $curLine . ' L' . $x($lastI) . ',' . $B . ' L' . $x(0) . ',' . $B . ' Z' : '';
+    $prevLine = '';
+    foreach ($hf['cumPrev'] as $i => $v) $prevLine .= ($i ? ' L' : 'M') . $x($i) . ',' . $y($v);
+    $ticks = array_values(array_unique([0, (int) round($peak / 2), (int) $peak]));
     $xl = array_values(array_unique([0, (int) floor(($n - 1) / 3), (int) floor(2 * ($n - 1) / 3), $n - 1]));
+    $dPeak = max(1, max($hf['cur'] ?: [0]));
+    $dStep = ($R - $L) / max(1, $n); $dw = max(2, min(22, $dStep * .7));
+    $endV = $hf['cumCur'][$lastI] ?? 0;
+    $pace = $hf['pace'];
 ?>
 <section class="ovh-freight" aria-label="<?= h($hf['title']) ?>">
   <div class="ovh-fl">
     <span class="ovh-eyebrow"><i class="ic ic-sm i-layers" aria-hidden="true"></i><?= h($hf['title']) ?></span>
-    <b class="ovh-huge"><?= sl_num($hf['total']) ?></b>
-    <?php if ($hf['change'] !== null && (float) $hf['change'] === 0.0): ?><p class="ovh-delta"><span class="eq">= 0%</span> same as <?= h($hf['prevLabel']) ?></p>
-    <?php elseif ($hf['change'] !== null): ?><p class="ovh-delta"><span class="<?= $hf['change'] < 0 ? 'dn' : 'up' ?>"><?= $hf['change'] < 0 ? '↘' : '↗' ?> <?= abs($hf['change']) ?>%</span> <?= $hf['change'] < 0 ? 'below' : 'above' ?> <?= h($hf['prevLabel']) ?></p>
-    <?php else: ?><p class="ovh-delta mut">Nothing registered in <?= h($hf['prevLabel']) ?></p><?php endif; ?>
-    <p class="mut">Registered <?= h($hf['rangeLabel']) ?> · <?= sl_num($hf['book']) ?> on the whole book</p>
+    <div class="ovh-tot"><b class="ovh-huge"><?= sl_num($hf['total']) ?></b><span class="mut">registered</span></div>
+    <?php if ($pace === null): ?><p class="ovh-delta mut">Nothing registered at this point in <?= h($hf['prevLabel']) ?></p>
+    <?php elseif ((float) $pace === 0.0): ?><p class="ovh-delta"><span class="eq">= on pace</span> with <?= h($hf['prevLabel']) ?></p>
+    <?php else: ?><p class="ovh-delta"><span class="<?= $pace < 0 ? 'dn' : 'up' ?>"><?= $pace < 0 ? '↘' : '↗' ?> <?= abs($pace) ?>%</span> <?= $pace < 0 ? 'behind' : 'ahead of' ?> <?= h($hf['prevLabel']) ?> · <?= sl_num($hf['prevSame']) ?> then</p><?php endif; ?>
+    <div class="ovh-fstats">
+      <div><span>Average a <?= h($hf['unit']) ?></span><b><?= sl_num($hf['avg']) ?></b></div>
+      <div><span>Best <?= h($hf['unit']) ?></span><b><?= sl_num($hf['best']['n']) ?></b><small><?= h($hf['best']['l']) ?></small></div>
+      <?php if ($hf['forecast'] !== null): ?><div><span>Forecast</span><b><?= sl_num($hf['forecast']) ?></b><small><?= h($hf['forecastLabel']) ?> at this pace</small></div>
+      <?php else: ?><div><span>Whole book</span><b><?= sl_num($hf['book']) ?></b><small>all time</small></div><?php endif; ?>
+      <div><span>Quiet <?= h($hf['unit']) ?>s</span><b<?= $hf['quiet'] ? ' class="warn"' : '' ?>><?= (int) $hf['quiet'] ?></b><small>of <?= (int) $hf['buckets'] ?> with none</small></div>
+    </div>
     <?php if ($hf['showSplit']): ?>
     <div class="ovh-split" role="img" aria-label="Air <?= (int) $hf['airPct'] ?>%, sea <?= (int) $hf['seaPct'] ?>%"><i class="air" style="width:<?= (int) $hf['airPct'] ?>%"></i><i class="sea" style="width:<?= (int) $hf['seaPct'] ?>%"></i></div>
     <div class="ovh-legend"><span><i class="air"></i>Air <?= (int) $hf['airPct'] ?>% · <?= sl_num($hf['air']) ?></span><span><i class="sea"></i>Sea <?= (int) $hf['seaPct'] ?>% · <?= sl_num($hf['sea']) ?></span></div>
     <?php endif; ?>
   </div>
   <div class="ovh-fr">
-    <div class="row between wrap g8"><b class="fw5">Registrations per <?= h($hf['unit']) ?></b><div class="ovh-legend"><span><i class="cur"></i>This period</span><span><i class="prev"></i>Previous period</span></div></div>
-    <svg class="ovh-chart" <?= sl_chartAttrs([['name' => 'This period', 'values' => $hf['cur'], 'color' => 'var(--sky)'], ['name' => 'Previous period', 'values' => $hf['prev'], 'color' => 'var(--yellow)']], $hf['labels'], 'Registrations', $L + $step / 2, $R - $step / 2) ?> viewBox="0 0 760 214" role="img" aria-label="Registrations per <?= h($hf['unit']) ?> compared with the previous period">
-      <?php foreach ($ticks as $t): $y = $B - ($B - $T) * $t / $hf['peak']; ?><line class="g" x1="<?= $L ?>" x2="<?= $R ?>" y1="<?= round($y, 1) ?>" y2="<?= round($y, 1) ?>"/><text class="ax" x="<?= $L - 8 ?>" y="<?= round($y + 4, 1) ?>" text-anchor="end"><?= sl_num($t) ?></text><?php endforeach; ?>
-      <?php foreach ($hf['cur'] as $i => $v): $hh = ($B - $T) * $v / $hf['peak']; ?><rect class="b" x="<?= round($L + $step * ($i + .5) - $bw / 2, 1) ?>" y="<?= round($B - $hh, 1) ?>" width="<?= round($bw, 1) ?>" height="<?= round(max($hh, $v ? 2 : 0), 1) ?>" rx="3"><title><?= h($hf['labels'][$i]) ?>: <?= (int) $v ?></title></rect><?php endforeach; ?>
-      <path class="p" d="<?= h($prior) ?>"/>
-      <?php foreach ($xl as $i): ?><text class="ax" x="<?= round($L + $step * ($i + .5), 1) ?>" y="208" text-anchor="middle"><?= h($hf['labels'][$i]) ?></text><?php endforeach; ?>
+    <div class="row between wrap g8"><span class="col"><b class="fw5">Running total</b><span class="mut sm">Where the period stands against the last one, <?= h($hf['unit']) ?> by <?= h($hf['unit']) ?></span></span><div class="ovh-legend"><span><i class="cur"></i>This period</span><span><i class="prev"></i>Previous period</span></div></div>
+    <svg class="ovh-chart" <?= sl_chartAttrs([['name' => 'This period (running)', 'values' => $hf['cumCur'], 'color' => 'var(--sky)'], ['name' => 'Previous period (running)', 'values' => $hf['cumPrev'], 'color' => 'var(--yellow)'], ['name' => 'Registered that ' . $hf['unit'], 'values' => $hf['cur'], 'color' => 'var(--violet)']], $hf['labels'], 'Running total', $x(0), $x($n - 1)) ?> viewBox="0 0 760 200" role="img" aria-label="Running total of registrations compared with the previous period">
+      <defs><linearGradient id="ovhArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--sky)" stop-opacity=".32"/><stop offset="1" stop-color="var(--sky)" stop-opacity="0"/></linearGradient></defs>
+      <?php foreach ($ticks as $t): ?><line class="g" x1="<?= $L ?>" x2="<?= $R ?>" y1="<?= $y($t) ?>" y2="<?= $y($t) ?>"/><text class="ax" x="<?= $L - 8 ?>" y="<?= round($y($t) + 4, 1) ?>" text-anchor="end"><?= sl_num($t) ?></text><?php endforeach; ?>
+      <path class="p" d="<?= h($prevLine) ?>"/>
+      <?php if ($area): ?><path class="a" d="<?= h($area) ?>" fill="url(#ovhArea)"/><path class="c" d="<?= h($curLine) ?>"/>
+      <circle class="dot" cx="<?= $x($lastI) ?>" cy="<?= $y($endV) ?>" r="5"/><text class="end" x="<?= $x($lastI) > $R - 60 ? $x($lastI) - 12 : $x($lastI) + 12 ?>" y="<?= $y($endV) + ($y($endV) < $T + 20 ? 18 : -10) ?>" text-anchor="<?= $x($lastI) > $R - 60 ? 'end' : 'start' ?>"><?= sl_num($endV) ?></text><?php endif; ?>
     </svg>
+    <div class="ovh-daily">
+      <span class="mut sm">Per <?= h($hf['unit']) ?></span>
+      <svg viewBox="0 0 760 40" preserveAspectRatio="none" role="img" aria-label="Registrations per <?= h($hf['unit']) ?>">
+        <?php foreach ($hf['cur'] as $i => $v): $hh = 36 * $v / $dPeak; ?><rect x="<?= round($L + $dStep * ($i + .5) - $dw / 2, 1) ?>" y="<?= round(38 - max($hh, 1.5), 1) ?>" width="<?= round($dw, 1) ?>" height="<?= round(max($hh, 1.5), 1) ?>" rx="2" class="<?= $v === $hf['best']['n'] && $v > 0 ? 'top' : ($v ? '' : 'zero') ?>"><title><?= h($hf['labels'][$i]) ?>: <?= (int) $v ?></title></rect><?php endforeach; ?>
+      </svg>
+      <div class="ovh-xl"><?php foreach ($xl as $i): ?><span style="left:<?= round(($L + $dStep * ($i + .5)) / 760 * 100, 2) ?>%"><?= h($hf['labels'][$i]) ?></span><?php endforeach; ?></div>
+    </div>
   </div>
 </section>
 <?php endif; ?>

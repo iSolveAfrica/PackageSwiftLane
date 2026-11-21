@@ -10,7 +10,10 @@ function sl_route($name, $params = []) { return strtolower($name) . '.php' . ($p
 function sl_url($params = []) { return '?' . http_build_query($params); }
 function sl_num($n) { return number_format((float) $n); }
 function sl_pager() { return ''; }
-function sl_date($value) { return date('M j, Y', strtotime($value)); }
+function sl_date($value, $fmt = 'M j, Y') { return date($fmt, strtotime((string) $value)); }
+function sl_self() { return 'fixture.php'; }
+function sl_ago($v) { return '1 d ago'; }
+function sl_pct($p, $w) { return $w ? (int) round($p / $w * 100) : 0; }
 $core = (object) ['site_name' => 'Swift Lane'];
 ?>
 <!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Interaction fixture</title>
@@ -20,7 +23,7 @@ $core = (object) ['site_name' => 'Swift Lane'];
 <div id="sl-app" class="sl-app"><main class="fixture-content">
 <aside id="nav-fixture" class="sl-side" aria-label="Main navigation">
 <?php
-$navItem = fn($label, $href, $active = false) => ['href' => $href, 'label' => $label, 'icon' => 'i-grid', 'cls' => $active ? 'is-active' : '', 'ok' => '', 'c1' => '', 'c2' => ''];
+$navItem = fn($label, $href, $active = false) => ['id' => strtolower(str_replace(' ', '', $label)), 'href' => $href, 'label' => $label, 'icon' => 'i-grid', 'cls' => $active ? 'is-active' : '', 'ok' => '', 'c1' => '', 'c2' => ''];
 $slNav = [
     ['label' => 'Operations', 'open' => true, 'items' => [$navItem('Overview', 'index.php')]],
     ['label' => 'Command Centers', 'open' => false, 'items' => [$navItem('Management Center', 'exec_dashboard.php', true), $navItem('AI Automation Center', 'ai_center.php')]],
@@ -32,9 +35,14 @@ include CDP_ROOT . '/views/sl/inc/nav_groups.php';
 </aside>
 <div id="control-fixture">
 <?php
-$d = ['pins' => [], 'updated' => '08:00', 'health' => [], 'sections' => [], 'attn' => array_map(function ($label, $value) {
-    return ['l' => $label, 'n' => $value, 'href' => 'courier_list.php?filter=held', 'up' => false, 'd' => 'Same as yesterday', 'aria' => 'Seven days', 's' => array_fill(0, 7, $value), 'bars' => array_fill(0, 7, 'height:' . ($value ? 90 : 4) . '%')];
-}, ['Awaiting approval', 'Held parcels', 'Unassigned pickups', 'Open pre-alerts'], [0, 160, 49, 1327])];
+$d = ['pins' => [], 'updated' => '08:00', 'sections' => [],
+    'health' => [['t' => 'API and web app', 's' => 'Operational', 'c' => '', 'i' => 'i-server', 'x' => 'Serving requests', 'href' => 'dev_overview.php'], ['t' => 'Messages failed (24 h)', 's' => '3 of 40', 'c' => 'w', 'i' => 'i-send', 'x' => '8% failure rate', 'pct' => 8, 'href' => 'comms_hub.php']],
+    'attn' => array_map(function ($label, $value, $tone) {
+    $mix = [['At origin', (int) round($value * .2), 'm0'], ['In transit', (int) round($value * .3), 'm1'], ['Arrived / ready', (int) round($value * .4), 'm2'], ['Held', $value - (int) round($value * .2) - (int) round($value * .3) - (int) round($value * .4), 'm3']];
+    return ['key' => $label, 'l' => $label, 'icon' => 'i-box', 'tone' => $tone, 'href' => 'courier_list.php?filter=held', 'n' => $value, 'unit' => 'on the way', 'badge' => '+3 this week', 'why' => 'Fixture card',
+        'mix' => $mix, 'bars' => array_fill(0, 7, (int) round($value / 20)), 'barsName' => $label, 'footL' => 'Registered / day · 7 d', 'footR' => 'Oldest open 4 d',
+        'insights' => $label === 'AI insights' ? [['Nothing unusual right now.', 'ai_center.php']] : []];
+}, ['Air shipments', 'Sea packages', 'Deliveries', 'AI insights'], [0, 160, 49, 1327], ['blue', 'violet', 'amber', 'mint'])];
 $sectionRows = [
     ['command-centers', 'Command Centers', 'Key controls and oversight in one place', ['Management Center', 'AI Automation Center', 'Notification Control', 'Payment Gateways', 'Loyalty & Referrals', 'Customer Care', 'Communications', 'Security Center', 'My Account Security']],
     ['developer', 'Developer', 'Platform health and technical controls', ['Developer Console', 'Services', 'Metrics', 'Deployments']],
@@ -48,7 +56,7 @@ include CDP_ROOT . '/views/sl/pages/ControlPanels.php';
 ?>
 </div><div id="shipment-fixture">
 <?php
-$d = ['client'=>false,'month'=>1,'attention'=>0,'canImport'=>false,'canAdd'=>false,'metrics'=>[],'all'=>1,'q'=>'','status'=>0,'statuses'=>[],'drivers'=>[],'driver'=>0,'filters'=>[],'filter'=>'','period'=>'all','per'=>25,'canSelect'=>false,'canStatus'=>false,'canAssign'=>false,'canLabel'=>false,'page'=>1,'count'=>1,
+$d = ['client'=>false,'month'=>1,'attention'=>0,'canImport'=>false,'canExport'=>false,'customs'=>0,'noCarrier'=>0,'unpaid'=>0,'canAdd'=>false,'metrics'=>[],'all'=>1,'q'=>'','status'=>0,'statuses'=>[],'drivers'=>[],'driver'=>0,'filters'=>[],'filter'=>'','period'=>'all','per'=>25,'canSelect'=>false,'canStatus'=>false,'canAssign'=>false,'canLabel'=>false,'page'=>1,'count'=>1,
 'rows'=>[['id'=>1,'track'=>'SL-TEST-001','carrier'=>'','date'=>'Nov 8, 2026','time'=>'08:03','sender_id'=>1,'sender'=>'Example Customer','from'=>'TEST-001','ini'=>'HA','name'=>'Example Customer','dest'=>'Accra, Ghana','eta'=>'Nov 15, 2026','kg'=>'4 lb','total'=>'$20','payCls'=>'pending','pay'=>'Pending','stCls'=>'pending','st'=>'On Route','badges'=>[],'acts'=>[],'driver_id'=>0]]];
 include CDP_ROOT . '/views/sl/pages/AirShipments.php';
 ?>

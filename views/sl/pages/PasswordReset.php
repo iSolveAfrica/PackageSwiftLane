@@ -13,7 +13,7 @@ $rules = [['len', 'At least 8 characters'], ['num', 'A number'], ['sym', 'A symb
 <div class="sl-auth fp-full">
   <div class="form">
     <div>
-      <div class="sl-brand"><span class="sl-logo"><i></i></span><?= sl_v($d, 'site') ?></div>
+      <div class="sl-brand"><?= sl_brandLogo('color', 40) ?></div>
       <div class="col g8" style="margin-top: 12px">
         <div class="sl-steps" aria-label="Step <?= $done ? 3 : 2 ?> of 3"><i class="on"></i><i class="on"></i><i class="<?= $done ? 'on' : '' ?>"></i></div>
         <div class="row between mut sm"><span>Verify it’s you</span><span class="<?= $done ? '' : 'fw5' ?>" <?= $done ? '' : 'style="color: var(--ink)"' ?>>New password</span><span class="<?= $done ? 'fw5' : '' ?>" <?= $done ? 'style="color: var(--ink)"' : '' ?>>Done</span></div>
