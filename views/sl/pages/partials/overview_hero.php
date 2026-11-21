@@ -26,6 +26,10 @@ $bars = function (array $bars, string $cls = '') {
     <?php if ($canFin): ?><a class="sl-btn sm ghost" href="<?= sl_route('FinancialSheet') ?>">Financial Sheet</a><?php endif; ?>
   </div>
 </header>
+<?php
+$adminView = cdp_dashboardType($user->userlevel) === 'admin';
+include __DIR__ . ($adminView ? '/overview_brief.php' : '/overview_work.php');
+?>
 
 <?php if ($hv['mode'] !== 'none'): ?>
 <form class="ovh-view" method="get" action="index.php" aria-label="Dashboard view">
@@ -177,3 +181,5 @@ $bars = function (array $bars, string $cls = '') {
     </div>
 </section>
 <?php endif; ?>
+
+<?php include __DIR__ . ($adminView ? '/overview_work.php' : '/overview_brief.php'); ?>

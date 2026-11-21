@@ -198,3 +198,17 @@
 .ovh-daily-detail .ovh-daily{margin-top:10px}
 .ovh-freight--focus .ovh-daily svg{background:none}
 @media(max-width:640px){.ovh-freight--focus{padding:20px 16px;gap:18px}.ovh-freight-head{align-items:stretch;flex-direction:column;gap:16px}.ovh-freight-modes{max-width:none}.ovh-freight--focus .ovh-fstats{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.ovh-freight--focus .ovh-fstats>div{padding:0;border:0}}
+
+.customer-next {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 18px;
+  border-inline-start: 3px solid var(--sky);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--sky) 8%, var(--card));
+}
+.customer-next h2 { margin: 3px 0; font-size: 20px; }
+.customer-next small, .customer-next p { color: var(--muted); }

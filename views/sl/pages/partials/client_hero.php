@@ -22,6 +22,23 @@ $yearN = max(1, (int) $d['year']);
       <?php if ($d['canShip']): ?><a class="sl-btn sm" href="courier_add_client.php"><i class="ic ic-sm i-plus" aria-hidden="true"></i>New Shipment</a><?php endif; ?>
     </div>
   </div>
+  <?php $delivery = $d['mobileDelivery'] ?? null; ?>
+  <div class="customer-next">
+    <?php if ($delivery): ?>
+      <div><small>Your delivery</small><h2><?= $delivery->state === 'onroute' ? 'Your rider is on the way' : 'Delivery requested' ?></h2><p><?= h($delivery->address) ?></p></div>
+      <a class="sl-btn" href="delivery_request.php?id=<?= (int) $delivery->id ?>">View delivery</a>
+    <?php elseif ($d['ready']): ?>
+      <div><small>Collection</small><h2><?= (int) $d['ready'] ?> <?= (int) $d['ready'] === 1 ? 'parcel is' : 'parcels are' ?> ready for pickup</h2></div>
+      <a class="sl-btn" href="<?= h(sl_route('PickupCodes')) ?>">Show pickup codes</a>
+    <?php elseif ($d['latest']): ?>
+      <div><small>Your latest parcel</small><h2><?= h($d['latest']['id']) ?></h2><p><?= h($d['latest']['st']) ?></p></div>
+      <a class="sl-btn" href="<?= h($d['latest']['href']) ?>">View parcel</a>
+    <?php else: ?>
+      <div><h2>Shipping your first parcel?</h2><p>Use your forwarding address when you order.</p></div>
+      <a class="sl-btn" href="#addresses">Find my address</a>
+    <?php endif; ?>
+  </div>
+
   <div class="ovh-me-mid">
     <div class="ovh-ring" style="--p:<?= sl_pct($d['deliveredYear'], $yearN) ?>" role="img" aria-label="<?= (int) $d['deliveredYear'] ?> of <?= (int) $d['year'] ?> parcels this year delivered"><b><?= (int) $d['deliveredYear'] ?></b><span>of <?= (int) $d['year'] ?> delivered<br>this year</span></div>
     <dl class="ovh-stats">
