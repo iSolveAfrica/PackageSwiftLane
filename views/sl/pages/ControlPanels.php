@@ -12,24 +12,22 @@ $otherSections = array_values(array_filter($d['sections'], fn($section) => !$sec
 <div class="cpx-hero"><div><h1><i class="ic i-grid" aria-hidden="true"></i>Control panels</h1><p class="sl-lede" style="font-size:14.5px;margin-top:6px">Every module in your workspace, grouped by the work it supports</p></div><label class="cpx-find"><i class="ic ic-sm i-search" aria-hidden="true"></i><input aria-label="Find a panel or action" placeholder="Find a panel or action" id="cpx-q"><kbd>⌘K</kbd></label></div>
 <div class="row wrap g8 cpx-pins"><span class="up" style="margin-right:4px">Pinned</span><?php foreach ($d['pins'] as $p): ?><a class="chipbtn" href="<?= h($p['href']) ?>"><i class="ic ic-sm <?= h($p['icon']) ?>" aria-hidden="true"></i><?= h($p['label']) ?></a><?php endforeach; ?><span class="grow"></span><a class="chipbtn" href="<?= sl_route('SettingsHub') ?>"><i class="ic ic-sm i-sliders" aria-hidden="true"></i>Customise</a></div>
 <section class="col g12" aria-labelledby="attention-title">
-  <div class="row between wrap g8"><h2 class="sl-ct" id="attention-title">Needs attention</h2><span class="mut sm">Updated <?= h($d['updated']) ?></span></div>
+  <div class="row between wrap g8"><h2 class="sl-ct" id="attention-title">At a glance</h2><span class="mut sm">Updated <?= h($d['updated']) ?></span></div>
   <?php if ($d['attn']): ?>
     <div class="cpa-grid">
-      <?php foreach ($d['attn'] as $index => $q): $tone = ['violet', 'amber', 'blue', 'mint'][$index % 4]; $delta = $q['n'] - $q['carried']; $newPeak = max(1, max($q['new'])); ?>
-        <a class="cpa t-<?= $tone ?><?= $q['n'] ? '' : ' zero' ?>" href="<?= h($q['href']) ?>">
+      <?php foreach ($d['attn'] as $q): $peak = max(1, max($q['bars'])); $mixTot = max(1, array_sum(array_column($q['mix'], 1))); $labels7 = array_map(fn($i) => date('M j', strtotime("-$i days")), range(6, 0)); ?>
+        <a class="cpa t-<?= h($q['tone']) ?><?= $q['n'] ? '' : ' zero' ?>" href="<?= h($q['href']) ?>">
           <div class="cpa-h"><span class="cpa-ic"><i class="ic ic-sm <?= h($q['icon']) ?>" aria-hidden="true"></i></span><b><?= h($q['l']) ?></b><i class="ic ic-sm i-right cpa-go" aria-hidden="true"></i></div>
-          <div class="cpa-fig"><b><?= sl_num($q['n']) ?></b><span><?= $q['n'] ? 'open' : 'all clear' ?></span>
-            <?php if ($q['n']): ?><em>+<?= sl_num($q['new7']) ?> this week</em><?php endif; ?></div>
-          <span class="cpa-why"><?= h($q['why']) ?></span>
-          <?php if ($q['n']): ?>
-          <div class="cpa-age" role="img" aria-label="Age of open items: <?= h(implode(', ', array_map(fn($a) => $a[0] . ' ' . $a[1], $q['ages']))) ?>">
-            <?php foreach ($q['ages'] as $ai => [$al, $av]): if (!$av) continue; ?><i class="a<?= $ai ?>" style="flex:<?= (int) $av ?>" title="<?= h($al) ?>: <?= sl_num($av) ?>"></i><?php endforeach; ?>
+          <div class="cpa-fig"><b><?= sl_num($q['n']) ?></b><span><?= h($q['unit']) ?></span><em><?= h($q['badge']) ?></em></div>
+          <?php if ($q['why'] !== ''): ?><span class="cpa-why"><?= h($q['why']) ?></span><?php endif; ?>
+          <div class="cpa-age" role="img" aria-label="<?= h(implode(', ', array_map(fn($m) => $m[0] . ' ' . $m[1], $q['mix']))) ?>">
+            <?php foreach ($q['mix'] as [$ml, $mv, $mc]): if ($mv <= 0) continue; ?><i class="<?= h($mc) ?>" style="flex:<?= (int) $mv ?>" title="<?= h($ml) ?>: <?= sl_num($mv) ?> (<?= sl_pct($mv, $mixTot) ?>%)"></i><?php endforeach; ?>
           </div>
-          <dl class="cpa-ages"><?php foreach ($q['ages'] as $ai => [$al, $av]): ?><div><dt><i class="a<?= $ai ?>"></i><?= h($al) ?></dt><dd><?= sl_num($av) ?></dd></div><?php endforeach; ?></dl>
-          <?php endif; ?>
+          <dl class="cpa-ages"><?php foreach ($q['mix'] as [$ml, $mv, $mc]): ?><div><dt><i class="<?= h($mc) ?>"></i><?= h($ml) ?></dt><dd><?= sl_num(max(0, $mv)) ?></dd></div><?php endforeach; ?></dl>
+          <?php if (!empty($q['insights'])): ?><ul class="cpa-ins"><?php foreach ($q['insights'] as [$it]): ?><li><i class="ic ic-sm i-spark" aria-hidden="true"></i><span><?= h($it) ?></span></li><?php endforeach; ?></ul><?php endif; ?>
           <div class="cpa-flow">
-            <?php $newLabels = array_map(fn($i) => date('M j', strtotime("-$i days")), range(6, 0)); ?><div class="cpa-bars" role="img" aria-label="<?= h($q['l']) ?>: new per day, last 7 days" <?= sl_chartAttrs([['name' => $q['l'], 'values' => $q['new']]], $newLabels, $q['l'] . ' · new per day') ?>><?php foreach ($q['new'] as $i => $v): ?><i style="height:<?= max(4, (int) round($v / $newPeak * 100)) ?>%" title="<?= h(date('D j M', strtotime('-' . (6 - $i) . ' days'))) ?>: <?= (int) $v ?> new"></i><?php endforeach; ?></div>
-            <div class="cpa-meta"><span>New / day · 7 d</span><span><?= $q['oldest'] !== null ? 'Oldest ' . (int) $q['oldest'] . ' d' : '—' ?><?= $q['n'] ? ' · ' . (int) $q['stale'] . '% over 30 d' : '' ?></span></div>
+            <div class="cpa-bars" role="img" aria-label="<?= h($q['barsName']) ?>, last 7 days" <?= sl_chartAttrs([['name' => $q['barsName'], 'values' => $q['bars']]], $labels7, $q['l'] . ' · ' . $q['footL']) ?>><?php foreach ($q['bars'] as $i => $v): ?><i style="height:<?= max(4, (int) round($v / $peak * 100)) ?>%" title="<?= h($labels7[$i]) ?>: <?= (int) $v ?>"></i><?php endforeach; ?></div>
+            <div class="cpa-meta"><span><?= h($q['footL']) ?></span><span><?= h($q['footR']) ?></span></div>
           </div>
         </a>
       <?php endforeach; ?>

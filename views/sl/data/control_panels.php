@@ -17,39 +17,87 @@ function sl_controlPanelsData($user, $core): array
     $ok = fn($perm) => $perm === null || sl_navAllowed($perm, []);
     $finance = cdp_financeEnabled();
     $money = cdp_canViewMoney($user, 'dashboard');
-    // Each queue: how big, how old (age buckets), how fast it fills (new per day) and whether it is
-    // growing (open now vs open a week ago). $from / $where / $col describe the open items.
-    $queue = function (string $from, string $where, string $col, array $item) {
+    // The four cards at the top: air shipments, sea packages, deliveries and AI insights.
+    // Each card: a headline number, a split (stacked bar + legend), a 7-day series and a footer.
+    $days7 = [];
+    for ($i = 6; $i >= 0; $i--) $days7[] = date('Y-m-d', strtotime("-$i days"));
+    $series = function (string $sql, array $b = []) use ($days7) {
+        $m = [];
+        foreach (sl_rows($sql, $b + [':d0' => $days7[0]]) as $x) $m[$x->d] = (int) $x->c;
+        return array_map(fn($d) => $m[$d] ?? 0, $days7);
+    };
+    $ageDays = fn($dt) => $dt ? max(0, (int) floor((time() - strtotime((string) $dt)) / 86400)) : null;
+    // open parcels of one kind, split by where they are
+    $parcels = function (string $tbl, string $del, string $label, string $icon, string $tone, string $href, string $unpaidHref) use ($w, $series, $ageDays) {
+        $open = "a.status_courier NOT IN (8,15,21)$del $w";
         $r = sl_row("SELECT COUNT(*) AS n,
-                SUM($col >= NOW() - INTERVAL 1 DAY) AS d1,
-                SUM($col < NOW() - INTERVAL 1 DAY AND $col >= NOW() - INTERVAL 7 DAY) AS d7,
-                SUM($col < NOW() - INTERVAL 7 DAY AND $col >= NOW() - INTERVAL 30 DAY) AS d30,
-                SUM($col < NOW() - INTERVAL 30 DAY) AS old, MIN($col) AS oldest,
-                SUM($col < CURDATE() - INTERVAL 6 DAY) AS weekAgo
-            FROM $from WHERE $where");
+                SUM(a.status_courier IN (3,5,14)) AS transit,
+                SUM(a.status_courier IN (4,6,32)) AS ready,
+                SUM(a.status_courier = 7) AS out_now,
+                SUM(a.status_courier IN (12,25,28,29)) AS held,
+                SUM(a.status_invoice NOT IN (1,19)) AS unpaid,
+                MIN(a.order_date) AS oldest
+            FROM $tbl a WHERE $open");
         $n = (int) ($r->n ?? 0);
-        $new = [];
-        $map = [];
-        foreach (sl_rows("SELECT DATE($col) AS d, COUNT(*) AS c FROM $from WHERE $where AND $col >= CURDATE() - INTERVAL 6 DAY GROUP BY DATE($col)") as $x) $map[$x->d] = (int) $x->c;
-        for ($i = 6; $i >= 0; $i--) $new[] = $map[date('Y-m-d', strtotime("-$i days"))] ?? 0;
-        $ages = [['< 1 day', (int) ($r->d1 ?? 0)], ['1–7 days', (int) ($r->d7 ?? 0)], ['7–30 days', (int) ($r->d30 ?? 0)], ['30 days +', (int) ($r->old ?? 0)]];
-        $weekAgo = (int) ($r->weekAgo ?? 0); // still open and already there a week ago
-        return $item + ['n' => $n, 'ages' => $ages, 'new' => $new, 'new7' => array_sum($new),
-            'oldest' => !empty($r->oldest) ? max(0, (int) floor((time() - strtotime($r->oldest)) / 86400)) : null,
-            'stale' => $n ? (int) round(((int) ($r->d30 ?? 0) + (int) ($r->old ?? 0)) / $n * 100) : 0, 'carried' => $weekAgo];
+        $transit = (int) ($r->transit ?? 0); $ready = (int) ($r->ready ?? 0) + (int) ($r->out_now ?? 0); $held = (int) ($r->held ?? 0);
+        $origin = max(0, $n - $transit - $ready - $held);
+        $reg = $series("SELECT DATE(a.order_date) AS d, COUNT(*) AS c FROM $tbl a WHERE a.order_date >= :d0$del $w GROUP BY DATE(a.order_date)");
+        $unpaid = (int) ($r->unpaid ?? 0);
+        return ['key' => $label, 'l' => $label, 'icon' => $icon, 'tone' => $tone, 'href' => $href, 'n' => $n, 'unit' => 'on the way',
+            'badge' => '+' . sl_num(array_sum($reg)) . ' this week', 'why' => sl_num($unpaid) . ' not paid yet' . ($held ? ' · ' . sl_num($held) . ' held' : ''), 'whyHref' => $unpaidHref,
+            'mix' => [['At origin', $origin, 'm0'], ['In transit', $transit, 'm1'], ['Arrived / ready', $ready, 'm2'], ['Held', $held, 'm3']],
+            'bars' => $reg, 'barsName' => $label . ' registered', 'footL' => 'Registered / day · 7 d', 'footR' => ($o = $ageDays($r->oldest ?? null)) !== null ? 'Oldest open ' . $o . ' d' : 'Nothing open'];
     };
     $attn = [];
-    if ($ok('view_client_list') && sl_columnExists('cdb_users', 'approve')) {
-        $attn[] = $queue('cdb_users', 'userlevel = 1 AND approve = 0 AND active = 1', 'created', ['href' => sl_route('Customers', ['filter' => 'unapproved']), 'l' => 'Awaiting approval', 'why' => 'New customers cannot ship until approved', 'icon' => 'i-shield']);
+    if ($ok(['view_shipment_list', 'view_general_shipments'])) {
+        $attn[] = $parcels('cdb_add_order', ' AND a.is_deleted = 0 AND a.is_pickup = 0', 'Air shipments', 'i-plane', 'blue', sl_route('AirShipments'), sl_route('AirShipments', ['filter' => 'unpaid']));
     }
-    if ($ok(['warehouse_view', 'view_shipment_list'])) {
-        $attn[] = $queue('cdb_add_order a', "a.is_deleted = 0 AND a.status_courier IN (12,25,28,29) $w", 'a.order_date', ['href' => sl_route('Warehouse', ['filter' => 'exceptions']), 'l' => 'Held parcels', 'why' => 'Rejected, held or not shipped', 'icon' => 'i-alert']);
+    if ($ok(['view_package_list', 'view_general_package_records'])) {
+        $attn[] = $parcels('cdb_customers_packages', '', 'Sea packages', 'i-ship', 'violet', sl_route('SeaPackages'), sl_route('SeaPackages', ['filter' => 'unpaid']));
     }
-    if ($ok('view_pickup_list')) {
-        $attn[] = $queue('cdb_add_order a', "a.is_deleted = 0 AND a.is_pickup = 1 AND a.status_courier IN (1,14) AND (a.driver_id IS NULL OR a.driver_id = 0) $w", 'a.order_date', ['href' => sl_route('Pickups'), 'l' => 'Unassigned pickups', 'why' => 'Booked but no rider yet', 'icon' => 'i-truck']);
+    if ($ok(['view_pickup_list', 'dispatch_riders', 'view_warehouse_delivery'])) {
+        $outNow = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier = 7 $w");
+        $readyN = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (6,32) $w");
+        $booked = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.is_pickup = 1 AND a.status_courier IN (1,14) $w");
+        $noRider = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.is_pickup = 1 AND a.status_courier IN (1,14) AND (a.driver_id IS NULL OR a.driver_id = 0) $w");
+        $trk = 'FROM cdb_courier_track t' . ($w !== '' ? ' JOIN cdb_add_order a ON t.order_track = CONCAT(a.order_prefix, a.order_no)' : '') . ' WHERE t.status_courier IN (8,15)' . ($w !== '' ? " $w" : '');
+        $handed = $series("SELECT DATE(t.t_date) AS d, COUNT(DISTINCT t.order_track) AS c $trk AND t.t_date >= :d0 GROUP BY DATE(t.t_date)");
+        $riders = (int) sl_scalar('SELECT COUNT(*) FROM cdb_users WHERE userlevel = 3 AND active = 1');
+        $attn[] = ['key' => 'Deliveries', 'l' => 'Deliveries', 'icon' => 'i-truck', 'tone' => 'amber', 'href' => sl_route('RiderDispatch'), 'n' => $outNow, 'unit' => 'out for delivery',
+            'badge' => sl_num(end($handed)) . ' handed over today', 'why' => sl_num($riders) . ' active rider' . ($riders === 1 ? '' : 's') . ($noRider ? ' · ' . sl_num($noRider) . ' pickups need a rider' : ''), 'whyHref' => sl_route('Pickups'),
+            'mix' => [['Out now', $outNow, 'm1'], ['Ready to hand out', $readyN, 'm2'], ['Pickups booked', $booked - $noRider, 'm0'], ['No rider', $noRider, 'm3']],
+            'bars' => $handed, 'barsName' => 'Handed over', 'footL' => 'Handed over / day · 7 d', 'footR' => sl_num(array_sum($handed)) . ' this week'];
     }
-    if ($ok('prealert_list')) {
-        $attn[] = $queue('cdb_pre_alert', 'is_package = 0', 'prealert_date', ['href' => sl_route('PreAlerts'), 'l' => 'Open pre-alerts', 'why' => 'Announced by customers, not yet received', 'icon' => 'i-inbox']);
+    if (sl_navAllowed('ai:use', [])) {
+        $hasQ = sl_tableExists('cdb_ai_questions'); $hasC = sl_tableExists('cdb_cs_conversations');
+        $staffQ = $hasQ ? (int) sl_scalar('SELECT COUNT(*) FROM cdb_ai_questions WHERE created_at >= CURDATE() - INTERVAL 6 DAY') : 0;
+        $unans = $hasQ ? (int) sl_scalar("SELECT COUNT(*) FROM cdb_ai_questions WHERE created_at >= CURDATE() - INTERVAL 6 DAY AND outcome <> 'answered'") : 0;
+        $chats = $hasC ? (int) sl_scalar('SELECT COUNT(*) FROM cdb_cs_conversations WHERE created_at >= CURDATE() - INTERVAL 6 DAY') : 0;
+        $handedC = $hasC ? (int) sl_scalar('SELECT COUNT(*) FROM cdb_cs_conversations WHERE created_at >= CURDATE() - INTERVAL 6 DAY AND handover_at IS NOT NULL') : 0;
+        $perDay = array_fill(0, 7, 0);
+        if ($hasQ) foreach ($series('SELECT DATE(created_at) AS d, COUNT(*) AS c FROM cdb_ai_questions WHERE created_at >= :d0 GROUP BY DATE(created_at)') as $i => $v) $perDay[$i] += $v;
+        if ($hasC) foreach ($series('SELECT DATE(created_at) AS d, COUNT(*) AS c FROM cdb_cs_conversations WHERE created_at >= :d0 GROUP BY DATE(created_at)') as $i => $v) $perDay[$i] += $v;
+        $aiOn = function_exists('cdp_aiSetting') && (string) cdp_aiSetting('enabled', '0') === '1';
+        $attn[] = ['key' => 'AI insights', 'l' => 'AI insights', 'icon' => 'i-ai', 'tone' => 'mint', 'href' => sl_navAllowed('ai:manage', []) ? sl_route('AiCenter') : sl_route('StaffAI'),
+            'n' => $staffQ + $chats, 'unit' => 'questions this week', 'badge' => $chats ? sl_pct($chats - $handedC, $chats) . '% solved by AI' : ($aiOn ? 'Assistant on' : 'Assistant off'),
+            'why' => '', 'whyHref' => '', 'insights' => [],
+            'mix' => [['Solved by AI', max(0, $chats - $handedC), 'm2'], ['Handed to staff', $handedC, 'm1'], ['Staff questions', max(0, $staffQ - $unans), 'm0'], ['Unanswered', $unans, 'm3']],
+            'bars' => $perDay, 'barsName' => 'AI questions and chats', 'footL' => 'Questions + chats / day · 7 d', 'footR' => $aiOn ? 'Ask with Ctrl J' : 'Switch on in AI center'];
+    }
+    // AI insights: plain-language observations drawn from the other cards (no model call on page load)
+    foreach ($attn as $k => $c) {
+        if (($c['key'] ?? '') !== 'AI insights') continue;
+        $tips = [];
+        foreach ($attn as $o) {
+            if (empty($o['mix']) || ($o['key'] ?? '') === 'AI insights') continue;
+            $mix = array_column($o['mix'], 1, 0);
+            if (!empty($mix['Held'])) $tips[] = [sl_num($mix['Held']) . ' ' . strtolower($o['l']) . ' are held: clear them before the next departure.', $o['href']];
+            if (!empty($mix['No rider'])) $tips[] = [sl_num($mix['No rider']) . ' pickups have no rider yet.', sl_route('RiderDispatch')];
+            if (!empty($mix['Arrived / ready']) && $o['n'] && $mix['Arrived / ready'] / max(1, $o['n']) > .5) $tips[] = [sl_pct($mix['Arrived / ready'], $o['n']) . '% of open ' . strtolower($o['l']) . ' are waiting for collection: send reminders.', sl_route('HandOut')];
+            if (str_contains((string) $o['footR'], 'Oldest open') && (int) filter_var($o['footR'], FILTER_SANITIZE_NUMBER_INT) > 90) $tips[] = [$o['l'] . ' has records open for over 90 days: close or follow them up.', $o['href']];
+        }
+        if (!$tips) $tips[] = ['Nothing unusual right now. Ask the assistant about any page with Ctrl J.', $c['href']];
+        $attn[$k]['insights'] = array_slice($tips, 0, 3);
     }
     $d['attn'] = $attn;
     // health

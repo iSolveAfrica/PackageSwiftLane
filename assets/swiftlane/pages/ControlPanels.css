@@ -106,3 +106,9 @@
 .cph.b .cph-s{color:var(--red-ink)}.cph.b .cph-s i{background:var(--red)}
 .cph-bar{display:block;height:5px;border-radius:99px;background:var(--hover);overflow:hidden;margin-top:6px}
 .cph-bar i{display:block;height:100%;background:var(--red)}
+/* At a glance cards: split colours and AI insights */
+.cpa .m0{background:color-mix(in srgb,var(--t) 30%,var(--card))}.cpa .m1{background:color-mix(in srgb,var(--t) 60%,var(--card))}.cpa .m2{background:var(--t)}.cpa .m3{background:var(--red)}
+.cpa.t-violet .m2{background:var(--violet)}
+.cpa-ins{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.cpa-ins li{display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.35;padding:7px 9px;border-radius:10px;background:color-mix(in srgb,var(--t) 9%,var(--card))}
+.cpa-ins .ic{color:var(--t);flex:none;margin-top:1px}
