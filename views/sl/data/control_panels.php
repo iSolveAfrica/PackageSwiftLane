@@ -17,27 +17,39 @@ function sl_controlPanelsData($user, $core): array
     $ok = fn($perm) => $perm === null || sl_navAllowed($perm, []);
     $finance = cdp_financeEnabled();
     $money = cdp_canViewMoney($user, 'dashboard');
-    $daily = function (string $sql) {
-        $out = [];
-        for ($i = 6; $i >= 0; $i--) $out[] = (int) sl_scalar($sql, [':d' => date('Y-m-d', strtotime("-$i days"))]);
-        return $out;
+    // Each queue: how big, how old (age buckets), how fast it fills (new per day) and whether it is
+    // growing (open now vs open a week ago). $from / $where / $col describe the open items.
+    $queue = function (string $from, string $where, string $col, array $item) {
+        $r = sl_row("SELECT COUNT(*) AS n,
+                SUM($col >= NOW() - INTERVAL 1 DAY) AS d1,
+                SUM($col < NOW() - INTERVAL 1 DAY AND $col >= NOW() - INTERVAL 7 DAY) AS d7,
+                SUM($col < NOW() - INTERVAL 7 DAY AND $col >= NOW() - INTERVAL 30 DAY) AS d30,
+                SUM($col < NOW() - INTERVAL 30 DAY) AS old, MIN($col) AS oldest,
+                SUM($col < CURDATE() - INTERVAL 6 DAY) AS weekAgo
+            FROM $from WHERE $where");
+        $n = (int) ($r->n ?? 0);
+        $new = [];
+        $map = [];
+        foreach (sl_rows("SELECT DATE($col) AS d, COUNT(*) AS c FROM $from WHERE $where AND $col >= CURDATE() - INTERVAL 6 DAY GROUP BY DATE($col)") as $x) $map[$x->d] = (int) $x->c;
+        for ($i = 6; $i >= 0; $i--) $new[] = $map[date('Y-m-d', strtotime("-$i days"))] ?? 0;
+        $ages = [['< 1 day', (int) ($r->d1 ?? 0)], ['1–7 days', (int) ($r->d7 ?? 0)], ['7–30 days', (int) ($r->d30 ?? 0)], ['30 days +', (int) ($r->old ?? 0)]];
+        $weekAgo = (int) ($r->weekAgo ?? 0); // still open and already there a week ago
+        return $item + ['n' => $n, 'ages' => $ages, 'new' => $new, 'new7' => array_sum($new),
+            'oldest' => !empty($r->oldest) ? max(0, (int) floor((time() - strtotime($r->oldest)) / 86400)) : null,
+            'stale' => $n ? (int) round(((int) ($r->d30 ?? 0) + (int) ($r->old ?? 0)) / $n * 100) : 0, 'carried' => $weekAgo];
     };
     $attn = [];
     if ($ok('view_client_list') && sl_columnExists('cdb_users', 'approve')) {
-        $s = $daily("SELECT COUNT(*) FROM cdb_users WHERE userlevel = 1 AND approve = 0 AND DATE(created) <= :d");
-        $attn[] = ['href' => sl_route('Customers', ['filter' => 'unapproved']), 'l' => 'Awaiting approval', 'n' => end($s), 's' => $s];
+        $attn[] = $queue('cdb_users', 'userlevel = 1 AND approve = 0 AND active = 1', 'created', ['href' => sl_route('Customers', ['filter' => 'unapproved']), 'l' => 'Awaiting approval', 'why' => 'New customers cannot ship until approved', 'icon' => 'i-shield']);
     }
     if ($ok(['warehouse_view', 'view_shipment_list'])) {
-        $s = $daily("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (12,25,28,29) AND a.order_date < DATE_ADD(:d, INTERVAL 1 DAY) $w");
-        $attn[] = ['href' => sl_route('Warehouse', ['filter' => 'exceptions']), 'l' => 'Held parcels', 'n' => end($s), 's' => $s];
+        $attn[] = $queue('cdb_add_order a', "a.is_deleted = 0 AND a.status_courier IN (12,25,28,29) $w", 'a.order_date', ['href' => sl_route('Warehouse', ['filter' => 'exceptions']), 'l' => 'Held parcels', 'why' => 'Rejected, held or not shipped', 'icon' => 'i-alert']);
     }
     if ($ok('view_pickup_list')) {
-        $s = $daily("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.is_pickup = 1 AND a.status_courier IN (1,14) AND (a.driver_id IS NULL OR a.driver_id = 0) AND a.order_date < DATE_ADD(:d, INTERVAL 1 DAY) $w");
-        $attn[] = ['href' => sl_route('Pickups'), 'l' => 'Unassigned pickups', 'n' => end($s), 's' => $s];
+        $attn[] = $queue('cdb_add_order a', "a.is_deleted = 0 AND a.is_pickup = 1 AND a.status_courier IN (1,14) AND (a.driver_id IS NULL OR a.driver_id = 0) $w", 'a.order_date', ['href' => sl_route('Pickups'), 'l' => 'Unassigned pickups', 'why' => 'Booked but no rider yet', 'icon' => 'i-truck']);
     }
     if ($ok('prealert_list')) {
-        $s = $daily("SELECT COUNT(*) FROM cdb_pre_alert WHERE is_package = 0 AND DATE(prealert_date) <= :d");
-        $attn[] = ['href' => sl_route('PreAlerts'), 'l' => 'Open pre-alerts', 'n' => end($s), 's' => $s];
+        $attn[] = $queue('cdb_pre_alert', 'is_package = 0', 'prealert_date', ['href' => sl_route('PreAlerts'), 'l' => 'Open pre-alerts', 'why' => 'Announced by customers, not yet received', 'icon' => 'i-inbox']);
     }
     $d['attn'] = $attn;
     // health
@@ -46,11 +58,17 @@ function sl_controlPanelsData($user, $core): array
     $sms = function_exists('cdp_smsReady') ? (bool) cdp_smsReady() : false;
     $fails = sl_tableExists('cdb_message_log') ? (int) sl_scalar("SELECT COUNT(*) FROM cdb_message_log WHERE status = 'failed' AND created_at >= NOW() - INTERVAL 1 DAY") : 0;
     $sent = sl_tableExists('cdb_message_log') ? (int) sl_scalar("SELECT COUNT(*) FROM cdb_message_log WHERE created_at >= NOW() - INTERVAL 1 DAY") : 0;
+    $failPct = $sent ? (int) round($fails / $sent * 100) : 0;
+    $aiOn = function_exists('cdp_aiSetting') && (string) cdp_aiSetting('enabled', '0') === '1';
+    $logOn = sl_tableExists('cdb_activity_log');
+    $lastLog = $logOn ? sl_scalar('SELECT MAX(created_at) FROM cdb_activity_log', [], null) : null;
     $d['health'] = [
-        ['t' => 'API and web app', 's' => 'Operational', 'c' => ''],
-        ['t' => 'Payment gateways', 's' => $finance ? ($gwOn ? 'Operational' : 'No gateway keys set') : 'Finance switched off', 'c' => $finance && $gwOn ? '' : 'w'],
-        ['t' => 'SMS delivery', 's' => !$sms ? 'Not configured' : ($sent && $fails / max(1, $sent) > 0.2 ? 'Degraded' : 'Operational'), 'c' => !$sms || ($sent && $fails / max(1, $sent) > 0.2) ? 'w' : ''],
-        ['t' => 'Messages failed (24h)', 's' => $fails . ' of ' . $sent, 'c' => $fails ? 'w' : ''],
+        ['t' => 'API and web app', 's' => 'Operational', 'c' => '', 'i' => 'i-server', 'x' => $lastLog ? 'Last action ' . sl_ago($lastLog) : 'Serving requests', 'href' => sl_route('DevOverview')],
+        ['t' => 'Payment gateways', 's' => $finance ? ($gwOn ? 'Operational' : 'No keys set') : 'Finance off', 'c' => $finance && $gwOn ? '' : 'w', 'i' => 'i-card', 'x' => $finance ? $gwOn . ' gateway' . ($gwOn === 1 ? '' : 's') . ' with keys' : 'Payments are not taken online', 'href' => sl_route('Payments')],
+        ['t' => 'SMS delivery', 's' => !$sms ? 'Not configured' : ($sent && $fails / max(1, $sent) > 0.2 ? 'Degraded' : 'Operational'), 'c' => !$sms || ($sent && $fails / max(1, $sent) > 0.2) ? 'w' : '', 'i' => 'i-message', 'x' => $sent ? (100 - $failPct) . '% delivered in 24 h' : 'Nothing sent in 24 h', 'href' => sl_route('CommsHub')],
+        ['t' => 'Messages failed (24 h)', 's' => sl_num($fails) . ' of ' . sl_num($sent), 'c' => $failPct > 20 ? 'b' : ($fails ? 'w' : ''), 'i' => 'i-send', 'x' => $sent ? $failPct . '% failure rate' : 'No messages', 'pct' => $failPct, 'href' => sl_route('CommsHub')],
+        ['t' => 'AI assistant', 's' => $aiOn ? 'On' : 'Off', 'c' => $aiOn ? '' : 'w', 'i' => 'i-ai', 'x' => $aiOn ? 'Staff and customers can ask' : 'Switch it on in the AI center', 'href' => sl_route('AiCenter')],
+        ['t' => 'Activity trail', 's' => $logOn ? 'Recording' : 'Not set up', 'c' => $logOn ? '' : 'w', 'i' => 'i-activity', 'x' => $logOn ? 'Every change is logged' : 'Run the activity log migration', 'href' => sl_route('ActivityLogs')],
     ];
     $c = fn(string $sql) => sl_num(sl_scalar($sql));
     $sections = [

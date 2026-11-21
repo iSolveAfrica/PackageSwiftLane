@@ -61,3 +61,48 @@
 .cpx-jump{flex-wrap:nowrap;overflow-x:auto;max-width:100%;padding-bottom:4px;scrollbar-width:none}
 .cpx-jump a{white-space:nowrap;flex:none}
 }
+
+/* Needs attention: queue cards with size, age mix, arrivals and oldest item */
+.cpa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(270px,100%),1fr));gap:14px}
+.cpa{--t:var(--violet);display:flex;flex-direction:column;gap:10px;padding:18px;border-radius:20px;background:var(--card);border:1px solid var(--line);color:var(--ink);position:relative;overflow:hidden;transition:border-color .15s,box-shadow .15s,transform .15s}
+.cpa::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:var(--t)}
+.cpa:hover{border-color:color-mix(in srgb,var(--t) 45%,var(--line));box-shadow:0 14px 30px -20px color-mix(in srgb,var(--t) 70%,transparent);transform:translateY(-1px)}
+.cpa.t-violet{--t:var(--violet)}.cpa.t-amber{--t:#E0A82E}.cpa.t-blue{--t:var(--sky)}.cpa.t-mint{--t:var(--green)}
+.cpa-h{display:flex;align-items:center;gap:10px}
+.cpa-h b{font-weight:600;font-size:15px;flex:1}
+.cpa-ic{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:color-mix(in srgb,var(--t) 14%,var(--card));color:var(--t)}
+.cpa-go{color:var(--faint)}
+.cpa-fig{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.cpa-fig b{font:600 36px/1 var(--font);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.cpa-fig span{color:var(--muted);font-size:14px}
+.cpa-fig em{font-style:normal;margin-left:auto;font-size:12px;text-transform:none;letter-spacing:0;white-space:nowrap;padding:3px 9px;border-radius:99px;background:var(--hover);color:var(--ink-2)}
+.cpa-why{font-size:13.5px;color:var(--muted)}
+.cpa.zero .cpa-fig b{color:var(--green-ink)}
+.cpa-age{display:flex;gap:2px;height:10px;border-radius:99px;overflow:hidden;background:var(--hover)}
+.cpa-age i,.cpa-ages i{display:block;background:var(--t)}
+.cpa .a0{background:color-mix(in srgb,var(--t) 35%,var(--card))}.cpa .a1{background:color-mix(in srgb,var(--t) 60%,var(--card))}.cpa .a2{background:var(--t)}.cpa .a3{background:var(--red)}
+.cpa-ages{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 12px;margin:0;font-size:12.5px}
+.cpa-ages div{display:flex;justify-content:space-between;gap:6px}
+.cpa-ages dt{display:flex;align-items:center;gap:6px;color:var(--muted)}
+.cpa-ages dt i{width:8px;height:8px;border-radius:2px}
+.cpa-ages dd{margin:0;font-weight:600;font-variant-numeric:tabular-nums}
+.cpa-flow{margin-top:auto;display:flex;flex-direction:column;gap:6px;padding-top:10px;border-top:1px dashed var(--line)}
+.cpa-bars{display:flex;align-items:flex-end;gap:4px;height:34px}
+.cpa-bars i{flex:1;border-radius:3px 3px 1px 1px;background:color-mix(in srgb,var(--t) 55%,transparent)}
+.cpa-bars i:last-child{background:var(--t)}
+.cpa-meta{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted)}
+
+/* Workspace health tiles */
+.cph-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(280px,100%),1fr));gap:10px}
+.cph{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:16px;background:var(--card);border:1px solid var(--line);color:var(--ink)}
+.cph:hover{border-color:var(--line-2)}
+.cph b{font-weight:500;font-size:14.5px}
+.cph small{color:var(--muted);font-size:12.5px;margin-top:2px}
+.cph-ic{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:var(--green-bg);color:var(--green-ink);flex:none}
+.cph.w .cph-ic{background:var(--amber-bg);color:var(--amber-ink)}.cph.b .cph-ic{background:var(--red-bg);color:var(--red-ink)}
+.cph-s{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--green-ink);white-space:nowrap}
+.cph-s i{width:7px;height:7px;border-radius:50%;background:var(--green)}
+.cph.w .cph-s{color:var(--amber-ink)}.cph.w .cph-s i{background:#E0A82E}
+.cph.b .cph-s{color:var(--red-ink)}.cph.b .cph-s i{background:var(--red)}
+.cph-bar{display:block;height:5px;border-radius:99px;background:var(--hover);overflow:hidden;margin-top:6px}
+.cph-bar i{display:block;height:100%;background:var(--red)}
