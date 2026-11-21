@@ -7,22 +7,101 @@
   var f = document.getElementById('aic-form'), out = document.getElementById('aic-out');
   if (f) {
     var model = f.elements.namedItem('model'), hint = document.getElementById('aic-model-hint'), remembered = {};
-    function fillModels(models, current) {
-      var options = [], seen = {};
-      (models || []).forEach(function (m) { var id = typeof m === 'string' ? m : m.id; if (!id || seen[id]) return; seen[id] = true; options.push(new Option(m.name || m.label || id, id)); });
-      if (current && !seen[current]) options.unshift(new Option(current + ' (saved)', current));
-      model.replaceChildren.apply(model, options);
+    var picker = document.querySelector('.aic-mp'), qIn = document.getElementById('aic-model-q'), tierBox = document.getElementById('aic-tier'), info = document.getElementById('aic-model-info');
+    var presets = {}; try { presets = JSON.parse(picker.getAttribute('data-presets') || '{}'); } catch (e) {}
+    var loaded = {}, state = { list: [], q: '', tier: '' };
+    var BADGE = { recommended: '★ Recommended', best: 'Best', value: 'Best value', freebest: 'Best free' };
+    function badgeText(m) { return (m.badges || []).map(function (b) { return BADGE[b] || b; }).join(' · '); }
+    function label(m) {
+      var b = badgeText(m), parts = [];
+      if (b) parts.push(b + ' ·');
+      parts.push(m.name && m.name !== m.id ? m.name : m.id);
+      if (m.tier === 'free') parts.push('— Free');
+      if (m.tools === false) parts.push('(no lookups)');
+      return parts.join(' ');
+    }
+    function matches(m) {
+      if (state.tier && m.tier !== state.tier) return false;
+      if (!state.q) return true;
+      var hay = (m.id + ' ' + (m.name || '') + ' ' + badgeText(m) + ' ' + (m.tier || '')).toLowerCase();
+      return state.q.split(/\s+/).every(function (w) { return hay.indexOf(w) !== -1; });
+    }
+    function render() {
+      var current = model.value, frag = document.createDocumentFragment(), seen = {}, shown = 0;
+      var groups = [['Recommended for ' + (window.SL_KING || 'King'), function (m) { return (m.badges || []).length > 0; }]];
+      if (state.list.some(function (m) { return m.tier; })) { groups.push(['Free models', function (m) { return m.tier === 'free'; }]); groups.push(['Paid models', function (m) { return m.tier === 'paid'; }]); }
+      else groups.push(['All models', function () { return true; }]);
+      groups.forEach(function (g) {
+        var og = document.createElement('optgroup'); og.label = g[0];
+        state.list.forEach(function (m) {
+          if (seen[m.id] || !g[1](m) || !matches(m)) return;
+          seen[m.id] = true; shown++;
+          var o = new Option(label(m), m.id); o.title = m.id + (m.price ? ' · ' + m.price : ''); og.appendChild(o);
+        });
+        if (og.children.length) frag.appendChild(og);
+      });
+      if (current && !seen[current]) { var keep = state.list.filter(function (m) { return m.id === current; })[0]; frag.insertBefore(new Option(keep ? label(keep) : current + ' (saved)', current), frag.firstChild); }
+      model.replaceChildren(frag);
       if (current) model.value = current;
+      var total = state.list.length, free = state.list.filter(function (m) { return m.tier === 'free'; }).length;
+      if (qIn) qIn.placeholder = 'Search ' + total + ' models';
+      if (tierBox) tierBox.querySelectorAll('button').forEach(function (b) { var t = b.getAttribute('data-tier'); b.textContent = (t === 'free' ? 'Free' : t === 'paid' ? 'Paid' : 'All') + ' ' + (t === 'free' ? free : t === 'paid' ? total - free : total); });
+      if (state.q || state.tier) hint.textContent = shown ? shown + ' of ' + total + ' models match. Open the Model list to choose.' : 'No model matches. Clear the search to see all ' + total + '.';
+      else if (total) hint.textContent = total + ' models' + (free ? ' · ' + free + ' free · ' + (total - free) + ' paid' : '') + '. Search above or open the list to choose.';
+      describe();
+    }
+    function describe() {
+      var m = state.list.filter(function (x) { return x.id === model.value; })[0];
+      if (!info) return;
+      if (!m) { info.textContent = model.value ? model.value : ''; return; }
+      var bits = [m.id];
+      if (badgeText(m)) bits.push(badgeText(m));
+      if (m.price) bits.push(m.price);
+      if (m.ctx) bits.push((m.ctx >= 1e6 ? (Math.round(m.ctx / 1e5) / 10) + 'M' : Math.round(m.ctx / 1000) + 'k') + ' context');
+      bits.push(m.tools === false ? 'cannot look up data (no tool support)' : 'can look up data');
+      info.textContent = bits.join(' · ');
+      info.classList.toggle('warn', m.tools === false);
+    }
+    function fillModels(models, current) {
+      var seen = {};
+      state.list = (models || []).map(function (m) { return typeof m === 'string' ? { id: m, name: m } : m; }).filter(function (m) { if (!m.id || seen[m.id]) return false; seen[m.id] = true; return true; });
+      if (current) { if (!seen[current]) model.replaceChildren(new Option(current + ' (saved)', current)); model.value = current; }
+      render();
+    }
+    function setTierUi(p) { if (tierBox) { tierBox.hidden = p !== 'openrouter'; state.tier = ''; tierBox.querySelectorAll('button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-tier') === ''); }); } }
+    if (qIn) qIn.addEventListener('input', function () { state.q = qIn.value.trim().toLowerCase(); render(); });
+    if (qIn) qIn.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); var first = model.querySelector('option'); if (first) { model.value = first.value; describe(); model.focus(); } } });
+    if (tierBox) tierBox.addEventListener('click', function (e) { var b = e.target.closest('[data-tier]'); if (!b) return; state.tier = b.getAttribute('data-tier'); tierBox.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); }); render(); });
+    model.addEventListener('change', describe);
+    function hasKey(p) { var k = f.elements.namedItem('key_' + p); return !!(k && k.value.trim()); }
+    function loadModels(auto) {
+      var button = document.getElementById('aic-models-btn'), provider = f.provider.value, current = model.value;
+      if (loaded[provider]) { fillModels(loaded[provider], current); return; }
+      button.disabled = true; button.textContent = 'Loading…'; hint.textContent = 'Loading every model from ' + provider + '…';
+      var fd = new FormData(f); fd.set('action', 'models');
+      post(fd).then(function (j) {
+        if (f.provider.value !== provider) return;
+        if (!j.success) { if (!auto) { out.textContent = j.message; out.style.color = 'var(--red-ink)'; } hint.textContent = auto ? 'Showing the suggested models. Press Load models for the full list.' : 'Your current model is unchanged.'; return; }
+        if (!Array.isArray(j.models) || !j.models.length) { hint.textContent = 'No models returned. Your current selection is unchanged.'; return; }
+        loaded[provider] = j.models;
+        fillModels(j.models, model.value || current);
+        hint.textContent = j.models.length + ' models' + (j.paid !== null && j.paid !== undefined ? ' · ' + j.free + ' free · ' + j.paid + ' paid' : '') + '. Search above or open the list to choose.';
+        if (!auto) { out.textContent = 'Models loaded'; out.style.color = 'var(--green-ink)'; }
+      }).catch(function () { if (f.provider.value === provider && !auto) { out.textContent = 'Could not load models. Try again.'; out.style.color = 'var(--red-ink)'; }
+      }).finally(function () { button.disabled = false; button.textContent = 'Load models'; if (/^Loading every model/.test(hint.textContent)) hint.textContent = 'Your current model is unchanged. Try loading again.'; });
     }
     f.addEventListener('submit', function (e) { e.preventDefault(); var fd = new FormData(f); fd.set('action', 'save'); post(fd).then(function (j) { done(j, 'Saved'); }); });
     document.querySelectorAll('[data-prov]').forEach(function (b) {
       b.addEventListener('click', function () {
         var p = b.getAttribute('data-prov'); remembered[f.provider.value] = model.value; f.provider.value = p;
-        var presets = JSON.parse(b.getAttribute('data-models') || '{}');
-        fillModels(Object.keys(presets).map(function (id) { return { id: id, name: presets[id] }; }), remembered[p]);
-        hint.textContent = 'Choose a model, or load the latest list from your provider.'; out.textContent = '';
+        if (qIn) { qIn.value = ''; state.q = ''; }
+        setTierUi(p);
+        model.replaceChildren();
+        fillModels(loaded[p] || presets[p] || [], remembered[p]);
+        hint.textContent = 'Choose a model, or load the full list from your provider.'; out.textContent = '';
         document.querySelectorAll('[data-prov]').forEach(function (x) { x.classList.toggle('on', x === b); });
         document.querySelectorAll('[data-key-for]').forEach(function (x) { x.style.display = x.getAttribute('data-key-for') !== p ? 'none' : ''; });
+        if (!loaded[p] && hasKey(p)) loadModels(true);
       });
     });
     document.getElementById('aic-test').addEventListener('click', function () {
@@ -30,20 +109,9 @@
       var fd = new FormData(f); fd.set('action', 'test');
       post(fd).then(function (j) { out.textContent = j.success ? j.message : j.message; out.style.color = j.success ? 'var(--green-ink)' : 'var(--red-ink)'; });
     });
-    document.getElementById('aic-models-btn').addEventListener('click', function () {
-      var button = this, provider = f.provider.value, current = model.value;
-      button.disabled = true; button.textContent = 'Loading…'; hint.textContent = 'Loading available models…';
-      var fd = new FormData(f); fd.set('action', 'models');
-      post(fd).then(function (j) {
-        if (f.provider.value !== provider) return;
-        if (!j.success) { out.textContent = j.message; out.style.color = 'var(--red-ink)'; return; }
-        if (!Array.isArray(j.models) || !j.models.length) { hint.textContent = 'No models returned. Your current selection is unchanged.'; return; }
-        fillModels(j.models, current);
-        hint.textContent = j.models.length + ' models available. Open the Model dropdown to choose.';
-        model.focus(); out.textContent = 'Models loaded'; out.style.color = 'var(--green-ink)';
-      }).catch(function () { if (f.provider.value === provider) { out.textContent = 'Could not load models. Try again.'; out.style.color = 'var(--red-ink)'; }
-      }).finally(function () { button.disabled = false; button.textContent = 'Load models'; if (hint.textContent === 'Loading available models…') hint.textContent = 'Your current model is unchanged. Try loading again.'; });
-    });
+    document.getElementById('aic-models-btn').addEventListener('click', function () { loaded[f.provider.value] = null; loadModels(false); });
+    fillModels(presets[f.provider.value] || [], model.value);
+    if (hasKey(f.provider.value)) loadModels(true);
   }
   document.addEventListener('submit', function (e) {
     var k = e.target.closest('[data-aic-form]'); if (!k) return;
