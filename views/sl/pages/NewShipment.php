@@ -160,6 +160,7 @@ $unit = h($d['rates']['weight']);
             <input class="ns-chip-input mono" data-ns-track-input placeholder="Scan or type a number, then press Enter" autocomplete="off" aria-label="Add a tracking number">
           </div>
           <span class="sl-hint">Press <b>Enter</b> after each number. A scanner that presses Enter adds it for you.</span>
+          <div class="ns-pa" data-ns-pa hidden aria-live="polite"></div>
           <textarea name="tracking_number" data-ns-track-value hidden><?= h($pa['tracking'] ?? '') ?></textarea>
         </div>
 

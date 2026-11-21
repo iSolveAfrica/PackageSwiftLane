@@ -155,6 +155,8 @@ if (empty($errors)) {
     if ($shipment_id !== null) {
 
         cdp_updatedPreAlertPackage($_POST["prealert_id"]);
+        require_once __DIR__ . '/../../helpers/prealert_receive.php';
+        cdp_preAlertMarkReceived((int) $_POST['prealert_id'], 'sea', (int) $shipment_id, (int) $_SESSION['userid'], $code_prefix . $next_order);
 
         if (isset($_POST["packages"])) {
 

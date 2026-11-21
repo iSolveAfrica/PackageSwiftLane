@@ -32,6 +32,7 @@ $sel = function (string $name, array $rows, $cur) {
     </div>
     <div class="ix-load" aria-live="polite" hidden data-ix-loading><div class="row g8 sm"><i class="ic ic-sm i-spark" aria-hidden="true"></i>Looking for a pre-alert<?= $d['ai'] ? ' and reading the items' : '' ?>…</div><i style="width:70%"></i><i style="width:90%"></i><i style="width:55%"></i></div>
     <div class="sm" hidden data-ix-msg></div>
+    <div class="ix-match" hidden data-ix-match aria-live="polite"></div>
   </section>
 
   <section class="sl-card col g16" hidden data-ix-details>

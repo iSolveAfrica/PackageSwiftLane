@@ -99,3 +99,5 @@
 /* Label pop-up after saving a shipment */
 .ns-label-modal{width:min(960px,96vw);max-height:94vh;display:flex;flex-direction:column;gap:12px}
 .ns-label-frame{width:100%;height:min(62vh,640px);border:1px solid var(--line);border-radius:12px;background:#fff}
+.ns-pa{display:flex;flex-direction:column;gap:10px;margin-top:8px;padding:14px;border-radius:14px;border:1.5px solid var(--green);background:var(--green-bg)}
+.ns-pa .sl-kv{background:var(--card);border-radius:12px;padding:4px 12px}

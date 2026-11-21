@@ -64,3 +64,6 @@
 .rc .dash{border-top:1px dashed var(--faint)}
 .rc .r{display:flex;justify-content:space-between;gap:10px}
 .rc .m{font-family:JetBrains Mono,monospace}
+/* pre-alert match card (dataJs/sl/package_intake.js) */
+.ix-match{display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:16px;border:1.5px solid var(--green);background:var(--green-bg)}
+.ix-match .sl-kv{background:var(--card);border-radius:12px;padding:4px 12px}

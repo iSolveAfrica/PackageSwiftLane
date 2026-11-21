@@ -1,4 +1,5 @@
 <?php
+require_once CDP_ROOT . '/helpers/prealert_receive.php';
 /** Data for PreAlerts.dc.html (cdb_pre_alert). */
 require_once __DIR__ . '/ops_common.php';
 
@@ -40,13 +41,14 @@ function sl_preAlertsData($user, $core): array
             'id' => (int) $r->pre_alert_id, 'trk' => $r->tracking, 'name' => sl_userName($u), 'ini' => sl_initials(sl_userName($u)), 'locker' => $u->locker ?? '',
             'sup' => $r->provider_shop, 'carrier' => $r->name_com ?: '—', 'what' => $r->package_description, 'price' => sl_money($r->purchase_price),
             'eta' => sl_date($r->estimated_date), 'sent' => sl_ago($r->prealert_date), 'invoice' => $r->url_invoice,
-            'st' => $r->is_package ? 'Matched' : ($late ? 'Overdue' : 'Expected'), 'cls' => $r->is_package ? 'delivered' : ($late ? 'overdue' : 'pending'), 'open' => !$r->is_package,
+            'rec' => cdp_preAlertReceipt($r),
+            'st' => $r->is_package ? 'Received' : ($late ? 'Overdue' : 'Expected'), 'cls' => $r->is_package ? 'delivered' : ($late ? 'overdue' : 'pending'), 'open' => !$r->is_package,
         ];
     }
     $base = "FROM cdb_pre_alert p WHERE 1 = 1 $scope";
     return [
         'rows' => $list, 'count' => $count, 'page' => $page, 'per' => $per, 'q' => $q, 'filter' => $filter,
-        'filters' => [['f' => 'open', 'label' => 'Open'], ['f' => 'matched', 'label' => 'Matched'], ['f' => 'all', 'label' => 'All']],
+        'filters' => [['f' => 'open', 'label' => 'Open'], ['f' => 'matched', 'label' => 'Received'], ['f' => 'all', 'label' => 'All']],
         'openN' => (int) sl_scalar("SELECT COUNT(*) $base AND p.is_package = 0"), 'weekN' => (int) sl_scalar("SELECT COUNT(*) $base AND p.prealert_date >= NOW() - INTERVAL 7 DAY"),
         'isClient' => $isClient,
         'canAdd' => $user->cdp_hasPermission('prealert_add'),
