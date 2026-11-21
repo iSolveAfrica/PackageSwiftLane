@@ -23,6 +23,11 @@
 
 require_once("../../loader.php");
 require_once(__DIR__ . '/../../helpers/querys.php');
+require_once(__DIR__ . '/../../helpers/ajax_guard.php');
+// Staff report data (every employee's shipments / pickups): same permission as its report_view.php
+// page (helpers/sl_reports.php) or the general reports permission. It had no check at all before.
+require_login();
+require_permission(['view_general_reports', 'view_pickups_by_employees']);
 
 $db = new Conexion;
 $user = new User;

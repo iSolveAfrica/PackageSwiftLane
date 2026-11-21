@@ -24,22 +24,20 @@
 
 require_once("../loader.php");
 
+// Public on purpose: the sign-up page (dataJs/sl/auth.js) fills its region list from here before
+// the visitor has an account. It returns only reference data (id + name of a state), and every
+// input is bound, so an anonymous caller cannot read anything else.
 $db = new Conexion;
 
-$country = cdp_sanitize($_REQUEST['id']);
+$country = (int) ($_REQUEST['id'] ?? 0);
+$search = isset($_REQUEST['q']) ? trim((string) $_REQUEST['q']) : '';
+$search = addcslashes(mb_substr($search, 0, 100), '%_\\');
 
-$search = '';
-if (isset($_REQUEST['q'])) {
-    $search = cdp_sanitize($_REQUEST['q']);
-}
-
-$list = array();
 $data = [];
 
-
-$sql = "SELECT * FROM cdb_states WHERE  name LIKE '%" . $search . "%' and country_id='" . $country . "'";
-
-$db->cdp_query($sql);
+$db->cdp_query("SELECT id, name FROM cdb_states WHERE name LIKE :search AND country_id = :country");
+$db->bind(':search', '%' . $search . '%');
+$db->bind(':country', $country);
 $db->cdp_execute();
 
 $datas = $db->cdp_registros();

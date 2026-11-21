@@ -20,7 +20,10 @@ cdp_financeGuardAjax();
 require_permission(['fs_record_payment', 'manage_account_payments', 'verify_payments', 'verify_consolidate_payment', 'verify_consolidate_package_payment']);
 // Recording a payment marks invoices paid and releases goods: staff only, even
 // if a customer/driver role was ever granted one of the permissions above.
-if (!sl_userIs('staff')) sl_json(['success' => false, 'message' => 'Not allowed'], 403);
+// Rank, not sl_userIs('staff'): that is only "not client and not driver", so agency users
+// (rank 1) would pass it.
+require_once __DIR__ . '/../../helpers/rbac.php';
+if (cdp_roleRankById((int) $user->userlevel) < 2) sl_json(['success' => false, 'message' => 'Not allowed'], 403);
 
 $core = new Core();
 $type = (string) ($_POST['type'] ?? 'shipment');

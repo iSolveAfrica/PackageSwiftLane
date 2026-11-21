@@ -1,4 +1,11 @@
 <?php
+// WhatsApp helper library, included by helpers (whatsapp, comms, push_notify, pickup_code) and signed-in endpoints.
+// It sits under ajax/ but is not an endpoint: requested directly it would run with no login or permission check, so refuse it.
+// Including it from another script is unaffected.
+if (realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) {
+    http_response_code(403);
+    exit;
+}
 // ini_set('display_errors', 1);
 $projectRoot = dirname(__DIR__, 2);
 require_once $projectRoot . '/helpers/querys.php';

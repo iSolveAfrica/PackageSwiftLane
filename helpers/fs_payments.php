@@ -561,8 +561,16 @@ if (!function_exists('cdp_fsCompleteIntent')) {
             $db->bind(':note', 'Paid online by the customer.');
             $db->bind(':rate', $intent->exchange_rate !== null ? (float) $intent->exchange_rate : null);
             $db->bind(':by', (int) $intent->sender_id);
-            $db->cdp_execute();
+            // PDO runs in silent mode: a failed insert (e.g. the unique gateway-reference key from
+            // migrations/2026_11_22_payment_reference_unique.sql) returns false instead of throwing.
+            // Throw so the catch below parks the intent instead of clearing packages with no ledger row.
+            if ($db->cdp_execute() === false) {
+                throw new RuntimeException('ledger insert failed for reference ' . $reference);
+            }
             $paymentId = (int) $db->dbh->lastInsertId();
+            if ($paymentId <= 0) {
+                throw new RuntimeException('ledger insert returned no id for reference ' . $reference);
+            }
         } catch (Throwable $e) {
             // Money left the customer but we could not book it. Park the intent
             // as processing so it is visibly stuck rather than silently lost —

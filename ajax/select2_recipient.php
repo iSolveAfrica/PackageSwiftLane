@@ -52,10 +52,24 @@ if ($ctx['is_restricted']) {
     $extraWhere = " AND agency_id = " . (int)$ctx['agency_id'];
 }
 
+// Drivers, agency users and agency-restricted staff: the sender must be a customer they could pick
+// in select2_sender.php (userlevel 1, in their agency when restricted). Without this they could read
+// any account's contact details (staff and admins included) and saved recipients by walking ids.
+// Drivers are not refused outright: their default role has add_shipment (NewShipment uses this).
+if ($sender_id > 0 && (cdp_roleRankById((int) $__u->userlevel) === 1 || $ctx['is_restricted'])) {
+    $db->cdp_query("SELECT id FROM cdb_users WHERE id = :id AND userlevel = 1" . $extraWhere . " LIMIT 1");
+    $db->bind(':id', $sender_id);
+    $db->cdp_execute();
+    if (!$db->cdp_registro()) {
+        echo json_encode([]);
+        exit;
+    }
+}
+
 /*
 ------------------------------------
 1. DEFAULT RECIPIENT (THE SENDER)
-   No agency/userlevel filter — sender is uniquely identified by id.
+   Sender is uniquely identified by id; non-staff / restricted callers were checked above.
 ------------------------------------
 */
 

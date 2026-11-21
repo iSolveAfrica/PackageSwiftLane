@@ -27,6 +27,7 @@ require_once(__DIR__ . '/../../helpers/sl_auth.php');
 
 require_once("../../helpers/querys.php");
 require_once(__DIR__ . '/../../helpers/ajax_guard.php');
+require_once(__DIR__ . '/../../helpers/uploads.php');
 require_login();
 notify_after_response(); // email + WhatsApp go out after the response (helpers/after_response.php)
 require_permission('view_shipment_list');
@@ -38,6 +39,20 @@ $user   = new User;
 $core   = new Core;
 $errors = array();
 $ctx = cdp_getAgencyContext();
+
+// view_shipment_list (the only permission checked above) is also granted to
+// customers, who book through add_courier_client_ajax.php (courier_add.php sends
+// them there). Posting here instead let a customer create a shipment under any
+// sender at any price and attach files to it. Below staff rank the caller needs
+// the page's permission ('add_shipment') and must not be a customer role.
+require_once(__DIR__ . '/../../helpers/rbac.php');
+$scopeLevel = (int) ($_SESSION['userlevel'] ?? 0);
+if (cdp_roleRankById($scopeLevel) < 2 && (cdp_roleIsClient($scopeLevel) || !$user->cdp_hasPermission('add_shipment'))) {
+    header('HTTP/1.1 403 Forbidden');
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
+    exit;
+}
 
 if (empty($_POST['sender_id']))
     $errors['sender_id'] = $lang['validate_field_ajax144'];
@@ -535,17 +550,13 @@ if (empty($errors)) {
             foreach ($_FILES["filesMultiple"]['tmp_name'] as $key => $tmp_name) {
 
                 if (!in_array($key, $deleted_file_ids)) {
-                    $image_name    = $order_track . date("Y-m-d") . "_" . basename($_FILES["filesMultiple"]["name"][$key]);
-                    $target_file   = $target_dir . $image_name;
-                    $imageFileType = pathinfo($target_file, PATHINFO_EXTENSION);
-                    $imageFileZise = $_FILES["filesMultiple"]["size"][$key];
-
-                    if ($imageFileZise > 0) {
-                        move_uploaded_file($_FILES["filesMultiple"]["tmp_name"][$key], $target_file);
+                    // order_files/ is web-served: the client's file name and extension were kept, so a
+                    // .php/.html/.svg file could be stored there. cdp_uploadStore() checks the type from the
+                    // contents and stores it under our own random name and extension; rejected files are skipped.
+                    $stored = cdp_uploadStore(cdp_uploadPick($_FILES["filesMultiple"], (int) $key), __DIR__ . '/../../order_files', $order_track, 'office');
+                    if ($stored['ok']) {
+                        cdp_insertOrdersFiles($shipment_id, 'order_files/' . $stored['name'], $stored['name'], date("Y-m-d H:i:s"), '0', pathinfo($stored['name'], PATHINFO_EXTENSION));
                     }
-
-                    $target_file_db = "order_files/" . $image_name;
-                    cdp_insertOrdersFiles($shipment_id, $target_file_db, $image_name, date("Y-m-d H:i:s"), '0', $imageFileType);
                 }
             }
         }

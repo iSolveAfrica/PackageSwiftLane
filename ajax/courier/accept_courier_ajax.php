@@ -25,6 +25,7 @@ ini_set('display_errors', 0);
 require_once("../../loader.php");
 require_once __DIR__ . '/../../helpers/sl_auth.php';
 require_once(__DIR__ . '/../../helpers/ajax_guard.php');
+require_once(__DIR__ . '/../../helpers/uploads.php');
 require_login();
 require_permission('view_shipment_list');
 
@@ -36,6 +37,40 @@ require_once("../notify_whatsapp/api_whatsapp_service_v2.php");
 $user = new User;
 $core = new Core;
 $errors = array();
+
+// view_shipment_list (the only permission checked above) is also granted to
+// customers, drivers and agency users, and the shipment id comes from the
+// request: without this check any of them could accept and re-price any shipment.
+// Below staff rank the caller needs the same permission as the page
+// ('complete_client_shipment') and the shipment must be theirs (sender or driver) or
+// their agency's.
+require_once(__DIR__ . '/../../helpers/rbac.php');
+$scopeUser = $user->cdp_getUserData();
+if (cdp_roleRankById((int) ($scopeUser->userlevel ?? 0)) < 2) {
+    $scopeId = (int) ($_POST['order_id'] ?? 0);
+    $scopeDb = new Conexion;
+    $scopeDb->cdp_query("SELECT sender_id, driver_id, agency FROM cdb_add_order WHERE order_id = :id LIMIT 1");
+    $scopeDb->bind(':id', $scopeId);
+    $scopeDb->cdp_execute();
+    $scopeRow = $scopeDb->cdp_registro();
+    $scopeUid = (int) ($_SESSION['userid'] ?? 0);
+    $scopeCtx = cdp_getAgencyContext();
+    $scopeAgencies = array_filter([
+        (int) ($scopeCtx['agency_id'] ?? 0),
+        ((int) $scopeUser->userlevel === 6) ? (int) cdp_getAgencyBranchIdForUser($scopeUser->name_off) : 0,
+    ]);
+    $scopeOk = $scopeRow && (
+        (int) $scopeRow->sender_id === $scopeUid
+        || (int) $scopeRow->driver_id === $scopeUid
+        || in_array((int) $scopeRow->agency, $scopeAgencies, true)
+    );
+    if (!$scopeOk || !$user->cdp_hasPermission('complete_client_shipment')) {
+        header('HTTP/1.1 403 Forbidden');
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
+        exit;
+    }
+}
 
 if (empty($_POST['sender_id']))
 
@@ -274,18 +309,13 @@ if (empty($errors)) {
             foreach ($_FILES["filesMultiple"]['tmp_name'] as $key => $tmp_name) {
 
                 if (!in_array($key, $deleted_file_ids)) {
-                    $image_name = $order_track .  date("Y-m-d") . "_" . basename($_FILES["filesMultiple"]["name"][$key]);
-                    $target_file = $target_dir . $image_name;
-                    $imageFileType = pathinfo($target_file, PATHINFO_EXTENSION);
-                    $imageFileZise = $_FILES["filesMultiple"]["size"][$key];
-
-                    if ($imageFileZise > 0) {
-                        move_uploaded_file($_FILES["filesMultiple"]["tmp_name"][$key], $target_file);
-                        $imagen = basename($_FILES["filesMultiple"]["name"][$key]);
+                    // order_files/ is web-served: the client's file name and extension were kept, so a
+                    // .php/.html/.svg file could be stored there. cdp_uploadStore() checks the type from the
+                    // contents and stores it under our own random name and extension; rejected files are skipped.
+                    $stored = cdp_uploadStore(cdp_uploadPick($_FILES["filesMultiple"], (int) $key), __DIR__ . '/../../order_files', $order_track, 'office');
+                    if ($stored['ok']) {
+                        cdp_insertOrdersFiles($shipment_id, 'order_files/' . $stored['name'], $stored['name'], date("Y-m-d H:i:s"), '0', pathinfo($stored['name'], PATHINFO_EXTENSION));
                     }
-
-                    $target_file_db = "order_files/" . $image_name;
-                    cdp_insertOrdersFiles($shipment_id, $target_file_db, $image_name, date("Y-m-d H:i:s"), '0', $imageFileType);
                 }
             }
         }

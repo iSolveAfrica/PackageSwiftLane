@@ -28,7 +28,9 @@ require_once("../../helpers/phpmailer/class.smtp.php");
 require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_login();
 notify_after_response(); // email + WhatsApp go out after the response (helpers/after_response.php)
-require_permission('view_dashboard');
+// Creates a driver account. 'view_dashboard' is customer-facing, so any customer could
+// create staff-side accounts here; use the same permission as users_add_ajax.php.
+require_permission('add_user');
 
 $db = new Conexion;
 $user = new User;
@@ -85,16 +87,11 @@ if (empty($_POST['phone']))
 
 if (!empty($_FILES['avatar']['name'])) {
 
-    $target_dir = "../../assets/uploads/";
-    $image_name = time() . "_" . basename($_FILES["avatar"]["name"]);
-    $target_file = $target_dir . $image_name;
-    $imageFileType = pathinfo($target_file, PATHINFO_EXTENSION);
-    $imageFileZise = $_FILES["avatar"]["size"];
-
-    if (($imageFileType != "jpg" && $imageFileType != "png")) {
-
-        $errors['avatar'] = $lang['validate_field_ajax62'];
-    } else if (empty(getimagesize($_FILES['avatar']['tmp_name']))) { //1048576 byte=1MB
+    // JPG/PNG only, checked from the contents; the file is stored later under our own
+    // name (helpers/uploads.php), not the client's (assets/uploads/ is web-served).
+    require_once(__DIR__ . '/../../helpers/uploads.php');
+    $cdpAvatarMime = cdp_uploadDetect((string) $_FILES['avatar']['tmp_name']);
+    if (!in_array($cdpAvatarMime, ['image/jpeg', 'image/png'], true)) {
 
         $errors['avatar'] = $lang['validate_field_ajax62'];
     }
@@ -138,9 +135,10 @@ if (empty($errors)) {
 
     if (!empty($_FILES['avatar']['name'])) {
 
-        move_uploaded_file($_FILES["avatar"]["tmp_name"], $target_file);
-        $imagen = basename($_FILES["avatar"]["name"]);
-        $data['avatar'] = 'uploads/' . $image_name;
+        $cdpUp = cdp_uploadStore($_FILES['avatar'], __DIR__ . '/../../assets/uploads', 'avatar', 'images');
+        if ($cdpUp['ok']) {
+            $data['avatar'] = 'uploads/' . $cdpUp['name'];
+        }
     }
 
     $insert = cdp_insertDrivers1fcoe($data);

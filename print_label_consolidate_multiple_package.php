@@ -27,6 +27,14 @@ $user = new User();
 $core = new Core();
 // ... ask if we are logged in here:
 if ($user->cdp_loginCheck() == true) {
+    // Security: logging in is not enough; customers, drivers and agency users may
+    // only print their own documents (see helpers/print_access.php).
+    require_once(__DIR__ . "/helpers/print_access.php");
+    $printKeys = is_string($_GET['data'] ?? null) ? json_decode($_GET['data']) : null;
+    if (is_array($printKeys)) {
+        cdp_printOwnerOr403('consolidate_package', $printKeys, 'no');
+    }
+
 
 
     // Audit: record who took this document out of the system.
@@ -36,6 +44,7 @@ if ($user->cdp_loginCheck() == true) {
     include('views/print/print_label_consolidate_multiple_package.php');
 } else {
 
-    header("location: login.php");
+    require_once(__DIR__ . "/helpers/print_access.php");
+    cdp_printLoginRedirect(); // back to this document after signing in
     exit;
 }

@@ -241,7 +241,11 @@ class User
      * (ERRMODE_SILENT) and the login works as before.
      */
     const LOGIN_WINDOW_MIN       = 15;
-    const LOGIN_MAX_PER_USERNAME = 10;
+    // Security: the tight limit is per (username, ip) pair, so someone who only
+    // knows a username cannot lock the real user out from another address. The
+    // per-username limit is a much higher backstop against distributed guessing.
+    const LOGIN_MAX_PER_USER_IP  = 10;
+    const LOGIN_MAX_PER_USERNAME = 100;
     const LOGIN_MAX_PER_IP       = 30;
 
     private function cdp_loginAttemptKey($username)
@@ -258,16 +262,17 @@ class User
     {
         $this->cdp_loginAttemptsTable();
         $since = date('Y-m-d H:i:s', time() - self::LOGIN_WINDOW_MIN * 60);
+        $ip    = $this->cdp_loginClientIp();
 
-        $this->db->cdp_query('SELECT COUNT(*) AS c FROM cdb_login_attempts WHERE username = :u AND created_at >= :since');
+        $this->db->cdp_query('SELECT COUNT(*) AS c, SUM(ip = :ip) AS c_ip FROM cdb_login_attempts WHERE username = :u AND created_at >= :since');
         $this->db->bind(':u', $this->cdp_loginAttemptKey($username));
+        $this->db->bind(':ip', $ip);
         $this->db->bind(':since', $since);
         $row = $this->db->cdp_registro();
-        if ($row && (int) $row->c >= self::LOGIN_MAX_PER_USERNAME) {
+        if ($row && ((int) $row->c >= self::LOGIN_MAX_PER_USERNAME || (int) $row->c_ip >= self::LOGIN_MAX_PER_USER_IP)) {
             return true;
         }
 
-        $ip = $this->cdp_loginClientIp();
         if ($ip === '') {
             return false;
         }

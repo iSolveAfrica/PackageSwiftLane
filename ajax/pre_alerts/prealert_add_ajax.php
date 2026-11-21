@@ -47,17 +47,19 @@ if (empty($_POST['tracking_prealert']) || empty($_POST['provider_prealert']) || 
 // Si no hay errores, procesar la inserción en la base de datos
 if (!isset($response['status'])) {
     // Verificar si el archivo se cargó correctamente
+    // pre_alert_files/ is served by the web server and the stored name kept the client's
+    // file name and extension, so a customer could store a .php or .html file. Store only
+    // an image or PDF (type detected from the contents) under our own name (helpers/uploads.php).
+    require_once(__DIR__ . '/../../helpers/uploads.php');
     if ($_FILES['file_invoice']['error'] !== UPLOAD_ERR_OK) {
         $response['status'] = 'error';
         $response['message'] = 'Error uploading attachment.';
     } else {
-        // Mover el archivo al directorio de destino
-        $target_dir = "../../pre_alert_files/";
-        $image_name = time() . "_" . basename($_FILES["file_invoice"]["name"]);
-        $target_file = $target_dir . $image_name;
-        if (!move_uploaded_file($_FILES["file_invoice"]["tmp_name"], $target_file)) {
+        $cdpUp = cdp_uploadStore($_FILES['file_invoice'], __DIR__ . '/../../pre_alert_files', 'prealert');
+        $image_name = $cdpUp['ok'] ? $cdpUp['name'] : '';
+        if (!$cdpUp['ok']) {
             $response['status'] = 'error';
-            $response['message'] = 'Error moving the file to the destination directory.';
+            $response['message'] = $cdpUp['error'];
         } else {
             // Resto de tu código para insertar en la base de datos
             // Crear un arreglo de datos para la inserción en la base de datos

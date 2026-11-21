@@ -229,3 +229,82 @@ function cdp_ajaxCustomerFacingPerms(): array
     ];
 }
 
+
+/**
+ * Staff-only gate (role rank 2+: staff, admin, superadmin). require_permission() soft-passes
+ * customers, drivers and agency users for the customer-facing permission names, so an endpoint
+ * that acts on records it does not scope to the caller (bulk status or rider changes resolved by
+ * order number) must also call this, or any signed-in customer could move anyone's shipment.
+ */
+function require_staff() {
+    global $user;
+    if (!isset($user) || !($user instanceof User)) {
+        $user = new User();
+    }
+    if (empty($user->logged_in)) {
+        _ajax_guard_send(401, ['success' => false, 'error' => 'Unauthorized', 'message' => 'Session Required']);
+    }
+    if (!function_exists('cdp_roleRankById')) {
+        require_once __DIR__ . '/rbac.php';
+    }
+    if (cdp_roleRankById((int) $user->userlevel) >= 2) {
+        return;
+    }
+    // A hard denial is a security event: record it like require_permission() does.
+    require_once __DIR__ . '/activity_log.php';
+    $denied = cdp_activityClassify(cdp_activityEndpoint());
+    cdp_activityLog([
+        'module'  => $denied['module'],
+        'verb'    => $denied['verb'],
+        'outcome' => 'denied',
+        'label'   => $denied['label'],
+        'summary' => 'Blocked — staff only',
+        'meta'    => ['source' => 'rbac', 'required' => 'staff'],
+    ]);
+    _ajax_guard_send(403, ['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
+}
+
+/**
+ * CSRF for endpoints that change data but are still called as a jQuery GET by legacy list
+ * screens. require_login() checks the token only on POST/PUT/PATCH/DELETE, so a GET is accepted
+ * only with a valid token or as a same-origin XHR: a cross-site link, redirect or <img> cannot
+ * add the X-Requested-With header, and browsers flag a cross-site request in Sec-Fetch-Site.
+ * Call after require_login(). Read the parameters with $_POST[...] ?? $_GET[...].
+ */
+function require_safe_write() {
+    $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
+    if (in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
+        // Token already required by require_login(); check again in case it was not called.
+        if (!cdp_csrf_validate_request()) {
+            _ajax_guard_send(419, ['success' => false, 'error' => 'Invalid CSRF token', 'message' => 'CSRF token missing or invalid']);
+        }
+        return;
+    }
+    if (cdp_csrf_validate_request()) {
+        return;
+    }
+    $xrw  = strtolower((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? ''));
+    $site = strtolower((string) ($_SERVER['HTTP_SEC_FETCH_SITE'] ?? ''));
+    if ($xrw !== 'xmlhttprequest' || ($site !== '' && $site !== 'same-origin')) {
+        _ajax_guard_send(403, ['success' => false, 'error' => 'Forbidden', 'message' => 'This action must be sent from the application.']);
+    }
+}
+
+/**
+ * True when a shipment / package / consolidation row (any table with an `agency` column) is
+ * inside the signed-in user's agency. Agency-restricted staff (helpers/querys.php
+ * cdp_getAgencyContext) may only act on their own agency's rows; everyone else sees all.
+ */
+function cdp_ajaxRowInAgencyScope($row): bool {
+    static $ctx = null;
+    if ($ctx === null) {
+        if (!function_exists('cdp_getAgencyContext')) {
+            require_once __DIR__ . '/querys.php';
+        }
+        $ctx = cdp_getAgencyContext();
+    }
+    if (empty($ctx['is_restricted']) || empty($ctx['agency_id'])) {
+        return true;
+    }
+    return is_object($row) && (int) ($row->agency ?? 0) === (int) $ctx['agency_id'];
+}

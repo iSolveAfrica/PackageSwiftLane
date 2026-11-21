@@ -212,7 +212,10 @@ switch ($action) {
             ? $user->cdp_hasPermission('edit_client')
             : ($user->cdp_hasPermission('edit_user') && cdp_canManageUser($user, (int) $target->userlevel));
         $ctx = cdp_getAgencyContext();
-        if (!empty($ctx['is_restricted']) && (int) $target->agency_id !== (int) $ctx['agency_id']) {
+        // A restricted context with no agency (agency_id null) is out of scope for every account;
+        // (int) null === 0 would otherwise match all accounts without an agency.
+        if (!empty($ctx['is_restricted'])
+            && ($ctx['agency_id'] === null || (int) $target->agency_id !== (int) $ctx['agency_id'])) {
             $mayEdit = false;
         }
         if (!$mayEdit) {

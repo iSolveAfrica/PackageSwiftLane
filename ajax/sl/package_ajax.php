@@ -29,11 +29,15 @@ $uid = (int) $_SESSION['userid'];
 function slp_lookupScope(): string
 {
     // Same rule as the NewPackage page (customer_packages_add.php): customers never get this screen.
-    if (sl_userIs('client')) {
+    // Drivers are refused too: add_package is customer-facing, so a driver passes require_permission(),
+    // and these lookups would otherwise hand them any customer's addresses / pre-alert owner by id.
+    if (sl_userIs('client') || sl_userIs('driver')) {
         sl_json(['success' => false, 'message' => 'Not allowed'], 403);
     }
+    // Same condition as sl_opsCustomers(), which fills the customer picker on NewPackage: a restricted
+    // user is filtered by agency only when they have one, so the lookup matches the list they see.
     $ctx = function_exists('cdp_getAgencyContext') ? cdp_getAgencyContext() : ['is_restricted' => false];
-    return !empty($ctx['is_restricted']) ? ' AND u.agency_id = ' . (int) ($ctx['agency_id'] ?? 0) : '';
+    return !empty($ctx['is_restricted']) && !empty($ctx['agency_id']) ? ' AND u.agency_id = ' . (int) $ctx['agency_id'] : '';
 }
 
 if ($op === 'addresses') {

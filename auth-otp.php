@@ -21,6 +21,20 @@ $otpRedirect = 'index.php';
 $sessionKey  = 'otp_' . $flow . '_challenge';
 $challengeId = isset($_SESSION[$sessionKey]) ? (int) $_SESSION[$sessionKey] : 0;
 
+// ── Forgot-password decoy (set by ajax/forgot-password-ajax.php) ─────────────
+// Security: for an unknown email the reset request stores a decoy context so this
+// page looks exactly like a real code step instead of revealing that no account
+// exists. Every code entered against it is rejected with the normal messages.
+$forgotDecoy = null;
+if ($flow === 'forgot' && empty($_SESSION['otp_forgot_user_id'])
+    && isset($_SESSION['otp_forgot_decoy']) && is_array($_SESSION['otp_forgot_decoy'])) {
+    if (time() - (int) ($_SESSION['otp_forgot_decoy']['at'] ?? 0) < 1800) {
+        $forgotDecoy = $_SESSION['otp_forgot_decoy'];
+    } else {
+        unset($_SESSION['otp_forgot_decoy']);
+    }
+}
+
 // ── System-wide OTP switch OFF: complete the flow without a code ─────────────
 // (password reset is excluded on purpose: the code is the proof of ownership).
 if (!cdp_otpEnabled() && $flow !== 'forgot') {
@@ -96,6 +110,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !cdp_csrf_validate_request()) {
         } elseif ($flow === 'forgot' && !empty($_SESSION['otp_forgot_user_id'])) {
             $uid = (int) $_SESSION['otp_forgot_user_id'];
 
+        } elseif ($flow === 'forgot' && $forgotDecoy !== null) {
+            // Decoy: mirror the real cooldown and "sent" message, send nothing.
+            if (time() - (int) $forgotDecoy['at'] < 60) {
+                $error = 'Please wait before requesting a new code.';
+            } else {
+                $forgotDecoy = ['email' => (string) ($forgotDecoy['email'] ?? ''), 'at' => time(), 'attempts' => 0];
+                $_SESSION['otp_forgot_decoy'] = $forgotDecoy;
+                $message = 'A new OTP has been sent to your email.';
+            }
+
         } elseif ($flow === 'signup' && !empty($_SESSION['signup_user_id'])) {
             $suid = (int) $_SESSION['signup_user_id'];
             $db->cdp_query("SELECT email, fname, lname FROM cdb_users WHERE id=:id AND registration_complete=0 LIMIT 1");
@@ -169,7 +193,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !cdp_csrf_validate_request()) {
 
     // ── Verify ────────────────────────────────────────────────────────────────
     } elseif (isset($_POST['otp_code'])) {
-        $verify = $otp->verifyChallenge($challengeId, $_POST['otp_code'], $flow);
+        if ($flow === 'forgot' && $forgotDecoy !== null) {
+            // Decoy: same messages as OtpService::verifyChallenge, never succeeds.
+            $attempts = (int) ($forgotDecoy['attempts'] ?? 0);
+            if (time() - (int) $forgotDecoy['at'] > 300) {
+                $verify = ['ok' => false, 'error' => 'OTP expired. Request a new code.'];
+            } elseif ($attempts >= 5) {
+                $verify = ['ok' => false, 'error' => 'Too many attempts. Request a new code.'];
+            } else {
+                $attempts++;
+                $_SESSION['otp_forgot_decoy']['attempts'] = $attempts;
+                $remaining = 5 - $attempts;
+                $verify = $remaining <= 0
+                    ? ['ok' => false, 'error' => 'Too many attempts. Request a new code.']
+                    : ['ok' => false, 'error' => 'Incorrect OTP. ' . $remaining . ' attempt' . ($remaining === 1 ? '' : 's') . ' remaining.'];
+            }
+        } else {
+            $verify = $otp->verifyChallenge($challengeId, $_POST['otp_code'], $flow);
+        }
 
         if ($verify['ok']) {
 
@@ -301,7 +342,7 @@ if ($otpSuccess) {
 // disabled with no timer. Send the user back to where they can start over.
 $hasContext =
     ($flow === 'login'  && (!empty($_SESSION['otp_login_user_id'])  || $challengeId > 0)) ||
-    ($flow === 'forgot' && (!empty($_SESSION['otp_forgot_user_id']) || $challengeId > 0)) ||
+    ($flow === 'forgot' && (!empty($_SESSION['otp_forgot_user_id']) || $challengeId > 0 || $forgotDecoy !== null)) ||
     ($flow === 'signup' && (!empty($_SESSION['signup_user_id'])     || $challengeId > 0));
 
 if (!$hasContext) {
@@ -328,6 +369,8 @@ if ($challengeId > 0) {
     if ($activeChallenge) {
         $challengeCreatedAt = strtotime($activeChallenge->created_at);
     }
+} elseif ($forgotDecoy !== null) {
+    $challengeCreatedAt = (int) $forgotDecoy['at'];
 }
 ?>
 <?php
@@ -354,7 +397,7 @@ $d = [
     'step' => 2,
     'message' => $message,
     'error' => $error,
-    'email' => sl_maskEmail((string) ($otpUser->email ?? '')),
+    'email' => sl_maskEmail((string) ($otpUser->email ?? ($forgotDecoy['email'] ?? ''))),
     'phone' => sl_maskPhone((string) ($otpUser->phone ?? '')),
     'hasPhone' => !empty($otpUser->phone) && !empty($core->active_whatsapp),
     'countdownEnd' => $challengeCreatedAt > 0 ? $challengeCreatedAt + 60 : 0,

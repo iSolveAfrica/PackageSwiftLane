@@ -36,11 +36,21 @@
     $db->cdp_query("SELECT id,fname,lname,email FROM cdb_users WHERE email=:email LIMIT 1");
     $db->bind(':email', $email);
     $u = $db->cdp_registro();
-    if (!$u) {
+    // Security: an unknown address (or a request we refuse) gets a decoy code
+    // context, so auth-otp.php shows the same code form instead of bouncing to
+    // "code expired" (which told an attacker the email had no account). Any code
+    // entered against the decoy is simply rejected.
+    $startDecoy = function () use ($email) {
         unset($_SESSION['otp_forgot_challenge'], $_SESSION['otp_forgot_user_id']);
+        $_SESSION['otp_forgot_decoy'] = ['email' => $email, 'at' => time(), 'attempts' => 0];
+    };
+
+    if (!$u) {
+        $startDecoy();
         echo json_encode($genericReply);
         exit;
     }
+    unset($_SESSION['otp_forgot_decoy']);
 
     $otp = new OtpService;
     $challenge = $otp->createChallenge((int)$u->id, 'forgot', ['email' => $u->email]);
@@ -54,7 +64,11 @@
             echo json_encode($genericReply);
             exit;
         }
-        echo json_encode(['success' => false, 'errors' => $challenge['error']]);
+        // Hard cap reached: answer exactly like the unknown-email path so the
+        // limit cannot be used to confirm the account exists; log it instead.
+        error_log('forgot-password: OTP request refused for user ' . (int)$u->id . ': ' . (string)($challenge['error'] ?? ''));
+        $startDecoy();
+        echo json_encode($genericReply);
         exit;
     }
 
@@ -63,14 +77,11 @@
     $_SESSION['otp_forgot_challenge'] = $challenge['id'];
     $_SESSION['otp_forgot_user_id']   = (int)$u->id;
 
-    // Email is the primary channel for password reset — surface a failure instead
-    // of silently claiming success.
+    // A mail failure is logged server-side rather than shown: a distinct error
+    // here would only ever appear for registered emails (account enumeration).
+    // The user can still use Resend on the code page.
     if (empty($emailResult['ok'])) {
-        echo json_encode([
-            'success' => false,
-            'errors'  => 'Could not send the reset code by email: ' . (isset($emailResult['error']) ? $emailResult['error'] : 'unknown error') . '.'
-        ]);
-        exit;
+        error_log('forgot-password: reset code email failed for user ' . (int)$u->id . ': ' . (isset($emailResult['error']) ? $emailResult['error'] : 'unknown error'));
     }
 
     echo json_encode($genericReply);

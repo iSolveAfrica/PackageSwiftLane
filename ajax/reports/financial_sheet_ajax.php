@@ -329,6 +329,31 @@ function fs_consol_summary($cid)
     ];
 }
 
+/** Canonical form of a typed/pasted payment reference. Gateway references never
+ *  contain whitespace, so a stray space inside a pasted online reference must not
+ *  make it look like a new one (and would fail gateway verification anyway).
+ *  Letter case is left alone: the ledger column uses a case-insensitive collation,
+ *  so the lookup below and the unique key already treat "ABC" and "abc" as one. */
+function fs_clean_reference($mode, $raw)
+{
+    $ref = trim((string) $raw);
+    if ($mode !== 'cash') {
+        $ref = (string) preg_replace('/\s+/u', '', $ref);
+    }
+    return $ref;
+}
+
+/** True when a failed cdb_fs_payments insert was rejected by the unique key on
+ *  online references (migrations/2026_11_22_payment_reference_unique.sql): another
+ *  request booked the same gateway reference between our check and our insert. */
+function fs_is_duplicate_reference_error(Throwable $e)
+{
+    if ($e instanceof PDOException && isset($e->errorInfo[1]) && (int) $e->errorInfo[1] === 1062) {
+        return true;
+    }
+    return stripos($e->getMessage(), 'Duplicate entry') !== false;
+}
+
 /** Why an online (non-cash) gateway reference cannot be booked again, or ''.
  *  One real gateway transaction must be counted once: without this, the same
  *  Paystack/Hubtel reference could be recorded against several customers or
@@ -1581,7 +1606,7 @@ if ($action === 'record_payment') {
     if (!in_array($mode, ['cash', 'paystack', 'hubtel', 'paypal'], true)) {
         $mode = 'cash';
     }
-    $reference = trim((string) ($_REQUEST['reference'] ?? ''));
+    $reference = fs_clean_reference($mode, $_REQUEST['reference'] ?? '');
     $modeLbl   = ucfirst($mode);
 
     // Packages the customer is paying for now (checkbox list, all on by default).
@@ -1703,7 +1728,13 @@ if ($action === 'record_payment') {
         $db->bind(':note', $note !== '' ? $note : null);
         $db->bind(':rate', (float) $core->exchange_rate);
         $db->bind(':by', $uid);
-        $db->cdp_execute();
+        // Conexion runs PDO in silent mode, so a rejected insert only shows up as
+        // a false return. Stop here: clearing packages without a ledger row would
+        // release goods for money that was never booked (and a duplicate-key
+        // rejection means a concurrent request already booked this reference).
+        if ($db->cdp_execute() === false) {
+            throw new RuntimeException((string) $db->cdp_error());
+        }
 
         cdp_fsLogPaymentEvent([
             'payment_id' => (int) $db->dbh->lastInsertId(),
@@ -1718,6 +1749,11 @@ if ($action === 'record_payment') {
             'actor_id'   => $uid,
         ]);
     } catch (Throwable $e) {
+        if (fs_is_duplicate_reference_error($e)) {
+            echo json_encode(['ok' => false, 'error' => 'duplicate_reference',
+                              'message' => 'This payment reference has already been recorded. Each gateway payment can be booked only once.']);
+            exit;
+        }
         echo json_encode(['ok' => false, 'error' => 'ledger_missing',
                           'message' => 'Payment ledger not found — run sql/fs_transactions.sql, then try again.']);
         exit;
@@ -1916,7 +1952,7 @@ if ($action === 'clear_debt') {
     if (!in_array($mode, ['cash', 'paystack', 'hubtel', 'paypal'], true)) {
         $mode = 'cash';
     }
-    $reference = trim((string) ($_REQUEST['reference'] ?? ''));
+    $reference = fs_clean_reference($mode, $_REQUEST['reference'] ?? '');
 
     $refTaken = fs_reference_taken($mode, $reference);
     if ($refTaken !== '') {
@@ -2013,7 +2049,13 @@ if ($action === 'clear_debt') {
         $db->bind(':note', $note !== '' ? ('Debt clearing — ' . $note) : 'Debt clearing');
         $db->bind(':rate', (float) $core->exchange_rate);
         $db->bind(':by', $uid);
-        $db->cdp_execute();
+        // Conexion runs PDO in silent mode, so a rejected insert only shows up as
+        // a false return. Stop here: clearing packages without a ledger row would
+        // release goods for money that was never booked (and a duplicate-key
+        // rejection means a concurrent request already booked this reference).
+        if ($db->cdp_execute() === false) {
+            throw new RuntimeException((string) $db->cdp_error());
+        }
 
         cdp_fsLogPaymentEvent([
             'payment_id' => (int) $db->dbh->lastInsertId(),
@@ -2028,6 +2070,11 @@ if ($action === 'clear_debt') {
             'actor_id'   => $uid,
         ]);
     } catch (Throwable $e) {
+        if (fs_is_duplicate_reference_error($e)) {
+            echo json_encode(['ok' => false, 'error' => 'duplicate_reference',
+                              'message' => 'This payment reference has already been recorded. Each gateway payment can be booked only once.']);
+            exit;
+        }
         echo json_encode(['ok' => false, 'error' => 'ledger_missing',
                           'message' => 'Payment ledger not found — run sql/fs_transactions.sql, then try again.']);
         exit;

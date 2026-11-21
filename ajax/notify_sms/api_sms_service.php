@@ -1,4 +1,11 @@
 <?php
+// SMS helper library, included by the shipment / pickup / package endpoints and helpers/message_log.php.
+// It sits under ajax/ but is not an endpoint: requested directly it would run with no login or permission check, so refuse it.
+// Including it from another script is unaffected.
+if (realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) {
+    http_response_code(403);
+    exit;
+}
 // ini_set('display_errors', 1);
 require_once("../../helpers/querys.php");
 require_once(__DIR__ . "/../../helpers/hubtel_sms.php");

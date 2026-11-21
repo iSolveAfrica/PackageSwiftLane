@@ -35,11 +35,20 @@ define('MAX_UPLOAD_BYTES', 5 * 1024 * 1024);
  * pending row under a different email must not be taken over, otherwise anyone
  * who knows it could overwrite that row's email and password.
  */
+// Unverified sign-ups older than this are treated as abandoned: they no longer
+// hold their username / document number and may be resumed by a new applicant.
+define('SIGNUP_PENDING_HOLD_SEC', 24 * 3600);
+
 function cdp_signupPendingHeldByOther($db, $field, $value, $email)
 {
-    $db->cdp_query("SELECT id FROM cdb_users WHERE $field = :v AND active = 0 AND approve = 0 AND email <> :e LIMIT 1");
+    // Only a live pending row holds the value: email-verified (awaiting approval)
+    // or started recently. Otherwise an abandoned attempt would block the same
+    // person retrying with a corrected email forever.
+    $db->cdp_query("SELECT id FROM cdb_users WHERE $field = :v AND active = 0 AND approve = 0 AND email <> :e
+                      AND (registration_complete = 1 OR created >= :cutoff) LIMIT 1");
     $db->bind(':v', $value);
     $db->bind(':e', $email);
+    $db->bind(':cutoff', date('Y-m-d H:i:s', time() - SIGNUP_PENDING_HOLD_SEC));
     $db->cdp_execute();
     return $db->cdp_registro() ? true : false;
 }
@@ -165,6 +174,29 @@ if (empty($error)) {
                     ORDER BY id DESC LIMIT 1");
     $db->bind(':e', cdp_sanitize($_POST['email']));
     $resume = $db->cdp_registro();
+
+    if (!$resume) {
+        // An abandoned (never email-verified, older than the hold window) row
+        // with this username or document is reused rather than duplicated; it
+        // gets the new email and must be verified again by OTP, so no live
+        // registration can be taken over this way.
+        $db->cdp_query("SELECT id FROM cdb_users
+                        WHERE active = 0 AND approve = 0 AND registration_complete = 0
+                          AND (created < :cutoff OR created IS NULL)
+                          AND (username = :u OR document_number = :d)
+                        ORDER BY id DESC LIMIT 1");
+        $db->bind(':cutoff', date('Y-m-d H:i:s', time() - SIGNUP_PENDING_HOLD_SEC));
+        $db->bind(':u', cdp_sanitize($_POST['username']));
+        $db->bind(':d', cdp_sanitize($_POST['document_number']));
+        $resume = $db->cdp_registro();
+        if ($resume) {
+            // Restart the hold window so the reused row is held for this applicant.
+            $db->cdp_query("UPDATE cdb_users SET created = :c WHERE id = :id");
+            $db->bind(':c', date('Y-m-d H:i:s'));
+            $db->bind(':id', (int) $resume->id);
+            $db->cdp_execute();
+        }
+    }
 
     if ($resume) {
         // ── Resume: refresh the editable fields on the existing incomplete row ──

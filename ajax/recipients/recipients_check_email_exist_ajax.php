@@ -22,8 +22,27 @@
  
 require_once("../../loader.php");
 require_once("../../helpers/querys.php");
+require_once(__DIR__ . '/../../helpers/ajax_guard.php');
+require_once(__DIR__ . '/../../helpers/rbac.php');
+require_login();
+require_permission(['recipients_edit', 'view_recipients']);
 
 $db = new Conexion;
+
+// Duplicate check for the recipient form. A customer, driver or agency user (rank < 2) is only
+// told about their own address book: checking every account's recipients let any caller probe
+// whether an e-mail address is a recipient of another customer. Staff keep the global check.
+$recipientEmailTaken = function ($email) use ($user) {
+    if (cdp_roleRankById((int) $user->userlevel) >= 2) {
+        return cdp_recipientEmailExiste($email);
+    }
+    $db = new Conexion;
+    $db->cdp_query("SELECT email FROM cdb_recipients WHERE email = :email AND sender_id = :uid LIMIT 1");
+    $db->bind(':email', $email);
+    $db->bind(':uid', (int) $user->uid);
+    $db->cdp_execute();
+    return $db->cdp_registro();
+};
 
 $response = []; // Inicializar la respuesta
 
@@ -36,7 +55,7 @@ if (!empty($_POST['email'])) {
     if (isset($_POST['original_email']) && $_POST['original_email'] === $email) {
         // Si el correo electrónico no ha cambiado, no es necesario verificar si ya existe en la base de datos
         $response['status'] = 'success';
-    } elseif (cdp_recipientEmailExiste($email)) {
+    } elseif ($recipientEmailTaken($email)) {
         // Si el correo electrónico ha cambiado y ya existe en la base de datos
         $response['status'] = 'error';
         $response['message'] = $lang['validate_field_ajax126']; // Mensaje de correo electrónico duplicado

@@ -25,6 +25,10 @@ require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_login();
 notify_after_response(); // email + WhatsApp go out after the response (helpers/after_response.php)
 require_permission('view_client_list');
+// Order numbers below are resolved across every customer, so this bulk change is for staff
+// only, with the permission the package list shows its status menu for.
+require_staff();
+require_permission(['select_change_status', 'select_change_status_courier', 'track_package']);
 require_once(__DIR__ . '/../../helpers/video_files.php');
 cdp_purgeDeliveredVideosLater();   // videos of delivered packages are deleted after the response
 
@@ -48,23 +52,16 @@ $smtppass   = $settings->smtp_password;
 $smtpport   = $settings->smtp_port;
 $smtpsecure = $settings->smtp_secure;
 
-// CSRF: require_login() validates the token only on POST, but the list screens
-// (dataJs/customers_packages_ajax.js)
-// still send this as a jQuery GET. A GET is therefore accepted only as a
-// same-origin XHR or with a valid token: a cross-site link, redirect or <img>
-// cannot add the X-Requested-With header, and browsers flag it in Sec-Fetch-Site.
-// POST (token already checked by require_login()) is accepted as well.
-$cdpIsPost = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST';
-if (!$cdpIsPost && !cdp_csrf_validate_request()) {
-    $cdpXrw  = strtolower((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? ''));
-    $cdpSite = strtolower((string) ($_SERVER['HTTP_SEC_FETCH_SITE'] ?? ''));
-    if ($cdpXrw !== 'xmlhttprequest' || ($cdpSite !== '' && $cdpSite !== 'same-origin')) {
-        _ajax_guard_send(403, ['success' => false, 'error' => 'Forbidden', 'message' => 'This action must be sent from the application.']);
-    }
-}
+// CSRF: the list screen (dataJs/customers_packages_ajax.js) still sends this as a jQuery
+// GET; helpers/ajax_guard.php require_safe_write() accepts that only as a same-origin XHR
+// or with a valid token.
+require_safe_write();
 
 $status = intval($_POST['status'] ?? $_GET['status'] ?? 0);
 $data   = json_decode((string) ($_POST['checked_data'] ?? $_GET['checked_data'] ?? ''));
+if (!is_array($data)) {
+    $data = [];
+}
 
 // Delivered / Picked up only with the owner's verified pickup code
 // (helpers/pickup_code.php). Order numbers repeat across customers, so
@@ -117,6 +114,11 @@ foreach ($data as $key) {
             continue;
         }
         $courier = $cdpRes['row'];
+    }
+    // Agency-restricted staff move only their own agency's packages.
+    if (!$courier || !cdp_ajaxRowInAgencyScope($courier)) {
+        $message[$key] = $key . ': not found.';
+        continue;
     }
     $prefix   = $courier->order_prefix;
     $office   = $courier->origin_off;

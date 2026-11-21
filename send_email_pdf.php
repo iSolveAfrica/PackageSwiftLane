@@ -63,13 +63,11 @@ if (!$row) {
 	exit;
 }
 
-// Customers may only print/e-mail their own documents; without this any
-// logged-in customer could pull another customer's data by guessing ids.
-require_once(__DIR__ . '/helpers/rbac.php');
-if (cdp_roleRankById((int) ($_SESSION['userlevel'] ?? 0)) < 1 && (int) $row->sender_id !== (int) $_SESSION['userid']) {
-	http_response_code(403);
-	exit;
-}
+// Customers, drivers and agency users may only print/e-mail their own
+// documents (sender, driver or agency), the same rule as the print pages;
+// without this they could pull other customers' data by guessing ids.
+require_once(__DIR__ . '/helpers/print_access.php');
+cdp_printOwnerOr403('shipment', [$cdp_id]);
 
 $core = new Core;
 $db = new Conexion;

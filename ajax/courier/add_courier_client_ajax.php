@@ -115,30 +115,27 @@ if (empty($_POST['order_payment_method']))
 // Attachments are saved in order_files/, which the web server serves from the
 // app's own origin. The client's file name and extension were kept as sent, so
 // an .html/.svg (stored XSS for staff opening it) or .php file could be stored.
-// Only invoices/photos are accepted (the form asks for image/* and PDF), checked
-// by extension and by content.
-$allowedUploadTypes = [
-    'pdf' => ['application/pdf', 'application/x-pdf'],
-    'jpg' => ['image/jpeg'], 'jpeg' => ['image/jpeg'],
-    'png' => ['image/png'], 'gif' => ['image/gif'], 'webp' => ['image/webp'],
-];
+// Only invoices/photos are accepted (the form asks for image/* and PDF; phone
+// cameras give HEIC/HEIF/AVIF too), checked by content before the shipment is
+// created; cdp_uploadStore() then stores them under our own name and extension.
+require_once(__DIR__ . '/../../helpers/uploads.php');
 if (isset($_FILES['filesMultiple']['name']) && is_array($_FILES['filesMultiple']['name'])) {
     $skipFileIds = !empty($_POST['deleted_file_ids']) ? explode(",", (string) $_POST['deleted_file_ids']) : array();
-    $finfo = function_exists('finfo_open') ? finfo_open(FILEINFO_MIME_TYPE) : false;
+    $allowedUploadKinds = cdp_uploadKinds('docs');
     foreach ($_FILES['filesMultiple']['name'] as $key => $fname) {
         if ($fname === '' || in_array($key, $skipFileIds) || (int) $_FILES['filesMultiple']['size'][$key] <= 0) {
             continue;
         }
-        $ext = strtolower(pathinfo((string) $fname, PATHINFO_EXTENSION));
         $tmp = (string) $_FILES['filesMultiple']['tmp_name'][$key];
-        $mime = ($finfo && is_uploaded_file($tmp)) ? (string) finfo_file($finfo, $tmp) : '';
-        if (!isset($allowedUploadTypes[$ext]) || ($finfo && !in_array($mime, $allowedUploadTypes[$ext], true))) {
-            $errors['filesMultiple'] = 'Attachments must be PDF or image files (JPG, PNG, GIF, WEBP).';
+        $mime = is_uploaded_file($tmp) ? cdp_uploadDetect($tmp) : '';
+        if (!isset($allowedUploadKinds[$mime])) {
+            $errors['filesMultiple'] = '"' . htmlspecialchars(basename((string) $fname), ENT_QUOTES, 'UTF-8') . '" cannot be attached: attachments must be a photo or a PDF.';
             break;
         }
-    }
-    if ($finfo) {
-        finfo_close($finfo);
+        if ((int) $_FILES['filesMultiple']['size'][$key] > 10485760) {
+            $errors['filesMultiple'] = '"' . htmlspecialchars(basename((string) $fname), ENT_QUOTES, 'UTF-8') . '" is too large (10 MB at most).';
+            break;
+        }
     }
 }
 
@@ -356,22 +353,11 @@ if (empty($errors)) {
             foreach ($_FILES["filesMultiple"]['tmp_name'] as $key => $tmp_name) {
 
                 if (!in_array($key, $deleted_file_ids)) {
-                    // Stored name: tracking + date + a cleaned copy of the client's name, with the
-                    // extension already checked against the allow-list above (never the raw name).
-                    $origName = pathinfo(basename((string) $_FILES["filesMultiple"]["name"][$key]), PATHINFO_FILENAME);
-                    $origName = substr(trim(preg_replace('/[^A-Za-z0-9._-]+/', '_', $origName), '._'), 0, 60);
-                    $image_name = $order_track .  date("Y-m-d") . "_" . bin2hex(random_bytes(4)) . "_" . ($origName !== '' ? $origName : 'file') . "." . strtolower(pathinfo((string) $_FILES["filesMultiple"]["name"][$key], PATHINFO_EXTENSION));
-                    $target_file = $target_dir . $image_name;
-                    $imageFileType = pathinfo($target_file, PATHINFO_EXTENSION);
-                    $imageFileZise = $_FILES["filesMultiple"]["size"][$key];
-
-                    if ($imageFileZise > 0) {
-                        move_uploaded_file($_FILES["filesMultiple"]["tmp_name"][$key], $target_file);
-                        $imagen = basename($_FILES["filesMultiple"]["name"][$key]);
+                    // Our own random name and the extension of the detected type (never the client's).
+                    $stored = cdp_uploadStore(cdp_uploadPick($_FILES["filesMultiple"], (int) $key), __DIR__ . '/../../order_files', $order_track, 'docs');
+                    if ($stored['ok']) {
+                        cdp_insertOrdersFiles($shipment_id, 'order_files/' . $stored['name'], $stored['name'], date("Y-m-d H:i:s"), '0', pathinfo($stored['name'], PATHINFO_EXTENSION));
                     }
-
-                    $target_file_db = "order_files/" . $image_name;
-                    cdp_insertOrdersFiles($shipment_id, $target_file_db, $image_name, date("Y-m-d H:i:s"), '0', $imageFileType);
                 }
             }
         }

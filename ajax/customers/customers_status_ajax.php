@@ -24,7 +24,10 @@
         $trow = $tdb->cdp_registro();
         $ctx = cdp_getAgencyContext();
         if (!$trow || !cdp_roleIsClient((int) $trow->userlevel)
-            || (!empty($ctx['is_restricted']) && (int) $trow->agency_id !== (int) $ctx['agency_id'])) {
+            // A restricted context with no agency (agency_id null) manages no clients;
+            // (int) null === 0 would otherwise match every client without an agency.
+            || (!empty($ctx['is_restricted'])
+                && ($ctx['agency_id'] === null || (int) $trow->agency_id !== (int) $ctx['agency_id']))) {
             echo json_encode(['status' => 'error', 'message' => 'This action only applies to client accounts you manage.']);
             exit;
         }

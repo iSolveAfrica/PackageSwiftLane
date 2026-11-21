@@ -32,6 +32,12 @@ $user = new User;
 $core = new Core;
 $errors = array();
 
+require_once(__DIR__ . '/../../helpers/uploads.php');
+$order_id = (int) ($_POST['order_id'] ?? $_GET['order_id'] ?? 0); // the sea-package screens post it in the form body
+if ($order_id <= 0) {
+    $errors['order_id'] = $lang['message_ajax_error2'];
+}
+
 
 
 if (empty($_POST['mode_pay']))
@@ -43,14 +49,6 @@ if (empty($_FILES['file_invoice']['name']))
     $errors['file_invoice'] = 'attach proof of payment';
 
 
-if (!empty($_FILES['file_invoice']['name'])) {
-
-    $target_dir = "../../assets/payment_packages/";
-    $image_name = time() . "_" . basename($_FILES["file_invoice"]["name"]);
-    $target_file = $target_dir . $image_name;
-    $imageFileType = pathinfo($target_file, PATHINFO_EXTENSION);
-    $imageFileZise = $_FILES["file_invoice"]["size"];
-}
 
 $status_invoice = 3;
 
@@ -60,7 +58,7 @@ if (empty($errors)) {
     $data = array(
 
         'mode_pay'   =>   cdp_sanitize($_POST["mode_pay"]),
-        'order_id'   =>   cdp_sanitize($_GET["order_id"]),
+        'order_id'   =>   $order_id,
         'notes'   =>   cdp_sanitize($_POST["notes"]),
         'status_invoice'   =>   $status_invoice,
         'payment_date'   =>  date("Y-m-d H:i:s"),
@@ -71,14 +69,18 @@ if (empty($errors)) {
 
 
 
-    if (!empty($_FILES['file_invoice']['name'])) {
-
-        move_uploaded_file($_FILES["file_invoice"]["tmp_name"], $target_file);
-        $imagen = basename($_FILES["file_invoice"]["name"]);
-        $data['file_invoice'] = 'payment_packages/' . $image_name;
+    // assets/payment_packages/ is web-served: the client's file name and
+    // extension were kept, so a .php/.html/.svg "proof" could be stored there.
+    // cdp_uploadStore() accepts only images/PDF (detected from the contents)
+    // and stores them under our own random name and extension.
+    $stored = cdp_uploadStore($_FILES['file_invoice'], __DIR__ . '/../../assets/payment_packages', 'pay', 'docs');
+    if ($stored['ok']) {
+        $data['file_invoice'] = 'payment_packages/' . $stored['name'];
+    } else {
+        $errors['file_invoice'] = $stored['error'];
     }
 
-    $insert = cdp_updatePaymentPackagesCustomer($data);
+    $insert = empty($errors) && cdp_updatePaymentPackagesCustomer($data);
 
 
 
@@ -111,7 +113,7 @@ if (empty($errors)) {
 
 
         $db->bind(':user_id',  $_SESSION['userid']);
-        $db->bind(':order_id', $_GET["order_id"]);
+        $db->bind(':order_id', $order_id);
         $db->bind(':notification_description', $lang['notification_shipment26']);
         $db->bind(':shipping_type', '4');
         $db->bind(':notification_date',  date("Y-m-d H:i:s"));
@@ -130,7 +132,7 @@ if (empty($errors)) {
         }
 
         cdp_insertNotificationsUsers($notification_id, $_SESSION['userid']);
-    } else {
+    } elseif (empty($errors)) {
 
         $errors['critical_error'] = $lang['message_ajax_error1'];
     }

@@ -51,6 +51,30 @@ if (cdp_roleRankById((int) $__u->userlevel) < 1) {
             exit;
         }
     }
+} else {
+    // Drivers, agency users and agency-restricted staff: the owning customer (the user itself for
+    // type=user, the recipient's sender otherwise) must be one they could pick in select2_sender.php
+    // (userlevel 1, in their agency when restricted). Drivers keep access: their role has add_shipment.
+    $ctx = cdp_getAgencyContext();
+    if (cdp_roleRankById((int) $__u->userlevel) === 1 || !empty($ctx['is_restricted'])) {
+        if (!empty($ctx['is_restricted']) && $ctx['agency_id'] === null) {
+            echo json_encode([]);
+            exit;
+        }
+        $agencyWhere = !empty($ctx['is_restricted']) ? " AND u.agency_id = " . (int) $ctx['agency_id'] : '';
+        if ($type === "user") {
+            $db->cdp_query("SELECT u.id FROM cdb_users u WHERE u.id = :id AND u.userlevel = 1" . $agencyWhere . " LIMIT 1");
+        } else {
+            $db->cdp_query("SELECT r.id FROM cdb_recipients r JOIN cdb_users u ON u.id = r.sender_id"
+                . " WHERE r.id = :id AND u.userlevel = 1" . $agencyWhere . " LIMIT 1");
+        }
+        $db->bind(':id', $id);
+        $db->cdp_execute();
+        if (!$db->cdp_registro()) {
+            echo json_encode([]);
+            exit;
+        }
+    }
 }
 
 if ($type === "user") {

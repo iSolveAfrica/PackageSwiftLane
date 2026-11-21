@@ -32,6 +32,32 @@ require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_login();
 require_permission('view_pickup_list');
 
+// Accepting a pickup prices it, sets its agency, driver and status and attaches files.
+// The page that posts here (pickup_accept.php) needs 'pickup_accept', but this endpoint
+// only asked for the customer-facing 'view_pickup_list', so a customer could rewrite any
+// shipment by posting its order_id. Require the page's permission, never for customers,
+// and keep drivers/agency users to pickups of their own agency or assigned to them.
+require_once(__DIR__ . '/../../helpers/rbac.php');
+$cdpAcceptRank = cdp_roleRankById((int) $user->userlevel);
+if ($cdpAcceptRank < 1 || !$user->cdp_hasPermission('pickup_accept')) {
+    _ajax_guard_send(403, ['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
+}
+if ($cdpAcceptRank < 2) {
+    $cdpAcceptDb = new Conexion;
+    $cdpAcceptDb->cdp_query("SELECT agency, driver_id FROM cdb_add_order WHERE order_id = :id LIMIT 1");
+    $cdpAcceptDb->bind(':id', (int) ($_POST['order_id'] ?? 0));
+    $cdpAcceptRow = $cdpAcceptDb->cdp_registro();
+    $cdpAcceptCtx = cdp_getAgencyContext();
+    $cdpOwnAgency = !empty($cdpAcceptCtx['agency_id']) && $cdpAcceptRow && (int) $cdpAcceptRow->agency === (int) $cdpAcceptCtx['agency_id'];
+    $cdpOwnDriver = $cdpAcceptRow && (int) $cdpAcceptRow->driver_id > 0 && (int) $cdpAcceptRow->driver_id === (int) ($_SESSION['userid'] ?? 0);
+    if (!$cdpOwnAgency && !$cdpOwnDriver) {
+        _ajax_guard_send(403, ['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
+    }
+    if ($cdpOwnAgency) {
+        $_POST['agency'] = (int) $cdpAcceptCtx['agency_id']; // cannot move it to another agency
+    }
+}
+
 $user = new User;
 $core = new Core;
 $errors = array();
@@ -93,6 +119,25 @@ require_once(__DIR__ . '/../../helpers/pickup_code.php');
 $cdpPickupGate = cdp_pickupCodeGate('air', [intval($_POST['order_id'] ?? 0)], intval($_POST['status_courier'] ?? 0));
 if (!$cdpPickupGate['ok']) {
     $errors['pickup_code'] = $cdpPickupGate['message'];
+}
+
+// Attachments are stored in order_files/, which the web server serves. The stored
+// name kept the client's file name and extension, so a .php or .html file could be
+// stored there. Check each file's real type (from its contents) before anything is
+// saved, so a bad file is refused instead of leaving a half-saved pickup.
+require_once(__DIR__ . '/../../helpers/uploads.php');
+if (isset($_FILES['filesMultiple']['tmp_name']) && is_array($_FILES['filesMultiple']['tmp_name'])) {
+    $cdpUploadKinds = cdp_uploadKinds('docs');
+    $cdpSkipFiles = !empty($_POST['deleted_file_ids']) ? explode(",", (string) $_POST['deleted_file_ids']) : array();
+    foreach ($_FILES['filesMultiple']['tmp_name'] as $key => $tmp) {
+        if ((string) $tmp === '' || in_array($key, $cdpSkipFiles) || (int) ($_FILES['filesMultiple']['size'][$key] ?? 0) <= 0) {
+            continue;
+        }
+        if (!isset($cdpUploadKinds[cdp_uploadDetect((string) $tmp)])) {
+            $errors['filesMultiple'] = 'Attachments must be PDF or image files (JPG, PNG, GIF, WEBP).';
+            break;
+        }
+    }
 }
 
 if (empty($errors)) {
@@ -282,7 +327,7 @@ if (empty($errors)) {
 
         if (isset($_FILES['filesMultiple']) && count($_FILES['filesMultiple']['name']) > 0 && $_FILES['filesMultiple']['tmp_name'][0] != '') {
 
-            $target_dir = "../../order_files/";
+            $target_dir = __DIR__ . "/../../order_files";
             $deleted_file_ids = array();
 
             if (isset($_POST['deleted_file_ids']) && !empty($_POST['deleted_file_ids'])) {
@@ -292,18 +337,13 @@ if (empty($errors)) {
             foreach ($_FILES["filesMultiple"]['tmp_name'] as $key => $tmp_name) {
 
                 if (!in_array($key, $deleted_file_ids)) {
-                    $image_name = $order_track .  date("Y-m-d") . "_" . basename($_FILES["filesMultiple"]["name"][$key]);
-                    $target_file = $target_dir . $image_name;
-                    $imageFileType = pathinfo($target_file, PATHINFO_EXTENSION);
-                    $imageFileZise = $_FILES["filesMultiple"]["size"][$key];
-
-                    if ($imageFileZise > 0) {
-                        move_uploaded_file($_FILES["filesMultiple"]["tmp_name"][$key], $target_file);
-                        $imagen = basename($_FILES["filesMultiple"]["name"][$key]);
+                    // Our own name with the extension of the detected type (helpers/uploads.php),
+                    // never the client's file name: order_files/ is served by the web server.
+                    $cdpUp = cdp_uploadStore(cdp_uploadPick($_FILES['filesMultiple'], (int) $key), $target_dir, $order_track);
+                    if ($cdpUp['ok']) {
+                        $image_name = $cdpUp['name'];
+                        cdp_insertOrdersFiles($shipment_id, "order_files/" . $image_name, $image_name, date("Y-m-d H:i:s"), '0', pathinfo($image_name, PATHINFO_EXTENSION));
                     }
-
-                    $target_file_db = "order_files/" . $image_name;
-                    cdp_insertOrdersFiles($shipment_id, $target_file_db, $image_name, date("Y-m-d H:i:s"), '0', $imageFileType);
                 }
             }
         }

@@ -69,6 +69,16 @@ class AuthHandler
             $otpCode     = isset($data['otp_code']) && is_scalar($data['otp_code']) ? trim((string)$data['otp_code']) : '';
 
             if ($challengeId > 0 && $otpCode !== '') {
+                // Security: check the challenge belongs to this account before
+                // verifying, so valid credentials for one account cannot burn the
+                // attempts of (and lock) another user's pending login code.
+                $chk = new Conexion();
+                $chk->cdp_query("SELECT user_id FROM cdb_auth_otp_challenges WHERE id = :id AND purpose = 'login' LIMIT 1");
+                $chk->bind(':id', $challengeId);
+                $owner = $chk->cdp_registro();
+                if (!$owner || (int)$owner->user_id !== (int)$userInfo->id) {
+                    ApiResponse::error('otp_invalid', 'Invalid or used OTP request.', 401);
+                }
                 $verify = $otp->verifyChallenge($challengeId, $otpCode, 'login');
                 if (empty($verify['ok']) || (int)($verify['user_id'] ?? 0) !== (int)$userInfo->id) {
                     ApiResponse::error('otp_invalid', $verify['error'] ?? 'Invalid one-time code.', 401);

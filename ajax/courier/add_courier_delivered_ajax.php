@@ -43,6 +43,41 @@ $user = new User;
 $core = new Core;
 $errors = array();
 
+// view_shipment_list (the only permission checked above) is also granted to
+// customers, drivers and agency users, and shipment_id comes from the request:
+// without this check any of them could mark any shipment handed over. Below
+// staff rank the shipment's assigned driver may deliver it (the driver app has
+// no other permission); anyone else needs the page's permission
+// ('deliver_shipment') and a shipment that is theirs or their agency's.
+require_once(__DIR__ . '/../../helpers/rbac.php');
+$scopeUser = $user->cdp_getUserData();
+if (cdp_roleRankById((int) ($scopeUser->userlevel ?? 0)) < 2) {
+    $scopeDb = new Conexion;
+    $scopeDb->cdp_query("SELECT sender_id, driver_id, agency FROM cdb_add_order WHERE order_id = :id LIMIT 1");
+    $scopeDb->bind(':id', (int) ($_POST['shipment_id'] ?? 0));
+    $scopeDb->cdp_execute();
+    $scopeRow = $scopeDb->cdp_registro();
+    $scopeUid = (int) ($_SESSION['userid'] ?? 0);
+    $scopeCtx = cdp_getAgencyContext();
+    $scopeAgencies = array_filter([
+        (int) ($scopeCtx['agency_id'] ?? 0),
+        ((int) $scopeUser->userlevel === 6) ? (int) cdp_getAgencyBranchIdForUser($scopeUser->name_off) : 0,
+    ]);
+    $scopeOk = $scopeRow && (
+        (int) $scopeRow->driver_id === $scopeUid
+        || ($user->cdp_hasPermission('deliver_shipment') && (
+            (int) $scopeRow->sender_id === $scopeUid
+            || in_array((int) $scopeRow->agency, $scopeAgencies, true)
+        ))
+    );
+    if (!$scopeOk) {
+        header('HTTP/1.1 403 Forbidden');
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
+        exit;
+    }
+}
+
 $db = new Conexion;
 
 if (empty($_POST['deliver_date']))
@@ -57,20 +92,18 @@ if (intval($_POST['driver_id']) <= 0)
 
     $errors['driver_id'] =  $lang['validate_field_ajax163'];
 
+// files/ is web-served and the delivery photo kept the client's file name; only
+// the extension and getimagesize() were checked, so an image/script polyglot
+// could be stored. Check the type from the contents here (before anything is
+// changed) and let cdp_uploadStore() pick our own name and extension below.
+require_once(__DIR__ . '/../../helpers/uploads.php');
 if (!empty($_FILES['miarchivo']['name'])) {
-
-    $target_dir = "../../files/";
-    $image_name = time() . "_" . basename($_FILES["miarchivo"]["name"]);
-    $target_file = $target_dir . $image_name;
-    $imageFileType = pathinfo($target_file, PATHINFO_EXTENSION);
-    $imageFileZise = $_FILES["miarchivo"]["size"];
-
-    if (($imageFileType != "jpg" && $imageFileType != "png")) {
-
-        $errors['miarchivo'] = "<p>Illegal file type. Only jpg and png file types are allowed..</p>";
-    } else if (empty(getimagesize($_FILES['miarchivo']['tmp_name']))) { //1048576 byte=1MB
-
-        $errors['miarchivo'] = "<p>Illegal file type. Only jpg and png file types are allowed.";
+    $photoTmp = (string) ($_FILES['miarchivo']['tmp_name'] ?? '');
+    $photoMime = is_uploaded_file($photoTmp) ? cdp_uploadDetect($photoTmp) : '';
+    if (!isset(cdp_uploadKinds('images')[$photoMime])) {
+        $errors['miarchivo'] = "<p>Illegal file type. Only image files (JPG, PNG, ...) are allowed.</p>";
+    } elseif ((int) ($_FILES['miarchivo']['size'] ?? 0) > 10485760) {
+        $errors['miarchivo'] = "<p>The photo is too large (10 MB at most).</p>";
     }
 }
 
@@ -138,12 +171,10 @@ if (empty($errors)) {
 
 
         if (!empty($_FILES['miarchivo']['name'])) {
-            $image_name = time() . "_" . basename($_FILES["miarchivo"]["name"]);
-            $target_file = $target_dir . $image_name;
-            move_uploaded_file($_FILES["miarchivo"]["tmp_name"], $target_file);
-            // $imagen=basename($_FILES["favicon"]["name"]);
-            $photo_delivered = 'files/' . $image_name;
-            $dataUpdate['photo_delivered'] = $photo_delivered;
+            $storedPhoto = cdp_uploadStore($_FILES['miarchivo'], __DIR__ . '/../../files', 'delivered', 'images');
+            if ($storedPhoto['ok']) {
+                $dataUpdate['photo_delivered'] = 'files/' . $storedPhoto['name'];
+            }
         }
 
 

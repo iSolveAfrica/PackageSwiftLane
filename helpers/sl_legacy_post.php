@@ -9,6 +9,9 @@
  * The handler code itself is unchanged, so validation, numbering, notifications,
  * status rules and audit stay exactly as they were.
  *
+ * sl_legacyPostBegin() also rejects the request (419 JSON) when the CSRF token
+ * is missing or wrong.
+ *
  * Usage (controller, global scope):
  *   sl_legacyPostBegin();
  *   include 'views/sl/handlers/x.php';
@@ -27,6 +30,14 @@ function sl_legacyLocation(): ?string
 
 function sl_legacyPostBegin(): void
 {
+    // These controllers run state-changing handlers without ajax_guard, so the CSRF
+    // token is checked here, once for every caller, before any handler code runs
+    // (and before the shutdown responder is registered). ops_forms.js postRaw()
+    // sends it as X-CSRF-Token and as a form field.
+    require_once __DIR__ . '/csrf.php';
+    if (!cdp_csrf_validate_request()) {
+        sl_json(['success' => false, 'message' => 'CSRF token missing or invalid'], 419);
+    }
     $GLOBALS['__sl_lp_done'] = false;
     ob_start();
     // A handler may exit() after a redirect (cdp_redirect_to): answer from here.

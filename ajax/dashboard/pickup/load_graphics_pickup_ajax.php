@@ -22,7 +22,12 @@
 
 
 	require_once ("../../../loader.php");
+	require_once(__DIR__ . '/../../../helpers/ajax_guard.php');
 	require_once(__DIR__ . '/../../../helpers/querys.php');
+	// Same gate as the sibling dashboard endpoints: without a session $userData is empty and the
+	// owner / agency scoping below would fall through to company-wide totals.
+	require_login();
+	require_permission('view_dashboard');
 
 	$db = new Conexion;
 	$user = new User;

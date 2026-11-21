@@ -28,19 +28,36 @@ require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 
 require_login();
 require_permission('view_consolidate_list');
+// view_consolidate_list is soft-passed for customers, and the consolidation numbers below are
+// not scoped to the caller: staff only, with the permission the list shows its status menu for.
+require_staff();
+require_permission(['select_change_status_courier', 'select_change_status', 'track_consolidate']);
 require_once(__DIR__ . '/../../helpers/video_files.php');
 cdp_purgeDeliveredVideosLater();   // videos of delivered packages are deleted after the response
 
 session_start();
 
-$status = intval($_GET['status']);
-$data = json_decode($_GET['checked_data']);
+// CSRF: the list screen (dataJs/consolidate_ajax.js) still sends this as a jQuery GET;
+// helpers/ajax_guard.php require_safe_write() accepts that only as a same-origin XHR or
+// with a valid token, so a cross-site link cannot change consolidations.
+require_safe_write();
+
+$status = intval($_POST['status'] ?? $_GET['status'] ?? 0);
+$data = json_decode((string) ($_POST['checked_data'] ?? $_GET['checked_data'] ?? ''));
+if (!is_array($data)) {
+    $data = [];
+}
 
 $core = new Core();
 
 foreach ($data as $key) {
     // Obtener información del envío
     $courier = cdp_getConsolidateMultiple($key);
+    // Agency-restricted staff move only their own agency's consolidations.
+    if (!$courier || !cdp_ajaxRowInAgencyScope($courier)) {
+        $message[$key] = $key . ': not found.';
+        continue;
+    }
     $prefix = $courier->c_prefix;
     $office = $courier->origin_off;
     $tracking = $prefix . $key;
@@ -50,7 +67,12 @@ foreach ($data as $key) {
 
     if (!$exists) {
         // Si no existe un registro duplicado, actualizar el estado del envío
-        cdp_updateStatusConsolidateMultiple($key, $status);
+        // By consolidate_id: the row checked above, not every consolidation sharing the number.
+        $cdpDb = new Conexion;
+        $cdpDb->cdp_query("UPDATE cdb_consolidate SET status_courier = :s WHERE consolidate_id = :id");
+        $cdpDb->bind(':s', $status);
+        $cdpDb->bind(':id', (int) $courier->consolidate_id);
+        $cdpDb->cdp_execute();
 
         // Sorting at Accra (33) / Ready for PickUp (32) become the member packages'
         // own status; Ready for PickUp also starts the pickup-aging clock.

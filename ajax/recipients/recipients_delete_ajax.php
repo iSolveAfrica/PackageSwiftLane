@@ -35,9 +35,19 @@ require_once CDP_ROOT . '/views/sl/data/recipients.php';
 $rcScope = sl_rcScope();
 if (sl_userIs('driver')) $rcScope .= ' AND r.sender_id = ' . (int) $_SESSION['userid'];
 
+// Deletes must arrive as POST: require_login() only checks the CSRF token on
+// POST, so a GET link (e.g. ?id=5 in an email) must never reach the delete.
+if (strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+    http_response_code(405);
+    header('Allow: POST');
+    header('Content-type: application/json; charset=UTF-8');
+    echo json_encode(['status' => 'error', 'message' => 'POST required']);
+    exit;
+}
+
 $db = new Conexion;
 
-$id = (int) ($_REQUEST['id'] ?? 0);
+$id = (int) ($_POST['id'] ?? 0);
 
 if (!sl_row('SELECT r.id FROM cdb_recipients r LEFT JOIN cdb_users u ON u.id = r.sender_id WHERE r.id = :id' . $rcScope, [':id' => $id])) {
     header('Content-type: application/json; charset=UTF-8');

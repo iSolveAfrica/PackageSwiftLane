@@ -18,7 +18,19 @@ $uid = (int) $_SESSION['userid'];
 $isClient = sl_userIs('client');
 if ($op === 'addresses') {
     require_permission('add_full_pickup');
-    sl_json(['success' => true, 'addresses' => sl_opsAddresses((int) ($_GET['id'] ?? 0))]);
+    // add_full_pickup is customer-facing, so require_permission() lets customers and drivers through;
+    // without these checks anyone signed in could read any user's saved addresses by id. Customers get
+    // their own addresses server-side on SchedulePickup, and drivers do not schedule for customers.
+    if ($isClient || sl_userIs('driver')) sl_json(['success' => false, 'message' => 'Not allowed'], 403);
+    // Only customer accounts, and only the caller's agency (same condition as sl_opsCustomers(), which
+    // fills the customer picker).
+    $ctx = function_exists('cdp_getAgencyContext') ? cdp_getAgencyContext() : ['is_restricted' => false];
+    $scope = !empty($ctx['is_restricted']) && !empty($ctx['agency_id']) ? ' AND u.agency_id = ' . (int) $ctx['agency_id'] : '';
+    $custId = (int) ($_GET['id'] ?? 0);
+    if (!sl_row("SELECT u.id FROM cdb_users u WHERE u.id = :id AND u.userlevel = 1$scope", [':id' => $custId])) {
+        sl_json(['success' => false, 'message' => 'Customer not found'], 404);
+    }
+    sl_json(['success' => true, 'addresses' => sl_opsAddresses($custId)]);
 }
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') sl_json(['success' => false, 'message' => 'POST required'], 405);
 if (CDP_APP_MODE_DEMO === true) sl_json(['success' => false, 'message' => 'Demo mode: changes are disabled'], 403);

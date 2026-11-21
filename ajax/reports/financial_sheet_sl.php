@@ -1,4 +1,11 @@
 <?php
+// Read models included by financial_sheet_ajax.php after its require_login() / require_permission().
+// It sits under ajax/ but is not an endpoint: requested directly it would run with no login or permission check, so refuse it.
+// Including it from another script is unaffected.
+if (realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) {
+    http_response_code(403);
+    exit;
+}
 // ============================================================================
 // Financial Sheet — JSON read models for the Swift Lane design page
 // (views/sl/pages/FinancialSheet.php). Included by financial_sheet_ajax.php

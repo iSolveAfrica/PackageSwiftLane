@@ -20,6 +20,11 @@
 // *************************************************************************
 
 require_once("../loader.php");
+require_once(__DIR__ . '/../helpers/ajax_guard.php');
+// Lists the senders (names, e-mails) inside a consolidation for the Broadcast page: staff only,
+// same permission as push_notifications.php.
+require_login();
+require_permission('push_notifications');
 
 $db = new Conexion;
 

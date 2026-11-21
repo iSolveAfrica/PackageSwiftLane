@@ -30,15 +30,14 @@ if (sl_row('SELECT pre_alert_id FROM cdb_pre_alert WHERE tracking = :t AND custo
 }
 $url = '';
 if ($hasFile) {
-    $f = $_FILES['file_invoice'];
-    $ext = strtolower(pathinfo((string) $f['name'], PATHINFO_EXTENSION));
-    if ($f['error'] !== UPLOAD_ERR_OK || !in_array($ext, ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'gif'], true) || $f['size'] > 5242880) {
+    // The type is checked from the file contents, not the client's extension (helpers/uploads.php):
+    // pre_alert_files/ is web-served, so an HTML/script file renamed .jpg must not be stored.
+    require_once __DIR__ . '/../../helpers/uploads.php';
+    $up = cdp_uploadStore($_FILES['file_invoice'], CDP_ROOT . '/pre_alert_files', 'prealert', 'docs', 5242880);
+    if (!$up['ok']) {
         sl_json(['success' => false, 'message' => 'The invoice must be a PDF or image under 5 MB', 'errors' => ['file_invoice' => 'Invalid file']], 422);
     }
-    $name = time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
-    if (!is_dir(CDP_ROOT . '/pre_alert_files')) @mkdir(CDP_ROOT . '/pre_alert_files', 0755, true);
-    if (!move_uploaded_file($f['tmp_name'], CDP_ROOT . '/pre_alert_files/' . $name)) sl_json(['success' => false, 'message' => 'The file could not be saved'], 500);
-    $url = 'pre_alert_files/' . $name;
+    $url = 'pre_alert_files/' . $up['name'];
 }
 $data = [
     'tracking_prealert' => cdp_sanitize(trim($_POST['tracking'])), 'provider_prealert' => cdp_sanitize((string) ($_POST['provider'] ?? '')), 'courier_prealert' => (int) $_POST['courier'],

@@ -383,17 +383,18 @@ if (isset($_POST["total_item"])) {
 
     if (isset($_FILES['filesMultiple']['name']) && count($_FILES['filesMultiple']['name']) > 0) {
         $target_dir = "order_files/";
+        require_once('helpers/uploads.php');
         $deleted_file_ids = !empty($_POST['deleted_file_ids']) ? explode(",", $_POST['deleted_file_ids']) : [];
 
         foreach ($_FILES["filesMultiple"]["tmp_name"] as $key => $tmp_name) {
             if (!in_array($key, $deleted_file_ids)) {
-                $image_name = time() . "_" . basename($_FILES["filesMultiple"]["name"][$key]);
-                $target_file = $target_dir . $image_name;
-                $imageFileType = pathinfo($target_file, PATHINFO_EXTENSION);
-                $imageFileSize = $_FILES["filesMultiple"]["size"][$key];
-
-                if ($imageFileSize > 0 && move_uploaded_file($_FILES["filesMultiple"]["tmp_name"][$key], $target_file)) {
-                    cdp_insertOrdersFiles($order_id, $target_file, $image_name, date("Y-m-d H:i:s"), '1', $imageFileType);
+                // Our own name with the extension of the type detected from the contents
+                // (helpers/uploads.php): order_files/ is web-served, so the client's name and
+                // extension (.php, .html) must never be kept. Office files stay allowed here.
+                $cdpUp = cdp_uploadStore(cdp_uploadPick($_FILES['filesMultiple'], (int) $key), 'order_files', 'consolidate', 'office');
+                if ($cdpUp['ok']) {
+                    $image_name = $cdpUp['name'];
+                    cdp_insertOrdersFiles($order_id, $target_dir . $image_name, $image_name, date("Y-m-d H:i:s"), '1', pathinfo($image_name, PATHINFO_EXTENSION));
                 }
             }
         }
