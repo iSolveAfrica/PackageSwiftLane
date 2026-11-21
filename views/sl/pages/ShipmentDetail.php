@@ -24,8 +24,8 @@ if (!empty($d['missing'])): ?>
           <div class="a col g16">
             <section class="sl-card flush">
               <div class="row between" style="padding: 16px 20px"><h2 class="sl-ct">Items</h2><span class="mut sm"><?= count($d['items']) ?> lines · <?= h($d['kg']) ?></span></div>
-              <div class="sl-tw"><table class="sl-table"><thead><tr><th>Qty</th><th>Description</th><th class="num">L × W × H</th><th class="num">Weight</th><th class="num">Value</th></tr></thead><tbody>
-                <?php foreach ($d['items'] as $it): ?><tr><td><?= h($it['qty']) ?></td><td><?= h($it['desc']) ?></td><td class="num mono"><?= h($it['dims']) ?></td><td class="num"><?= h($it['kg']) ?></td><td class="num"><?= h($it['val']) ?></td></tr><?php endforeach; ?>
+              <div class="sl-tw"><table class="sl-table"><thead><tr><th>Qty</th><th>Description</th><th class="num">Weight</th><th class="num">Custom price</th><th class="num">Declared value</th></tr></thead><tbody>
+                <?php foreach ($d['items'] as $it): ?><tr><td><?= h($it['qty']) ?></td><td><?= h($it['desc']) ?></td><td class="num"><?= h($it['kg']) ?></td><td class="num"><?= h($it['custom']) ?></td><td class="num"><?= h($it['val']) ?></td></tr><?php endforeach; ?>
                 <?php if (!$d['items']): ?><tr><td colspan="5"><div class="sl-empty">No items recorded on this shipment.</div></td></tr><?php endif; ?>
               </tbody></table></div>
               <?php if ($d['notes'] !== ''): ?><div style="padding: 12px 20px; border-top: 1px solid var(--line)" class="sm"><span class="mut">Notes</span> · <?= h($d['notes']) ?></div><?php endif; ?>
@@ -50,6 +50,21 @@ if (!empty($d['missing'])): ?>
               <?php if ($d['canVerify']): ?><a class="sl-btn ghost sm" href="courier_list.php?verify=<?= (int) $d['id'] ?>"><i class="ic ic-sm i-dollar" aria-hidden="true"></i>Verify payment</a><?php endif; ?>
               <?php if ($d['canPay']): ?><a class="sl-btn block" href="add_payment_gateways_courier.php?id_order=<?= (int) $d['id'] ?>">Pay now</a><?php endif; ?>
             </section>
+            <?php if (!sl_userIs('client')): ?>
+            <section class="sl-card col g12 pk-card" id="pickup-code" aria-label="Pickup code">
+              <div class="row between"><h2 class="sl-ct">Pickup code</h2><span class="sl-pill <?= !empty($d['pickup']['assigned']) ? (!empty($d['pickup']['sent']) ? 'paid' : 'pending') : 'plain' ?>"><?= !empty($d['pickup']['assigned']) ? (!empty($d['pickup']['sent']) ? 'Sent' : 'Assigned') : 'Not assigned' ?></span></div>
+              <?php if (!empty($d['pickup']['assigned'])): ?>
+                <div class="pk-code mono" aria-label="Pickup code"><?= h($d['pickup']['code']) ?></div>
+                <div class="sl-kv">
+                  <div><span>Assigned</span><span><?= h($d['pickup']['created']) ?></span></div>
+                  <div><span>Sent</span><span><?= $d['pickup']['sent'] !== '' ? h($d['pickup']['sent']) : 'Not yet. It is sent automatically when the package is ready for pickup.' ?></span></div>
+                  <?php if ($d['pickup']['channels'] !== ''): ?><div><span>Channels</span><span><?= h($d['pickup']['channels']) ?></span></div><?php endif; ?>
+                </div>
+              <?php else: ?>
+                <p class="mut sm">No code yet. A code is assigned when the package is created and sent when it is ready for pickup.</p>
+              <?php endif; ?>
+            </section>
+            <?php endif; ?>
             <section class="sl-card">
               <div class="sl-ch"><h2 class="sl-ct">Tracking</h2><a href="<?= h($d['publicUrl']) ?>" target="_blank" class="sm fw5 row g6">Public page <i class="ic ic-sm i-ext" aria-hidden="true"></i></a></div>
               <div class="sl-tl">
@@ -63,6 +78,42 @@ if (!empty($d['missing'])): ?>
             </section>
           </aside>
         </div>
+
+        <?php if (!sl_userIs('client')): ?>
+        <section class="sl-card col g12 act-card" id="activity" aria-label="Activity on this package">
+          <div class="row between wrap g12 act-head">
+            <div class="col g4"><h2 class="sl-ct">Activity on this package</h2><span class="mut sm">Every edit, status update, view, print, pickup code and customer action, newest first.</span></div>
+            <div class="sl-seg boxed act-filter" role="group" aria-label="Show activity">
+              <?php foreach (['all' => 'All', 'Shipment' => 'Shipment', 'Package' => 'Package', 'Customer' => 'Customer', 'Pickup code' => 'Pickup code'] as $k => $lbl): ?>
+              <button type="button" class="<?= $k === 'all' ? 'on' : '' ?>" data-act-f="<?= h($k) ?>" aria-pressed="<?= $k === 'all' ? 'true' : 'false' ?>"><?= h($lbl) ?> <span class="mono act-n"><?= (int) ($d['activity']['counts'][$k] ?? 0) ?></span></button>
+              <?php endforeach; ?>
+            </div>
+          </div>
+          <div class="act-list" role="list">
+            <?php foreach ($d['activity']['rows'] as $a): ?>
+            <div class="act-row" role="listitem" data-act-kind="<?= h($a['kind']) ?>">
+              <span class="act-time mono"><?= h($a['when']) ?></span>
+              <span class="act-kind"><?= h($a['kind']) ?></span>
+              <span class="act-body"><b class="fw5"><?= h($a['what']) ?></b><?php if ($a['detail'] !== ''): ?><span class="mut sm act-detail"><?= h($a['detail']) ?></span><?php endif; ?></span>
+              <span class="act-who"><?= h($a['who']) ?><?php if ($a['outcome'] !== '' && $a['outcome'] !== 'ok'): ?><span class="act-out"><?= h($a['outcome']) ?></span><?php endif; ?></span>
+            </div>
+            <?php endforeach; ?>
+            <?php if (empty($d['activity']['rows'])): ?><div class="sl-empty">Nothing recorded on this package yet.</div><?php endif; ?>
+          </div>
+        </section>
+        <script>
+        (function () {
+          var btns = document.querySelectorAll('[data-act-f]');
+          btns.forEach(function (b) {
+            b.addEventListener('click', function () {
+              var f = b.getAttribute('data-act-f');
+              btns.forEach(function (x) { var on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on ? 'true' : 'false'); });
+              document.querySelectorAll('.act-row').forEach(function (r) { r.hidden = f !== 'all' && r.getAttribute('data-act-kind') !== f; });
+            });
+          });
+        })();
+        </script>
+        <?php endif; ?>
 <?php if ($d['canTrack']): ?>
 <div class="sl-dialog" id="sd-status" hidden><form class="sl-modal" data-sl-form action="ajax/courier/add_courier_tracking.php" method="post" role="dialog" aria-label="Update status">
   <input type="hidden" name="shipment_id" value="<?= (int) $d['id'] ?>">

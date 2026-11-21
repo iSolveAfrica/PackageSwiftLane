@@ -12,6 +12,10 @@ require_once 'helpers/sl_view.php';
 sl_gate(sl_userIs('client') ? null : 'view_shipment_details');
 require_once 'views/sl/data/shipments.php';
 $d = sl_shipmentDetailData($user, $core, (int) ($_GET['id'] ?? 0));
+if (empty($d['missing']) && function_exists('cdp_activityLog')) {
+    cdp_activityLog(['module' => 'shipments', 'verb' => 'view', 'action' => 'shipment.view', 'entity_type' => 'shipment',
+        'entity_id' => (int) $d['id'], 'entity_label' => (string) $d['track'], 'summary' => 'Viewed shipment ' . $d['track']]);
+}
 if (!empty($d['missing'])) {
     http_response_code(404);
 }

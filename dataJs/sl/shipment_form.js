@@ -82,7 +82,7 @@
     return Array.prototype.map.call(tb.querySelectorAll('[data-sf-item]'), function (tr) {
       var v = function (k) { var i = tr.querySelector('[data-k="' + k + '"]'); return i ? i.value : ''; };
       var cp = num(v('custom_price'));
-      return { qty: Math.max(1, num(v('qty')) || 1), description: v('description').trim(), weight: cp > 0 ? 0 : num(v('weight')), length: num(v('length')), width: num(v('width')), height: num(v('height')), custom_price: cp, use_custom_price: cp > 0 ? 1 : 0, declared_value: num(v('declared_value')), fixed_value: 0 };
+      return { qty: Math.max(1, num(v('qty')) || 1), description: v('description').trim(), weight: cp > 0 ? 0 : num(v('weight')), length: 0, width: 0, height: 0, custom_price: cp, use_custom_price: cp > 0 ? 1 : 0, declared_value: num(v('declared_value')), fixed_value: 0 };
     }).filter(function (p) { return p.description !== '' || p.weight > 0 || p.custom_price > 0; });
   }
 
@@ -96,7 +96,7 @@
   var qt;
   function quote() {
     var p = items(), w = 0, base = 0, decl = 0, pcs = 0, priceLb = num(($('[name="price_lb"]') || {}).value) || R.price_lb;
-    p.forEach(function (i) { var vol = R.meter > 0 ? i.length * i.width * i.height / R.meter : 0; var cw = Math.max(i.weight, vol); pcs += i.qty; w += cw * i.qty; decl += i.declared_value * i.qty; base += i.use_custom_price ? i.custom_price * i.qty : cw * i.qty * priceLb; });
+    p.forEach(function (i) { var cw = i.weight; pcs += i.qty; w += cw * i.qty; decl += i.declared_value * i.qty; base += i.use_custom_price ? i.custom_price * i.qty : cw * i.qty * priceLb; });
     $('[data-sf-packages]').value = JSON.stringify(p);
     $('[data-sf-wsum]').textContent = w.toFixed(2) + ' ' + R.weight + ' · ' + pcs + ' piece' + (pcs === 1 ? '' : 's');
     paint(w, decl, priceLb, base);
