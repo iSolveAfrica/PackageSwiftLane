@@ -870,3 +870,27 @@ if (!function_exists('cdp_aiLogQuestion')) {
         ];
     }
 }
+
+if (!function_exists('cdp_aiScopedQuestion')) {
+    /**
+     * The question as sent to the model when it was asked from a page pop-up:
+     * a short context line keeps the answer on that page's subject while still
+     * allowing related areas. The stored question (history, logs) stays as typed.
+     * Unknown scopes leave the question unchanged.
+     *
+     * @param string $scope    e.g. 'air_shipments' (ajax/ai_assistant/chat_ajax.php, POST scope)
+     * @param string $question what the user typed
+     * @return string
+     */
+    function cdp_aiScopedQuestion($scope, $question)
+    {
+        $contexts = [
+            'air_shipments' => 'the user is on the Air Shipments page. Answer about air shipments first: tracking numbers, status, payments, ETAs, consolidations, customs holds and the senders involved. You may look into related areas such as customers, payments, consolidations and tracking when that gives a fuller answer.',
+        ];
+        $scope = (string) $scope;
+        if (!isset($contexts[$scope])) {
+            return (string) $question;
+        }
+        return '[Context: ' . $contexts[$scope] . "]\n\n" . (string) $question;
+    }
+}

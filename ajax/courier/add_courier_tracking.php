@@ -132,9 +132,7 @@ if (empty($errors)) {
         );
 
         cdp_insertCourierShipmentTrack($dataTrack);
-        if (function_exists('cdp_activityLogStatus')) {
-            cdp_activityLogStatus('shipments', 'shipment', (int) $shipment_id, (string) $order_track, $status, cdp_activityStatusName($status), (string) ($cdp_prev_status ?? ''));
-        }
+        // The status change is logged once, after the notifications (cdp_activityLogStatus below).
 
         // Automations (helpers/automations.php): "when shipment status changes".
         @include_once __DIR__ . '/../../helpers/automations.php';

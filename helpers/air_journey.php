@@ -41,7 +41,7 @@ function cdp_airRoute()
 }
 
 /**
- * The 16 stages, with the company name from settings substituted in.
+ * The 11 stages, with the company name from settings substituted in.
  *
  * @param string $company cdb_settings.site_name
  * @return array<int,array{key:string,label:string,desc:string,icon:string}>
@@ -75,7 +75,7 @@ function cdp_airNormalizeLabel($s)
 }
 
 /**
- * Map a cdb_styles status onto a stage index (0..15), or null when the status
+ * Map a cdb_styles status onto a stage index (0..10), or null when the status
  * says nothing about the air journey.
  *
  * Resolution order:
@@ -142,6 +142,9 @@ function cdp_airStageIndex($statusId, $statusName = '')
         return false;
     };
     if ($t === '  ') return null;
+    // Airline hand-over wording first: "delivered" / "accepted" here is not the customer's.
+    if ($has(['accepted by airline'])) return 3;
+    if ($has(['delivered to airline', 'rejected by airline', 'handed to airline'])) return 2;
     if ($has(['pickup', 'pick up', 'picked', 'delivered', 'collect', 'auction'])) return 10;
     if ($has(['cleared', 'released'])) return 9;
     if ($has(['sorting', 'invoic', 'billed', 'payment', 'distribution', 'available', 'on route', 'customs', 'clearance', 'clearing'])) return 8;

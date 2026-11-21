@@ -108,11 +108,9 @@ if (empty($errors)) {
     $days = intval($days);
     $due_date = cdp_sumardias($sale_date, $days);
 
-    if ($days == 0) {
-        $status_invoice = 1;
-    } else {
-        $status_invoice = 2;
-    }
+    // Never marked paid on creation: payments are recorded by hand afterwards.
+
+    $status_invoice = 2;
 
     $sender_data = cdp_getSenderCourier(intval($_POST["sender_id"]));
     // recipient_type: posted by the form, else the shipment's stored one.

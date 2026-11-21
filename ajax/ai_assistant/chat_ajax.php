@@ -115,13 +115,8 @@ session_write_close(); // a long answer must not lock the user's other tabs
 
 $userData = $user->cdp_getUserData();
 $ctx = cdp_aiContext($user, $userData);
-// Asked from a page pop-up: keep the answer centred on that page's subject,
-// while still allowing it to look into related areas for more detail.
-$scope = (string) ($_POST['scope'] ?? '');
-$modelQuestion = $question;
-if ($scope === 'air_shipments') {
-    $modelQuestion = "[Context: the user is on the Air Shipments page. Answer about air shipments first: tracking numbers, status, payments, ETAs, consolidations, customs holds and the senders involved. You may look into related areas such as customers, payments, consolidations and tracking when that gives a fuller answer.]\n\n" . $question;
-}
+// Asked from a page pop-up (scope): the model gets a context line, the history keeps the question as typed.
+$modelQuestion = cdp_aiScopedQuestion((string) ($_POST['scope'] ?? ''), $question);
 $res = cdp_aiAsk($ctx, $clean, $modelQuestion);
 
 $toolNames = array_map(function ($t) { return $t['name']; }, $res['tools'] ?? []);

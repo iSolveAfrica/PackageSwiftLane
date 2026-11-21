@@ -102,7 +102,16 @@ if (empty($errors)) {
         }
     }
     $due_date       = cdp_sumardias($sale_date, $days);
-    $status_invoice = ($days === 0) ? 1 : 2;
+    // Editing never changes whether a shipment is paid: payments are recorded
+    // on their own. Keep the stored value (unpaid, 2, when there is none).
+    $status_invoice = 2;
+    $dbInvoice = new Conexion;
+    $dbInvoice->cdp_query('SELECT status_invoice FROM cdb_add_order WHERE order_id = :id');
+    $dbInvoice->bind(':id', (int) ($_POST['order_id'] ?? 0));
+    $curInvoice = $dbInvoice->cdp_registro();
+    if ($curInvoice && isset($curInvoice->status_invoice)) {
+        $status_invoice = (int) $curInvoice->status_invoice;
+    }
     $tariff_mode    = 1; // Tariff table pricing removed: always manual pricing.
 
     $shipment_id = cdp_sanitize(intval($_POST["order_id"]));

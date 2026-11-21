@@ -266,7 +266,7 @@ $print_href = "print_customer_package_track.php";
 				</h1>
 				<div class="trk-tags">
 					<span class="trk-tag"><i class="mdi <?php echo $mode === 'air' ? 'mdi-airplane' : 'mdi-ferry'; ?>" aria-hidden="true"></i> <?php echo $mode === 'air' ? 'Air Freight' : 'Sea Freight'; ?></span>
-					<?php if ($mode === 'air') : ?><span class="trk-tag"><i class="mdi mdi-map-marker-path" aria-hidden="true"></i> <?php echo $e($progress['route']['origin']['code']); ?> → <?php echo $e($progress['route']['transit']['code']); ?> → <?php echo $e($progress['route']['destination']['code']); ?></span><?php endif; ?>
+					<?php if ($mode === 'air') : ?><span class="trk-tag"><i class="mdi mdi-map-marker-path" aria-hidden="true"></i> <?php echo $e($progress['route']['origin']['code']); ?> → <?php echo $e($progress['route']['destination']['code']); ?></span><?php endif; ?>
 					<span class="trk-tag"><i class="mdi mdi-calendar-blank-outline" aria-hidden="true"></i> <?php echo $e($track->order_date); ?></span>
 					<span class="trk-tag"><i class="mdi mdi-package-variant-closed" aria-hidden="true"></i> <?php echo (int)$count; ?> <?php echo $e($lang['track-shipment11'] ?? 'Packages'); ?></span>
 				</div>

@@ -15,10 +15,57 @@ function sl_shipPaid($statusInvoice): bool
     return in_array((int) $statusInvoice, [1, 19], true);
 }
 
-/** Payment pill for an air shipment (19 counts as paid, see sl_shipPaid). */
+/**
+ * Payment pill for an air shipment. New shipments start unpaid (status_invoice 2,
+ * see ajax/courier/add_courier_ajax.php), so 0 and 2 read "Unpaid" here; the
+ * other states follow sl_payPill (19 counts as paid, see sl_shipPaid).
+ */
 function sl_shipPayPill($statusInvoice): array
 {
-    return sl_shipPaid($statusInvoice) ? ['Paid', 'paid'] : sl_payPill($statusInvoice);
+    if (sl_shipPaid($statusInvoice)) {
+        return ['Paid', 'paid'];
+    }
+    if (in_array((int) $statusInvoice, [0, 2], true)) {
+        return ['Unpaid', 'pending'];
+    }
+    return sl_payPill($statusInvoice);
+}
+
+/** Date and time the shipment pages print: "Nov 21, 2026 · 3:05 PM". */
+function sl_shipDateTime($value): string
+{
+    return sl_date($value, 'M j, Y · g:i A');
+}
+
+/**
+ * One line from an activity-log "changes" value (JSON or array):
+ * "field: old → new · field: value", at most 12 parts. Empty when there is nothing readable.
+ */
+function sl_activityChanges($raw): string
+{
+    $c = is_string($raw) ? json_decode($raw, true) : $raw;
+    if (!is_array($c)) {
+        return '';
+    }
+    $show = fn($x) => $x === null || $x === '' ? '—' : (is_bool($x) ? ($x ? 'yes' : 'no') : (string) $x);
+    $parts = [];
+    foreach ($c as $k => $v) {
+        if (is_array($v) && count($v) === 2 && array_key_exists(0, $v) && array_key_exists(1, $v) && !is_array($v[0]) && !is_array($v[1])) {
+            $parts[] = $k . ': ' . $show($v[0]) . ' → ' . $show($v[1]);
+        } elseif (!is_array($v)) {
+            $parts[] = $k . ': ' . $show($v);
+        }
+    }
+    return implode(' · ', array_slice($parts, 0, 12));
+}
+
+/** Which filter an activity-log row belongs to on the shipment page. */
+function sl_activityKind(string $entityType, string $action): string
+{
+    if ($entityType === 'pickup_code' || strpos($action, 'pickup_code.') === 0) {
+        return 'Pickup code';
+    }
+    return $entityType === 'customer' ? 'Customer' : 'Shipment';
 }
 
 /** Carrier tracking numbers for a set of order ids (cdb_package_tracking_number, legacy column fallback). */
@@ -121,6 +168,7 @@ function sl_shipmentActions($user, object $o, bool $client): array
 function sl_airShipmentsData($user, $core): array
 {
     $client = sl_userIs('client');
+    $forExport = ($_GET['export'] ?? '') === 'csv';
     $scope = sl_opsScope('a');
     $base = "FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier <> 14 $scope";
     $month = (int) sl_scalar("SELECT COUNT(*) $base AND a.order_date >= DATE_FORMAT(CURDATE(), '%Y-%m-01')");
@@ -217,7 +265,8 @@ function sl_airShipmentsData($user, $core): array
         if ((int) $r->order_incomplete === 0 && !(int) $r->is_pickup) $badges[] = $client ? 'Awaiting acceptance' : 'Customer booking';
         $list[] = [
             'id' => (int) $r->order_id, 'track' => $track, 'carrier' => $carriers[(int) $r->order_id]->tracking_number ?? '', 'date' => sl_date($r->order_datetime ?? null) ?: sl_date($r->order_date), 'time' => sl_date($r->order_datetime ?? null, 'g:i A'),
-            'eta' => cdp_getEffectiveEta((int) $r->order_id, $r->order_no, $r->order_deli_time ?? null, $r->is_consolidate),
+            // ETA is no longer a column; only the CSV export still carries it.
+            'eta' => $forExport ? cdp_getEffectiveEta((int) $r->order_id, $r->order_no, $r->order_deli_time ?? null, $r->is_consolidate) : '',
             'sender' => sl_userName($s), 'from' => $s->locker ?? '', 'sender_id' => (int) $r->sender_id,
             'name' => $rc ? trim(($rc->fname ?? '') . ' ' . ($rc->lname ?? '')) : sl_userName($s) . ' (self)', 'ini' => sl_initials($rc ? ($rc->fname . ' ' . $rc->lname) : sl_userName($s)),
             'dest' => $dest, 'kg' => (float) $r->total_weight > 0 ? sl_weight($r->total_weight) : '—', 'total' => sl_money($r->total_order),
@@ -285,7 +334,7 @@ function sl_shipmentStep(int $statusId, string $statusName): int
     if (cdp_isHandedOver($statusId)) return 5;
     $air = cdp_airStageIndex($statusId, $statusName);
     if ($air !== null) {
-        if ($air >= 12) return 4;
+        if ($air >= 7) return 4; // Arrived in Accra (stage 7 of 0..10)
         if ($air >= 5) return 3;
         if ($air >= 1) return 2;
         return 1;
@@ -310,12 +359,12 @@ function sl_shipmentDetailData($user, $core, int $id): array
     $kg = 0;
     foreach ($s['items'] as $it) {
         $kg += (float) $it->order_item_weight * max(1, (float) $it->order_item_quantity);
-        $items[] = ['qty' => (float) $it->order_item_quantity == (int) $it->order_item_quantity ? (int) $it->order_item_quantity : (float) $it->order_item_quantity, 'desc' => $it->order_item_description, 'kg' => (float) $it->order_item_weight > 0 ? sl_weight($it->order_item_weight, 2) : '—', 'custom' => (float) ($it->custom_price ?? 0) > 0 ? sl_money($it->custom_price) : '—', 'val' => sl_money($it->order_item_declared_value), 'dims' => (float) $it->order_item_length > 0 ? (float) $it->order_item_length . ' × ' . (float) $it->order_item_width . ' × ' . (float) $it->order_item_height : '—'];
+        $items[] = ['qty' => (float) $it->order_item_quantity == (int) $it->order_item_quantity ? (int) $it->order_item_quantity : (float) $it->order_item_quantity, 'desc' => $it->order_item_description, 'kg' => (float) $it->order_item_weight > 0 ? sl_weight($it->order_item_weight, 2) : '—', 'custom' => (float) ($it->custom_price ?? 0) > 0 ? sl_money($it->custom_price) : '—', 'val' => sl_money($it->order_item_declared_value)];
     }
     $events = [];
     $rev = array_reverse($s['events']);
     foreach ($rev as $i => $e) {
-        $events[] = ['cls' => $i === 0 ? 'now' : 'done', 'ic' => $i === 0 ? 'i-pin' : 'i-check', 't' => str_replace('_', ' ', $e->mod_style ?: 'Update'), 's' => sl_date($e->t_date, 'M j, Y H:i') . ($e->name_off ? ' · ' . $e->name_off : '') . ($e->comments ? ' · ' . $e->comments : '')];
+        $events[] = ['cls' => $i === 0 ? 'now' : 'done', 'ic' => $i === 0 ? 'i-pin' : 'i-check', 't' => str_replace('_', ' ', $e->mod_style ?: 'Update'), 's' => sl_shipDateTime($e->t_date) . ($e->name_off ? ' · ' . $e->name_off : '') . ($e->comments ? ' · ' . $e->comments : '')];
     }
     [$payLabel, $payCls] = sl_shipPayPill($o->status_invoice);
     $d = [
@@ -327,7 +376,9 @@ function sl_shipmentDetailData($user, $core, int $id): array
         'items' => $items, 'kg' => (float) $o->total_weight > 0 ? sl_weight($o->total_weight) : sl_weight($kg),
         'sender' => ['name' => sl_userName($s['sender']), 'ini' => sl_initials(sl_userName($s['sender'])), 'mail' => $s['sender']->email ?? '', 'phone' => $s['sender']->phone ?? '—', 'locker' => $s['sender']->locker ?? '', 'id' => (int) $o->sender_id, 'addr' => $s['addr'] ? trim(implode(', ', array_filter([$s['addr']->sender_address, $s['addr']->sender_city, $s['addr']->sender_state])), ', ') : '—'],
         'recip' => ['name' => $s['recip'] ? trim($s['recip']->fname . ' ' . $s['recip']->lname) : '—', 'ini' => sl_initials($s['recip'] ? $s['recip']->fname . ' ' . $s['recip']->lname : '?'), 'mail' => $s['recip']->email ?? '', 'phone' => $s['recip']->phone ?? '—', 'addr' => $s['addr'] ? trim(implode(', ', array_filter($s['rtype'] === 'user' ? [$s['addr']->sender_address, $s['addr']->sender_city, $s['addr']->sender_state] : [$s['addr']->recipient_address, $s['addr']->recipient_city, $s['addr']->recipient_state])), ', ') : '—'],
-        'pickup' => sl_pickupInfo($id), 'activity' => sl_shipmentActivity($id, (string) $s['track'], (int) $o->sender_id),
+        // Staff only: customers never see the code card or the activity panel.
+        'pickup' => $client ? ['assigned' => false] : sl_pickupInfo($id),
+        'activity' => $client ? ['rows' => [], 'counts' => []] : sl_shipmentActivity($id, (string) $s['track'], (int) $o->sender_id),
         'files' => array_map(fn($f) => ['name' => $f->name, 'url' => $f->url, 'img' => in_array(strtolower((string) $f->file_type), ['jpg', 'jpeg', 'png', 'gif', 'webp'], true)], $s['files']),
         'total' => sl_money($o->total_order), 'pay' => $payLabel, 'payCls' => $payCls, 'payMethod' => $s['payMode']->name_pay ?? ($s['payLabel']->label ?? '—'), 'terms' => $s['payLabel']->label ?? '',
         'payRef' => $s['gateway']->payment_transaction ?? ($s['charge']->number_reference ?? '—'), 'paidOn' => $o->payment_date ? sl_date($o->payment_date) : ($s['charge'] ? sl_date($s['charge']->charge_date) : '—'), 'due' => $o->due_date ? sl_date($o->due_date) : '—',
@@ -466,7 +517,7 @@ function sl_shipmentTrackingData($user, $core, int $id, string $q = ''): array
     // Milestones
     $ms = [];
     foreach (array_reverse($s['events']) as $i => $e) {
-        $ms[] = ['cls' => $i === 0 ? 'now' : 'done', 'icon' => $i === 0 ? 'i-pin' : 'i-check', 'date' => sl_date($e->t_date), 'time' => date('H:i', strtotime($e->t_date)), 't' => cdp_airEventLabel($e, $core->site_name ?? ''), 'where' => trim(implode(' · ', array_filter([$e->name_off, $e->t_city, $e->t_dest, $e->comments, $e->flight_no ? 'Flight ' . $e->flight_no : '', $e->awb_no ? 'AWB ' . $e->awb_no : '']))) ?: '—', 'src' => ucfirst((string) ($e->source ?? '') ?: 'staff')];
+        $ms[] = ['cls' => $i === 0 ? 'now' : 'done', 'icon' => $i === 0 ? 'i-pin' : 'i-check', 'date' => sl_date($e->t_date), 'time' => sl_date($e->t_date, 'g:i A'), 't' => cdp_airEventLabel($e, $core->site_name ?? ''), 'where' => trim(implode(' · ', array_filter([$e->name_off, $e->t_city, $e->t_dest, $e->comments, $e->flight_no ? 'Flight ' . $e->flight_no : '', $e->awb_no ? 'AWB ' . $e->awb_no : '']))) ?: '—', 'src' => ucfirst((string) ($e->source ?? '') ?: 'staff')];
     }
     $d['ms'] = $ms;
     $d['msN'] = count($ms);
@@ -474,7 +525,8 @@ function sl_shipmentTrackingData($user, $core, int $id, string $q = ''): array
     $cusIdx = $isSea ? null : $idx;
     $cusSteps = [['t' => 'Arrived in Accra', 'at' => 7], ['t' => 'Documents lodged', 'at' => 8], ['t' => 'Inspection / duties', 'at' => 8], ['t' => 'Cleared / released', 'at' => 9]];
     $d['cus'] = array_map(fn($c) => ['t' => $c['t'], 'cls' => $delivered || ($cusIdx !== null && $cusIdx > $c['at']) ? 'done' : (($cusIdx !== null && $cusIdx === $c['at']) ? 'now' : '')], $cusSteps);
-    $d['cusNote'] = $delivered || $idx >= 15 ? 'Cleared. Duties were settled with the shipment invoice.' : ($idx >= 13 ? 'At customs now. We update this stage as soon as the broker reports.' : 'Customs starts when the flight lands in Accra.');
+    // Stages: 7 arrived in Accra, 8 customs, 9 cleared, 10 ready for collection.
+    $d['cusNote'] = $delivered || $idx >= 9 ? 'Cleared. Duties were settled with the shipment invoice.' : ($idx >= 8 ? 'At customs now. We update this stage as soon as the broker reports.' : 'Customs starts when the flight lands in Accra.');
     $priv = json_decode((string) sl_slSetting('tracking_public_privacy', '{}'), true) ?: [];
     $d['cusVis'] = !empty($priv['customs']);
     // Proof of delivery
@@ -557,9 +609,10 @@ function sl_pickupInfo(int $id): array
     return [
         'assigned' => true,
         'code' => (string) $r->code,
-        'created' => sl_date($r->created_at, 'M j, Y · g:i A'),
-        'sent' => $r->last_sent_at ? sl_date($r->last_sent_at, 'M j, Y · g:i A') : '',
+        'created' => sl_shipDateTime($r->created_at),
+        'sent' => $r->last_sent_at ? sl_shipDateTime($r->last_sent_at) : '',
         'channels' => trim((string) $r->channels),
+        'verified' => !empty($r->verified_at) ? sl_shipDateTime($r->verified_at) : '',
     ];
 }
 
@@ -572,32 +625,17 @@ function sl_shipmentActivity(int $id, string $track, int $senderId): array
 {
     $rows = [];
     $ts = fn($v) => $v ? (int) strtotime((string) $v) : 0;
-    $fmt = fn($v) => sl_date($v, 'M j, Y · g:i A');
-    $changes = function ($raw): string {
-        $c = is_string($raw) ? json_decode($raw, true) : $raw;
-        if (!is_array($c)) {
-            return '';
-        }
-        $parts = [];
-        foreach ($c as $k => $v) {
-            if (is_array($v) && count($v) === 2 && array_key_exists(0, $v) && array_key_exists(1, $v)) {
-                $parts[] = $k . ': ' . ($v[0] === null || $v[0] === '' ? '—' : $v[0]) . ' → ' . ($v[1] === null || $v[1] === '' ? '—' : $v[1]);
-            } elseif (!is_array($v)) {
-                $parts[] = $k . ': ' . $v;
-            }
-        }
-        return implode(' · ', array_slice($parts, 0, 12));
-    };
+    $fmt = fn($v) => sl_shipDateTime($v);
     if (sl_tableExists('cdb_activity_log')) {
-        $sql = "SELECT created_at, actor_name, action_label, summary, outcome, entity_type, changes, verb FROM cdb_activity_log
+        // Pickup code events are logged against the shipment (helpers/pickup_code.php::cdp_pickupCodeLog).
+        $sql = "SELECT created_at, actor_name, action, action_label, summary, outcome, entity_type, changes FROM cdb_activity_log
                 WHERE (entity_type = 'shipment' AND entity_id = :id) OR (entity_type = 'customer' AND entity_id = :s)
-                   OR (entity_type = 'pickup_code' AND summary LIKE :tr)
                 ORDER BY id DESC LIMIT 300";
-        foreach (sl_rows($sql, [':id' => (string) $id, ':s' => (string) $senderId, ':tr' => '%' . $track . '%']) as $r) {
+        foreach (sl_rows($sql, [':id' => (string) $id, ':s' => (string) $senderId]) as $r) {
             $rows[] = [
                 'ts' => $ts($r->created_at), 'when' => $fmt($r->created_at), 'who' => $r->actor_name ?: 'System',
-                'kind' => $r->entity_type === 'customer' ? 'Customer' : ($r->entity_type === 'pickup_code' ? 'Pickup code' : 'Shipment'),
-                'what' => $r->summary ?: $r->action_label, 'detail' => $changes($r->changes), 'outcome' => (string) $r->outcome,
+                'kind' => sl_activityKind((string) $r->entity_type, (string) $r->action),
+                'what' => $r->summary ?: $r->action_label, 'detail' => sl_activityChanges($r->changes), 'outcome' => (string) $r->outcome,
             ];
         }
     }

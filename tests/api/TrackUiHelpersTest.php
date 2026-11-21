@@ -75,11 +75,13 @@ class TrackUiHelpersTest extends TestCase
         $early = cdp_airJourney(0, 'Prepared for Airline', [], '');
         $this->assertSame(0, cdp_trackFoldCount($early));
 
-        $mid = cdp_airJourney(0, 'In Transit to London', [], ''); // index 6
+        // A legacy London status reads as in transit on the direct flight: index 6.
+        $mid = cdp_airJourney(0, 'In Transit to London', [], '');
+        $this->assertSame(6, $mid['index']);
         $this->assertSame(4, cdp_trackFoldCount($mid));            // keeps 2 done stages visible
 
-        $done = cdp_airJourney(0, 'Ready for Collection', [], ''); // index 15
-        $this->assertSame(13, cdp_trackFoldCount($done));
+        $done = cdp_airJourney(0, 'Ready for Collection', [], ''); // index 10, the last of 11
+        $this->assertSame(8, cdp_trackFoldCount($done));
     }
 
     // ── Dates ────────────────────────────────────────────────────────────────

@@ -173,9 +173,9 @@
   function renderTracks() {
     trackChips.replaceChildren();
     tracks.forEach(function (t, i) {
-      var chip = el('span', 'ns-tchip mono', t);
+      var chip = el('span', 'ns-tchip mono', t); chip.setAttribute('role', 'listitem');
       var x = el('button', 'ns-tchip-x', '×'); x.type = 'button'; x.setAttribute('aria-label', 'Remove ' + t);
-      x.addEventListener('click', function () { tracks.splice(i, 1); renderTracks(); detectPrealert(); });
+      x.addEventListener('click', function () { tracks.splice(i, 1); renderTracks(); detectPrealert(); trackInput.focus(); });
       chip.appendChild(x); trackChips.appendChild(chip);
     });
     trackValue.value = tracks.join('\n');
@@ -302,7 +302,7 @@
       lbl.querySelector('[data-ns-lsub]').textContent = 'Shipment saved. Choose a label size, then print.';
       paintSize(); paintSettings(); showFrame();
       lbl.hidden = false;
-      lbl.querySelector('[data-ns-lprint]').focus();
+      setTimeout(function () { lbl.querySelector('[data-ns-lprint]').focus(); }, 0);
     };
     lbl.querySelectorAll('[data-ns-lsize-group] button').forEach(function (b) {
       b.addEventListener('click', function () { lstate.size = b.getAttribute('data-v'); lstate.mode = 'label'; paintSize(); paintSettings(); showFrame(); });
@@ -313,9 +313,15 @@
     });
     lbl.querySelector('[data-ns-lnew]').addEventListener('click', function () { location.href = f.getAttribute('data-new'); });
     lbl.querySelector('[data-ns-lview]').addEventListener('click', function () { location.href = f.getAttribute('data-detail') + '?id=' + encodeURIComponent(lstate.id); });
-    var closeLabels = function () { lbl.hidden = true; lframe.src = 'about:blank'; if (lstate.next) location.href = f.getAttribute('data-new') + '?saved=' + encodeURIComponent(lstate.id); };
-    lbl.querySelector('[data-ns-lclose]').addEventListener('click', closeLabels);
-    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !lbl.hidden) closeLabels(); });
+    // However the pop-up closes (button, Escape or a click outside, the last two handled by
+    // swiftlane.js), leave this filled-in form: it is saved, and a second Create would duplicate it.
+    var leave = function () {
+      if (!lstate.id) return;
+      lframe.src = 'about:blank';
+      location.href = lstate.next ? f.getAttribute('data-new') + '?saved=' + encodeURIComponent(lstate.id) : f.getAttribute('data-detail') + '?id=' + encodeURIComponent(lstate.id);
+    };
+    lbl.querySelector('[data-ns-lclose]').addEventListener('click', function () { lbl.hidden = true; });
+    new MutationObserver(function () { if (lbl.hidden) leave(); }).observe(lbl, { attributes: true, attributeFilter: ['hidden'] });
   }
 
   // ---- submit to the legacy endpoint ----
@@ -333,11 +339,19 @@
     ['sender_id', 'sender_address_id', 'recipient_id', 'recipient_address_id'].forEach(function (k) { var el2 = $('[name="' + k + '"]'); if (el2 && !el2.value) { miss.push(k); (el2.closest('.sl-sel') || el2).classList.add('is-invalid'); } });
     if (!items().length) miss.push('items');
     if (miss.length) { SL.toast(miss.indexOf('items') >= 0 && miss.length === 1 ? 'Add at least one item' : 'Fill in the sender, recipient and their addresses', true); return; }
-    var btns = f.querySelectorAll('[type="submit"]'); btns.forEach(function (b) { b.disabled = true; b.classList.add('loading'); });
-    SL.post(f.getAttribute('action'), new FormData(f)).then(function (j) {
+    var btns = f.querySelectorAll('[type="submit"]'), saved = false; btns.forEach(function (b) { b.disabled = true; b.classList.add('loading'); });
+    // A file input left empty still posts an empty entry, and the endpoint only reads
+    // filesMultiple when the first entry is a real file: send real files only.
+    var fd = new FormData(f);
+    ['filesMultiple[]', 'filesVideo[]'].forEach(function (k) {
+      var keep = fd.getAll(k).filter(function (x) { return x && typeof x === 'object' && x.size > 0 && x.name; });
+      fd.delete(k); keep.forEach(function (x) { fd.append(k, x, x.name); });
+    });
+    SL.post(f.getAttribute('action'), fd).then(function (j) {
       // A PHP notice printed before the JSON would hide the payload: recover it.
       if (j.shipment_id === undefined && typeof j.message === 'string' && j.message.indexOf('{') >= 0) { try { j = JSON.parse(j.message.slice(j.message.indexOf('{"'))); } catch (e2) {} }
       if (j.success) {
+        saved = true;
         SL.toast((j.messages || ['Shipment created']).join(' '));
         var id = j.shipment_id;
         // Staff get the label pop-up here; customers go straight to the shipment.
@@ -354,6 +368,6 @@
       });
       SL.toast(first || j.message || j.error || 'The shipment could not be saved', true);
     }).catch(function () { SL.toast('Network error. Please try again.', true); })
-      .finally(function () { btns.forEach(function (b) { b.disabled = false; b.classList.remove('loading'); }); });
+      .finally(function () { btns.forEach(function (b) { b.disabled = saved; b.classList.remove('loading'); }); });
   });
 })();

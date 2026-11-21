@@ -29,7 +29,7 @@ $client = !empty($d['client']);
             <span class="mut sm">Rows</span><label class="sl-sel native" style="width: 80px"><select name="per" aria-label="Rows per page" onchange="this.form.submit()"><?php foreach ([25, 50, 100] as $n): ?><option <?= $n === $d['per'] ? 'selected' : '' ?>><?= $n ?></option><?php endforeach; ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></label>
           </form>
           <?php if ($d['canSelect']): ?>
-          <div class="row g12 wrap" style="padding: 10px 16px; background: var(--active)" id="as-bulk" hidden style="display:none">
+          <div class="row g12 wrap as-bulk" id="as-bulk" hidden>
             <strong><span data-as-count>0</span> selected</strong><span class="grow"></span>
             <?php if ($d['canStatus']): ?><button type="button" class="sl-btn ghost sm" data-sl-open="as-status"><i class="ic ic-sm i-refresh" aria-hidden="true"></i>Update status</button><?php endif; ?>
             <?php if ($d['canAssign']): ?><button type="button" class="sl-btn ghost sm" data-sl-open="as-driver" data-as-bulk-driver><i class="ic ic-sm i-wheel" aria-hidden="true"></i>Assign rider</button><?php endif; ?>
@@ -46,10 +46,10 @@ $client = !empty($d['client']);
                     <?php if ($d['canSelect']): ?><td><?php if ($r['selectable']): ?><label class="sl-chk" aria-label="Select <?= h($r['track']) ?>"><input type="checkbox" value="<?= (int) $r['id'] ?>" data-as-pick data-track="<?= h($r['track']) ?>" style="position:absolute;opacity:0;width:0;height:0"></label><?php endif; ?></td><?php endif; ?>
                     <td class="as-trk"><a class="id" href="<?= sl_route('ShipmentDetail', ['id' => $r['id']]) ?>"><?= h($r['carrier'] !== '' ? $r['carrier'] : $r['track']) ?></a><?php if ($r['carrier'] !== ''): ?><span class="sub mono"><?= h($r['track']) ?></span><?php endif; ?></td>
                     <td class="nowrap"><?= h($r['date']) ?><span class="sub mono"><?= h($r['time'] ?: 'Time not recorded') ?></span></td>
-                    <?php if (!$client): ?><td><div><a href="<?= sl_route('CustomerProfile', ['id' => $r['sender_id']]) ?>" style="color:inherit"><?= h($r['sender']) ?></a><span class="sub"><?= h($r['from']) ?></span></div></td><?php endif; ?>
+                    <?php if (!$client): ?><td class="as-snd"><div><a href="<?= sl_route('CustomerProfile', ['id' => $r['sender_id']]) ?>" style="color:inherit"><?= h($r['sender']) ?></a><span class="sub"><?= h($r['from']) ?></span></div></td><?php endif; ?>
                     <td class="num"><?= h($r['kg']) ?></td>
                     <td><span class="col g4"><span class="sl-pill <?= h($r['payCls']) ?>"><?= h($r['pay']) ?></span><span class="mut mono" style="font-size:13.5px"><?= h($r['total']) ?></span></span></td>
-                    <td><span class="col g4"><span class="sl-pill <?= h($r['stCls']) ?>"><?= h($r['st']) ?></span><?php foreach ($r['badges'] as $b): ?><span class="mut" style="font-size:13.5px"><?= h($b) ?></span><?php endforeach; ?></span></td>
+                    <td class="as-st"><span class="col g4"><span class="sl-pill <?= h($r['stCls']) ?>"><?= h($r['st']) ?></span><?php foreach ($r['badges'] as $b): ?><span class="mut" style="font-size:13.5px"><?= h($b) ?></span><?php endforeach; ?></span></td>
                     <td class="as-dots"><button type="button" class="as-more" aria-label="More actions for <?= h($r['track']) ?>" aria-expanded="false" data-as-toggle><i class="ic i-more" aria-hidden="true"></i></button></td>
                   </tr>
                   <tr class="as-mrow" hidden><td colspan="<?= $cols ?>"><div class="as-menu" role="menu" aria-label="Actions for <?= h($r['track']) ?>"><div class="as-mh"><b class="fw5"><?= h($r['track']) ?></b><span class="mut sm"><?= h($r['name']) ?> · <?= h($r['dest']) ?></span><span class="grow"></span><button type="button" class="sl-ib" style="width:34px;height:34px" aria-label="Close" data-as-toggle><i class="ic ic-sm i-x" aria-hidden="true"></i></button></div><div class="as-acts"><?php foreach ($r['acts'] as $a): ?><?php if (!empty($a['action'])): ?><button type="button" class="as-a <?= h($a['cls']) ?>" role="menuitem" data-sl-action="ajax/sl/shipment_action_ajax.php" data-p-op="<?= h($a['action']) ?>" data-p-id="<?= (int) $r['id'] ?>" data-sl-confirm="<?= $a['action'] === 'delete' ? 'Delete shipment ' . h($r['track']) . '? It is marked cancelled and hidden from lists.' : 'Cancel shipment ' . h($r['track']) . '?' ?>" data-sl-reload><i class="ic ic-sm <?= h($a['icon']) ?>" aria-hidden="true"></i><?= h($a['label']) ?></button><?php elseif (!empty($a['dialog'])): ?><button type="button" class="as-a" role="menuitem" data-sl-open="as-driver" data-as-driver-id="<?= (int) $r['id'] ?>" data-as-driver-cur="<?= (int) $r['driver_id'] ?>"><i class="ic ic-sm <?= h($a['icon']) ?>" aria-hidden="true"></i><?= h($a['label']) ?></button><?php else: ?><a class="as-a <?= h($a['cls']) ?>" role="menuitem" href="<?= h($a['href']) ?>"<?= !empty($a['blank']) ? ' target="_blank"' : '' ?>><i class="ic ic-sm <?= h($a['icon']) ?>" aria-hidden="true"></i><?= h($a['label']) ?></a><?php endif; ?><?php endforeach; ?></div></div></td></tr>
@@ -78,11 +78,13 @@ $client = !empty($d['client']);
 </form></div>
 <?php endif; ?>
 <?php if (!$client): ?>
-<div class="sl-dialog" id="as-ai" hidden><div class="sl-modal as-ai-modal" role="dialog" aria-label="Ask AI about air shipments">
-  <div class="row g10"><span class="sl-tile"><i class="ic i-spark" aria-hidden="true"></i></span><div class="col grow"><b class="fw5">Ask AI about air shipments</b><span class="mut sm">Ask about tracking numbers, status, payments, customs holds or senders. It can look into other areas for more detail.</span></div><button type="button" class="sl-ib" data-sl-close aria-label="Close"><i class="ic ic-sm i-x" aria-hidden="true"></i></button></div>
-  <div class="as-ai-log" id="as-ai-log" aria-live="polite"><div class="as-ai-msg bot">Hi. Ask me anything about air shipments, for example: “Which packages are unpaid this week?” or “Where is tracking number …?”</div></div>
+<div class="sl-dialog" id="as-ai" hidden><div class="sl-modal as-ai-modal" role="dialog" aria-labelledby="as-ai-title">
+  <div class="row g10"><span class="sl-tile"><i class="ic i-spark" aria-hidden="true"></i></span><div class="col grow"><b class="fw5" id="as-ai-title">Ask AI about air shipments</b><span class="mut sm">Ask about tracking numbers, status, payments, customs holds or senders. It can look into other areas for more detail.</span></div><button type="button" class="sl-ib" data-sl-close aria-label="Close"><i class="ic ic-sm i-x" aria-hidden="true"></i></button></div>
+  <div class="as-ai-log" id="as-ai-log" role="log" aria-live="polite"><div class="as-ai-msg bot">Hi. Ask me anything about air shipments, for example: “Which packages are unpaid this week?” or “Where is tracking number …?”</div></div>
   <form id="as-ai-form" class="row g8" autocomplete="off"><input class="sl-in grow" name="q" placeholder="Type your question" aria-label="Your question" required><button type="submit" class="sl-btn">Ask</button></form>
 </div></div>
+<?php endif; ?>
+<?php if ($d['canExport']): ?>
 <div class="sl-dialog" id="as-export" hidden><form class="sl-modal" id="as-export-form" method="get" action="<?= h(sl_self()) ?>" role="dialog" aria-label="Export shipments">
   <input type="hidden" name="export" value="csv">
   <div class="row g10"><span class="sl-tile"><i class="ic i-download" aria-hidden="true"></i></span><div class="col grow"><b class="fw5">Export shipments</b><span class="mut sm">Choose what to include. Up to 100 matching shipments are exported as a CSV file.</span></div></div>
@@ -130,7 +132,7 @@ $client = !empty($d['client']);
   var bulk = document.getElementById('as-bulk');
   function sync() {
     var n = picks().length;
-    if (bulk) { bulk.hidden = n === 0; bulk.style.display = n ? "" : "none"; var c = bulk.querySelector('[data-as-count]'); if (c) c.textContent = n; }
+    if (bulk) { bulk.hidden = n === 0; var c = bulk.querySelector('[data-as-count]'); if (c) c.textContent = n; }
     document.querySelectorAll('[data-as-pick]').forEach(function (i) { i.closest('.sl-chk').classList.toggle('on', i.checked); });
     var all = document.querySelector('[data-as-all]'); if (all) all.closest('.sl-chk').classList.toggle('on', all.checked);
   }
@@ -138,12 +140,22 @@ $client = !empty($d['client']);
     if (e.target.matches('[data-as-all]')) { document.querySelectorAll('[data-as-pick]').forEach(function (i) { i.checked = e.target.checked; }); }
     if (e.target.matches('[data-as-pick],[data-as-all]')) sync();
   });
+  // Row menu: Escape closes it and puts focus back on its button.
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    var open = document.querySelector('.as-mrow:not([hidden])');
+    if (!open) return;
+    open.hidden = true;
+    var b = open.previousElementSibling.querySelector('.as-more');
+    if (b) { b.classList.remove('on'); b.setAttribute('aria-expanded', 'false'); b.focus(); }
+  });
   document.addEventListener('click', function (e) {
     var t = e.target.closest('[data-as-toggle]');
     if (t) {
       var row = t.closest('tr'); var menu = row.classList.contains('as-mrow') ? row : row.nextElementSibling;
       var open = menu.hidden; document.querySelectorAll('.as-mrow').forEach(function (m) { m.hidden = true; }); document.querySelectorAll('.as-more').forEach(function (b) { b.classList.remove('on'); b.setAttribute('aria-expanded', 'false'); });
-      if (open) { menu.hidden = false; var b = menu.previousElementSibling.querySelector('.as-more'); b.classList.add('on'); b.setAttribute('aria-expanded', 'true'); }
+      if (open) { menu.hidden = false; var b = menu.previousElementSibling.querySelector('.as-more'); b.classList.add('on'); b.setAttribute('aria-expanded', 'true'); var first = menu.querySelector('.as-a'); if (first) first.focus(); }
+      else if (row.classList.contains('as-mrow')) { var ob = row.previousElementSibling.querySelector('.as-more'); if (ob) ob.focus(); }
       return;
     }
     if (e.target.closest('[data-as-clear]')) { document.querySelectorAll('[data-as-pick],[data-as-all]').forEach(function (i) { i.checked = false; }); sync(); }

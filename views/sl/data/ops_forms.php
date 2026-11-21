@@ -251,7 +251,7 @@ function sl_shipFormData($user, $core, string $mode, int $id = 0): array
             $v['tracking_number'] = (string) ($tr->tracking_number ?? '');
         }
         $itemTable = $r['K']['items'];
-        $d['items'] = array_map(fn($i) => ['qty' => (float) $i->order_item_quantity, 'description' => (string) $i->order_item_description, 'weight' => (float) $i->order_item_weight, 'length' => (float) $i->order_item_length, 'width' => (float) $i->order_item_width, 'height' => (float) $i->order_item_height, 'declared_value' => (float) $i->order_item_declared_value, 'fixed_value' => (float) $i->order_item_fixed_value, 'custom_price' => isset($i->custom_price) && $i->custom_price !== null ? (float) $i->custom_price : ''], sl_rows("SELECT * FROM $itemTable WHERE order_id = :id", [':id' => $id]));
+        $d['items'] = array_map(fn($i) => ['qty' => (float) $i->order_item_quantity, 'description' => (string) $i->order_item_description, 'weight' => (float) $i->order_item_weight, 'length' => (float) $i->order_item_length, 'width' => (float) $i->order_item_width, 'height' => (float) $i->order_item_height, 'declared_value' => (float) $i->order_item_declared_value, 'fixed_value' => (float) $i->order_item_fixed_value, 'custom_price' => isset($i->custom_price) && $i->custom_price !== null ? (float) $i->custom_price : '', 'weight_group' => (string) ($i->order_item_weight_group ?? ''), 'priced_at' => $i->priced_at ?? null], sl_rows("SELECT * FROM $itemTable WHERE order_id = :id", [':id' => $id]));
         $d['files'] = sl_rows("SELECT id, url, name, date_file FROM {$r['K']['files']} WHERE order_id = :id ORDER BY date_file", [':id' => $id]);
         $d['fileDel'] = $r['K']['fileDel'];
         if ($mode === 'accept' || $mode === 'pickup') {

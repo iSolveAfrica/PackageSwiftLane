@@ -495,7 +495,7 @@ if ($action === 'create') {
     $days            = $payment_methods ? intval($payment_methods->days) : 0;
     $sale_date       = date("Y-m-d H:i:s");
     $due_date        = $days === 0 ? $sale_date : cdp_sumardias($sale_date, $days);
-    $status_invoice  = ($days === 0) ? 1 : 2;
+    $status_invoice  = 2; // never marked paid on creation: payments are recorded by hand afterwards
 
     $created = 0;
     $failed  = 0;

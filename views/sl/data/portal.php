@@ -75,7 +75,7 @@ function sl_trackData(string $code, $core): array
             'w' => $i === 0 ? '' : 'w',
             'ic' => $i === 0 ? 'i-route' : 'i-check',
             't' => $s['label'],
-            's' => trim(sl_date($e->t_date, 'M j, Y · H:i') . ($where !== '' ? ' · ' . $where : '') . (!empty($e->flight_no) ? ' · Flight ' . $e->flight_no : '') . (!empty($e->comments) ? ' · ' . $e->comments : '')),
+            's' => trim(sl_date($e->t_date, 'M j, Y · g:i A') . ($where !== '' ? ' · ' . $where : '') . (!empty($e->flight_no) ? ' · Flight ' . $e->flight_no : '') . (!empty($e->comments) ? ' · ' . $e->comments : '')),
         ];
     }
     $itemsTable = $isPkg ? 'cdb_customers_packages_detail' : 'cdb_add_order_item';
