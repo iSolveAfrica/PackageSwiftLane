@@ -32,29 +32,34 @@ $user = new User;
 $core = new Core;
 $userData = $user->cdp_getUserData();
 
-$search = cdp_sanitize($_REQUEST['search']);
+$search = cdp_sanitize($_REQUEST['search'] ?? '');
 $gateway = ($_REQUEST['gateway'] ?? '');
 
 
 $sWhere = "";
 
-if ($userData->userlevel == 1) {
-
-	$sWhere .= " and  order_track_customer_id = '" . $_SESSION['userid'] . "'";
-} else {
-	$sWhere .= "";
+// Scope by role rank, not the seed id 1: a customer on a custom role used to fall into the
+// unscoped branch and list every online payment. Customers see their own; drivers and agency
+// users have no gateway payments of their own and see none (the table has no agency column).
+require_once(__DIR__ . '/../../helpers/rbac.php');
+if (cdp_roleRankById((int) $userData->userlevel) < 2) {
+	$sWhere .= cdp_ajaxListScopeSql('order_track_customer_id', null, null);
 }
 
+// gateway is user input: bind it instead of concatenating, otherwise a quote
+// in it could break out of the customer scope above (SQL injection).
+$cdp_bindGateway = false;
 if ($gateway != '0') {
 
-	$sWhere .= " and  gateway = '" . $gateway . "'";
+	$sWhere .= " and  gateway = :gateway";
+	$cdp_bindGateway = true;
 }
 
 
 
 
 // // pagination variables
-$page = (isset($_REQUEST['page']) && !empty($_REQUEST['page'])) ? $_REQUEST['page'] : 1;
+$page = (isset($_REQUEST['page']) && !empty($_REQUEST['page'])) ? max(1, (int) $_REQUEST['page']) : 1;
 $per_page = (($_REQUEST['per_page'] ?? '') === 'all') ? 1000000000 : (in_array((int)($_REQUEST['per_page'] ?? 0), [25, 50, 100], true) ? (int)$_REQUEST['per_page'] : 25); //how much records you want to show
 $adjacents  = 4; //gap between pages after number of adjacents
 $offset = ($page - 1) * $per_page;
@@ -66,11 +71,17 @@ $sql = "SELECT * FROM cdb_payments_gateway  where type_transaccition_courier= 'C
 
 
 $db->cdp_query("SELECT COUNT(*) AS cdp_total FROM (" . $sql . ") AS cdp_cnt");
+if ($cdp_bindGateway) {
+	$db->bind(':gateway', (string) $gateway);
+}
 $cdp_cnt_row = $db->cdp_registro();
 $numrows = $cdp_cnt_row ? (int) $cdp_cnt_row->cdp_total : 0;
 
 
 $db->cdp_query($sql . " limit $offset, $per_page");
+if ($cdp_bindGateway) {
+	$db->bind(':gateway', (string) $gateway);
+}
 $data = $db->cdp_registros();
 
 $total_pages = ceil($numrows / $per_page);
@@ -120,14 +131,15 @@ if ($numrows > 0) { ?>
 						}
 
 
-						$db->cdp_query("SELECT * FROM cdb_add_order  where CONCAT(c_prefix, c_no)= '" . $row->order_track . "'");
+						$db->cdp_query("SELECT * FROM cdb_consolidate WHERE CONCAT(c_prefix, c_no) = :track");
+						$db->bind(':track', (string) $row->order_track);
 						$order_ = $db->cdp_registro();
 
 
 					?>
 						<tr class="card-hovera">
 
-							<td><b><a href="consolidate_view.php?id=<?php echo $order_->consolidate_id; ?>"><?php echo $row->order_track; ?></a></b></td>
+							<td><b><a href="consolidate_view.php?id=<?php echo (int) ($order_->consolidate_id ?? 0); ?>"><?php echo htmlspecialchars((string) $row->order_track, ENT_QUOTES, 'UTF-8'); ?></a></b></td>
 							<td class="text-center">
 								<?php echo date('Y-m-d h:i A', strtotime($row->date_payment)); ?>
 							</td>

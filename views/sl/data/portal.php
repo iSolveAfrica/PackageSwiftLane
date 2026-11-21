@@ -347,6 +347,12 @@ function sl_clientDashboardData($user, $core, $userData): array
     $d['aiOn'] = function_exists('cdp_aiConfigured') && cdp_aiConfigured();
     require_once __DIR__ . '/track_console.php';
     $d['tracking'] = sl_trackConsoleData($user, $core, 'mine', 8);
+    // header card: delivered this year and how long they have shipped with us
+    $d['deliveredYear'] = (int) sl_scalar('SELECT COUNT(*) FROM cdb_add_order WHERE sender_id = :u AND is_deleted = 0 AND status_courier IN (8,15) AND YEAR(order_date) = YEAR(CURDATE())', [':u' => $uid])
+        + (int) sl_scalar('SELECT COUNT(*) FROM cdb_customers_packages WHERE sender_id = :u AND status_courier IN (8,15) AND YEAR(order_date) = YEAR(CURDATE())', [':u' => $uid]);
+    $d['since'] = !empty($userData->created) && $userData->created !== '0000-00-00 00:00:00' ? sl_date($userData->created, 'M Y') : '';
+    $d['onWay'] = max(0, $d['active'] - $d['atWh'] - $d['ready']);
+    $d['canBills'] = $d['finance'] && $user->cdp_hasPermission('view_my_bills');
     return $d;
 }
 
@@ -451,6 +457,10 @@ function sl_userHomeData($user, $core, $userData): array
         $act[] = ['icon' => 'i-inbox', 'pre' => true, 'trk' => $p->tracking, 'shop' => (string) $p->provider_shop, 'price' => sl_money($p->purchase_price), 'eta' => sl_date($p->estimated_date, 'M j'), 'at' => sl_date($p->prealert_date, 'M j, H:i')];
     }
     $d['activity'] = $act;
+    // Everything about this customer on one page (views/sl/data/user_360.php).
+    require_once CDP_ROOT . '/views/sl/data/user_360.php';
+    $d['moving'] = sl_u360InMotion($uid);
+    $d['timeline'] = sl_u360Timeline(sl_u360Events($uid, 'customer'), 'customer', (string) ($_GET['k'] ?? ''), max(25, min(1000, (int) ($_GET['n'] ?? 25))));
     return $d;
 }
 

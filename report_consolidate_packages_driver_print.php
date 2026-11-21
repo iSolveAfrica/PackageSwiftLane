@@ -26,7 +26,9 @@ require_once("loader.php");
 $user = new User();
 $core = new Core();
 // ... ask if we are logged in here:
-if ($user->cdp_loginCheck() == true) {
+require_once(__DIR__ . '/helpers/report_access.php');
+    cdp_reportExportGuard($user, basename(__FILE__));
+    if ($user->cdp_loginCheck() == true) {
 
 
   // Audit: record who took this document out of the system.

@@ -22,6 +22,9 @@
 
 
 require_once("../../loader.php");
+require_once(__DIR__ . '/../../helpers/ajax_guard.php');
+require_login();
+require_permission('view_recipients');
 
 $db = new Conexion;
 $user = new User;
@@ -32,7 +35,8 @@ $search = cdp_sanitize($_REQUEST['search']);
 $tables = "cdb_recipients";
 $fields = "*";
 
-$sWhere = "sender_id = '" . $_SESSION['userid'] . "'";
+// Always the signed-in user's own address book (customers reach this through view_recipients).
+$sWhere = "sender_id = " . (int) $_SESSION['userid'];
 
 
 if ($search != null) {
@@ -83,11 +87,11 @@ if ($numrows > 0) { ?>
 		<?php } else { ?>
 			<?php foreach ($data as $recipient) { ?>
 				<tr>
-					<td class="text-center"><?php echo $recipient->fname; ?> <?php echo $recipient->lname; ?></td>
-					<td class="text-center"><?php echo $recipient->email; ?></td>
-					<td class="text-center"><?php echo $recipient->phone; ?></td>
+					<td class="text-center"><?php echo htmlspecialchars((string) $recipient->fname, ENT_QUOTES, 'UTF-8'); ?> <?php echo htmlspecialchars((string) $recipient->lname, ENT_QUOTES, 'UTF-8'); ?></td>
+					<td class="text-center"><?php echo htmlspecialchars((string) $recipient->email, ENT_QUOTES, 'UTF-8'); ?></td>
+					<td class="text-center"><?php echo htmlspecialchars((string) $recipient->phone, ENT_QUOTES, 'UTF-8'); ?></td>
 					<td align='center'>
-						<a href="recipients_edit.php?recipient=<?php echo $recipient->id; ?>" data-toggle="tooltip" data-placement="top" title="<?php echo $lang['edit-clien46'] ?>"><i style="color:#343a40" class="ti-pencil"></i></a>
+						<a href="recipients_edit.php?recipient=<?php echo (int) $recipient->id; ?>" data-toggle="tooltip" data-placement="top" title="<?php echo $lang['edit-clien46'] ?>"><i style="color:#343a40" class="ti-pencil"></i></a>
 
 					</td>
 				</tr>

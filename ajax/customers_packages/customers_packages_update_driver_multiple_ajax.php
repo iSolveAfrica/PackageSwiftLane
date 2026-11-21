@@ -26,6 +26,10 @@ require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_login();
 notify_after_response(); // email + WhatsApp go out after the response (helpers/after_response.php)
 require_permission('view_client_list');
+// Order numbers below are resolved across every customer, so rider changes are for staff
+// only, with a rider-assignment permission.
+require_staff();
+require_permission(['assign_driver_package', 'assign_drivers']);
 
 require_once("../../helpers/querys.php");
 
@@ -33,8 +37,16 @@ session_start();
 
 $db = new Conexion;
 
-$driver = intval($_GET['driver']);
-$data = json_decode($_GET['checked_data']);
+// CSRF: the list screen (dataJs/customers_packages_ajax.js) still sends this as a jQuery
+// GET; helpers/ajax_guard.php require_safe_write() accepts that only as a same-origin XHR
+// or with a valid token.
+require_safe_write();
+
+$driver = intval($_POST['driver'] ?? $_GET['driver'] ?? 0);
+$data = json_decode((string) ($_POST['checked_data'] ?? $_GET['checked_data'] ?? ''));
+if (!is_array($data)) {
+    $data = [];
+}
 
 foreach ($data as $key) {
 
@@ -49,11 +61,16 @@ foreach ($data as $key) {
         continue;
     }
     $customer_packages = $cdpRes['row'];
+    // Agency-restricted staff assign riders only on their own agency's packages.
+    if (!cdp_ajaxRowInAgencyScope($customer_packages)) {
+        $message[$key] = $key . ': not found.';
+        continue;
+    }
 
     $sender_id = $customer_packages->sender_id;
     $sender_data = cdp_getSenderCourier($sender_id);
 
-    // The driver comes in the query string ($_GET), not $_POST.
+    // The driver comes in the query string ($_GET) or, once the screen posts, $_POST.
     $driver_data = cdp_getSenderCourier($driver);
 
     $order_id = $customer_packages->order_id;

@@ -25,6 +25,11 @@ require_once("../../loader.php");
 require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_login();
 require_permission('view_shipment_list');
+// view_shipment_list is soft-passed for customers, and the order numbers below are resolved
+// across every customer: without these a signed-in customer could set any shipment to
+// Delivered / Cancelled. Staff only, with the permission the list uses for its status menu.
+require_staff();
+require_permission(['select_change_status_courier', 'select_change_status', 'track_shipment']);
 require_once(__DIR__ . '/../../helpers/video_files.php');
 cdp_purgeDeliveredVideosLater();   // videos of delivered packages are deleted after the response
 
@@ -33,8 +38,16 @@ require_once("../notify_whatsapp/api_whatsapp_service_v2.php");
 
 session_start();
 
-$status = intval($_GET['status']);
-$data = json_decode($_GET['checked_data']);
+// CSRF: the list screens (dataJs/courier.js, locker.js, warehouse.js, pickup_client_ajax.js)
+// still send this as a jQuery GET; helpers/ajax_guard.php require_safe_write() accepts
+// that only as a same-origin XHR or with a valid token.
+require_safe_write();
+
+$status = intval($_POST['status'] ?? $_GET['status'] ?? 0);
+$data = json_decode((string) ($_POST['checked_data'] ?? $_GET['checked_data'] ?? ''));
+if (!is_array($data)) {
+    $data = [];
+}
 
 // Delivered / Picked up only with the owner's verified pickup code
 // (helpers/pickup_code.php). Order numbers repeat across customers, so
@@ -82,6 +95,11 @@ foreach ($data as $key) {
             continue;
         }
         $courier = $cdpRes['row'];
+    }
+    // Agency-restricted staff move only their own agency's shipments.
+    if (!$courier || !cdp_ajaxRowInAgencyScope($courier)) {
+        $message[$key] = $key . ': not found.';
+        continue;
     }
     $prefix = $courier->order_prefix;
     $office = $courier->origin_off;

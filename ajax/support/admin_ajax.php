@@ -110,7 +110,7 @@ switch ($action) {
                 continue;
             }
             if ($k === 'king_mode' && $v === 'customer' && !cdp_csAiReady()) {
-                $reply(['ok' => false, 'error' => 'Set the AI provider, key and model on Tools > AI Assistant first, then switch King on for customers.']);
+                $reply(['ok' => false, 'error' => 'Set the AI provider, key and model on Tools > King first, then switch King on for customers.']);
             }
             if ($k === 'king_name') {
                 $v = cdp_csClip($v, 40) ?: 'King';

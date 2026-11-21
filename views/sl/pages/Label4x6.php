@@ -1,24 +1,98 @@
 <?php
 /**
- * Label4x6 - from docs/handover/artifact-source/Label4x6.dc.html (plain print page).
- * Data: views/sl/data/labels.php (sl_labelPrintData). One label per piece × copies.
+ * Label4x6: the shipping label. Tracking number leads, then who it is for; locker is a detail.
+ * Data: views/sl/data/labels.php (sl_labelPrintData / sl_labelTestData). One label per piece × copies.
+ * Printer settings (paper, offsets, scale, darkness, logo, auto print) come from sl_printerOptions().
  */
 if (!isset($d)) { $d = []; }
 $o = $d['o'];
+$p = $d['p'];
+$page = sl_printerPage($p, 'big');
+$pp = $p; $ppTeam = $user->cdp_hasPermission('view_tools'); $ppScope = 'me';
 ?>
-<div class="sl-noprint row g8" style="padding:12px;justify-content:center"><button type="button" class="sl-btn" data-sl-print><i class="ic ic-sm i-print" aria-hidden="true"></i>Print <?= count($d['labels']) ?> label<?= count($d['labels']) === 1 ? '' : 's' ?></button><a class="sl-btn ghost" href="<?= h(sl_url(['size' => '12'])) ?>">Small 1 × 2 label</a><a class="sl-btn ghost" href="<?= sl_route('LabelStudio', ['id' => $d['labels'][0]['id'] ?? null]) ?>">Label options</a></div>
+<?php if (empty($_GET['embed'])): ?><div class="sl-noprint lb-bar">
+  <button type="button" class="sl-btn" data-sl-print><i class="ic ic-sm i-print" aria-hidden="true"></i><?= $d['test'] ? 'Print test label' : 'Print ' . count($d['labels']) . ' label' . (count($d['labels']) === 1 ? '' : 's') ?></button>
+  <?php if (!$d['test']): ?><a class="sl-btn ghost" href="<?= h(sl_url(['size' => '12'])) ?>">Small label</a><a class="sl-btn ghost" href="<?= sl_route('LabelStudio', ['id' => $d['labels'][0]['id'] ?? null]) ?>">Label options</a><?php endif; ?>
+  <details class="lb-pp"><summary class="sl-btn ghost"><i class="ic ic-sm i-sliders" aria-hidden="true"></i>Printer: <?= h($p['name']) ?> · <?= h($page['label']) ?></summary><div class="lb-pp-in"><?php include __DIR__ . '/partials/printer_panel.php'; ?></div></details>
+</div><?php endif; ?>
 <?php foreach ($d['labels'] as $l): ?>
-<div class="sl-page">
-<div class="lb lb46">
-<div class="row between"><div class="row g8"><span style="width:30px;height:30px;border-radius:7px;background:#000;color:#fff;display:grid;place-items:center;font-weight:800;font-size:12px"><?= h($l['ini']) ?></span><b style="font-size:16px"><?= h($l['site']) ?></b></div><div style="text-align:right"><div style="font-size:22px;font-weight:800;line-height:1"><?= h($l['mode']) ?></div><div class="k"><?= h(trim($l['pack'] . ' · ' . $l['svc'], ' ·')) ?></div></div></div>
-<div class="bx" style="display:flex;justify-content:space-between;align-items:center"><div><div class="k">Locker</div><div style="font-size:40px;font-weight:800;letter-spacing:-.02em;line-height:1"><?= h($l['locker'] ?: '—') ?></div></div><div style="text-align:right"><?php if ($l['bay'] !== ''): ?><div class="k">Bay</div><div style="font-size:28px;font-weight:800;line-height:1"><?= h($l['bay']) ?></div><?php elseif (!empty($o['qr'])): ?><?= $l['qr'] ?><?php endif; ?></div></div>
-<div class="bx"><div class="k">Ship to</div><div style="font-size:18px;font-weight:700"><?= h($l['name']) ?></div><div style="font-size:12px"><?= h(trim($l['addr'] . ', ' . $l['to'], ', ')) ?><?php if (!empty($o['phone']) && $l['phone'] !== ''): ?> · <?= h($l['phone']) ?><?php endif; ?></div></div>
-<div class="row g8" style="font-size:12px;font-weight:700"><span class="bx" style="flex:1;text-align:center;padding:6px"><?= h($l['from'] ?: '—') ?></span><span style="font-size:18px">→</span><span class="bx" style="flex:1;text-align:center;padding:6px;background:#000;color:#fff"><?= h($l['to']) ?></span></div>
-<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;font-size:11px"><div class="bx" style="padding:5px 7px"><div class="k">Weight</div><b style="font-size:15px"><?= h($l['weight']) ?></b></div><div class="bx" style="padding:5px 7px"><div class="k">Pieces</div><b style="font-size:15px"><?= h($l['piece']) ?></b></div><div class="bx" style="padding:5px 7px"><div class="k">Received</div><b style="font-size:15px"><?= h($l['received']) ?></b></div></div>
-<?php if (!empty($o['contents'])): ?><div style="font-size:10.5px;line-height:1.35"><b>Contents:</b> <?= h($l['contents']) ?><?php if (!empty($o['value'])): ?> · declared <?= h($l['declared']) ?><?php endif; ?><?php if (!empty($o['fragile'])): ?> · <b>FRAGILE</b><?php endif; ?><?php if (!empty($l['dg'])): ?> · <b>DANGEROUS GOODS</b><?php endif; ?><?php if (!empty($o['care'])): ?> · ⬆ this side up<?php endif; ?></div><?php endif; ?>
-<div style="margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:2px"><?= $l['bc'] ?><?php if ($l['carrierNo'] !== ''): ?><div style="font-size:9.5px" class="m"><?= h(trim($l['carrier'] . ' ' . $l['carrierNo'])) ?></div><?php endif; ?></div>
+<div class="sl-page<?= $p['big'] === 'a4' ? ' a4' : '' ?>">
+<div class="lb lb46<?= $p['big'] === '44' ? ' sq' : '' ?><?= $p['dark'] ? ' dark' : '' ?><?= $p['border'] ? '' : ' nob' ?><?= $d['test'] ? ' test' : '' ?>" style="<?= h(sl_printerStyle($p)) ?>">
+  <div class="l-top">
+    <?php if ($p['logo']): ?><?= sl_brandLogo('black', 40, 'l-logo') ?><?php else: ?><b class="l-site"><?= h($l['site']) ?></b><?php endif; ?>
+    <div class="l-mode"><b><?= h($l['mode']) ?></b><span><?= h(trim($l['svc'] ?: $l['pack'])) ?></span></div>
+  </div>
+  <div class="l-trk">
+    <div class="col"><span class="k">Tracking number</span><b class="l-no"><?= h($l['track']) ?></b><span class="l-sub"><?= h($l['pack']) ?> · piece <?= h($l['piece']) ?></span></div>
+    <?php if (!empty($o['qr'])): ?><div class="l-qr"><?= $l['qr'] ?></div><?php endif; ?>
+  </div>
+  <div class="l-to">
+    <div class="row between" style="align-items:flex-start;gap:8px"><span class="k">Deliver to</span><span class="l-lock">Locker <b><?= h($l['locker'] ?: '—') ?></b><?= $l['bay'] !== '' ? ' · Bay <b>' . h($l['bay']) . '</b>' : '' ?></span></div>
+    <b class="l-name"><?= h($l['name']) ?></b>
+    <span class="l-addr"><?= h(trim($l['addr'] . ', ' . $l['to'], ', ')) ?><?php if (!empty($o['phone']) && $l['phone'] !== ''): ?> · <?= h($l['phone']) ?><?php endif; ?></span>
+  </div>
+  <div class="l-route"><span><?= h($l['from'] ?: '—') ?></span><i>→</i><span class="dst"><?= h($l['to']) ?></span></div>
+  <div class="l-facts">
+    <div><span class="k">Weight</span><b><?= h($l['weight']) ?></b></div>
+    <div><span class="k">Pieces</span><b><?= h($l['piece']) ?></b></div>
+    <div><span class="k">Received</span><b><?= h($l['received']) ?></b></div>
+    <div class="<?= $l['paid'] ? '' : 'inv' ?>"><span class="k">Payment</span><b><?= $l['paid'] ? 'PAID' : 'COLLECT' ?></b></div>
+  </div>
+  <?php if (!empty($o['sender']) && $l['sender'] !== ''): ?><div class="l-from"><span class="k">From</span> <?= h($l['sender']) ?><?= $l['senderCity'] !== '' ? ' · ' . h($l['senderCity']) : '' ?></div><?php endif; ?>
+  <?php if (!empty($o['contents'])): ?><div class="l-cont"><b>Contents:</b> <?= h($l['contents']) ?><?php if (!empty($o['value'])): ?> · declared <?= h($l['declared']) ?><?php endif; ?></div><?php endif; ?>
+  <?php if (!empty($o['fragile']) || !empty($l['dg']) || !empty($o['care'])): ?><div class="l-flags"><?php if (!empty($o['fragile'])): ?><span>FRAGILE</span><?php endif; ?><?php if (!empty($l['dg'])): ?><span>DANGEROUS GOODS</span><?php endif; ?><?php if (!empty($o['care'])): ?><span>⬆ THIS SIDE UP</span><?php endif; ?></div><?php endif; ?>
+  <div class="l-bc"><?= $l['bc'] ?><?php if ($l['carrierNo'] !== ''): ?><span class="l-car"><?= h(trim($l['carrier'] . ' ' . $l['carrierNo'])) ?></span><?php endif; ?></div>
+  <div class="l-foot"><span><?= h($l['hub']) ?></span><span><?= h($l['siteUrl'] !== '' ? 'Track: ' . $l['siteUrl'] . '/track.php' : '') ?></span></div>
+  <?php if ($d['test']): ?><div class="l-test"><b>TEST PRINT</b><span><?= h($p['name']) ?> · <?= h($page['label']) ?> · <?= h($p['dpi']) ?> dpi · move <?= h($p['dx']) ?>/<?= h($p['dy']) ?> mm · <?= (int) $p['scale'] ?>%</span><i class="c tl"></i><i class="c tr"></i><i class="c bl"></i><i class="c br"></i><i class="x"></i></div><?php endif; ?>
 </div>
 </div>
 <?php endforeach; ?>
 <?php if (!$d['labels']): ?><div class="sl-empty" style="padding:40px">No shipment to print. It may not exist or be outside your scope.</div><?php endif; ?>
-<style>@media print{.sl-noprint{display:none!important}.sl-page{page-break-after:always;break-after:page}body{background:#fff}}.sl-page{display:flex;justify-content:center;padding:12px 0}@page{size:4in 6in;margin:0}</style>
+<style>
+<?= $page['css'] ?>
+<?php if (!empty($_GET['embed'])): ?>.sl-page{padding:0!important}body{background:#fff;overflow:hidden}<?php endif; ?>
+@media print{.sl-noprint{display:none!important}.sl-page{page-break-after:always;break-after:page;padding:0!important}body{background:#fff}}
+.sl-page{display:flex;justify-content:center;padding:12px 0}
+.sl-page.a4{align-items:flex-start;padding-top:20mm}
+.lb-bar{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:12px}
+.lb-pp{position:relative}.lb-pp summary{list-style:none;cursor:pointer}.lb-pp summary::-webkit-details-marker{display:none}
+.lb-pp-in{position:absolute;z-index:5;top:46px;left:50%;transform:translateX(-50%);width:min(760px,94vw);padding:16px;border-radius:16px;background:#fff;border:1px solid #ddd;box-shadow:0 20px 50px -20px rgba(0,0,0,.3)}
+.lb46{position:relative;transform:translate(var(--lb-dx,0),var(--lb-dy,0)) scale(var(--lb-scale,1));transform-origin:top left;gap:7px;padding:12px}
+.lb46.sq{height:384px}.lb46.sq .l-from,.lb46.sq .l-cont,.lb46.sq .l-foot{display:none}
+.lb46.nob{border-color:transparent}
+.lb46.dark{-webkit-font-smoothing:none;font-weight:600}.lb46.dark .l-name,.lb46.dark .l-no{font-weight:900}.lb46.dark svg rect,.lb46.dark svg path{shape-rendering:crispEdges}
+.lb46 svg{shape-rendering:crispEdges}
+.l-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.l-top .l-logo{height:40px;width:auto}
+.l-site{font-size:16px}
+.l-mode{display:flex;flex-direction:column;align-items:center;background:#000;color:#fff;border-radius:6px;padding:3px 12px 4px;line-height:1}
+.l-mode b{font-size:24px;font-weight:900;letter-spacing:.02em}.l-mode span{font-size:8px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
+.l-trk{display:flex;justify-content:space-between;align-items:center;gap:8px;border:2.5px solid #000;border-radius:8px;padding:8px 10px}
+.l-no{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:34px;font-weight:800;letter-spacing:-.01em;line-height:1.05}
+.l-sub{font-size:10px;font-weight:600}
+.l-qr svg{width:64px;height:64px;display:block}
+.l-to{display:flex;flex-direction:column;gap:2px;border:2px solid #000;border-radius:8px;padding:7px 10px}
+.l-name{font-size:21px;font-weight:800;line-height:1.15}
+.l-addr{font-size:11.5px;line-height:1.3}
+.l-lock{font-size:10px;border:1.5px solid #000;border-radius:4px;padding:1px 5px;white-space:nowrap}
+.l-route{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;font-size:12px;font-weight:800;text-align:center}
+.l-route span{border:2px solid #000;border-radius:6px;padding:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.l-route span.dst{background:#000;color:#fff}.l-route i{font-style:normal;font-size:16px}
+.l-facts{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.l-facts div{border:2px solid #000;border-radius:6px;padding:4px 6px;display:flex;flex-direction:column}
+.l-facts b{font-size:14px;font-weight:800}
+.l-facts .inv{background:#000;color:#fff}
+.l-from,.l-cont{font-size:10px;line-height:1.3}
+.l-flags{display:flex;gap:5px;flex-wrap:wrap}.l-flags span{font-size:9.5px;font-weight:900;border:2px solid #000;padding:1px 6px;border-radius:4px}
+.l-bc{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:1px}
+.l-car{font-family:"JetBrains Mono",monospace;font-size:9px}
+.l-foot{display:flex;justify-content:space-between;gap:8px;font-size:8.5px;font-weight:600;border-top:1.5px solid #000;padding-top:3px}
+.l-test{position:absolute;inset:0;pointer-events:none}
+.l-test b{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-28deg);font-size:40px;font-weight:900;color:rgba(0,0,0,.12);white-space:nowrap}
+.l-test span{position:absolute;bottom:-1px;left:0;right:0;text-align:center;font-size:8px;background:#fff}
+.l-test .c{position:absolute;width:12px;height:12px;border:0 solid #000}
+.l-test .tl{top:2px;left:2px;border-top-width:2px;border-left-width:2px}.l-test .tr{top:2px;right:2px;border-top-width:2px;border-right-width:2px}
+.l-test .bl{bottom:2px;left:2px;border-bottom-width:2px;border-left-width:2px}.l-test .br{bottom:2px;right:2px;border-bottom-width:2px;border-right-width:2px}
+.l-test .x{position:absolute;top:50%;left:50%;width:16px;height:16px;transform:translate(-50%,-50%);background:linear-gradient(#000,#000) center/1.5px 100% no-repeat,linear-gradient(#000,#000) center/100% 1.5px no-repeat}
+</style>
+<?php if ($p['auto'] && $d['labels'] && empty($_GET['embed'])): ?><script>addEventListener('load', function () { setTimeout(function () { window.print(); }, 300); });</script><?php endif; ?>

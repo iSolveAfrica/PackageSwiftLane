@@ -37,7 +37,7 @@ $month = date('m');
 $year = date('Y');
 
 // // pagination variables
-$page = (isset($_REQUEST['page']) && !empty($_REQUEST['page'])) ? $_REQUEST['page'] : 1;
+$page = max(1, (int) ($_REQUEST['page'] ?? 1));
 $per_page = (($_REQUEST['per_page'] ?? '') === 'all') ? 1000000000 : (in_array((int)($_REQUEST['per_page'] ?? 0), [25, 50, 100], true) ? (int)$_REQUEST['per_page'] : 25); //how much records you want to show
 $adjacents  = 4; //gap between pages after number of adjacents
 $offset = ($page - 1) * $per_page;
@@ -46,16 +46,11 @@ $offset = ($page - 1) * $per_page;
 if (!function_exists('cdp_markOverdueInvoices')) { $d = __DIR__; while ($d !== dirname($d) && !is_file($d . '/helpers/overdue_invoices.php')) { $d = dirname($d); } if (is_file($d . '/helpers/overdue_invoices.php')) require_once $d . '/helpers/overdue_invoices.php'; }
 cdp_markOverdueInvoices($db);
 
-$sWhereExtra = "";
-if ($userData->userlevel == 3) {
-	$sWhereExtra = " and driver_id = " . (int)$_SESSION['userid'];
-} else if ($userData->userlevel == 1) {
-	$sWhereExtra = " and sender_id = " . (int)$_SESSION['userid'];
-} else if ($ctx['is_restricted'] && $ctx['agency_id'] !== null) {
-	$sWhereExtra = " and agency = " . (int)$ctx['agency_id'];
-} else if ($ctx['is_restricted']) {
-	$sWhereExtra = " and 1=0";
-}
+// Row scope by role rank (customer -> own, driver -> assigned, agency user / agency-restricted
+// staff -> their agency) through the shared helper the shipment lists use, so this widget and
+// those lists cannot disagree. Replaces a hand-written copy that resolved an agency user's
+// agency differently (agency_id only) from cdp_ajaxListScopeSql().
+$sWhereExtra = cdp_ajaxListScopeSql('sender_id', 'driver_id', 'agency');
 
 $sql = "SELECT * FROM cdb_add_order where order_payment_method >1 
 			and order_date >= '$year-$month-01' AND order_date < DATE('$year-$month-01') + INTERVAL 1 MONTH 

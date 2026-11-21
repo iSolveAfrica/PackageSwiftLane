@@ -9,6 +9,12 @@ require_once CDP_ROOT . '/views/sl/data/customer_profile.php';
 require_login();
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') sl_json(['success' => false, 'message' => 'POST required'], 405);
 if (CDP_APP_MODE_DEMO === true) sl_json(['success' => false, 'message' => 'Demo mode: changes are disabled'], 403);
+// Staff-only screen. Do not rely on require_permission() alone: in CDP_RBAC_MODE 'off' it lets
+// everyone through, and a customer must never edit or delete another customer's account.
+// Rank, not sl_userIs('staff'): that is only "not client and not driver", so agency users
+// (rank 1) would pass it.
+require_once __DIR__ . '/../../helpers/rbac.php';
+if (cdp_roleRankById((int) $user->userlevel) < 2) sl_json(['success' => false, 'message' => 'Not allowed'], 403);
 $id = (int) ($_POST['id'] ?? 0);
 $c = sl_row('SELECT id, fname, lname, agency_id, notes FROM cdb_users WHERE id = :id AND userlevel = 1', [':id' => $id]);
 if (!$c) sl_json(['success' => false, 'message' => 'Customer not found'], 404);
@@ -40,7 +46,7 @@ switch ((string) ($_POST['op'] ?? '')) {
         $log('address_add', "added an address for $name", 'create');
         sl_json(['success' => true, 'message' => 'Address added']);
     case 'address_delete':
-        require_permission(['edit_client', 'view_client_list']);
+        require_permission('edit_client'); // a write: view-only staff must not remove addresses
         $aid = (int) ($_POST['address_id'] ?? 0);
         if (!sl_scalar('SELECT COUNT(*) FROM cdb_senders_addresses WHERE id_addresses = :a AND user_id = :u', [':a' => $aid, ':u' => $id])) sl_json(['success' => false, 'message' => 'Address not found'], 404);
         // same referential check as ajax/customers/customers_delete_address_ajax.php

@@ -42,15 +42,45 @@ if ($search != null) {
 	$sWhere .= " ";
 }
 
-if ($userData->userlevel == 1) {
+// Row scope by role RANK, not the seed role ids 1/6: prealert_list is customer-facing, and a
+// custom Customer/Driver/Agency role used to fall through to the unscoped branch and list every
+// customer's prealerts. Pre-alerts carry no driver or agency column, so drivers see none and
+// agency users / agency-restricted staff keep the "customers of this agency" filter.
+require_once(__DIR__ . '/../../helpers/rbac.php');
+$scopeLevel = (int) $userData->userlevel;
+$scopeRank = cdp_roleRankById($scopeLevel);
+$aid = 0;
+$scopeByAgency = false;
+if ($scopeRank === 0) {
 
-	$sWhere .= " and  customer_id = '" . $_SESSION['userid'] . "'";
-} else if ($userData->userlevel == 6) {
-	// Agencia: solo prealertas de clientes que tienen órdenes/paquetes en esta agencia
+	$sWhere .= cdp_ajaxListScopeSql('customer_id', null, null);
+} else if ($scopeRank === 1 && ($scopeLevel === 3 || cdp_roleHasFlag($scopeLevel, 'is_driver'))) {
+
+	$sWhere .= " and 1=0";
+} else if ($scopeRank === 1) {
+
+	$scopeByAgency = true;
 	$aid = (int) cdp_getAgencyBranchIdForUser($userData->name_off ?? '');
-	$sWhere .= " and (customer_id IN (SELECT sender_id FROM cdb_add_order WHERE agency = " . $aid . ") OR customer_id IN (SELECT sender_id FROM cdb_customers_packages WHERE agency = " . $aid . ") OR customer_id IN (SELECT id FROM cdb_users WHERE name_off = (SELECT name_branch FROM cdb_branchoffices WHERE id = " . $aid . " LIMIT 1)))";
+	if ($aid <= 0) {
+		$scopeCtx = cdp_getAgencyContext();
+		$aid = (int) ($scopeCtx['agency_id'] ?? 0);
+	}
+	if ($aid <= 0) {
+		$aid = (int) ($userData->agency_id ?? 0);
+	}
 } else {
-	$sWhere .= "";
+	$scopeCtx = cdp_getAgencyContext();
+	if (!empty($scopeCtx['is_restricted'])) {
+		$scopeByAgency = true;
+		$aid = (int) ($scopeCtx['agency_id'] ?? 0);
+	}
+}
+if ($scopeByAgency) {
+	// Agencia: solo prealertas de clientes que tienen órdenes/paquetes en esta agencia.
+	// No agency at all: show nothing (agency 0 would match every unassigned order's customer).
+	$sWhere .= $aid > 0
+		? " and (customer_id IN (SELECT sender_id FROM cdb_add_order WHERE agency = " . $aid . ") OR customer_id IN (SELECT sender_id FROM cdb_customers_packages WHERE agency = " . $aid . ") OR customer_id IN (SELECT id FROM cdb_users WHERE name_off = (SELECT name_branch FROM cdb_branchoffices WHERE id = " . $aid . " LIMIT 1)))"
+		: " and 1=0";
 }
 
 

@@ -120,8 +120,9 @@ function sl_labelFor(int $id, string $type = 'air'): ?array
     $phone = (string) ($recip->phone ?? '');
     $masked = strlen($phone) > 6 ? substr($phone, 0, max(3, strlen($phone) - 7)) . ' *** ' . substr($phone, -4) : $phone;
     $bay = '';
-    if (sl_columnExists($type === 'sea' ? 'cdb_customers_packages' : 'cdb_add_order', 'bay')) {
-        $bay = (string) ($o->bay ?? '');
+    // the column is warehouse_bay (migrations/2026_11_06_warehouse_packages.sql), not bay
+    if (sl_columnExists($type === 'sea' ? 'cdb_customers_packages' : 'cdb_add_order', 'warehouse_bay')) {
+        $bay = (string) ($o->warehouse_bay ?? '');
     }
     return [
         'id' => $id, 'type' => $type, 'track' => $track, 'carrier' => $courier->name_com ?? '', 'carrierNo' => $carrierNo,
@@ -136,6 +137,8 @@ function sl_labelFor(int $id, string $type = 'air'): ?array
         'total' => sl_money($o->total_order), 'paid' => sl_shipPaid($o->status_invoice),
         'url' => rtrim((string) ($core->site_url ?? ''), '/') . '/track.php?order_track=' . rawurlencode($track),
         'site' => (string) ($core->site_name ?? 'Swift Lane'), 'ini' => sl_initials((string) ($core->site_name ?? 'SL')),
+        'sender' => mb_strtoupper(trim(($sender->fname ?? '') . ' ' . ($sender->lname ?? ''))), 'senderCity' => mb_strtoupper($fromCity),
+        'siteUrl' => preg_replace('#^https?://#', '', rtrim((string) ($core->site_url ?? ''), '/')), 'sitePhone' => (string) ($core->c_phone ?? ''),
     ];
 }
 
@@ -156,7 +159,22 @@ function sl_labelPrintData(array $ids, string $size, string $type = 'air'): arra
             }
         }
     }
-    return ['labels' => $labels, 'o' => $opt['big'], 's' => $opt['small'], 'size' => $size];
+    return ['labels' => $labels, 'o' => $opt['big'], 's' => $opt['small'], 'size' => $size, 'p' => sl_printerOptions(), 'test' => false];
+}
+
+/** A calibration label with sample data, to check alignment and darkness on a printer. */
+function sl_labelTestData(string $size): array
+{
+    global $core;
+    $opt = sl_labelOptions();
+    $track = 'TEST000123';
+    $l = ['id' => 0, 'type' => 'air', 'track' => $track, 'carrier' => 'Test carrier', 'carrierNo' => '1Z999AA10123456784', 'mode' => 'AIR', 'svc' => 'Express', 'pack' => 'Small box',
+        'locker' => '000000', 'bay' => '', 'dg' => false, 'name' => 'TEST CUSTOMER NAME', 'phone' => '+233 *** 0000', 'addr' => '12 Sample Street, East Legon', 'to' => 'ACCRA, GHANA', 'from' => 'NEW YORK, USA',
+        'hub' => mb_strtoupper((string) ($core->site_name ?? 'Swift Lane')), 'hubAddr' => '', 'weight' => '2.5 lb', 'pieces' => 1, 'received' => date('M j'), 'contents' => 'Printer test ×1', 'declared' => sl_money(0),
+        'total' => sl_money(0), 'paid' => true, 'url' => rtrim((string) ($core->site_url ?? ''), '/') . '/track.php', 'site' => (string) ($core->site_name ?? 'Swift Lane'), 'ini' => 'SL',
+        'sender' => 'SENDER NAME', 'senderCity' => 'NEW YORK, USA', 'siteUrl' => preg_replace('#^https?://#', '', rtrim((string) ($core->site_url ?? ''), '/')), 'sitePhone' => (string) ($core->c_phone ?? '')];
+    $l += ['piece' => '1 / 1', 'bc' => sl_barcodeSvg($track, 350, 88, 13), 'bcSmall' => sl_barcodeSvg($track, 178, 40, 6.5), 'qr' => sl_codeGridSvg($l['url'], 64)];
+    return ['labels' => [$l], 'o' => $opt['big'], 's' => $opt['small'], 'size' => $size, 'p' => sl_printerOptions(), 'test' => true];
 }
 
 /** Receipt (paid / not paid) for an air shipment or a sea package. */
@@ -257,4 +275,57 @@ function sl_labelStudioData($user, int $id, string $q, string $view): array
         $d['summary'] = 'No shipment loaded';
     }
     return $d;
+}
+
+/**
+ * Printer settings. A team default (cdb_sl_settings printer_options, set in Label Studio by people with
+ * view_tools) and a personal override per user (printer_options_u{id}): each desk has its own printer.
+ * Saved by ajax/sl/printer_options_ajax.php, applied by the label print pages.
+ */
+function sl_printerDefaults(): array
+{
+    return ['type' => 'thermal', 'dpi' => '203', 'big' => '46', 'small' => '21', 'dx' => 0.0, 'dy' => 0.0, 'scale' => 100, 'margin' => 0.0,
+        'dark' => 0, 'border' => 1, 'logo' => 1, 'auto' => 0, 'name' => 'Default printer'];
+}
+
+/** Clean one set of printer settings (anything unknown falls back to the default). */
+function sl_printerClean(array $in): array
+{
+    $d = sl_printerDefaults();
+    $o = [];
+    $o['type'] = in_array($in['type'] ?? '', ['thermal', 'laser'], true) ? $in['type'] : $d['type'];
+    $o['dpi'] = in_array((string) ($in['dpi'] ?? ''), ['203', '300', '600'], true) ? (string) $in['dpi'] : $d['dpi'];
+    $o['big'] = in_array((string) ($in['big'] ?? ''), ['46', '44', 'a4'], true) ? (string) $in['big'] : $d['big'];
+    $o['small'] = in_array((string) ($in['small'] ?? ''), ['21', '12', '5025'], true) ? (string) $in['small'] : $d['small'];
+    $o['dx'] = max(-15, min(15, round((float) ($in['dx'] ?? 0), 1)));
+    $o['dy'] = max(-15, min(15, round((float) ($in['dy'] ?? 0), 1)));
+    $o['scale'] = max(80, min(120, (int) ($in['scale'] ?? 100)));
+    $o['margin'] = max(0, min(15, round((float) ($in['margin'] ?? 0), 1)));
+    foreach (['dark', 'border', 'logo', 'auto'] as $k) $o[$k] = (int) !empty($in[$k]);
+    $o['name'] = mb_substr(trim(strip_tags((string) ($in['name'] ?? ''))), 0, 80) ?: $d['name'];
+    return $o;
+}
+
+/** Effective settings for a user, and where they come from. */
+function sl_printerOptions(?int $uid = null): array
+{
+    $uid = $uid ?? (int) ($_SESSION['userid'] ?? 0);
+    $team = json_decode((string) sl_slSetting('printer_options', ''), true);
+    $mine = $uid ? json_decode((string) sl_slSetting('printer_options_u' . $uid, ''), true) : null;
+    $base = sl_printerClean(array_merge(sl_printerDefaults(), is_array($team) ? $team : []));
+    return is_array($mine) ? sl_printerClean(array_merge($base, $mine)) + ['from' => 'mine', 'team' => $base] : $base + ['from' => is_array($team) ? 'team' : 'default', 'team' => $base];
+}
+
+/** Paper size in mm, and @page CSS, for a label kind under these settings. */
+function sl_printerPage(array $p, string $kind): array
+{
+    $sizes = ['46' => [101.6, 152.4, '4 × 6 in'], '44' => [101.6, 101.6, '4 × 4 in'], 'a4' => [210, 297, 'A4 sheet'], '21' => [50.8, 25.4, '2 × 1 in'], '12' => [25.4, 50.8, '1 × 2 in'], '5025' => [50, 25, '50 × 25 mm']];
+    [$w, $h, $l] = $sizes[$kind === 'small' ? $p['small'] : $p['big']];
+    return ['w' => $w, 'h' => $h, 'label' => $l, 'css' => '@page{size:' . $w . 'mm ' . $h . 'mm;margin:' . (float) $p['margin'] . 'mm}'];
+}
+
+/** Inline style that applies the offsets, scale and darkness to a label. */
+function sl_printerStyle(array $p): string
+{
+    return '--lb-dx:' . (float) $p['dx'] . 'mm;--lb-dy:' . (float) $p['dy'] . 'mm;--lb-scale:' . ((int) $p['scale'] / 100) . ';';
 }

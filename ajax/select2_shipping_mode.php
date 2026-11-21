@@ -1,10 +1,14 @@
 <?php
 require_once("../loader.php");
+require_once(__DIR__ . '/../helpers/ajax_guard.php');
+// Tariff filter for the settings screens (dataJs/shipping_tariffs_list.js): staff only.
+require_login();
+require_permission('view_tools');
 
 $db = new Conexion;
 
-$q = isset($_GET['q']) ? trim($_GET['q']) : '';
-$safe = $q !== '' ? cdp_sanitize($q) : '';
+$q = isset($_GET['q']) ? trim((string) $_GET['q']) : '';
+$safe = $q !== '' ? addcslashes(mb_substr($q, 0, 100), '%_\\') : '';
 
 // Trae solo categorías que estén usadas en tarifas (opcional pero útil)
 $sql = "SELECT DISTINCT c.id, c.name_item
@@ -13,11 +17,14 @@ $sql = "SELECT DISTINCT c.id, c.name_item
          WHERE c.name_item <> ''";
 
 if ($safe !== '') {
-  $sql .= " AND c.name_item LIKE '%$safe%'";
+  $sql .= " AND c.name_item LIKE :q";
 }
 $sql .= " ORDER BY c.name_item ASC LIMIT 50";
 
 $db->cdp_query($sql);
+if ($safe !== '') {
+  $db->bind(':q', '%' . $safe . '%');
+}
 $db->cdp_execute();
 $rows = $db->cdp_registros();
 

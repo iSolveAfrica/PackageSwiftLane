@@ -24,9 +24,30 @@ require_once(__DIR__ . '/../../../helpers/ajax_guard.php');
 require_login();
 require_permission('view_tools');
 
+// Same gate as backup.php: only administrators manage backups.
+if (!$user->cdp_is_Admin()) {
+    _ajax_guard_send(403, ['success' => false, 'error' => 'Forbidden', 'message' => 'Administrators only']);
+}
+
   /* == Delete SQL Backup == */
   if (isset($_POST['deleteBackup'])):
-      $action = @unlink('../../../backups/' . trim($_POST['deleteBackup']));
+      // The name comes from the client: strip any directory part and accept only a
+      // plain .sql file that exists in backups/, so "../config/config.php" cannot
+      // delete files outside the backups folder.
+      $backupDir = realpath(__DIR__ . '/../../../backups');
+      $backupName = basename(trim((string) $_POST['deleteBackup']));
+      $backupPath = $backupDir ? $backupDir . DIRECTORY_SEPARATOR . $backupName : '';
+      if (!$backupDir || !preg_match('/^[A-Za-z0-9._-]+\.sql(\.gz)?$/', $backupName) || !is_file($backupPath)) {
+          ?>
+	<div class="alert alert-danger" id="success-alert">
+        <p><span class="icon-minus-sign"></span><i class="close icon-remove-circle"></i>
+            Backup file not found.
+       </p>
+    </div>
+    <?php
+          exit;
+      }
+      $action = @unlink($backupPath);
 
       ?>
 

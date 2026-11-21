@@ -109,8 +109,8 @@ function sl_aiCenterData($user, $core): array
         ['icon' => 'i-scan', 'l' => 'Tokens · 30 days', 'v' => sl_num($d['usage']['tokens'] + $d['usage']['csTokens']), 's' => 'staff assistant and King', 'sp' => $spark('cdb_ai_messages', "role = 'assistant'")],
     ];
     $cov = [
-        ['Staff assistant chat', 'AI assistant', 'StaffAI', $d['configured']], ['Explain this page', 'Help menu → AI assistant', 'StaffAI', $d['configured']], ['Answers scoped to the role', 'AI assistant', 'StaffAI', true],
-        ['AI agent for customers (King)', 'AI for customers', 'CsAI', $king === 'customer'], ['Reply drafts for agents', 'Support ticket', 'CsAI', $king !== 'off'], ['Ticket summaries', 'Support ticket', 'CsAI', $king !== 'off'],
+        ['Staff chat with ' . cdp_kingName(), cdp_kingName(), 'StaffAI', $d['configured']], ['Explain this page', 'Help menu → Ask ' . cdp_kingName(), 'StaffAI', $d['configured']], ['Answers scoped to the role', cdp_kingName(), 'StaffAI', true],
+        [cdp_kingName() . ' for customers', cdp_kingName() . ' for customers', 'CsAI', $king === 'customer'], ['Reply drafts for agents', 'Support ticket', 'CsAI', $king !== 'off'], ['Ticket summaries', 'Support ticket', 'CsAI', $king !== 'off'],
         ['Language and tag detection', 'AI for customers', 'CsAI', $king !== 'off'], ['Help articles from tickets', 'Playbook', 'CsPlaybook', $king !== 'off'], ['Providers and keys', 'Settings below', '#', true],
         ['Taught facts', 'Knowledge below', '#', true], ['Page ideas from questions', 'Page ideas below', '#', true], ['Question log', 'Questions below', '#', true], ['Usage and cost', 'Usage above', '#', true],
         ['Profile photo retouch', 'AI profile studio', 'AiStudio', true],

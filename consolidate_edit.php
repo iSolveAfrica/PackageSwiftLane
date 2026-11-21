@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // The old view's POST handler, moved verbatim (views/sl/handlers/consolidate_edit.php); replies JSON.
     require_once 'helpers/sl_legacy_post.php';
     $db = new Conexion;
-    sl_legacyPostBegin();
+    sl_legacyPostBegin(); // also validates the CSRF token (this path skips ajax_guard)
     include 'views/sl/handlers/consolidate_edit.php';
     sl_legacyPostEnd([], ['message' => $message ?? null, 'ok' => isset($success_script), 'bad' => isset($error_script), 'requireOk' => true, 'redirect' => 'consolidate_view.php?id=' . (int) ($_GET['id'] ?? 0)]);
 }

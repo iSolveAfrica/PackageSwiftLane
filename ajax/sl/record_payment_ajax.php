@@ -12,11 +12,18 @@ require_once __DIR__ . '/../../helpers/sl_view.php';
 require_once __DIR__ . '/../../helpers/finance_switch.php';
 require_once __DIR__ . '/../../helpers/activity_log.php';
 require_once __DIR__ . '/../../helpers/querys.php';
+require_once __DIR__ . '/../../views/sl/data/ops_common.php';
 require_login();
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') sl_json(['success' => false, 'message' => 'POST required'], 405);
 if (CDP_APP_MODE_DEMO === true) sl_json(['success' => false, 'message' => 'Demo mode: changes are disabled'], 403);
 cdp_financeGuardAjax();
 require_permission(['fs_record_payment', 'manage_account_payments', 'verify_payments', 'verify_consolidate_payment', 'verify_consolidate_package_payment']);
+// Recording a payment marks invoices paid and releases goods: staff only, even
+// if a customer/driver role was ever granted one of the permissions above.
+// Rank, not sl_userIs('staff'): that is only "not client and not driver", so agency users
+// (rank 1) would pass it.
+require_once __DIR__ . '/../../helpers/rbac.php';
+if (cdp_roleRankById((int) $user->userlevel) < 2) sl_json(['success' => false, 'message' => 'Not allowed'], 403);
 
 $core = new Core();
 $type = (string) ($_POST['type'] ?? 'shipment');
@@ -37,9 +44,11 @@ if ($amount <= 0) $errors['amount'] = 'Enter the amount paid';
 if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $paidAt) || !strtotime($paidAt)) $errors['paid_at'] = 'Pick a date';
 if ($errors) sl_json(['success' => false, 'message' => 'Check the form', 'errors' => $errors], 422);
 
-$rows = sl_rows("SELECT $pk AS id, CONCAT($pre, $no) AS track, total_order, sender_id, status_invoice FROM $tbl WHERE $pk IN (" . implode(',', $orders) . ")");
+$rows = sl_rows("SELECT $pk AS id, CONCAT($pre, $no) AS track, total_order, sender_id, status_invoice, agency, driver_id FROM $tbl WHERE $pk IN (" . implode(',', $orders) . ")");
 if (!$rows) sl_json(['success' => false, 'message' => 'Invoices not found'], 404);
 foreach ($rows as $r) {
+    // Agency-restricted staff may only settle their own agency's invoices.
+    if (!sl_opsInScope($r)) sl_json(['success' => false, 'message' => 'Invoices not found'], 404);
     if ($customerId && (int) $r->sender_id !== $customerId) sl_json(['success' => false, 'message' => 'Invoice ' . $r->track . ' belongs to another customer'], 422);
     if ((int) $r->status_invoice !== 23) sl_json(['success' => false, 'message' => 'Invoice ' . $r->track . ' is not awaiting payment'], 409);
 }
@@ -50,6 +59,30 @@ if ($currency === 'GHS' && ($core->currency ?? 'USD') !== 'GHS' && function_exis
     $amountUsd = cdp_ghsToUsd($amount, (float) $core->exchange_rate);
 }
 $total = array_sum(array_map(fn($r) => (float) $r->total_order, $rows));
+// Payments already booked against these invoices (instalments), so the last
+// instalment closes the invoice instead of comparing each one to the full total.
+$prior = 0.0;
+$ids = implode(',', array_map(fn($r) => (int) $r->id, $rows));
+if ($tbl === 'cdb_add_order') {
+    // cdb_charges_order.total is stored in the base currency (see $share below).
+    $prior = (float) sl_scalar("SELECT COALESCE(SUM(total), 0) FROM cdb_charges_order WHERE order_id IN ($ids)", [], 0);
+} else {
+    // cdb_payments_gateway has no order id, only a comma list of tracks. Count a
+    // previous payment only when every track it names is in this selection, so a
+    // payment shared with other invoices is never attributed to these ones.
+    $trackSet = array_map(fn($r) => strtolower((string) $r->track), $rows);
+    $prev = sl_rows("SELECT amount, currency, order_track FROM cdb_payments_gateway WHERE order_track_customer_id = :c AND type_transaccition_courier = :t AND LOWER(status) IN ('success', 'completed', 'succeeded', 'paid')", [':c' => $customerId, ':t' => $label]);
+    foreach ($prev as $g) {
+        $gTracks = array_values(array_filter(array_map('trim', explode(',', strtolower((string) $g->order_track)))));
+        if (!$gTracks || array_diff($gTracks, $trackSet)) continue;
+        $gAmt = (float) $g->amount;
+        if (strtoupper((string) $g->currency) === 'GHS' && ($core->currency ?? 'USD') !== 'GHS' && function_exists('cdp_ghsToUsd')) {
+            $gAmt = cdp_ghsToUsd($gAmt, (float) $core->exchange_rate);
+        }
+        $prior += $gAmt;
+    }
+}
+$outstanding = max(0.0, $total - $prior);
 $ref = $reference !== '' ? $reference : 'MAN-' . date('ymd') . '-' . strtoupper(substr(bin2hex(random_bytes(3)), 0, 6));
 $when = $paidAt . ' ' . date('H:i:s');
 $db = new Conexion();
@@ -65,7 +98,7 @@ try {
         ]);
         if (!$ok) throw new RuntimeException('Could not save the payment');
     }
-    $full = $amountUsd + 0.005 >= $total; // paid in full: mark invoices paid (19), keep 23 otherwise
+    $full = $amountUsd + 0.005 >= $outstanding; // balance settled: mark invoices paid (19), keep 23 otherwise
     foreach ($rows as $r) {
         if ($full) {
             $confirmFn(['order_id' => (int) $r->id, 'status_invoice' => 19]);

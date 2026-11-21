@@ -91,25 +91,22 @@ class PreAlertsHandler
         // Handle optional file upload
         $invoiceFile = '';
         if (!empty($_FILES['file_invoice']['name'])) {
-            $uploadDir  = __DIR__ . '/../../../pre_alert_files/';
-            $imageName  = time() . '_' . basename($_FILES['file_invoice']['name']);
-            $targetFile = $uploadDir . $imageName;
-
+            // The stored name kept the client's file name and extension, so an image with PHP
+            // inside named x.php passed the MIME check and was saved as x.php in a web-served
+            // folder. Store under our own name with the detected type's extension instead.
+            require_once __DIR__ . '/../../../helpers/uploads.php';
             $allowed = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'];
-            $mimeType = mime_content_type($_FILES['file_invoice']['tmp_name']);
-            if (!in_array($mimeType, $allowed, true)) {
+            if (!in_array(cdp_uploadDetect((string) $_FILES['file_invoice']['tmp_name']), $allowed, true)) {
                 ApiResponse::badRequest('Only images (JPG, PNG, GIF) and PDF files are allowed.');
             }
             if ($_FILES['file_invoice']['size'] > 5 * 1024 * 1024) {
                 ApiResponse::badRequest('File size must not exceed 5 MB.');
             }
-            if (!is_dir($uploadDir)) {
-                @mkdir($uploadDir, 0755, true);
-            }
-            if (!move_uploaded_file($_FILES['file_invoice']['tmp_name'], $targetFile)) {
+            $upload = cdp_uploadStore($_FILES['file_invoice'], __DIR__ . '/../../../pre_alert_files', 'prealert', 'docs', 5 * 1024 * 1024);
+            if (!$upload['ok']) {
                 ApiResponse::serverError('Failed to upload invoice file.');
             }
-            $invoiceFile = 'pre_alert_files/' . $imageName;
+            $invoiceFile = 'pre_alert_files/' . $upload['name'];
         }
 
         $prealertData = [

@@ -24,22 +24,20 @@
 
 require_once("../loader.php");
 
+// Public on purpose: the sign-up page (dataJs/sl/auth.js) fills its city list from here before
+// the visitor has an account. It returns only reference data (id + name of a city), and every
+// input is bound, so an anonymous caller cannot read anything else.
 $db = new Conexion;
 
-$state = cdp_sanitize($_REQUEST['id']);
+$state = (int) ($_REQUEST['id'] ?? 0);
+$search = isset($_REQUEST['q']) ? trim((string) $_REQUEST['q']) : '';
+$search = addcslashes(mb_substr($search, 0, 100), '%_\\');
 
-$search = '';
-if (isset($_REQUEST['q'])) {
-    $search = cdp_sanitize($_REQUEST['q']);
-}
-
-$list = array();
 $data = [];
 
-
-$sql = "SELECT * FROM cdb_cities WHERE  name LIKE '%" . $search . "%' and state_id='" . $state . "'";
-
-$db->cdp_query($sql);
+$db->cdp_query("SELECT id, name FROM cdb_cities WHERE name LIKE :search AND state_id = :state");
+$db->bind(':search', '%' . $search . '%');
+$db->bind(':state', $state);
 $db->cdp_execute();
 
 $datas = $db->cdp_registros();

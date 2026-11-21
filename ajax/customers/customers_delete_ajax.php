@@ -27,18 +27,41 @@ require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_once(__DIR__ . '/../../helpers/rbac.php');
 require_login();
 require_permission('delete_client');
+// Staff only, whatever CDP_RBAC_MODE says: a customer must never delete other customers.
+if (cdp_roleRankById((int) $user->userlevel) < 2) {
+    header('HTTP/1.1 403 Forbidden');
+    echo json_encode(['status' => 'error', 'message' => 'No permission for this action']);
+    exit;
+}
+
+// Deletes must arrive as POST: require_login() only checks the CSRF token on
+// POST, so a GET link (e.g. ?id=5 in an email) must never reach the delete.
+if (strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+    http_response_code(405);
+    header('Allow: POST');
+    header('Content-type: application/json; charset=UTF-8');
+    echo json_encode(['status' => 'error', 'message' => 'POST required']);
+    exit;
+}
 
 $db = new Conexion;
 
-$id = $_REQUEST['id'];
+// Read the id once, as an int, and use that value everywhere below.
+$id = (int) ($_POST['id'] ?? 0);
 
 // Only ever delete CLIENT accounts here — never staff.
 $tdb = new Conexion;
-$tdb->cdp_query("SELECT userlevel FROM cdb_users WHERE id = :id LIMIT 1");
-$tdb->bind(':id', (int) $id);
+$tdb->cdp_query("SELECT userlevel, agency_id FROM cdb_users WHERE id = :id LIMIT 1");
+$tdb->bind(':id', $id);
 $tdb->cdp_execute();
 $trow = $tdb->cdp_registro();
-if (!$trow || !cdp_roleIsClient((int) $trow->userlevel)) {
+// Agency-restricted staff may only delete their own agency's clients. A restricted
+// context with no agency (agency_id null) is out of scope for every client; without
+// the null check (int) null === 0 would match all clients that have no agency.
+$ctx = cdp_getAgencyContext();
+if (!$trow || !cdp_roleIsClient((int) $trow->userlevel)
+    || (!empty($ctx['is_restricted'])
+        && ($ctx['agency_id'] === null || (int) $trow->agency_id !== (int) $ctx['agency_id']))) {
     echo json_encode(['status' => 'error', 'message' => 'This action can only delete client accounts.']);
     exit;
 }

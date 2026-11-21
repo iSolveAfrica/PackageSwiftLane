@@ -118,11 +118,15 @@ switch ($op) {
         $code = $prefix . $no;
         cdp_insertCourierShipmentTrack(['user_id' => $uid, 'order_id' => $cid, 'order_track' => $code, 't_date' => date('Y-m-d H:i:s'), 'status_courier' => $status, 'comments' => 'Consolidation created with ' . count($pkgs) . ' package(s)', 'office' => (int) ($_POST['origin_off'] ?? 0)]);
         if (!empty($_FILES['files']['name'][0])) {
+            // Type from the file contents, not the client's extension (helpers/uploads.php):
+            // order_files/ is web-served, so an HTML file renamed .pdf must not be stored.
+            require_once CDP_ROOT . '/helpers/uploads.php';
             foreach ($_FILES['files']['tmp_name'] as $k => $tmp) {
-                $ext = strtolower(pathinfo((string) $_FILES['files']['name'][$k], PATHINFO_EXTENSION));
-                if (!is_uploaded_file($tmp) || !in_array($ext, ['pdf', 'jpg', 'jpeg', 'png', 'webp'], true) || $_FILES['files']['size'][$k] > 5242880) continue;
-                $name = preg_replace('/[^A-Za-z0-9_.-]/', '_', $code . '_' . date('Ymd_His') . '_' . $k . '.' . $ext);
-                if (move_uploaded_file($tmp, CDP_ROOT . '/order_files/' . $name)) cdp_insertOrdersFiles($cid, 'order_files/' . $name, $name, date('Y-m-d H:i:s'), '1', $ext);
+                $up = cdp_uploadStore(cdp_uploadPick($_FILES['files'], (int) $k), CDP_ROOT . '/order_files', $code, 'docs', 5242880);
+                // is_consolidate 1 = air (cdb_consolidate), 2 = sea (cdb_consolidate_packages): the
+                // two tables' ids collide, so the kind is what keeps air #N's files off sea #N
+                // (readers, and the delete endpoints' agency check) — see migrations/2026_11_23_consolidation_file_kind.sql.
+                if ($up['ok']) cdp_insertOrdersFiles($cid, 'order_files/' . $up['name'], $up['name'], date('Y-m-d H:i:s'), $M['sea'] ? '2' : '1', pathinfo($up['name'], PATHINFO_EXTENSION));
             }
         }
         slc_notify($M, $cid, $code, $status);

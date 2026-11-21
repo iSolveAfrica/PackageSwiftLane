@@ -76,6 +76,15 @@ $row = $current['data'];
 if (!cdp_roleIsClient((int) $row->userlevel)) {
     cdp_profileRespond('error', 'This page can only edit customer accounts.');
 }
+// Another customer's profile (email, password): the caller must outrank the target, so a
+// self-service account that somehow holds edit_client can never take over a peer's account.
+// Agency-restricted staff stay inside their agency (as in ajax/sl/customer_profile_ajax.php),
+// so they cannot change the email/password of, and take over, another agency's customer.
+if ($targetId !== (int) $user->uid
+    && (!cdp_canManageUser($user, (int) $row->userlevel)
+        || !cdp_ajaxRowInAgencyScope((object) ['agency' => $row->agency_id ?? null]))) {
+    cdp_profileRespond('error', 'You can only edit your own profile.');
+}
 
 // ── Validation ───────────────────────────────────────────────────────────────
 $errors = [];

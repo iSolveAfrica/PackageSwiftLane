@@ -26,21 +26,43 @@ require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_login();
 notify_after_response(); // email + WhatsApp go out after the response (helpers/after_response.php)
 require_permission('view_consolidate_list');
+// That permission is soft-passed for customers, and the consolidation numbers below are not
+// scoped to the caller: rider changes are for staff only, with a rider-assignment permission.
+require_staff();
+require_permission(['assign_driver_consolidate', 'assign_drivers']);
 
 require_once("../../helpers/querys.php");
 
 session_start();
 
-$driver = intval($_GET['driver']);
-$data = json_decode($_GET['checked_data']);
+// CSRF: the list screen (dataJs/consolidate_ajax.js) still sends this as a jQuery GET;
+// helpers/ajax_guard.php require_safe_write() accepts that only as a same-origin XHR or
+// with a valid token, so a cross-site link cannot change consolidations.
+require_safe_write();
+
+$driver = intval($_POST['driver'] ?? $_GET['driver'] ?? 0);
+$data = json_decode((string) ($_POST['checked_data'] ?? $_GET['checked_data'] ?? ''));
+if (!is_array($data)) {
+    $data = [];
+}
 
 foreach ($data as $key) {
-
-    cdp_updateDriverConsolidateMultiple($key, $driver);
 
     // $key is a consolidation number (c_no) — read the CONSOLIDATION, not a
     // shipment that happens to share the number.
     $customer_packages = cdp_getConsolidateMultiple($key);
+    // Agency-restricted staff assign riders only on their own agency's consolidations.
+    if (!$customer_packages || !cdp_ajaxRowInAgencyScope($customer_packages)) {
+        $message[$key] = $key . ': not found.';
+        continue;
+    }
+
+    // By consolidate_id: the row checked above, not every consolidation sharing the number.
+    $cdpDb = new Conexion;
+    $cdpDb->cdp_query("UPDATE cdb_consolidate SET driver_id = :d WHERE consolidate_id = :id");
+    $cdpDb->bind(':d', $driver);
+    $cdpDb->bind(':id', (int) $customer_packages->consolidate_id);
+    $cdpDb->cdp_execute();
 
     $sender_id = $customer_packages->sender_id;
     $sender_data = cdp_getSenderCourier($sender_id);

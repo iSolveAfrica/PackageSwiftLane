@@ -9,8 +9,18 @@
  */
 class TrackingHandler
 {
+    /** Lookups allowed per client IP per minute (same budget as track.php). */
+    const MAX_LOOKUPS_PER_MINUTE = 30;
+
     public function show(string $orderNo): void
     {
+        // Security: tracking numbers are prefix + sequential number, so an
+        // unthrottled public endpoint lets anyone enumerate every order.
+        if ($this->throttled()) {
+            header('Retry-After: 60');
+            ApiResponse::error('too_many_requests', 'Too many tracking lookups. Please wait a minute and try again.', 429);
+        }
+
         $orderNo = strtoupper(cdp_sanitize($orderNo));
 
         if (empty($orderNo)) {
@@ -36,6 +46,37 @@ class TrackingHandler
         }
 
         ApiResponse::notFound("No shipment found for tracking number: {$orderNo}");
+    }
+
+    /**
+     * Per-IP fixed one-minute window kept in a small temp file (the API has no
+     * session). Fails open if the temp directory is not writable.
+     */
+    private function throttled(): bool
+    {
+        $ip = (string)($_SERVER['REMOTE_ADDR'] ?? '');
+        if ($ip === '') {
+            return false;
+        }
+        $window = (int)floor(time() / 60);
+        $file   = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . '/cdp_api_track_' . md5(__DIR__ . '|' . $ip);
+        $fh = @fopen($file, 'c+');
+        if (!$fh) {
+            return false;
+        }
+        $count = 0;
+        if (flock($fh, LOCK_EX)) {
+            $raw = stream_get_contents($fh);
+            [$w, $c] = array_pad(explode(':', (string)$raw, 2), 2, '0');
+            $count = ((int)$w === $window) ? (int)$c + 1 : 1;
+            ftruncate($fh, 0);
+            rewind($fh);
+            fwrite($fh, $window . ':' . $count);
+            fflush($fh);
+            flock($fh, LOCK_UN);
+        }
+        fclose($fh);
+        return $count > self::MAX_LOOKUPS_PER_MINUTE;
     }
 
     private function findShipment(string $orderNo): ?array
@@ -82,8 +123,7 @@ class TrackingHandler
             'consolidation_awb' => $eff->in_consolidation ? (cdp_consolidationAwb($eff->consolidate_code) ?: null) : null,
             'eta'             => cdp_getEffectiveEta((int)$row->order_id, $row->order_no, $row->order_deli_time ?? null, $row->is_consolidate ?? null),
             'order_date'      => $row->order_date ?? null,
-            'due_date'        => $row->due_date ?? null,
-            'total_order'     => (float)($row->total_order ?? 0),
+            // total_order / due_date are invoice data; this endpoint is public.
             'is_pickup'       => (bool)(int)($row->is_pickup ?? 0),
             'events'          => $events ?: [],
         ];
@@ -131,7 +171,6 @@ class TrackingHandler
             'consolidation_awb' => $eff->in_consolidation ? (cdp_consolidationAwb($eff->consolidate_code) ?: null) : null,
             'eta'             => cdp_getEffectiveEta((int)$row->order_id, $row->order_no, $row->order_deli_time ?? null, $row->is_consolidate ?? null, true),
             'order_date'      => $row->order_date ?? null,
-            'total_order'     => (float)($row->total_order ?? 0),
             'events'          => $events ?: [],
         ];
     }
@@ -171,7 +210,6 @@ class TrackingHandler
             'status_label'    => $row->status_label,
             'status_color'    => $row->status_color,
             'order_date'      => $row->c_date ?? null,
-            'total_order'     => (float)($row->total_order ?? 0),
             'events'          => $events ?: [],
         ];
     }

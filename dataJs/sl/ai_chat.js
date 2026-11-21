@@ -23,7 +23,7 @@
     SL.post(url, { action: 'send', message: text, conversation_id: conv }).then(function (j) {
       t.remove();
       if (j.conversation_id) { conv = j.conversation_id; history.replaceState(null, '', 'ai_assistant.php?c=' + conv); }
-      if (!j.ok) { var e = bubble(false, j.error || j.message || 'The assistant could not answer.'); e.querySelector('.ai-b').style.background = 'var(--red-bg)'; return; }
+      if (!j.ok) { var e = bubble(false, j.error || j.message || ((window.SL_KING || 'King') + ' could not answer.')); e.querySelector('.ai-b').style.background = 'var(--red-bg)'; return; }
       bubble(false, j.answer, j.tools);
     }).catch(function () { t.remove(); SL.toast('Network error', true); });
   }

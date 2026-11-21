@@ -547,6 +547,11 @@ function cdp_nlSendOne(array $r, $subject, $html, $settings, array $ctx = [])
     $body    = cdp_nlPersonalise($html, $r, $settings, true);
     $subj    = cdp_nlPersonalise($subject, $r, $settings, false);
     $unsub   = cdp_nlUnsubscribeUrl($to, (string) ($settings->site_url ?? ''));
+    // opens and clicks for the Campaigns page (signed pixel and links, helpers/message_tracking.php)
+    if (!empty($ctx['batch_id'])) {
+        require_once __DIR__ . '/message_tracking.php';
+        $body = cdp_mtInject($body, (string) $ctx['batch_id'], $to, (string) ($settings->site_url ?? ''), $unsub);
+    }
     $from    = (string) ($settings->email_address ?? '');
     $fromNm  = (string) (($settings->smtp_names ?? '') !== '' ? $settings->smtp_names : ($settings->site_name ?? ''));
 
@@ -682,5 +687,25 @@ function cdp_nlHistory($limit = 15)
         ORDER BY started_at DESC
         LIMIT " . max(1, min(100, (int) $limit)));
     $db->cdp_execute();
-    return (array) $db->cdp_registros();
+    $rows = (array) $db->cdp_registros();
+    // opens, clicks and cost for each campaign (helpers/message_tracking.php, helpers/message_cost.php)
+    require_once __DIR__ . '/message_tracking.php';
+    require_once __DIR__ . '/message_cost.php';
+    $rate = function_exists('cdp_notifyCostPerMessage') ? (float) cdp_notifyCostPerMessage('email') : 0.0;
+    $cur = function_exists('cdp_notifyCostCurrency') ? (string) cdp_notifyCostCurrency() : '';
+    $ev = [];
+    if ($rows && cdp_mtReady()) {
+        $in = []; $b = [];
+        foreach ($rows as $k => $r) { $in[] = ':b' . $k; $b[':b' . $k] = $r->batch_id; }
+        $db->cdp_query("SELECT batch_id, COUNT(DISTINCT CASE WHEN event = 'open' THEN recipient_to END) AS o, COUNT(DISTINCT CASE WHEN event = 'click' THEN recipient_to END) AS c FROM cdb_message_events WHERE batch_id IN (" . implode(',', $in) . ') GROUP BY batch_id');
+        foreach ($b as $k => $v) $db->bind($k, $v);
+        $db->cdp_execute();
+        foreach ((array) $db->cdp_registros() as $e) $ev[$e->batch_id] = $e;
+    }
+    foreach ($rows as $r) {
+        $r->opened = isset($ev[$r->batch_id]) ? (int) $ev[$r->batch_id]->o : 0;
+        $r->clicked = isset($ev[$r->batch_id]) ? (int) $ev[$r->batch_id]->c : 0;
+        $r->cost = trim($cur . ' ' . number_format($rate * (int) $r->sent, 2));
+    }
+    return $rows;
 }

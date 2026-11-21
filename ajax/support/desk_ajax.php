@@ -268,7 +268,7 @@ switch ($action) {
             $reply(['ok' => false, 'error' => cdp_csKingOn() ? 'This chat cannot go back to King.' : 'King is not switched on.']);
         }
         if (cdp_csOwnerMove($conv->id, 'ai_active', 'staff', $uid, 'Returned to King by ' . cdp_csUserName($uid))) {
-            cdp_csMessageAdd($conv->id, $t->id, 'system', null, cdp_csSetting('king_name', 'King') . ' (our AI assistant) is back in this chat. Ask for a person at any time.', 'public', ['meta' => ['kind' => 'king_back']]);
+            cdp_csMessageAdd($conv->id, $t->id, 'system', null, cdp_csSetting('king_name', 'King') . ' is back in this chat. Ask for a person at any time.', 'public', ['meta' => ['kind' => 'king_back']]);
         }
         $reply(['ok' => true] + $ticketPayload(cdp_csTicket($id)));
 

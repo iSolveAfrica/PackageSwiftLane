@@ -36,9 +36,6 @@ $userData = $user->cdp_getUserData();
 $status_courier = intval($_REQUEST['status_courier']);
 $method = intval($_REQUEST['method']);
 $agency = intval($_REQUEST['agency']);
-if ($userData->userlevel == 6) {
-	$agency = (int) cdp_getAgencyBranchIdForUser($userData->name_off);
-}
 $range = cdp_sanitize($_REQUEST['range']);
 $customer_id = intval($_REQUEST['customer_id']);
 
@@ -68,10 +65,10 @@ if ($method > 0) {
 	$sWhere .= " and a.order_payment_method = '" . $method . "'";
 }
 
-if ($userData->userlevel == 3) {
-
-	$sWhere .= " and  a.driver_id = '" . $_SESSION['userid'] . "'";
-}
+// Row scope by role rank (customer -> own, driver -> assigned, agency user / agency-restricted
+// staff -> their agency). Replaces the old userlevel 3/6 seed-id checks, which let restricted
+// staff of other levels read every agency's rows.
+$sWhere .= cdp_ajaxListScopeSql('a.sender_id', 'a.driver_id', 'a.agency');
 
 
 

@@ -48,34 +48,21 @@ $printUrl = $l ? 'print_label_ship.php?id=' . (int) $l['id'] : '';
 </div></section>
 <div class="ls-stage">
 <div class="ls-canvas">
-<?php if (!$l): ?><div class="ix-paper" style="padding:30px;color:#000">No shipment to preview yet. Create one or search above.</div>
-<?php elseif ($d['view'] === '12'): ?>
-<div class="col g12" style="align-items:center;width:100%"><div class="ix-paper" style="width:576px;height:288px;overflow:hidden"><div style="transform:scale(3);transform-origin:0 0"><div class="lb lb12"><div class="row between" style="align-items:baseline"><b style="font-size:<?= (int) $s['size'] ?>px;letter-spacing:-.01em;line-height:1"><?= h($s['use'] === 'track' ? $l['track'] : ($l['locker'] ?: $l['track'])) ?></b><?php if (!empty($s['tag'])): ?><span style="font-size:8px;font-weight:800;border:1.5px solid #000;border-radius:3px;padding:0 3px"><?= h($l['mode'] . ($l['bay'] !== '' ? ' · B' . $l['bay'] : '')) ?></span><?php endif; ?></div><div style="font-size:8.5px;font-weight:600;white-space:nowrap;overflow:hidden"><?= h($l['name'] . ' · ' . $l['weight'] . ' · 1/' . $l['pieces']) ?></div><?php if (!empty($s['barcode'])): ?><?= $d['bcSmall'] ?><?php endif; ?><?php if (!empty($s['code'])): ?><div style="font-size:9px;font-weight:800;letter-spacing:.2em"><?= h($l['track']) ?></div><?php endif; ?></div></div></div>
-<span style="color:#fff;font-size:13px">Shown at 3× · prints at 1 × 2 in</span></div>
-<?php else: $sq = $d['view'] === '44'; ?>
-<div class="ix-paper"<?= $sq ? ' style="width:384px;height:384px;overflow:hidden"' : '' ?>><div<?= $sq ? ' style="transform:scale(.667);transform-origin:0 0"' : '' ?>><div class="lb lbx">
-<div class="lx-top"><?php if (!empty($o['sender'])): ?><div class="lx-from"><b><?= h($l['hub']) ?></b><br><?= h($l['hubAddr']) ?></div><?php endif; ?><div class="lx-meta"><b><?= h($l['weight']) ?></b><span>1 / <?= (int) $l['pieces'] ?></span></div></div>
-<div class="lx-svc"><span class="lx-code"><?= h(substr($l['mode'], 0, 1)) ?></span><div><b><?= h($l['mode'] === 'SEA' ? 'SEA FREIGHT' : 'AIR EXPRESS') ?></b><small><?= h(trim($l['pack'] . ' · ' . $l['svc'], ' ·')) ?></small></div><?php if (!empty($o['fragile'])): ?><span class="lx-flag">FRAGILE</span><?php endif; ?></div>
-<div class="lx-to"><span class="lx-k">Ship to</span><b class="lx-name"><?= h($l['name']) ?></b><div><?= h($l['addr']) ?></div><b style="font-size:15px"><?= h($l['to']) ?></b><?php if (!empty($o['phone'])): ?><div><?= h($l['phone']) ?></div><?php endif; ?></div>
-<div class="lx-route"><?php if (!empty($o['qr'])): ?><span class="lx-qr"><?= $d['qr'] ?></span><?php endif; ?><div class="grow"><div class="row between" style="align-items:baseline"><b style="font-size:26px;letter-spacing:-.01em"><?= h($l['locker'] ?: '—') ?></b><?php if ($l['bay'] !== ''): ?><span class="lx-bay">BAY <?= h($l['bay']) ?></span><?php endif; ?></div><?= $d['bcLocker'] ?></div></div>
-<div class="lx-trk"><b><?= h($l['mode'] === 'SEA' ? 'SEA FREIGHT' : 'AIR EXPRESS') ?></b><span>TRACKING # <?= h($l['track']) ?><?= $l['carrierNo'] !== '' ? ' · ' . h(trim($l['carrier'] . ' ' . $l['carrierNo'])) : '' ?></span></div>
-<div class="lx-bar"><?= $d['bc'] ?></div>
-<?php if (!empty($o['contents'])): ?><div class="lx-cont"><b>CONTENTS</b> <?= h($l['contents']) ?><?php if (!empty($o['value'])): ?> · <b>VALUE <?= h($l['declared']) ?></b><?php endif; ?></div><?php endif; ?>
-<?php if (!empty($o['customs'])): ?><div class="lx-cn22"><b>CN22 · CUSTOMS DECLARATION</b><span>Gift ☐ Sample ☐ Merchandise ☒ · declared <?= h($l['declared']) ?></span></div><?php endif; ?>
-<div class="lx-foot"><span>BILLING: <?= $l['paid'] ? 'PREPAID' : 'COLLECT ON PICKUP' ?></span><?php if (!empty($o['code'])): ?><span>PICKUP CODE SENT BY WHATSAPP</span><?php endif; ?><?php if (!empty($o['postage'])): ?><span>POSTAGE PAID <?= h($l['total']) ?></span><?php endif; ?><?php if (!empty($o['care'])): ?><span>⬆ THIS SIDE UP · HANDLE WITH CARE</span><?php endif; ?></div>
-</div></div></div>
-<?php if (!empty($o['ret']) && !$sq): ?><div class="ix-paper"><div class="lb lbx" style="border-style:dashed">
-<div class="lx-top"><div class="lx-from"><b><?= h($l['name']) ?></b><br><?= h($l['addr']) ?><br><?= h($l['to']) ?></div><div class="lx-meta"><b>RETURN</b><span>1 / <?= (int) $l['pieces'] ?></span></div></div>
-<div class="lx-svc"><span class="lx-code">RS</span><div><b>RETURN SERVICE</b><small>Use within 30 days</small></div></div>
-<div class="lx-to"><span class="lx-k">Return to</span><b class="lx-name"><?= h($l['hub']) ?></b><div><?= h($l['hubAddr']) ?></div></div>
-<div class="lx-bar"><?= $d['bcRet'] ?></div>
-<div class="lx-foot"><span>ORIGINAL <?= h($l['track']) ?></span></div>
-</div></div><?php endif; ?>
-<?php endif; ?>
+<?php $pv = $d['view'] === '12' ? '12' : '46'; $src = 'print_label_ship.php?' . ($l ? 'id=' . (int) $l['id'] : 'test=1') . '&size=' . $pv . '&embed=1'; ?>
+<div class="col g8" style="align-items:center;width:100%">
+  <iframe class="ls-frame<?= $pv === '12' ? ' sm' : '' ?>" src="<?= h($src) ?>" title="Label preview" loading="lazy"></iframe>
+  <span style="color:#fff;font-size:13px"><?= $l ? 'The label exactly as it prints' : 'Sample label: search a shipment above to preview a real one' ?> · <a style="color:#fff;text-decoration:underline" href="<?= h(str_replace('&embed=1', '', $src)) ?>" target="_blank" rel="noopener">open print page</a></span>
+</div>
 </div>
 <div class="row between wrap g8 sm"><span class="mut"><?= h($d['summary']) ?></span><span class="mut"><?= h($o['printer']) ?> · browser print to PDF or label printer</span></div>
 </div>
 </div>
+
+<section class="sl-card col g16" id="printer" style="margin-top:16px">
+  <div class="sl-ch" style="margin:0"><h2 class="sl-ct"><i class="ic ic-sm i-print" aria-hidden="true"></i> Printer settings</h2><span class="mut sm">Paper, alignment, darkness and logo for the label printers</span></div>
+  <?php require_once CDP_ROOT . '/views/sl/data/labels.php'; $pp = sl_printerOptions(); $ppScope = 'me'; include __DIR__ . '/partials/printer_panel.php'; ?>
+  <?php if ($user->cdp_hasPermission('view_tools')): ?><div class="hr" style="border-top:1px solid var(--line)"></div><?php $ppScope = 'team'; include __DIR__ . '/partials/printer_panel.php'; ?><?php endif; ?>
+</section>
 <?php if ($canEdit): ?>
 <script>
 (function () {
@@ -92,3 +79,5 @@ $printUrl = $l ? 'print_label_ship.php?id=' . (int) $l['id'] : '';
 })();
 </script>
 <?php endif; ?>
+
+<style>.ls-frame{width:400px;height:600px;border:0;background:#fff;border-radius:6px}.ls-frame.sm{width:240px;height:130px;transform:scale(2);transform-origin:top center;margin-bottom:130px}</style>

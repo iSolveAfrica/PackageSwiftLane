@@ -26,7 +26,7 @@ body{margin:0}.dk-desk{display:flex;flex-wrap:wrap;gap:20px;padding:20px}
 .mn-chip.on{background:var(--ink);color:var(--inverse);border-color:var(--ink)}
 .mn-dot{width:8px;height:8px;border-radius:50%;background:var(--faint);flex:none}
 .hi .mn-dot{background:var(--red)}.md .mn-dot{background:var(--yellow)}.ok .mn-dot{background:var(--green)}
-.mn-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(230px,100%),1fr));gap:12px}
+.mn-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(290px,100%),1fr));gap:12px}
 .mn-c{display:flex;flex-direction:column;gap:12px;padding:16px;border:1px solid var(--line);border-radius:18px;background:var(--card);color:var(--ink);position:relative;overflow:hidden;transition:transform .15s,box-shadow .15s,border-color .15s}
 .mn-c::after{content:"";position:absolute;right:-30px;top:-30px;width:110px;height:110px;border-radius:50%;background:var(--active);opacity:.6;pointer-events:none}
 .mn-c.hi::after{background:var(--red-bg);opacity:1}.mn-c.md::after{background:#FBF0D9;opacity:1}.mn-c.ok::after{background:var(--green-bg);opacity:1}
@@ -113,3 +113,88 @@ body{margin:0}.dk-desk{display:flex;flex-wrap:wrap;gap:20px;padding:20px}
 .sl-insights__heat-key .h3{background:var(--ch-3)}
 @media(max-width:960px){.sl-insights__grid{grid-template-columns:1fr 1fr}.sl-insights__trend{grid-column:1/-1}}
 @media(max-width:640px){.sl-insights__grid{grid-template-columns:1fr}.sl-insights__trend{grid-column:auto}.sl-insights__periods{width:100%;justify-content:space-between}.sl-insights__mix{gap:16px}.sl-insights__heat{gap:3px}.sl-viz-card{padding:18px}}
+/* daily intake runs the full width of the insights grid; cells become wide, short week columns */
+.sl-insights__intake{grid-column:1/-1}
+.sl-insights__intake .sl-insights__heat{gap:5px}
+.sl-insights__intake .sl-insights__heat span{aspect-ratio:auto;height:clamp(14px,2.2vw,26px)}
+/* Ghana destinations map: wide card, map + region list / selected region */
+.sl-gh{grid-column:1/-1;order:-1;container:gh/inline-size}
+.sl-gh__body{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:20px;align-items:start}
+.sl-gh__map{position:relative;max-width:520px;width:100%;justify-self:center}
+.sl-gh__map svg{width:100%;height:auto;display:block;overflow:visible}
+.sl-gh__land{fill:color-mix(in srgb,var(--ch-1) 10%,var(--card));stroke:color-mix(in srgb,var(--ch-1) 45%,var(--line));stroke-width:1.4;stroke-linejoin:round}
+.sl-gh__reg{cursor:pointer;outline:none}
+.sl-gh__reg .dot{fill:color-mix(in srgb,var(--ch-1) 30%,var(--card));stroke:var(--card);stroke-width:2;transition:fill .15s}
+.sl-gh__reg.l2 .dot{fill:color-mix(in srgb,var(--ch-1) 60%,var(--card))}
+.sl-gh__reg.l3 .dot{fill:var(--ch-1)}
+.sl-gh__reg.l0 .dot{fill:var(--ch-muted)}
+.sl-gh__reg .halo{fill:none;stroke:var(--ch-1);stroke-width:2;opacity:0;transition:opacity .15s}
+.sl-gh__reg:hover .halo,.sl-gh__reg:focus-visible .halo{opacity:.35}
+.sl-gh__reg.on .halo{opacity:1}
+.sl-gh__reg .n{font:600 10.5px var(--font);fill:var(--ink);text-anchor:middle;pointer-events:none}
+.sl-gh__reg.l3 .n{fill:#fff}
+.sl-gh__reg .lbl{font:500 10.5px var(--font);fill:var(--muted);text-anchor:middle;pointer-events:none;paint-order:stroke;stroke:var(--card);stroke-width:3px}
+.sl-gh__reg.on .lbl{fill:var(--ink)}
+.sl-gh__places{display:none}
+.sl-gh__places.on{display:inline}
+.sl-gh__places circle{fill:color-mix(in srgb,var(--ch-2,#2F7FC8) 75%,transparent);stroke:var(--card);stroke-width:1}
+.sl-gh__places circle:hover{fill:var(--ch-2,#2F7FC8)}
+.sl-gh__tip{position:absolute;transform:translate(-50%,calc(-100% - 8px));background:var(--ink);color:var(--inverse);border-radius:10px;padding:7px 10px;font-size:12.5px;pointer-events:none;white-space:nowrap;display:flex;flex-direction:column;gap:2px;box-shadow:0 8px 24px -10px rgba(0,0,0,.4);z-index:2}
+.sl-gh__tip span{opacity:.75}
+.sl-gh__side{display:flex;flex-direction:column;gap:14px;min-width:0}
+.sl-gh__list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 14px}
+.sl-gh__list button{all:unset;box-sizing:border-box;cursor:pointer;display:flex;gap:10px;align-items:center;width:100%;padding:6px 8px;border-radius:10px;font-size:13px}
+.sl-gh__list button:hover{background:var(--hover)}
+.sl-gh__list button.on{background:color-mix(in srgb,var(--ch-1) 12%,var(--card))}
+.sl-gh__list strong{font-variant-numeric:tabular-nums}
+.sl-gh__list small{color:var(--muted);font-weight:400}
+.sl-gh__list .sl-insights__track{margin-top:4px;height:5px}
+.sl-gh__detail{display:none;flex-direction:column;gap:8px;padding:14px;border-radius:14px;background:var(--hover);border:1px solid var(--line)}
+.sl-gh__detail.on{display:flex}
+.sl-gh__detail ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.sl-gh__detail li{display:grid;grid-template-columns:minmax(0,9em) 1fr auto;gap:10px;align-items:center;font-size:13px}
+.sl-gh__detail li span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sl-gh__detail li i{height:6px;border-radius:99px;background:var(--ch-2,#2F7FC8);opacity:.7}
+.sl-gh__detail li b{font-variant-numeric:tabular-nums;font-weight:600}
+.sl-gh__unplaced{font-size:12.5px;color:var(--muted)}
+.sl-gh__unplaced summary{cursor:pointer}
+@container gh (max-width:760px){.sl-gh__body{grid-template-columns:1fr}.sl-gh__list{grid-template-columns:1fr}}
+/* on the Overview the trend card is hidden, so the status mix takes its own full row */
+.sl-insights__grid>.sl-viz-card--violet{grid-column:1/-1}
+/* smart briefing: severity stripe, facts row, meter, info level, chip counts */
+.mn-c{border-left-width:4px}
+.mn-c.hi{border-left-color:var(--red)}.mn-c.md{border-left-color:#E9B949}.mn-c.ok{border-left-color:var(--green)}.mn-c.in{border-left-color:var(--sky)}
+.mn-c.in::after{background:var(--sky-bg);opacity:1}.mn-c.in .mn-ic{background:var(--sky-bg);color:var(--sky-ink);border-color:transparent}.mn-c.in .mn-sev{background:var(--sky);color:#fff}
+.mn-facts{display:grid;grid-template-columns:repeat(var(--n,3),minmax(0,1fr));gap:6px;margin:0;position:relative;z-index:1}
+.mn-facts div{padding:8px 10px;border-radius:10px;background:var(--hover);min-width:0}
+.mn-facts dt{font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mn-facts dd{margin:2px 0 0;font:600 15.5px var(--font);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mn-c.hi .mn-facts div{background:color-mix(in srgb,var(--red) 7%,var(--hover))}
+.mn-meter{display:flex;flex-direction:column;gap:4px}
+.mn-meter span{height:6px;border-radius:99px;background:var(--hover);overflow:hidden}
+.mn-meter i{display:block;height:100%;border-radius:inherit;background:var(--ink)}
+.mn-c.hi .mn-meter i{background:var(--red)}.mn-c.md .mn-meter i{background:#E9B949}.mn-c.ok .mn-meter i{background:var(--green)}
+.mn-meter small{font-size:12.5px;color:var(--muted)}
+.mn-cn{font-weight:600;font-size:12.5px;padding:1px 7px;border-radius:99px;background:var(--hover);color:var(--ink)}
+.mn-chip.on .mn-cn{background:rgba(255,255,255,.18);color:inherit}
+.mn-cards [hidden]{display:none}
+/* Status counts stay together instead of spanning an empty full-width card. */
+.sl-air-status{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:20px}
+.sl-air-status__row{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+.sl-air-status__row small{color:var(--muted)}
+.sl-air-status__row meter{grid-column:1/-1;width:100%;height:12px;accent-color:var(--status-color)}
+.sl-air-status__row meter::-webkit-meter-optimum-value{background:var(--status-color)}
+.sl-air-status__row meter::-moz-meter-bar{background:var(--status-color)}
+.sl-gh__map{overflow:hidden}
+.sl-gh__map svg{aspect-ratio:1/1.15;overflow:hidden}
+.sl-gh__map [data-gh-reset]{position:relative;z-index:1;margin-bottom:8px}
+.sl-gh__place-label{display:none;font:5px var(--font);fill:var(--ink);paint-order:stroke;stroke:var(--card);stroke-width:1px;pointer-events:none}
+.sl-gh.is-zoomed .sl-gh__places.on .sl-gh__place-label{display:inline}
+.sl-gh.is-zoomed .sl-gh__reg{opacity:.25}
+.sl-gh.is-zoomed .sl-gh__reg.on{display:none}
+.sl-gh__detail ul{max-height:340px;overflow-y:auto}
+.sl-gh__detail li span{white-space:normal;overflow-wrap:anywhere}
+/* The freight card owns the headline; daily comparison remains available on demand. */
+.sl-insights__comparison summary{cursor:pointer;display:flex;flex-direction:column;gap:5px;padding:4px 0;list-style:disclosure-closed}
+.sl-insights__comparison[open] summary{padding-bottom:18px;list-style:disclosure-open}
+.sl-insights__comparison-body{min-width:0}

@@ -67,8 +67,12 @@ class Conexion
             self::$sharedDbh = $this->dbh;
         } catch (PDOException $e) {
             $this->error = $e->getMessage();
-            // Puedes considerar registrar el error en lugar de mostrarlo
-            echo $this->error;
+            // Log the details; never print them (they can include the host, user and DSN).
+            error_log('DB connection failed: ' . $this->error);
+            if (PHP_SAPI !== 'cli' && !headers_sent()) {
+                http_response_code(503);
+            }
+            echo 'The service is temporarily unavailable. Please try again in a moment.';
         }
     }
 

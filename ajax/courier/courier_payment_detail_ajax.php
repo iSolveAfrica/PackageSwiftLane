@@ -55,10 +55,34 @@ $numrows = $db->cdp_rowCount();
 $db->cdp_query($sql);
 $data = $db->cdp_registro();
 
+// view_shipment_list is also granted to customers, drivers and agency users, and the id comes from
+// the request: only show the payment of a shipment the caller may see (same rule as the print
+// pages, helpers/print_access.php). Out of scope is answered like a missing shipment: nothing.
+require_once(__DIR__ . '/../../helpers/print_access.php');
+if (!$data || !cdp_printRowInScope($data, (int) $user->uid, (int) $user->userlevel)) {
+    exit;
+}
+
 
 
 $db->cdp_query("SELECT * FROM cdb_met_payment where id= '" . $data->order_pay_mode . "'");
 $met_payment = $db->cdp_registro();
+
+// Payment notes and the attachment path are stored values (notes are often already HTML-encoded
+// by cdp_sanitize()): decode once and escape on output so stored markup cannot run in this popup.
+$payEsc = function ($v) {
+    return htmlspecialchars(html_entity_decode((string) $v, ENT_QUOTES | ENT_HTML5, 'UTF-8'), ENT_QUOTES, 'UTF-8');
+};
+// The attachment is a relative file under assets/ (e.g. payment_packages/x.pdf). Anything else
+// (a scheme, an absolute path, "..") gets no link; each segment is URL-encoded so the value
+// cannot leave the href attribute.
+$payAttach = str_replace('\\', '/', trim((string) ($data->url_payment_attach ?? '')));
+$payAttachHref = '#';
+if ($payAttach !== '' && $payAttach[0] !== '/' && strpos($payAttach, '..') === false
+    && strpos($payAttach, ':') === false && !preg_match('/[\x00-\x1F\x7F]/', $payAttach)) {
+    $payAttachHref = 'assets/' . implode('/', array_map('rawurlencode', explode('/', $payAttach)));
+}
+
 
 
 ?>
@@ -66,12 +90,12 @@ $met_payment = $db->cdp_registro();
 
 <div class="row">
     <div class="col-md-6">
-        <h3 class=" pull-left"><b class="text-danger"> <?php echo $lang['billing'] ?></b> <span>#<?php echo $data->order_prefix . $data->order_no; ?></span></h3>
+        <h3 class=" pull-left"><b class="text-danger"> <?php echo $lang['billing'] ?></b> <span>#<?php echo $payEsc($data->order_prefix . $data->order_no); ?></span></h3>
     </div>
 
     <div class="col-md-6  pull-right">
         <div class="btn-group pull-right">
-            <a href="assets/<?php echo $data->url_payment_attach; ?>" target="blank" class="btn btn-info text-white">
+            <a href="<?php echo h($payAttachHref); ?>" target="blank" class="btn btn-info text-white">
                 <?php echo $lang['left1108'] ?>
             </a>
         </div>
@@ -105,7 +129,7 @@ $met_payment = $db->cdp_registro();
             // Verifica si se obtuvo el resultado de la consulta para el método de pago
             $met_payment_name = $met_payment ? $met_payment->name_pay : '';
             ?>
-            <p class="text-muted  m-l-5"><?php echo $met_payment_name; ?></p>
+            <p class="text-muted  m-l-5"><?php echo $payEsc($met_payment_name); ?></p>
         </div>
     </div>
 
@@ -113,7 +137,7 @@ $met_payment = $db->cdp_registro();
         <div class="pull-left">
             <h5> &nbsp;<b><?php echo $lang['modal-text18'] ?></b></h5>
             <b class="text-muted  m-l-5"><?php if ($data->notes != null) {
-                                                echo $data->notes;
+                                                echo $payEsc($data->notes);
                                             } ?></b>
         </div>
     </div>

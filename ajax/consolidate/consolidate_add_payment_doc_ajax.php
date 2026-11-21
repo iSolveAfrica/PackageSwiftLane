@@ -31,6 +31,32 @@ $user = new User;
 $core = new Core;
 $errors = array();
 
+// view_consolidate_list is also granted to customers, drivers and agencies, and
+// order_id comes from the URL: without this check any of them could mark any
+// consolidation as paid. Below staff rank the consolidation must be one the
+// user can see in the list (theirs as sender/driver, or their agency's).
+require_once(__DIR__ . '/../../helpers/rbac.php');
+$userData = $user->cdp_getUserData();
+$order_id = (int) ($_GET['order_id'] ?? 0);
+$consolidation = null;
+if ($order_id > 0) {
+    $db->cdp_query("SELECT consolidate_id, sender_id, driver_id, agency FROM cdb_consolidate WHERE consolidate_id = :id LIMIT 1");
+    $db->bind(':id', $order_id);
+    $db->cdp_execute();
+    $consolidation = $db->cdp_registro();
+}
+$canPay = (bool) $consolidation;
+if ($canPay && cdp_roleRankById((int) $userData->userlevel) < 2) {
+    $uid = (int) $_SESSION['userid'];
+    $agencyBranch = ((int) $userData->userlevel === 6) ? (int) cdp_getAgencyBranchIdForUser($userData->name_off) : 0;
+    $canPay = (int) $consolidation->sender_id === $uid
+        || (int) $consolidation->driver_id === $uid
+        || ($agencyBranch > 0 && (int) $consolidation->agency === $agencyBranch);
+}
+if (!$canPay) {
+    $errors['order_id'] = $lang['message_ajax_error2'];
+}
+
 
 
 if (empty($_POST['mode_pay']))
@@ -44,10 +70,35 @@ if (empty($_FILES['file_invoice']['name']))
 
 if (!empty($_FILES['file_invoice']['name'])) {
 
+    // assets/payment_packages/ is web-served: the client's file name and
+    // extension were kept, so a .php/.html/.svg "proof" could be stored there.
+    // Accept only PDF/images (checked by extension and content) and store
+    // them under a random name with the allow-listed extension.
+    $allowedProofTypes = [
+        'pdf' => ['application/pdf', 'application/x-pdf'],
+        'jpg' => ['image/jpeg'], 'jpeg' => ['image/jpeg'],
+        'png' => ['image/png'], 'gif' => ['image/gif'], 'webp' => ['image/webp'],
+    ];
+    $imageFileType = strtolower(pathinfo((string) $_FILES["file_invoice"]["name"], PATHINFO_EXTENSION));
+    $proofTmp = (string) $_FILES["file_invoice"]["tmp_name"];
+    $proofMime = '';
+    if (function_exists('finfo_open') && is_uploaded_file($proofTmp)) {
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $proofMime = (string) finfo_file($finfo, $proofTmp);
+        finfo_close($finfo);
+    }
+    if (
+        (int) $_FILES["file_invoice"]["error"] !== UPLOAD_ERR_OK
+        || !isset($allowedProofTypes[$imageFileType])
+        || !is_uploaded_file($proofTmp)
+        || ($proofMime !== '' && !in_array($proofMime, $allowedProofTypes[$imageFileType], true))
+    ) {
+        $errors['file_invoice'] = 'The proof of payment must be a PDF or image file (JPG, PNG, GIF, WEBP).';
+    }
+
     $target_dir = "../../assets/payment_packages/";
-    $image_name = time() . "_" . basename($_FILES["file_invoice"]["name"]);
+    $image_name = time() . "_" . bin2hex(random_bytes(8)) . "." . $imageFileType;
     $target_file = $target_dir . $image_name;
-    $imageFileType = pathinfo($target_file, PATHINFO_EXTENSION);
     $imageFileZise = $_FILES["file_invoice"]["size"];
 }
 
@@ -59,7 +110,7 @@ if (empty($errors)) {
     $data = array(
 
         'mode_pay'   =>   cdp_sanitize($_POST["mode_pay"]),
-        'order_id'   =>   trim($_GET["order_id"]),
+        'order_id'   =>   $order_id,
         'notes'   =>   cdp_sanitize($_POST["notes"]),
         'status_invoice'   =>   $status_invoice,
         'payment_date'   =>  date("Y-m-d H:i:s"),
@@ -72,9 +123,9 @@ if (empty($errors)) {
 
     if (!empty($_FILES['file_invoice']['name'])) {
 
-        move_uploaded_file($_FILES["file_invoice"]["tmp_name"], $target_file);
-        $imagen = basename($_FILES["file_invoice"]["name"]);
-        $data['file_invoice'] = 'payment_packages/' . $image_name;
+        if (move_uploaded_file($_FILES["file_invoice"]["tmp_name"], $target_file)) {
+            $data['file_invoice'] = 'payment_packages/' . $image_name;
+        }
     }
 
     $insert = cdp_updatePaymentConsolidate($data);
@@ -110,7 +161,7 @@ if (empty($errors)) {
 
 
         $db->bind(':user_id',  $_SESSION['userid']);
-        $db->bind(':order_id', $_GET["order_id"]);
+        $db->bind(':order_id', $order_id);
         $db->bind(':notification_description', $lang['notification_shipment16']);
         $db->bind(':shipping_type', '2');
         $db->bind(':notification_date',  date("Y-m-d H:i:s"));

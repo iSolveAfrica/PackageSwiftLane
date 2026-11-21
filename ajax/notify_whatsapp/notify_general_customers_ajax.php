@@ -24,7 +24,11 @@
 require_once("../../loader.php");
 require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_login();
-require_permission('view_dashboard');
+// Sends an arbitrary WhatsApp body from the company account to the users / order owners named in the
+// request. view_dashboard is customer-facing, so it let any customer use this; gate it like the
+// push_notifications pages and refuse every role below staff.
+require_permission('push_notifications');
+require_staff();
 
 require_once("../../helpers/querys.php");
 require_once("../notify_whatsapp/api_whatsapp_service_v2.php");

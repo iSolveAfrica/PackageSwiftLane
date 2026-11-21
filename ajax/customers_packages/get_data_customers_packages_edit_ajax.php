@@ -29,13 +29,27 @@ require_permission('view_client_list');
 
 
 $db = new Conexion;
+$user = new User;
 
-$order_id = cdp_sanitize($_GET['id']);
+// The id is a primary key: cast it instead of pasting the sanitized string into SQL.
+$order_id = (int) ($_GET['id'] ?? 0);
 $list = array();
 
-$sql = "SELECT * FROM cdb_customers_packages_detail  WHERE  order_id='" . $order_id . "'";
+// The items belong to a package: only list them when the caller may see that package
+// (agency-restricted staff only reach their agency's, as with get_data_shipment_edit_ajax.php).
+// Out of scope or missing is answered with an empty list.
+require_once(__DIR__ . '/../../helpers/print_access.php');
+$db->cdp_query("SELECT sender_id, driver_id, agency FROM cdb_customers_packages WHERE order_id = :id LIMIT 1");
+$db->bind(':id', $order_id);
+$db->cdp_execute();
+$owner = $db->cdp_registro();
+if ($order_id <= 0 || !$owner || !cdp_printRowInScope($owner, (int) $user->uid, (int) $user->userlevel)) {
+    echo json_encode($list);
+    exit;
+}
 
-$db->cdp_query($sql);
+$db->cdp_query("SELECT * FROM cdb_customers_packages_detail  WHERE  order_id = :id");
+$db->bind(':id', $order_id);
 $db->cdp_execute();
 
 $data = $db->cdp_registros();

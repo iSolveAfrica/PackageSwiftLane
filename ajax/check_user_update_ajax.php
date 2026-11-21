@@ -1,6 +1,10 @@
 <?php
 require_once("../loader.php");
 require_once("../helpers/querys.php");
+require_once(__DIR__ . '/../helpers/ajax_guard.php');
+// Reads the signed-in user's own onboarding checklist and phone. Every role loads it from the
+// footer, so a session is all it needs; without one there is no user to answer for.
+require_login();
 
 header('Content-Type: application/json; charset=UTF-8');
 

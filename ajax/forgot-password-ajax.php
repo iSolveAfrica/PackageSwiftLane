@@ -18,20 +18,39 @@
     $email = is_string($_POST['email'] ?? null) ? trim($_POST['email']) : '';
     if (empty($email)) $errors['email'] = 'Enter a valid email address';
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors['email'] = 'The email address you entered is invalid.';
-    if (empty($errors) && !$user->cdp_emailExists($email)) $errors['email'] = 'The email address you entered does not exist.';
 
     if (!empty($errors)) {
         echo json_encode(['success' => false, 'errors' => implode(' ', $errors)]);
         exit;
     }
 
+    // Security: answer the same way whether or not the address has an account,
+    // so this endpoint cannot be used to discover registered emails. A code is
+    // only created and sent when the account exists.
+    $genericReply = [
+        'success'  => true,
+        'messages' => 'If an account exists for that email, a reset code has been sent to it.',
+        'redirect' => 'auth-otp.php?flow=forgot'
+    ];
+
     $db->cdp_query("SELECT id,fname,lname,email FROM cdb_users WHERE email=:email LIMIT 1");
     $db->bind(':email', $email);
     $u = $db->cdp_registro();
+    // Security: an unknown address (or a request we refuse) gets a decoy code
+    // context, so auth-otp.php shows the same code form instead of bouncing to
+    // "code expired" (which told an attacker the email had no account). Any code
+    // entered against the decoy is simply rejected.
+    $startDecoy = function () use ($email) {
+        unset($_SESSION['otp_forgot_challenge'], $_SESSION['otp_forgot_user_id']);
+        $_SESSION['otp_forgot_decoy'] = ['email' => $email, 'at' => time(), 'attempts' => 0];
+    };
+
     if (!$u) {
-        echo json_encode(['success' => false, 'errors' => 'Unable to process request.']);
+        $startDecoy();
+        echo json_encode($genericReply);
         exit;
     }
+    unset($_SESSION['otp_forgot_decoy']);
 
     $otp = new OtpService;
     $challenge = $otp->createChallenge((int)$u->id, 'forgot', ['email' => $u->email]);
@@ -42,14 +61,28 @@
         if (!empty($challenge['existing_id'])) {
             $_SESSION['otp_forgot_challenge'] = (int)$challenge['existing_id'];
             $_SESSION['otp_forgot_user_id']   = (int)$u->id;
-            echo json_encode([
-                'success'  => true,
-                'messages' => 'A reset code was already sent recently. Enter it to continue.',
-                'redirect' => 'auth-otp.php?flow=forgot'
-            ]);
+            echo json_encode($genericReply);
             exit;
         }
-        echo json_encode(['success' => false, 'errors' => $challenge['error']]);
+        // Hard cap reached: answer exactly like the unknown-email path so the
+        // limit cannot be used to confirm the account exists; log it instead.
+        error_log('forgot-password: OTP request refused for user ' . (int)$u->id . ': ' . (string)($challenge['error'] ?? ''));
+        // A code already sent and still valid stays usable: switching this
+        // session to the decoy would make the real code in the mailbox fail.
+        $db->cdp_query("SELECT id FROM cdb_auth_otp_challenges
+            WHERE user_id = :u AND purpose = 'forgot' AND status = 'pending' AND expires_at > :now
+            ORDER BY created_at DESC LIMIT 1");
+        $db->bind(':u', (int)$u->id);
+        $db->bind(':now', date('Y-m-d H:i:s'));
+        $live = $db->cdp_registro();
+        if ($live) {
+            $_SESSION['otp_forgot_challenge'] = (int)$live->id;
+            $_SESSION['otp_forgot_user_id']   = (int)$u->id;
+            echo json_encode($genericReply);
+            exit;
+        }
+        $startDecoy();
+        echo json_encode($genericReply);
         exit;
     }
 
@@ -58,18 +91,11 @@
     $_SESSION['otp_forgot_challenge'] = $challenge['id'];
     $_SESSION['otp_forgot_user_id']   = (int)$u->id;
 
-    // Email is the primary channel for password reset — surface a failure instead
-    // of silently claiming success.
+    // A mail failure is logged server-side rather than shown: a distinct error
+    // here would only ever appear for registered emails (account enumeration).
+    // The user can still use Resend on the code page.
     if (empty($emailResult['ok'])) {
-        echo json_encode([
-            'success' => false,
-            'errors'  => 'Could not send the reset code by email: ' . (isset($emailResult['error']) ? $emailResult['error'] : 'unknown error') . '.'
-        ]);
-        exit;
+        error_log('forgot-password: reset code email failed for user ' . (int)$u->id . ': ' . (isset($emailResult['error']) ? $emailResult['error'] : 'unknown error'));
     }
 
-    echo json_encode([
-        'success' => true,
-        'messages' => 'OTP sent to your email. Verify it to continue password reset.',
-        'redirect' => 'auth-otp.php?flow=forgot'
-    ]);
+    echo json_encode($genericReply);

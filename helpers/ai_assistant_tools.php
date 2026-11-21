@@ -26,6 +26,8 @@
 
 require_once __DIR__ . '/ai_assistant.php';
 
+require_once __DIR__ . '/ai_site_index.php';
+
 if (!function_exists('cdp_aiModules')) {
 
     /** The record types the assistant can read, and how each maps to SQL. */
@@ -451,6 +453,16 @@ if (!function_exists('cdp_aiModules')) {
             ];
         }
         $tools[] = [
+            'name' => 'search_site',
+            'description' => 'Search the whole site index: every page this user can open (title, menu group, link, what it is for), facts the team taught the assistant, and published help articles. Use it for "where do I…", "how do I…", "is there a page for…", and to point to related pages with links. Prefer it to list_pages when the question has words to search for.',
+            'parameters' => [
+                'type' => 'object',
+                'properties' => ['query' => ['type' => 'string', 'description' => 'Words to look for, e.g. "unpaid invoices", "print label", "rider fees".']],
+                'required' => ['query'],
+                'additionalProperties' => false,
+            ],
+        ];
+        $tools[] = [
             'name' => 'list_pages',
             'description' => 'The pages of the system this user can open, with what each is for and its link. Use to answer "where do I…", "how do I…" and to point people to the right screen.',
             'parameters' => ['type' => 'object', 'properties' => new stdClass(), 'required' => [], 'additionalProperties' => false],
@@ -527,7 +539,8 @@ if (!function_exists('cdp_aiModules')) {
                 case 'recent_activity': return cdp_aiToolActivity($args, $ctx);
                 case 'finance_summary': return cdp_aiToolFinance($args, $ctx);
                 case 'find_customer':   return cdp_aiToolFindCustomer($args, $ctx);
-                case 'list_pages':      return ['pages' => cdp_aiPagesFor($ctx['user'])];
+                case 'list_pages':      return ['pages' => cdp_aiSiteIndex($ctx['user'])];
+                case 'search_site':     return cdp_aiToolSearchSite($args, $ctx);
                 case 'list_statuses':   return cdp_aiToolStatuses();
                 case 'suggest_page':    return cdp_aiToolSuggestPage($args, $ctx);
                 case 'remember_fact':   return cdp_aiToolRemember($args, $ctx);
@@ -1007,6 +1020,6 @@ if (!function_exists('cdp_aiModules')) {
             return ['error' => 'Only administrators can teach the assistant.'];
         }
         $id = cdp_aiKnowledgeAdd((string) ($a['fact'] ?? ''), $ctx['uid'], 'chat');
-        return $id ? ['ok' => true, 'note' => 'Saved. It is listed under Tools > AI Assistant > What the assistant knows.'] : ['error' => 'Nothing to save.'];
+        return $id ? ['ok' => true, 'note' => 'Saved. It is listed under Tools > King > What King knows.'] : ['error' => 'Nothing to save.'];
     }
 }

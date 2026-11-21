@@ -15,13 +15,22 @@ if (!$id) exit;
 
 $offset = ($page - 1) * $per_page;
 
-$db          = new Conexion;
-$db->cdp_query("SELECT * FROM cdb_consolidate_detail WHERE consolidate_id='" . $id . "' LIMIT $offset, $per_page");
-$order_items = $db->cdp_registros();
-
 // also need the parent row for value_weight etc.
 $data       = cdp_getConsolidatePrint($id);
 $row_order  = $data['data'];
+
+// view_consolidate is customer-facing, so ?id= alone must not list another customer's
+// (or another agency's) packages: same ownership rule as the print pages. Out of scope
+// answers like an unknown id (no rows).
+require_once('../../helpers/print_access.php');
+global $user;
+if (!$row_order || !cdp_printRowInScope($row_order, (int) $user->uid, (int) $user->userlevel)) {
+    exit;
+}
+
+$db          = new Conexion;
+$db->cdp_query("SELECT * FROM cdb_consolidate_detail WHERE consolidate_id='" . $id . "' LIMIT $offset, $per_page");
+$order_items = $db->cdp_registros();
 
 if ($order_items):
     $sumador_total     = 0;

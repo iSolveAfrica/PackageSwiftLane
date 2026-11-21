@@ -6,70 +6,27 @@
 if (!isset($d)) { $d = []; }
 $wh = $d['warehouse']; $pk = $d['pickups']; $rv = $d['revenue'];
 ?>
-        <h1 class="sl-title">Overview</h1>
-<section class="sl-card dk-desk" aria-label="Your desk">
-          <div class="dk-me">
-            <div class="row g12"><span class="sl-av lg dark"><?= h($d['me']['ini']) ?></span><div><div class="fw5" style="font-size:16px"><?= h($d['me']['name']) ?></div><div class="mut sm"><?= h($slSub ?? '') ?></div></div></div>
-            <div class="col g6"><div class="row between sm"><span class="mut"><?= h($d['shift']['label']) ?></span><span class="mono"><?= (int) $d['shift']['pct'] ?>%</span></div><div class="sl-ticks n"><i style="width:<?= (int) $d['shift']['pct'] ?>%"></i></div></div>
-            <div class="row between sm"><span class="mut">Cleared today</span><span><b class="mono"><?= (int) $d['doneToday'] ?></b> <span class="mut">actions · <?= (int) $d['queueTotal'] ?> in queues</span></span></div>
-            <div class="col g8" style="margin-top:auto">
-              <a class="sl-btn sm" href="<?= sl_route('Warehouse') ?>"><i class="ic ic-sm i-scan" aria-hidden="true"></i>Scan package</a>
-              <div class="row g8"><a class="sl-btn sm ghost grow" href="<?= sl_route('RiderDispatch') ?>"><i class="ic ic-sm i-truck" aria-hidden="true"></i>Dispatch</a><a class="sl-btn sm ghost grow" href="<?= sl_route('AirShipments') ?>"><i class="ic ic-sm i-print" aria-hidden="true"></i>Print AWBs</a></div>
-              <div class="row g8"><a class="sl-btn sm ghost grow" href="<?= sl_route('Customers', ['filter' => 'unapproved']) ?>"><i class="ic ic-sm i-user" aria-hidden="true"></i>Approvals</a></div>
-            </div>
-          </div>
+        <?php include __DIR__ . '/partials/overview_hero.php'; ?>
+
+        <?php if (!empty($d['tracking']['items'])): $tc = $d['tracking']; $tcTitle = 'Tracking list'; $tcNoun = 'shipments'; $tcExpand = sl_route('LiveTracking'); ?>
+        <?php include __DIR__ . '/partials/track_console.php'; ?>
+        <?php endif; ?>
+
+<?php if ($d['queues'] || $d['deskStats']): ?>
+<section class="sl-card dk-desk solo" aria-label="Your desk">
           <div class="dk-qs">
-            <div class="row between" style="margin-bottom:6px"><div class="up row g8"><i class="ic ic-sm i-grid" aria-hidden="true"></i>Your desk · <?= (int) $d['queueTotal'] ?> items in your queues</div><span class="mut sm">Sorted by urgency</span></div>
+            <div class="row between" style="margin-bottom:6px"><div class="up row g8"><i class="ic ic-sm i-grid" aria-hidden="true"></i>Your desk · <?= (int) $d['queueTotal'] ?> items in additional queues</div><span class="mut sm">More work queues and daily totals</span></div>
             <div class="dk-grid"><?php foreach ($d['queues'] as $q): ?><a class="dk-q" href="<?= h($q['href']) ?>"><span class="sl-tile"><i class="ic ic-sm <?= h($q['icon']) ?>" aria-hidden="true"></i></span><span class="grow col"><span class="fw5"><?= h($q['label']) ?></span><span class="sm" style="color:<?= h($q['tone']) ?>"><?= h($q['sub']) ?></span></span><b class="mono"><?= (int) $q['n'] ?></b><i class="ic ic-sm i-right mut" aria-hidden="true"></i></a><?php endforeach; ?><?php if (!$d['queues']): ?><div class="sl-empty">No queues are assigned to your role.</div><?php endif; ?></div>
             <?php include __DIR__ . '/partials/overview_desk_stats.php'; ?>
           </div>
         </section>
-
-        <?php if (!empty($d['tracking']['items'])): $tc = $d['tracking']; $tcTitle = 'Tracking list'; $tcNoun = 'shipments'; $tcExpand = $user->cdp_hasPermission('track_shipment') ? sl_route('ShipmentTracking') : ''; ?>
-        <?php include __DIR__ . '/partials/track_console.php'; ?>
-        <?php endif; ?>
-
-        <div class="sl-data-grid">
-          <?php if (cdp_financeEnabled() && cdp_canViewMoney($user, 'dashboard')): ?>
-          <a class="sl-data-card sl-data-card--amber" href="<?= sl_route('FinancialOverview') ?>">
-            <header><h2 class="sl-data-card__title">Revenue &amp; billing</h2><span class="sl-data-card__period">This month</span></header>
-            <p class="sl-data-card__value"><?= h(sl_money($rv['value'])) ?></p>
-            <p class="sl-data-card__detail"><?= sl_num($rv['parcels']) ?> parcels · next settlement <?= h($rv['next']) ?></p>
-            <?php if ($rv['target'] > 0): ?>
-              <div class="sl-data-meter" role="img" aria-label="<?= (int) $rv['pct'] ?>% of target"><i style="width:<?= (int) $rv['pct'] ?>%"></i></div>
-              <p class="sl-data-card__detail">Target <?= h(sl_money($rv['target'])) ?></p>
-            <?php endif; ?>
-          </a>
-          <?php elseif ($user->cdp_hasPermission(['view_shipment_list', 'view_general_shipments'])): ?>
-          <a class="sl-data-card" href="<?= sl_route('AirShipments') ?>">
-            <header><h2 class="sl-data-card__title">Shipments registered</h2><span class="sl-data-card__period">This month</span></header>
-            <p class="sl-data-card__value"><?= sl_num($rv['parcels']) ?></p>
-            <p class="sl-data-card__detail">Since <?= h(date('M 1')) ?></p>
-          </a>
-          <?php endif; ?>
-          <?php if ($user->cdp_hasPermission(['view_pickup_list', 'view_general_pickups'])): ?>
-          <a class="sl-data-card sl-data-card--violet" href="<?= sl_route('Pickups') ?>">
-            <header><h2 class="sl-data-card__title">Pickup completion</h2><span class="sl-data-card__period">Today</span></header>
-            <p class="sl-data-card__value"><?= sl_num($pk['done']) ?> / <?= sl_num($pk['total']) ?></p>
-            <div class="sl-data-meter" role="img" aria-label="<?= (int) $pk['pct'] ?>% completed"><i style="width:<?= (int) $pk['pct'] ?>%"></i></div>
-            <p class="sl-data-card__detail"><?= sl_num($pk['drivers']) ?> drivers on route · <?= sl_num($pk['unassigned']) ?> unassigned</p>
-          </a>
-          <?php endif; ?>
-          <?php if ($user->cdp_hasPermission(['warehouse_view', 'view_warehouse_delivery'])): ?>
-          <a class="sl-data-card sl-data-card--mint" href="<?= sl_route('Warehouse') ?>">
-            <header><h2 class="sl-data-card__title">Warehouse capacity</h2><span class="sl-data-card__period">Current</span></header>
-            <p class="sl-data-card__value"><?= sl_num($wh['used']) ?><?= $wh['capacity'] ? ' / ' . sl_num($wh['capacity']) : '' ?></p>
-            <?php if ($wh['capacity']): ?><div class="sl-data-meter" role="img" aria-label="<?= (int) $wh['pct'] ?>% of capacity used"><i style="width:<?= (int) $wh['pct'] ?>%"></i></div><?php endif; ?>
-            <p class="sl-data-card__detail"><?= sl_num($wh['arriving']) ?> arriving · <?= sl_num($wh['awaiting']) ?> awaiting pickup</p>
-          </a>
-          <?php endif; ?>
-        </div>
+<?php endif; ?>
 
         <?php include __DIR__ . '/partials/overview_insights.php'; ?>
 
-        <section class="mn-brief" aria-label="Smart briefing" data-sl-scope><div class="mn-bh"><span class="mn-ai"><i class="ic i-ai" aria-hidden="true"></i></span><div class="col grow"><b class="fw5">Good <?= date('G') < 12 ? 'morning' : (date('G') < 17 ? 'afternoon' : 'evening') ?>, <?= h($userData->fname ?? '') ?>. <?= h($d['briefLead']) ?></b><span class="mut sm">Picked from shipments, payments, riders, messages and the warehouse · updated just now</span></div><a class="sl-btn ghost sm" href="<?= sl_route('StaffAI') ?>"><i class="ic ic-sm i-spark" aria-hidden="true"></i>Ask AI</a></div>
-<div class="mn-sum" data-sl-filter-seg><?php foreach ($d['bfil'] as $f): ?><button type="button" class="mn-chip <?= h($f['cls']) ?>" data-f="<?= h($f['f']) ?>"><span class="mn-dot"></span><?= h($f['label']) ?></button><?php endforeach; ?></div>
-<div class="mn-cards"><?php foreach ($d['brief'] as $b): ?><a class="mn-c <?= h($b['lvl']) ?>" href="<?= h($b['href']) ?>" data-sl-row data-f="<?= h($b['cat']) ?>"><div class="mn-ch"><span class="mn-ic"><i class="ic <?= h($b['icon']) ?>" aria-hidden="true"></i></span><span class="mn-tag"><?= h($b['tag']) ?></span><span class="mn-sev"><?= h($b['sev']) ?></span></div><div class="mn-fig"><b><?= h($b['big']) ?></b><span><?= h($b['bigS']) ?></span></div><div class="col g4"><span class="mn-t"><?= h($b['t']) ?></span><span class="mn-d"><?= h($b['d']) ?></span></div><span class="mn-go"><?= h($b['cta']) ?><i class="ic ic-sm i-right" aria-hidden="true"></i></span></a><?php endforeach; ?><div class="sl-empty" data-sl-empty hidden>Nothing in this category.</div></div></section>
+        <section class="mn-brief" aria-label="Smart briefing" data-sl-scope><div class="mn-bh"><span class="mn-ai"><i class="ic i-ai" aria-hidden="true"></i></span><div class="col grow"><b class="fw5">Good <?= date('G') < 12 ? 'morning' : (date('G') < 17 ? 'afternoon' : 'evening') ?>, <?= h($userData->fname ?? '') ?>. <?= h($d['briefLead']) ?></b><span class="mut sm">Picked from shipments, payments, riders, messages and the warehouse · updated just now</span></div><a class="sl-btn ghost sm" href="<?= sl_route('StaffAI') ?>"><i class="ic ic-sm i-spark" aria-hidden="true"></i>Ask <?= h(cdp_kingName()) ?></a></div>
+<div class="mn-sum" data-sl-filter-seg><?php foreach ($d['bfil'] as $f): ?><button type="button" class="mn-chip <?= h($f['cls']) ?>" data-f="<?= h($f['f']) ?>"><span class="mn-dot"></span><?= h($f['label']) ?><?php if (isset($f['n'])): ?> <b class="mn-cn"><?= (int) $f['n'] ?></b><?php endif; ?></button><?php endforeach; ?></div>
+<div class="mn-cards"><?php foreach ($d['brief'] as $b): ?><a class="mn-c <?= h($b['lvl']) ?>" href="<?= h($b['href']) ?>" data-sl-row data-f="<?= h($b['cat']) ?>"><div class="mn-ch"><span class="mn-ic"><i class="ic <?= h($b['icon']) ?>" aria-hidden="true"></i></span><span class="mn-tag"><?= h($b['tag']) ?></span><span class="mn-sev"><?= h($b['sev']) ?></span></div><div class="mn-fig"><b><?= h($b['big']) ?></b><span><?= h($b['bigS']) ?></span></div><div class="col g4"><span class="mn-t"><?= h($b['t']) ?></span><span class="mn-d"><?= h($b['d']) ?></span></div><?php foreach ($b['context'] ?? [] as $context): ?><span class="mn-d"><?= h($context) ?></span><?php endforeach; ?><?php if (!empty($b['facts'])): ?><dl class="mn-facts" style="--n:<?= count($b['facts']) ?>"><?php foreach ($b['facts'] as [$fl, $fv]): ?><div><dt><?= h($fl) ?></dt><dd><?= h($fv) ?></dd></div><?php endforeach; ?></dl><?php endif; ?><?php if (!empty($b['meter'])): ?><div class="mn-meter"><span><i style="width:<?= (int) $b['meter']['pct'] ?>%"></i></span><small><?= h($b['meter']['l']) ?></small></div><?php endif; ?><span class="mn-go"><?= h($b['cta']) ?><i class="ic ic-sm i-right" aria-hidden="true"></i></span></a><?php endforeach; ?><div class="sl-empty" data-sl-empty hidden>Nothing in this category.</div></div></section>
 <section class="mn-live"><div class="mn-lh"><span class="row g8"><span class="mn-pulse"></span><b class="fw5">Live now</b></span><span class="mut sm" data-sl-clock><?= h($d['clock']) ?></span></div><div class="mn-lk"><?php foreach ($d['pulse'] as $p): ?><a class="mn-k" href="<?= h($p['href']) ?>"><small><?= h($p['l']) ?></small><b class="<?= h($p['a']) ?>"><?= h($p['v']) ?></b><span class="mut" style="font-size:14px"><?= h($p['s']) ?></span></a><?php endforeach; ?></div>
 <div class="mn-ticker" aria-live="polite"><?php foreach ($d['ticker'] as $x): ?><span class="mn-ti <?= h($x['cls']) ?>"><span class="sl-av sm" style="width:22px;height:22px;font-size:11px"><?= h($x['ini']) ?></span><b class="fw5"><?= h($x['who']) ?></b> <?= h($x['what']) ?> <span class="mono mut"><?= h($x['at']) ?></span></span><?php endforeach; ?><?php if (!$d['ticker']): ?><span class="mn-ti mut">No activity recorded yet today.</span><?php endif; ?></div></section>
 <section class="sl-card col g12"><div class="sl-ch" style="margin:0"><div><h2 class="sl-ct">Next 14 days</h2><span class="mut sm">Expected parcels at the hub vs room in the bays</span></div><span class="sl-pill <?= h($d['fcPill']) ?>"><?= h($d['fcNote']) ?></span></div><div class="mn-fc" role="img" aria-label="Forecast of parcels for the next 14 days"><?php foreach ($d['fc'] as $f): ?><div class="mn-fd" title="<?= h($f['tip']) ?>"><i class="<?= h($f['c']) ?>" style="<?= h($f['h']) ?>"></i><small><?= h($f['l']) ?></small></div><?php endforeach; ?><span class="mn-cap" style="<?= h($d['capY']) ?>"><b><?= h($d['capacityLabel']) ?></b></span></div><div class="row wrap g8 sm"><a class="chipbtn" href="<?= sl_route('NewConsolidation') ?>">Plan an extra consolidation</a><a class="chipbtn" href="<?= sl_route('PickupAging') ?>">Clear unclaimed parcels</a><a class="chipbtn" href="<?= sl_route('Broadcast') ?>">Remind customers to collect</a></div></section>
@@ -85,16 +42,6 @@ $wh = $d['warehouse']; $pk = $d['pickups']; $rv = $d['revenue'];
 </section>
         <?php endif; ?>
 
-        <section class="sl-card" aria-label="Quick actions">
-          <h2 class="sl-ct" style="margin-bottom: 12px">Quick Actions</h2>
-          <div class="row wrap g12">
-            <a class="sl-btn soft" href="<?= sl_route('PublicTracking') ?>"><i class="ic ic-sm i-search" aria-hidden="true"></i>Track Shipment <i class="ic ic-sm i-right" aria-hidden="true"></i></a>
-            <a class="sl-btn ghost" style="border-color: transparent; background: transparent" href="<?= sl_route('Warehouse') ?>"><i class="ic ic-sm i-scan" aria-hidden="true"></i>Scan Package <i class="ic ic-sm i-right" aria-hidden="true"></i></a>
-            <a class="sl-btn ghost" style="border-color: transparent; background: transparent" href="<?= sl_route('ComposeMessage') ?>"><i class="ic ic-sm i-send" aria-hidden="true"></i>Send Update <i class="ic ic-sm i-right" aria-hidden="true"></i></a>
-            <span class="grow"></span>
-            <?php if ($user->cdp_hasPermission('add_shipment')): ?><a class="sl-btn" href="<?= sl_route('NewShipment') ?>"><i class="ic ic-sm i-plus" aria-hidden="true"></i>New Shipment</a><?php endif; ?>
-          </div>
-        </section>
 
         <?php if ($d['gateways'] && $user->cdp_hasPermission('manage_payment_modes')): ?>
         <div class="grid cols2">

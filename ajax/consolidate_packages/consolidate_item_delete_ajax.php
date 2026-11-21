@@ -26,23 +26,58 @@ require_once("../../helpers/querys.php");
 require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_login();
 require_permission(['view_consolidate_package', 'view_consolidate_package_list']);
+// The view permission above is soft-passed for customers, drivers and agency users, and this
+// removes any posted item from its consolidation: staff only, with the edit permission.
+require_staff();
+require_permission(['edit_consolidate_package']);
 
 $errors = array();
 
 
 
-if (empty($_POST['id']))
+$cdpItemId = (int) ($_POST['id'] ?? 0);
+
+if ($cdpItemId <= 0) {
 
     $errors['id'] = 'Please select shipment';
+} else {
+    // Agency-restricted staff may only edit their own agency's consolidations: every
+    // consolidation holding this item (or, when it is not consolidated yet, the item itself)
+    // must be inside their agency.
+    $cdpDb = new Conexion;
+    $cdpDb->cdp_query("SELECT c.consolidate_id, c.agency FROM cdb_consolidate_packages_detail d
+        JOIN cdb_consolidate_packages c ON c.consolidate_id = d.consolidate_id WHERE d.order_id = :id");
+    $cdpDb->bind(':id', $cdpItemId);
+    $cdpDb->cdp_execute();
+    $cdpScopeRows = $cdpDb->cdp_registros() ?: [];
+    if (!$cdpScopeRows) {
+        $cdpDb->cdp_query("SELECT order_id, agency FROM cdb_customers_packages WHERE order_id = :id LIMIT 1");
+        $cdpDb->bind(':id', $cdpItemId);
+        $cdpDb->cdp_execute();
+        $cdpItem = $cdpDb->cdp_registro();
+        $cdpScopeRows = $cdpItem ? [$cdpItem] : [];
+    }
+    if (!$cdpScopeRows) {
+        $errors['id'] = 'Please select shipment';
+    }
+    foreach ($cdpScopeRows as $cdpScopeRow) {
+        if (!cdp_ajaxRowInAgencyScope($cdpScopeRow)) {
+            $errors['id'] = 'Please select shipment';
+            break;
+        }
+    }
+}
 
 if (empty($errors)) {
 
     $data = array(
 
-        'id' => trim($_POST['id'])
+        'id' => $cdpItemId
     );
 
-    $insert = cdp_updateItemConsolidatePackages($data);
+    // cdp_updateItemConsolidatePackages() updates cdb_consolidate_packages, which has no
+    // order_id column, so the package was never released; free it in cdb_customers_packages.
+    $insert = cdp_updateConsolidatePackagesDelete($cdpItemId);
     $delete = cdp_deleteItemConsolidatePackages($data);
 
 

@@ -79,37 +79,78 @@ function sl_documentCategory(string $page): string
     return 'exports';
 }
 
+/** Friendly name for the page that produced a document. */
+function sl_documentName(string $ep, array $params): string
+{
+    $base = preg_replace('/\.php$/', '', $ep);
+    $map = [
+        'print_inv_ship_multiple' => 'Shipment invoices (bulk)', 'print_inv_ship_track' => 'Tracking sheet', 'print_inv_ship' => 'Shipment invoice',
+        'print_invoice_package' => 'Package receipt', 'print_charge' => 'Charge receipt', 'print_label_ship_multiple' => 'Shipping labels (bulk)',
+        'print_label_ship' => !empty($params['size']) ? 'Shelf label' : 'Shipping label 4 × 6', 'print_label_package_multiple' => 'Package labels (bulk)', 'print_label_package' => 'Package label',
+        'print_label_consolidate_multiple_package' => 'Sea consolidation labels (bulk)', 'print_label_consolidate_multiple' => 'Consolidation labels (bulk)',
+        'print_label_consolidate_package' => 'Sea consolidation label', 'print_label_consolidate' => 'Consolidation label',
+        'print_consolidate_package' => 'Sea consolidation manifest', 'print_consolidate' => 'Consolidation manifest', 'consolidate_parking_list_excel' => 'Packing list',
+        'print_customer_package_track' => 'Package tracking sheet', 'waybill_print' => 'Waybill', 'warehouse_print' => 'Warehouse sheet',
+    ];
+    if (isset($map[$base])) return $map[$base];
+    foreach (sl_documentCatalogue() as $e) if (strtok($e['file'], '?') === $ep) return $e['label'] . ' · ' . $e['fmt'];
+    return ucfirst(str_replace(['print_', '_excel', '_'], ['', ' export', ' '], $base));
+}
+
+/** Record ids a document was made for: ?id=, or the JSON list a bulk print sends in ?data=. */
+function sl_documentIds(array $params): array
+{
+    if (!empty($params['id'])) return [(int) $params['id']];
+    if (!empty($params['data'])) {
+        $j = json_decode((string) $params['data'], true);
+        if (is_array($j)) return array_values(array_filter(array_map('intval', $j)));
+    }
+    return [];
+}
+
 function sl_documentsData($user, $core): array
 {
     require_once CDP_ROOT . '/helpers/finance_switch.php';
-    $finance = function_exists('cdp_financeEnabled') ? cdp_financeEnabled() : true;
-    $cat = [];
-    foreach (sl_documentCatalogue() as $e) {
-        $file = strtok($e['file'], '?');
-        if (!is_file(CDP_ROOT . '/' . $file)) continue;
-        if (!empty($e['finance']) && !$finance) continue;
-        if (!$user->cdp_hasPermission($e['perm'])) continue;
-        $cat[] = $e;
-    }
-    $q = trim((string) ($_GET['q'] ?? ''));
+    $all = $user->cdp_hasPermission('view_activity_logs');
+    $q = mb_substr(trim((string) ($_GET['q'] ?? '')), 0, 100);
     $filter = (string) ($_GET['filter'] ?? 'all');
+    $by = (int) ($_GET['by'] ?? 0);
+    $from = preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) ($_GET['from'] ?? '')) ? $_GET['from'] : '';
+    $to = preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) ($_GET['to'] ?? '')) ? $_GET['to'] : '';
     $page = max(1, (int) ($_GET['page'] ?? 1));
-    $per = 25;
-    $rows = [];
-    $count = 0;
+    $per = 30;
+    $rows = []; $count = 0; $facets = []; $people = []; $tiles = [];
+    $map = ['invoices' => "endpoint LIKE 'print_inv_ship%'", 'receipts' => "(endpoint LIKE 'print_invoice_package%' OR endpoint LIKE 'print_charge%')", 'labels' => "endpoint LIKE '%label%'",
+        'manifests' => "(endpoint LIKE '%consolidate%' OR endpoint LIKE '%parking%' OR endpoint LIKE 'waybill%')", 'exports' => "(verb = 'export' OR endpoint LIKE '%excel%' OR endpoint LIKE '%csv%')"];
     if (sl_tableExists('cdb_activity_log')) {
-        $where = "entity_type = 'document'";
+        $base = "entity_type = 'document'" . ($all ? '' : ' AND user_id = ' . (int) $_SESSION['userid']);
+        $where = $base;
         $binds = [];
-        if (!$user->cdp_hasPermission('view_activity_logs')) {
-            $where .= ' AND user_id = ' . (int) $_SESSION['userid'];
-        }
         if ($q !== '') {
-            $where .= ' AND (summary LIKE :q1 OR entity_id LIKE :q2 OR actor_name LIKE :q3 OR endpoint LIKE :q4)';
-            $binds = [':q1' => "%$q%", ':q2' => "%$q%", ':q3' => "%$q%", ':q4' => "%$q%"];
+            // a tracking number or customer name finds the documents printed for that record
+            $ids = [];
+            foreach (sl_rows("SELECT o.order_id FROM cdb_add_order o LEFT JOIN cdb_users u ON u.id = o.sender_id WHERE CONCAT(o.order_prefix, o.order_no) LIKE :a OR CONCAT_WS(' ', u.fname, u.lname, u.locker) LIKE :b LIMIT 200", [':a' => "%$q%", ':b' => "%$q%"]) as $o) $ids[] = (int) $o->order_id;
+            foreach (sl_rows("SELECT o.order_id FROM cdb_customers_packages o LEFT JOIN cdb_users u ON u.id = o.sender_id WHERE CONCAT(o.order_prefix, o.order_no) LIKE :a OR CONCAT_WS(' ', u.fname, u.lname, u.locker) LIKE :b LIMIT 200", [':a' => "%$q%", ':b' => "%$q%"]) as $o) $ids[] = (int) $o->order_id;
+            $idW = $ids ? ' OR entity_id IN (' . implode(',', array_unique($ids)) . ')' : '';
+            $where .= " AND (summary LIKE :q1 OR entity_id LIKE :q2 OR actor_name LIKE :q3 OR endpoint LIKE :q4 OR meta LIKE :q5$idW)";
+            $binds = [':q1' => "%$q%", ':q2' => "%$q%", ':q3' => "%$q%", ':q4' => "%$q%", ':q5' => "%$q%"];
         }
-        $map = ['labels' => "endpoint LIKE '%label%'", 'receipts' => "(endpoint LIKE 'print_invoice_package%' OR endpoint LIKE 'print_charge%')", 'invoices' => "endpoint LIKE 'print_inv_ship%'", 'manifests' => "(endpoint LIKE '%consolidate%' OR endpoint LIKE '%parking%')", 'exports' => "(verb = 'export' OR endpoint LIKE '%excel%' OR endpoint LIKE '%csv%')"];
+        if ($by && $all) $where .= ' AND user_id = ' . $by;
+        if ($from !== '') { $where .= ' AND created_at >= :f'; $binds[':f'] = $from; }
+        if ($to !== '') { $where .= ' AND created_at < :t'; $binds[':t'] = date('Y-m-d', strtotime($to . ' +1 day')); }
+        // counts per type for the current search (before the type filter)
+        $case = 'CASE ' . implode(' ', array_map(fn($k, $w) => "WHEN $w THEN '$k'", array_keys($map), $map)) . " ELSE 'other' END";
+        foreach (sl_rows("SELECT $case AS k, COUNT(*) AS n FROM cdb_activity_log WHERE $where GROUP BY k", $binds) as $f) $facets[$f->k] = (int) $f->n;
+        $facets['all'] = array_sum($facets);
         if (isset($map[$filter])) $where .= ' AND ' . $map[$filter];
         $count = (int) sl_scalar("SELECT COUNT(*) FROM cdb_activity_log WHERE $where", $binds);
+        if ($all) $people = sl_rows("SELECT user_id AS id, MAX(actor_name) AS name, COUNT(*) AS n FROM cdb_activity_log WHERE $base AND created_at >= NOW() - INTERVAL 90 DAY AND user_id > 0 GROUP BY user_id ORDER BY n DESC LIMIT 40");
+        $tiles = [
+            ['Today', (int) sl_scalar("SELECT COUNT(*) FROM cdb_activity_log WHERE $base AND created_at >= CURDATE()"), 'i-clock'],
+            ['Last 7 days', (int) sl_scalar("SELECT COUNT(*) FROM cdb_activity_log WHERE $base AND created_at >= CURDATE() - INTERVAL 6 DAY"), 'i-calendar'],
+            ['Labels · 7 days', (int) sl_scalar("SELECT COUNT(*) FROM cdb_activity_log WHERE $base AND {$map['labels']} AND created_at >= CURDATE() - INTERVAL 6 DAY"), 'i-tag'],
+            ['Invoices & receipts · 7 days', (int) sl_scalar("SELECT COUNT(*) FROM cdb_activity_log WHERE $base AND ({$map['invoices']} OR {$map['receipts']}) AND created_at >= CURDATE() - INTERVAL 6 DAY"), 'i-receipt'],
+        ];
         foreach (sl_rows("SELECT id, created_at, actor_name, verb, summary, entity_id, endpoint, meta FROM cdb_activity_log WHERE $where ORDER BY id DESC LIMIT " . (($page - 1) * $per) . ", $per", $binds) as $r) {
             $meta = json_decode((string) $r->meta, true) ?: [];
             $params = is_array($meta['params'] ?? null) ? $meta['params'] : [];
@@ -117,38 +158,50 @@ function sl_documentsData($user, $core): array
             $params = array_filter($params, fn($v) => is_scalar($v) && (string) $v !== '');
             $ep = basename((string) ($r->endpoint ?: (($meta['page'] ?? '') . '.php')));
             $catName = sl_documentCategory($ep);
-            $label = $r->entity_id !== '' && $r->entity_id !== null ? sl_documentNumber($ep, (int) $r->entity_id, $params) : '';
+            $ids = sl_documentIds($params);
+            if (!$ids && $r->entity_id !== '' && $r->entity_id !== null && ctype_digit((string) $r->entity_id)) $ids = [(int) $r->entity_id];
+            $recs = array_map(fn($id) => sl_documentNumber($ep, $id, $params, true), array_slice($ids, 0, 4));
+            $whoList = array_values(array_unique(array_filter(array_column($recs, 'who'))));
+            $range = !empty($params['range']) ? str_replace('/', '-', (string) $params['range']) : '';
             $rows[] = [
-                'title' => preg_replace('/^(Printed|Exported) /', '', (string) $r->summary), 'sub' => ucfirst($catName) . ($params ? ' · ' . implode(', ', array_map(fn($k, $v) => $k . ' ' . (is_scalar($v) ? $v : ''), array_keys($params), $params)) : ''),
+                'title' => sl_documentName($ep, $params), 'cat' => $catName,
                 'icon' => ['labels' => 'i-tag', 'receipts' => 'i-receipt', 'invoices' => 'i-receipt', 'manifests' => 'i-layers', 'exports' => 'i-download'][$catName],
-                'num' => $label ?: ($r->entity_id ?: '—'), 'by' => $r->actor_name ?: 'System', 'date' => sl_date($r->created_at, 'M j, H:i'),
+                'recs' => array_column($recs, 't'), 'more' => max(0, count($ids) - 4), 'n' => count($ids),
+                'who' => $whoList ? implode(', ', array_slice($whoList, 0, 2)) . (count($whoList) > 2 ? ' +' . (count($whoList) - 2) : '') : '',
+                'range' => $range, 'by' => $r->actor_name ?: 'System', 'date' => sl_date($r->created_at, 'M j, H:i'), 'ago' => sl_ago($r->created_at),
                 'href' => preg_match('/^[a-z0-9_]+\.php$/', $ep) && is_file(CDP_ROOT . '/' . $ep) ? $ep . ($params ? '?' . http_build_query(array_filter($params, 'is_scalar')) : '') : '',
             ];
         }
     }
     return [
-        'catalogue' => $cat, 'groups' => array_values(array_unique(array_map(fn($e) => $e['g'], $cat))), 'prints' => sl_documentPrints(),
-        'rows' => $rows, 'count' => $count, 'page' => $page, 'per' => $per, 'q' => $q, 'filter' => $filter,
+        'prints' => sl_documentPrints(), 'all' => $all,
+        'rows' => $rows, 'count' => $count, 'page' => $page, 'per' => $per, 'q' => $q, 'filter' => $filter, 'by' => $by, 'from' => $from, 'to' => $to,
+        'facets' => $facets, 'people' => $people, 'tiles' => $tiles,
         'filters' => [['f' => 'all', 'label' => 'All'], ['f' => 'invoices', 'label' => 'Invoices'], ['f' => 'receipts', 'label' => 'Receipts'], ['f' => 'labels', 'label' => 'Labels'], ['f' => 'manifests', 'label' => 'Manifests'], ['f' => 'exports', 'label' => 'Exports']],
-        'from' => date('Y-m-d', strtotime('-30 days')), 'to' => date('Y-m-d'),
         'canLabels' => $user->cdp_hasPermission(['print_label', 'view_tools']),
-        'schedules' => sl_tableExists('cdb_report_schedules') ? sl_rows('SELECT * FROM cdb_report_schedules ORDER BY id DESC LIMIT 5') : [],
+        'canReports' => $user->cdp_hasPermission('view_general_reports'),
     ];
 }
 
 /** Human number of the record a print was made for (shipment/package tracking). */
-function sl_documentNumber(string $ep, int $id, array $params): string
+function sl_documentNumber(string $ep, int $id, array $params, bool $withOwner = false)
 {
     static $cache = [];
     $k = $ep . ':' . $id . ':' . ($params['type'] ?? '');
-    if (isset($cache[$k])) return $cache[$k];
+    if (isset($cache[$k])) return $withOwner ? $cache[$k] : $cache[$k]['t'];
     $tbl = null;
     if (strpos($ep, 'consolidate') !== false) {
-        $r = sl_row(strpos($ep, 'package') !== false ? 'SELECT CONCAT(c_prefix, c_no) AS t FROM cdb_consolidate_packages WHERE consolidate_id = :id' : 'SELECT CONCAT(c_prefix, c_no) AS t FROM cdb_consolidate WHERE consolidate_id = :id', [':id' => $id]);
+        $r = sl_row(strpos($ep, 'package') !== false ? 'SELECT CONCAT(c_prefix, c_no) AS t, sender_id FROM cdb_consolidate_packages WHERE consolidate_id = :id' : 'SELECT CONCAT(c_prefix, c_no) AS t, sender_id FROM cdb_consolidate WHERE consolidate_id = :id', [':id' => $id]);
     } elseif (strpos($ep, 'package') !== false && ($params['type'] ?? 'sea') !== 'air') {
-        $r = sl_row('SELECT CONCAT(order_prefix, order_no) AS t FROM cdb_customers_packages WHERE order_id = :id', [':id' => $id]);
+        $r = sl_row('SELECT CONCAT(order_prefix, order_no) AS t, sender_id FROM cdb_customers_packages WHERE order_id = :id', [':id' => $id]);
     } else {
-        $r = sl_row('SELECT CONCAT(order_prefix, order_no) AS t FROM cdb_add_order WHERE order_id = :id', [':id' => $id]);
+        $r = sl_row('SELECT CONCAT(order_prefix, order_no) AS t, sender_id FROM cdb_add_order WHERE order_id = :id', [':id' => $id]);
     }
-    return $cache[$k] = $r ? (string) $r->t : '#' . $id;
+    $who = '';
+    if ($r && (int) $r->sender_id) {
+        $u = sl_row('SELECT fname, lname FROM cdb_users WHERE id = :u', [':u' => (int) $r->sender_id]);
+        $who = $u ? trim($u->fname . ' ' . $u->lname) : '';
+    }
+    $cache[$k] = ['t' => $r ? (string) $r->t : '#' . $id, 'who' => $who];
+    return $withOwner ? $cache[$k] : $cache[$k]['t'];
 }

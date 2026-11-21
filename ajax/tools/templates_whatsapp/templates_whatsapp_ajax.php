@@ -22,31 +22,37 @@
 
 
 require_once("../../../loader.php");
+require_once("../../../helpers/ajax_guard.php");
+require_login();
+require_permission('manage_whatsapp_templates');
 
 $db = new Conexion;
 
 
-$search = trim($_REQUEST['search']);
+$search = trim((string) ($_REQUEST['search'] ?? ''));
 
 $tables = "whatsapp_templates";
 $fields = "*";
 
-$sWhere = "title LIKE '%" . $search . "%'";
+$sWhere = "title LIKE :search";
 
 
 // // pagination variables
-$page = (isset($_REQUEST['page']) && !empty($_REQUEST['page'])) ? $_REQUEST['page'] : 1;
+$page = max(1, (int) ($_REQUEST['page'] ?? 1));
 $per_page = (($_REQUEST['per_page'] ?? '') === 'all') ? 1000000000 : (in_array((int)($_REQUEST['per_page'] ?? 0), [25, 50, 100], true) ? (int)$_REQUEST['per_page'] : 25); //how much records you want to show
 $adjacents  = 4; //gap between pages after number of adjacents
 $offset = ($page - 1) * $per_page;
 
 $sql = "SELECT $fields FROM  $tables WHERE $sWhere ORDER BY title ASC";
 $db->cdp_query("SELECT COUNT(*) AS cdp_total FROM (" . $sql . ") AS cdp_cnt");
+$db->bind(':search', '%' . $search . '%');
 $cdp_cnt_row = $db->cdp_registro();
 $numrows = $cdp_cnt_row ? (int) $cdp_cnt_row->cdp_total : 0;
 
 
+$offset = max(0, (int) $offset);
 $db->cdp_query($sql . " limit $offset, $per_page");
+$db->bind(':search', '%' . $search . '%');
 $data = $db->cdp_registros();
 
 $total_pages = ceil($numrows / $per_page);

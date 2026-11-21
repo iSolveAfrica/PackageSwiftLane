@@ -32,6 +32,7 @@ ini_set('display_errors', 0);
 
 require_once("../../loader.php");
 require_once("../../helpers/querys.php");
+require_once("../../helpers/rbac.php");
 require_once("../../helpers/profile.php");
 require_once("../../helpers/ajax_guard.php");
 require_login();
@@ -52,11 +53,22 @@ if (!cdp_profileCanEdit($user, $targetId, 'edit_client_avatar')) {
     exit;
 }
 
-$db->cdp_query("SELECT id, avatar, fname, lname FROM cdb_users WHERE id = :id LIMIT 1");
+$db->cdp_query("SELECT id, avatar, fname, lname, userlevel, agency_id FROM cdb_users WHERE id = :id LIMIT 1");
 $db->bind(':id', $targetId);
 $row = $db->cdp_registro();
 if (!$row) {
     echo json_encode(['success' => false, 'message' => 'Account not found.']);
+    exit;
+}
+// Someone else's photo: the edit_client_avatar permission is for customer accounts, and the
+// caller must outrank the target, so a customer or junior staff member holding the permission
+// can never change an administrator's (or a peer's) photo. Agency-restricted staff also stay
+// inside their own agency.
+if ($targetId !== (int) $user->uid
+    && (!cdp_canManageUser($user, (int) $row->userlevel)
+        || (!$user->cdp_is_Admin() && !cdp_roleIsClient((int) $row->userlevel))
+        || !cdp_ajaxRowInAgencyScope((object) ['agency' => $row->agency_id]))) {
+    echo json_encode(['success' => false, 'message' => 'You can only change your own profile photo.']);
     exit;
 }
 

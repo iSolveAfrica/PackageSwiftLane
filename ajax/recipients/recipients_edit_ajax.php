@@ -26,9 +26,23 @@ require_once("../../helpers/querys.php");
 require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_login();
 require_permission('view_recipients');
+require_once(__DIR__ . '/../../helpers/sl_view.php');
+require_once CDP_ROOT . '/views/sl/data/recipients.php';
+// Ownership: customers may only touch their own recipients, agency staff only their agency's
+// (same scope as ajax/sl/recipient_ajax.php). Drivers have no recipients of their own to manage
+// on behalf of others, so they are limited to sender_id = themselves as well.
+$rcScope = sl_rcScope();
+if (sl_userIs('driver')) $rcScope .= ' AND r.sender_id = ' . (int) $_SESSION['userid'];
 $user = new User;
 $core = new Core;
 $errors = array();
+
+$recipientId = (int) ($_POST['recipient_id'] ?? 0);
+if (!sl_row('SELECT r.id FROM cdb_recipients r LEFT JOIN cdb_users u ON u.id = r.sender_id WHERE r.id = :id' . $rcScope, [':id' => $recipientId])) {
+    header('Content-type: application/json; charset=UTF-8');
+    echo json_encode(['status' => 'error', 'message' => $lang['message_ajax_error1']]);
+    exit;
+}
 
 if (empty($_POST['fname']))
     $errors['fname'] = $lang['validate_field_ajax122'];
@@ -71,7 +85,7 @@ if (CDP_APP_MODE_DEMO === true) {
             'fname' => cdp_sanitize($_POST['fname']),
             'phone' => cdp_sanitize($_POST['phone']),
             'email' => cdp_sanitize($_POST['email']),
-            'id_recipient' => $_POST['recipient_id'],
+            'id_recipient' => $recipientId,
         );
 
         $update = cdp_updateRecipient($data);
@@ -81,6 +95,11 @@ if (CDP_APP_MODE_DEMO === true) {
             for ($count = 0; $count < $_POST["total_address"]; $count++) {
 
                 if (isset($_POST["address_id"][$count]) && !empty($_POST["address_id"][$count])) {
+
+                    // Only addresses of this (already ownership-checked) recipient may be rewritten.
+                    if (!sl_scalar('SELECT COUNT(*) FROM cdb_recipients_addresses WHERE id_addresses = :a AND recipient_id = :r', [':a' => (int) $_POST["address_id"][$count], ':r' => $recipientId])) {
+                        continue;
+                    }
 
                     $dataAddresses = array(
                         'address_id' =>  cdp_sanitize($_POST["address_id"][$count]),
@@ -95,7 +114,7 @@ if (CDP_APP_MODE_DEMO === true) {
                 } else {
 
                     $dataAddresses = array(
-                        'recipient_id' =>   cdp_sanitize($_POST['recipient_id']),
+                        'recipient_id' =>   $recipientId,
                         'address' =>  cdp_sanitize($_POST["address"][$count]),
                         'country' =>  cdp_sanitize($_POST["country"][$count]),
                         'city' =>  cdp_sanitize($_POST["city"][$count]),

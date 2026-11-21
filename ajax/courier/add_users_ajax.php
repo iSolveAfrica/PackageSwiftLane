@@ -31,6 +31,21 @@ $user = new User;
 $core = new Core;
 $errors = array();
 
+// view_shipment_list (checked above) is soft-passed for customers, drivers and agency users. This
+// endpoint creates a customer account (optionally with a login) from the staff consolidation and
+// pre-alert forms, so a customer must never reach it. Below staff rank the caller must not be a
+// customer role (rank 0 follows parent_role_id) and needs one of those forms' permissions.
+require_once(__DIR__ . '/../../helpers/rbac.php');
+$scopeLevel = (int) ($_SESSION['userlevel'] ?? 0);
+$scopeRank = cdp_roleRankById($scopeLevel);
+if ($scopeRank < 2 && ($scopeRank === 0 || cdp_roleIsClient($scopeLevel)
+    || !$user->cdp_hasPermission(['add_consolidate_shipment', 'add_consolidate_package', 'edit_consolidate', 'edit_consolidate_package', 'create_pre_alert']))) {
+    header('HTTP/1.1 403 Forbidden');
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
+    exit;
+}
+
 
 if (empty($_POST['fname']))
     $errors['fname'] = $lang['validate_field_ajax122'];
@@ -103,8 +118,16 @@ if (!isset($response['status'])) {
         $data['username'] = cdp_sanitize($_POST['username']);
     }
 
+    // An agency-restricted caller's new customer belongs to that agency. Without agency_id the
+    // agency-scoped address/recipient endpoints (add_address_users_ajax.php, add_recipients_ajax.php)
+    // refuse the very customer that caller just created.
+    $scopeNewCtx = cdp_getAgencyContext();
+    $scopeNewAgency = (!empty($scopeNewCtx['is_restricted']) && $scopeNewCtx['agency_id'] !== null)
+        ? (int) $scopeNewCtx['agency_id'] : 0;
+
     $db->cdp_query('INSERT INTO cdb_users
               (   
+                  ' . ($scopeNewAgency > 0 ? 'agency_id,' : '') . '
                   username,
                   password,
                   locker,
@@ -118,6 +141,7 @@ if (!isset($response['status'])) {
               )
 
               VALUES (
+                  ' . ($scopeNewAgency > 0 ? ':agency_id,' : '') . '
                   :username,
                   :password,
                   :locker,
@@ -140,6 +164,9 @@ if (!isset($response['status'])) {
     $db->bind(':username', $data['username']);
     $db->bind(':password', $data['password']);
     $db->bind(':created', $data['created']);
+    if ($scopeNewAgency > 0) {
+        $db->bind(':agency_id', $scopeNewAgency);
+    }
 
     $db->cdp_execute();
 

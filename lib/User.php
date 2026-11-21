@@ -125,12 +125,19 @@ class User
 
         if ($username === '' && $pass === '') {
             $this->errors[] = 'Enter a valid username and password.';
+        } elseif ($this->cdp_loginThrottled($username)) {
+            // Brute-force protection: too many recent failures for this account
+            // or from this address; refuse without checking the password.
+            $this->errors[] = 'Too many failed sign-in attempts. Please wait 15 minutes and try again.';
         } else {
             $status = $this->cdp_checkStatus($username, $pass);
             if ($status == 0) {
+                $this->cdp_loginRecordFailure($username);
                 $this->errors[] = 'Incorrect username or password.';
             } elseif ($status == 2) {
                 $this->errors[] = 'Your account is not activated.';
+            } else {
+                $this->cdp_loginClearFailures($username);
             }
         }
 
@@ -196,6 +203,11 @@ class User
     }
 
     private function cdp_finalizeLogin($user) {
+        // Security: issue a fresh session id at the privilege change so a
+        // session id planted before sign-in (session fixation) is worthless.
+        if (session_status() === PHP_SESSION_ACTIVE && !headers_sent()) {
+            session_regenerate_id(true);
+        }
         $_SESSION['userid'] = $user->id;
         $_SESSION['username'] = $user->username;
         $_SESSION['email'] = $user->email;
@@ -221,6 +233,105 @@ class User
         return true;
     }
 
+
+    /**
+     * Failed sign-in throttle (web login and API login). Failures are kept in
+     * cdb_login_attempts (migrations/2026_11_21_login_attempts.sql; created on
+     * demand if missing). If the table cannot be used the queries fail silently
+     * (ERRMODE_SILENT) and the login works as before.
+     */
+    const LOGIN_WINDOW_MIN       = 15;
+    // Security: the tight limit is per (username, ip) pair, so someone who only
+    // knows a username cannot lock the real user out from another address. The
+    // per-username limit is a much higher backstop against distributed guessing.
+    const LOGIN_MAX_PER_USER_IP  = 10;
+    const LOGIN_MAX_PER_USERNAME = 100;
+    const LOGIN_MAX_PER_IP       = 30;
+
+    private function cdp_loginAttemptKey($username)
+    {
+        return substr(strtolower(trim((string) $username)), 0, 190);
+    }
+
+    private function cdp_loginClientIp()
+    {
+        return substr(trim((string) ($_SERVER['REMOTE_ADDR'] ?? '')), 0, 45);
+    }
+
+    public function cdp_loginThrottled($username)
+    {
+        $this->cdp_loginAttemptsTable();
+        $since = date('Y-m-d H:i:s', time() - self::LOGIN_WINDOW_MIN * 60);
+        $ip    = $this->cdp_loginClientIp();
+
+        $this->db->cdp_query('SELECT COUNT(*) AS c, SUM(ip = :ip) AS c_ip FROM cdb_login_attempts WHERE username = :u AND created_at >= :since');
+        $this->db->bind(':u', $this->cdp_loginAttemptKey($username));
+        $this->db->bind(':ip', $ip);
+        $this->db->bind(':since', $since);
+        $row = $this->db->cdp_registro();
+        if ($row && ((int) $row->c >= self::LOGIN_MAX_PER_USERNAME || (int) $row->c_ip >= self::LOGIN_MAX_PER_USER_IP)) {
+            return true;
+        }
+
+        if ($ip === '') {
+            return false;
+        }
+        $this->db->cdp_query('SELECT COUNT(*) AS c FROM cdb_login_attempts WHERE ip = :ip AND created_at >= :since');
+        $this->db->bind(':ip', $ip);
+        $this->db->bind(':since', $since);
+        $row = $this->db->cdp_registro();
+        return $row && (int) $row->c >= self::LOGIN_MAX_PER_IP;
+    }
+
+    private function cdp_loginAttemptsTable()
+    {
+        // DDL takes a metadata lock, so run it once per install (marker file),
+        // the same way lib/OtpService.php creates its tables.
+        static $ready = false;
+        if ($ready) {
+            return;
+        }
+        $ready = true;
+        $marker = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . '/cdp_login_attempts_' . md5(__DIR__ . '|' . (defined('CDP_DB_NAME') ? CDP_DB_NAME : '')) . '.ok';
+        if (@is_file($marker)) {
+            return;
+        }
+        $this->db->cdp_query("CREATE TABLE IF NOT EXISTS cdb_login_attempts (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            username VARCHAR(190) NOT NULL,
+            ip VARCHAR(45) NOT NULL DEFAULT '',
+            created_at DATETIME NOT NULL,
+            KEY idx_login_attempt_user (username, created_at),
+            KEY idx_login_attempt_ip (ip, created_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        if ($this->db->cdp_execute()) {
+            @file_put_contents($marker, date('c'));
+        }
+    }
+
+    public function cdp_loginRecordFailure($username)
+    {
+        $this->cdp_loginAttemptsTable();
+        $this->db->cdp_query('INSERT INTO cdb_login_attempts (username, ip, created_at) VALUES (:u, :ip, :t)');
+        $this->db->bind(':u', $this->cdp_loginAttemptKey($username));
+        $this->db->bind(':ip', $this->cdp_loginClientIp());
+        $this->db->bind(':t', date('Y-m-d H:i:s'));
+        $this->db->cdp_execute();
+
+        // Keep the table small: rows older than a day are no longer needed.
+        if (random_int(1, 50) === 1) {
+            $this->db->cdp_query('DELETE FROM cdb_login_attempts WHERE created_at < :old');
+            $this->db->bind(':old', date('Y-m-d H:i:s', time() - 86400));
+            $this->db->cdp_execute();
+        }
+    }
+
+    public function cdp_loginClearFailures($username)
+    {
+        $this->db->cdp_query('DELETE FROM cdb_login_attempts WHERE username = :u');
+        $this->db->bind(':u', $this->cdp_loginAttemptKey($username));
+        $this->db->cdp_execute();
+    }
 
     /**
      * Users::cdp_checkStatus()
@@ -538,15 +649,20 @@ class User
     public function cdp_emailExists($email, $id = null)
     {
 
+        // Security: $id often comes straight from $_POST; bind it as an int
+        // instead of inlining it into the SQL (blind SQL injection).
         $where = '';
         if ($id != null) {
 
-            $where = "and id!='$id'";
+            $where = "and id != :exclude_id";
         }
 
         $this->db->cdp_query("SELECT email FROM cdb_users where email = :email $where LIMIT 1");
 
         $this->db->bind(':email', trim($email));
+        if ($id != null) {
+            $this->db->bind(':exclude_id', (int) $id);
+        }
 
         $this->db->cdp_execute();
 
@@ -567,15 +683,20 @@ class User
     public function cdp_ccnumberExists($document_number, $id = null)
     {
 
+        // Security: $id often comes straight from $_POST; bind it as an int
+        // instead of inlining it into the SQL (blind SQL injection).
         $where = '';
         if ($id != null) {
 
-            $where = "and id!='$id'";
+            $where = "and id != :exclude_id";
         }
 
         $this->db->cdp_query("SELECT document_number FROM cdb_users where document_number = :document_number $where LIMIT 1");
 
         $this->db->bind(':document_number', trim($document_number));
+        if ($id != null) {
+            $this->db->bind(':exclude_id', (int) $id);
+        }
 
         $this->db->cdp_execute();
 
@@ -593,15 +714,20 @@ class User
     public function cdp_emailExistsRecipients($email, $id = null)
     {
 
+        // Security: $id often comes straight from $_POST; bind it as an int
+        // instead of inlining it into the SQL (blind SQL injection).
         $where = '';
         if ($id != null) {
 
-            $where = "and id!='$id'";
+            $where = "and id != :exclude_id";
         }
 
         $this->db->cdp_query("SELECT email FROM cdb_recipients where email = :email $where LIMIT 1");
 
         $this->db->bind(':email', trim($email));
+        if ($id != null) {
+            $this->db->bind(':exclude_id', (int) $id);
+        }
 
         $this->db->cdp_execute();
 

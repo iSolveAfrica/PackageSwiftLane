@@ -25,6 +25,7 @@ ini_set('display_errors', 0);
 require_once("../../loader.php");
 require_once __DIR__ . '/../../helpers/sl_auth.php';
 require_once(__DIR__ . '/../../helpers/ajax_guard.php');
+require_once(__DIR__ . '/../../helpers/uploads.php');
 require_login();
 require_permission('view_shipment_list');
 
@@ -36,6 +37,197 @@ require_once("../notify_whatsapp/api_whatsapp_service_v2.php");
 $user = new User;
 $core = new Core;
 $errors = array();
+
+// view_shipment_list (the only permission checked above) is also granted to
+// customers, drivers and agency users, and the shipment id comes from the
+// request: without this check any of them could accept and re-price any shipment.
+// Below staff rank the caller needs the same permission as the page
+// ('complete_client_shipment') and the shipment must be theirs (sender or driver) or
+// their agency's.
+require_once(__DIR__ . '/../../helpers/rbac.php');
+
+// Canonical recipient type for everyone. cdp_sanitize() is not idempotent (stripslashes), so
+// writing the sanitised string back let 'us\\er' be checked below as a cdb_recipients id and
+// then, sanitised again further down, loaded as 'user' (another user's name and address on this
+// shipment). Further down only 'user' vs anything else matters, so this keeps behaviour.
+// 'customer' (SL customer pickups, ajax/sl/pickup_ajax.php) stores a cdb_users id and one of the
+// sender's cdb_senders_addresses ids, exactly like 'user', so it takes the 'user' path: checking it
+// as a cdb_recipients id refused legitimate edits and loaded an unrelated recipient. The stored
+// type is never rewritten by this endpoint. When the field is not posted, use the stored type
+// (as the fallbacks further down used to) instead of assuming 'recipient'.
+if (isset($_POST['recipient_type'])) {
+    $scopeRawType = cdp_sanitize($_POST['recipient_type']);
+} else {
+    $scopeTypeDb = new Conexion;
+    $scopeTypeDb->cdp_query("SELECT recipient_type FROM cdb_add_order WHERE order_id = :id LIMIT 1");
+    $scopeTypeDb->bind(':id', (int) ($_POST['order_id'] ?? 0));
+    $scopeTypeDb->cdp_execute();
+    $scopeTypeRow = $scopeTypeDb->cdp_registro();
+    $scopeRawType = (string) ($scopeTypeRow->recipient_type ?? 'recipient');
+}
+$scopeType = in_array($scopeRawType, ['user', 'customer'], true) ? 'user' : 'recipient';
+$_POST['recipient_type'] = $scopeType;
+
+$scopeUser = $user->cdp_getUserData();
+$scopeCheckParties = false;
+if (cdp_roleRankById((int) ($scopeUser->userlevel ?? 0)) < 2) {
+    $scopeId = (int) ($_POST['order_id'] ?? 0);
+    $scopeDb = new Conexion;
+    $scopeDb->cdp_query("SELECT sender_id, driver_id, agency FROM cdb_add_order WHERE order_id = :id LIMIT 1");
+    $scopeDb->bind(':id', $scopeId);
+    $scopeDb->cdp_execute();
+    $scopeRow = $scopeDb->cdp_registro();
+    $scopeUid = (int) ($_SESSION['userid'] ?? 0);
+    $scopeCtx = cdp_getAgencyContext();
+    $scopeAgencies = array_filter([
+        (int) ($scopeCtx['agency_id'] ?? 0),
+        ((int) $scopeUser->userlevel === 6) ? (int) cdp_getAgencyBranchIdForUser($scopeUser->name_off) : 0,
+    ]);
+    $scopeOk = $scopeRow && (
+        (int) $scopeRow->sender_id === $scopeUid
+        || (int) $scopeRow->driver_id === $scopeUid
+        || in_array((int) $scopeRow->agency, $scopeAgencies, true)
+    );
+    if (!$scopeOk || !$user->cdp_hasPermission('complete_client_shipment')) {
+        header('HTTP/1.1 403 Forbidden');
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
+        exit;
+    }
+
+    // The scope check above only covers the row as stored. The UPDATE below writes sender, agency
+    // and driver from the request, so a caller below staff rank could otherwise move the shipment
+    // to another customer or agency (out of their scope, into someone else's notifications) or
+    // pick any user as its driver. Keep the stored values for them.
+    $_POST['sender_id'] = (int) $scopeRow->sender_id;
+    if ((int) $scopeRow->agency > 0) {
+        $_POST['agency'] = (int) $scopeRow->agency;
+    } elseif ($scopeAgencies) {
+        $_POST['agency'] = (int) reset($scopeAgencies);
+    } else {
+        // Neither the row (legacy/customer pickup with agency 0) nor the caller names an agency:
+        // the caller matched as sender or driver, so choosing an agency moves nothing into their
+        // own scope. Accept a posted agency only if it is a real branch office; otherwise keep 0
+        // and let the 'agency required' validation below ask for one.
+        $scopePostedAgency = (int) ($_POST['agency'] ?? 0);
+        $scopeAgencyExists = false;
+        if ($scopePostedAgency > 0) {
+            $scopeDb->cdp_query("SELECT id FROM cdb_branchoffices WHERE id = :id LIMIT 1");
+            $scopeDb->bind(':id', $scopePostedAgency);
+            $scopeDb->cdp_execute();
+            $scopeAgencyExists = (bool) $scopeDb->cdp_registro();
+        }
+        $_POST['agency'] = $scopeAgencyExists ? $scopePostedAgency : (int) $scopeRow->agency;
+    }
+    if (!$user->cdp_hasPermission('assign_drivers')) {
+        $_POST['driver_id'] = (int) $scopeRow->driver_id;
+    }
+    $scopeSender = (int) $scopeRow->sender_id;
+    $scopeStoredDriver = (int) $scopeRow->driver_id;
+    $scopeCheckParties = true;
+} else {
+    // Staff were only checked for view_shipment_list, so a read-only staff role could still
+    // write here. Require the same permission as the page that posts here.
+    require_permission('complete_client_shipment');
+    // Agency-restricted staff (userlevel 2/4 tied to an agency) passed every check above, so they
+    // could edit any agency's shipment by order_id and move it out of (or into) their agency. Same
+    // rule as the other courier write endpoints: the stored row must be in their agency, the agency
+    // written stays theirs, and a changed sender must be one of their agency's customers.
+    $scopeCtx = cdp_getAgencyContext();
+    if (!empty($scopeCtx['is_restricted'])) {
+        $scopeDb = new Conexion;
+        $scopeDb->cdp_query("SELECT sender_id, driver_id, agency FROM cdb_add_order WHERE order_id = :id LIMIT 1");
+        $scopeDb->bind(':id', (int) ($_POST['order_id'] ?? 0));
+        $scopeDb->cdp_execute();
+        $scopeRow = $scopeDb->cdp_registro();
+        $scopeAgencyId = (int) ($scopeCtx['agency_id'] ?? 0);
+        $scopeSender = (int) ($_POST['sender_id'] ?? 0);
+        $scopeOk = $scopeRow && $scopeAgencyId > 0 && cdp_ajaxRowInAgencyScope($scopeRow);
+        if ($scopeOk && $scopeSender !== (int) $scopeRow->sender_id) {
+            // A changed sender must be a customer (rank 0) of this agency, not a staff or driver
+            // account that happens to carry the agency_id (add_courier_ajax.php checks the same).
+            $scopeDb->cdp_query("SELECT agency_id, userlevel FROM cdb_users WHERE id = :id LIMIT 1");
+            $scopeDb->bind(':id', $scopeSender);
+            $scopeDb->cdp_execute();
+            $scopeSenderRow = $scopeDb->cdp_registro();
+            $scopeOk = $scopeSenderRow && (int) $scopeSenderRow->agency_id === $scopeAgencyId
+                && cdp_roleRankById((int) $scopeSenderRow->userlevel) === 0;
+        }
+        if (!$scopeOk) {
+            header('HTTP/1.1 403 Forbidden');
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
+            exit;
+        }
+        $_POST['agency'] = $scopeAgencyId;
+        $scopeAgencies = [$scopeAgencyId];
+        $scopeStoredDriver = (int) $scopeRow->driver_id;
+        $scopeCheckParties = true;
+    }
+}
+
+if ($scopeCheckParties) {
+    // The recipient, the sender address and the recipient address must belong to that sender
+    // (or to its recipient), so another customer's contact or address cannot be attached to,
+    // and printed on, this shipment. $scopeType is the canonical value used further down.
+    $scopeRecipient = (int) ($_POST['recipient_id'] ?? 0);
+    if ($scopeType === 'user') {
+        $scopeRecipientOk = $scopeRecipient === $scopeSender;
+    } else {
+        $scopeDb->cdp_query("SELECT sender_id, agency_id FROM cdb_recipients WHERE id = :id LIMIT 1");
+        $scopeDb->bind(':id', $scopeRecipient);
+        $scopeDb->cdp_execute();
+        $scopeRec = $scopeDb->cdp_registro();
+        $scopeRecipientOk = $scopeRec && (
+            (int) $scopeRec->sender_id === $scopeSender
+            || in_array((int) ($scopeRec->agency_id ?? 0), $scopeAgencies, true)
+        );
+    }
+    $scopeAddrOk = true;
+    $scopeAddrId = (int) ($_POST['sender_address_id'] ?? 0);
+    if ($scopeAddrId > 0) {
+        $scopeDb->cdp_query("SELECT user_id FROM cdb_senders_addresses WHERE id_addresses = :id LIMIT 1");
+        $scopeDb->bind(':id', $scopeAddrId);
+        $scopeDb->cdp_execute();
+        $scopeAddr = $scopeDb->cdp_registro();
+        $scopeAddrOk = $scopeAddr && (int) $scopeAddr->user_id === $scopeSender;
+    }
+    // For type 'user' the sender doubles as recipient, so the address is one of the sender's.
+    $scopeRAddrId = (int) ($_POST['recipient_address_id'] ?? 0);
+    if ($scopeRAddrId > 0) {
+        if ($scopeType === 'user') {
+            $scopeDb->cdp_query("SELECT user_id AS owner_id FROM cdb_senders_addresses WHERE id_addresses = :id LIMIT 1");
+            $scopeRAddrOwner = $scopeSender;
+        } else {
+            $scopeDb->cdp_query("SELECT recipient_id AS owner_id FROM cdb_recipients_addresses WHERE id_addresses = :id LIMIT 1");
+            $scopeRAddrOwner = $scopeRecipient;
+        }
+        $scopeDb->bind(':id', $scopeRAddrId);
+        $scopeDb->cdp_execute();
+        $scopeRAddr = $scopeDb->cdp_registro();
+        if (!$scopeRAddr || (int) $scopeRAddr->owner_id !== $scopeRAddrOwner) {
+            $scopeAddrOk = false;
+        }
+    }
+    // The driver is notified and then passes the driver_id scope of edit/accept/print, so a newly
+    // named driver must be an active driver account (what the form offers, as add_courier_ajax.php
+    // requires), not any user id. An unchanged stored driver is left alone.
+    $scopeDriver = (int) ($_POST['driver_id'] ?? 0);
+    if ($scopeDriver > 0 && $scopeDriver !== $scopeStoredDriver) {
+        $scopeDb->cdp_query("SELECT id FROM cdb_users WHERE id = :id AND userlevel = 3 AND active = 1 LIMIT 1");
+        $scopeDb->bind(':id', $scopeDriver);
+        $scopeDb->cdp_execute();
+        if (!$scopeDb->cdp_registro()) {
+            $scopeAddrOk = false;
+        }
+    }
+    if (($scopeRecipient > 0 && !$scopeRecipientOk) || !$scopeAddrOk) {
+        header('HTTP/1.1 403 Forbidden');
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
+        exit;
+    }
+}
 
 if (empty($_POST['sender_id']))
 
@@ -274,18 +466,13 @@ if (empty($errors)) {
             foreach ($_FILES["filesMultiple"]['tmp_name'] as $key => $tmp_name) {
 
                 if (!in_array($key, $deleted_file_ids)) {
-                    $image_name = $order_track .  date("Y-m-d") . "_" . basename($_FILES["filesMultiple"]["name"][$key]);
-                    $target_file = $target_dir . $image_name;
-                    $imageFileType = pathinfo($target_file, PATHINFO_EXTENSION);
-                    $imageFileZise = $_FILES["filesMultiple"]["size"][$key];
-
-                    if ($imageFileZise > 0) {
-                        move_uploaded_file($_FILES["filesMultiple"]["tmp_name"][$key], $target_file);
-                        $imagen = basename($_FILES["filesMultiple"]["name"][$key]);
+                    // order_files/ is web-served: the client's file name and extension were kept, so a
+                    // .php/.html/.svg file could be stored there. cdp_uploadStore() checks the type from the
+                    // contents and stores it under our own random name and extension; rejected files are skipped.
+                    $stored = cdp_uploadStore(cdp_uploadPick($_FILES["filesMultiple"], (int) $key), __DIR__ . '/../../order_files', $order_track, 'office');
+                    if ($stored['ok']) {
+                        cdp_insertOrdersFiles($shipment_id, 'order_files/' . $stored['name'], $stored['name'], date("Y-m-d H:i:s"), '0', pathinfo($stored['name'], PATHINFO_EXTENSION));
                     }
-
-                    $target_file_db = "order_files/" . $image_name;
-                    cdp_insertOrdersFiles($shipment_id, $target_file_db, $image_name, date("Y-m-d H:i:s"), '0', $imageFileType);
                 }
             }
         }

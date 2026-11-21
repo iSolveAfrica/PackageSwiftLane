@@ -219,3 +219,13 @@ html.sl-dark .sl-legacy .alert-success{background:var(--green-bg);color:var(--gr
 html.sl-dark .sl-legacy .alert-danger,html.sl-dark .sl-legacy .alert-warning{background:var(--red-bg);color:var(--red-ink)}
 html.sl-dark .sl-legacy .swl-metric,html.sl-dark .sl-legacy .swl-panel{background:var(--card);border-color:var(--line)}
 html.sl-dark .sl-legacy .apexcharts-tooltip{background:var(--card)!important;color:var(--ink)!important;border-color:var(--line)!important}
+
+/* Swift Lane logo (helpers/sl_view.php sl_brandLogo) */
+.sl-brand-logo{display:block;height:auto;max-width:100%;object-fit:contain}
+.sl-brand .sl-brand-logo{height:40px;width:auto}
+.sl-top .sl-switch .sl-top-logo{height:30px;width:auto}
+.sl-top .sl-switch .sl-top-hub{font-size:13px;color:var(--muted);font-weight:500;padding-left:10px;margin-left:2px;border-left:1px solid var(--line-2);white-space:nowrap}
+.sl-top-logo.on-dark{display:none}
+html.sl-dark .sl-top-logo.on-light,.sl-app.dk .sl-top-logo.on-light{display:none}
+html.sl-dark .sl-top-logo.on-dark,.sl-app.dk .sl-top-logo.on-dark{display:block}
+@media (max-width:680px){.sl-top .sl-switch .sl-top-hub{display:none}.sl-top .sl-switch .sl-top-logo{height:26px}}

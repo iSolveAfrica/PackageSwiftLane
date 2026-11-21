@@ -16,10 +16,42 @@ $user = new User;
 $core = new Core;
 $db = new Conexion;
 
+// Registration closed by the admin: sign-up.php already redirects away, but this
+// endpoint creates the account, so it must refuse direct POSTs as well.
+if (isset($core->reg_allowed) && (string) $core->reg_allowed === '0') {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'errors' => 'Registration is currently closed.']);
+    exit;
+}
+
 $error = "";
 
 // Max file size: 5MB (adjust to taste)
 define('MAX_UPLOAD_BYTES', 5 * 1024 * 1024);
+
+/**
+ * Security: a pending (not yet usable) row may only be resumed by whoever submits
+ * the SAME email it was created with. A username or document number held by a
+ * pending row under a different email must not be taken over, otherwise anyone
+ * who knows it could overwrite that row's email and password.
+ */
+// Unverified sign-ups older than this are treated as abandoned: they no longer
+// hold their username / document number and may be resumed by a new applicant.
+define('SIGNUP_PENDING_HOLD_SEC', 24 * 3600);
+
+function cdp_signupPendingHeldByOther($db, $field, $value, $email)
+{
+    // Only a live pending row holds the value: email-verified (awaiting approval)
+    // or started recently. Otherwise an abandoned attempt would block the same
+    // person retrying with a corrected email forever.
+    $db->cdp_query("SELECT id FROM cdb_users WHERE $field = :v AND active = 0 AND approve = 0 AND email <> :e
+                      AND (registration_complete = 1 OR created >= :cutoff) LIMIT 1");
+    $db->bind(':v', $value);
+    $db->bind(':e', $email);
+    $db->bind(':cutoff', date('Y-m-d H:i:s', time() - SIGNUP_PENDING_HOLD_SEC));
+    $db->cdp_execute();
+    return $db->cdp_registro() ? true : false;
+}
 
 /**
  * True only when a *usable* account already uses this field value — i.e. one that
@@ -62,6 +94,19 @@ if (empty($error)) {
         $error = $lang['messagesform82'];
     } elseif (cdp_signupBlockingExists($db, 'email', cdp_sanitize($_POST['email']))) {
         $error = $lang['messagesform78'];
+    } elseif (cdp_signupPendingHeldByOther($db, 'username', cdp_sanitize($_POST['username']), cdp_sanitize($_POST['email']))) {
+        $error = $lang['messagesform81'];
+    } elseif (cdp_signupPendingHeldByOther($db, 'document_number', cdp_sanitize($_POST['document_number']), cdp_sanitize($_POST['email']))) {
+        $error = $lang['messagesform82'];
+    } else {
+        // An email-verified registration awaiting approval is not re-opened: a
+        // resubmit would reset its password and verification state.
+        $db->cdp_query("SELECT id FROM cdb_users WHERE email = :e AND active = 0 AND approve = 0 AND registration_complete = 1 LIMIT 1");
+        $db->bind(':e', cdp_sanitize($_POST['email']));
+        $db->cdp_execute();
+        if ($db->cdp_registro()) {
+            $error = $lang['messagesform78'];
+        }
     }
 }
 
@@ -119,17 +164,41 @@ if (empty($error)) {
         $documentPhotoPath = '../assets/uploads/users/' . $finalName;
     }
 
-    // Resume an existing not-yet-usable account (same email/username/document)
-    // instead of erroring — it just means "needs (another) OTP". Usable accounts
-    // (active/approved) were already rejected above.
+    // Resume an existing not-yet-verified account registered with this SAME email
+    // instead of erroring — it just means "needs (another) OTP". Matching on
+    // username or document alone would let a stranger hijack the row (see
+    // cdp_signupPendingHeldByOther above); usable accounts were rejected above.
     $db->cdp_query("SELECT id FROM cdb_users
-                    WHERE active = 0 AND approve = 0
-                      AND (email = :e OR username = :u OR document_number = :d)
+                    WHERE active = 0 AND approve = 0 AND registration_complete = 0
+                      AND email = :e
                     ORDER BY id DESC LIMIT 1");
     $db->bind(':e', cdp_sanitize($_POST['email']));
-    $db->bind(':u', cdp_sanitize($_POST['username']));
-    $db->bind(':d', cdp_sanitize($_POST['document_number']));
     $resume = $db->cdp_registro();
+    $reusedAbandoned = false;
+
+    if (!$resume) {
+        // An abandoned (never email-verified, older than the hold window) row
+        // with this username or document is reused rather than duplicated; it
+        // gets the new email and must be verified again by OTP, so no live
+        // registration can be taken over this way.
+        $db->cdp_query("SELECT id FROM cdb_users
+                        WHERE active = 0 AND approve = 0 AND registration_complete = 0
+                          AND (created < :cutoff OR created IS NULL)
+                          AND (username = :u OR document_number = :d)
+                        ORDER BY id DESC LIMIT 1");
+        $db->bind(':cutoff', date('Y-m-d H:i:s', time() - SIGNUP_PENDING_HOLD_SEC));
+        $db->bind(':u', cdp_sanitize($_POST['username']));
+        $db->bind(':d', cdp_sanitize($_POST['document_number']));
+        $resume = $db->cdp_registro();
+        if ($resume) {
+            $reusedAbandoned = true;
+            // Restart the hold window so the reused row is held for this applicant.
+            $db->cdp_query("UPDATE cdb_users SET created = :c WHERE id = :id");
+            $db->bind(':c', date('Y-m-d H:i:s'));
+            $db->bind(':id', (int) $resume->id);
+            $db->cdp_execute();
+        }
+    }
 
     if ($resume) {
         // ── Resume: refresh the editable fields on the existing incomplete row ──
@@ -156,13 +225,23 @@ if (empty($error)) {
         $db->bind(':id',              $userId);
         $db->cdp_execute();
 
-        if ($avatarPath !== '') {
+        if ($reusedAbandoned) {
+            // The abandoned row may belong to a different person: drop their
+            // avatar and ID photo (uploads are optional, so they would otherwise
+            // survive) and give the row the locker just claimed for this applicant.
+            $db->cdp_query('UPDATE cdb_users SET avatar = :a, document_photo = :d, locker = :l WHERE id = :id');
+            $db->bind(':a', $avatarPath);
+            $db->bind(':d', $documentPhotoPath);
+            $db->bind(':l', cdp_sanitize($prefixlk . ' ' . $_POST['locker']));
+            $db->bind(':id', $userId);
+            $db->cdp_execute();
+        } elseif ($avatarPath !== '') {
             $db->cdp_query('UPDATE cdb_users SET avatar = :a WHERE id = :id');
             $db->bind(':a', $avatarPath);
             $db->bind(':id', $userId);
             $db->cdp_execute();
         }
-        if ($documentPhotoPath !== '') {
+        if (!$reusedAbandoned && $documentPhotoPath !== '') {
             $db->cdp_query('UPDATE cdb_users SET document_photo = :d WHERE id = :id');
             $db->bind(':d', $documentPhotoPath);
             $db->bind(':id', $userId);

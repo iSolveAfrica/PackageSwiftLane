@@ -13,18 +13,24 @@ require_once 'helpers/sl_view.php';
 sl_gate('print_label');
 require_once 'helpers/activity_log.php';
 require_once 'views/sl/data/labels.php';
-cdp_activityLogDocument();
+$slPreview = !empty($_GET['test']) || !empty($_GET['embed']); // previews and test prints are not documents
+if (!$slPreview) cdp_activityLogDocument();
 $ids = array_filter(array_map('intval', explode(',', (string) ($_GET['ids'] ?? ($_GET['id'] ?? '')))));
 $ids = array_slice(array_values(array_unique($ids)), 0, 100);
 $opt = sl_labelOptions();
 $size = (string) ($_GET['size'] ?? ($opt['big']['size'] === '12' ? '12' : '46'));
 $size = $size === '12' ? '12' : '46';
 $type = ($_GET['type'] ?? 'air') === 'sea' ? 'sea' : 'air';
-foreach ($ids as $printId) {
+foreach ($slPreview ? [] : $ids as $printId) {
     cdp_activityLog(['module' => 'shipments', 'verb' => 'print', 'action' => 'label.print',
         'entity_type' => $type === 'sea' ? 'package' : 'shipment', 'entity_id' => (int) $printId,
         // Logged when the label is opened for printing (the browser does not report the print itself).
         'summary' => 'Label opened for printing (' . ($size === '12' ? '1 × 2 in' : '4 × 6 in') . ')']);
 }
 $board = $size === '12' ? 'Label1x2' : 'Label4x6';
+if (!empty($_GET['test'])) {
+    // calibration label: no shipment, sample data, the printer settings drawn on it
+    sl_render($board, ['id' => 'air', 'title' => 'Test label', 'board' => $board, 'plain' => true], sl_labelTestData($size));
+    exit;
+}
 sl_render($board, ['id' => 'air', 'title' => 'Label', 'board' => $board, 'plain' => true], sl_labelPrintData($ids, $size, $type));

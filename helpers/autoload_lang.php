@@ -130,10 +130,28 @@ if (!function_exists('cdp_trackingSearchSql')) {
     function cdp_trackingSearchSql($search, $alias = 'a')
     {
         $p = ($alias !== '') ? ($alias . '.') : '';
-        $s = $search;
+        $p = preg_match('/^[A-Za-z_][A-Za-z0-9_]*\.$|^$/', $p) ? $p : '';
+        // Callers paste this into SQL, so the term is reduced to what tracking numbers contain
+        // (letters, digits, space, - _ . / #). Quotes, backslashes and % can never reach the query.
+        $s = preg_replace('/[^A-Za-z0-9 _\-.\/#]/', '', (string) $search);
+        // cdb_add_order.tracking_num only exists on installations upgraded from the old system
+        // (helpers/querys.php checks the same way). On a fresh install referencing it made the
+        // whole list query fail, so every tracking search came back empty.
+        static $hasLegacy = null;
+        if ($hasLegacy === null) {
+            $hasLegacy = false;
+            try {
+                $db = new Conexion;
+                $db->cdp_query("SELECT COUNT(*) AS n FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_add_order' AND COLUMN_NAME = 'tracking_num'");
+                $row = $db->cdp_registro();
+                $hasLegacy = $row && (int) $row->n > 0;
+            } catch (\Throwable $e) {
+                $hasLegacy = false;
+            }
+        }
         return "("
             . "CONCAT({$p}order_prefix, {$p}order_no) LIKE '%{$s}%'"
-            . " OR {$p}tracking_num LIKE '%{$s}%'"
+            . ($hasLegacy ? " OR {$p}tracking_num LIKE '%{$s}%'" : '')
             . " OR EXISTS (SELECT 1 FROM cdb_package_tracking_number cptn"
             . " WHERE cptn.order_id = {$p}order_id AND cptn.tracking_number LIKE '%{$s}%')"
             . ")";
@@ -241,7 +259,10 @@ function cdp_sanitize($string, $trim = false, $int = false, $str = false)
 	$string = trim($string);
 	$string = stripslashes($string);
 	$string = strip_tags($string);
-	$string = str_replace(array('‘', '’', '“', '”'), array("'", "'", '"', '"'), $string);
+	// Typographic quotes become the same encoded quotes htmlspecialchars() produced above. Turning them
+	// into raw ' or " here (after escaping) re-opened SQL injection in every list endpoint that
+	// concatenates the sanitised value into SQL.
+	$string = str_replace(array('‘', '’', '“', '”'), array('&#039;', '&#039;', '&quot;', '&quot;'), $string);
 
 	if ($trim)
 		$string = substr($string, 0, $trim);

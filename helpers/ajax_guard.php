@@ -142,6 +142,14 @@ function require_permission($permission) {
     }
     $isStaffUp = cdp_roleRankById((int)$user->userlevel) >= 2;
     $shouldEnforce = ($mode === 'enforce') && $isStaffUp;
+    // Customers, drivers and agency users keep the soft pass ONLY for the customer-facing permission
+    // names their own screens still use (viewing/adding their own shipments, packages, pickups,
+    // recipients, pre-alerts). Anything else (settings, roles, payments, other people's accounts,
+    // deletes, reports) is refused for them in every mode except 'off', so a self-service account
+    // can never reach a staff endpoint. Those endpoints must still scope rows to the owner.
+    if (!$isStaffUp && !array_intersect($perms, cdp_ajaxCustomerFacingPerms())) {
+        $shouldEnforce = true;
+    }
 
     if (!$shouldEnforce) {
         error_log(sprintf(
@@ -202,4 +210,167 @@ function _ajax_guard_require_csrf() {
     if (!cdp_csrf_validate_request()) {
         _ajax_guard_send(419, ['success' => false, 'error' => 'Invalid CSRF token', 'message' => 'CSRF token missing or invalid']);
     }
+}
+
+/**
+ * Permission names that customer, driver and agency screens historically use for their OWN records.
+ * Only these are soft-allowed (audit-logged) for those roles by require_permission(); every other
+ * permission is enforced for them. Keep this list short and add a name only for an endpoint that
+ * scopes every row to the signed-in owner.
+ */
+function cdp_ajaxCustomerFacingPerms(): array
+{
+    return [
+        'view_shipment_list', 'view_package_list', 'view_pickup_list', 'track_shipment', 'print_label',
+        'add_shipment', 'courier_add_client', 'add_package', 'pickup_add', 'add_full_pickup', 'cancel_pickup',
+        'view_recipients', 'recipients_add', 'recipients_edit', 'delete_recipient',
+        'prealert_list', 'prealert_add', 'view_my_bills', 'view_dashboard',
+        'view_consolidate', 'view_consolidate_list', 'view_consolidate_package', 'view_consolidate_package_list',
+    ];
+}
+
+
+/**
+ * Staff-only gate (role rank 2+: staff, admin, superadmin). require_permission() soft-passes
+ * customers, drivers and agency users for the customer-facing permission names, so an endpoint
+ * that acts on records it does not scope to the caller (bulk status or rider changes resolved by
+ * order number) must also call this, or any signed-in customer could move anyone's shipment.
+ */
+function require_staff() {
+    global $user;
+    if (!isset($user) || !($user instanceof User)) {
+        $user = new User();
+    }
+    if (empty($user->logged_in)) {
+        _ajax_guard_send(401, ['success' => false, 'error' => 'Unauthorized', 'message' => 'Session Required']);
+    }
+    if (!function_exists('cdp_roleRankById')) {
+        require_once __DIR__ . '/rbac.php';
+    }
+    if (cdp_roleRankById((int) $user->userlevel) >= 2) {
+        return;
+    }
+    // A hard denial is a security event: record it like require_permission() does.
+    require_once __DIR__ . '/activity_log.php';
+    $denied = cdp_activityClassify(cdp_activityEndpoint());
+    cdp_activityLog([
+        'module'  => $denied['module'],
+        'verb'    => $denied['verb'],
+        'outcome' => 'denied',
+        'label'   => $denied['label'],
+        'summary' => 'Blocked — staff only',
+        'meta'    => ['source' => 'rbac', 'required' => 'staff'],
+    ]);
+    _ajax_guard_send(403, ['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
+}
+
+/**
+ * CSRF for endpoints that change data but are still called as a jQuery GET by legacy list
+ * screens. require_login() checks the token only on POST/PUT/PATCH/DELETE, so a GET is accepted
+ * only with a valid token or as a same-origin XHR: a cross-site link, redirect or <img> cannot
+ * add the X-Requested-With header, and browsers flag a cross-site request in Sec-Fetch-Site.
+ * Call after require_login(). Read the parameters with $_POST[...] ?? $_GET[...].
+ */
+function require_safe_write() {
+    $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
+    if (in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
+        // Token already required by require_login(); check again in case it was not called.
+        if (!cdp_csrf_validate_request()) {
+            _ajax_guard_send(419, ['success' => false, 'error' => 'Invalid CSRF token', 'message' => 'CSRF token missing or invalid']);
+        }
+        return;
+    }
+    if (cdp_csrf_validate_request()) {
+        return;
+    }
+    $xrw  = strtolower((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? ''));
+    $site = strtolower((string) ($_SERVER['HTTP_SEC_FETCH_SITE'] ?? ''));
+    if ($xrw !== 'xmlhttprequest' || ($site !== '' && $site !== 'same-origin')) {
+        _ajax_guard_send(403, ['success' => false, 'error' => 'Forbidden', 'message' => 'This action must be sent from the application.']);
+    }
+}
+
+/**
+ * True when a shipment / package / consolidation row (any table with an `agency` column) is
+ * inside the signed-in user's agency. Agency-restricted staff (helpers/querys.php
+ * cdp_getAgencyContext) may only act on their own agency's rows (none when no agency is on
+ * file); everyone else sees all.
+ */
+function cdp_ajaxRowInAgencyScope($row): bool {
+    static $ctx = null;
+    if ($ctx === null) {
+        if (!function_exists('cdp_getAgencyContext')) {
+            require_once __DIR__ . '/querys.php';
+        }
+        $ctx = cdp_getAgencyContext();
+    }
+    if (empty($ctx['is_restricted'])) {
+        return true;
+    }
+    // Restricted but with no agency on file (e.g. an agency user whose agency_id is empty):
+    // fail closed, like the sl/ data scopes, instead of granting every agency's rows.
+    if (empty($ctx['agency_id'])) {
+        return false;
+    }
+    return is_object($row) && (int) ($row->agency ?? 0) === (int) $ctx['agency_id'];
+}
+
+/**
+ * One SQL row-scope fragment (" and ..." ) for list endpoints that are reachable with a
+ * customer-facing permission. Scopes by role RANK, not by the seed role ids 1/3/6, so custom
+ * Customer / Driver / Agency roles never fall through to the unscoped staff branch:
+ *   rank 0 (customer)            -> $ownerCol = uid
+ *   rank 1 driver (id 3 / flag)  -> $driverCol = uid
+ *   rank 1 other (agency user)   -> agency = name_off branch, else context agency, else
+ *                                   cdb_users.agency_id, else nothing (" and 1=0")
+ *   staff, agency-restricted     -> agency = their agency, else nothing
+ *   other staff                  -> no filter
+ * Column names are passed by the caller and must be trusted identifiers (alias.column);
+ * pass $driverCol = null for tables without a driver column (drivers then see nothing) and
+ * $agencyCol = null for tables without an agency column (agency users then see nothing).
+ */
+function cdp_ajaxListScopeSql(?string $ownerCol = 'a.sender_id', ?string $driverCol = 'a.driver_id', ?string $agencyCol = 'a.agency'): string {
+    foreach ([$ownerCol, $driverCol, $agencyCol] as $c) {
+        if ($c !== null && !preg_match('/^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)?$/', $c)) {
+            return ' and 1=0';
+        }
+    }
+    global $user;
+    if (!isset($user) || !($user instanceof User)) {
+        $user = new User();
+    }
+    require_once __DIR__ . '/rbac.php';
+    if (!function_exists('cdp_getAgencyContext')) {
+        require_once __DIR__ . '/querys.php';
+    }
+    $uid = (int) ($_SESSION['userid'] ?? 0);
+    if ($uid <= 0) {
+        return ' and 1=0';
+    }
+    $userData = $user->cdp_getUserData();
+    $level = (int) ($userData->userlevel ?? 0);
+    $rank = cdp_roleRankById($level);
+    if ($rank === 0) {
+        return $ownerCol !== null ? " and {$ownerCol} = {$uid}" : ' and 1=0';
+    }
+    if ($rank === 1 && ($level === 3 || cdp_roleHasFlag($level, 'is_driver'))) {
+        return $driverCol !== null ? " and {$driverCol} = {$uid}" : ' and 1=0';
+    }
+    if ($rank === 1) {
+        $agency = function_exists('cdp_getAgencyBranchIdForUser') ? (int) cdp_getAgencyBranchIdForUser($userData->name_off ?? '') : 0;
+        if ($agency <= 0) {
+            $ctx = cdp_getAgencyContext();
+            $agency = (int) ($ctx['agency_id'] ?? 0);
+        }
+        if ($agency <= 0) {
+            $agency = (int) ($userData->agency_id ?? 0);
+        }
+        // No agency at all: show nothing. Filtering on agency 0 would list every unassigned row.
+        return ($agency > 0 && $agencyCol !== null) ? " and {$agencyCol} = {$agency}" : ' and 1=0';
+    }
+    $ctx = cdp_getAgencyContext();
+    if (!empty($ctx['is_restricted'])) {
+        return (!empty($ctx['agency_id']) && $agencyCol !== null) ? " and {$agencyCol} = " . (int) $ctx['agency_id'] : ' and 1=0';
+    }
+    return '';
 }

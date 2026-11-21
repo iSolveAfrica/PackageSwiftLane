@@ -37,6 +37,9 @@ if ($userData->userlevel == 1)
 
 
 if (isset($_GET['id'])) {
+    // Force an integer id: MySQL casts '5'' UNION ...' to 5 so the lookup below would pass and the
+    // raw value would then reach later queries.
+    $_GET['id'] = (int) $_GET['id'];
     $data = cdp_getConsolidatePackage($_GET['id']);
 }
 
@@ -56,7 +59,8 @@ if (isset($userData->userlevel) && (int)$userData->userlevel === 6) {
 $row_order = $data['data'];
 
 
-$db->cdp_query("SELECT * FROM cdb_consolidate_packages_detail WHERE consolidate_id='" . $_GET['id'] . "'");
+$db->cdp_query("SELECT * FROM cdb_consolidate_packages_detail WHERE consolidate_id = :cid");
+$db->bind(':cid', (int) $_GET['id']);
 $order_items = $db->cdp_registros();
 
 $db->cdp_query("SELECT * FROM cdb_users where id= '" . $row_order->sender_id . "'");
@@ -281,7 +285,9 @@ if (isset($_POST["total_item"])) {
     $db->bind(':date_history',  trim($date));
     $db->cdp_execute();
 
-    $db->cdp_query("SELECT * FROM cdb_senders_addresses where id_addresses= '" . $_POST["sender_address_id"] . "'");
+    // Bound integer: the posted address id was concatenated into SQL before.
+    $db->cdp_query("SELECT * FROM cdb_senders_addresses where id_addresses = :aid");
+    $db->bind(':aid', (int) ($_POST["sender_address_id"] ?? 0));
 
     $sender_address_data = $db->cdp_registro();
 
@@ -301,7 +307,9 @@ if (isset($_POST["total_item"])) {
     $final_sender_city = $sender_city['data'];
 
 
-    $db->cdp_query("SELECT * FROM cdb_recipients_addresses where id_addresses= '" . $_POST["recipient_address_id"] . "'");
+    // Bound integer: the posted address id was concatenated into SQL before.
+    $db->cdp_query("SELECT * FROM cdb_recipients_addresses where id_addresses = :aid");
+    $db->bind(':aid', (int) ($_POST["recipient_address_id"] ?? 0));
 
     $recipient_address_data = $db->cdp_registro();
 
@@ -377,19 +385,20 @@ if (isset($_POST["total_item"])) {
 
     if (isset($_FILES['filesMultiple']['name']) && count($_FILES['filesMultiple']['name']) > 0) {
         $target_dir = "order_files/";
+        require_once('helpers/uploads.php');
         $deleted_file_ids = !empty($_POST['deleted_file_ids']) ? explode(",", $_POST['deleted_file_ids']) : [];
 
         foreach ($_FILES["filesMultiple"]["tmp_name"] as $key => $tmp_name) {
             if (!in_array($key, $deleted_file_ids)) {
-                $image_name = time() . "_" . basename($_FILES["filesMultiple"]["name"][$key]);
-                $target_file = $target_dir . $image_name;
-                $imageFileType = pathinfo($target_file, PATHINFO_EXTENSION);
-                $imageFileZise = $_FILES["filesMultiple"]["size"][$key];
-
-                if ($imageFileZise > 0 && move_uploaded_file($_FILES["filesMultiple"]["tmp_name"][$key], $target_file)) {
-                    $imagen = basename($_FILES["filesMultiple"]["name"][$key]);
-                    $file = "image_path='img/usuarios/$image_name' ";
-                    cdp_insertOrdersFiles($order_id, $target_file, $image_name, date("Y-m-d H:i:s"), '1', $imageFileType);
+                // Our own name with the extension of the type detected from the contents
+                // (helpers/uploads.php): order_files/ is web-served, so the client's name and
+                // extension (.php, .html) must never be kept. Office files stay allowed here.
+                $cdpUp = cdp_uploadStore(cdp_uploadPick($_FILES['filesMultiple'], (int) $key), 'order_files', 'consolidate', 'office');
+                if ($cdpUp['ok']) {
+                    $image_name = $cdpUp['name'];
+                    // Sea attachments are is_consolidate = 2 (air keeps 1): air and sea consolidation
+                    // ids collide, so the kind tells readers and the delete endpoint which table owns the file.
+                    cdp_insertOrdersFiles($order_id, $target_dir . $image_name, $image_name, date("Y-m-d H:i:s"), '2', pathinfo($image_name, PATHINFO_EXTENSION));
                 }
             }
         }

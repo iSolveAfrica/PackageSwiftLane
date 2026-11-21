@@ -283,10 +283,25 @@
     };
     var GLOB = [['bodyBg', 'Page'], ['contentBg', 'E-mail'], ['textColor', 'Text'], ['headingColor', 'Headings'], ['linkColor', 'Links'], ['accent', 'Buttons']];
 
+    /* A saved design (server, draft or template) is untrusted JSON. The renderer puts the block id, align,
+       weight and the global font/colours into HTML attributes unescaped, so force them to safe values here. */
+    var ALIGNS = { left: 1, center: 1, right: 1, justify: 1 };
+    function safeSettings(st) {
+        var d = blankSettings(), out = Object.assign({}, d, st || {});
+        Object.keys(d).forEach(function (k) { if (k !== 'font') out[k] = col(out[k], d[k]); });
+        out.font = /^[A-Za-z0-9 ,'-]{1,120}$/.test(String(out.font || '')) ? out.font : d.font;
+        return out;
+    }
+    function safeProps(p, d) {
+        if (p.align !== undefined && !ALIGNS.hasOwnProperty(String(p.align))) p.align = d.align || 'left';
+        if (p.weight !== undefined && !/^[1-9]00$/.test(String(p.weight))) p.weight = d.weight || '700';
+        if (p.side !== undefined && p.side !== 'left' && p.side !== 'right') p.side = 'left';
+        return p;
+    }
     function load(design, meta) {
         meta = meta || {};
-        S.design = { settings: Object.assign(blankSettings(), design.settings || {}), blocks: (design.blocks || []).filter(function (b) { return b && TYPES[b.type]; }) };
-        S.design.blocks.forEach(function (b) { b.id = b.id || uid(); b.props = Object.assign({}, clone(TYPES[b.type].d), b.props || {}); if (b.type === 'columns' && !b.props.cols) b.props.cols = defaultCols(2); });
+        S.design = { settings: safeSettings(design.settings), blocks: (design.blocks || []).filter(function (b) { return b && typeof b.type === 'string' && TYPES.hasOwnProperty(b.type); }) };
+        S.design.blocks.forEach(function (b) { b.id = /^[A-Za-z0-9_-]{1,40}$/.test(String(b.id || '')) ? b.id : uid(); b.props = safeProps(Object.assign({}, clone(TYPES[b.type].d), b.props || {}), TYPES[b.type].d); if (b.type === 'columns' && !b.props.cols) b.props.cols = defaultCols(2); });
         S.selected = null; S.designId = meta.id || 0; S.name = meta.name || ''; S.undo = [];
         if (meta.subject !== undefined) $('eb-subj').value = meta.subject || '';
         if (meta.preheader !== undefined) $('eb-pre').value = meta.preheader || '';
@@ -425,7 +440,10 @@
     ['eb-subj', 'eb-pre'].forEach(function (i) { $(i).addEventListener('input', function () { meta_(); saveDraft(); }); });
     var reach = 0, ct;
     function count() { clearTimeout(ct); var aud = $('eb-aud').value; $('eb-emails-f').style.display = aud === 'emails' ? '' : 'none';
-        ct = setTimeout(function () { ajax({ action: 'count', audience: aud, emails: $('eb-emails').value }).then(function (r) { if (!r.success) { $('eb-reach').textContent = errs(r); reach = 0; return; } reach = r.total; $('eb-reach').textContent = r.total + ' recipient(s)' + (r.sample && r.sample.length ? ', e.g. ' + r.sample.join(', ') : '') + (r.invalid && r.invalid.length ? '. Not valid: ' + r.invalid.join(', ') : '') + '.'; $('eb-send-btn').querySelector('span').textContent = 'Send to ' + r.total; }); }, 250); }
+        ct = setTimeout(function () { ajax({ action: 'count', audience: aud, emails: $('eb-emails').value }).then(function (r) { if (!r.success) { $('eb-reach').textContent = errs(r); reach = 0; return; } reach = r.total; $('eb-reach').textContent = r.total.toLocaleString() + ' recipient' + (r.total === 1 ? '' : 's') + (r.invalid && r.invalid.length ? ' · not valid: ' + r.invalid.join(', ') : '');
+                $('eb-people').innerHTML = (r.people || []).map(function (p) { var n = p.name || p.email; var ini = n.split(/\s+/).map(function (w) { return w.charAt(0); }).join('').slice(0, 2).toUpperCase(); return '<div class="eb-pp"><span class="eb-av">' + esc(ini) + '</span><span class="col" style="min-width:0"><b>' + esc(p.name || '—') + '</b><small>' + esc(p.email) + '</small></span></div>'; }).join('') + (r.total > 5 ? '<div class="eb-more">+ ' + (r.total - 5).toLocaleString() + ' more</div>' : '');
+                $('eb-all').hidden = !r.total;
+                var c = r.cost || {}; $('eb-cost').textContent = (c.currency ? c.currency + ' ' : '') + (+c.total || 0).toFixed(2); $('eb-cost-d').textContent = r.total.toLocaleString() + ' e-mails × ' + (c.currency ? c.currency + ' ' : '') + (+c.rate || 0) + (c.rate ? '' : ' · set the e-mail price in Message Costs'); $('eb-send-btn').querySelector('span').textContent = 'Send to ' + r.total; }); }, 250); }
     $('eb-aud').addEventListener('change', count); $('eb-emails').addEventListener('input', count);
     $('eb-test-btn').addEventListener('click', function () { var s = $('eb-subj').value.trim(), btn = this; if (!S.design.blocks.length) { SL.toast('The design is empty.', true); return; } btn.disabled = true;
         ajax({ action: 'test', emails: $('eb-test').value, subject: s, html: exportHtml(s, $('eb-pre').value) }).then(function (r) { btn.disabled = false; $('eb-test-res').innerHTML = (r.lines || []).map(function (l) { return '<span>' + esc(l) + '</span>'; }).join('') + (r.errors && r.errors.length ? '<span>' + esc(r.errors.join(' ')) + '</span>' : ''); SL.toast(r.success ? 'Test sent to ' + r.sent : errs(r, 'Test not sent'), !r.success); }); });
@@ -441,7 +459,23 @@
             tot.batch = s.batch_id; tot.total = s.total; tot.done += s.recipients; tot.sent += s.sent; tot.failed += s.failed; tot.skipped += s.skipped; tot.lines = tot.lines.concat(s.lines || []);
             if (s.done) fin(''); else { prog(); go(s.next_offset); } }).catch(function () { if (retries < 2 && tot.batch) { retries++; setTimeout(function () { go(offset); }, 3000); return; } fin('The connection failed after ' + tot.done + ' recipient(s). Check Message logs for batch ' + (tot.batch || '-') + ' before sending again.'); }); })(0);
     });
-    function history_() { ajax({ action: 'history' }).then(function (r) { var l = (r && r.history) || []; $('eb-hist').innerHTML = l.length ? l.map(function (h) { return '<tr><td>' + esc(h.started_at) + '</td><td class="wrap">' + esc(h.subject) + '</td><td>' + esc(h.audience) + '</td><td>' + esc(h.sent_by) + '</td><td>' + (+h.sent || 0) + '</td><td>' + (+h.failed || 0) + '</td></tr>'; }).join('') : '<tr><td colspan="6" class="mut">No campaigns sent yet.</td></tr>'; }); }
+    function history_() { ajax({ action: 'history' }).then(function (r) { var l = (r && r.history) || []; $('eb-hist').innerHTML = l.length ? l.map(function (h) { var sent = +h.sent || 0, pc = function (n) { return sent ? ' <span class="mut sm">' + Math.round(n / sent * 100) + '%</span>' : ''; }; return '<tr><td><a class="col" href="campaigns.php?batch=' + encodeURIComponent(h.batch_id) + '#campaign"><b class="fw5">' + esc(h.subject) + '</b><span class="mut sm">' + esc(h.started_at) + ' · ' + esc(h.audience) + ' · ' + esc(h.sent_by) + '</span></a></td><td class="num">' + sent + '</td><td class="num">' + (+h.opened || 0) + pc(+h.opened || 0) + '</td><td class="num">' + (+h.clicked || 0) + pc(+h.clicked || 0) + '</td><td class="num">' + (+h.failed || 0) + '</td><td class="num">' + esc(h.cost || '') + '</td></tr>'; }).join('') : '<tr><td colspan="6" class="mut">No campaigns sent yet.</td></tr>'; }); }
+
+    /* all recipients: search, page, edit one person */
+    var pp = { page: 1, q: '', t: null };
+    function people() { ajax({ action: 'people', audience: $('eb-aud').value, emails: $('eb-emails').value, q: pp.q, page: pp.page }).then(function (r) {
+        if (!r.success) { $('eb-plist').innerHTML = '<p class="mut">' + esc(errs(r)) + '</p>'; return; }
+        var pages = Math.max(1, Math.ceil(r.total / r.per)); $('eb-p-n').textContent = '· ' + r.total.toLocaleString(); $('eb-p-pg').textContent = 'Page ' + r.page + ' of ' + pages; $('eb-p-prev').disabled = r.page <= 1; $('eb-p-next').disabled = r.page >= pages;
+        $('eb-plist').innerHTML = r.people.map(function (p) { return '<div class="eb-pr" data-id="' + p.id + '"><div class="eb-prv"><span class="eb-av">' + esc(((p.fname || p.email).charAt(0) + (p.lname || '').charAt(0)).toUpperCase()) + '</span><span class="col grow" style="min-width:0"><b>' + esc((p.fname + ' ' + p.lname).trim() || '—') + (p.locker ? ' <span class="mut sm">· ' + esc(p.locker) + '</span>' : '') + '</b><small>' + esc(p.email) + (p.phone ? ' · ' + esc(p.phone) : '') + (p.news ? '' : ' · <em>not subscribed</em>') + '</small></span>' + (r.canEdit && p.id ? '<button type="button" class="sl-btn ghost sm" data-pe>Edit</button>' : '') + (p.id ? '<a class="sl-btn ghost sm" href="customer_view.php?id=' + p.id + '" target="_blank" rel="noopener">Profile</a>' : '') + '</div>'
+            + (r.canEdit && p.id ? '<form class="eb-pf" hidden><label><span>First name</span><input name="fname" value="' + esc(p.fname) + '"></label><label><span>Last name</span><input name="lname" value="' + esc(p.lname) + '"></label><label><span>E-mail</span><input name="email" type="email" value="' + esc(p.email) + '" required></label><label><span>Phone</span><input name="phone" value="' + esc(p.phone) + '"></label><label class="ck"><input type="checkbox" name="news" value="1"' + (p.news ? ' checked' : '') + '> Gets newsletters</label><div class="row g8"><button class="sl-btn sm" type="submit">Save</button><button class="sl-btn ghost sm" type="button" data-pc>Cancel</button></div></form>' : '') + '</div>'; }).join('') || '<p class="mut">Nobody matches.</p>';
+    }); }
+    $('eb-all').addEventListener('click', function () { pp.page = 1; pp.q = ''; $('eb-p-q').value = ''; $('eb-pdlg').hidden = false; document.body.style.overflow = 'hidden'; people(); });
+    $('eb-p-q').addEventListener('input', function () { clearTimeout(pp.t); pp.t = setTimeout(function () { pp.q = $('eb-p-q').value.trim(); pp.page = 1; people(); }, 250); });
+    $('eb-p-prev').addEventListener('click', function () { if (pp.page > 1) { pp.page--; people(); } });
+    $('eb-p-next').addEventListener('click', function () { pp.page++; people(); });
+    $('eb-plist').addEventListener('click', function (e) { var row = e.target.closest('.eb-pr'); if (!row) return; var f = row.querySelector('.eb-pf'); if (!f) return; if (e.target.closest('[data-pe]')) f.hidden = !f.hidden; if (e.target.closest('[data-pc]')) f.hidden = true; });
+    $('eb-plist').addEventListener('submit', function (e) { var f = e.target.closest('.eb-pf'); if (!f) return; e.preventDefault(); var row = f.closest('.eb-pr'), d = { action: 'person_save', id: row.getAttribute('data-id') }; new FormData(f).forEach(function (v, k) { d[k] = v; }); if (!d.news) d.news = 0;
+        ajax(d).then(function (r) { SL.toast(r.success ? 'Saved' : errs(r), !r.success); if (r.success) { people(); count(); } }); });
 
     /* start: the unsaved draft from this browser, else the first template */
     var dr = null; try { dr = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch (e) {}

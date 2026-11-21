@@ -56,3 +56,22 @@
 .eb-steps button b{width:28px;height:28px;border-radius:50%;background:var(--active);display:grid;place-items:center;font-size:14.5px}
 .eb-steps button.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}.eb-steps button.on b{background:var(--ink);color:var(--inverse)}
 .eb-set{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(360px,100%),1fr));gap:16px;align-items:start;max-width:1100px}
+
+/* Subject and send: two aligned columns */
+#eb-send:not([hidden]){display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start;max-width:1200px}
+.eb-col{display:flex;flex-direction:column;gap:16px;min-width:0}
+@media (max-width:900px){#eb-send:not([hidden]){grid-template-columns:1fr}}
+.eb-reach{display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:14px;background:var(--sky-bg);border:1px solid color-mix(in srgb,var(--sky) 25%,transparent)}
+.eb-people{display:flex;flex-direction:column;gap:6px}
+.eb-pp{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:10px;background:var(--card)}
+.eb-pp b,.eb-pr b{font-weight:500;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.eb-pp small,.eb-pr small{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.eb-av{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;flex:none;background:var(--ink);color:var(--inverse);font-size:12px;font-weight:600}
+.eb-more{font-size:13px;color:var(--sky-ink);padding-left:8px}
+.eb-cost{display:flex;flex-direction:column;gap:2px}.eb-cost b{font-size:28px;font-weight:600}
+.eb-plist{display:flex;flex-direction:column;gap:6px;max-height:60vh;overflow:auto}
+.eb-pr{border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+.eb-prv{display:flex;align-items:center;gap:10px}
+.eb-pf{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
+.eb-pf label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted)}
+.eb-pf input:not([type=checkbox]){font:inherit;font-size:14px;color:var(--ink);height:36px;padding:0 10px;border-radius:10px;border:1px solid var(--line-2);background:var(--field)}
+.eb-pf .ck{flex-direction:row;align-items:center;gap:6px;color:var(--ink);font-size:13.5px}

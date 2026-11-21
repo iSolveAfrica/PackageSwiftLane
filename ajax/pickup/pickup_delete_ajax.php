@@ -25,7 +25,9 @@ require_once("../../loader.php");
 require_once("../../helpers/querys.php");
 require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_login();
-require_permission('view_pickup_list');
+// Deleting is destructive: require a delete permission (staff only), not the list permission,
+// which customers also hold. This endpoint serves both pickups and courier shipments (cdb_add_order).
+require_permission(['delete_pickup', 'delete_shipment']);
 $db = new Conexion;
 $user = new User;
 $userData = $user->cdp_getUserData();
@@ -40,17 +42,35 @@ if (empty($_POST['id_delete']))
 
 
 
-if (empty($errors)) {
+$id_delete = (int) ($_POST['id_delete'] ?? 0);
+if (empty($errors) && $id_delete <= 0)
 
-    $db->cdp_query("SELECT * FROM cdb_add_order where order_id=" . $_POST['id_delete'] . "");
+    $errors['id'] = 'Please select shipment';
+
+$trackings_order = null;
+if (empty($errors)) {
+    // Bound integer id (the raw POST value was concatenated into SQL before).
+    $db->cdp_query("SELECT * FROM cdb_add_order where order_id = :id");
+    $db->bind(':id', $id_delete);
     $trackings_order = $db->cdp_registro();
+
+    // The record must exist and, for an agency-restricted user, belong to their agency.
+    $agencyCtx = cdp_getAgencyContext();
+    if (!$trackings_order) {
+        $errors['id'] = 'Please select shipment';
+    } elseif (!empty($agencyCtx['is_restricted']) && (int) ($trackings_order->agency ?? 0) !== (int) $agencyCtx['agency_id']) {
+        $errors['id'] = 'Please select shipment';
+    }
+}
+
+if (empty($errors)) {
 
 
     $track_resulta = $trackings_order->order_prefix . $trackings_order->order_no;
 
     $data = array(
 
-        'id' => cdp_sanitize($_POST['id_delete'])
+        'id' => $id_delete
     );
 
 
@@ -89,13 +109,13 @@ if (empty($errors)) {
             'module'       => 'pickups',
             'verb'         => 'delete',
             'entity_type'  => 'pickup',
-            'entity_id'    => (int) $_POST['id_delete'],
+            'entity_id'    => $id_delete,
             'entity_label' => isset($trackings_order)
                 ? ($trackings_order->order_prefix . $trackings_order->order_no)
-                : ('#' . (int) $_POST['id_delete']),
+                : ('#' . $id_delete),
             'summary'      => 'Deleted pickup ' . (isset($trackings_order)
                 ? ($trackings_order->order_prefix . $trackings_order->order_no)
-                : ('#' . (int) $_POST['id_delete'])),
+                : ('#' . $id_delete)),
         ]);
 
         $messages[] = $lang['message_ajax_success_delete'];

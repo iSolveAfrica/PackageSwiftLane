@@ -71,6 +71,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $db->cdp_execute();
             if ($mode === 'forgot' || $signOut) {
                 $otp->revokeAllTrustedDevices($userId);
+                // Security: API bearer tokens (valid up to 30 days) must die with
+                // the old password too, or an attacker's token survives the reset.
+                if (!class_exists('ApiAuth')) {
+                    require_once __DIR__ . '/api/v1/ApiAuth.php';
+                }
+                (new ApiAuth())->revokeAllForUser($userId);
             }
             unset($_SESSION['forgot_reset_token']);
             cdp_activityLog(['module' => 'auth', 'action' => 'password.change', 'action_label' => 'Password changed', 'verb' => 'update', 'outcome' => 'ok',

@@ -25,6 +25,10 @@ require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_login();
 notify_after_response(); // email + WhatsApp go out after the response (helpers/after_response.php)
 require_permission('view_client_list');
+// Order numbers below are resolved across every customer, so this bulk change is for staff
+// only, with the permission the package list shows its status menu for.
+require_staff();
+require_permission(['select_change_status', 'select_change_status_courier', 'track_package']);
 require_once(__DIR__ . '/../../helpers/video_files.php');
 cdp_purgeDeliveredVideosLater();   // videos of delivered packages are deleted after the response
 
@@ -48,8 +52,16 @@ $smtppass   = $settings->smtp_password;
 $smtpport   = $settings->smtp_port;
 $smtpsecure = $settings->smtp_secure;
 
-$status = intval($_GET['status']);
-$data   = json_decode($_GET['checked_data']);
+// CSRF: the list screen (dataJs/customers_packages_ajax.js) still sends this as a jQuery
+// GET; helpers/ajax_guard.php require_safe_write() accepts that only as a same-origin XHR
+// or with a valid token.
+require_safe_write();
+
+$status = intval($_POST['status'] ?? $_GET['status'] ?? 0);
+$data   = json_decode((string) ($_POST['checked_data'] ?? $_GET['checked_data'] ?? ''));
+if (!is_array($data)) {
+    $data = [];
+}
 
 // Delivered / Picked up only with the owner's verified pickup code
 // (helpers/pickup_code.php). Order numbers repeat across customers, so
@@ -102,6 +114,11 @@ foreach ($data as $key) {
             continue;
         }
         $courier = $cdpRes['row'];
+    }
+    // Agency-restricted staff move only their own agency's packages.
+    if (!$courier || !cdp_ajaxRowInAgencyScope($courier)) {
+        $message[$key] = $key . ': not found.';
+        continue;
     }
     $prefix   = $courier->order_prefix;
     $office   = $courier->origin_off;

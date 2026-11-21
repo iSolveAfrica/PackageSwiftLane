@@ -156,7 +156,11 @@ function sl_opsLookups(): array
 function sl_opsCustomers(int $limit = 500): array
 {
     $ctx = function_exists('cdp_getAgencyContext') ? cdp_getAgencyContext() : ['is_restricted' => false];
-    $scope = !empty($ctx['is_restricted']) && !empty($ctx['agency_id']) ? ' AND agency_id = ' . (int) $ctx['agency_id'] : '';
+    $scope = '';
+    if (!empty($ctx['is_restricted'])) {
+        // Fail closed: a restricted user without an agency sees no customers rather than all of them.
+        $scope = !empty($ctx['agency_id']) ? ' AND agency_id = ' . (int) $ctx['agency_id'] : ' AND 1 = 0';
+    }
     if (sl_userIs('client')) {
         $scope = ' AND id = ' . (int) $_SESSION['userid'];
     }

@@ -5,7 +5,7 @@
  * ajax/sl/customer_profile_ajax.php (addresses, note, alerts, delete).
  */
 if (!isset($d)) { $d = []; }
-$tabs = ['ship' => 'Shipments', 'pkg' => 'Packages', 'pay' => 'Payments', 'msg' => 'Messages', 'recip' => 'Recipients'];
+$tabs = ['all' => 'Everything', 'ship' => 'Shipments', 'pkg' => 'Packages', 'pay' => 'Payments', 'msg' => 'Messages', 'recip' => 'Recipients'];
 $heads = ['ship' => ['Tracking', 'Date', 'Destination', 'Weight', 'Amount', 'Status'], 'pkg' => ['Tracking', 'Date', 'Bay', 'Weight', 'Amount', 'Status'], 'pay' => ['Invoice', 'Date', 'Payment', '', 'Amount', 'Status'], 'msg' => ['Channel', 'Sent', 'Message', '', 'Source', 'Status'], 'recip' => ['Recipient', '', 'Phone', 'E-mail', 'Shipments', '']];
 ?>
         <a href="<?= sl_route('Customers') ?>" class="row g6 mut sm"><i class="ic ic-sm i-left" aria-hidden="true"></i>Customers</a>
@@ -16,28 +16,38 @@ $heads = ['ship' => ['Tracking', 'Date', 'Destination', 'Weight', 'Amount', 'Sta
         </section>
         <?php if ($d['block']): ?><div class="sl-banner" style="background:var(--red-bg);color:var(--red-ink);border-color:transparent"><i class="ic i-ban" aria-hidden="true"></i><span class="grow"><b class="fw5">Blocked</b> · <?= h($d['block']['reason']) ?> · by <?= h($d['block']['by']) ?>, <?= h($d['block']['at']) ?>. Log-in, pickups and offers are off.</span></div><?php elseif ($d['blocked']): ?><div class="sl-banner" style="background:var(--red-bg);color:var(--red-ink);border-color:transparent"><i class="ic i-ban" aria-hidden="true"></i><span class="grow">The account is inactive.</span></div><?php endif; ?>
         <?php if (!$d['approve'] && !$d['blocked']): ?><section class="sl-card row g12 wrap" style="align-items:center"><span class="sl-tile" style="background:var(--amber-bg);color:var(--amber-ink)"><i class="ic i-shield" aria-hidden="true"></i></span><div class="col grow"><b class="fw5">KYC to review</b><span class="mut sm"><?= $d['docUrl'] ? h(($d['docType'] ?: 'ID') . ' ' . ($d['docNo'] ?: '')) . ' uploaded. Check the photo, then approve.' : 'No ID document uploaded yet.' ?></span></div><?php if ($d['docUrl']): ?><a class="sl-btn ghost" href="<?= h($d['docUrl']) ?>" target="_blank" rel="noopener"><i class="ic ic-sm i-file" aria-hidden="true"></i>Open document</a><?php endif; ?><?php if ($d['canApprove']): ?><button class="sl-btn" data-sl-action="ajax/sl/customer_status_ajax.php" data-p-op="approve" data-p-id="<?= (int) $d['id'] ?>" data-sl-confirm="Approve <?= h($d['name']) ?>?" data-sl-reload><i class="ic ic-sm i-check" aria-hidden="true"></i>Approve</button><?php endif; ?></section><?php endif; ?>
-        <div class="grid cols4">
+        <div class="grid u3-kpis">
           <div class="sl-card sl-metric"><div class="sl-ml"><span>Lifetime parcels</span></div><div class="sl-mv"><?= sl_num($d['nShip'] + $d['nPkg']) ?> <i><?= (int) $d['nShip'] ?> air · <?= (int) $d['nPkg'] ?> sea</i></div><div class="sl-ticks"><i style="width: <?= min(100, ($d['nShip'] + $d['nPkg']) * 2) ?>%"></i></div></div>
           <div class="sl-card sl-metric"><div class="sl-ml"><span>Total spend</span></div><div class="sl-mv"><?= h($d['spend']) ?></div><div class="sl-ticks y"><i style="width: 70%"></i></div></div>
           <div class="sl-card sl-metric"><div class="sl-ml"><span>Balance due</span></div><div class="sl-mv"><?= h($d['due']) ?></div><div class="sl-ticks <?= $d['dueN'] > 0 ? 'r' : '' ?>"><i style="width: <?= $d['dueN'] > 0 ? 60 : 0 ?>%"></i></div></div>
           <div class="sl-card sl-metric"><div class="sl-ml"><span>Waiting at warehouse</span></div><div class="sl-mv"><?= (int) $d['waiting'] ?></div><div class="sl-ticks v"><i style="width: <?= min(100, $d['waiting'] * 20) ?>%"></i></div></div>
+          <div class="sl-card sl-metric"><div class="sl-ml"><span>Last shipment</span></div><div class="sl-mv" style="font-size:22px"><?= h($d['lastShip']) ?></div><div class="mut sm">Customer since <?= h($d['created']) ?></div></div>
+          <div class="sl-card sl-metric"><div class="sl-ml"><span>Last sign-in</span></div><div class="sl-mv" style="font-size:22px"><?= h($d['lastLogin']) ?></div><div class="mut sm"><?= h($d['lastDevice'] ?: ($d['lastLoginAt'] ?: 'No sign-in yet')) ?></div></div>
+          <div class="sl-card sl-metric"><div class="sl-ml"><span>Open support</span></div><div class="sl-mv"><?= (int) $d['openTickets'] ?></div><div class="mut sm"><?= $d['openTickets'] ? 'tickets waiting' : 'Nothing open' ?></div></div>
         </div>
+        <?php $moving = $d['moving']; $movingTitle = 'Parcels on the move'; include __DIR__ . '/partials/user_moving.php'; ?>
         <div class="split">
           <div class="a col g16">
             <section class="sl-card flush">
-              <div class="row between wrap g12" style="padding: 14px 16px"><div class="sl-seg boxed"><?php foreach ($tabs as $k => $l): ?><a class="<?= $k === $d['tab'] ? 'on' : '' ?>" href="<?= h(sl_url(['tab' => $k, 'page' => null])) ?>"><?= $l ?></a><?php endforeach; ?></div><a href="<?= $d['tab'] === 'pkg' ? sl_route('SeaPackages', ['q' => $d['locker']]) : sl_route('AirShipments', ['q' => $d['locker']]) ?>" class="sm fw5 row g6">View all <i class="ic ic-sm i-right" aria-hidden="true"></i></a></div>
+              <div class="row between wrap g12" style="padding: 14px 16px"><div class="sl-seg boxed"><?php foreach ($tabs as $k => $l): ?><a class="<?= $k === $d['tab'] ? 'on' : '' ?>" href="<?= h(sl_url(['tab' => $k, 'page' => null, 'k' => null, 'n' => null])) ?>"><?= $l ?><?php $tc = $k === 'all' ? ($d['timeline']['all'] ?? null) : ($d['tabCounts'][$k] ?? null); if ($tc !== null): ?> <b class="u3-n"><?= sl_num($tc) ?></b><?php endif; ?></a><?php endforeach; ?></div><?php if ($d['tab'] !== 'all'): ?><a href="<?= $d['tab'] === 'pkg' ? sl_route('SeaPackages', ['q' => $d['locker']]) : sl_route('AirShipments', ['q' => $d['locker']]) ?>" class="sm fw5 row g6">View all <i class="ic ic-sm i-right" aria-hidden="true"></i></a><?php endif; ?></div>
+              <?php if ($d['tab'] === 'all'): ?><div style="padding:0 16px 16px"><?php $tl = $d['timeline']; $tlAud = 'staff'; $tlAnchor = 'everything'; include __DIR__ . '/partials/user_timeline.php'; ?></div><?php else: ?>
               <div class="sl-tw"><table class="sl-table"><thead><tr><?php foreach ($heads[$d['tab']] as $i => $hh): ?><th class="<?= $i === 3 || $i === 4 ? 'num' : '' ?>"><?= h($hh) ?></th><?php endforeach; ?></tr></thead><tbody>
                 <?php foreach ($d['rows'] as $r): ?><tr><td><a class="id" href="<?= h($r['href']) ?>"><?= h($r['trk']) ?></a></td><td><?= h($r['date']) ?></td><td><?= h($r['dest']) ?></td><td class="num"><?= h($r['kg']) ?></td><td class="num"><?= h($r['amt']) ?></td><td><?php if ($r['st']): ?><span class="sl-pill <?= h($r['cls']) ?>"><?= h($r['st']) ?></span><?php endif; ?></td></tr><?php endforeach; ?>
                 <?php if (!$d['rows']): ?><tr><td colspan="6"><div class="sl-empty"><span class="sl-tile"><i class="ic i-box" aria-hidden="true"></i></span>Nothing here yet.</div></td></tr><?php endif; ?>
               </tbody></table></div>
               <?= $d['count'] > $d['per'] ? sl_pager($d['page'], $d['per'], $d['count'], 'rows') : '' ?>
+              <?php endif; ?>
             </section>
-            <section class="sl-card"><div class="sl-ch"><h2 class="sl-ct">Shipping activity</h2><span class="mut sm">Last 6 months</span></div>
-              <div class="sl-bars" style="height: 120px"><?php foreach ($d['act'] as $a): ?><div class="sl-bar <?= h($a['hi']) ?>" title="<?= (int) $a['n'] ?> parcels"><span style="<?= h($a['h']) ?>"></span></div><?php endforeach; ?></div>
-              <div class="row between mut sm" style="margin-top: 8px"><?php foreach ($d['act'] as $a): ?><span><?= h($a['l']) ?></span><?php endforeach; ?></div>
-            </section>
+            <?php $heat = $d['heat']; $heatTitle = 'Their shipping rhythm'; include __DIR__ . '/partials/user_heatmap.php'; ?>
           </div>
           <aside class="b col g16">
+            <section class="sl-card col g12"><h2 class="sl-ct">Account &amp; security</h2>
+              <div class="sl-kv"><div><span>Last sign-in</span><span><?= h($d['lastLoginAt'] ?: 'Never') ?></span></div><?php if ($d['lastDevice']): ?><div><span>Device</span><span><?= h($d['lastDevice']) ?></span></div><?php endif; ?><?php if ($d['lastIp']): ?><div><span>Last IP</span><span class="mono"><?= h($d['lastIp']) ?></span></div><?php endif; ?><div><span>Trusted devices</span><span><?= (int) $d['devices'] ?></span></div><div><span>Failed sign-ins (30 days)</span><span class="<?= $d['failed30'] >= 5 ? 'u3-bad' : '' ?>"><?= (int) $d['failed30'] ?></span></div></div>
+              <a class="sm fw5 row g6" href="<?= h(sl_url(['tab' => 'all', 'k' => 'account', 'n' => null])) ?>#everything">All sign-ins <i class="ic ic-sm i-right" aria-hidden="true"></i></a>
+            </section>
+            <?php if ($d['loyalty']): ?><section class="sl-card col g12"><h2 class="sl-ct">Rewards</h2>
+              <div class="sl-kv"><div><span>Points</span><span class="mono"><?= sl_num($d['loyalty']['pts']) ?></span></div><div><span>Lifetime</span><span class="mono"><?= sl_num($d['loyalty']['life']) ?></span></div><?php if ($d['loyalty']['tier']): ?><div><span>Tier</span><span><?= h($d['loyalty']['tier']) ?></span></div><?php endif; ?><?php if ($d['loyalty']['code']): ?><div><span>Referral code</span><span class="mono"><?= h($d['loyalty']['code']) ?></span></div><?php endif; ?></div>
+            </section><?php endif; ?>
             <section class="sl-card col g12"><h2 class="sl-ct">Contact</h2>
               <div class="sl-kv"><div><span>Email</span><span><?= h($d['mail']) ?></span></div><div><span>Phone</span><span><?= h($d['phone']) ?></span></div><div><span>Username</span><span class="mono"><?= h($d['username']) ?></span></div><div><span>Newsletter</span><span class="row g8 end"><span class="sl-toggle <?= $d['newsletter'] ? 'on' : '' ?>" role="switch" aria-checked="<?= $d['newsletter'] ? 'true' : 'false' ?>" aria-label="Newsletter" <?= $d['canEdit'] ? 'data-sl-save="ajax/sl/customer_profile_ajax.php" data-key="newsletter" data-p-op="pref" data-p-id="' . (int) $d['id'] . '"' : 'data-static' ?>></span></span></div></div>
             </section>

@@ -22,6 +22,11 @@
 
 
 require_once("../../../loader.php");
+require_once(__DIR__ . '/../../../helpers/ajax_guard.php');
+// Settings list: staff only, same permission as its lookup-lists page (helpers/sl_catalogs.php,
+// catalog.php / templates pages) or the general settings permission, like the sibling list endpoints.
+require_login();
+require_permission(['manage_cities', 'view_tools']);
 
 $db = new Conexion;
 

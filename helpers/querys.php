@@ -1006,7 +1006,7 @@ function cdp_lineExists($ship_line, $id = null)
     $where = '';
     if ($id != null) {
 
-        $where = "and id!='$id'";
+        $where = "and id!=" . (int) $id; // callers pass raw $_POST['id']; cast so it cannot inject SQL
     }
 
     $db->cdp_query("SELECT * FROM cdb_shipping_line WHERE  ship_line=:ship_line $where");
@@ -1126,7 +1126,7 @@ function cdp_incoExists($inco_name, $id = null)
     $where = '';
     if ($id != null) {
 
-        $where = "and id!='$id'";
+        $where = "and id!=" . (int) $id; // callers pass raw $_POST['id']; cast so it cannot inject SQL
     }
 
     $db->cdp_query("SELECT * FROM cdb_incoterm WHERE  inco_name=:inco_name $where");
@@ -1244,7 +1244,7 @@ function cdp_officeExistsjmbj1($name_off, $id = null)
     $where = '';
     if ($id != null) {
 
-        $where = "and id!='$id'";
+        $where = "and id!=" . (int) $id; // callers pass raw $_POST['id']; cast so it cannot inject SQL
     }
 
     $db->cdp_query("SELECT * FROM cdb_offices WHERE  name_off=:name_off $where");
@@ -1271,7 +1271,7 @@ function cdp_codeofficeExists($code_off, $id = null)
     $where = '';
     if ($id != null) {
 
-        $where = "and id!='$id'";
+        $where = "and id!=" . (int) $id; // callers pass raw $_POST['id']; cast so it cannot inject SQL
     }
 
     $db->cdp_query("SELECT * FROM cdb_offices WHERE  code_off=:code_off $where");
@@ -1406,7 +1406,7 @@ function cdp_rolesExistsjmbj12($role_name, $id = null)
     $where = '';
     if ($id != null) {
 
-        $where = "and role_id!='$id'";
+        $where = "and role_id!=" . (int) $id; // callers pass raw $_POST['id']; cast so it cannot inject SQL
     }
 
     $db->cdp_query("SELECT * FROM cdb_user_roles WHERE  role_name=:role_name $where");
@@ -1629,7 +1629,7 @@ function cdp_branchofficeExistsr9ufr($name_branch, $id = null)
     $where = '';
     if ($id != null) {
 
-        $where = "and id!='$id'";
+        $where = "and id!=" . (int) $id; // callers pass raw $_POST['id']; cast so it cannot inject SQL
     }
 
     $db->cdp_query("SELECT * FROM cdb_branchoffices WHERE  name_branch=:name_branch $where");
@@ -1753,7 +1753,7 @@ function cdp_courierExists9y45g($name_com, $id = null)
     $where = '';
     if ($id != null) {
 
-        $where = "and id!='$id'";
+        $where = "and id!=" . (int) $id; // callers pass raw $_POST['id']; cast so it cannot inject SQL
     }
 
     $db->cdp_query("SELECT * FROM cdb_courier_com WHERE  name_com=:name_com $where");
@@ -1890,7 +1890,7 @@ function cdp_DelitimeExists($delitime, $id = null)
     $where = '';
     if ($id != null) {
 
-        $where = "and id!='$id'";
+        $where = "and id!=" . (int) $id; // callers pass raw $_POST['id']; cast so it cannot inject SQL
     }
 
     $db->cdp_query("SELECT * FROM cdb_delivery_time WHERE  delitime=:delitime $where");
@@ -2004,7 +2004,7 @@ function cdp_statusExists($ship_mode, $id = null)
     $where = '';
     if ($id != null) {
 
-        $where = "and id!='$id'";
+        $where = "and id!=" . (int) $id; // callers pass raw $_POST['id']; cast so it cannot inject SQL
     }
 
     $db->cdp_query("SELECT * FROM cdb_shipping_mode WHERE  ship_mode=:ship_mode $where");
@@ -2141,7 +2141,7 @@ function cdp_statusCourierExists($mod_style, $id = null)
     $where = '';
     if ($id != null) {
 
-        $where = "and id!='$id'";
+        $where = "and id!=" . (int) $id; // callers pass raw $_POST['id']; cast so it cannot inject SQL
     }
 
     $db->cdp_query("SELECT * FROM cdb_styles WHERE  mod_style=:mod_style $where");
@@ -2181,7 +2181,7 @@ function cdp_colorStatusCourierExists($color, $id = null)
     $where = '';
     if ($id != null) {
 
-        $where = "and id!='$id'";
+        $where = "and id!=" . (int) $id; // callers pass raw $_POST['id']; cast so it cannot inject SQL
     }
 
     $db->cdp_query("SELECT * FROM cdb_styles WHERE  color=:color $where");
@@ -2299,7 +2299,7 @@ function cdp_paymentMethodExists($name_pay, $id = null)
     $where = '';
     if ($id != null) {
 
-        $where = "and id!='$id'";
+        $where = "and id!=" . (int) $id; // callers pass raw $_POST['id']; cast so it cannot inject SQL
     }
 
     $db->cdp_query("SELECT * FROM cdb_met_payment WHERE  name_pay=:name_pay $where");
@@ -2324,7 +2324,7 @@ function cdp_paymentMethods2Exists($label, $id = null)
     $where = '';
     if ($id != null) {
 
-        $where = "and id!='$id'";
+        $where = "and id!=" . (int) $id; // callers pass raw $_POST['id']; cast so it cannot inject SQL
     }
 
     $db->cdp_query("SELECT * FROM cdb_payment_methods WHERE  label=:label $where");
@@ -2600,7 +2600,7 @@ function cdp_packExists($name_pack, $id = null)
     $where = '';
     if ($id != null) {
 
-        $where = "and id!='$id'";
+        $where = "and id!=" . (int) $id; // callers pass raw $_POST['id']; cast so it cannot inject SQL
     }
 
     $db->cdp_query("SELECT * FROM cdb_packaging WHERE  name_pack=:name_pack $where");
@@ -2715,7 +2715,7 @@ function cdp_itemExists($name_item, $id = null)
     $where = '';
     if ($id != null) {
 
-        $where = "and id!='$id'";
+        $where = "and id!=" . (int) $id; // callers pass raw $_POST['id']; cast so it cannot inject SQL
     }
 
     $db->cdp_query("SELECT * FROM cdb_category WHERE  name_item=:name_item $where");
@@ -5540,7 +5540,7 @@ function cdp_countryExists($name, $id = null)
     $where = '';
     if ($id != null) {
 
-        $where = "and id!='$id'";
+        $where = "and id!=" . (int) $id; // callers pass raw $_POST['id']; cast so it cannot inject SQL
     }
 
     $db->cdp_query("SELECT * FROM cdb_countries WHERE  name=:name $where");
@@ -5721,7 +5721,7 @@ function cdp_stateExists($name, $id = null)
     $where = '';
     if ($id != null) {
 
-        $where = "and id!='$id'";
+        $where = "and id!=" . (int) $id; // callers pass raw $_POST['id']; cast so it cannot inject SQL
     }
 
     $db->cdp_query("SELECT * FROM cdb_states WHERE  name=:name $where");
@@ -5861,7 +5861,7 @@ function cdp_cityExists($name, $id = null)
     $where = '';
     if ($id != null) {
 
-        $where = "and id!='$id'";
+        $where = "and id!=" . (int) $id; // callers pass raw $_POST['id']; cast so it cannot inject SQL
     }
 
     $db->cdp_query("SELECT * FROM cdb_cities WHERE  name=:name $where");
@@ -8291,7 +8291,9 @@ function cdp_updateItemConsolidatePackages($datos)
 
     $db = new Conexion;
 
-    $db->cdp_query("UPDATE cdb_consolidate_packages SET                
+    // The package rows (cdb_customers_packages) carry order_id / is_consolidate;
+    // cdb_consolidate_packages has neither column, so the old target always failed.
+    $db->cdp_query("UPDATE cdb_customers_packages SET                
            
             is_consolidate ='0'          
 
@@ -8311,7 +8313,9 @@ function cdp_updateConsolidateDeletePackages($id)
 
     $db = new Conexion;
 
-    $db->cdp_query("UPDATE cdb_consolidate_packages SET                
+    // The package rows (cdb_customers_packages) carry order_id / is_consolidate;
+    // cdb_consolidate_packages has neither column, so the old target always failed.
+    $db->cdp_query("UPDATE cdb_customers_packages SET                
            
             is_consolidate ='0'          
 

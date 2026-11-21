@@ -31,6 +31,34 @@ $user = new User;
 $core = new Core;
 $errors = array();
 
+$_GET['sender'] = (int) ($_GET['sender'] ?? 0);
+// view_shipment_list (checked above) is soft-passed for customers, drivers and agency users and the
+// sender id comes from the query string: without this anyone signed in could add addresses or
+// recipients to another customer's account. A customer may only write to their own account;
+// drivers and agency users, and agency-restricted staff, only to customers of their agency.
+require_once(__DIR__ . '/../../helpers/rbac.php');
+$scopeRank = cdp_roleRankById((int) ($_SESSION['userlevel'] ?? 0));
+if ($scopeRank === 0) {
+    $_GET['sender'] = (int) ($_SESSION['userid'] ?? 0);
+} else {
+    $scopeDb = new Conexion;
+    $scopeDb->cdp_query('SELECT id, agency_id AS agency FROM cdb_users WHERE id = :id LIMIT 1');
+    $scopeDb->bind(':id', (int) $_GET['sender']);
+    $scopeDb->cdp_execute();
+    $scopeSender = $scopeDb->cdp_registro();
+    $scopeOk = $scopeSender && cdp_ajaxRowInAgencyScope($scopeSender);
+    if ($scopeOk && $scopeRank === 1) {
+        $scopeCtx = cdp_getAgencyContext();
+        $scopeOk = !empty($scopeCtx['agency_id']) && (int) $scopeSender->agency === (int) $scopeCtx['agency_id'];
+    }
+    if (!$scopeOk) {
+        header('HTTP/1.1 403 Forbidden');
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
+        exit;
+    }
+}
+
 
 if (empty($_POST['address_modal_user_address']))
 
@@ -85,7 +113,7 @@ if (!isset($response['status'])) {
     $db->bind(':city',  cdp_sanitize($_POST["city_modal_user_address"]));
     $db->bind(':address',  cdp_sanitize($_POST["address_modal_user_address"]));
     $db->bind(':zip_code',  cdp_sanitize($_POST["postal_modal_user_address"]));
-    $db->bind(':user_id',  $_GET["sender"]);
+    $db->bind(':user_id',  (int) $_GET["sender"]);
 
     $insert = $db->cdp_execute();
 

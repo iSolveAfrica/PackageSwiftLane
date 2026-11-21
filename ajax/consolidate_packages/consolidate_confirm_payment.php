@@ -26,14 +26,28 @@ require_once("../../helpers/querys.php");
 require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_login();
 require_permission(['view_consolidate_package', 'view_consolidate_package_list']);
+// That view permission is soft-passed for customers, and this marks the posted consolidation as
+// PAID: staff only, with a payment-verification permission (the air sibling uses its payments one).
+require_staff();
+require_permission(['verify_consolidate_package_payment', 'verify_payments', 'fs_record_payment', 'payments_gateways_package_consolidate']);
 
 
 $errors = array();
 session_start();
 
 
-if (empty($_POST['order_id_confirm_payment']))
+$cdpConsId = (int) ($_POST['order_id_confirm_payment'] ?? 0);
+$cdpCons   = null;
+
+if ($cdpConsId <= 0) {
     $errors['order_id_confirm_payment'] = 'Please select invoice';
+} else {
+    // Agency-restricted staff confirm payments only on their own agency's consolidations.
+    $cdpCons = cdp_getConsolidatePackage($cdpConsId)['data'];
+    if (!$cdpCons || !cdp_ajaxRowInAgencyScope($cdpCons)) {
+        $errors['order_id_confirm_payment'] = 'Please select invoice';
+    }
+}
 
 
 $status_invoice = 1;
@@ -43,7 +57,7 @@ $status_invoice = 1;
 if (empty($errors)) {
 
     $data = array(
-        'order_id' => trim($_POST['order_id_confirm_payment']),
+        'order_id' => $cdpConsId,
         'status_invoice' => $status_invoice
     );
 
@@ -78,7 +92,7 @@ if (empty($errors)) {
 
 
         $db->bind(':user_id',  $_SESSION['userid']);
-        $db->bind(':order_id', $_POST["order_id_confirm_payment"]);
+        $db->bind(':order_id', $cdpConsId);
         $db->bind(':notification_description', $lang['notification_shipment24']);
         $db->bind(':shipping_type', '5');
         $db->bind(':notification_date',  date("Y-m-d H:i:s"));
@@ -96,7 +110,8 @@ if (empty($errors)) {
             cdp_insertNotificationsUsers($notification_id, $key->id);
         }
 
-        cdp_insertNotificationsUsers($notification_id, $_POST['customer_id_confirm_payment']);
+        // Notify the consolidation's own sender (the form posts the same id), never a posted user id.
+        cdp_insertNotificationsUsers($notification_id, (int) $cdpCons->sender_id);
     } else {
 
         $errors['critical_error'] = $lang['message_ajax_error1'];

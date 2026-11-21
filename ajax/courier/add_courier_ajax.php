@@ -27,6 +27,7 @@ require_once(__DIR__ . '/../../helpers/sl_auth.php');
 
 require_once("../../helpers/querys.php");
 require_once(__DIR__ . '/../../helpers/ajax_guard.php');
+require_once(__DIR__ . '/../../helpers/uploads.php');
 require_login();
 notify_after_response(); // email + WhatsApp go out after the response (helpers/after_response.php)
 require_permission('view_shipment_list');
@@ -38,6 +39,102 @@ $user   = new User;
 $core   = new Core;
 $errors = array();
 $ctx = cdp_getAgencyContext();
+
+// view_shipment_list (the only permission checked above) is also granted to
+// customers, who book through add_courier_client_ajax.php (courier_add.php sends
+// them there). Posting here instead let a customer create a shipment under any
+// sender at any price and attach files to it. Below staff rank the caller needs
+// the page's permission ('add_shipment') and must not be a customer role.
+// Rank 0 follows the parent_role_id chain, so a department role created under Customer (own
+// is_client flag 0) is refused too; cdp_roleIsClient() reads only the role's own flag.
+require_once(__DIR__ . '/../../helpers/rbac.php');
+$scopeLevel = (int) ($_SESSION['userlevel'] ?? 0);
+$scopeRank = cdp_roleRankById($scopeLevel);
+if ($scopeRank < 2 && ($scopeRank === 0 || cdp_roleIsClient($scopeLevel) || !$user->cdp_hasPermission('add_shipment'))) {
+    header('HTTP/1.1 403 Forbidden');
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
+    exit;
+}
+// Staff were only checked for view_shipment_list, so a read-only staff role could still create
+// shipments here. Require the permission of the page that posts here for them too.
+if ($scopeRank >= 2) {
+    require_permission('add_shipment');
+}
+
+// Canonical recipient type for everyone. cdp_sanitize() is not idempotent (stripslashes), so a
+// value like 'us\\er' could pass the check below as a cdb_recipients id and then, sanitised again
+// further down, be loaded as 'user'. Further down only 'user' vs anything else matters.
+$scopeType = (cdp_sanitize($_POST['recipient_type'] ?? 'recipient') === 'user') ? 'user' : 'recipient';
+$_POST['recipient_type'] = $scopeType;
+
+// Callers below staff rank and agency-restricted staff: the sender (and agency) is checked, but
+// the recipient, both addresses and the driver came from POST unchecked, so another customer's or
+// agency's contact/address could be attached to, printed on and notified for this shipment (the
+// same rule edit_courier_ajax.php and accept_courier_ajax.php enforce).
+// Skipped without a sender: the 'sender_id' validation below then reports the missing field
+// (same empty() test, so nothing is inserted without one) instead of a misleading 403.
+if (($scopeRank < 2 || !empty($ctx['is_restricted'])) && !empty($_POST['sender_id'])) {
+    $scopeDb = new Conexion;
+    $scopeSender = (int) ($_POST['sender_id'] ?? 0);
+    $scopeAgencies = array_filter([(int) ($ctx['agency_id'] ?? 0)]);
+    $scopeRecipient = (int) ($_POST['recipient_id'] ?? 0);
+    if ($scopeType === 'user') {
+        $scopeRecipientOk = $scopeRecipient === $scopeSender;
+    } else {
+        $scopeDb->cdp_query("SELECT sender_id, agency_id FROM cdb_recipients WHERE id = :id LIMIT 1");
+        $scopeDb->bind(':id', $scopeRecipient);
+        $scopeDb->cdp_execute();
+        $scopeRec = $scopeDb->cdp_registro();
+        $scopeRecipientOk = $scopeRec && (
+            (int) $scopeRec->sender_id === $scopeSender
+            || in_array((int) ($scopeRec->agency_id ?? 0), $scopeAgencies, true)
+        );
+    }
+    $scopeAddrOk = true;
+    $scopeAddrId = (int) ($_POST['sender_address_id'] ?? 0);
+    if ($scopeAddrId > 0) {
+        $scopeDb->cdp_query("SELECT user_id FROM cdb_senders_addresses WHERE id_addresses = :id LIMIT 1");
+        $scopeDb->bind(':id', $scopeAddrId);
+        $scopeDb->cdp_execute();
+        $scopeAddr = $scopeDb->cdp_registro();
+        $scopeAddrOk = $scopeAddr && (int) $scopeAddr->user_id === $scopeSender;
+    }
+    // For type 'user' the sender doubles as recipient, so the address is one of the sender's.
+    $scopeRAddrId = (int) ($_POST['recipient_address_id'] ?? 0);
+    if ($scopeRAddrId > 0) {
+        if ($scopeType === 'user') {
+            $scopeDb->cdp_query("SELECT user_id AS owner_id FROM cdb_senders_addresses WHERE id_addresses = :id LIMIT 1");
+            $scopeRAddrOwner = $scopeSender;
+        } else {
+            $scopeDb->cdp_query("SELECT recipient_id AS owner_id FROM cdb_recipients_addresses WHERE id_addresses = :id LIMIT 1");
+            $scopeRAddrOwner = $scopeRecipient;
+        }
+        $scopeDb->bind(':id', $scopeRAddrId);
+        $scopeDb->cdp_execute();
+        $scopeRAddr = $scopeDb->cdp_registro();
+        if (!$scopeRAddr || (int) $scopeRAddr->owner_id !== $scopeRAddrOwner) {
+            $scopeAddrOk = false;
+        }
+    }
+    // The driver gets a notification for this shipment: only an active driver (what the add form
+    // offers, User::cdp_userAllDriver) may be named, not any user id.
+    $scopeDriver = (int) ($_POST['driver_id'] ?? 0);
+    if ($scopeDriver > 0) {
+        $scopeDb->cdp_query("SELECT id FROM cdb_users WHERE id = :id AND userlevel = 3 AND active = 1 LIMIT 1");
+        $scopeDb->bind(':id', $scopeDriver);
+        $scopeDb->cdp_execute();
+        if (!$scopeDb->cdp_registro()) {
+            $scopeAddrOk = false;
+        }
+    }
+    if (($scopeRecipient > 0 && !$scopeRecipientOk) || !$scopeAddrOk) {
+        header('HTTP/1.1 403 Forbidden');
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
+        exit;
+    }
+}
 
 if (empty($_POST['sender_id']))
     $errors['sender_id'] = $lang['validate_field_ajax144'];
@@ -535,17 +632,13 @@ if (empty($errors)) {
             foreach ($_FILES["filesMultiple"]['tmp_name'] as $key => $tmp_name) {
 
                 if (!in_array($key, $deleted_file_ids)) {
-                    $image_name    = $order_track . date("Y-m-d") . "_" . basename($_FILES["filesMultiple"]["name"][$key]);
-                    $target_file   = $target_dir . $image_name;
-                    $imageFileType = pathinfo($target_file, PATHINFO_EXTENSION);
-                    $imageFileZise = $_FILES["filesMultiple"]["size"][$key];
-
-                    if ($imageFileZise > 0) {
-                        move_uploaded_file($_FILES["filesMultiple"]["tmp_name"][$key], $target_file);
+                    // order_files/ is web-served: the client's file name and extension were kept, so a
+                    // .php/.html/.svg file could be stored there. cdp_uploadStore() checks the type from the
+                    // contents and stores it under our own random name and extension; rejected files are skipped.
+                    $stored = cdp_uploadStore(cdp_uploadPick($_FILES["filesMultiple"], (int) $key), __DIR__ . '/../../order_files', $order_track, 'office');
+                    if ($stored['ok']) {
+                        cdp_insertOrdersFiles($shipment_id, 'order_files/' . $stored['name'], $stored['name'], date("Y-m-d H:i:s"), '0', pathinfo($stored['name'], PATHINFO_EXTENSION));
                     }
-
-                    $target_file_db = "order_files/" . $image_name;
-                    cdp_insertOrdersFiles($shipment_id, $target_file_db, $image_name, date("Y-m-d H:i:s"), '0', $imageFileType);
                 }
             }
         }

@@ -25,8 +25,18 @@
 
     $user = new User();
     $core = new Core();
- 
-       
+
+    // Security: this page renders a full invoice (names, addresses, phones,
+    // charges) by sequential id, so it must not be open to anonymous callers.
+    // Customers, drivers and agency users may only print their own documents.
+    if ($user->cdp_loginCheck() != true) {
+        // Bring the owner back to this sheet after signing in (track page Print button).
+        require_once(__DIR__ . "/helpers/print_access.php");
+        cdp_printLoginRedirect();
+    }
+    require_once(__DIR__ . "/helpers/print_access.php");
+    cdp_printOwnerOr403('shipment', [(int) ($_GET['id'] ?? 0)]);
+
       // Audit: record who took this document out of the system.
       require_once(__DIR__ . "/helpers/activity_log.php");
       cdp_activityLogDocument();

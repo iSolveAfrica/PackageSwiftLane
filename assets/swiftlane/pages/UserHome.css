@@ -1,3 +1,4 @@
+@import url("../user360.css?v=1");
 /* Page styles of UserHome.dc.html (from the approved design) */
 .sl-ticks.n{--c:var(--muted)}
 .ur-ring{position:relative;width:58px;height:58px;border-radius:50%;flex:none;display:grid;place-items:center}

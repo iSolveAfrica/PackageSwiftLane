@@ -36,8 +36,14 @@ require_permission('add_shipment');
 // shipment under another customer, who then got its messages. For customer
 // roles the sender is the session's user and the sender address must be
 // one of theirs. Staff keep choosing the sender.
+// Rank 0 follows the parent_role_id chain, so a department role created under Customer (own
+// is_client flag 0) is pinned too; cdp_roleIsClient() reads only the role's own flag.
 require_once(__DIR__ . '/../../helpers/rbac.php');
-if (cdp_roleIsClient((int) ($_SESSION['userlevel'] ?? 0))) {
+require_once("../../helpers/querys.php");
+$scopeLevel = (int) ($_SESSION['userlevel'] ?? 0);
+$scopeRank = cdp_roleRankById($scopeLevel);
+$scopeIsClient = $scopeRank === 0 || cdp_roleIsClient($scopeLevel);
+if ($scopeIsClient) {
     $_POST['sender_id'] = (int) ($_SESSION['userid'] ?? 0);
     $cdpAddrDb = new Conexion;
     $cdpAddrDb->cdp_query("SELECT user_id FROM cdb_senders_addresses WHERE id_addresses = :a LIMIT 1");
@@ -45,6 +51,86 @@ if (cdp_roleIsClient((int) ($_SESSION['userlevel'] ?? 0))) {
     $cdpAddr = $cdpAddrDb->cdp_registro();
     if ($cdpAddr && (int) $cdpAddr->user_id !== (int) $_POST['sender_id']) {
         $_POST['sender_address_id'] = '';   // fails the required-address check below
+    }
+}
+
+// Canonical recipient type. cdp_sanitize() is not idempotent (stripslashes) and is applied again
+// further down, so a value like 'us\\er' could pass a check as a cdb_recipients id and then be
+// loaded as 'user'. Further down only 'user' vs anything else matters, so this keeps behaviour.
+$scopeType = (cdp_sanitize($_POST['recipient_type'] ?? 'recipient') === 'user') ? 'user' : 'recipient';
+$_POST['recipient_type'] = $scopeType;
+
+// Agency-restricted callers book for their own agency and its customers only, as
+// add_courier_ajax.php enforces; the posted agency and sender were trusted here.
+$scopeCtx = cdp_getAgencyContext();
+$scopeAgencies = [];
+if (!$scopeIsClient && !empty($scopeCtx['is_restricted'])) {
+    $scopeAgencyId = (int) ($scopeCtx['agency_id'] ?? 0);
+    $scopeSenderOk = false;
+    if ($scopeAgencyId > 0) {
+        $scopeDb = new Conexion;
+        $scopeDb->cdp_query("SELECT agency_id FROM cdb_users WHERE id = :id AND userlevel = 1 LIMIT 1");
+        $scopeDb->bind(':id', (int) ($_POST['sender_id'] ?? 0));
+        $scopeDb->cdp_execute();
+        $scopeSenderRow = $scopeDb->cdp_registro();
+        $scopeSenderOk = $scopeSenderRow && (int) $scopeSenderRow->agency_id === $scopeAgencyId;
+    }
+    if (!$scopeSenderOk && !empty($_POST['sender_id'])) {
+        _ajax_guard_send(403, ['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
+    }
+    $_POST['agency'] = $scopeAgencyId;
+    $scopeAgencies = [$scopeAgencyId];
+}
+
+// The recipient, the sender address and the recipient address came from POST unchecked, so a
+// customer could put another customer's contact or address (or, with type 'user', any registered
+// user) on the label and in the notifications. They must belong to the sender, as offered by
+// ajax/select2_recipient.php and select2_recipient_addresses.php (same rule as add_courier_ajax.php).
+// Skipped without a sender: the 'sender_id' validation below then refuses the request.
+if (($scopeRank < 2 || $scopeIsClient || !empty($scopeCtx['is_restricted'])) && !empty($_POST['sender_id'])) {
+    $scopeDb = new Conexion;
+    $scopeSender = (int) $_POST['sender_id'];
+    $scopeRecipient = (int) ($_POST['recipient_id'] ?? 0);
+    if ($scopeType === 'user') {
+        $scopeRecipientOk = $scopeRecipient === $scopeSender;
+    } else {
+        $scopeDb->cdp_query("SELECT sender_id, agency_id FROM cdb_recipients WHERE id = :id LIMIT 1");
+        $scopeDb->bind(':id', $scopeRecipient);
+        $scopeDb->cdp_execute();
+        $scopeRec = $scopeDb->cdp_registro();
+        $scopeRecipientOk = $scopeRec && (
+            (int) $scopeRec->sender_id === $scopeSender
+            || in_array((int) ($scopeRec->agency_id ?? 0), $scopeAgencies, true)
+        );
+    }
+    $scopeAddrOk = true;
+    $scopeAddrId = (int) ($_POST['sender_address_id'] ?? 0);
+    if ($scopeAddrId > 0) {
+        $scopeDb->cdp_query("SELECT user_id FROM cdb_senders_addresses WHERE id_addresses = :id LIMIT 1");
+        $scopeDb->bind(':id', $scopeAddrId);
+        $scopeDb->cdp_execute();
+        $scopeAddr = $scopeDb->cdp_registro();
+        $scopeAddrOk = $scopeAddr && (int) $scopeAddr->user_id === $scopeSender;
+    }
+    // For type 'user' the sender doubles as recipient, so the address is one of the sender's.
+    $scopeRAddrId = (int) ($_POST['recipient_address_id'] ?? 0);
+    if ($scopeRAddrId > 0) {
+        if ($scopeType === 'user') {
+            $scopeDb->cdp_query("SELECT user_id AS owner_id FROM cdb_senders_addresses WHERE id_addresses = :id LIMIT 1");
+            $scopeRAddrOwner = $scopeSender;
+        } else {
+            $scopeDb->cdp_query("SELECT recipient_id AS owner_id FROM cdb_recipients_addresses WHERE id_addresses = :id LIMIT 1");
+            $scopeRAddrOwner = $scopeRecipient;
+        }
+        $scopeDb->bind(':id', $scopeRAddrId);
+        $scopeDb->cdp_execute();
+        $scopeRAddr = $scopeDb->cdp_registro();
+        if (!$scopeRAddr || (int) $scopeRAddr->owner_id !== $scopeRAddrOwner) {
+            $scopeAddrOk = false;
+        }
+    }
+    if (($scopeRecipient > 0 && !$scopeRecipientOk) || !$scopeAddrOk) {
+        _ajax_guard_send(403, ['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
     }
 }
 
@@ -111,6 +197,33 @@ if (empty($_POST['order_pay_mode']))
 
 if (empty($_POST['order_payment_method']))
     $errors['order_payment_method'] = $lang['validate_field_ajax158'];
+
+// Attachments are saved in order_files/, which the web server serves from the
+// app's own origin. The client's file name and extension were kept as sent, so
+// an .html/.svg (stored XSS for staff opening it) or .php file could be stored.
+// Only invoices/photos are accepted (the form asks for image/* and PDF; phone
+// cameras give HEIC/HEIF/AVIF too), checked by content before the shipment is
+// created; cdp_uploadStore() then stores them under our own name and extension.
+require_once(__DIR__ . '/../../helpers/uploads.php');
+if (isset($_FILES['filesMultiple']['name']) && is_array($_FILES['filesMultiple']['name'])) {
+    $skipFileIds = !empty($_POST['deleted_file_ids']) ? explode(",", (string) $_POST['deleted_file_ids']) : array();
+    $allowedUploadKinds = cdp_uploadKinds('docs');
+    foreach ($_FILES['filesMultiple']['name'] as $key => $fname) {
+        if ($fname === '' || in_array($key, $skipFileIds) || (int) $_FILES['filesMultiple']['size'][$key] <= 0) {
+            continue;
+        }
+        $tmp = (string) $_FILES['filesMultiple']['tmp_name'][$key];
+        $mime = is_uploaded_file($tmp) ? cdp_uploadDetect($tmp) : '';
+        if (!isset($allowedUploadKinds[$mime])) {
+            $errors['filesMultiple'] = '"' . htmlspecialchars(basename((string) $fname), ENT_QUOTES, 'UTF-8') . '" cannot be attached: attachments must be a photo or a PDF.';
+            break;
+        }
+        if ((int) $_FILES['filesMultiple']['size'][$key] > 10485760) {
+            $errors['filesMultiple'] = '"' . htmlspecialchars(basename((string) $fname), ENT_QUOTES, 'UTF-8') . '" is too large (10 MB at most).';
+            break;
+        }
+    }
+}
 
 if (empty($errors)) {
 
@@ -326,18 +439,11 @@ if (empty($errors)) {
             foreach ($_FILES["filesMultiple"]['tmp_name'] as $key => $tmp_name) {
 
                 if (!in_array($key, $deleted_file_ids)) {
-                    $image_name = $order_track .  date("Y-m-d") . "_" . basename($_FILES["filesMultiple"]["name"][$key]);
-                    $target_file = $target_dir . $image_name;
-                    $imageFileType = pathinfo($target_file, PATHINFO_EXTENSION);
-                    $imageFileZise = $_FILES["filesMultiple"]["size"][$key];
-
-                    if ($imageFileZise > 0) {
-                        move_uploaded_file($_FILES["filesMultiple"]["tmp_name"][$key], $target_file);
-                        $imagen = basename($_FILES["filesMultiple"]["name"][$key]);
+                    // Our own random name and the extension of the detected type (never the client's).
+                    $stored = cdp_uploadStore(cdp_uploadPick($_FILES["filesMultiple"], (int) $key), __DIR__ . '/../../order_files', $order_track, 'docs');
+                    if ($stored['ok']) {
+                        cdp_insertOrdersFiles($shipment_id, 'order_files/' . $stored['name'], $stored['name'], date("Y-m-d H:i:s"), '0', pathinfo($stored['name'], PATHINFO_EXTENSION));
                     }
-
-                    $target_file_db = "order_files/" . $image_name;
-                    cdp_insertOrdersFiles($shipment_id, $target_file_db, $image_name, date("Y-m-d H:i:s"), '0', $imageFileType);
                 }
             }
         }

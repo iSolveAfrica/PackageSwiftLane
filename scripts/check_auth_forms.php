@@ -100,6 +100,17 @@ PHP
 );
 file_put_contents($fixture . '/helpers/activity_log.php', '<?php function cdp_activityLogLogin(...$arguments) {}');
 file_put_contents($fixture . '/helpers/querys.php', '<?php');
+// login.php renders through the Swift Lane view layer (helpers/sl_view.php + views/sl/pages/Login.php).
+// Stub it with the real escaping helper (sl_v) and a render that prints the username field the way the
+// Login template does, so the check still proves the controller escapes input and never echoes passwords.
+file_put_contents($fixture . '/helpers/sl_view.php', <<<'PHP'
+<?php
+if (!function_exists('h')) { function h($value) { return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8'); } }
+function sl_v($data, string $path, $default = '') { $cur = is_array($data) && array_key_exists($path, $data) ? $data[$path] : $default; return is_scalar($cur) ? h($cur) : ''; }
+function sl_render(string $view, array $page, array $d = []): void { echo '<input name="username" value="' . sl_v($d, 'username') . '">'; foreach ($d['errors'] ?? [] as $e) echo '<p>' . h($e) . '</p>'; }
+PHP
+);
+file_put_contents($fixture . '/helpers/sl_auth.php', '<?php function sl_loginPicturesHtml(string $page, string $variant = "fs"): array { return ["texts" => []]; } if (!function_exists("cdp_otpEnabled")) { function cdp_otpEnabled() { return false; } }');
 $scenarios = ['login_missing_token', 'login_array', 'login_valid_error', 'reset_missing_token', 'reset_bad_token', 'reset_array', 'reset_short', 'reset_mismatch', 'reset_valid', 'ajax_signup_missing_token', 'ajax_forgot_missing_token', 'ajax_signup_array', 'ajax_forgot_array'];
 $failures = 0;
 try {

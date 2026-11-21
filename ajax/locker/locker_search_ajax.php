@@ -10,6 +10,16 @@ require_permission('view_shipment_list');
 
 $db    = new Conexion;
 $core  = new Core;
+$user  = new User;
+$userData = $user->cdp_getUserData(); // the table below branches on userlevel; it was never defined
+
+// Locker search finds ANY customer by locker number, and view_shipment_list is customer-facing:
+// a customer could list another customer's orders by typing their locker. The page itself sends
+// customers away (locker_search.php), so refuse them here too.
+require_once(__DIR__ . '/../../helpers/rbac.php');
+if (cdp_roleRankById((int) $userData->userlevel) === 0) {
+    require_staff();
+}
 
 // Get and sanitize the locker id from the request
 $locker = cdp_sanitize($_REQUEST['search']);
@@ -34,8 +44,9 @@ $page = (isset($_REQUEST['page']) && !empty($_REQUEST['page'])) ? $_REQUEST['pag
 $per_page = (($_REQUEST['per_page'] ?? '') === 'all') ? 1000000000 : (in_array((int)($_REQUEST['per_page'] ?? 0), [25, 50, 100], true) ? (int)$_REQUEST['per_page'] : 25); //how much records you want to show
 $offset = ($page - 1) * $per_page;
 
-// Define $sWhere if it is not already set (adjust if needed)
-$sWhere = "";
+// Row scope by role rank: drivers see only their assigned orders, agency users and
+// agency-restricted staff only their agency's (shared helper, fails closed).
+$sWhere = cdp_ajaxListScopeSql('a.sender_id', 'a.driver_id', 'a.agency');
 
 // Get orders for the sender (locker)
 $sql = "SELECT 

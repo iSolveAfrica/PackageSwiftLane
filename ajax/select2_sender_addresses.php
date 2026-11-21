@@ -31,6 +31,30 @@ if (!$__u->cdp_loginCheck()) { http_response_code(401); header('Content-Type: ap
 $db = new Conexion;
 
 $sender = (int) ($_REQUEST['id'] ?? 0);
+// Customers may only read their own saved addresses (security fix 2026-11-21).
+require_once(__DIR__ . '/../helpers/rbac.php');
+if (cdp_roleRankById((int) $__u->userlevel) < 1) {
+	$sender = (int) $__u->uid;
+} else {
+	// Drivers, agency users and agency-restricted staff only see addresses of customers they could
+	// pick in select2_sender.php (userlevel 1, in their agency when restricted); otherwise any
+	// account's addresses were readable by id. Drivers keep access: their role has add_shipment.
+	$ctx = cdp_getAgencyContext();
+	if (cdp_roleRankById((int) $__u->userlevel) === 1 || !empty($ctx['is_restricted'])) {
+		if (!empty($ctx['is_restricted']) && $ctx['agency_id'] === null) {
+			echo json_encode([]);
+			exit;
+		}
+		$db->cdp_query("SELECT id FROM cdb_users WHERE id = :id AND userlevel = 1"
+			. (!empty($ctx['is_restricted']) ? " AND agency_id = " . (int) $ctx['agency_id'] : '') . " LIMIT 1");
+		$db->bind(':id', $sender);
+		$db->cdp_execute();
+		if (!$db->cdp_registro()) {
+			echo json_encode([]);
+			exit;
+		}
+	}
+}
 
 $list = array();
 

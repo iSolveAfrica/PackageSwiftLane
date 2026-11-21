@@ -15,7 +15,7 @@ function sl_csBase($user, string $tab): array
     $ready = cdp_csEnsureTables();
     $tabs = [
         ['Capture', 'CsInbox', 'inbox'], ['Solve', 'CsTicket', 'ticket'], ['Route', 'CsRules', 'rules'], ['Automate', 'CsPlaybook', 'playbook'],
-        ['Measure', 'CsReports', 'reports'], ['AI Assistant', 'CsAI', 'ai'], ['Channels', 'CsChannels', 'channels'],
+        ['Measure', 'CsReports', 'reports'], [cdp_kingName(), 'CsAI', 'ai'], ['Channels', 'CsChannels', 'channels'],
     ];
     $isAdmin = cdp_csIsAdmin($user);
     $out = [

@@ -22,7 +22,12 @@
 
 
 require_once("../../loader.php");
+require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_once(__DIR__ . '/../../helpers/querys.php');
+// Security: this report returns company-wide shipment totals and declared
+// values, so it needs a signed-in staff user holding the report permission.
+require_login();
+require_permission(['view_shipment_by_drivers', 'view_general_reports']);
 
 $db = new Conexion;
 $user = new User;

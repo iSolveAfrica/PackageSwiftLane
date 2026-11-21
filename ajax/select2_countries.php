@@ -24,20 +24,23 @@
 
 require_once("../loader.php");
 
-$db = new Conexion; 
+// Public on purpose: the sign-up page fills its country list from here before the visitor has an
+// account. It returns only active countries (id + name), and the search term is bound.
+$db = new Conexion;
 
 $sWhere = '';
+$search = '';
 if (isset($_REQUEST['q'])) {
-    $search = cdp_sanitize($_REQUEST['q']);
-    $sWhere = "and  name LIKE '%" . $search . "%'";
+    $search = addcslashes(mb_substr(trim((string) $_REQUEST['q']), 0, 100), '%_\\');
+    $sWhere = "AND name LIKE :search";
 }
-$list = array();
 $data = [];
 
 
-$sql = "SELECT * FROM cdb_countries where is_active=1 $sWhere";
-
-$db->cdp_query($sql);
+$db->cdp_query("SELECT id, name FROM cdb_countries WHERE is_active = 1 $sWhere");
+if ($sWhere !== '') {
+    $db->bind(':search', '%' . $search . '%');
+}
 $db->cdp_execute();
 
 $datas = $db->cdp_registros();

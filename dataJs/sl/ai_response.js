@@ -35,7 +35,7 @@
     meta = element('meta'); meta.setAttribute('charset', 'utf-8'); doc.head.appendChild(meta);
     doc.head.appendChild(element('style', documentStyle));
     doc.body.appendChild(element('h1', title));
-    doc.body.appendChild(element('p', 'Swift Lane AI · ' + new Date().toLocaleDateString() + ' · Verify important figures in the linked records.', 'report-meta'));
+    doc.body.appendChild(element('p', ((window.SL_KING || 'King') + ' · ') + new Date().toLocaleDateString() + ' · Verify important figures in the linked records.', 'report-meta'));
     var clone = content.cloneNode(true);
     clone.querySelectorAll('a[href]').forEach(function (a) { a.href = new URL(a.getAttribute('href'), location.href).href; });
     doc.body.appendChild(clone);
@@ -80,7 +80,7 @@
     });
     actions.appendChild(copy);
     var titleNode = content.querySelector('h1,h2,h3,h4');
-    var title = titleNode ? titleNode.textContent : 'Swift Lane AI report';
+    var title = titleNode ? titleNode.textContent : ('Report from ' + (window.SL_KING || 'King'));
     var filename = (title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 70) || 'swift-lane-ai-report');
     if (text.length >= 500 || content.querySelector('table') || content.querySelectorAll('li').length >= 3) {
       actions.appendChild(button('Download report (.html)', function () { download(report(content, title), 'text/html;charset=utf-8', filename + '.html'); }));

@@ -32,6 +32,149 @@ require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_login();
 require_permission('view_pickup_list');
 
+// Accepting a pickup prices it, sets its agency, driver and status and attaches files.
+// The page that posts here (pickup_accept.php) needs 'pickup_accept', but this endpoint
+// only asked for the customer-facing 'view_pickup_list', so a customer could rewrite any
+// shipment by posting its order_id. Require the page's permission, never for customers,
+// and keep drivers/agency users to pickups of their own agency or assigned to them.
+require_once(__DIR__ . '/../../helpers/rbac.php');
+$cdpAcceptRank = cdp_roleRankById((int) $user->userlevel);
+if ($cdpAcceptRank < 1 || !$user->cdp_hasPermission('pickup_accept')) {
+    _ajax_guard_send(403, ['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
+}
+$cdpAcceptDb = new Conexion;
+$cdpAcceptDb->cdp_query("SELECT sender_id, agency, driver_id, recipient_type FROM cdb_add_order WHERE order_id = :id LIMIT 1");
+$cdpAcceptDb->bind(':id', (int) ($_POST['order_id'] ?? 0));
+$cdpAcceptDb->cdp_execute();
+$cdpAcceptRow = $cdpAcceptDb->cdp_registro();
+$cdpAcceptCtx = cdp_getAgencyContext();
+
+// Canonical recipient type, written back once. cdp_sanitize() is not idempotent (stripslashes) and
+// was applied again further down, so 'us\\er' could be checked as one type and loaded as another.
+// 'customer' (SL customer pickups, ajax/sl/pickup_ajax.php) stores a cdb_users id and one of the
+// sender's cdb_senders_addresses ids, exactly like 'user', so it takes the 'user' path (reading it
+// from cdb_recipients picked an unrelated person). Not posted: the stored type, as before.
+$cdpRawType = isset($_POST['recipient_type']) && $_POST['recipient_type'] !== ''
+    ? cdp_sanitize($_POST['recipient_type'])
+    : (string) ($cdpAcceptRow->recipient_type ?? 'recipient');
+$cdpScopeType = in_array($cdpRawType, ['user', 'customer'], true) ? 'user' : 'recipient';
+$_POST['recipient_type'] = $cdpScopeType;
+
+$cdpCheckParties = false;
+$cdpScopeAgencies = [];
+if ($cdpAcceptRank < 2) {
+    $cdpOwnAgency = !empty($cdpAcceptCtx['agency_id']) && $cdpAcceptRow && (int) $cdpAcceptRow->agency === (int) $cdpAcceptCtx['agency_id'];
+    $cdpOwnDriver = $cdpAcceptRow && (int) $cdpAcceptRow->driver_id > 0 && (int) $cdpAcceptRow->driver_id === (int) ($_SESSION['userid'] ?? 0);
+    if (!$cdpOwnAgency && !$cdpOwnDriver) {
+        _ajax_guard_send(403, ['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
+    }
+    if ($cdpOwnAgency) {
+        $_POST['agency'] = (int) $cdpAcceptCtx['agency_id']; // cannot move it to another agency
+        $cdpScopeAgencies = [(int) $cdpAcceptCtx['agency_id']];
+    } elseif ((int) $cdpAcceptRow->agency > 0) {
+        // Matched only as its driver: the pickup stays with its agency.
+        $_POST['agency'] = (int) $cdpAcceptRow->agency;
+    } else {
+        // No agency on the row yet: accept a posted agency only if it is a real branch office.
+        $cdpPostedAgency = (int) ($_POST['agency'] ?? 0);
+        $cdpAgencyExists = false;
+        if ($cdpPostedAgency > 0) {
+            $cdpAcceptDb->cdp_query("SELECT id FROM cdb_branchoffices WHERE id = :id LIMIT 1");
+            $cdpAcceptDb->bind(':id', $cdpPostedAgency);
+            $cdpAcceptDb->cdp_execute();
+            $cdpAgencyExists = (bool) $cdpAcceptDb->cdp_registro();
+        }
+        $_POST['agency'] = $cdpAgencyExists ? $cdpPostedAgency : 0;
+    }
+    // The scope check covers the row as stored, but the update writes sender and driver from the
+    // request: keep the stored sender (else the pickup moves to another customer and into their
+    // notifications) and the stored driver unless the caller may assign drivers.
+    $_POST['sender_id'] = (int) $cdpAcceptRow->sender_id;
+    if (!$user->cdp_hasPermission('assign_drivers')) {
+        $_POST['driver_id'] = (int) $cdpAcceptRow->driver_id;
+    }
+    $cdpCheckParties = true;
+} elseif (!empty($cdpAcceptCtx['is_restricted'])) {
+    // Agency-restricted staff (userlevel 2/4 tied to an agency) could accept and re-price any
+    // agency's pickup by order_id. The stored row must be in their agency, the agency written stays
+    // theirs, and a changed sender must be a customer of that agency (as accept_courier_ajax.php).
+    $cdpAgencyId = (int) ($cdpAcceptCtx['agency_id'] ?? 0);
+    $cdpScopeOk = $cdpAcceptRow && $cdpAgencyId > 0 && cdp_ajaxRowInAgencyScope($cdpAcceptRow);
+    $cdpPostedSender = (int) ($_POST['sender_id'] ?? 0);
+    if ($cdpScopeOk && $cdpPostedSender !== (int) $cdpAcceptRow->sender_id) {
+        $cdpAcceptDb->cdp_query("SELECT agency_id, userlevel FROM cdb_users WHERE id = :id LIMIT 1");
+        $cdpAcceptDb->bind(':id', $cdpPostedSender);
+        $cdpAcceptDb->cdp_execute();
+        $cdpSenderRow = $cdpAcceptDb->cdp_registro();
+        $cdpScopeOk = $cdpSenderRow && (int) $cdpSenderRow->agency_id === $cdpAgencyId
+            && cdp_roleRankById((int) $cdpSenderRow->userlevel) === 0;
+    }
+    if (!$cdpScopeOk) {
+        _ajax_guard_send(403, ['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
+    }
+    $_POST['agency'] = $cdpAgencyId;
+    $cdpScopeAgencies = [$cdpAgencyId];
+    $cdpCheckParties = true;
+}
+
+if ($cdpCheckParties) {
+    // The recipient, the sender address and the recipient address must belong to that sender (or
+    // to its recipient), so another customer's contact or address cannot be attached to, and
+    // printed on, this pickup. A newly named driver must be an active driver account.
+    $cdpSender = (int) ($_POST['sender_id'] ?? 0);
+    $cdpRecipient = (int) ($_POST['recipient_id'] ?? 0);
+    if ($cdpScopeType === 'user') {
+        $cdpRecipientOk = $cdpRecipient === $cdpSender;
+    } else {
+        $cdpAcceptDb->cdp_query("SELECT sender_id, agency_id FROM cdb_recipients WHERE id = :id LIMIT 1");
+        $cdpAcceptDb->bind(':id', $cdpRecipient);
+        $cdpAcceptDb->cdp_execute();
+        $cdpRec = $cdpAcceptDb->cdp_registro();
+        $cdpRecipientOk = $cdpRec && (
+            (int) $cdpRec->sender_id === $cdpSender
+            || in_array((int) ($cdpRec->agency_id ?? 0), $cdpScopeAgencies, true)
+        );
+    }
+    $cdpPartiesOk = true;
+    $cdpAddrId = (int) ($_POST['sender_address_id'] ?? 0);
+    if ($cdpAddrId > 0) {
+        $cdpAcceptDb->cdp_query("SELECT user_id FROM cdb_senders_addresses WHERE id_addresses = :id LIMIT 1");
+        $cdpAcceptDb->bind(':id', $cdpAddrId);
+        $cdpAcceptDb->cdp_execute();
+        $cdpAddr = $cdpAcceptDb->cdp_registro();
+        $cdpPartiesOk = $cdpAddr && (int) $cdpAddr->user_id === $cdpSender;
+    }
+    // For type 'user' the sender doubles as recipient, so the address is one of the sender's.
+    $cdpRAddrId = (int) ($_POST['recipient_address_id'] ?? 0);
+    if ($cdpRAddrId > 0) {
+        if ($cdpScopeType === 'user') {
+            $cdpAcceptDb->cdp_query("SELECT user_id AS owner_id FROM cdb_senders_addresses WHERE id_addresses = :id LIMIT 1");
+            $cdpRAddrOwner = $cdpSender;
+        } else {
+            $cdpAcceptDb->cdp_query("SELECT recipient_id AS owner_id FROM cdb_recipients_addresses WHERE id_addresses = :id LIMIT 1");
+            $cdpRAddrOwner = $cdpRecipient;
+        }
+        $cdpAcceptDb->bind(':id', $cdpRAddrId);
+        $cdpAcceptDb->cdp_execute();
+        $cdpRAddr = $cdpAcceptDb->cdp_registro();
+        if (!$cdpRAddr || (int) $cdpRAddr->owner_id !== $cdpRAddrOwner) {
+            $cdpPartiesOk = false;
+        }
+    }
+    $cdpDriver = (int) ($_POST['driver_id'] ?? 0);
+    if ($cdpDriver > 0 && $cdpDriver !== (int) $cdpAcceptRow->driver_id) {
+        $cdpAcceptDb->cdp_query("SELECT id FROM cdb_users WHERE id = :id AND userlevel = 3 AND active = 1 LIMIT 1");
+        $cdpAcceptDb->bind(':id', $cdpDriver);
+        $cdpAcceptDb->cdp_execute();
+        if (!$cdpAcceptDb->cdp_registro()) {
+            $cdpPartiesOk = false;
+        }
+    }
+    if (($cdpRecipient > 0 && !$cdpRecipientOk) || !$cdpPartiesOk) {
+        _ajax_guard_send(403, ['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
+    }
+}
+
 $user = new User;
 $core = new Core;
 $errors = array();
@@ -93,6 +236,25 @@ require_once(__DIR__ . '/../../helpers/pickup_code.php');
 $cdpPickupGate = cdp_pickupCodeGate('air', [intval($_POST['order_id'] ?? 0)], intval($_POST['status_courier'] ?? 0));
 if (!$cdpPickupGate['ok']) {
     $errors['pickup_code'] = $cdpPickupGate['message'];
+}
+
+// Attachments are stored in order_files/, which the web server serves. The stored
+// name kept the client's file name and extension, so a .php or .html file could be
+// stored there. Check each file's real type (from its contents) before anything is
+// saved, so a bad file is refused instead of leaving a half-saved pickup.
+require_once(__DIR__ . '/../../helpers/uploads.php');
+if (isset($_FILES['filesMultiple']['tmp_name']) && is_array($_FILES['filesMultiple']['tmp_name'])) {
+    $cdpUploadKinds = cdp_uploadKinds('docs');
+    $cdpSkipFiles = !empty($_POST['deleted_file_ids']) ? explode(",", (string) $_POST['deleted_file_ids']) : array();
+    foreach ($_FILES['filesMultiple']['tmp_name'] as $key => $tmp) {
+        if ((string) $tmp === '' || in_array($key, $cdpSkipFiles) || (int) ($_FILES['filesMultiple']['size'][$key] ?? 0) <= 0) {
+            continue;
+        }
+        if (!isset($cdpUploadKinds[cdp_uploadDetect((string) $tmp)])) {
+            $errors['filesMultiple'] = 'Attachments must be a photo or a PDF.';
+            break;
+        }
+    }
 }
 
 if (empty($errors)) {
@@ -280,7 +442,7 @@ if (empty($errors)) {
 
         if (isset($_FILES['filesMultiple']) && count($_FILES['filesMultiple']['name']) > 0 && $_FILES['filesMultiple']['tmp_name'][0] != '') {
 
-            $target_dir = "../../order_files/";
+            $target_dir = __DIR__ . "/../../order_files";
             $deleted_file_ids = array();
 
             if (isset($_POST['deleted_file_ids']) && !empty($_POST['deleted_file_ids'])) {
@@ -290,18 +452,13 @@ if (empty($errors)) {
             foreach ($_FILES["filesMultiple"]['tmp_name'] as $key => $tmp_name) {
 
                 if (!in_array($key, $deleted_file_ids)) {
-                    $image_name = $order_track .  date("Y-m-d") . "_" . basename($_FILES["filesMultiple"]["name"][$key]);
-                    $target_file = $target_dir . $image_name;
-                    $imageFileType = pathinfo($target_file, PATHINFO_EXTENSION);
-                    $imageFileZise = $_FILES["filesMultiple"]["size"][$key];
-
-                    if ($imageFileZise > 0) {
-                        move_uploaded_file($_FILES["filesMultiple"]["tmp_name"][$key], $target_file);
-                        $imagen = basename($_FILES["filesMultiple"]["name"][$key]);
+                    // Our own name with the extension of the detected type (helpers/uploads.php),
+                    // never the client's file name: order_files/ is served by the web server.
+                    $cdpUp = cdp_uploadStore(cdp_uploadPick($_FILES['filesMultiple'], (int) $key), $target_dir, $order_track);
+                    if ($cdpUp['ok']) {
+                        $image_name = $cdpUp['name'];
+                        cdp_insertOrdersFiles($shipment_id, "order_files/" . $image_name, $image_name, date("Y-m-d H:i:s"), '0', pathinfo($image_name, PATHINFO_EXTENSION));
                     }
-
-                    $target_file_db = "order_files/" . $image_name;
-                    cdp_insertOrdersFiles($shipment_id, $target_file_db, $image_name, date("Y-m-d H:i:s"), '0', $imageFileType);
                 }
             }
         }

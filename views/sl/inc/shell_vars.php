@@ -66,3 +66,6 @@ $slHelpUrl = $slIsClient ? 'support.php' : sl_route('CsInbox');
 $slCanAskAI = !$slIsClient && sl_navAllowed('ai:use', []);
 $slHasSupport = $slIsClient || sl_navAllowed('cs:agent', []);
 $slAssistantUrl = $slCanAskAI ? sl_route('StaffAI', ['q' => 'Explain this page', 'page' => sl_self()]) : $slHelpUrl;
+// The AI pop-up (views/sl/inc/ai_page.php) on every page whose user may ask the assistant
+// (staff with AI access; customers too when the assistant's audience includes them), except the assistant itself.
+$slAiPopup = sl_navAllowed('ai:use', []) && ($slPage['board'] ?? '') !== 'StaffAI';

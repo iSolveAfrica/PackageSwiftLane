@@ -41,19 +41,10 @@ $status_courier = intval(($_REQUEST['status_courier'] ?? ''));
 
 $sWhere = "";
 
-if ($userData->userlevel == 3) {
-
-	$sWhere .= " and  a.driver_id = '" . $_SESSION['userid'] . "'";
-} else if ($userData->userlevel == 1) {
-
-	$sWhere .= " and  a.sender_id = '" . $_SESSION['userid'] . "'";
-} else if ($userData->userlevel == 6) {
-
-	$agency_branch_id = cdp_getAgencyBranchIdForUser($userData->name_off);
-	$sWhere .= " and  a.agency = '" . (int)$agency_branch_id . "'";
-} else {
-	$sWhere .= "";
-}
+// Row scope by role RANK (customer -> own rows, driver -> assigned rows, agency user and
+// agency-restricted staff -> their agency, nothing without one), via the shared helper so a
+// custom Customer/Driver/Agency role can never fall through to the unscoped staff branch.
+$sWhere .= cdp_ajaxListScopeSql('a.sender_id', 'a.driver_id', 'a.agency');
 if ($search != null) {
 
 	$sWhere .= " and  " . cdp_trackingSearchSql($search, 'a');
@@ -95,7 +86,7 @@ $sWhere .= cdp_shipModeWhere($_REQUEST['mode'] ?? '', 'a');
 
 
 // // pagination variables
-$page = (isset($_REQUEST['page']) && !empty($_REQUEST['page'])) ? $_REQUEST['page'] : 1;
+$page = max(1, (int) ($_REQUEST['page'] ?? 1));
 $per_page = (($_REQUEST['per_page'] ?? '') === 'all') ? 1000000000 : (in_array((int)($_REQUEST['per_page'] ?? 0), [25, 50, 100], true) ? (int)$_REQUEST['per_page'] : 25); //how much records you want to show
 $adjacents  = 4; //gap between pages after number of adjacents
 $offset = ($page - 1) * $per_page;

@@ -10,4 +10,4 @@ if (sl_userIs('client')) {
     exit;
 }
 require_once 'views/sl/data/documents.php';
-sl_render('Documents', ['id' => '', 'title' => 'Documents and exports', 'board' => 'Documents'], sl_documentsData($user, $core));
+sl_render('Documents', ['id' => '', 'title' => 'Documents', 'board' => 'Documents', 'wide' => true], sl_documentsData($user, $core));

@@ -68,11 +68,12 @@ switch ($op) {
             if ($receiver === '') sl_json(['success' => false, 'message' => 'Who handed it over?', 'errors' => ['person' => 'Required']], 422);
             $photo = '';
             if (!empty($_FILES['photo']['name']) && is_uploaded_file($_FILES['photo']['tmp_name'])) {
-                if ($_FILES['photo']['size'] > 8 * 1048576 || !@getimagesize($_FILES['photo']['tmp_name'])) sl_json(['success' => false, 'message' => 'Photo must be an image under 8 MB'], 422);
-                $ext = strtolower(pathinfo($_FILES['photo']['name'], PATHINFO_EXTENSION));
-                if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp'], true)) $ext = 'jpg';
-                $photo = 'driver_files/pod_' . (int) $j->order_id . '_' . time() . '.' . $ext;
-                move_uploaded_file($_FILES['photo']['tmp_name'], CDP_ROOT . '/' . $photo);
+                // Image type detected from the contents and stored under our own name with that
+                // type's extension (helpers/uploads.php); driver_files/ is web-served.
+                require_once CDP_ROOT . '/helpers/uploads.php';
+                $up = cdp_uploadStore($_FILES['photo'], CDP_ROOT . '/driver_files', 'pod_' . (int) $j->order_id, 'images', 8 * 1048576);
+                if (!$up['ok']) sl_json(['success' => false, 'message' => 'Photo must be an image under 8 MB'], 422);
+                $photo = 'driver_files/' . $up['name'];
             }
             $db->cdp_query('UPDATE cdb_add_order SET status_courier = 15, person_receives = :p' . (sl_columnExists('cdb_add_order', 'pod_at') ? ', pod_receiver = :p2, pod_at = NOW()' . ($photo ? ', pod_photo = :ph' : '') : '') . ' WHERE order_id = :id');
             $db->bind(':p', $receiver); if (sl_columnExists('cdb_add_order', 'pod_at')) { $db->bind(':p2', $receiver); if ($photo) $db->bind(':ph', $photo); }

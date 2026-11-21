@@ -26,21 +26,43 @@ require_once("../../helpers/querys.php");
 require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_login();
 require_permission(['view_consolidate_package', 'view_consolidate_package_list']);
+// Those permissions are soft-passed for customers, and the consolidation numbers below are not
+// scoped to the caller: staff only, with the permission the list shows its status menu for.
+require_staff();
+require_permission(['select_change_status_courier', 'select_change_status', 'track_consolidate_package']);
 require_once(__DIR__ . '/../../helpers/video_files.php');
 cdp_purgeDeliveredVideosLater();   // videos of delivered packages are deleted after the response
 
 session_start();
 
-$status = intval($_GET['status']);
-$data = json_decode($_GET['checked_data']);
+// CSRF: the list screen (dataJs/consolidate_package_ajax.js) still sends this as a jQuery GET;
+// helpers/ajax_guard.php require_safe_write() accepts that only as a same-origin XHR or
+// with a valid token, so a cross-site link cannot change consolidations.
+require_safe_write();
+
+$status = intval($_POST['status'] ?? $_GET['status'] ?? 0);
+$data = json_decode((string) ($_POST['checked_data'] ?? $_GET['checked_data'] ?? ''));
+if (!is_array($data)) {
+    $data = [];
+}
 
 foreach ($data as $key) {
 
     // Fetch BEFORE updating so we still know the previous status.
     $courier = cdp_getConsolidatePackagesMultiple($key);
+    // Agency-restricted staff move only their own agency's consolidations.
+    if (!$courier || !cdp_ajaxRowInAgencyScope($courier)) {
+        $message[$key] = $key . ': not found.';
+        continue;
+    }
     $status_changed = !isset($courier->status_courier) || (int) $courier->status_courier !== (int) $status;
 
-    cdp_updateStatusConsolidatePackagesMultiple($key, $status);
+    // By consolidate_id: the row checked above, not every consolidation sharing the number.
+    $cdpDb = new Conexion;
+    $cdpDb->cdp_query("UPDATE cdb_consolidate_packages SET status_courier = :s WHERE consolidate_id = :id");
+    $cdpDb->bind(':s', $status);
+    $cdpDb->bind(':id', (int) $courier->consolidate_id);
+    $cdpDb->cdp_execute();
 
 
     $receiver = $courier->receiver_id;

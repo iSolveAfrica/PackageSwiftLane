@@ -78,7 +78,7 @@
 					<li class="list-group-item  sidebar-item">
 						<a href="ai_assistant_settings.php" class="list-group-item-action">
 							<iconify-icon icon="solar:magic-stick-3-linear" class="tools-menu-icon"></iconify-icon>
-							AI Assistant
+							<?php echo h(cdp_kingName()) ?>
 						</a>
 					</li>
 					<?php } ?>

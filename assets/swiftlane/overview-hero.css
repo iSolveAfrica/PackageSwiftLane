@@ -1,0 +1,200 @@
+/* Overview top: header, view bar, "you" card, today cards, freight (views/sl/pages/partials/overview_hero.php). */
+.ovh-head { display: flex; align-items: center; justify-content: space-between; gap: 12px 20px; flex-wrap: wrap; }
+.ovh-title { display: flex; align-items: center; gap: 12px; }
+.ovh-title .ic { width: 24px; height: 24px; color: var(--violet); }
+.ovh-title .sl-title { font-size: 28px; letter-spacing: -.02em; }
+.ovh-acts { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ovh-who { color: var(--muted); font-size: 15px; margin-right: 6px; }
+
+.ovh-view { display: flex; align-items: center; gap: 10px 14px; flex-wrap: wrap; padding: 10px 12px; border-radius: var(--r-lg); background: var(--card); border: 1px solid var(--line); }
+.ovh-view .grow { flex: 1; }
+.ovh-vl { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding-left: 4px; }
+.ovh-seg { display: inline-flex; gap: 2px; padding: 3px; border-radius: 12px; background: var(--hover); border: 1px solid var(--line); }
+.ovh-seg a { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 9px; font-size: 14.5px; color: var(--ink-2); }
+.ovh-seg a.on { background: color-mix(in srgb, var(--violet) 14%, var(--field)); color: var(--violet-ink); box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+.ovh-periods { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+.ovh-periods a { padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line-2); font-size: 14.5px; color: var(--ink-2); background: var(--field); }
+.ovh-periods a:hover { border-color: var(--faint); }
+.ovh-periods a.on { background: color-mix(in srgb, var(--violet) 14%, var(--field)); border-color: color-mix(in srgb, var(--violet) 40%, transparent); color: var(--violet-ink); }
+.ovh-range { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ovh-range input[type=date] { font: inherit; font-size: 14px; color: var(--ink); background: var(--field); border: 1px solid var(--line-2); border-radius: 10px; padding: 6px 10px; height: 36px; }
+.ovh-range .mut { color: var(--muted); font-size: 14px; }
+
+/* grid: "you" card + today cards. Follows its own width (the page column varies with the sidebar). */
+.ovh-wrap { container: ovh / inline-size; }
+.ovh-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
+.ovh-me { grid-column: 1 / -1; }
+.ovh-grid > .ovh-card:last-child:nth-child(even) { grid-column: 1 / -1; }
+.ovh-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+
+/* same surface as the main menu container (.sl-side) */
+.ovh-me { position: relative; display: flex; flex-direction: column; gap: 18px; padding: 22px; border-radius: var(--r-xl); border: 1px solid var(--line); background: var(--panel); overflow: hidden; }
+.ovh-me-top { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.ovh-me-top .me-pic { flex: none; border-radius: 50%; display: inline-grid; place-items: center; color: var(--inverse); box-shadow: 0 0 0 3px var(--card), 0 0 0 4px color-mix(in srgb, var(--violet) 40%, transparent); }
+.ovh-name { font-size: 24px; font-weight: 600; letter-spacing: -.01em; line-height: 1.2; }
+.ovh-prof { align-self: flex-start; }
+.ovh-me-mid { display: grid; grid-template-columns: auto 1fr; gap: 20px; align-items: center; }
+.ovh-ring { --p: 0; width: 118px; height: 118px; border-radius: 50%; display: grid; place-content: center; text-align: center;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--violet) 8%, var(--card)) 79%, transparent 80% 100%), conic-gradient(var(--violet) calc(var(--p) * 1%), color-mix(in srgb, var(--violet) 18%, transparent) 0); }
+.ovh-ring b { font-size: 32px; font-weight: 600; line-height: 1; }
+.ovh-ring span { font-size: 12px; color: var(--muted); line-height: 1.25; margin-top: 4px; }
+.ovh-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px 18px; margin: 0; }
+.ovh-stats dt { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.ovh-stats dd { margin: 2px 0 0; color: var(--muted); font-size: 14px; }
+.ovh-stats dd b { font-size: 26px; font-weight: 600; color: var(--ink); margin-right: 2px; }
+.ovh-stats .up, .ovh-delta .up { color: var(--green-ink); font-weight: 500; }
+.ovh-stats .dn, .ovh-delta .dn { color: var(--red-ink); font-weight: 500; }
+.ovh-stats b.ok { color: var(--green-ink); } .ovh-stats b.bad { color: var(--red-ink); }
+.ovh-client { margin-bottom: 2px; }
+.ovh-me-bars { display: flex; flex-direction: column; gap: 8px; padding-top: 14px; border-top: 1px solid var(--line); }
+.ovh-last { max-width: 60%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ovh-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.ovh-kpi { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border-radius: 14px; background: var(--card); border: 1px solid var(--line); min-width: 0; }
+.ovh-kl { font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ovh-kpi > b { font-size: 26px; font-weight: 600; letter-spacing: -.02em; line-height: 1.1; }
+.ovh-kpi > b small { font-size: 14px; color: var(--muted); font-weight: 500; }
+.ovh-ku { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ovh-ku .up { color: var(--green-ink); font-weight: 500; } .ovh-ku .dn { color: var(--red-ink); font-weight: 500; }
+.ovh-meter { display: block; height: 6px; border-radius: 999px; background: color-mix(in srgb, var(--violet) 16%, transparent); overflow: hidden; margin-top: 6px; }
+.ovh-meter i { display: block; height: 100%; border-radius: inherit; background: var(--violet); }
+.ovh-kinds { display: flex; flex-direction: column; gap: 8px; }
+.ovh-kinds .ic { vertical-align: -2px; }
+.ovh-kind { display: grid; grid-template-columns: 110px 1fr auto; align-items: center; gap: 10px; font-size: 14px; color: var(--ink-2); }
+.ovh-kind > span:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ovh-kbar { height: 8px; border-radius: 999px; background: var(--hover); overflow: hidden; }
+.ovh-kbar i { display: block; height: 100%; border-radius: inherit; background: color-mix(in srgb, var(--violet) 70%, var(--sky)); }
+.ovh-kind b { font-weight: 600; min-width: 36px; text-align: right; }
+.ovh-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; }
+.ovh-chips a { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 12px; background: var(--field); border: 1px solid var(--line-2); font-size: 14.5px; color: var(--ink-2); }
+.ovh-chips a b { color: var(--ink); font-weight: 600; }
+.ovh-chips a:hover { border-color: var(--violet); }
+
+/* mini bars */
+.ovh-bars { display: flex; align-items: flex-end; gap: 5px; height: 56px; }
+.ovh-bars i { flex: 1; min-width: 4px; border-radius: 4px 4px 2px 2px; background: color-mix(in srgb, var(--tone, var(--sky)) 55%, transparent); transition: opacity .15s; }
+.ovh-bars i.now { background: var(--tone, var(--sky)); }
+.ovh-bars i:hover { opacity: .7; }
+.ovh-bars.violet { --tone: var(--violet); height: 64px; }
+
+/* today cards */
+.ovh-card { --tone: var(--sky); position: relative; display: flex; flex-direction: column; gap: 10px; padding: 18px 20px; border-radius: var(--r-xl); color: inherit; background: var(--card); border: 1px solid var(--line); overflow: hidden; min-width: 0; transition: border-color .15s, box-shadow .15s; }
+.ovh-card::before { content: ""; position: absolute; inset: -40% -30% auto auto; width: 70%; height: 90%; background: radial-gradient(closest-side, color-mix(in srgb, var(--tone) 16%, transparent), transparent); pointer-events: none; }
+.ovh-card:hover { border-color: color-mix(in srgb, var(--tone) 45%, var(--line)); box-shadow: 0 10px 30px -18px color-mix(in srgb, var(--tone) 60%, transparent); }
+.ovh-card.t-blue { --tone: var(--sky); } .ovh-card.t-rose { --tone: var(--red); } .ovh-card.t-amber { --tone: var(--orange); } .ovh-card.t-mint { --tone: var(--green); } .ovh-card.t-violet { --tone: var(--violet); }
+.ovh-card .ovh-eyebrow .ic { color: var(--tone); }
+.ovh-ch { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 26px; }
+.ovh-go { color: var(--faint); }
+.ovh-big { font-size: 34px; font-weight: 600; letter-spacing: -.02em; line-height: 1.1; }
+.ovh-lede { color: var(--muted); font-size: 14.5px; }
+.ovh-sub { display: grid; grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); gap: 8px; }
+.ovh-sub span { display: flex; flex-direction: column; gap: 2px; padding: 9px 10px; border-radius: 12px; background: color-mix(in srgb, var(--tone) 6%, var(--hover)); min-width: 0; }
+.ovh-sub b { font-size: 18px; font-weight: 600; }
+.ovh-sub small { font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ovh-card .ovh-bars { margin-top: auto; height: 46px; }
+.ovh-foot { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--muted); }
+.ovh-alert { display: inline-flex; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60%; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 999px; font-size: 12.5px; background: var(--red-bg); color: var(--red-ink); border: 1px solid color-mix(in srgb, var(--red) 25%, transparent); box-shadow: 0 6px 16px -8px rgba(0,0,0,.25); }
+
+/* freight */
+.ovh-freight { display: grid; grid-template-columns: minmax(280px, .85fr) 1.6fr; gap: 28px; padding: 22px 24px; border-radius: var(--r-xl); border: 1px solid var(--line); background: var(--card); }
+.ovh-tot { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.ovh-fstats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.ovh-fstats div { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 12px; background: var(--hover); min-width: 0; }
+.ovh-fstats span { font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.ovh-fstats b { font-size: 22px; font-weight: 600; letter-spacing: -.01em; }
+.ovh-fstats b.warn { color: var(--amber-ink); }
+.ovh-fstats small { font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ovh-daily { position: relative; display: flex; flex-direction: column; gap: 4px; padding-bottom: 18px; }
+.ovh-daily svg { width: 100%; height: 40px; display: block; }
+.ovh-daily rect { fill: color-mix(in srgb, var(--sky) 45%, transparent); }
+.ovh-daily rect.top { fill: var(--sky); }
+.ovh-daily rect.zero { fill: var(--line-2); }
+.ovh-daily rect:hover { fill: var(--sky-ink); }
+.ovh-xl { position: absolute; inset: auto 0 0 0; height: 16px; }
+.ovh-xl span { position: absolute; transform: translateX(-50%); font-size: 12px; color: var(--muted); white-space: nowrap; }
+.ovh-xl span:first-child { transform: none; } .ovh-xl span:last-child { transform: translateX(-100%); }
+.ovh-fl { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.ovh-huge { font-size: clamp(44px, 5vw, 68px); font-weight: 600; letter-spacing: -.04em; line-height: 1; margin-top: 6px; }
+.ovh-delta span { display: inline-flex; padding: 3px 10px; border-radius: 999px; margin-right: 6px; }
+.ovh-delta .up { background: var(--green-bg); }
+.ovh-delta .dn { background: var(--red-bg); }
+.ovh-delta .eq { background: var(--hover); color: var(--muted); }
+.ovh-split { display: flex; gap: 3px; height: 12px; border-radius: 999px; overflow: hidden; background: var(--hover); margin-top: auto; }
+.ovh-split i { display: block; height: 100%; }
+.ovh-split .air, .ovh-legend .air, .ovh-legend .cur { background: var(--sky); }
+.ovh-split .sea, .ovh-legend .sea { background: var(--violet); }
+.ovh-legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13.5px; color: var(--muted); }
+.ovh-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.ovh-legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.ovh-legend .prev { background: var(--yellow); }
+.ovh-fr { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.ovh-chart { width: 100%; height: auto; display: block; overflow: visible; }
+.ovh-chart .g { stroke: var(--line); stroke-dasharray: 3 4; }
+.ovh-chart .ax { fill: var(--muted); font-size: 12px; font-family: var(--font); }
+.ovh-chart .c { fill: none; stroke: var(--sky); stroke-width: 2.6; stroke-linejoin: round; stroke-linecap: round; }
+.ovh-chart .p { fill: none; stroke: var(--yellow); stroke-width: 2; stroke-dasharray: 5 5; stroke-linejoin: round; }
+.ovh-chart .dot { fill: var(--sky); stroke: var(--card); stroke-width: 3; }
+.ovh-chart .end { fill: var(--ink); font-size: 13px; font-weight: 600; font-family: var(--font); }
+
+/* the freight section above replaces the insights block's own registrations chart */
+.sl-insights__trend { display: none; }
+
+/* Overview page rhythm: the existing desk loses its "me" column (the card above carries it) */
+.dk-desk.solo { grid-template-columns: 1fr; }
+
+@media (max-width: 900px) {
+  .ovh-freight { grid-template-columns: 1fr; }
+  .ovh-view .grow { display: none; }
+}
+@media (max-width: 680px) {
+  .ovh-stats dd b { font-size: 22px; }
+  .ovh-who, .ovh-acts .sl-btn.ghost { display: none; }
+  .ovh-periods { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; max-width: 100%; }
+  .ovh-periods a { white-space: nowrap; }
+  .ovh-title .sl-title { font-size: 24px; }
+}
+
+/* container rules last, so they win over the base rules above */
+@container ovh (min-width: 1240px) {
+  .ovh-grid { grid-template-columns: minmax(360px, 1.1fr) repeat(2, minmax(0, 1fr)); }
+  .ovh-me { grid-column: 1; grid-row: 1 / span var(--rows, 2); }
+  .ovh-grid > .ovh-card:last-child:nth-child(even) { grid-column: 2 / -1; }
+}
+@container ovh (max-width: 640px) {
+  .ovh-grid { grid-template-columns: 1fr; }
+  .ovh-me-mid { grid-template-columns: 1fr; justify-items: center; }
+  .ovh-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }
+  .ovh-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ovh-kind { grid-template-columns: 90px 1fr auto; }
+  .ovh-prof { display: none; }
+  .ovh-me { padding: 18px; }
+  .ovh-name { font-size: 21px; }
+  .ovh-sub { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Explain every metric without clipping its unit or time period. */
+.ovh-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+.ovh-kl,.ovh-ku{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}
+.ovh-kind{grid-template-columns:minmax(100px,1fr) minmax(50px,1.2fr) auto}
+.ovh-kind>span:first-child{white-space:normal;overflow:visible}
+/* Freight performance: one headline, one plot, a quiet row of supporting facts. */
+.ovh-freight--focus{display:flex;flex-direction:column;gap:24px;padding:26px 28px;background:var(--card);box-shadow:0 8px 28px -24px rgba(0,0,0,.18)}
+.ovh-freight-head{display:flex;justify-content:space-between;gap:24px;align-items:center;padding-bottom:20px;border-bottom:1px solid var(--line)}
+.ovh-freight--focus .ovh-huge{font-size:clamp(36px,4vw,52px);letter-spacing:-.04em}
+.ovh-freight--focus .ovh-eyebrow{font-size:12px;letter-spacing:.07em}
+.ovh-freight--focus .ovh-delta{font-size:14px;margin:0}
+.ovh-freight-modes{display:flex;flex-direction:column;gap:10px;min-width:180px;max-width:300px}
+.ovh-freight--focus .ovh-split{height:5px;margin:0}
+.ovh-freight--focus .ovh-chart{max-height:260px;min-height:160px}
+.ovh-freight--focus .ovh-chart .a{opacity:.22}
+.ovh-freight--focus .ovh-chart .p{stroke:var(--faint);stroke-width:1.8}
+.ovh-freight--focus .ovh-legend .prev{background:var(--faint)}
+.ovh-freight--focus .ovh-fstats{grid-template-columns:repeat(4,minmax(0,1fr));gap:0;border-top:1px solid var(--line);padding-top:20px}
+.ovh-freight--focus .ovh-fstats>div{border-radius:0;background:none;border-right:1px solid var(--line);padding:0 20px;gap:6px}
+.ovh-freight--focus .ovh-fstats>div:first-child{padding-left:0}
+.ovh-freight--focus .ovh-fstats>div:last-child{border-right:0}
+.ovh-freight--focus .ovh-fstats span{font-size:12px;letter-spacing:0;text-transform:none}
+.ovh-freight--focus .ovh-fstats small{white-space:normal}
+.ovh-daily-detail summary{cursor:pointer;color:var(--muted);font-size:13px;padding:10px 0}
+.ovh-daily-detail .ovh-daily{margin-top:10px}
+.ovh-freight--focus .ovh-daily svg{background:none}
+@media(max-width:640px){.ovh-freight--focus{padding:20px 16px;gap:18px}.ovh-freight-head{align-items:stretch;flex-direction:column;gap:16px}.ovh-freight-modes{max-width:none}.ovh-freight--focus .ovh-fstats{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.ovh-freight--focus .ovh-fstats>div{padding:0;border:0}}

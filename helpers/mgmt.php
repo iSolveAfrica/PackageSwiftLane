@@ -836,7 +836,7 @@ if (!function_exists('cdp_mgmtData')) {
         require_once __DIR__ . '/ai_assistant.php';
         require_once __DIR__ . '/ai_assistant_llm.php';
         if (!function_exists('cdp_aiConfigured') || !cdp_aiConfigured()) {
-            return ['ok' => true, 'source' => 'rules', 'text' => '', 'rules' => $rules, 'note' => 'Connect an AI provider under Tools › AI Assistant for written analysis.'];
+            return ['ok' => true, 'source' => 'rules', 'text' => '', 'rules' => $rules, 'note' => 'Connect an AI provider under Tools › King for written analysis.'];
         }
         $facts = $d;
         unset($facts['warehouse']['by_day'], $facts['revenue']['by_day']);

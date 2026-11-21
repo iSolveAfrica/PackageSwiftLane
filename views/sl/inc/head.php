@@ -8,14 +8,16 @@ $slBoardCss = $slPage['board'] ? 'assets/swiftlane/pages/' . $slPage['board'] . 
 <meta name="csrf-param" content="<?= h(cdp_csrf_param()) ?>">
 <meta name="csrf-token" content="<?= h(cdp_csrf_token()) ?>">
 <meta name="color-scheme" content="light dark">
+<script>window.SL_KING = <?= json_encode(function_exists('cdp_kingName') ? cdp_kingName() : 'King', JSON_HEX_TAG | JSON_HEX_AMP) ?>;</script>
 <title><?= h($slTitle) ?></title>
-<?php if (!empty($core->favicon)): ?><link rel="icon" href="assets/<?= h($core->favicon) ?>"><?php endif; ?>
+<link rel="icon" type="image/png" href="<?= h(cdp_asset('assets/swiftlane/brand/favicon-64.png')) ?>"><link rel="apple-touch-icon" href="<?= h(cdp_asset('assets/swiftlane/brand/swift-mark.png')) ?>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/swiftlane.css')) ?>">
 <link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/app.css')) ?>">
 <link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/color.css')) ?>">
+<link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/ai-page.css')) ?>">
 <link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/chart-cards.css')) ?>">
 <?php if ($slBoardCss && is_file(CDP_ROOT . '/' . $slBoardCss)): ?>
 <link rel="stylesheet" href="<?= h(cdp_asset($slBoardCss)) ?>">

@@ -48,14 +48,28 @@ if (!isset($_SESSION['userid'])) {
 	exit;
 }
 
-if (isset($_GET['id'])) {
-	$data = cdp_getCourierPrint($_GET['id']);
-}
+// The id comes from the query string: cast it once and use only the integer
+// below, so it can never be spliced into SQL.
+$cdp_id = (int) ($_GET['id'] ?? 0);
+$data = cdp_getCourierPrint($cdp_id);
 
 
 
 
 $row = $data['data'];
+
+if (!$row) {
+	http_response_code(404);
+	exit;
+}
+
+// Customers, drivers and agency users may only print/e-mail their own
+// documents (sender, driver or agency), the same rule as the print pages;
+// without this they could pull other customers' data by guessing ids.
+require_once(__DIR__ . '/helpers/print_access.php');
+cdp_printOwnerOr403('shipment', [$cdp_id]);
+// Sends mail to an address from the request: refuse cross-site requests (CSRF).
+cdp_printRequireAppRequest();
 
 $core = new Core;
 $db = new Conexion;
@@ -98,7 +112,8 @@ $db->cdp_query("SELECT * FROM cdb_address_shipments where order_track='" . $row-
 $address_order = $db->cdp_registro();
 
 
-$db->cdp_query("SELECT * FROM cdb_add_order_item WHERE order_id='" . $_GET['id'] . "'");
+$db->cdp_query("SELECT * FROM cdb_add_order_item WHERE order_id=:id");
+$db->bind(':id', $cdp_id);
 $order_items = $db->cdp_registros();
 
 $dias_ = array("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday");

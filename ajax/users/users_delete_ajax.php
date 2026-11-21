@@ -26,11 +26,21 @@ require_once("../../helpers/querys.php");
 require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_login();
 require_permission('delete_user');
+
+// Deletes must arrive as POST: require_login() only checks the CSRF token on
+// POST, so a GET link (e.g. ?id=5 in an email) must never reach the delete.
+if (strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+    http_response_code(405);
+    header('Allow: POST');
+    header('Content-type: application/json; charset=UTF-8');
+    echo json_encode(['status' => 'error', 'message' => 'POST required']);
+    exit;
+}
 require_once(__DIR__ . '/../../helpers/rbac.php');
 
 $db = new Conexion;
 
-$id = intval($_REQUEST['id'] ?? 0);
+$id = intval($_POST['id'] ?? 0);
 
 $errors = array();
 

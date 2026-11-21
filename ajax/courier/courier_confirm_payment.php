@@ -25,7 +25,9 @@ require_once("../../loader.php");
 require_once("../../helpers/querys.php");
 require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_login();
-require_permission('view_shipment_list');
+// Confirming that money arrived is a finance action, never a customer one (view_shipment_list let any
+// customer mark any invoice paid).
+require_permission(['verify_payments', 'fs_record_payment', 'manage_account_payments']);
 
 $errors = array();
 session_start();

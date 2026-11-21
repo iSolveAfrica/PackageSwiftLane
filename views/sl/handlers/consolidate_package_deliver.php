@@ -77,7 +77,7 @@ if (isset($_POST['person_receives'])) {
     $core = new Core;
 
 
-    $id = $_GET['id'];
+    $id = (int) ($_GET['id'] ?? 0); // used in the signature file path below: never raw input
 
     $errors = array();
 
@@ -108,20 +108,16 @@ if (isset($_POST['person_receives'])) {
 
     if (!empty($_FILES['miarchivo']['name'])) {
 
-        $target_dir = "files/";
-        $image_name = time() . "_" . basename($_FILES["miarchivo"]["name"]);
-        $target_file = $target_dir . $image_name;
-        $imageFileType = pathinfo($target_file, PATHINFO_EXTENSION);
-        $imageFileZise = $_FILES["miarchivo"]["size"];
-
-        if (($imageFileType != "jpg" && $imageFileType != "png")) {
-            $errors['miarchivo'] = $lang['validate_field_ajax62'];
-        } else if (empty(getimagesize($_FILES['miarchivo']['tmp_name']))) { //1048576 byte=1MB
+        // JPG/PNG only, detected from the contents, stored under our own name with the
+        // detected extension (helpers/uploads.php), never the client's file name.
+        require_once('helpers/uploads.php');
+        $cdpUp = in_array(cdp_uploadDetect((string) $_FILES['miarchivo']['tmp_name']), ['image/jpeg', 'image/png'], true)
+            ? cdp_uploadStore($_FILES['miarchivo'], 'files', 'delivered', 'images')
+            : ['ok' => false];
+        if (!$cdpUp['ok']) {
             $errors['miarchivo'] = $lang['validate_field_ajax62'];
         } else {
-
-            move_uploaded_file($_FILES["miarchivo"]["tmp_name"], $target_file);
-            $photo_delivered = 'files/' . $image_name;
+            $photo_delivered = 'files/' . $cdpUp['name'];
         }
     }
 

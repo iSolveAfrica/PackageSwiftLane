@@ -25,11 +25,46 @@ require_once("../../loader.php");
 require_once("../../helpers/querys.php");
 require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_login();
-require_permission('view_client_list');
+require_once(__DIR__ . '/../../helpers/rbac.php');
 
-$id = $_REQUEST['id'];
+// Deleting is a write: only by POST with the CSRF token (every caller already POSTs), so a
+// cross-site GET can no longer make a signed-in user delete an address.
+require_safe_write();
+
+$id = (int) ($_POST['id'] ?? 0);
 
 $errors = array();
+$messages = array();
+
+// Load the address with its owner. Customers, drivers and agency users (rank < 2) may only
+// delete their OWN saved addresses (the "My details" page); staff need view_client_list (plus
+// edit_client for someone else's address), must
+// outrank the owner and stay inside their agency.
+$cdpAddrDb = new Conexion;
+$cdpAddrDb->cdp_query('SELECT sa.user_id, u.userlevel, u.agency_id AS agency
+    FROM cdb_senders_addresses sa
+    LEFT JOIN cdb_users u ON u.id = sa.user_id
+    WHERE sa.id_addresses = :id LIMIT 1');
+$cdpAddrDb->bind(':id', $id);
+$cdpAddrRow = $id > 0 ? $cdpAddrDb->cdp_registro() : null;
+$cdpAddrSelf = (int) ($_SESSION['userid'] ?? 0);
+$cdpAddrOwn = $cdpAddrRow && $cdpAddrSelf > 0 && (int) $cdpAddrRow->user_id === $cdpAddrSelf;
+if (cdp_roleRankById((int) $user->userlevel) < 2) {
+    $cdpAddrOk = $cdpAddrOwn;
+} else {
+    require_permission('view_client_list');
+    // Removing ANOTHER account's address is a client edit: a view-only permission is not
+    // enough (ajax/sl/customer_profile_ajax.php address_delete also requires edit_client).
+    if (!$cdpAddrOwn) {
+        require_permission('edit_client');
+    }
+    $cdpAddrOk = $cdpAddrOwn || ($cdpAddrRow && $cdpAddrRow->userlevel !== null
+        && cdp_canManageUser($user, (int) $cdpAddrRow->userlevel)
+        && cdp_ajaxRowInAgencyScope($cdpAddrRow));
+}
+if (!$cdpAddrOk) {
+    $errors['not_found'] = $lang['message_ajax_error1'];
+}
 
 if (CDP_APP_MODE_DEMO === true) {
 ?>

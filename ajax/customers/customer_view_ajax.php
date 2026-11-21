@@ -11,6 +11,8 @@ require_once(__DIR__ . '/../../helpers/querys.php');
 require_once(__DIR__ . '/../../helpers/pickup_code.php');
 $db    = new Conexion;
 $core  = new Core;
+$user  = new User;
+$userData = $user->cdp_getUserData(); // the table below branches on userlevel; it was never defined
 
 // Get and sanitize the locker id from the request
 $locker = cdp_sanitize($_REQUEST['search']);
@@ -39,6 +41,10 @@ $adjacents = 4; // pages shown either side of the current page in the paginator
 // Optional tracking-number filter (system, postal/carrier or legacy postal).
 $track      = isset($_REQUEST['track']) ? cdp_sanitize($_REQUEST['track']) : '';
 $trackWhere = ($track !== '') ? (" AND " . cdp_trackingSearchSql($track, 'a')) : '';
+
+// edit_client is staff-only, but agency-restricted staff must still see only their agency's
+// shipments of this customer (shared rank helper; '' for unrestricted staff).
+$trackWhere .= cdp_ajaxListScopeSql('a.sender_id', 'a.driver_id', 'a.agency');
 
 // Get orders for the sender (locker)
 $sql = "SELECT

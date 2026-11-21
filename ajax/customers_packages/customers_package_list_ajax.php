@@ -41,19 +41,10 @@ $status_courier = intval(($_REQUEST['status_courier'] ?? ''));
 
 $sWhere = "";
 
-if ($userData->userlevel == 3) {
-
-	$sWhere .= " and  a.driver_id = '" . $_SESSION['userid'] . "'";
-} else if ($userData->userlevel == 1) {
-
-	$sWhere .= " and  a.sender_id = '" . $_SESSION['userid'] . "'";
-} else if ($userData->userlevel == 6) {
-
-	$agency_branch_id = (int) cdp_getAgencyBranchIdForUser($userData->name_off ?? '');
-	$sWhere .= " and  a.agency = '" . $agency_branch_id . "'";
-} else {
-	$sWhere .= "";
-}
+// Row scope by role RANK, not the seed role ids 1/3/6: a custom Customer/Driver/Agency role
+// used to fall through to the unscoped branch and list every row, agency users without an
+// agency matched agency 0, and agency-restricted staff were never scoped. Shared helper.
+$sWhere .= cdp_ajaxListScopeSql('a.sender_id', 'a.driver_id', 'a.agency');
 if ($search != null) {
 
 	$sWhere .= " and  CONCAT(a.order_prefix,a.order_no) LIKE '%" . $search . "%'";

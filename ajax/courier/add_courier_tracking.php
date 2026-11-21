@@ -43,6 +43,40 @@ $errors = array();
 
 $db = new Conexion;
 
+// view_shipment_list (checked above) is soft-passed for customers, drivers and agency users and
+// shipment_id is any shipment: without this any signed-in customer could set any status (even
+// Delivered) on anyone's shipment. The status form (ShipmentDetail / ShipmentTracking) is shown
+// only to non-customers holding track_shipment, so: customers are refused; drivers and agency
+// users need track_shipment and only touch their assigned / their agency's shipments; staff need
+// a status permission and agency-restricted staff only their agency's shipments.
+require_once(__DIR__ . '/../../helpers/rbac.php');
+$cdpScopeUser = $user->cdp_getUserData();
+$cdpRank = cdp_roleRankById((int) ($cdpScopeUser->userlevel ?? 0));
+$cdpScopeRow = cdp_getCourier(intval($_POST['shipment_id'] ?? 0));
+if ($cdpRank >= 2) {
+    $cdpScopeOk = $user->cdp_hasPermission(['track_shipment', 'select_change_status_courier', 'select_change_status'])
+        && (!$cdpScopeRow || cdp_ajaxRowInAgencyScope($cdpScopeRow));
+} elseif ($cdpRank === 1) {
+    $cdpScopeUid = (int) ($_SESSION['userid'] ?? 0);
+    $cdpScopeCtx = cdp_getAgencyContext();
+    $cdpScopeAgencies = array_filter([
+        (int) ($cdpScopeCtx['agency_id'] ?? 0),
+        ((int) $cdpScopeUser->userlevel === 6) ? (int) cdp_getAgencyBranchIdForUser($cdpScopeUser->name_off) : 0,
+    ]);
+    $cdpScopeOk = $user->cdp_hasPermission('track_shipment') && $cdpScopeRow && (
+        (int) $cdpScopeRow->driver_id === $cdpScopeUid
+        || in_array((int) $cdpScopeRow->agency, $cdpScopeAgencies, true)
+    );
+} else {
+    $cdpScopeOk = false;
+}
+if (!$cdpScopeOk) {
+    header('HTTP/1.1 403 Forbidden');
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
+    exit;
+}
+
 if (empty($_POST['t_date']))
 
     $errors['t_date'] = $lang['validate_field_ajax159'];

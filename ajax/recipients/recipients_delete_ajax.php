@@ -27,12 +27,33 @@ require_once("../../helpers/querys.php");
 require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_login();
 require_permission('view_recipients');
+require_once(__DIR__ . '/../../helpers/sl_view.php');
+require_once CDP_ROOT . '/views/sl/data/recipients.php';
+// Ownership: customers may only touch their own recipients, agency staff only their agency's
+// (same scope as ajax/sl/recipient_ajax.php). Drivers have no recipients of their own to manage
+// on behalf of others, so they are limited to sender_id = themselves as well.
+$rcScope = sl_rcScope();
+if (sl_userIs('driver')) $rcScope .= ' AND r.sender_id = ' . (int) $_SESSION['userid'];
+
+// Deletes must arrive as POST: require_login() only checks the CSRF token on
+// POST, so a GET link (e.g. ?id=5 in an email) must never reach the delete.
+if (strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+    http_response_code(405);
+    header('Allow: POST');
+    header('Content-type: application/json; charset=UTF-8');
+    echo json_encode(['status' => 'error', 'message' => 'POST required']);
+    exit;
+}
 
 $db = new Conexion;
 
-$id = $_REQUEST['id'];
+$id = (int) ($_POST['id'] ?? 0);
 
-$addresses = cdp_getAddressesUsers($id);
+if (!sl_row('SELECT r.id FROM cdb_recipients r LEFT JOIN cdb_users u ON u.id = r.sender_id WHERE r.id = :id' . $rcScope, [':id' => $id])) {
+    header('Content-type: application/json; charset=UTF-8');
+    echo json_encode(['status' => 'error', 'message' => $lang['message_ajax_error1']]);
+    exit;
+}
 
 $errors = array();
 
@@ -85,9 +106,12 @@ if (CDP_APP_MODE_DEMO === true) {
             if ($delete) {
                 $response['status'] = 'success';
                 $response['message'] = $lang['message_ajax_success_delete'];
-                foreach ($addresses as $key) {
-                    cdp_deleteAddressesUsers($id);
-                }
+                // The recipient's addresses live in cdb_recipients_addresses. This used to call
+                // cdp_deleteAddressesUsers($id), which wiped cdb_users_multiple_addresses of the
+                // USER whose id happened to equal the recipient id.
+                $db->cdp_query('DELETE FROM cdb_recipients_addresses WHERE recipient_id = :r');
+                $db->bind(':r', $id);
+                $db->cdp_execute();
             } else {
                 $response['status'] = 'error';
                 $response['message'] = $lang['message_ajax_error1'];

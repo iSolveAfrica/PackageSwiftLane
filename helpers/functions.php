@@ -264,3 +264,42 @@ function cdp_printBrandPhones()
 {
   return '+233(0)243438799 || +233(0)342292798';
 }
+
+/**
+ * The name the AI goes by everywhere (staff chat, page pop-up, customer chat,
+ * WhatsApp). One setting: Customer Service > AI settings > Name (king_name).
+ */
+if (!function_exists('cdp_kingName')) {
+  function cdp_kingName()
+  {
+    static $name = null;
+    if ($name === null) {
+      $name = 'King';
+      if (!function_exists('cdp_csSetting') && is_file(__DIR__ . '/support.php')) {
+        require_once __DIR__ . '/support.php';
+      }
+      if (function_exists('cdp_csSetting')) {
+        try {
+          // Plain text only: the name is placed into HTML and scripts across the site.
+          $v = trim(str_replace(['<', '>', '&', '"', '`', '\\'], '', (string) cdp_csSetting('king_name', 'King')));
+          if ($v !== '') {
+            $name = $v;
+          }
+        } catch (\Throwable $e) {
+          // keep the default
+        }
+      }
+    }
+    return $name;
+  }
+}
+
+/** Persona lines added to every AI system prompt so it always speaks as King. */
+if (!function_exists('cdp_kingPersona')) {
+  function cdp_kingPersona($king)
+  {
+    return "Your name is $king. Speak as $king in the first person (\"I\"), like an experienced, warm colleague on the team: natural, confident and human in tone. "
+      . "Never call yourself an AI, a bot, a language model, a program or \"the assistant\"; you are simply $king. "
+      . "If someone sincerely asks whether they are talking to a real person, answer honestly that $king is the company's automated helper and offer to bring in a person.\n";
+  }
+}

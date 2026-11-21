@@ -57,20 +57,18 @@ if (intval($_POST['driver_id']) <= 0)
 
     $errors['driver_id'] =  $lang['validate_field_ajax163'];
 
+// files/ is web-served and the delivery photo kept the client's file name; only
+// the extension and getimagesize() were checked, so an image/script polyglot
+// could be stored. Check the type from the contents here (before anything is
+// changed) and let cdp_uploadStore() pick our own name and extension below.
+require_once(__DIR__ . '/../../helpers/uploads.php');
 if (!empty($_FILES['miarchivo']['name'])) {
-
-    $target_dir = "../../files/";
-    $image_name = time() . "_" . basename($_FILES["miarchivo"]["name"]);
-    $target_file = $target_dir . $image_name;
-    $imageFileType = pathinfo($target_file, PATHINFO_EXTENSION);
-    $imageFileZise = $_FILES["miarchivo"]["size"];
-
-    if (($imageFileType != "jpg" && $imageFileType != "png")) {
-
-        $errors['miarchivo'] = "<p>Illegal file type. Only jpg and png file types are allowed..</p>";
-    } else if (empty(getimagesize($_FILES['miarchivo']['tmp_name']))) { //1048576 byte=1MB
-
-        $errors['miarchivo'] = "<p>Illegal file type. Only jpg and png file types are allowed.";
+    $photoTmp = (string) ($_FILES['miarchivo']['tmp_name'] ?? '');
+    $photoMime = is_uploaded_file($photoTmp) ? cdp_uploadDetect($photoTmp) : '';
+    if (!isset(cdp_uploadKinds('images')[$photoMime])) {
+        $errors['miarchivo'] = "<p>Illegal file type. Only image files (JPG, PNG, ...) are allowed.</p>";
+    } elseif ((int) ($_FILES['miarchivo']['size'] ?? 0) > 10485760) {
+        $errors['miarchivo'] = "<p>The photo is too large (10 MB at most).</p>";
     }
 }
 
@@ -137,12 +135,10 @@ if (empty($errors)) {
 
 
         if (!empty($_FILES['miarchivo']['name'])) {
-            $image_name = time() . "_" . basename($_FILES["miarchivo"]["name"]);
-            $target_file = $target_dir . $image_name;
-            move_uploaded_file($_FILES["miarchivo"]["tmp_name"], $target_file);
-            // $imagen=basename($_FILES["favicon"]["name"]);
-            $photo_delivered = 'files/' . $image_name;
-            $dataUpdate['photo_delivered'] = $photo_delivered;
+            $storedPhoto = cdp_uploadStore($_FILES['miarchivo'], __DIR__ . '/../../files', 'delivered', 'images');
+            if ($storedPhoto['ok']) {
+                $dataUpdate['photo_delivered'] = 'files/' . $storedPhoto['name'];
+            }
         }
 
 

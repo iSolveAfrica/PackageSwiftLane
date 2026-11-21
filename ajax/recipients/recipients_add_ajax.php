@@ -83,7 +83,9 @@ if (!isset($response['status'])) {
     $recipient_id = cdp_insertRecipient($data);
 
     if ($recipient_id !== null && isset($_POST["total_address"])) {
-        for ($count = 0; $count < $_POST["total_address"]; $count++) {
+        // Bound the loop by the rows actually posted: total_address is client-supplied.
+        $cdpAddrTotal = min((int) $_POST["total_address"], is_array($_POST["address"] ?? null) ? count($_POST["address"]) : 0);
+        for ($count = 0; $count < $cdpAddrTotal; $count++) {
             $dataAddresses = array(
                 'recipient_id' =>  $recipient_id,
                 'address' =>  cdp_sanitize($_POST["address"][$count]),

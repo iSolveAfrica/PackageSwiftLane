@@ -29,21 +29,15 @@ $db = new Conexion;
 $user = new User;
 $core = new Core;
 $userData = $user->cdp_getUserData();
-$ctx = cdp_getAgencyContext();
 $month = date('m');
 $year = date('Y');
 
 $swhere = "";
 
-if ($userData->userlevel == 3) {
-	$swhere .= " and  a.driver_id = '" . (int)$_SESSION['userid'] . "'";
-} else if ($userData->userlevel == 1) {
-	$swhere .= " and  a.sender_id = '" . (int)$_SESSION['userid'] . "'";
-} else if ($ctx['is_restricted'] && $ctx['agency_id'] !== null) {
-	$swhere .= " and  a.agency = " . (int)$ctx['agency_id'];
-} else if ($ctx['is_restricted']) {
-	$swhere .= " and 1=0";
-}
+// Row scope by role rank (any customer level -> own rows, driver -> assigned, agency user /
+// agency-restricted staff -> their agency). The old userlevel 3/1 checks let customers and
+// agency users on other levels read every row through this view_dashboard endpoint.
+$swhere .= cdp_ajaxListScopeSql('a.sender_id', 'a.driver_id', 'a.agency');
 // Customers (userlevel 1) see ALL their own shipments on the dashboard — the
 // current-month/year scoping is only for staff activity overviews.
 if ((int)$userData->userlevel !== 1) {
@@ -62,7 +56,7 @@ if (isset($_REQUEST['search'])) {
 
 
 // pagination variables
-$page = (isset($_REQUEST['page']) && !empty($_REQUEST['page'])) ? $_REQUEST['page'] : 1;
+$page = max(1, (int) ($_REQUEST['page'] ?? 1));
 $per_page = (($_REQUEST['per_page'] ?? '') === 'all') ? 1000000000 : (in_array((int)($_REQUEST['per_page'] ?? 0), [25, 50, 100], true) ? (int)$_REQUEST['per_page'] : 25); //how much records you want to show
 $adjacents  = 4; //gap between pages after number of adjacents
 $offset = ($page - 1) * $per_page;

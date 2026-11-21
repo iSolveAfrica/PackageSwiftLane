@@ -97,18 +97,11 @@ $seg = [(int) sl_get($d, 'atWh'), (int) sl_get($d, 'ready'), (int) sl_get($d, 'i
           </div>
         </div>
 
-        <section class="sl-card col g16">
-          <div class="ur-tabs" role="tablist"><a class="on" href="<?= sl_route('UserHome') ?>">Activity</a><a href="<?= sl_route('AirShipments') ?>">Shipments</a><a href="<?= sl_route('PreAlerts') ?>">Pre-alerts</a><?php if ($fin): ?><a href="<?= sl_route('MyBills') ?>">Invoices</a><?php endif; ?><a href="<?= sl_route('Pickups') ?>">Pickups</a></div>
-          <div class="col g16">
-            <?php foreach ((array) sl_get($d, 'activity', []) as $a): ?>
-            <?php if (!empty($a['pre'])): ?>
-            <div class="ur-ev"><span class="ico"><i class="ic ic-sm i-inbox" aria-hidden="true"></i></span><div class="body row g12"><span class="sl-tile"><i class="ic i-box" aria-hidden="true"></i></span><div class="grow col g4"><div class="row between wrap g8"><span class="sm fw5">Pre-alert · <?= h($a['shop'] ?: $a['trk']) ?></span><?php if ($a['eta']): ?><span class="sm" style="color:var(--amber-ink)">Expected <?= h($a['eta']) ?></span><?php endif; ?></div><span class="mut sm">Declared <?= h($a['price']) ?> · <?= h($a['trk']) ?> · <?= h($a['at']) ?></span></div></div></div>
-            <?php else: ?>
-            <div class="ur-ev"><span class="ico"><i class="ic ic-sm <?= h($a['icon']) ?>" aria-hidden="true"></i></span><div class="body col g6"><div class="row between wrap g8"><span class="sm"><a class="mono fw5" href="<?= h(sl_route('PublicTracking', ['order_track' => $a['trk']])) ?>"><?= h($a['trk']) ?></a> status changed to <span class="sl-pill <?= h($a['cls']) ?>"><?= h($a['st']) ?></span></span><span class="mut sm"><?= h($a['at']) ?></span></div><?php if ($a['sub']): ?><div class="mut sm"><?= h($a['sub']) ?></div><?php endif; ?></div></div>
-            <?php endif; ?>
-            <?php endforeach; ?>
-            <?php if (!sl_get($d, 'activity')): ?><div class="sl-empty mut sm">No activity yet.</div><?php endif; ?>
-          </div>
+        <?php $moving = (array) sl_get($d, 'moving', []); $movingTitle = 'On their way to you'; include __DIR__ . '/partials/user_moving.php'; ?>
+
+        <section class="sl-card col g12">
+          <div class="sl-ch" style="margin:0"><div><h2 class="sl-ct">Everything in one place</h2><div class="mut sm">Every parcel, tracking update, payment, message, support chat and sign-in on your account</div></div></div>
+          <?php $tl = $d['timeline']; $tlAud = 'customer'; $tlAnchor = 'everything'; include __DIR__ . '/partials/user_timeline.php'; ?>
         </section>
 
         <section class="sl-card flush">

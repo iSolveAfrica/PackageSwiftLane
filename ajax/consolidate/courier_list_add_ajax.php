@@ -26,6 +26,11 @@ require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_once(__DIR__ . '/../../helpers/querys.php');
 require_login();
 require_permission('view_consolidate_list');
+// The view permission above is soft-passed for customers, drivers and agency users, and this
+// lists every customer's unconsolidated shipments (sender names, contents, weights) for the
+// consolidation add/edit screens: staff only, with the add or edit consolidation permission.
+require_staff();
+require_permission(['add_consolidate_shipment', 'edit_consolidate']);
 
 
 $db = new Conexion;
@@ -33,7 +38,7 @@ $user = new User;
 $core = new Core;
 $userData = $user->cdp_getUserData();
 
-$search = cdp_sanitize($_REQUEST['search']);
+$search = cdp_sanitize($_REQUEST['search'] ?? '');
 
 // Dangerous-goods filter. A consolidation may only group ONE kind, so Find
 // Shipments shows either dangerous goods (dg=1) or normal goods (dg=0), never
@@ -47,10 +52,16 @@ if ($search != null) {
 	$sWhere .= " and  CONCAT(a.order_prefix,a.order_no) LIKE '%" . $search . "%'";
 }
 
+// Agency-restricted staff only see (and so only consolidate) their own agency's shipments.
+$cdpAgencyCtx = cdp_getAgencyContext();
+if (!empty($cdpAgencyCtx['is_restricted']) && !empty($cdpAgencyCtx['agency_id'])) {
+	$sWhere .= " and a.agency = " . (int) $cdpAgencyCtx['agency_id'];
+}
+
 
 
 // pagination variables
-$page = (isset($_REQUEST['page']) && !empty($_REQUEST['page'])) ? $_REQUEST['page'] : 1;
+$page = max(1, (int) ($_REQUEST['page'] ?? 1));
 $per_page = (($_REQUEST['per_page'] ?? '') === 'all') ? 1000000000 : (in_array((int)($_REQUEST['per_page'] ?? 0), [25, 50, 100], true) ? (int)$_REQUEST['per_page'] : 25); //how much records you want to show
 $adjacents  = 4; //gap between pages after number of adjacents
 $offset = ($page - 1) * $per_page;
@@ -115,6 +126,25 @@ if ($numrows > 0) { ?>
 
 					<?php
 
+					// Item descriptions and customer names are customer-entered and may be stored raw or
+					// already HTML-encoded (cdp_sanitize). Normalise to the plain text once ($cdpText),
+					// encode it once for this table, and hand cdp_add_item() the plain text: it escapes
+					// every text value itself before building its row HTML (dataJs/consolidate*_add/edit.js),
+					// so neither path can be used for stored XSS on the staff screen.
+					$cdpText = function ($v) {
+						return html_entity_decode((string) $v, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+					};
+					$cdpHtml = function ($v) use ($cdpText) {
+						return htmlspecialchars($cdpText($v), ENT_QUOTES, 'UTF-8');
+					};
+					// data-* attribute: getAttribute() returns the plain text.
+					$cdpAttr = $cdpHtml;
+					// JS string literal inside onclick: the JS value is the plain text. Line breaks and
+					// U+2028/2029 are escaped too, or a multi-line description breaks the literal.
+					$cdpJs = function ($v) use ($cdpText) {
+						$js = str_replace(["\r", "\n", "\u{2028}", "\u{2029}"], ['\\r', '\\n', '\\u2028', '\\u2029'], addslashes($cdpText($v)));
+						return htmlspecialchars($js, ENT_QUOTES, 'UTF-8');
+					};
 					$count = 0;
 					foreach ($data as $row) {
                         // Get package total price.
@@ -168,11 +198,11 @@ if ($numrows > 0) { ?>
 							data-length="<?php echo $length; ?>"
 							data-width="<?php echo $width; ?>"
 							data-height="<?php echo $height; ?>"
-							data-tracking="<?php echo $tracking; ?>"
-							data-order-no="<?php echo $row->order_no; ?>"
-							data-order-prefix="<?php echo $row->order_prefix; ?>"
-                            data-sender="<?php echo htmlspecialchars(cdp_nameWithLocker($sender), ENT_QUOTES, 'UTF-8'); ?>"
-                            data-description="<?php echo $description->order_item_description; ?>"
+							data-tracking="<?php echo $cdpAttr($tracking); ?>"
+							data-order-no="<?php echo $cdpAttr($row->order_no); ?>"
+							data-order-prefix="<?php echo $cdpAttr($row->order_prefix); ?>"
+                            data-sender="<?php echo $cdpAttr(cdp_nameWithLocker($sender)); ?>"
+                            data-description="<?php echo $cdpAttr($description->order_item_description); ?>"
                             data-quantity="<?php echo $quantity->order_item_quantity; ?>"
                             data-total-order="<?php echo cdb_money_format($row->total_order); ?>"
                             data-total-order-raw="<?php echo $row->total_order; ?>"
@@ -185,13 +215,13 @@ if ($numrows > 0) { ?>
 										<label class="custom-control-label" for="pkg_<?php echo $row->order_id; ?>"></label>
 									</div>
 								</td>
-							<td><?php echo htmlspecialchars(cdp_nameWithLocker($sender), ENT_QUOTES, 'UTF-8'); ?></td>
+							<td><?php echo $cdpHtml(cdp_nameWithLocker($sender)); ?></td>
 
-							<td><?php echo $row->order_prefix . $row->order_no; ?></td>
+							<td><?php echo $cdpHtml($row->order_prefix . $row->order_no); ?></td>
 							<?php $__pt = cdp_getPackageTrackingLegacyAware((int) $row->order_id); ?>
 							<td><?php echo ($__pt && !empty($__pt->tracking_number)) ? htmlspecialchars((string) $__pt->tracking_number) : 'N/A'; ?></td>
 
-                            <td><?php echo $description->order_item_description; ?></td>
+                            <td><?php echo $cdpHtml($description->order_item_description); ?></td>
 
 							<td><?php echo $weight; ?></td>
 
@@ -217,7 +247,7 @@ if ($numrows > 0) { ?>
 
 							<td class="text-right">
 								<button type="button" name="add_row" id="add_row"
-									onclick="cdp_add_item('<?php echo $row->order_id; ?>','<?php echo $total_metric; ?>', '<?php echo $weight; ?>', '<?php echo $length; ?>', '<?php echo $width; ?>', '<?php echo $height; ?>', '<?php echo $tracking; ?>', '<?php echo $row->order_no; ?>','<?php echo $row->order_prefix; ?>', '<?php echo htmlspecialchars(addslashes(cdp_nameWithLocker($sender)), ENT_QUOTES, 'UTF-8'); ?>', '<?php echo $description->order_item_description; ?>', '<?php echo cdb_money_format(($row->total_order)); ?>', '<?php echo $quantity->order_item_quantity; ?>', '<?php echo $row->total_order; ?>');
+									onclick="cdp_add_item('<?php echo $row->order_id; ?>','<?php echo $total_metric; ?>', '<?php echo $weight; ?>', '<?php echo $length; ?>', '<?php echo $width; ?>', '<?php echo $height; ?>', '<?php echo $cdpJs($tracking); ?>', '<?php echo $cdpJs($row->order_no); ?>','<?php echo $cdpJs($row->order_prefix); ?>', '<?php echo $cdpJs(cdp_nameWithLocker($sender)); ?>', '<?php echo $cdpJs($description->order_item_description); ?>', '<?php echo cdb_money_format(($row->total_order)); ?>', '<?php echo $quantity->order_item_quantity; ?>', '<?php echo $row->total_order; ?>');
 									$('#tb_row_id_<?php echo $row->order_id; ?>').remove();"
 									class="btn btn-outline-success btn-sm add_row">
 									<i class="fa fa-plus"></i>

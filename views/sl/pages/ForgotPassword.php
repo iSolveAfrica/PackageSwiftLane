@@ -12,7 +12,7 @@ $step = (int) sl_get($d, 'step', 1);
 <div class="sl-auth fp-full">
   <div class="form">
     <div>
-      <div class="sl-brand"><span class="sl-logo"><i></i></span><?= sl_v($d, 'site') ?></div>
+      <div class="sl-brand"><?= sl_brandLogo('color', 40) ?></div>
       <div class="col g8" style="margin-top: 12px">
         <div class="sl-steps" aria-label="Step <?= $step ?> of 3"><i class="on"></i><i class="<?= $step >= 2 ? 'on' : '' ?>"></i><i></i></div>
         <div class="row between mut sm"><span class="<?= $step === 1 ? 'fw5' : '' ?>" <?= $step === 1 ? 'style="color: var(--ink)"' : '' ?>>Email</span><span class="<?= $step === 2 ? 'fw5' : '' ?>" <?= $step === 2 ? 'style="color: var(--ink)"' : '' ?>>Verify code</span><span>New password</span></div>
