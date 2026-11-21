@@ -314,3 +314,63 @@ function cdp_ajaxRowInAgencyScope($row): bool {
     }
     return is_object($row) && (int) ($row->agency ?? 0) === (int) $ctx['agency_id'];
 }
+
+/**
+ * One SQL row-scope fragment (" and ..." ) for list endpoints that are reachable with a
+ * customer-facing permission. Scopes by role RANK, not by the seed role ids 1/3/6, so custom
+ * Customer / Driver / Agency roles never fall through to the unscoped staff branch:
+ *   rank 0 (customer)            -> $ownerCol = uid
+ *   rank 1 driver (id 3 / flag)  -> $driverCol = uid
+ *   rank 1 other (agency user)   -> agency = name_off branch, else context agency, else
+ *                                   cdb_users.agency_id, else nothing (" and 1=0")
+ *   staff, agency-restricted     -> agency = their agency, else nothing
+ *   other staff                  -> no filter
+ * Column names are passed by the caller and must be trusted identifiers (alias.column);
+ * pass $driverCol = null for tables without a driver column (drivers then see nothing) and
+ * $agencyCol = null for tables without an agency column (agency users then see nothing).
+ */
+function cdp_ajaxListScopeSql(?string $ownerCol = 'a.sender_id', ?string $driverCol = 'a.driver_id', ?string $agencyCol = 'a.agency'): string {
+    foreach ([$ownerCol, $driverCol, $agencyCol] as $c) {
+        if ($c !== null && !preg_match('/^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)?$/', $c)) {
+            return ' and 1=0';
+        }
+    }
+    global $user;
+    if (!isset($user) || !($user instanceof User)) {
+        $user = new User();
+    }
+    require_once __DIR__ . '/rbac.php';
+    if (!function_exists('cdp_getAgencyContext')) {
+        require_once __DIR__ . '/querys.php';
+    }
+    $uid = (int) ($_SESSION['userid'] ?? 0);
+    if ($uid <= 0) {
+        return ' and 1=0';
+    }
+    $userData = $user->cdp_getUserData();
+    $level = (int) ($userData->userlevel ?? 0);
+    $rank = cdp_roleRankById($level);
+    if ($rank === 0) {
+        return $ownerCol !== null ? " and {$ownerCol} = {$uid}" : ' and 1=0';
+    }
+    if ($rank === 1 && ($level === 3 || cdp_roleHasFlag($level, 'is_driver'))) {
+        return $driverCol !== null ? " and {$driverCol} = {$uid}" : ' and 1=0';
+    }
+    if ($rank === 1) {
+        $agency = function_exists('cdp_getAgencyBranchIdForUser') ? (int) cdp_getAgencyBranchIdForUser($userData->name_off ?? '') : 0;
+        if ($agency <= 0) {
+            $ctx = cdp_getAgencyContext();
+            $agency = (int) ($ctx['agency_id'] ?? 0);
+        }
+        if ($agency <= 0) {
+            $agency = (int) ($userData->agency_id ?? 0);
+        }
+        // No agency at all: show nothing. Filtering on agency 0 would list every unassigned row.
+        return ($agency > 0 && $agencyCol !== null) ? " and {$agencyCol} = {$agency}" : ' and 1=0';
+    }
+    $ctx = cdp_getAgencyContext();
+    if (!empty($ctx['is_restricted'])) {
+        return (!empty($ctx['agency_id']) && $agencyCol !== null) ? " and {$agencyCol} = " . (int) $ctx['agency_id'] : ' and 1=0';
+    }
+    return '';
+}
