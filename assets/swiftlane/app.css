@@ -116,3 +116,8 @@ form.sl-inline{display:contents}
   .sl-main .row.wrap>.sl-btn{max-width:100%;white-space:normal;text-align:center;line-height:1.25}
   .eb .row.wrap>.mut{min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere}
 }
+/* Keep navigation within the viewport while the dashboard scrolls. */
+@media(min-width:901px){
+ .sl-app .sl-side{position:sticky;top:12px;align-self:flex-start;height:auto;max-height:calc(100dvh - 24px);overflow-y:auto;flex-shrink:0}
+ .sl-app .sl-rail{position:sticky;top:12px;align-self:flex-start;height:calc(100dvh - 24px)}
+}
