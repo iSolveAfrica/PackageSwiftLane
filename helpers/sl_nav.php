@@ -112,7 +112,7 @@ function sl_navStaff(): array
             ['id' => 'knowledge', 'label' => 'Knowledge Base', 'icon' => 'file', 'board' => 'CsPlaybook', 'href' => sl_route('CsPlaybook') . '#knowledge-base', 'perm' => 'cs:agent'],
             ['id' => 'cschan', 'label' => 'Support Settings', 'icon' => 'sliders', 'board' => 'CsChannels', 'perm' => 'cs:manage'],
             ['id' => 'csrules', 'label' => 'Ticket Rules', 'icon' => 'filter', 'board' => 'CsRules', 'perm' => 'cs:manage'],
-            ['id' => 'csai', 'label' => 'AI Assistant', 'icon' => 'ai', 'board' => 'StaffAI', 'perm' => 'ai:use'],
+            ['id' => 'csai', 'label' => 'Ask King', 'icon' => 'ai', 'board' => 'StaffAI', 'perm' => 'ai:use'],
             ['id' => 'cssupai', 'label' => 'AI for Customers', 'icon' => 'spark', 'board' => 'CsAI', 'perm' => 'cs:manage'],
         ]],
         ['label' => 'Freight', 'items' => [

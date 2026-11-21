@@ -48,7 +48,7 @@ $log = function ($summary, $changes = []) {
             'module'  => 'settings',
             'verb'    => 'update',
             'action'  => 'settings.ai_assistant',
-            'label'   => 'Settings · AI Assistant',
+            'label'   => 'Settings · King',
             'summary' => $summary,
             'changes' => $changes,
         ]);
@@ -148,7 +148,7 @@ switch ($action) {
             }
         }
         if ($changes) {
-            $log('Changed the AI Assistant settings: ' . implode(', ', array_keys($changes)), $changes);
+            $log('Changed King settings: ' . implode(', ', array_keys($changes)), $changes);
         }
         $reply($payload() + ['saved' => true]);
 
@@ -178,12 +178,12 @@ switch ($action) {
             $reply(['ok' => false, 'error' => 'Write the fact first.']);
         }
         cdp_aiKnowledgeAdd($note, $uid, 'admin');
-        $log('Taught the AI Assistant: ' . mb_substr($note, 0, 200));
+        $log('Taught King: ' . mb_substr($note, 0, 200));
         $reply($payload());
 
     case 'knowledge_delete':
         cdp_aiKnowledgeDelete((int) ($_POST['id'] ?? 0));
-        $log('Removed a fact from the AI Assistant');
+        $log('Removed a fact King knew');
         $reply($payload());
 
     case 'idea_status':

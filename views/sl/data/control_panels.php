@@ -115,7 +115,7 @@ function sl_controlPanelsData($user, $core): array
         ['t' => 'Payment gateways', 's' => $finance ? ($gwOn ? 'Operational' : 'No keys set') : 'Finance off', 'c' => $finance && $gwOn ? '' : 'w', 'i' => 'i-card', 'x' => $finance ? $gwOn . ' gateway' . ($gwOn === 1 ? '' : 's') . ' with keys' : 'Payments are not taken online', 'href' => sl_route('Payments')],
         ['t' => 'SMS delivery', 's' => !$sms ? 'Not configured' : ($sent && $fails / max(1, $sent) > 0.2 ? 'Degraded' : 'Operational'), 'c' => !$sms || ($sent && $fails / max(1, $sent) > 0.2) ? 'w' : '', 'i' => 'i-message', 'x' => $sent ? (100 - $failPct) . '% delivered in 24 h' : 'Nothing sent in 24 h', 'href' => sl_route('CommsHub')],
         ['t' => 'Messages failed (24 h)', 's' => sl_num($fails) . ' of ' . sl_num($sent), 'c' => $failPct > 20 ? 'b' : ($fails ? 'w' : ''), 'i' => 'i-send', 'x' => $sent ? $failPct . '% failure rate' : 'No messages', 'pct' => $failPct, 'href' => sl_route('CommsHub')],
-        ['t' => 'AI assistant', 's' => $aiOn ? 'On' : 'Off', 'c' => $aiOn ? '' : 'w', 'i' => 'i-ai', 'x' => $aiOn ? 'Staff and customers can ask' : 'Switch it on in the AI center', 'href' => sl_route('AiCenter')],
+        ['t' => cdp_kingName(), 's' => $aiOn ? 'On' : 'Off', 'c' => $aiOn ? '' : 'w', 'i' => 'i-ai', 'x' => $aiOn ? 'Staff and customers can ask ' . cdp_kingName() : 'Switch it on in the AI center', 'href' => sl_route('AiCenter')],
         ['t' => 'Activity trail', 's' => $logOn ? 'Recording' : 'Not set up', 'c' => $logOn ? '' : 'w', 'i' => 'i-activity', 'x' => $logOn ? 'Every change is logged' : 'Run the activity log migration', 'href' => sl_route('ActivityLogs')],
     ];
     $c = fn(string $sql) => sl_num(sl_scalar($sql));

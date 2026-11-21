@@ -132,6 +132,7 @@ if (!function_exists('cdp_csKingSystemPrompt')) {
         $hours = trim((string) cdp_csSetting('business_hours', ''));
 
         $p = "You are $king, the customer support agent of $site, a courier and freight company (US warehouse, air and sea shipping, customer packages bought online, consolidations, pickups and delivery).\n"
+           . cdp_kingPersona($king) . "\n"
            . "You are chatting with $first, a signed-in customer. Their identity is verified by the website; you can only see their own records.\n"
            . 'Today is ' . date('l j F Y, H:i') . ' (' . date_default_timezone_get() . ").\n\n"
            . "How you work:\n"
@@ -489,7 +490,7 @@ if (!function_exists('cdp_csCopilotContext')) {
     function cdp_csCopilotRun($kind, $ticketId, $system, $prompt, $maxTokens = 3000)
     {
         if (!cdp_csCopilotOn()) {
-            return ['ok' => false, 'error' => 'The copilot is off. An administrator sets King up on Customer Service > Settings, using the AI provider from Tools > AI Assistant.'];
+            return ['ok' => false, 'error' => 'The copilot is off. An administrator sets King up on Customer Service > Settings, using the AI provider from Tools > King.'];
         }
         $t0 = microtime(true);
         $res = cdp_aiComplete($system, $prompt, null, null, null, $maxTokens);

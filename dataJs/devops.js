@@ -807,7 +807,7 @@
             var btn = $('#dv_ai_go').prop('disabled', true);
             $('#dv_ai_out_card').prop('hidden', false);
             $('#dv_ai_title').text('Working…');
-            $('#dv_ai_out').html('<span class="swl-dev-busy">Collecting evidence, reading code and asking the AI. This can take up to a minute.</span>');
+            $('#dv_ai_out').html('<span class="swl-dev-busy">Collecting evidence, reading code and asking King. This can take up to a minute.</span>');
             post({ action: 'diag_run', question: $('#dv_ai_q').val(), scope: scope, window: $('#dv_ai_win').val(), paths: $('#dv_ai_paths').val() }).done(function (r) {
                 if (!r || !r.ok) { toast(r && r.error ? r.error : 'The report could not be made.'); return; }
                 showReport(r.id, r.ai_ok ? 'Diagnosis' : 'Diagnosis (evidence only)', r.markdown);

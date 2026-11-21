@@ -173,7 +173,7 @@
                 history.replaceState(null, '', '?c=' + state.id);
             }
             if (!r || !r.ok) {
-                addError(r && r.error ? r.error : 'The assistant could not answer.', text);
+                addError(r && r.error ? r.error : 'King could not answer.', text);
                 refreshList();
                 return;
             }

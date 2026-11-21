@@ -39,9 +39,9 @@ $aiSuggest = $aiClient ? $aiClientAsk : ($aiAsk[$aiBoard] ?? ['Explain this page
   <div class="sl-ai-panel" role="dialog" aria-modal="false" aria-labelledby="sl-ai-h">
     <header class="sl-ai-head">
       <span class="sl-ai-ic"><i class="ic i-ai" aria-hidden="true"></i></span>
-      <div class="col grow" style="min-width:0"><b id="sl-ai-h">Ask AI</b><small>About <span data-ai-page><?= h($aiTitle) ?></span> and everything you can see in <?= h($core->site_name ?? 'Swift Lane') ?></small></div>
+      <div class="col grow" style="min-width:0"><b id="sl-ai-h">Ask <?= h(cdp_kingName()) ?></b><small>About <span data-ai-page><?= h($aiTitle) ?></span> and everything you can see in <?= h($core->site_name ?? 'Swift Lane') ?></small></div>
       <button type="button" class="sl-ib sm" data-ai-new aria-label="New conversation" title="New conversation"><i class="ic ic-sm i-plus" aria-hidden="true"></i></button>
-      <?php if (!$aiClient): ?><a class="sl-ib sm" data-ai-full href="<?= h(sl_route('StaffAI')) ?>" aria-label="Open the full assistant" title="Open the full assistant"><i class="ic ic-sm i-expand" aria-hidden="true"></i></a><?php endif; ?>
+      <?php if (!$aiClient): ?><a class="sl-ib sm" data-ai-full href="<?= h(sl_route('StaffAI')) ?>" aria-label="Open the full chat with <?= h(cdp_kingName()) ?>" title="Open the full chat with <?= h(cdp_kingName()) ?>"><i class="ic ic-sm i-expand" aria-hidden="true"></i></a><?php endif; ?>
       <button type="button" class="sl-ib sm" data-ai-close aria-label="Close"><i class="ic ic-sm i-x" aria-hidden="true"></i></button>
     </header>
     <div class="sl-ai-log" data-ai-log aria-live="polite">

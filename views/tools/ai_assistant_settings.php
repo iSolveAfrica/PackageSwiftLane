@@ -32,7 +32,7 @@ $actions = '<a href="ai_assistant.php" class="btn btn-primary btn-sm"><iconify-i
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" type="image/png" sizes="16x16" href="assets/<?php echo $core->favicon ?>">
-    <title>AI Assistant Settings | <?php echo $core->site_name ?></title>
+    <title><?php echo h(cdp_kingName()) ?> Settings | <?php echo $core->site_name ?></title>
     <?php include 'views/inc/head_scripts.php'; ?>
 </head>
 
@@ -43,7 +43,7 @@ $actions = '<a href="ai_assistant.php" class="btn btn-primary btn-sm"><iconify-i
         <?php include 'views/inc/left_sidebar.php'; ?>
 
         <div class="page-wrapper">
-            <?php cdp_pageHeader('AI Assistant', ['sub' => 'Settings', 'icon' => 'solar:magic-stick-3-linear', 'actions' => $actions]); ?>
+            <?php cdp_pageHeader(cdp_kingName(), ['sub' => 'Settings', 'icon' => 'solar:magic-stick-3-linear', 'actions' => $actions]); ?>
 
             <div class="email-app">
                 <?php include 'views/inc/left_part_menu.php'; ?>

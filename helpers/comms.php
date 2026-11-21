@@ -1757,7 +1757,7 @@ if (!function_exists('cdp_commFindUserByPhone')) {
             $conv .= ($h->direction === 'in' ? 'Customer: ' : 'Us: ') . cdp_opsClip($h->body, 500) . "\n";
         }
         $company = cdp_commBaseVars((object) [])['company'];
-        $system = "You are the WhatsApp support assistant of {$company}, a shipping and parcel forwarding company. "
+        $system = "You are " . cdp_kingName() . ", the WhatsApp support agent of {$company}, a shipping and parcel forwarding company. " . cdp_kingPersona(cdp_kingName())
             . "Answer briefly (at most 4 short sentences), politely, in the customer's language. Use ONLY the facts below; never guess dates, prices or statuses. "
             . "If the facts do not answer the question, or the customer is upset, asks about refunds, claims, damage, changes of address or ownership, "
             . "or wants a person, reply with one short sentence saying a team member will help, and end your reply with the token [HANDOFF]. "

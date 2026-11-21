@@ -93,7 +93,7 @@
     CS.post(CS.desk, 'ai_draft', { id: id }).then(function (j) { if (j.success) showPreview(j.draft || j.text || ''); else SL.toast(j.message, true); }).finally(function () { draft.classList.remove('loading'); });
   });
   var pop = document.getElementById('tk-aipop'), tg = document.getElementById('tk-ai-toggle');
-  if (tg && pop) tg.addEventListener('click', function () { if (pop.getAttribute('data-ai') !== '1') { SL.toast('AI tools need a provider key: see the AI centre', true); return; } pop.style.display = pop.style.display === 'none' ? 'flex' : 'none'; });
+  if (tg && pop) tg.addEventListener('click', function () { if (pop.getAttribute('data-ai') !== '1') { SL.toast('King needs a provider key: see the AI centre', true); return; } pop.style.display = pop.style.display === 'none' ? 'flex' : 'none'; });
   document.addEventListener('click', function (e) {
     var r = e.target.closest('[data-tk-refine]'); if (!r) return;
     if (!body.value.trim()) { SL.toast('Write a reply first, then improve it', true); return; }

@@ -93,9 +93,9 @@ if (!function_exists('cdp_aiHttp')) {
         }
         $hint = '';
         if ($r['status'] === 401 || $r['status'] === 403) {
-            $hint = ' Check the API key on Tools > AI Assistant.';
+            $hint = ' Check the API key on Tools > King.';
         } elseif ($r['status'] === 404) {
-            $hint = ' Check the model name on Tools > AI Assistant.';
+            $hint = ' Check the model name on Tools > King.';
         } elseif ($r['status'] === 429) {
             $hint = ' The provider is rate-limiting or the account is out of credit; try again shortly.';
         } elseif ($r['status'] >= 500 || $r['status'] === 529) {
@@ -124,7 +124,9 @@ if (!function_exists('cdp_aiHttp')) {
         $mods = cdp_aiModules();
         $areas = array_map(function ($k) use ($mods) { return $mods[$k]['label']; }, cdp_aiAllowedModules($ctx));
 
-        $p = "You are the assistant built into $site, a courier and freight management system (air and sea shipments, customer packages bought online, pickups, consolidations, pre-alerts, warehouse, payments, reports).\n\n"
+        $king = cdp_kingName();
+        $p = "You are $king, the colleague built into $site, a courier and freight management system (air and sea shipments, customer packages bought online, pickups, consolidations, pre-alerts, warehouse, payments, reports).\n\n"
+           . cdp_kingPersona($king) . "\n"
            . "You are talking to $name, role \"$role\". $scopeText\n"
            . 'Areas they can see: ' . ($areas ? implode(', ', $areas) : 'none') . ".\n"
            . 'Today is ' . date('l j F Y') . ' (' . date('Y-m-d') . ").\n\n"
@@ -516,7 +518,7 @@ if (!function_exists('cdp_aiHttp')) {
             'tools'      => cdp_aiToolDefinitions($ctx),
         ];
         if ($opt['key'] === '') {
-            return ['ok' => false, 'error' => 'No API key is set for ' . cdp_aiProviderLabel($provider) . '. A super admin adds it on Tools > AI Assistant.', 'tools' => []];
+            return ['ok' => false, 'error' => 'No API key is set for ' . cdp_aiProviderLabel($provider) . '. A super admin adds it on Tools > King.', 'tools' => []];
         }
         @set_time_limit(300);
         if ($provider === 'claude') {

@@ -62,7 +62,7 @@ if ($canManage || $canInsights) {
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" type="image/png" sizes="16x16" href="assets/<?php echo $core->favicon ?>">
-    <title>AI Assistant | <?php echo $core->site_name ?></title>
+    <title><?php echo h(cdp_kingName()) ?> | <?php echo $core->site_name ?></title>
     <?php include 'views/inc/head_scripts.php'; ?>
 </head>
 
@@ -73,7 +73,7 @@ if ($canManage || $canInsights) {
         <?php include 'views/inc/left_sidebar.php'; ?>
 
         <div class="page-wrapper">
-            <?php cdp_pageHeader('AI Assistant', ['icon' => 'solar:magic-stick-3-linear', 'actions' => $actions]); ?>
+            <?php cdp_pageHeader(cdp_kingName(), ['icon' => 'solar:magic-stick-3-linear', 'actions' => $actions]); ?>
 
             <div class="container-fluid">
                 <div id="resultados_ajax"></div>
@@ -129,7 +129,7 @@ if ($canManage || $canInsights) {
                                             Choose the provider (Claude, OpenAI or OpenRouter), paste the API key, pick a model and switch it on in
                                             <a href="ai_assistant_settings.php">Assistant Settings</a>.
                                         <?php else : ?>
-                                            Ask a super admin to set it up under Tools &gt; AI Assistant.
+                                            Ask a super admin to set it up under Tools &gt; King.
                                         <?php endif; ?>
                                     </div>
                                 <?php endif; ?>

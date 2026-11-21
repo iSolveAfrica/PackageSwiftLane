@@ -3,7 +3,7 @@
 if (!isset($d)) { $d = []; }
 ?>
 <div class="ops">
-<div class="sl-head"><div><h1 class="sl-title" style="font-size:20px">WhatsApp Inbox</h1><p class="sl-lede">Conversations with customers. The AI assistant answers first when it is on and hands over to a person.</p></div>
+<div class="sl-head"><div><h1 class="sl-title" style="font-size:20px">WhatsApp Inbox</h1><p class="sl-lede">Conversations with customers. <?= h(cdp_kingName()) ?> answers first when switched on and hands over to a person.</p></div>
 <div class="row g8 wrap"><a class="sl-btn ghost" href="<?= h(sl_route('CommsCenter')) ?>">Communication Center</a></div></div>
 <?php if (empty($d['ready'])): ?><div class="swl-ops-banner is-danger">The communication tables could not be created.</div><?php endif; ?>
 <div class="swl-ops-inbox">
