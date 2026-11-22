@@ -321,8 +321,8 @@ function cdp_ajaxRowInAgencyScope($row): bool {
  * Customer / Driver / Agency roles never fall through to the unscoped staff branch:
  *   rank 0 (customer)            -> $ownerCol = uid
  *   rank 1 driver (id 3 / flag)  -> $driverCol = uid
- *   rank 1 other (agency user)   -> agency = name_off branch, else context agency, else
- *                                   cdb_users.agency_id, else nothing (" and 1=0")
+ *   rank 1 other (agency user)   -> agency IN (restricted context agency, name_off branch,
+ *                                   cdb_users.agency_id), else nothing (" and 1=0")
  *   staff, agency-restricted     -> agency = their agency, else nothing
  *   other staff                  -> no filter
  * Column names are passed by the caller and must be trusted identifiers (alias.column);
@@ -357,22 +357,22 @@ function cdp_ajaxListScopeSql(?string $ownerCol = 'a.sender_id', ?string $driver
         return $driverCol !== null ? " and {$driverCol} = {$uid}" : ' and 1=0';
     }
     if ($rank === 1) {
-        // Same order as the add-shipment endpoints and the sender picker: the restricted agency
-        // context first, then the name_off branch, then cdb_users.agency_id. A different order
-        // let an agency user book into one agency and then not see the shipment in their lists.
+        // Match the WHOLE set of agencies an agency user can book into (restricted agency context,
+        // name_off branch, cdb_users.agency_id), the same set the edit/accept endpoints allow, so a
+        // shipment booked under any of them stays visible in their lists.
         $ctx = cdp_getAgencyContext();
-        $agency = !empty($ctx['is_restricted']) ? (int) ($ctx['agency_id'] ?? 0) : 0;
-        if ($agency <= 0 && function_exists('cdp_getAgencyBranchIdForUser')) {
-            $agency = (int) cdp_getAgencyBranchIdForUser($userData->name_off ?? '');
+        $set = [];
+        if (!empty($ctx['is_restricted'])) {
+            $set[] = (int) ($ctx['agency_id'] ?? 0);
         }
-        if ($agency <= 0) {
-            $agency = (int) ($ctx['agency_id'] ?? 0);
+        if (function_exists('cdp_getAgencyBranchIdForUser')) {
+            $set[] = (int) cdp_getAgencyBranchIdForUser($userData->name_off ?? '');
         }
-        if ($agency <= 0) {
-            $agency = (int) ($userData->agency_id ?? 0);
-        }
+        $set[] = (int) ($ctx['agency_id'] ?? 0);
+        $set[] = (int) ($userData->agency_id ?? 0);
+        $set = array_values(array_unique(array_filter($set, function ($v) { return $v > 0; })));
         // No agency at all: show nothing. Filtering on agency 0 would list every unassigned row.
-        return ($agency > 0 && $agencyCol !== null) ? " and {$agencyCol} = {$agency}" : ' and 1=0';
+        return ($set && $agencyCol !== null) ? " and {$agencyCol} IN (" . implode(',', $set) . ")" : ' and 1=0';
     }
     $ctx = cdp_getAgencyContext();
     if (!empty($ctx['is_restricted'])) {

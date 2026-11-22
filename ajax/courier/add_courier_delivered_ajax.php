@@ -51,7 +51,22 @@ $errors = array();
 // ('deliver_shipment') and a shipment that is theirs or their agency's.
 require_once(__DIR__ . '/../../helpers/rbac.php');
 $scopeUser = $user->cdp_getUserData();
-if (cdp_roleRankById((int) ($scopeUser->userlevel ?? 0)) < 2) {
+if (cdp_roleRankById((int) ($scopeUser->userlevel ?? 0)) >= 2) {
+    // Staff need the page permission, and agency-restricted staff only their own agency's shipments.
+    require_permission('deliver_shipment');
+    if (!empty(cdp_getAgencyContext()['is_restricted'])) {
+        $scopeDb = new Conexion;
+        $scopeDb->cdp_query("SELECT agency FROM cdb_add_order WHERE order_id = :id LIMIT 1");
+        $scopeDb->bind(':id', (int) ($_POST['shipment_id'] ?? 0));
+        $scopeDb->cdp_execute();
+        if (!cdp_ajaxRowInAgencyScope($scopeDb->cdp_registro())) {
+            header('HTTP/1.1 403 Forbidden');
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
+            exit;
+        }
+    }
+} else {
     $scopeDb = new Conexion;
     $scopeDb->cdp_query("SELECT sender_id, driver_id, agency FROM cdb_add_order WHERE order_id = :id LIMIT 1");
     $scopeDb->bind(':id', (int) ($_POST['shipment_id'] ?? 0));
