@@ -51,6 +51,11 @@ if ($customer_id > 0) {
 	$sWhere .= " and a.sender_id = '" . $customer_id . "'";
 }
 
+// Row scope by role rank, same call as the matching ajax/reports/* list, so the export never
+// holds rows the on-screen report hides (agency-restricted staff and custom roles were unscoped).
+require_once(dirname(__DIR__, 4) . '/helpers/ajax_guard.php');
+$sWhere .= cdp_ajaxListScopeSql('a.sender_id', 'a.driver_id', 'a.agency');
+
 if (!empty($range)) {
 
 	$fecha =  explode(" - ", $range);

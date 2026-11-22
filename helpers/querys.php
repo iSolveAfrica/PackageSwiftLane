@@ -7155,12 +7155,17 @@ function cdp_updateCourierShipmentFromCustomer($datos)
         due_date=:due_date,
         status_invoice=:status_invoice,
         order_incomplete=:order_incomplete,
-        manual_tariff=:manual_tariff
+        manual_tariff=:manual_tariff,
+        recipient_type = COALESCE(:recipient_type, recipient_type)
         
         WHERE
         order_id=:order_id
 ");
 
+    // receiver_id is read by the STORED recipient_type (cdb_users for 'user'/'customer', else
+    // cdb_recipients). Writing a new receiver_id without its type loaded an unrelated party, so
+    // callers pass the validated type; callers that do not pass it keep the stored one (NULL).
+    $db->bind(':recipient_type', isset($datos['recipient_type']) ? (string) $datos['recipient_type'] : null);
     $db->bind(':manual_tariff',  $datos['manual_tariff']);
     $db->bind(':order_incomplete',  $datos['order_incomplete']);
     $db->bind(':order_id',  $datos['order_id']);
@@ -7209,12 +7214,16 @@ function cdp_updateCourierShipment($datos)
         status_invoice=:status_invoice,
         manual_tariff=:manual_tariff,
         courier_notes=:courier_notes,
-        is_dangerous_good=:is_dangerous_good
+        is_dangerous_good=:is_dangerous_good,
+        recipient_type = COALESCE(:recipient_type, recipient_type)
 
         WHERE
         order_id=:order_id
 ");
 
+    // See cdp_updateCourierShipmentFromCustomer: persist the validated recipient_type with
+    // receiver_id; absent key (NULL) keeps the stored type.
+    $db->bind(':recipient_type', isset($datos['recipient_type']) ? (string) $datos['recipient_type'] : null);
     $db->bind(':manual_tariff',  $datos['manual_tariff']);
     $db->bind(':order_id',  $datos['order_id']);
     $db->bind(':driver_id',  $datos["driver_id"]);

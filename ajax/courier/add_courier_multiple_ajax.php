@@ -65,25 +65,56 @@ if ($scopeRank >= 2) {
 // Agency-restricted callers (agency users, and staff tied to an agency) may only book for their own
 // agency and for customers of that agency, as add_courier_ajax.php enforces. Without this the bulk
 // form would trust the posted agency and sender_id and create shipments under any agency/customer.
+// cdp_getAgencyContext() only marks seed roles 6 and 2/4-with-agency as restricted, so agency users
+// on a custom role (rank 1, other ids) skipped the check and are scoped too. A restricted context
+// with an agency keeps that agency (what the sender picker offers); otherwise the agency is resolved
+// as cdp_ajaxListScopeSql() does (name_off branch, then users.agency_id).
+// Drivers hold 'add_shipment' in the seed Driver role on purpose: they are not agency-scoped, keep
+// the parties check below (rank < 2) and the sender must be a customer (rank 0).
 $scopeCtx = cdp_getAgencyContext();
-if ($scopeCtx['is_restricted']) {
-    $scopeSenderAgency = null;
-    if ($scopeCtx['agency_id'] !== null) {
+$scopeAgencyScoped = !empty($scopeCtx['is_restricted']);
+$scopeAgencyId = (int) ($scopeCtx['agency_id'] ?? 0);
+$scopeIsDriver = $scopeRank === 1 && ($scopeLevel === 3 || cdp_roleHasFlag($scopeLevel, 'is_driver'));
+if ($scopeRank === 1 && !$scopeIsDriver && !($scopeAgencyScoped && $scopeAgencyId > 0)) {
+    $scopeMeDb = new Conexion;
+    $scopeMeDb->cdp_query('SELECT name_off, agency_id FROM cdb_users WHERE id = :id LIMIT 1');
+    $scopeMeDb->bind(':id', (int) ($_SESSION['userid'] ?? 0));
+    $scopeMeDb->cdp_execute();
+    $scopeMe = $scopeMeDb->cdp_registro();
+    $scopeAgencyId = $scopeMe ? (int) cdp_getAgencyBranchIdForUser($scopeMe->name_off ?? '') : 0;
+    if ($scopeAgencyId <= 0 && $scopeMe) {
+        $scopeAgencyId = (int) ($scopeMe->agency_id ?? 0);
+    }
+    $scopeAgencyScoped = true;
+}
+// Write the int back: "00"/"0x" are not empty() but cast to 0, which skipped the checks keyed on
+// the sender while still passing the empty() validation below.
+if ($scopeRank < 2 || $scopeAgencyScoped) {
+    $_POST['sender_id'] = (int) ($_POST['sender_id'] ?? 0);
+}
+if ($scopeAgencyScoped) {
+    // No agency: nothing may be booked.
+    $scopeOk = $scopeAgencyId > 0;
+    // Skipped without a sender so the 'sender_id' validation below reports the missing field.
+    if ($scopeOk && !empty($_POST['sender_id'])) {
+        // The sender must be a customer (rank 0, any Customer-derived role) of this agency, not a
+        // staff or driver account that carries the agency_id (edit/accept check the same).
         $scopeDb = new Conexion;
-        $scopeDb->cdp_query('SELECT agency_id FROM cdb_users WHERE id = :id LIMIT 1');
-        $scopeDb->bind(':id', (int) ($_POST['sender_id'] ?? 0));
+        $scopeDb->cdp_query('SELECT agency_id, userlevel FROM cdb_users WHERE id = :id LIMIT 1');
+        $scopeDb->bind(':id', (int) $_POST['sender_id']);
         $scopeDb->cdp_execute();
         $scopeSenderRow = $scopeDb->cdp_registro();
-        $scopeSenderAgency = $scopeSenderRow ? (int) $scopeSenderRow->agency_id : null;
+        $scopeOk = $scopeSenderRow && (int) $scopeSenderRow->agency_id === $scopeAgencyId
+            && cdp_roleRankById((int) $scopeSenderRow->userlevel) === 0;
     }
-    if ($scopeCtx['agency_id'] === null || $scopeSenderAgency !== (int) $scopeCtx['agency_id']) {
+    if (!$scopeOk) {
         header('HTTP/1.1 403 Forbidden');
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode(['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
         exit;
     }
     // Force the caller's own agency into the insert below.
-    $_POST['agency'] = (int) $scopeCtx['agency_id'];
+    $_POST['agency'] = $scopeAgencyId;
 }
 
 // Canonical recipient type for everyone. cdp_sanitize() is not idempotent (stripslashes), so a
@@ -98,10 +129,24 @@ $_POST['recipient_type'] = $scopeType;
 // same rule edit_courier_ajax.php and accept_courier_ajax.php enforce).
 // Skipped without a sender: the 'sender_id' validation below then reports the missing field
 // (same empty() test, so nothing is inserted without one) instead of a misleading 403.
-if (($scopeRank < 2 || !empty($scopeCtx['is_restricted'])) && !empty($_POST['sender_id'])) {
+if (($scopeRank < 2 || $scopeAgencyScoped) && !empty($_POST['sender_id'])) {
     $scopeDb = new Conexion;
     $scopeSender = (int) ($_POST['sender_id'] ?? 0);
-    $scopeAgencies = array_filter([(int) ($scopeCtx['agency_id'] ?? 0)]);
+    // Not agency-scoped below staff rank (drivers): the agency check above did not run, so the
+    // sender must at least be a customer account (rank 0), not a staff/driver user.
+    if (!$scopeAgencyScoped) {
+        $scopeDb->cdp_query("SELECT userlevel FROM cdb_users WHERE id = :id LIMIT 1");
+        $scopeDb->bind(':id', $scopeSender);
+        $scopeDb->cdp_execute();
+        $scopeSenderRow = $scopeDb->cdp_registro();
+        if (!$scopeSenderRow || cdp_roleRankById((int) $scopeSenderRow->userlevel) !== 0) {
+            header('HTTP/1.1 403 Forbidden');
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
+            exit;
+        }
+    }
+    $scopeAgencies = array_filter([$scopeAgencyScoped ? $scopeAgencyId : 0]);
     $scopeRecipient = (int) ($_POST['recipient_id'] ?? 0);
     if ($scopeType === 'user') {
         $scopeRecipientOk = $scopeRecipient === $scopeSender;
@@ -145,10 +190,14 @@ if (($scopeRank < 2 || !empty($scopeCtx['is_restricted'])) && !empty($_POST['sen
     // offers, User::cdp_userAllDriver) may be named, not any user id.
     $scopeDriver = (int) ($_POST['driver_id'] ?? 0);
     if ($scopeDriver > 0) {
-        $scopeDb->cdp_query("SELECT id FROM cdb_users WHERE id = :id AND userlevel = 3 AND active = 1 LIMIT 1");
+        // A driver on a custom Driver role (rank 1 with is_driver) is a driver too, as in
+        // cdp_ajaxListScopeSql(); checking only the seed id 3 refused them.
+        $scopeDb->cdp_query("SELECT userlevel FROM cdb_users WHERE id = :id AND active = 1 LIMIT 1");
         $scopeDb->bind(':id', $scopeDriver);
         $scopeDb->cdp_execute();
-        if (!$scopeDb->cdp_registro()) {
+        $scopeDrvRow = $scopeDb->cdp_registro();
+        $scopeDrvLvl = $scopeDrvRow ? (int) $scopeDrvRow->userlevel : -1;
+        if (!$scopeDrvRow || !($scopeDrvLvl === 3 || (cdp_roleRankById($scopeDrvLvl) === 1 && cdp_roleHasFlag($scopeDrvLvl, 'is_driver')))) {
             $scopeAddrOk = false;
         }
     }

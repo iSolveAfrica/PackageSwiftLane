@@ -37,19 +37,35 @@ if (cdp_roleRankById((int) $__u->userlevel) < 1) {
 	$sender = (int) $__u->uid;
 } else {
 	// Drivers, agency users and agency-restricted staff only see addresses of customers they could
-	// pick in select2_sender.php (userlevel 1, in their agency when restricted); otherwise any
-	// account's addresses were readable by id. Drivers keep access: their role has add_shipment.
+	// pick in select2_sender.php (a customer role, rank 0; in their agency when agency-scoped);
+	// otherwise any account's addresses were readable by id. Drivers keep access: their role has
+	// add_shipment. The agency is resolved as in select2_sender.php and the booking endpoints.
 	$ctx = cdp_getAgencyContext();
-	if (cdp_roleRankById((int) $__u->userlevel) === 1 || !empty($ctx['is_restricted'])) {
-		if (!empty($ctx['is_restricted']) && $ctx['agency_id'] === null) {
+	$scopeLevel = (int) $__u->userlevel;
+	$scopeRank = cdp_roleRankById($scopeLevel);
+	if ($scopeRank === 1 || !empty($ctx['is_restricted'])) {
+		$scopeAgencyId = 0;
+		$scopeIsAgencyUser = $scopeRank === 1 && $scopeLevel !== 3 && !cdp_roleHasFlag($scopeLevel, 'is_driver');
+		if (!empty($ctx['is_restricted']) && (int) ($ctx['agency_id'] ?? 0) > 0) {
+			$scopeAgencyId = (int) $ctx['agency_id'];
+		} elseif ($scopeIsAgencyUser) {
+			$scopeMe = $__u->cdp_getUserData();
+			$scopeAgencyId = $scopeMe ? (int) cdp_getAgencyBranchIdForUser($scopeMe->name_off ?? '') : 0;
+			if ($scopeAgencyId <= 0 && $scopeMe) {
+				$scopeAgencyId = (int) ($scopeMe->agency_id ?? 0);
+			}
+		}
+		$scopeAgencyScoped = !empty($ctx['is_restricted']) || $scopeIsAgencyUser;
+		if ($scopeAgencyScoped && $scopeAgencyId <= 0) {
 			echo json_encode([]);
 			exit;
 		}
-		$db->cdp_query("SELECT id FROM cdb_users WHERE id = :id AND userlevel = 1"
-			. (!empty($ctx['is_restricted']) ? " AND agency_id = " . (int) $ctx['agency_id'] : '') . " LIMIT 1");
+		$db->cdp_query("SELECT userlevel FROM cdb_users WHERE id = :id"
+			. ($scopeAgencyScoped ? " AND agency_id = " . $scopeAgencyId : '') . " LIMIT 1");
 		$db->bind(':id', $sender);
 		$db->cdp_execute();
-		if (!$db->cdp_registro()) {
+		$scopeSenderRow = $db->cdp_registro();
+		if (!$scopeSenderRow || cdp_roleRankById((int) $scopeSenderRow->userlevel) !== 0) {
 			echo json_encode([]);
 			exit;
 		}

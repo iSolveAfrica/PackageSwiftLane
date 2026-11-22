@@ -54,6 +54,10 @@ if ($employee_id > 0) {
 }
 
 
+// Row scope by role rank (customer -> own, driver -> assigned, agency user / agency-restricted
+// staff -> their agency), ANDed on top of the report's own filter, same as the *_general list.
+$sWhere .= cdp_ajaxListScopeSql('a.sender_id', 'a.driver_id', 'a.agency');
+
 if (!empty($range)) {
 
 	$fecha =  explode(" - ", $range);

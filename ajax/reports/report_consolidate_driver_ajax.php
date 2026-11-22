@@ -54,6 +54,11 @@ if ($employee_id > 0) {
 }
 
 
+// Row scope by role rank (agency user / agency-restricted staff -> their agency, driver ->
+// assigned, customer -> own), ANDed on top of the chosen filter, so a restricted user cannot
+// read other agencies' consolidations by picking another agency/driver/customer/employee.
+$sWhere .= cdp_ajaxListScopeSql('a.sender_id', 'a.driver_id', 'a.agency');
+
 if (!empty($range)) {
 
 	$fecha =  explode(" - ", $range);

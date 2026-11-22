@@ -40,12 +40,39 @@ $data = [];
 
 $ctx = cdp_getAgencyContext();
 $extraWhere = "";
-if ($ctx['is_restricted']) {
-	if ($ctx['agency_id'] === null) {
+// Offer the senders the booking endpoints accept (add_courier_ajax.php and siblings): customers on
+// any Customer-derived role (rank 0), not only the seed userlevel 1. The role ids come from the
+// small cdb_user_roles map, so the user search stays one SQL query.
+$scopeCustomerRoles = [1];
+foreach (array_keys(cdp_roleFlagsMap()) as $scopeRoleId) {
+	if (cdp_roleRankById((int) $scopeRoleId) === 0) {
+		$scopeCustomerRoles[] = (int) $scopeRoleId;
+	}
+}
+$scopeCustomerRoles = array_values(array_unique($scopeCustomerRoles));
+// Agency resolution as in the booking endpoints: a restricted context with an agency keeps it;
+// other agency users (rank 1, not drivers, e.g. custom agency roles the context does not restrict)
+// use their name_off branch, then users.agency_id. Without this they were offered every customer
+// and then refused for anyone outside their agency. Drivers are not agency-scoped.
+$scopeLevel = (int) $__u->userlevel;
+$scopeIsAgencyUser = cdp_roleRankById($scopeLevel) === 1 && $scopeLevel !== 3 && !cdp_roleHasFlag($scopeLevel, 'is_driver');
+if (!empty($ctx['is_restricted']) && (int) ($ctx['agency_id'] ?? 0) > 0) {
+	$extraWhere = " AND agency_id = " . (int)$ctx['agency_id'];
+} elseif ($scopeIsAgencyUser) {
+	$scopeMe = $__u->cdp_getUserData();
+	$scopeAgencyId = $scopeMe ? (int) cdp_getAgencyBranchIdForUser($scopeMe->name_off ?? '') : 0;
+	if ($scopeAgencyId <= 0 && $scopeMe) {
+		$scopeAgencyId = (int) ($scopeMe->agency_id ?? 0);
+	}
+	if ($scopeAgencyId <= 0) {
 		echo json_encode([]);
 		exit;
 	}
-	$extraWhere = " AND agency_id = " . (int)$ctx['agency_id'];
+	$extraWhere = " AND agency_id = " . $scopeAgencyId;
+} elseif (!empty($ctx['is_restricted'])) {
+	// Agency-restricted staff without an agency: nothing may be booked.
+	echo json_encode([]);
+	exit;
 }
 // A customer may only pick themselves as sender (security fix 2026-11-21): without this a
 // customer could search every other customer's email, phone and locker code.
@@ -60,7 +87,7 @@ $sql = "SELECT * FROM cdb_users
   or email LIKE '%" . $search . "%'
   or phone LIKE '%" . $search . "%'
   or locker LIKE '%" . $search . "%')
-   and userlevel='1'" . $extraWhere;
+   and userlevel IN (" . implode(',', array_map('intval', $scopeCustomerRoles)) . ")" . $extraWhere;
 
 $db->cdp_query($sql);
 $db->cdp_execute();

@@ -34,18 +34,21 @@ require_once(__DIR__ . '/../../helpers/rbac.php');
 // shipment). Further down only 'user' vs anything else matters, so this keeps behaviour.
 // 'customer' (SL customer pickups, ajax/sl/pickup_ajax.php) stores a cdb_users id and one of the
 // sender's cdb_senders_addresses ids, exactly like 'user', so it takes the 'user' path: checking it
-// as a cdb_recipients id refused legitimate edits and loaded an unrelated recipient. The stored
-// type is never rewritten by this endpoint. When the field is not posted, use the stored type
-// (as the fallbacks further down used to) instead of assuming 'recipient'.
-if (isset($_POST['recipient_type'])) {
+// as a cdb_recipients id refused legitimate edits and loaded an unrelated recipient. The type is
+// persisted with the recipient by the UPDATE below ($scopePersistType). When the field is not posted, or posted empty (as
+// accept_pickup_ajax.php treats it), use the stored type (as the fallbacks further down used to)
+// instead of assuming 'recipient'.
+$scopeTypeDb = new Conexion;
+$scopeTypeDb->cdp_query("SELECT recipient_type FROM cdb_add_order WHERE order_id = :id LIMIT 1");
+$scopeTypeDb->bind(':id', (int) ($_POST['order_id'] ?? 0));
+$scopeTypeDb->cdp_execute();
+$scopeTypeRow = $scopeTypeDb->cdp_registro();
+$scopeStoredRawType = (string) ($scopeTypeRow->recipient_type ?? 'recipient');
+$scopeStoredType = in_array($scopeStoredRawType, ['user', 'customer'], true) ? 'user' : 'recipient';
+if (isset($_POST['recipient_type']) && $_POST['recipient_type'] !== '') {
     $scopeRawType = cdp_sanitize($_POST['recipient_type']);
 } else {
-    $scopeTypeDb = new Conexion;
-    $scopeTypeDb->cdp_query("SELECT recipient_type FROM cdb_add_order WHERE order_id = :id LIMIT 1");
-    $scopeTypeDb->bind(':id', (int) ($_POST['order_id'] ?? 0));
-    $scopeTypeDb->cdp_execute();
-    $scopeTypeRow = $scopeTypeDb->cdp_registro();
-    $scopeRawType = (string) ($scopeTypeRow->recipient_type ?? 'recipient');
+    $scopeRawType = $scopeStoredRawType;
 }
 $scopeType = in_array($scopeRawType, ['user', 'customer'], true) ? 'user' : 'recipient';
 $_POST['recipient_type'] = $scopeType;
@@ -61,10 +64,24 @@ if (cdp_roleRankById((int) ($scopeUser->userlevel ?? 0)) < 2) {
     $scopeRow = $scopeDb->cdp_registro();
     $scopeUid = (int) ($_SESSION['userid'] ?? 0);
     $scopeCtx = cdp_getAgencyContext();
-    $scopeAgencies = array_filter([
-        (int) ($scopeCtx['agency_id'] ?? 0),
-        ((int) $scopeUser->userlevel === 6) ? (int) cdp_getAgencyBranchIdForUser($scopeUser->name_off) : 0,
-    ]);
+    // Agency users (rank 1, not drivers), seed or custom role: the agency the add endpoints book
+    // under first (restricted context agency, else name_off branch, else users.agency_id), plus the
+    // other two so rows the lists show (cdp_ajaxListScopeSql: name_off first) stay editable.
+    // Before, only seed level 6 got the name_off branch, so a custom agency role could create and
+    // list a shipment but got a 403 editing it. Customers and drivers match as sender/driver only.
+    $scopeLevelMe = (int) ($scopeUser->userlevel ?? 0);
+    $scopeAgencies = [];
+    if (cdp_roleRankById($scopeLevelMe) === 1 && $scopeLevelMe !== 3 && !cdp_roleHasFlag($scopeLevelMe, 'is_driver')) {
+        $scopeBranch = (int) cdp_getAgencyBranchIdForUser($scopeUser->name_off ?? '');
+        $scopeCtxAgency = !empty($scopeCtx['is_restricted']) ? (int) ($scopeCtx['agency_id'] ?? 0) : 0;
+        $scopeAgencies = array_values(array_unique(array_filter([
+            $scopeCtxAgency > 0 ? $scopeCtxAgency : ($scopeBranch > 0 ? $scopeBranch : (int) ($scopeUser->agency_id ?? 0)),
+            $scopeBranch,
+            (int) ($scopeUser->agency_id ?? 0),
+        ])));
+    } else {
+        $scopeAgencies = array_filter([(int) ($scopeCtx['agency_id'] ?? 0)]);
+    }
     $scopeOk = $scopeRow && (
         (int) $scopeRow->sender_id === $scopeUid
         || (int) $scopeRow->driver_id === $scopeUid
@@ -124,8 +141,13 @@ if (cdp_roleRankById((int) ($scopeUser->userlevel ?? 0)) < 2) {
         $scopeRow = $scopeDb->cdp_registro();
         $scopeAgencyId = (int) ($scopeCtx['agency_id'] ?? 0);
         $scopeSender = (int) ($_POST['sender_id'] ?? 0);
+        // Write the int back so the empty() validation below sees the same number: "00"/"0x" are
+        // not empty() but cast to 0, which skipped the sender and parties checks keyed on > 0.
+        $_POST['sender_id'] = $scopeSender;
         $scopeOk = $scopeRow && $scopeAgencyId > 0 && cdp_ajaxRowInAgencyScope($scopeRow);
-        if ($scopeOk && $scopeSender !== (int) $scopeRow->sender_id) {
+        // An empty sender is not a "changed" one: it reaches the 'sender required' validation
+        // below (nothing is written) instead of failing the lookup with a misleading 403.
+        if ($scopeOk && $scopeSender > 0 && $scopeSender !== (int) $scopeRow->sender_id) {
             // A changed sender must be a customer (rank 0) of this agency, not a staff or driver
             // account that happens to carry the agency_id (add_courier_ajax.php checks the same).
             $scopeDb->cdp_query("SELECT agency_id, userlevel FROM cdb_users WHERE id = :id LIMIT 1");
@@ -148,7 +170,16 @@ if (cdp_roleRankById((int) ($scopeUser->userlevel ?? 0)) < 2) {
     }
 }
 
-if ($scopeCheckParties) {
+// The recipient type may change (the form lists the sender and the contacts in one picker): the
+// checks below validate the posted recipient/address against the NEW type, and the UPDATE now
+// persists recipient_type with receiver_id (see $scopePersistType), so the row cannot end up with
+// an id read against the wrong table. A legacy 'customer' row edited as 'user' with the sender
+// still as recipient keeps 'customer'.
+$scopePersistType = ($scopeType === 'user' && $scopeStoredRawType === 'customer'
+    && (int) ($_POST['recipient_id'] ?? 0) === (int) ($_POST['sender_id'] ?? 0)) ? 'customer' : $scopeType;
+
+// Skipped without a sender: the 'sender_id' validation below then refuses the request.
+if ($scopeCheckParties && $scopeSender > 0) {
     // The recipient, the sender address and the recipient address must belong to that sender
     // (or to its recipient), so another customer's contact or address cannot be attached to,
     // and printed on, this shipment. $scopeType is the canonical value used further down.
@@ -196,10 +227,14 @@ if ($scopeCheckParties) {
     // requires), not any user id. An unchanged stored driver is left alone.
     $scopeDriver = (int) ($_POST['driver_id'] ?? 0);
     if ($scopeDriver > 0 && $scopeDriver !== $scopeStoredDriver) {
-        $scopeDb->cdp_query("SELECT id FROM cdb_users WHERE id = :id AND userlevel = 3 AND active = 1 LIMIT 1");
+        // A driver on a custom Driver role (rank 1 with is_driver) is a driver too, as in
+        // cdp_ajaxListScopeSql(); checking only the seed id 3 refused them.
+        $scopeDb->cdp_query("SELECT userlevel FROM cdb_users WHERE id = :id AND active = 1 LIMIT 1");
         $scopeDb->bind(':id', $scopeDriver);
         $scopeDb->cdp_execute();
-        if (!$scopeDb->cdp_registro()) {
+        $scopeDrvRow = $scopeDb->cdp_registro();
+        $scopeDrvLvl = $scopeDrvRow ? (int) $scopeDrvRow->userlevel : -1;
+        if (!$scopeDrvRow || !($scopeDrvLvl === 3 || (cdp_roleRankById($scopeDrvLvl) === 1 && cdp_roleHasFlag($scopeDrvLvl, 'is_driver')))) {
             $scopeAddrOk = false;
         }
     }
@@ -372,6 +407,8 @@ if (empty($errors)) {
         'status_invoice'        => $status_invoice,
         'manual_tariff'         => $tariff_mode,
         'courier_notes'         => cdp_sanitize($_POST["courier_notes"]),
+        // Persisted with receiver_id so the recipient is read from the right table (validated above).
+        'recipient_type'        => $scopePersistType,
         // Dangerous-goods (hazmat) flag — checkbox only posts when checked. A
         // package already inside a consolidation must keep its classification:
         // flipping it would split the consolidation across both kinds, so the

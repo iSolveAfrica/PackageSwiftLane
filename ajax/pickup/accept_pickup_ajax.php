@@ -63,14 +63,31 @@ $_POST['recipient_type'] = $cdpScopeType;
 $cdpCheckParties = false;
 $cdpScopeAgencies = [];
 if ($cdpAcceptRank < 2) {
-    $cdpOwnAgency = !empty($cdpAcceptCtx['agency_id']) && $cdpAcceptRow && (int) $cdpAcceptRow->agency === (int) $cdpAcceptCtx['agency_id'];
+    // Agency users (rank 1, not drivers), seed or custom role: the agency the add endpoints book
+    // under (restricted context agency, else name_off branch, else users.agency_id), plus the other
+    // two so pickups the lists show (cdp_ajaxListScopeSql: name_off first) stay acceptable. Before,
+    // only the context agency counted, so a custom agency role could list a pickup but not accept
+    // it. Drivers match only as the pickup's driver.
+    $cdpMe = $user->cdp_getUserData();
+    $cdpMeLevel = (int) ($cdpMe->userlevel ?? 0);
+    $cdpMyAgencies = [];
+    if ($cdpMe && $cdpMeLevel !== 3 && !cdp_roleHasFlag($cdpMeLevel, 'is_driver')) {
+        $cdpBranch = (int) cdp_getAgencyBranchIdForUser($cdpMe->name_off ?? '');
+        $cdpCtxAgency = !empty($cdpAcceptCtx['is_restricted']) ? (int) ($cdpAcceptCtx['agency_id'] ?? 0) : 0;
+        $cdpMyAgencies = array_values(array_unique(array_filter([
+            $cdpCtxAgency > 0 ? $cdpCtxAgency : ($cdpBranch > 0 ? $cdpBranch : (int) ($cdpMe->agency_id ?? 0)),
+            $cdpBranch,
+            (int) ($cdpMe->agency_id ?? 0),
+        ])));
+    }
+    $cdpOwnAgency = $cdpAcceptRow && (int) $cdpAcceptRow->agency > 0 && in_array((int) $cdpAcceptRow->agency, $cdpMyAgencies, true);
     $cdpOwnDriver = $cdpAcceptRow && (int) $cdpAcceptRow->driver_id > 0 && (int) $cdpAcceptRow->driver_id === (int) ($_SESSION['userid'] ?? 0);
     if (!$cdpOwnAgency && !$cdpOwnDriver) {
         _ajax_guard_send(403, ['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
     }
     if ($cdpOwnAgency) {
-        $_POST['agency'] = (int) $cdpAcceptCtx['agency_id']; // cannot move it to another agency
-        $cdpScopeAgencies = [(int) $cdpAcceptCtx['agency_id']];
+        $_POST['agency'] = (int) $cdpAcceptRow->agency; // cannot move it to another agency
+        $cdpScopeAgencies = $cdpMyAgencies;
     } elseif ((int) $cdpAcceptRow->agency > 0) {
         // Matched only as its driver: the pickup stays with its agency.
         $_POST['agency'] = (int) $cdpAcceptRow->agency;
@@ -101,7 +118,12 @@ if ($cdpAcceptRank < 2) {
     $cdpAgencyId = (int) ($cdpAcceptCtx['agency_id'] ?? 0);
     $cdpScopeOk = $cdpAcceptRow && $cdpAgencyId > 0 && cdp_ajaxRowInAgencyScope($cdpAcceptRow);
     $cdpPostedSender = (int) ($_POST['sender_id'] ?? 0);
-    if ($cdpScopeOk && $cdpPostedSender !== (int) $cdpAcceptRow->sender_id) {
+    // Write the int back so the empty() validation below sees the same number: "00"/"0x" are not
+    // empty() but cast to 0, which skipped the sender and parties checks keyed on > 0.
+    $_POST['sender_id'] = $cdpPostedSender;
+    // An empty sender is not a "changed" one: it reaches the 'sender required' validation below
+    // (nothing is written) instead of failing the lookup with a misleading 403.
+    if ($cdpScopeOk && $cdpPostedSender > 0 && $cdpPostedSender !== (int) $cdpAcceptRow->sender_id) {
         $cdpAcceptDb->cdp_query("SELECT agency_id, userlevel FROM cdb_users WHERE id = :id LIMIT 1");
         $cdpAcceptDb->bind(':id', $cdpPostedSender);
         $cdpAcceptDb->cdp_execute();
@@ -117,7 +139,17 @@ if ($cdpAcceptRank < 2) {
     $cdpCheckParties = true;
 }
 
-if ($cdpCheckParties) {
+// The recipient type may change: SL customer pickups store 'customer' with the sender as a
+// placeholder recipient, and the operator then picks the real contact ('recipient'). The checks
+// below validate the posted recipient/address against the NEW type, and the UPDATE persists
+// recipient_type with receiver_id ($cdpPersistType), so the row is never read against the wrong
+// table. A 'customer' row accepted as 'user' with the sender still as recipient keeps 'customer'.
+$cdpStoredRawType = (string) ($cdpAcceptRow->recipient_type ?? 'recipient');
+$cdpPersistType = ($cdpScopeType === 'user' && $cdpStoredRawType === 'customer'
+    && (int) ($_POST['recipient_id'] ?? 0) === (int) ($_POST['sender_id'] ?? 0)) ? 'customer' : $cdpScopeType;
+
+// Skipped without a sender: the 'sender_id' validation below then refuses the request.
+if ($cdpCheckParties && (int) ($_POST['sender_id'] ?? 0) > 0) {
     // The recipient, the sender address and the recipient address must belong to that sender (or
     // to its recipient), so another customer's contact or address cannot be attached to, and
     // printed on, this pickup. A newly named driver must be an active driver account.
@@ -163,10 +195,14 @@ if ($cdpCheckParties) {
     }
     $cdpDriver = (int) ($_POST['driver_id'] ?? 0);
     if ($cdpDriver > 0 && $cdpDriver !== (int) $cdpAcceptRow->driver_id) {
-        $cdpAcceptDb->cdp_query("SELECT id FROM cdb_users WHERE id = :id AND userlevel = 3 AND active = 1 LIMIT 1");
+        // A driver on a custom Driver role (rank 1 with is_driver) is a driver too, as in
+        // cdp_ajaxListScopeSql(); checking only the seed id 3 refused them.
+        $cdpAcceptDb->cdp_query("SELECT userlevel FROM cdb_users WHERE id = :id AND active = 1 LIMIT 1");
         $cdpAcceptDb->bind(':id', $cdpDriver);
         $cdpAcceptDb->cdp_execute();
-        if (!$cdpAcceptDb->cdp_registro()) {
+        $cdpDrvRow = $cdpAcceptDb->cdp_registro();
+        $cdpDrvLvl = $cdpDrvRow ? (int) $cdpDrvRow->userlevel : -1;
+        if (!$cdpDrvRow || !($cdpDrvLvl === 3 || (cdp_roleRankById($cdpDrvLvl) === 1 && cdp_roleHasFlag($cdpDrvLvl, 'is_driver')))) {
             $cdpPartiesOk = false;
         }
     }
@@ -310,6 +346,8 @@ if (empty($errors)) {
         'status_invoice' =>  $status_invoice,
         'order_incomplete' => '1',
         'manual_tariff' =>  $tariff_mode,
+        // Persisted with receiver_id so the recipient is read from the right table (validated above).
+        'recipient_type' => $cdpPersistType,
 
     );
 

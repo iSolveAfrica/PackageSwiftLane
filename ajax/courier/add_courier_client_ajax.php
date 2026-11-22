@@ -62,18 +62,60 @@ $_POST['recipient_type'] = $scopeType;
 
 // Agency-restricted callers book for their own agency and its customers only, as
 // add_courier_ajax.php enforces; the posted agency and sender were trusted here.
+// cdp_getAgencyContext() only marks seed roles 6 and 2/4-with-agency as restricted, so agency users
+// on a custom role (rank 1, other ids) skipped this check and could book under any customer and
+// agency; they are scoped here too. A restricted context with an agency keeps that agency (what the
+// sender picker offers); otherwise the agency is resolved as cdp_ajaxListScopeSql() does (name_off
+// branch, then users.agency_id). Drivers hold 'add_shipment' in the seed Driver role on purpose: they
+// are not agency-scoped, keep the parties check below (rank < 2) and the sender must be a customer.
 $scopeCtx = cdp_getAgencyContext();
 $scopeAgencies = [];
-if (!$scopeIsClient && !empty($scopeCtx['is_restricted'])) {
-    $scopeAgencyId = (int) ($scopeCtx['agency_id'] ?? 0);
+$scopeAgencyScoped = !$scopeIsClient && !empty($scopeCtx['is_restricted']);
+$scopeAgencyId = (int) ($scopeCtx['agency_id'] ?? 0);
+$scopeIsDriver = !$scopeIsClient && $scopeRank === 1 && ($scopeLevel === 3 || cdp_roleHasFlag($scopeLevel, 'is_driver'));
+if (!$scopeIsClient && $scopeRank === 1 && !$scopeIsDriver && !($scopeAgencyScoped && $scopeAgencyId > 0)) {
+    $scopeMeDb = new Conexion;
+    $scopeMeDb->cdp_query("SELECT name_off, agency_id FROM cdb_users WHERE id = :id LIMIT 1");
+    $scopeMeDb->bind(':id', (int) ($_SESSION['userid'] ?? 0));
+    $scopeMeDb->cdp_execute();
+    $scopeMe = $scopeMeDb->cdp_registro();
+    $scopeAgencyId = $scopeMe ? (int) cdp_getAgencyBranchIdForUser($scopeMe->name_off ?? '') : 0;
+    if ($scopeAgencyId <= 0 && $scopeMe) {
+        $scopeAgencyId = (int) ($scopeMe->agency_id ?? 0);
+    }
+    if ($scopeAgencyId <= 0) {
+        _ajax_guard_send(403, ['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
+    }
+    $scopeAgencyScoped = true;
+}
+// Write the int back: "00"/"0x" are not empty() but cast to 0, which skipped the checks keyed on
+// the sender while still passing the empty() validation below.
+if ($scopeRank < 2 || $scopeIsClient || $scopeAgencyScoped) {
+    $_POST['sender_id'] = (int) ($_POST['sender_id'] ?? 0);
+}
+// Drivers are not agency-scoped, so the sender must at least be a customer account (rank 0).
+if ($scopeIsDriver && !empty($_POST['sender_id'])) {
+    $scopeDb = new Conexion;
+    $scopeDb->cdp_query("SELECT userlevel FROM cdb_users WHERE id = :id LIMIT 1");
+    $scopeDb->bind(':id', (int) $_POST['sender_id']);
+    $scopeDb->cdp_execute();
+    $scopeSenderRow = $scopeDb->cdp_registro();
+    if (!$scopeSenderRow || cdp_roleRankById((int) $scopeSenderRow->userlevel) !== 0) {
+        _ajax_guard_send(403, ['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
+    }
+}
+if ($scopeAgencyScoped) {
     $scopeSenderOk = false;
     if ($scopeAgencyId > 0) {
+        // The sender must be a customer (rank 0, any Customer-derived role) of this agency, not a
+        // staff or driver account that carries the agency_id (edit/accept check the same).
         $scopeDb = new Conexion;
-        $scopeDb->cdp_query("SELECT agency_id FROM cdb_users WHERE id = :id AND userlevel = 1 LIMIT 1");
+        $scopeDb->cdp_query("SELECT agency_id, userlevel FROM cdb_users WHERE id = :id LIMIT 1");
         $scopeDb->bind(':id', (int) ($_POST['sender_id'] ?? 0));
         $scopeDb->cdp_execute();
         $scopeSenderRow = $scopeDb->cdp_registro();
-        $scopeSenderOk = $scopeSenderRow && (int) $scopeSenderRow->agency_id === $scopeAgencyId;
+        $scopeSenderOk = $scopeSenderRow && (int) $scopeSenderRow->agency_id === $scopeAgencyId
+            && cdp_roleRankById((int) $scopeSenderRow->userlevel) === 0;
     }
     if (!$scopeSenderOk && !empty($_POST['sender_id'])) {
         _ajax_guard_send(403, ['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
@@ -87,7 +129,7 @@ if (!$scopeIsClient && !empty($scopeCtx['is_restricted'])) {
 // user) on the label and in the notifications. They must belong to the sender, as offered by
 // ajax/select2_recipient.php and select2_recipient_addresses.php (same rule as add_courier_ajax.php).
 // Skipped without a sender: the 'sender_id' validation below then refuses the request.
-if (($scopeRank < 2 || $scopeIsClient || !empty($scopeCtx['is_restricted'])) && !empty($_POST['sender_id'])) {
+if (($scopeRank < 2 || $scopeIsClient || $scopeAgencyScoped) && !empty($_POST['sender_id'])) {
     $scopeDb = new Conexion;
     $scopeSender = (int) $_POST['sender_id'];
     $scopeRecipient = (int) ($_POST['recipient_id'] ?? 0);

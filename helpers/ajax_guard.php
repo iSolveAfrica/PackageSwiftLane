@@ -357,9 +357,15 @@ function cdp_ajaxListScopeSql(?string $ownerCol = 'a.sender_id', ?string $driver
         return $driverCol !== null ? " and {$driverCol} = {$uid}" : ' and 1=0';
     }
     if ($rank === 1) {
-        $agency = function_exists('cdp_getAgencyBranchIdForUser') ? (int) cdp_getAgencyBranchIdForUser($userData->name_off ?? '') : 0;
+        // Same order as the add-shipment endpoints and the sender picker: the restricted agency
+        // context first, then the name_off branch, then cdb_users.agency_id. A different order
+        // let an agency user book into one agency and then not see the shipment in their lists.
+        $ctx = cdp_getAgencyContext();
+        $agency = !empty($ctx['is_restricted']) ? (int) ($ctx['agency_id'] ?? 0) : 0;
+        if ($agency <= 0 && function_exists('cdp_getAgencyBranchIdForUser')) {
+            $agency = (int) cdp_getAgencyBranchIdForUser($userData->name_off ?? '');
+        }
         if ($agency <= 0) {
-            $ctx = cdp_getAgencyContext();
             $agency = (int) ($ctx['agency_id'] ?? 0);
         }
         if ($agency <= 0) {
