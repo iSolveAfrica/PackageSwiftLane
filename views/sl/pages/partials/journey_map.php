@@ -14,7 +14,7 @@ static $assetsPrinted = false;
 <script src="<?= h(cdp_asset('assets/vendor/libs/leaflet/leaflet.js')) ?>" defer></script>
 <script src="<?= h(cdp_asset('assets/swiftlane/journey-map.js')) ?>" defer></script>
 <?php endif; ?>
-<div class="tk-map jm-map" <?php if ($m): ?>data-journey-map data-from="<?= h(json_encode(['lat' => (float) $m['from']['lat'], 'lon' => (float) $m['from']['lon'], 'label' => $m['from']['label']])) ?>" data-to="<?= h(json_encode(['lat' => (float) $m['to']['lat'], 'lon' => (float) $m['to']['lon'], 'label' => $m['to']['label']])) ?>" data-frac="<?= h((string) $m['frac']) ?>" role="img" aria-label="Flight from <?= h($m['from']['label']) ?> to <?= h($m['to']['label']) ?>, <?= (int) round($m['frac'] * 100) ?> percent of the way"<?php else: ?>role="img" aria-label="Sea freight is tracked by vessel"<?php endif; ?>>
+<div class="tk-map jm-map" <?php if ($m): ?>data-journey-map data-from="<?= h(json_encode(['lat' => (float) $m['from']['lat'], 'lon' => (float) $m['from']['lon'], 'label' => $m['from']['label']])) ?>" data-to="<?= h(json_encode(['lat' => (float) $m['to']['lat'], 'lon' => (float) $m['to']['lon'], 'label' => $m['to']['label']])) ?>" data-frac="<?= h((string) $m['frac']) ?>" role="figure" aria-label="Map: flight from <?= h($m['from']['label']) ?> to <?= h($m['to']['label']) ?>, <?= (int) round($m['frac'] * 100) ?> percent of the way"<?php else: ?>role="img" aria-label="Sea freight is tracked by vessel"<?php endif; ?>>
   <?php if (!$m): ?>
     <div class="jm-empty"><i class="ic i-ship" aria-hidden="true"></i><span>Sea freight is tracked by vessel. There is no air route map for this shipment.</span></div>
   <?php else: ?>

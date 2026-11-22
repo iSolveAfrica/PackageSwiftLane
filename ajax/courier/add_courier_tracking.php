@@ -166,9 +166,7 @@ if (empty($errors)) {
         );
 
         cdp_insertCourierShipmentTrack($dataTrack);
-        if (function_exists('cdp_activityLogStatus')) {
-            cdp_activityLogStatus('shipments', 'shipment', (int) $shipment_id, (string) $order_track, $status, cdp_activityStatusName($status), (string) ($cdp_prev_status ?? ''));
-        }
+        // The status change is logged once, after the notifications (cdp_activityLogStatus below).
 
         // Automations (helpers/automations.php): "when shipment status changes".
         @include_once __DIR__ . '/../../helpers/automations.php';
@@ -277,13 +275,47 @@ if (empty($errors)) {
         // delivered are SMS automations (helpers/hubtel_sms.php).
         $cdp_sms_event = cdp_statusSmsEvent($status, $add_status);
         $cdp_code_line = cdp_pickupCodeReadyLine('air', [$shipment_id], $status, $add_status);
-        if ($cdp_code_line !== '') {
-            $newbody .= cdp_pickupCodeReadyLine('air', [$shipment_id], $status, $add_status, true);
+        $nsCodeHtml = $cdp_code_line !== '' ? cdp_pickupCodeReadyLine('air', [$shipment_id], $status, $add_status, true) : '';
+        $newbody .= $nsCodeHtml;
+
+        // Notification Studio (helpers/notify_studio.php): each status can have its own
+        // e-mail, SMS, WhatsApp and in-app message, or a channel switched off. With
+        // nothing saved for this status, the built-in messages below go out unchanged.
+        require_once __DIR__ . '/../../helpers/notify_studio.php';
+        $nsKey = 'status:' . (int) $status;
+        $nsVars = cdp_notifyBaseVars($sender_data, $fullshipment, $app_url) + cdp_notifyPackageVars((int) $shipment_id, 'air') + [
+            'status' => (string) $add_status,
+            'location' => trim(cdp_sanitize($_POST['country'] ?? '') . ' | ' . cdp_sanitize($_POST['address'] ?? ''), ' |'),
+            'comment' => (string) cdp_sanitize($_POST['comments'] ?? ''),
+            'pickup_code' => (string) $cdp_code_line,
+            'pickup_code_html' => (string) $nsCodeHtml,
+        ];
+        $nsEmail = cdp_notifyResolve($nsKey, 'email', $nsVars);
+        if ($nsEmail['custom']) {
+            $subject = $nsEmail['subject'] !== '' ? $nsEmail['subject'] : $subject;
+            $newbody = $nsEmail['body'];
+        }
+        $nsIn = cdp_notifyResolve($nsKey, 'inapp', $nsVars);
+        if (!$nsIn['on'] || $nsIn['custom']) {
+            $dbNs = new Conexion;
+            if (!$nsIn['on']) {
+                // In-app switched off for this status: the customer does not get it (staff still do).
+                $dbNs->cdp_query('DELETE FROM cdb_notifications_users WHERE notification_id = :n AND user_id = :u');
+                $dbNs->bind(':n', (int) $notification_id);
+                $dbNs->bind(':u', (int) $shipment->sender_id);
+            } else {
+                $dbNs->cdp_query('UPDATE cdb_notifications SET notification_description = :d WHERE notification_id = :n');
+                $dbNs->bind(':d', mb_substr($nsIn['body'], 0, 350));
+                $dbNs->bind(':n', (int) $notification_id);
+            }
+            $dbNs->cdp_execute();
         }
 
         //SENDMAIL PHP
 
-        if ($check_mail == 'PHP') {
+        if (!$nsEmail['on']) {
+            // E-mail switched off for this status in the Notification Studio.
+        } elseif ($check_mail == 'PHP') {
 
             $message = $newbody;
             $to = $sender_data->email;
@@ -362,7 +394,13 @@ if (empty($errors)) {
                         $app_url . "\n\n" .
                         "Thank you, *{$msnames}* Team";
 
-                    sendNotificationWhatsApp_v2($sender_data, $whatsapp_body_sender, null, ['allow_sms' => false]);
+                    $nsWa = cdp_notifyResolve($nsKey, 'whatsapp', $nsVars);
+                    if ($nsWa['custom']) {
+                        $whatsapp_body_sender = $nsWa['body'];
+                    }
+                    if ($nsWa['on']) {
+                        sendNotificationWhatsApp_v2($sender_data, $whatsapp_body_sender, null, ['allow_sms' => false]);
+                    }
                 } catch (Exception $e) {
                     error_log('Error sending WhatsApp to sender for ' . $fullshipment . ': ' . $e->getMessage());
                 }
@@ -382,6 +420,13 @@ if (empty($errors)) {
             $newbodyS_sender = generateSMSBody($sender_data, $fullshipment, $add_status, $app_url, $templatessender);
             if ($cdp_code_line !== '') {
                 $newbodyS_sender .= "\n" . $cdp_code_line;
+            }
+            $nsSms = cdp_notifyResolve($nsKey, 'sms', $nsVars);
+            if ($nsSms['custom']) {
+                $newbodyS_sender = $nsSms['body'];
+            }
+            if (!$nsSms['on']) {
+                $notify_sms_sender = false;
             }
             // Llamar a la función para enviar la notificación SMS al remitente
             sendNotificationSMS($sender_data, $newbodyS_sender, $notify_sms_sender);

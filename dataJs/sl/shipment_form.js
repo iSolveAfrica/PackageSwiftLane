@@ -70,9 +70,14 @@
   // ---- items ----
   var tb = $('[data-sf-items]');
   var tpl = tb.querySelector('[data-sf-item]').cloneNode(true);
+  // Fields the form no longer shows (dimensions, fixed value, financial-sheet group marks)
+  // ride along unchanged on rows loaded from the shipment, so an edit never wipes them.
+  var KEEP = ['length', 'width', 'height', 'fixed_value', 'weight_group', 'priced_at'];
   function row(it) {
     var r = tpl.cloneNode(true);
     r.querySelectorAll('input').forEach(function (i) { var k = i.getAttribute('data-k'); var v = it && it[k] !== undefined && it[k] !== null && it[k] !== 0 ? it[k] : (k === 'qty' ? 1 : ''); i.value = v; });
+    if (it) { var keep = {}; KEEP.forEach(function (k) { if (it[k] !== undefined && it[k] !== null && it[k] !== '') keep[k] = it[k]; }); r.setAttribute('data-keep', JSON.stringify(keep)); }
+    else r.removeAttribute('data-keep');
     return r;
   }
   if (ITEMS.length) { tb.innerHTML = ''; ITEMS.forEach(function (it) { tb.appendChild(row(it)); }); }
@@ -81,8 +86,11 @@
   function items() {
     return Array.prototype.map.call(tb.querySelectorAll('[data-sf-item]'), function (tr) {
       var v = function (k) { var i = tr.querySelector('[data-k="' + k + '"]'); return i ? i.value : ''; };
-      var cp = num(v('custom_price'));
-      return { qty: Math.max(1, num(v('qty')) || 1), description: v('description').trim(), weight: cp > 0 ? 0 : num(v('weight')), length: 0, width: 0, height: 0, custom_price: cp, use_custom_price: cp > 0 ? 1 : 0, declared_value: num(v('declared_value')), fixed_value: 0 };
+      var cp = num(v('custom_price')), keep = {};
+      try { keep = JSON.parse(tr.getAttribute('data-keep') || '{}') || {}; } catch (e) { keep = {}; }
+      var out = { qty: Math.max(1, num(v('qty')) || 1), description: v('description').trim(), weight: cp > 0 ? 0 : num(v('weight')), length: 0, width: 0, height: 0, custom_price: cp, use_custom_price: cp > 0 ? 1 : 0, declared_value: num(v('declared_value')), fixed_value: 0 };
+      KEEP.forEach(function (k) { if (keep[k] !== undefined) out[k] = keep[k]; });
+      return out;
     }).filter(function (p) { return p.description !== '' || p.weight > 0 || p.custom_price > 0; });
   }
 

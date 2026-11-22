@@ -24,3 +24,13 @@
 .as-a:hover{background:var(--hover);border-color:var(--line-2)}
 .as-a.pri{background:var(--ink);color:var(--inverse);border-color:var(--ink)}
 .as-a.danger{color:var(--red-ink)}
+.as-bulk{padding:10px 16px;background:var(--active)}
+.as-bulk[hidden],.as-mrow[hidden]{display:none}
+/* Fit the table on a laptop screen: tighter cells, long sender names wrap, pills keep their own width */
+.as-table-wrap .sl-table th,.as-table-wrap .sl-table td{padding-left:10px;padding-right:10px}
+.as-table-wrap .as-snd{white-space:normal;min-width:140px;max-width:190px}
+.as-table-wrap .col>.sl-pill{align-self:flex-start}
+.as-table-wrap .as-trk .id{font-size:14.5px}
+.as-table-wrap .as-st{white-space:normal;min-width:120px;max-width:170px}
+.as-table-wrap .as-st .sl-pill{white-space:normal;height:auto;min-height:24px;padding-top:2px;padding-bottom:2px;line-height:1.25}
+@media (min-width:721px){.as-table-wrap .sl-table td.as-dots{width:56px;padding-left:8px;padding-right:8px}}

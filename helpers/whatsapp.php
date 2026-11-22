@@ -344,13 +344,28 @@ if (!function_exists('cdp_sendShipmentRegisteredWhatsApp')) {
 
         $track_url = rtrim((string) ($settings->site_url ?? ''), '/') . '/track.php?order_track=' . rawurlencode($tracking);
 
-        $body = cdp_renderWhatsAppTemplate(4, [
+        $waService  = cdp_wa_lookupName('cdb_shipping_mode', 'ship_mode', $service_id);
+        $waCourier  = cdp_wa_lookupName('cdb_courier_com', 'name_com', $ids['courier'] ?? 0);
+        $waDelivery = cdp_wa_lookupName('cdb_delivery_time', 'delitime', $ids['delitime'] ?? 0);
+        $waOffice   = cdp_wa_lookupName('cdb_offices', 'name_off', $ids['office'] ?? 0);
+
+        // Notification Studio: a saved "Shipment registered" message replaces the built-in
+        // template, and a switched-off channel is not sent (helpers/notify_studio.php).
+        require_once __DIR__ . '/notify_studio.php';
+        $ns = cdp_notifyResolve('action:shipment.registered', 'whatsapp', cdp_notifyBaseVars($sender, $tracking, $track_url) + [
+            'service' => $waService, 'courier' => $waCourier, 'delivery_time' => $waDelivery, 'origin_office' => $waOffice,
+            'details' => $extraLines ? implode("\n", $extraLines) : '',
+        ]);
+        if (!$ns['on']) {
+            return ['success' => false, 'skipped' => true, 'message' => 'WhatsApp is switched off for "Shipment registered" in the Notification Studio.'];
+        }
+        $body = $ns['custom'] ? $ns['body'] : cdp_renderWhatsAppTemplate(4, [
             '[CUSTOMER_FULLNAME]' => cdp_nameWithLocker($sender),
             '[TRACKING_NUMBER]'   => $tracking,
-            '[SERVICE_TYPE]'      => cdp_wa_lookupName('cdb_shipping_mode', 'ship_mode', $service_id),
-            '[COURIER_NAME]'      => cdp_wa_lookupName('cdb_courier_com', 'name_com', $ids['courier'] ?? 0),
-            '[DELIVERY_TIME]'     => cdp_wa_lookupName('cdb_delivery_time', 'delitime', $ids['delitime'] ?? 0),
-            '[ORIGIN_OFFICE]'     => cdp_wa_lookupName('cdb_offices', 'name_off', $ids['office'] ?? 0),
+            '[SERVICE_TYPE]'      => $waService,
+            '[COURIER_NAME]'      => $waCourier,
+            '[DELIVERY_TIME]'     => $waDelivery,
+            '[ORIGIN_OFFICE]'     => $waOffice,
             '[EXTRA_DETAILS]'     => $extraLines ? implode("\n", $extraLines) . "\n" : '',
             '[TRACK_URL]'         => $track_url,
             '[COMPANY_SITE_URL]'  => !empty($settings->site_url) ? $settings->site_url : '',
@@ -480,19 +495,38 @@ if (!function_exists('cdp_sendStatusUpdateWhatsApp')) {
         }
         $statusId = (int) ($opts['status_id'] ?? 0);
 
-        $body = cdp_renderWhatsAppTemplate(11, [
-            '[CUSTOMER_FULLNAME]' => cdp_nameWithLocker($sender),
-            '[TRACKING_NUMBER]'   => $tracking,
-            '[CURR_STATUS]'       => (string) $statusLabel,
-            '[APP_URL]'           => $appUrl,
-            '[COMPANY_NAME]'      => !empty($settings->site_name) ? $settings->site_name : 'Our Company',
-        ]);
-        if ($body === null) {
-            return ['success' => false, 'skipped' => true, 'message' => 'WhatsApp template 11 not found.'];
-        }
+        $line = '';
         if (!empty($opts['order_id'])) {
             require_once __DIR__ . '/pickup_code.php';
             $line = cdp_pickupCodeReadyLine((string) ($opts['module'] ?? 'air'), [(int) $opts['order_id']], $statusId, $statusLabel);
+        }
+        // Notification Studio: a message saved for this status replaces the built-in one,
+        // and a switched-off channel is not sent (helpers/notify_studio.php).
+        $ns = ['on' => true, 'custom' => false, 'body' => ''];
+        if ($statusId > 0) {
+            require_once __DIR__ . '/notify_studio.php';
+            $nsModule = (string) ($opts['module'] ?? 'air');
+            $nsVars = cdp_notifyBaseVars($sender, $tracking, $appUrl)
+                + (!empty($opts['order_id']) ? cdp_notifyPackageVars((int) $opts['order_id'], $nsModule) : [])
+                + ['status' => (string) $statusLabel, 'pickup_code' => (string) $line, 'pickup_code_html' => ''];
+            $ns = cdp_notifyResolve('status:' . $statusId, 'whatsapp', $nsVars);
+            if (!$ns['on']) {
+                return ['success' => false, 'skipped' => true, 'message' => 'WhatsApp is switched off for this status in the Notification Studio.'];
+            }
+        }
+        if ($ns['custom']) {
+            $body = $ns['body'];
+        } else {
+            $body = cdp_renderWhatsAppTemplate(11, [
+                '[CUSTOMER_FULLNAME]' => cdp_nameWithLocker($sender),
+                '[TRACKING_NUMBER]'   => $tracking,
+                '[CURR_STATUS]'       => (string) $statusLabel,
+                '[APP_URL]'           => $appUrl,
+                '[COMPANY_NAME]'      => !empty($settings->site_name) ? $settings->site_name : 'Our Company',
+            ]);
+            if ($body === null) {
+                return ['success' => false, 'skipped' => true, 'message' => 'WhatsApp template 11 not found.'];
+            }
             if ($line !== '') {
                 $body .= "\n\n" . $line;
             }

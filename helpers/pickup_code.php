@@ -349,7 +349,12 @@ if (!function_exists('cdp_pickupCodeEnsureTables')) {
                     }
                     // Sent with the ready message, whether the code is new or assigned at creation.
                     cdp_pickupCodeMarkSent((int) $r['code_id']);
-                    cdp_pickupCodeLog($module, $ids, 'pickup_code.sent', 'Pickup code sent automatically: package ready for pickup (' . $context . ')');
+                    // A status update builds its message twice (text and HTML): log the send once.
+                    static $loggedSent = [];
+                    if (!isset($loggedSent[(int) $r['code_id']])) {
+                        $loggedSent[(int) $r['code_id']] = true;
+                        cdp_pickupCodeLog($module, $ids, 'pickup_code.sent', 'Pickup code sent automatically: package ready for pickup (' . $context . ')');
+                    }
                 }
             }
         } catch (Throwable $e) {

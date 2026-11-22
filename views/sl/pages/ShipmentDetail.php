@@ -50,15 +50,16 @@ if (!empty($d['missing'])): ?>
               <?php if ($d['canVerify']): ?><a class="sl-btn ghost sm" href="courier_list.php?verify=<?= (int) $d['id'] ?>"><i class="ic ic-sm i-dollar" aria-hidden="true"></i>Verify payment</a><?php endif; ?>
               <?php if ($d['canPay']): ?><a class="sl-btn block" href="add_payment_gateways_courier.php?id_order=<?= (int) $d['id'] ?>">Pay now</a><?php endif; ?>
             </section>
-            <?php if (!sl_userIs('client')): ?>
-            <section class="sl-card col g12 pk-card" id="pickup-code" aria-label="Pickup code">
-              <div class="row between"><h2 class="sl-ct">Pickup code</h2><span class="sl-pill <?= !empty($d['pickup']['assigned']) ? (!empty($d['pickup']['sent']) ? 'paid' : 'pending') : 'plain' ?>"><?= !empty($d['pickup']['assigned']) ? (!empty($d['pickup']['sent']) ? 'Sent' : 'Assigned') : 'Not assigned' ?></span></div>
-              <?php if (!empty($d['pickup']['assigned'])): ?>
-                <div class="pk-code mono" aria-label="Pickup code"><?= h($d['pickup']['code']) ?></div>
+            <?php if (!$d['client']): $pk = $d['pickup']; $pkState = empty($pk['assigned']) ? ['Not assigned', 'plain'] : (!empty($pk['verified']) ? ['Verified', 'delivered'] : (!empty($pk['sent']) ? ['Sent', 'paid'] : ['Assigned', 'pending'])); ?>
+            <section class="sl-card col g12 pk-card" id="pickup-code" aria-labelledby="pk-title">
+              <div class="row between"><h2 class="sl-ct" id="pk-title">Pickup code</h2><span class="sl-pill <?= h($pkState[1]) ?>"><?= h($pkState[0]) ?></span></div>
+              <?php if (!empty($pk['assigned'])): ?>
+                <div class="pk-code mono"><span class="sd-vh">Code </span><?= h($pk['code']) ?></div>
                 <div class="sl-kv">
                   <div><span>Assigned</span><span><?= h($d['pickup']['created']) ?></span></div>
                   <div><span>Sent</span><span><?= $d['pickup']['sent'] !== '' ? h($d['pickup']['sent']) : 'Not yet. It is sent automatically when the package is ready for pickup.' ?></span></div>
                   <?php if ($d['pickup']['channels'] !== ''): ?><div><span>Channels</span><span><?= h($d['pickup']['channels']) ?></span></div><?php endif; ?>
+                  <?php if (!empty($pk['verified'])): ?><div><span>Verified</span><span><?= h($pk['verified']) ?></span></div><?php endif; ?>
                 </div>
               <?php else: ?>
                 <p class="mut sm">No code yet. A code is assigned when the package is created and sent when it is ready for pickup.</p>
@@ -71,7 +72,7 @@ if (!empty($d['missing'])): ?>
                 <?php foreach ($d['events'] as $e): ?><div class="<?= h($e['cls']) ?>"><span class="dot"></span><div><div class="fw5 row g8"><i class="ic ic-sm <?= h($e['ic']) ?>" aria-hidden="true"></i><?= h($e['t']) ?></div><div class="mut sm"><?= h($e['s']) ?></div></div></div><?php endforeach; ?>
                 <?php if (!$d['events']): ?><div class="mut sm">No tracking events yet.</div><?php endif; ?>
               </div>
-              <?php if (!empty($d['pickupCode']['live']) || !empty($d['pickupCode']['verified'])): ?><div class="row between sm" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><span class="mut">Pickup code</span><b><?= !empty($d['pickupCode']['verified']) ? 'Verified at hand-over' : 'Sent to the customer' ?></b></div><?php endif; ?>
+              <?php if ($d['client'] && (!empty($d['pickupCode']['live']) || !empty($d['pickupCode']['verified']))): ?><div class="row between sm" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><span class="mut">Pickup code</span><b><?= !empty($d['pickupCode']['verified']) ? 'Verified at hand-over' : 'Sent to the customer' ?></b></div><?php endif; ?>
             </section>
             <section class="sl-card col g12"><div class="row between"><h2 class="sl-ct">Assigned driver</h2><?php if ($d['canAssign']): ?><button type="button" class="sl-btn ghost sm" data-sl-open="sd-driver"><?= $d['driver'] ? 'Change' : 'Assign' ?></button><?php endif; ?></div>
               <?php if ($d['driver']): ?><div class="row g12"><span class="sl-av dark"><?= h($d['driver']['ini']) ?></span><div class="grow"><div class="fw5"><?= h($d['driver']['name']) ?></div><div class="mut sm"><?= h($d['driver']['veh']) ?></div></div><?php if ($d['driver']['phone']): ?><a class="sl-ib sm" aria-label="Call driver" href="tel:<?= h($d['driver']['phone']) ?>"><i class="ic i-phone" aria-hidden="true"></i></a><?php endif; ?></div><?php else: ?><div class="mut sm">No rider assigned yet.</div><?php endif; ?>
@@ -79,17 +80,17 @@ if (!empty($d['missing'])): ?>
           </aside>
         </div>
 
-        <?php if (!sl_userIs('client')): ?>
-        <section class="sl-card col g12 act-card" id="activity" aria-label="Activity on this package">
+        <?php if (!$d['client']): ?>
+        <section class="sl-card col g12 act-card" id="activity" aria-labelledby="act-title">
           <div class="row between wrap g12 act-head">
-            <div class="col g4"><h2 class="sl-ct">Activity on this package</h2><span class="mut sm">Every edit, status update, view, print, pickup code and customer action, newest first.</span></div>
-            <div class="sl-seg boxed act-filter" role="group" aria-label="Show activity">
+            <div class="col g4"><h2 class="sl-ct" id="act-title">Activity on this package</h2><span class="mut sm">Every edit, status update, view, print, pickup code and customer action, newest first.</span></div>
+            <div class="sl-seg boxed act-filter" role="group" aria-label="Show activity" aria-controls="act-list">
               <?php foreach (['all' => 'All', 'Shipment' => 'Shipment', 'Package' => 'Package', 'Customer' => 'Customer', 'Pickup code' => 'Pickup code'] as $k => $lbl): ?>
               <button type="button" class="<?= $k === 'all' ? 'on' : '' ?>" data-act-f="<?= h($k) ?>" aria-pressed="<?= $k === 'all' ? 'true' : 'false' ?>"><?= h($lbl) ?> <span class="mono act-n"><?= (int) ($d['activity']['counts'][$k] ?? 0) ?></span></button>
               <?php endforeach; ?>
             </div>
           </div>
-          <div class="act-list" role="list">
+          <div class="act-list" id="act-list" role="list">
             <?php foreach ($d['activity']['rows'] as $a): ?>
             <div class="act-row" role="listitem" data-act-kind="<?= h($a['kind']) ?>">
               <span class="act-time mono"><?= h($a['when']) ?></span>
@@ -99,16 +100,22 @@ if (!empty($d['missing'])): ?>
             </div>
             <?php endforeach; ?>
             <?php if (empty($d['activity']['rows'])): ?><div class="sl-empty">Nothing recorded on this package yet.</div><?php endif; ?>
+            <div class="sl-empty" data-act-none hidden>Nothing of this kind recorded on this package.</div>
           </div>
+          <p class="sd-vh" role="status" data-act-status></p>
         </section>
         <script>
         (function () {
-          var btns = document.querySelectorAll('[data-act-f]');
+          var card = document.getElementById('activity'); if (!card) return;
+          var btns = card.querySelectorAll('[data-act-f]'), rows = card.querySelectorAll('.act-row');
+          var none = card.querySelector('[data-act-none]'), status = card.querySelector('[data-act-status]');
           btns.forEach(function (b) {
             b.addEventListener('click', function () {
-              var f = b.getAttribute('data-act-f');
+              var f = b.getAttribute('data-act-f'), shown = 0;
               btns.forEach(function (x) { var on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on ? 'true' : 'false'); });
-              document.querySelectorAll('.act-row').forEach(function (r) { r.hidden = f !== 'all' && r.getAttribute('data-act-kind') !== f; });
+              rows.forEach(function (r) { var hide = f !== 'all' && r.getAttribute('data-act-kind') !== f; r.hidden = hide; if (!hide) shown++; });
+              if (none) none.hidden = shown > 0 || rows.length === 0;
+              if (status) status.textContent = shown + ' ' + (shown === 1 ? 'entry' : 'entries') + ' shown';
             });
           });
         })();

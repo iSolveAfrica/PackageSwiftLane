@@ -9,7 +9,7 @@
  *   → Accra Sorting Office → Billed → Ready For Pickup
  *
  * Air shipments do NOT use this pipeline: the tracking pages route them to
- * cdp_airJourney() (helpers/air_journey.php), the 16-stage JFK → London →
+ * cdp_airJourney() (helpers/air_journey.php), the 11-stage direct JFK →
  * Accra flow. This helper is the sea (and fallback) pipeline.
  *
  * Consolidation is deliberately NOT a step: it is an internal warehouse

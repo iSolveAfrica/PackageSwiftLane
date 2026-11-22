@@ -1,0 +1,17 @@
+/* Pre-Alerts (views/sl/pages/PreAlerts.php): statistics row and the full-width list. Cards use overview-hero.css. */
+.pa-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.pa-small { font-size: 16px; font-weight: 400; color: var(--muted); letter-spacing: 0; }
+.pa-stats .ovh-foot span + span { text-align: right; }
+.pa-axis { display: flex; gap: 5px; margin-top: -4px; }
+.pa-axis span { flex: 1; text-align: center; font-size: 12px; color: var(--muted); }
+.pa-act { text-align: right; white-space: nowrap; }
+.pa-meter { height: 8px; border-radius: 999px; background: color-mix(in srgb, var(--tone, var(--green)) 14%, var(--hover)); overflow: hidden; }
+.pa-meter i { display: block; height: 100%; border-radius: inherit; background: var(--tone, var(--green)); }
+.pa-meter.sm { height: 6px; margin-top: 4px; }
+.pa-shops { display: flex; flex-direction: column; gap: 10px; margin-top: auto; }
+.pa-table td { vertical-align: middle; }
+.pa-two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+#pa-new .sl-modal { gap: 12px; }
+.pa-what { display: block; max-width: 240px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
+@media (max-width: 1280px) { .pa-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .pa-stats { grid-template-columns: 1fr; } .pa-what { max-width: 180px; } .pa-two { grid-template-columns: 1fr; } }

@@ -37,14 +37,14 @@
     var from = JSON.parse(el.getAttribute('data-from')), to = JSON.parse(el.getAttribute('data-to'));
     var frac = Math.max(0, Math.min(1, parseFloat(el.getAttribute('data-frac')) || 0));
     el.setAttribute('data-jm-ready', '1');
-    el.setAttribute('role', 'img');
     var map = L.map(el, { zoomControl: true, scrollWheelZoom: false, attributionControl: true });
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 6, attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
     var pts = greatCircle(from, to, 120);
-    var k = Math.max(1, Math.round(frac * (pts.length - 1)));
+    // Point index of the aircraft: 0 at JFK (still at the warehouse), the last point at Accra.
+    var k = Math.round(frac * (pts.length - 1));
     L.polyline(pts, { color: '#1E1D1A', weight: 2, dashArray: '4 8', opacity: 0.45, interactive: false }).addTo(map);
     if (k > 0) L.polyline(pts.slice(0, k + 1), { color: '#E2632A', weight: 4, lineCap: 'round', className: 'jm-flow', interactive: false }).addTo(map);
 

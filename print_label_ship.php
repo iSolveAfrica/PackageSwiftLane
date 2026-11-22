@@ -24,7 +24,8 @@ $type = ($_GET['type'] ?? 'air') === 'sea' ? 'sea' : 'air';
 foreach ($slPreview ? [] : $ids as $printId) {
     cdp_activityLog(['module' => 'shipments', 'verb' => 'print', 'action' => 'label.print',
         'entity_type' => $type === 'sea' ? 'package' : 'shipment', 'entity_id' => (int) $printId,
-        'summary' => 'Printed ' . ($_GET['size'] ?? '') . ' label']);
+        // Logged when the label is opened for printing (the browser does not report the print itself).
+        'summary' => 'Label opened for printing (' . ($size === '12' ? '1 × 2 in' : '4 × 6 in') . ')']);
 }
 $board = $size === '12' ? 'Label1x2' : 'Label4x6';
 if (!empty($_GET['test'])) {

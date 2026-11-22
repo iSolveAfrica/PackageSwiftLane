@@ -21,7 +21,7 @@ $sel = function (string $name, array $rows, string $labelKey, $cur, string $empt
         $lab = is_array($r) ? $r[$labelKey] : ($r->$labelKey ?? '');
         $o .= '<option value="' . $id . '"' . ($id === (int) $cur ? ' selected' : '') . '>' . h(str_replace('_', ' ', (string) $lab)) . '</option>';
     }
-    return '<span class="sl-sel native"><select name="' . h($name) . '" aria-label="' . h($name) . '">' . $o . '</select><i class="ic ic-sm i-down" aria-hidden="true"></i></span>';
+    return '<span class="sl-sel native"><select name="' . h($name) . '">' . $o . '</select><i class="ic ic-sm i-down" aria-hidden="true"></i></span>';
 };
 $lab = fn($rows, $id, $key) => (function () use ($rows, $id, $key) { foreach ($rows as $r) { if ((int) $r->id === (int) $id) return str_replace('_', ' ', (string) $r->$key); } return '—'; })();
 $pa = $d['prealert'];
@@ -79,10 +79,10 @@ $unit = h($d['rates']['weight']);
         </label>
         <div class="sl-field"><span class="sl-lab">Notify</span>
           <div class="ns-notify" role="group" aria-label="Notifications">
-            <label class="nt-ch <?= $d['notify']['whatsapp'] ? 'on' : '' ?>" title="Send a WhatsApp message to the sender"><input type="checkbox" name="notify_whatsapp_sender" value="1" <?= $d['notify']['whatsapp'] && ($d['prefs']['notify_whatsapp_sender'] ?? 1) ? 'checked' : '' ?> hidden data-ns-chip><i class="ic ic-sm i-message" aria-hidden="true"></i>WhatsApp sender</label>
-            <span class="nt-ch on" title="Text message to the sender"><i class="ic ic-sm i-phone" aria-hidden="true"></i>SMS sender</span>
-            <span class="nt-ch on" title="E-mail to the sender"><i class="ic ic-sm i-mail" aria-hidden="true"></i>Email sender</span>
-            <label class="nt-ch <?= !empty($d['prefs']['notify_sms_receiver']) ? 'on' : '' ?>" title="Text message to the recipient"><input type="checkbox" name="notify_sms_receiver" value="1" <?= !empty($d['prefs']['notify_sms_receiver']) ? 'checked' : '' ?> hidden data-ns-chip><i class="ic ic-sm i-user" aria-hidden="true"></i>SMS recipient</label>
+            <label class="nt-ch <?= $d['notify']['whatsapp'] ? 'on' : '' ?>" title="Send a WhatsApp message to the sender"><input type="checkbox" class="ns-vh" name="notify_whatsapp_sender" value="1" <?= $d['notify']['whatsapp'] && ($d['prefs']['notify_whatsapp_sender'] ?? 1) ? 'checked' : '' ?> data-ns-chip><i class="ic ic-sm i-message" aria-hidden="true"></i>WhatsApp sender</label>
+            <span class="nt-ch on fixed" title="Always sent: text message to the sender"><i class="ic ic-sm i-phone" aria-hidden="true"></i>SMS sender</span>
+            <span class="nt-ch on fixed" title="Always sent: e-mail to the sender"><i class="ic ic-sm i-mail" aria-hidden="true"></i>Email sender</span>
+            <label class="nt-ch <?= !empty($d['prefs']['notify_sms_receiver']) ? 'on' : '' ?>" title="Text message to the recipient"><input type="checkbox" class="ns-vh" name="notify_sms_receiver" value="1" <?= !empty($d['prefs']['notify_sms_receiver']) ? 'checked' : '' ?> data-ns-chip><i class="ic ic-sm i-user" aria-hidden="true"></i>SMS recipient</label>
           </div>
         </div>
       </div>
@@ -98,7 +98,7 @@ $unit = h($d['rates']['weight']);
     <div class="a col g16">
 
       <!-- Step 1 -->
-      <section class="sl-card col g16">
+      <section class="sl-card col g16 ns-s1">
         <div class="row between"><h2 class="sl-ct">Sender and recipient</h2><span class="sl-badge">Step 1 of 4</span></div>
         <?php if ($client): ?>
         <div class="col g12 ns-party ns-sender">
@@ -142,7 +142,7 @@ $unit = h($d['rates']['weight']);
       </section>
 
       <!-- Step 2 -->
-      <section class="sl-card col g16">
+      <section class="sl-card col g16 ns-s2">
         <div class="row between"><h2 class="sl-ct">Tracking and items</h2><span class="sl-badge">Step 2 of 4</span></div>
         <input type="hidden" name="order_item_category" value="<?= (int) $df['order_item_category'] ?>">
         <input type="hidden" name="agency" value="<?= (int) $df['agency'] ?>"><input type="hidden" name="origin_off" value="<?= (int) $df['origin_off'] ?>"><input type="hidden" name="order_package" value="<?= (int) $df['order_package'] ?>"><input type="hidden" name="order_payment_method" value="<?= (int) $df['order_payment_method'] ?>"><input type="hidden" name="order_deli_time" value="<?= (int) $df['order_deli_time'] ?>"><input type="hidden" name="order_service_options" value="<?= (int) $df['order_service_options'] ?>"><input type="hidden" name="order_date" value="<?= h($d['today']) ?>"><input type="hidden" name="estimated_eta" value="">
@@ -155,11 +155,11 @@ $unit = h($d['rates']['weight']);
 
         <div class="sl-field">
           <span class="sl-lab" id="ns-track-label">Tracking numbers</span>
-          <div class="ns-chips" data-ns-track-box aria-labelledby="ns-track-label">
-            <span class="ns-chip-list" data-ns-track-chips></span>
-            <input class="ns-chip-input mono" data-ns-track-input placeholder="Scan or type a number, then press Enter" autocomplete="off" aria-label="Add a tracking number">
+          <div class="ns-chips" data-ns-track-box role="group" aria-labelledby="ns-track-label">
+            <span class="ns-chip-list" data-ns-track-chips role="list" aria-live="polite"></span>
+            <input class="ns-chip-input mono" data-ns-track-input placeholder="Scan or type a number, then press Enter" autocomplete="off" enterkeyhint="enter" aria-label="Add a tracking number" aria-describedby="ns-track-hint">
           </div>
-          <span class="sl-hint">Press <b>Enter</b> after each number. A scanner that presses Enter adds it for you.</span>
+          <span class="sl-hint" id="ns-track-hint">Press Enter after each number. A scanner that presses Enter adds it for you. Backspace in the empty box removes the last number.</span>
           <textarea name="tracking_number" data-ns-track-value hidden><?= h($pa['tracking'] ?? '') ?></textarea>
         </div>
 
@@ -187,7 +187,7 @@ $unit = h($d['rates']['weight']);
       </section>
 
       <!-- Step 4 (photos and notes) -->
-      <section class="sl-card col g16">
+      <section class="sl-card col g16 ns-s4">
         <div class="row between"><h2 class="sl-ct">Photos and notes</h2><span class="sl-badge">Step 4 of 4</span></div>
         <div class="ns-drops">
           <label class="sl-drop" style="cursor:pointer"><i class="ic ic-lg i-upload" aria-hidden="true"></i><span class="fw5" style="color: var(--ink)">Drop files or browse</span><span class="sm" data-ns-fname>Invoices, receipts, up to 10 MB each</span><input type="file" name="filesMultiple[]" multiple accept="image/*,application/pdf" hidden data-ns-files></label>

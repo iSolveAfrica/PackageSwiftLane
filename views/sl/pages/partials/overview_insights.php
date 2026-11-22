@@ -21,7 +21,9 @@
     </nav>
   </div>
   <div class="sl-insights__grid">
-    <section class="sl-viz-card sl-viz-card--blue sl-insights__trend" aria-label="Daily registrations">
+    <details class="sl-viz-card sl-viz-card--blue sl-insights__trend sl-insights__comparison">
+      <summary><span class="fw5">Daily registration comparison</span><span class="mut sm">Show daily counts, previous period and mode totals · <?= h($ch['range']) ?></span></summary>
+      <div class="sl-insights__comparison-body">
       <div class="sl-viz-card__head"><div><span class="sl-viz-card__eyebrow">Daily registrations</span><h3><?= sl_num($ch['total']) ?> <small>registered</small></h3></div><span class="sl-viz-card__period"><?= h($ch['range']) ?></span></div>
       <p class="sl-viz-card__sub">
         <?php if ($ch['change'] !== null): ?><span class="sl-viz-card__delta <?= $ch['change'] < 0 ? 'is-down' : '' ?>"><?= $ch['change'] > 0 ? '+' : '' ?><?= h($ch['change']) ?>%</span> versus the previous <?= (int) $ch['days'] ?> days
@@ -38,14 +40,21 @@
       </div>
       <div class="sl-viz-card__legend"><span><i class="sl-viz-card__key sl-viz-card__key--blue"></i>This period</span><span><i class="sl-viz-card__key sl-viz-card__key--amber"></i>Previous period</span></div>
       <div class="sl-insights__totals"><?php foreach ($ch['series'] as $series): ?><span><?= h($series['name']) ?> <strong><?= sl_num($series['total']) ?></strong></span><?php endforeach; ?></div>
-    </section>
+      </div>
+    </details>
 
     <?php if (!empty($ch['status'])): ?>
     <section class="sl-viz-card sl-viz-card--violet" aria-label="Air shipment status mix">
       <div class="sl-viz-card__head"><div><span class="sl-viz-card__eyebrow">Air shipment status</span><h3><?= sl_num($ch['statusTotal']) ?> <small>shipments</small></h3></div><span class="sl-viz-card__period"><?= (int) $ch['days'] ?> days</span></div>
       <p class="sl-viz-card__sub">How shipments registered in this period are progressing</p>
-      <div class="sl-insights__mix"><div class="sl-insights__donut" style="--sl-donut:<?= h($ch['statusTotal'] ? $ch['statusConic'] : 'var(--ch-muted)') ?>" <?= sl_chartAttrs([['name' => 'Shipments', 'values' => array_column($ch['status'], 'count')]], array_column($ch['status'], 'label'), 'Air shipment status mix', null, null, 'donut') ?> role="img" aria-label="Status mix of <?= (int) $ch['statusTotal'] ?> air shipments"><span><?= sl_num($ch['statusTotal']) ?><small>total</small></span></div>
-      <ul class="sl-insights__mix-list"><?php foreach ($ch['status'] as $row): ?><li><i style="--sl-key:<?= h($row['color']) ?>"></i><span><?= h($row['label']) ?></span><strong><?= sl_num($row['count']) ?></strong></li><?php endforeach; ?></ul></div>
+      <div class="sl-air-status" aria-label="Air shipment progress">
+        <?php foreach ($ch['status'] as $row): $pct = $ch['statusTotal'] ? round($row['count'] / $ch['statusTotal'] * 100, 1) : 0; ?>
+        <div class="sl-air-status__row" style="--status-color:<?= h($row['color']) ?>">
+          <span><?= h($row['label']) ?></span><strong><?= sl_num($row['count']) ?></strong><small><?= $pct ?>%</small>
+          <meter min="0" max="<?= max(1, (int) $ch['statusTotal']) ?>" value="<?= (int) $row['count'] ?>" aria-label="<?= h($row['label']) ?>"><?= $pct ?>%</meter>
+        </div>
+        <?php endforeach; ?>
+      </div>
     </section>
 
     <?php $gh = $ch['ghana'] ?? []; if ($gh && $gh['total'] > 0):
@@ -55,14 +64,15 @@
     ?>
     <section class="sl-viz-card sl-viz-card--mint sl-gh" id="<?= $ghId ?>" data-gh aria-label="Where parcels go in Ghana">
       <div class="sl-viz-card__head"><div><span class="sl-viz-card__eyebrow">Top destinations</span><h3>Where parcels go</h3></div><span class="sl-viz-card__period"><?= (int) $ch['days'] ?> days</span></div>
-      <p class="sl-viz-card__sub"><?= sl_num($gh['total']) ?> air shipments across <?= count(array_filter($gh['regions'], fn($r) => $r['n'] > 0)) ?> of 16 regions · hover a region for its towns, click to open it</p>
+      <p class="sl-viz-card__sub"><?= sl_num($gh['total']) ?> air shipments across <?= count(array_filter($gh['regions'], fn($r) => $r['n'] > 0)) ?> of 16 regions · select a region to zoom in and see its locations</p>
       <div class="sl-gh__body">
         <div class="sl-gh__map">
+          <button type="button" class="sl-btn" data-gh-reset>All Ghana</button>
           <svg viewBox="0 0 <?= (float) $gh['w'] ?> <?= (float) $gh['h'] ?>" role="group" aria-label="Map of Ghana with parcels per region">
             <path class="sl-gh__land" d="<?= h($gh['outline']) ?>"/>
             <?php foreach ($gh['regions'] as $r): ?>
             <g class="sl-gh__places<?= $r['key'] === $ghSel ? ' on' : '' ?>" data-gh-places="<?= h($r['key']) ?>" aria-hidden="true">
-              <?php foreach (array_slice($r['places'], 0, 40) as $pl): $pr = 2.2 + 5 * sqrt($pl['n'] / max(1, $r['places'][0]['n'])); ?><circle cx="<?= $pl['xy'][0] ?>" cy="<?= $pl['xy'][1] ?>" r="<?= round($pr, 1) ?>"><title><?= h($pl['name']) ?>: <?= sl_num($pl['n']) ?><?= !empty($pl['approx']) ? ' (approximate position)' : '' ?></title></circle><?php endforeach; ?>
+              <?php foreach ($r['places'] as $pl): $pr = 2.2 + 5 * sqrt($pl['n'] / max(1, $r['places'][0]['n'])); ?><g data-gh-location><text class="sl-gh__place-label" x="<?= $pl['xy'][0] + 4 ?>" y="<?= $pl['xy'][1] - 4 ?>"><?= h($pl['name']) ?></text><circle cx="<?= $pl['xy'][0] ?>" cy="<?= $pl['xy'][1] ?>" r="<?= round($pr, 1) ?>"><title><?= h($pl['name']) ?>: <?= sl_num($pl['n']) ?><?= !empty($pl['approx']) ? ' (approximate position)' : '' ?></title></circle></g><?php endforeach; ?>
             </g>
             <?php endforeach; ?>
             <?php foreach ($gh['regions'] as $r): $rad = $r['n'] ? 7 + 13 * sqrt($r['n'] / $ghPeak) : 4; ?>
@@ -77,15 +87,15 @@
         </div>
         <div class="sl-gh__side">
           <ol class="sl-gh__list">
-            <?php $i = 0; foreach ($gh['regions'] as $r): if (!$r['n']) continue; $i++; ?>
+            <?php $i = 0; foreach ($gh['regions'] as $r): $i++; ?>
             <li><button type="button" class="<?= $r['key'] === $ghSel ? 'on' : '' ?>" data-gh-r="<?= h($r['key']) ?>" aria-pressed="<?= $r['key'] === $ghSel ? 'true' : 'false' ?>"><span class="sl-insights__rank"><?= $i ?></span><span class="col grow"><span class="row between"><span><?= h($r['name']) ?></span><strong><?= sl_num($r['n']) ?> <small><?= (int) $r['pct'] ?>%</small></strong></span><span class="sl-insights__track"><i style="width:<?= max(2, (int) round($r['n'] / $ghPeak * 100)) ?>%"></i></span></span></button></li>
             <?php endforeach; ?>
           </ol>
-          <?php foreach ($gh['regions'] as $r): if (!$r['n']) continue; ?>
+          <?php foreach ($gh['regions'] as $r): ?>
           <div class="sl-gh__detail<?= $r['key'] === $ghSel ? ' on' : '' ?>" data-gh-detail="<?= h($r['key']) ?>" data-gh-name="<?= h($r['name']) ?>" data-gh-n="<?= sl_num($r['n']) ?>" data-gh-top="<?= h(implode(', ', array_map(fn($p) => $p['name'] . ' ' . sl_num($p['n']), array_slice($r['places'], 0, 3)))) ?>">
             <div class="row between"><b><?= h($r['name']) ?> · <?= count($r['places']) ?> location<?= count($r['places']) === 1 ? '' : 's' ?></b><span class="mut sm">Capital <?= h($r['capital']) ?></span></div>
-            <ul><?php foreach (array_slice($r['places'], 0, 12) as $pl): ?><li><span><?= h($pl['name']) ?></span><i style="width:<?= max(3, (int) round($pl['n'] / max(1, $r['places'][0]['n']) * 100)) ?>%"></i><b><?= sl_num($pl['n']) ?></b></li><?php endforeach; ?></ul>
-            <?php if (count($r['places']) > 12): ?><span class="mut sm">+ <?= count($r['places']) - 12 ?> more locations</span><?php endif; ?>
+            <ul><?php foreach ($r['places'] as $pl): ?><li><span><?= h($pl['name']) ?></span><i style="width:<?= max(3, (int) round($pl['n'] / max(1, $r['places'][0]['n']) * 100)) ?>%"></i><b><?= sl_num($pl['n']) ?></b></li><?php endforeach; ?></ul>
+            <?php if (!$r['places']): ?><p class="mut sm">No shipment locations recorded in this region for this period.</p><?php endif; ?>
           </div>
           <?php endforeach; ?>
           <?php if ($gh['unplaced']): ?><details class="sl-gh__unplaced"><summary><?= sl_num($gh['unplaced']) ?> with a city we could not place on the map</summary><p><?= h(implode(' · ', array_map(fn($u) => $u['name'] . ' ' . $u['n'], $gh['unplacedList']))) ?></p></details><?php endif; ?>
@@ -96,7 +106,21 @@
     (function () {
       var root = document.getElementById('<?= $ghId ?>'); if (!root) return;
       var tip = root.querySelector('[data-gh-tip]');
+      var svg = root.querySelector('svg'), fullView = svg.getAttribute('viewBox');
+      root.querySelector('[data-gh-reset]').addEventListener('click', function () { svg.setAttribute('viewBox', fullView); root.classList.remove('is-zoomed'); });
       function pick(k) {
+        tip.hidden = true;
+        var group = root.querySelector('[data-gh-places="' + k + '"]');
+        var marker = root.querySelector('g[data-gh-r="' + k + '"]');
+        var points = group ? Array.from(group.querySelectorAll('circle')).map(function (c) { return [+c.getAttribute('cx'), +c.getAttribute('cy')]; }) : [];
+        if (marker) { var xy = marker.transform.baseVal.consolidate().matrix; points.push([xy.e, xy.f]); }
+        if (points.length) {
+          var xs = points.map(function(p){return p[0];}), ys = points.map(function(p){return p[1];});
+          var w = Math.max(90, Math.max.apply(null,xs)-Math.min.apply(null,xs)+50);
+          var h = Math.max(90, Math.max.apply(null,ys)-Math.min.apply(null,ys)+50);
+          svg.setAttribute('viewBox', [(Math.min.apply(null,xs)+Math.max.apply(null,xs)-w)/2,(Math.min.apply(null,ys)+Math.max.apply(null,ys)-h)/2,w,h].join(' '));
+          root.classList.add('is-zoomed');
+        }
         root.querySelectorAll('[data-gh-r]').forEach(function (e) { var on = e.getAttribute('data-gh-r') === k; e.classList.toggle('on', on); e.setAttribute('aria-pressed', on ? 'true' : 'false'); });
         root.querySelectorAll('[data-gh-places]').forEach(function (e) { e.classList.toggle('on', e.getAttribute('data-gh-places') === k); });
         root.querySelectorAll('[data-gh-detail]').forEach(function (e) { e.classList.toggle('on', e.getAttribute('data-gh-detail') === k); });

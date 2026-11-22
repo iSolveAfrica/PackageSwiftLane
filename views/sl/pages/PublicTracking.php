@@ -43,7 +43,7 @@ $found = (bool) sl_get($d, 'found');
             <div class="pt-kv"><span class="pt-ic"><i class="ic ic-sm i-pin" aria-hidden="true"></i></span><div><div class="up">To</div><div class="fw5"><?= sl_v($d, 'to') ?></div></div></div>
             <div class="pt-kv"><span class="pt-ic"><i class="ic ic-sm i-clock" aria-hidden="true"></i></span><div><div class="up">Estimated delivery</div><div class="fw5"><?= sl_v($d, 'eta') ?></div></div></div>
           </div>
-          <?php $pct = (int) sl_get($d, 'pct', 0); $t = max(0.05, min(0.95, $pct / 100)); $bx = (1 - $t) * (1 - $t) * 110 + 2 * (1 - $t) * $t * 400 + $t * $t * 690; $by = (1 - $t) * (1 - $t) * 90 + 2 * (1 - $t) * $t * -30 + $t * $t * 150; ?>
+          <?php $pct = (int) sl_get($d, 'pct', 0); ?>
           <?php include __DIR__ . '/partials/journey_map.php'; ?>
           <div class="col g8"><div class="sl-ticks lg pt-fill" role="img" aria-label="Parcel is <?= $pct ?> percent of the way"><i style="width: <?= $pct ?>%"></i></div><div class="pt-steps"><?php foreach ((array) sl_get($d, 'steps', []) as $s): ?><div class="<?= h($s['cls']) ?>"><span class="pt-ic lg <?= h($s['w']) ?>"><i class="ic <?= h($s['i']) ?>" aria-hidden="true"></i></span><?= h($s['l']) ?></div><?php endforeach; ?></div></div>
           <hr class="hr">

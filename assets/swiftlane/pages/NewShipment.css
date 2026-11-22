@@ -99,3 +99,18 @@
 /* Label pop-up after saving a shipment */
 .ns-label-modal{width:min(960px,96vw);max-height:94vh;display:flex;flex-direction:column;gap:12px}
 .ns-label-frame{width:100%;height:min(62vh,640px);border:1px solid var(--line);border-radius:12px;background:#fff}
+
+/* Review pass: readable notify chips, keyboard focus, phone step order */
+.ns-vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.ns-quick .nt-ch{width:auto;padding:0 12px;white-space:nowrap}
+.ns-quick .nt-ch.fixed{cursor:default;opacity:.85}
+.ns-notify .nt-ch:focus-within{outline:2px solid var(--ink);outline-offset:2px}
+.ns-chips:focus-within{border-color:var(--ink);box-shadow:0 0 0 3px color-mix(in srgb,var(--ink) 12%,transparent)}
+.ns-tchip-x:focus-visible{outline:2px solid var(--ink);outline-offset:1px}
+/* One column below desktop: keep the steps in order 1, 2, 3 (pricing), 4. */
+@media (max-width:1180px){
+  .ns-form .split>.a{display:contents}
+  .ns-form .split>.a>section,.ns-form .split>.b{flex:1 1 100%}
+  .ns-form .ns-s1{order:1}.ns-form .ns-s2{order:2}.ns-form .split>.b{order:3}.ns-form .ns-s4{order:4}
+  .ns-price{position:static}
+}

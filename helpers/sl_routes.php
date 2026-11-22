@@ -122,6 +122,7 @@ function sl_routes(): array
         // Messaging
         'Notifications'         => 'notifications_list.php',
         'NotificationCenter'    => 'notification_center.php',
+        'NotifyStudio'          => 'notify_studio.php',
         'CustomerNotifications' => 'customer_notifications.php',
         'ComposeMessage'        => 'compose_message.php',
         'Broadcast'             => 'push_notifications.php',
