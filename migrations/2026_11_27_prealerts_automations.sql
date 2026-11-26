@@ -5,6 +5,39 @@
 -- Additive and re-runnable.
 SET NAMES utf8mb4;
 
+-- The automation tables come from 2026_11_06_messaging_settings; create them here too, so this
+-- file works on a database where that upgrade was never run (same definitions, IF NOT EXISTS).
+CREATE TABLE IF NOT EXISTS cdb_automations (
+    id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    name          VARCHAR(150) NOT NULL,
+    trigger_key   VARCHAR(60) NOT NULL,
+    conditions    TEXT NULL,            -- JSON list [{key,op,value}]
+    actions       TEXT NULL,            -- JSON list [{type, ...params}]
+    enabled       TINYINT(1) NOT NULL DEFAULT 1,
+    run_count     INT UNSIGNED NOT NULL DEFAULT 0,
+    last_run_at   DATETIME NULL,
+    created_by    INT NULL,
+    created_at    DATETIME NOT NULL,
+    updated_at    DATETIME NULL,
+    PRIMARY KEY (id),
+    KEY idx_trigger (trigger_key, enabled)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_automation_runs (
+    id             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    automation_id  INT UNSIGNED NOT NULL,
+    trigger_key    VARCHAR(60) NOT NULL,
+    entity_type    VARCHAR(40) NULL,
+    entity_id      VARCHAR(64) NULL,
+    entity_label   VARCHAR(190) NULL,
+    outcome        VARCHAR(12) NOT NULL DEFAULT 'ok',   -- ok | skipped | failed | test
+    detail         VARCHAR(500) NULL,
+    created_at     DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    KEY idx_auto (automation_id, created_at),
+    KEY idx_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_pre_alert' AND COLUMN_NAME = 'package_ref');
 SET @sql := IF(@c = 0, 'ALTER TABLE cdb_pre_alert ADD COLUMN package_ref VARCHAR(60) NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
 SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_pre_alert' AND COLUMN_NAME = 'package_module');
