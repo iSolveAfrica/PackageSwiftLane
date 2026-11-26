@@ -11,4 +11,5 @@ require_once 'views/sl/data/consolidations.php';
 $d = sl_consolidationDetailData($user, $core, (int) ($_GET['id'] ?? 0), $type);
 if (!$d) { header('Location: ' . sl_route('Consolidations', ['mode' => $type])); exit; }
 $board = $type === 'sea' ? 'ConsolidationDetail' : 'ConsolidationAir';
-sl_render($board, ['id' => 'consol', 'title' => $d['code'], 'board' => $board, 'styles' => ['assets/swiftlane/pages/ops.css']], $d);
+// Wide view: the menu starts collapsed so the map and the package list get the room.
+sl_render($board, ['id' => 'consol', 'title' => $d['code'], 'board' => $board, 'navCollapsed' => true, 'styles' => ['assets/swiftlane/pages/ops.css']], $d);

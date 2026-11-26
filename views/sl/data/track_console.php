@@ -200,7 +200,9 @@ function sl_trackConsoleData($user, $core, string $source = 'shipments', int $li
     $money = $client || (function_exists('cdp_canViewMoney') && cdp_canViewMoney($user));
     $q = trim((string) ($opt['q'] ?? ''));
     $f = (string) ($opt['filter'] ?? 'all');
-    if (!isset(sl_tcFilters()[$f])) $f = 'all';
+    // 'loading' (still at the origin warehouse) and 'transit' are used by the Consolidations statistics only
+    if (!isset(sl_tcFilters()[$f]) && !in_array($f, ['loading', 'transit'], true)) $f = 'all';
+    $onlyMode = in_array($opt['mode'] ?? '', ['air', 'sea'], true) ? (string) $opt['mode'] : '';
     $kinds = sl_tcKinds($user, $source);
     $out = ['source' => $source, 'items' => [], 'total' => 0, 'shown' => 0, 'q' => $q, 'filter' => $f,
         'counts' => ['all' => 0, 'air' => 0, 'sea' => 0, 'con' => 0, 'late' => 0], 'tally' => [], 'glows' => sl_tcGlows()];
@@ -219,6 +221,7 @@ function sl_trackConsoleData($user, $core, string $source = 'shipments', int $li
         $tk = $kind === 'consolidation' ? $mode . '_con' : $mode;
         $out['tally'][$tk] = ($out['tally'][$tk] ?? 0) + (int) sl_scalar("SELECT COUNT(*) FROM $tbl a WHERE $openW$del$scope");
         // does this kind take part in the filter?
+        if ($onlyMode !== '' && $mode !== $onlyMode) continue;
         if ($f === 'air' && $mode !== 'air') continue;
         if ($f === 'sea' && $mode !== 'sea') continue;
         if ($f === 'con' && $kind !== 'consolidation') continue;
@@ -226,6 +229,8 @@ function sl_trackConsoleData($user, $core, string $source = 'shipments', int $li
         $statusW = $f === 'done' ? 'a.status_courier IN (8,15)' : ($f === 'ready' ? 'a.status_courier IN (6,32)' : ($q !== '' ? 'a.status_courier <> 21' : $openW));
         // 'late' = not yet arrived (stage < 4) and past ETA, with or without a search term;
         // matches the per-item $late rule and the Overview "running late" brief count
+        if ($f === 'loading') $statusW = 'a.status_courier NOT IN (3,5,7,2,4,6,32,8,15,21,12)';
+        if ($f === 'transit') $statusW = 'a.status_courier IN (3,5,7)';
         if ($f === 'late') $statusW = 'a.status_courier NOT IN (6,32,8,15,21,12)' . ($eta === 'NULL' ? ' AND 1 = 0' : " AND $eta IS NOT NULL AND $eta < CURDATE()");
         $b = [];
         $qW = '';

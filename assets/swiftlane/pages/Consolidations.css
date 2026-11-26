@@ -1,0 +1,36 @@
+/* Consolidations board (views/sl/pages/Consolidations.php): Air and Sea statistics, then the console. */
+.cb-modes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.cb-modes.one { grid-template-columns: 1fr; }
+.cb-mode { --tone: var(--sky); display: flex; flex-direction: column; gap: 14px; padding: 18px 20px; border-radius: var(--r-xl); background: var(--card); border: 1px solid var(--line);
+  background-image: radial-gradient(120% 60% at 100% 0%, color-mix(in srgb, var(--tone) 9%, transparent), transparent 60%); }
+.cb-mode.m-sea { --tone: var(--violet); }
+.cb-mode.on { border-color: color-mix(in srgb, var(--tone) 45%, var(--line)); box-shadow: 0 10px 30px -20px color-mix(in srgb, var(--tone) 70%, transparent); }
+.cb-mh { display: flex; align-items: center; gap: 12px; }
+.cb-mh h2 { font-size: 18px; font-weight: 600; margin: 0; letter-spacing: -.01em; }
+.cb-ic { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; color: var(--tone); background: color-mix(in srgb, var(--tone) 13%, transparent); flex: none; }
+.cb-all { display: inline-flex; align-items: center; gap: 4px; font-size: 14px; color: var(--tone); font-weight: 500; white-space: nowrap; }
+.cb-stages { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+.cb-st { position: relative; display: flex; flex-direction: column; gap: 2px; padding: 12px 14px 13px; color: inherit; border-right: 1px solid var(--line); min-width: 0; transition: background .15s; }
+.cb-st:last-child { border-right: 0; }
+.cb-st:hover { background: color-mix(in srgb, var(--tone) 6%, var(--card)); }
+.cb-st.on { background: color-mix(in srgb, var(--tone) 10%, var(--card)); box-shadow: inset 0 -3px 0 var(--tone); }
+.cb-st b { font-size: 28px; font-weight: 600; line-height: 1.1; margin-top: 4px; }
+.cb-st .fw5 { font-size: 14px; }
+.cb-st small { font-size: 12.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cb-st.bad small { color: var(--red-ink); }
+.cb-step { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 11.5px; font-weight: 600; color: var(--tone); background: color-mix(in srgb, var(--tone) 13%, transparent); }
+.cb-foot { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 16px; align-items: end; }
+.cb-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; margin: 0; }
+.cb-facts dt { font-size: 12px; color: var(--muted); }
+.cb-facts dd { margin: 1px 0 0; font-size: 14.5px; font-weight: 500; }
+.cb-spark { display: flex; flex-direction: column; gap: 6px; --tone: inherit; }
+.cb-spark .ovh-bars { height: 44px; }
+.cb-mode .ovh-bars { --tone: var(--tone); }
+.cb-showing { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 10px 14px; border-radius: 14px; background: var(--card); border: 1px solid var(--line); font-size: 14.5px; }
+@media (max-width: 1280px) { .cb-modes { grid-template-columns: 1fr; } }
+@media (max-width: 700px) {
+  .cb-stages { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cb-st:nth-child(2) { border-right: 0; }
+  .cb-st:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+  .cb-foot { grid-template-columns: 1fr; }
+}

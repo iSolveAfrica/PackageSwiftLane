@@ -1,0 +1,73 @@
+/* White version of the tracking console (.tc.tc--light), used on the Consolidations pages.
+   Overrides the hard-coded dark colours of track-console.css; the dark console elsewhere is unchanged. */
+.tc.tc--light {
+  --tc-bg: #f6f5f2; --tc-card: #ffffff; --tc-card2: #faf9f7; --tc-line: rgba(20,20,20,.08); --tc-line2: rgba(20,20,20,.16);
+  --tc-ink: #161615; --tc-mut: #6b6a65; --tc-dim: #a3a29c; --tc-acc: #e0a100; --tc-blue: #1f6fb0; --tc-blue-bg: #e6f0fa;
+  --tc-ok: #0a7c57; --tc-bad: #c42a32; --tc-warn: #8a5a00;
+  background: linear-gradient(180deg, #ffffff, #f6f5f2); color: var(--tc-ink); border-color: var(--line, #e7e5df);
+  box-shadow: 0 18px 44px -28px rgba(20,20,20,.35); color-scheme: light;
+}
+.tc--light .tc-list, .tc--light .tc-card { background: #fff; }
+.tc--light .tc-card:hover { background: #faf9f6; }
+.tc--light .tc-card.on { background: #fffaf0; border-color: rgba(224,161,0,.45); box-shadow: 0 0 0 1px rgba(224,161,0,.25); }
+.tc--light .tc-count, .tc--light .tc-filters button { background: #f1f0ec; color: #44433f; }
+.tc--light .tc-filters button.on { background: #161615; color: #fff; }
+.tc--light .tc-ib:hover { background: #f1f0ec; }
+.tc--light .tc-search { background: #faf9f7; }
+.tc--light .tc-cards { scrollbar-color: #d6d4cd transparent; }
+.tc--light .tc-c2 .ic { color: #161615; }
+.tc--light .tc-dots { border-top-color: #b7b5ae; }
+.tc--light .tc-line { border-top-color: #d6d4cd; }
+.tc--light .tc-line::after { border-left-color: #d6d4cd; }
+.tc--light .tc-line em { background: #f1f0ec; border-color: #e2e0da; color: #6b6a65; }
+.tc--light .tc-st, .tc--light .tc-badge { background: #f1f0ec; color: #44433f; }
+.tc--light .tc-st.transit, .tc--light .tc-st.onway, .tc--light .tc-badge.transit, .tc--light .tc-badge.onway { background: #e6f0fa; color: #1f6fb0; }
+.tc--light .tc-st.pending, .tc--light .tc-st.sorting, .tc--light .tc-badge.pending, .tc--light .tc-badge.sorting { background: #fbf1d7; color: #8a5a00; }
+.tc--light .tc-st.delivered, .tc--light .tc-st.paid, .tc--light .tc-badge.delivered, .tc--light .tc-badge.paid { background: #e3f6ee; color: #0a7c57; }
+.tc--light .tc-st.overdue, .tc--light .tc-st.late, .tc--light .tc-badge.overdue, .tc--light .tc-badge.late { background: #fce9ea; color: #b3262f; }
+.tc--light .tc-kind.consolidation { color: #8a5a00; border-color: rgba(138,90,0,.3); }
+.tc--light .tc-kind.package { color: #5a3ac4; border-color: rgba(90,58,196,.3); }
+
+/* map: dark dots on a soft paper background */
+.tc--light .tc-map { background: #eef1f4; border-color: #e2e5e9; }
+.tc--light .tc-world { filter: invert(1) brightness(.55) contrast(1.1); opacity: .55; }
+.tc--light .tc-hub .dot { fill: #1f6fb0; opacity: .45; }
+.tc--light .tcg-a { stop-color: #1f6fb0; }
+.tc--light .tcf-a, .tc--light .tcf-b { stop-color: #eef1f4; }
+.tc--light .tc-route { stroke: rgba(22,22,21,.4); }
+.tc--light .tc-done { stroke: #1f6fb0; filter: none; }
+.tc--light .tc-pin .halo { fill: rgba(31,111,176,.14); stroke: rgba(31,111,176,.3); }
+.tc--light .tc-pin .dot { fill: #1f6fb0; filter: none; }
+.tc--light .tc-chip rect { fill: rgba(255,255,255,.95); stroke: rgba(20,20,20,.14); }
+.tc--light .tc-chip .k { fill: #6b6a65; }
+.tc--light .tc-chip .v { fill: #161615; }
+.tc--light .tc-craft { filter: drop-shadow(0 2px 4px rgba(0,0,0,.25)); }
+.tc--light .tc-now { fill: #8a5a00; stroke: #eef1f4; }
+.tc--light .tc-legend { background: rgba(255,255,255,.85); color: #6b6a65; border-color: #e2e5e9; }
+.tc--light .tc-legend .l1 { background: #1f6fb0; }
+.tc--light .tc-legend .l2 { border-top-color: #8a8984; }
+
+/* panel */
+.tc--light .tc-panel { background: rgba(255,255,255,.97); border-color: #e2e0da; box-shadow: 0 -10px 30px -16px rgba(20,20,20,.25); }
+.tc--light .tc-tabs button:hover { color: #161615; }
+.tc--light .tc-tabs button.on { color: #161615; border-bottom-color: #161615; }
+.tc--light .tc-rh span b, .tc--light .tc-muted b { color: #161615; }
+.tc--light .tc-bar { background: #eceae5; }
+.tc--light .tc-bar .done { background: #1f6fb0; }
+.tc--light .tc-bar .rest i { background: #cfcdc6; }
+.tc--light .tc-code2 .pt { background: #b7b5ae; }
+.tc--light .tc-k, .tc--light .tc-docs a, .tc--light .tc-dl > div { background: #faf9f7; }
+.tc--light .tc-docs a:hover { background: #f3f2ee; }
+.tc--light .tc-kh { color: #44433f; }
+.tc--light .tc-tl li::before { background: #cfcdc6; }
+.tc--light .tc-ir.h { background: #f3f2ee; }
+.tc--light .tc-more { background: #f1f0ec; color: #161615; }
+.tc--light .tc-more:hover { background: #e7e5df; }
+.tc--light .tcp { background: #fff; color: #161615; }
+.tc--light .tcp-acts a { background: #f3f2ee; color: #161615; }
+.tc--light .tcp-acts a:hover { background: #e9e7e2; }
+.tc--light .tcp-route, .tc--light .tcp-dl div { background: #faf9f7; }
+.tc--light .tcp-bar { background: #e4e2dc; }
+.tc--light .tcp-dl .ok { color: #0a7c57; } .tc--light .tcp-dl .bad { color: #b3262f; } .tc--light .tcp-dl .warn { color: #8a5a00; }
+/* "open on click" cards (Consolidations): show it is a link */
+.tc [data-tc-nav] .tc-go { display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; color: var(--tc-blue); margin-left: auto; }

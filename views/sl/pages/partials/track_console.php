@@ -17,6 +17,8 @@ $tcTitle = $tcTitle ?? 'Tracking list';
 $tcNoun = $tcNoun ?? 'shipments';
 $tcExpand = $tcExpand ?? '';
 $tcFilters = $tcFilters ?? true;
+$tcLight = !empty($tcLight);       // white version (Consolidations pages)
+$tcNavigate = !empty($tcNavigate); // clicking a card opens its page; hovering previews it on the map
 $tcNounOne = ['shipments' => 'shipment', 'consolidations' => 'consolidation', 'records' => 'record'][$tcNoun] ?? 'record';
 $tcUid = 'tc' . substr(md5($tc['source'] . mt_rand()), 0, 6);
 $items = $tc['items'];
@@ -34,8 +36,9 @@ $chip = function (float $x, float $y, string $k, string $v, string $anchor = 'le
 };
 ?>
 <link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/track-console.css')) ?>">
+<?php if ($tcLight): ?><link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/track-console-light.css')) ?>"><?php endif; ?>
 <script defer src="<?= h(cdp_asset('assets/swiftlane/track-console.js')) ?>"></script>
-<div class="tc-wrap"><section class="tc" id="<?= h($tcUid) ?>" data-tc aria-label="Live tracking">
+<div class="tc-wrap"><section class="tc<?= $tcLight ? ' tc--light' : '' ?>" id="<?= h($tcUid) ?>" data-tc aria-label="Live tracking">
 <svg class="tc-sprite" width="0" height="0" aria-hidden="true" focusable="false"><symbol id="<?= $tcUid ?>-plane" viewBox="0 0 600 190"><defs>
 <linearGradient id="<?= $tcUid ?>-fus" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE58A"/><stop offset=".28" stop-color="#FFCC33"/><stop offset=".7" stop-color="#F2B400"/><stop offset="1" stop-color="#B98600"/></linearGradient>
 <linearGradient id="<?= $tcUid ?>-fin" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFD84D"/><stop offset="1" stop-color="#E8A900"/></linearGradient>
@@ -89,11 +92,12 @@ $chip = function (float $x, float $y, string $k, string $v, string $anchor = 'le
     <?php endif; ?>
     <div class="tc-cards" role="listbox" aria-label="<?= h($tcTitle) ?>">
       <?php foreach ($items as $i => $it): ?>
-      <button type="button" role="option" class="tc-card<?= $i === 0 ? ' on' : '' ?>" aria-selected="<?= $i === 0 ? 'true' : 'false' ?>" data-tc-key="<?= h($it['key']) ?>" data-mode="<?= h($it['mode']) ?>" data-kind="<?= h($it['kind'] ?? '') ?>" data-late="<?= $it['late'] ? '1' : '' ?>" data-text="<?= h(strtolower($it['code'] . ' ' . $it['customer'] . ' ' . $it['carrier'] . ' ' . $it['st'] . ' ' . ($it['search'] ?? ''))) ?>">
-        <span class="tc-c1"><b class="mono"><?= h($it['code']) ?></b><?php if (!empty($it['kind'])): ?><span class="tc-kind <?= h($it['kind']) ?>" title="<?= h($it['modeL'] . ' ' . strtolower($it['kindL'])) ?>"><?= h($it['kind'] === 'consolidation' ? 'Consol' : $it['kindL']) ?></span><?php endif; ?><span class="tc-st <?= $it['late'] ? 'late' : h($it['cls']) ?>"><?= h($it['late'] ? 'Delayed' : $it['st']) ?></span></span>
+      <button type="button" role="option" class="tc-card<?= $i === 0 ? ' on' : '' ?>" aria-selected="<?= $i === 0 ? 'true' : 'false' ?>" data-tc-key="<?= h($it['key']) ?>"<?= $tcNavigate ? ' data-tc-nav="' . h($it['href']) . '"' : '' ?> data-mode="<?= h($it['mode']) ?>" data-kind="<?= h($it['kind'] ?? '') ?>" data-late="<?= $it['late'] ? '1' : '' ?>" data-text="<?= h(strtolower($it['code'] . ' ' . $it['customer'] . ' ' . $it['carrier'] . ' ' . $it['st'] . ' ' . ($it['search'] ?? ''))) ?>">
+        <span class="tc-c1"><b class="mono"><?= h($it['code']) ?></b><?php if (!empty($it['kind']) && $tcNoun !== 'consolidations'): ?><span class="tc-kind <?= h($it['kind']) ?>" title="<?= h($it['modeL'] . ' ' . strtolower($it['kindL'])) ?>"><?= h($it['kind'] === 'consolidation' ? 'Consol' : $it['kindL']) ?></span><?php endif; ?><span class="tc-st <?= $it['late'] ? 'late' : h($it['cls']) ?>"><?= h($it['late'] ? 'Delayed' : $it['st']) ?></span></span>
         <span class="tc-c2"><span><?= h($it['from']['code']) ?></span><i class="tc-dots"></i><i class="ic ic-sm <?= $it['mode'] === 'sea' ? 'i-ship' : 'i-plane' ?>" aria-hidden="true"></i><i class="tc-line"><em><?= h($it['transit']) ?></em></i><span><?= h($it['to']['code']) ?></span></span>
         <span class="tc-c3"><span><?= h($it['from']['city']) ?>, <?= h($it['from']['country']) ?></span><span><?= h($it['to']['city']) ?>, <?= h($it['to']['country']) ?></span></span>
         <span class="tc-c4"><span><i class="tc-sw <?= h($it['mode']) ?>"></i><?= h($it['carrier']) ?> · <?= h($it['customer']) ?></span><span><?= $it['arrived'] ? 'Arrived' : 'ETA' ?> <b><?= h($it['etaShort']) ?></b></span></span>
+        <?php if ($tcNavigate): ?><span class="tc-go">Open <?= h($tcNounOne) ?> <i class="ic ic-sm i-right" aria-hidden="true"></i></span><?php endif; ?>
       </button>
       <?php endforeach; ?>
       <div class="tc-empty" data-tc-empty<?= $items ? ' hidden' : '' ?>><?= !empty($tc['q']) ? 'Nothing matches “' . h($tc['q']) . '”.' : 'No open ' . h($tcNoun) . ' to track.' ?></div>
@@ -104,9 +108,9 @@ $chip = function (float $x, float $y, string $k, string $v, string $anchor = 'le
       <img class="tc-world" src="<?= h(cdp_asset('assets/swiftlane/maps/world-dots.svg')) ?>" alt="" aria-hidden="true" loading="lazy">
       <svg class="tc-over" viewBox="0 0 <?= $vw ?> <?= $vh ?>" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Route map of the selected <?= h($tcNounOne) ?>">
         <defs>
-          <radialGradient id="<?= $tcUid ?>-glow"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".35" stop-color="#fff" stop-opacity=".12"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+          <radialGradient id="<?= $tcUid ?>-glow"><stop class="tcg-a" offset="0" stop-color="#fff" stop-opacity=".55"/><stop class="tcg-a" offset=".35" stop-color="#fff" stop-opacity=".12"/><stop class="tcg-a" offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
           <radialGradient id="<?= $tcUid ?>-sun"><stop offset="0" stop-color="#FFD43B" stop-opacity=".55"/><stop offset="1" stop-color="#FFD43B" stop-opacity="0"/></radialGradient>
-          <linearGradient id="<?= $tcUid ?>-fade" x1="0" x2="0" y1="0" y2="1"><stop offset=".55" stop-color="#151515" stop-opacity="0"/><stop offset="1" stop-color="#151515" stop-opacity=".9"/></linearGradient>
+          <linearGradient id="<?= $tcUid ?>-fade" x1="0" x2="0" y1="0" y2="1"><stop class="tcf-a" offset=".55" stop-color="#151515" stop-opacity="0"/><stop class="tcf-b" offset="1" stop-color="#151515" stop-opacity=".9"/></linearGradient>
         </defs>
         <?php foreach ($tc['glows'] as $gp): ?><g class="tc-hub" transform="translate(<?= $gp[0] ?> <?= $gp[1] ?>)"><circle r="16" fill="url(#<?= $tcUid ?>-glow)"/><circle r="4.2" class="dot"/></g><?php endforeach; ?>
         <?php foreach ($items as $i => $it): $g = $it['geo']; $v = $g['veh']; $n = count($g['pts']); ?>

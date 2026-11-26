@@ -3,7 +3,8 @@
 ?>
 <a class="sl-skip" href="#sl-main">Skip to main content</a>
 <div class="<?= h($slTheme) ?>" id="sl-app" data-page="<?= h($slPage['id'] ?? '') ?>">
-  <input type="checkbox" id="navtg" class="nav-tg" aria-hidden="true" tabindex="-1">
+  <input type="checkbox" id="navtg" class="nav-tg" aria-hidden="true" tabindex="-1"<?= !empty($slPage['navCollapsed']) ? ' checked' : '' ?>>
+  <?php if (!empty($slPage['navCollapsed'])): ?><script>/* wide page: menu starts collapsed on desktop; on phones the same box opens the drawer, so keep it shut */ if (matchMedia('(max-width: 900px)').matches) document.getElementById('navtg').checked = false;</script><?php endif; ?>
   <header class="sl-top">
     <button class="sl-ib nav-open" type="button" data-sl-nav aria-controls="sl-navigation" aria-expanded="true" aria-label="Close the menu"><i class="ic i-sidebar" aria-hidden="true"></i></button>
     <a class="sl-switch" href="<?= h($slHome) ?>"><?= sl_brandLogo('color', 30, 'sl-top-logo on-light') ?><?= sl_brandLogo('white', 30, 'sl-top-logo on-dark') ?><span class="sl-top-hub"><?= h($slHub) ?></span><i class="ic ic-sm i-down" aria-hidden="true"></i></a>

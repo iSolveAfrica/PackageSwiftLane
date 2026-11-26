@@ -191,7 +191,9 @@ function sl_consolidationDetailData($user, $core, int $id, string $type): ?array
         $row = ['n' => $n, 'did' => (int) $r->detail_id, 'oid' => (int) $r->order_id, 'ini' => sl_initials(sl_userName($u)), 'name' => sl_userName($u), 'lock' => $u->locker ?? '', 'id' => $r->order_prefix . $r->order_no,
             'href' => $M['sea'] ? sl_route('PackageDetail', ['id' => (int) $r->order_id]) : sl_route('ShipmentDetail', ['id' => (int) $r->order_id]),
             'post' => $r->postal ?: '—', 'what' => $r->what ?: '—', 'pcs' => (int) $r->pcs, 'w' => sl_weight($r->weight), 'v' => number_format((float) $r->weight_vol, 1), 'pay' => $pl, 'pc' => $pc,
-            'cls' => cdp_isHandedOver($r->status_courier) ? 'mut' : '', 'canDel' => $canEdit && !cdp_isHandedOver($r->status_courier)];
+            'cls' => cdp_isHandedOver($r->status_courier) ? 'mut' : '', 'canDel' => $canEdit && !cdp_isHandedOver($r->status_courier),
+            'stL' => sl_statusLabel($r->status_courier), 'stC' => sl_statusClass($r->status_courier), 'phone' => (string) ($u->phone ?? ''),
+            'amt' => sl_money($r->total_order), 'vn' => (float) $r->weight_vol];
         if ($lq === '' || stripos(implode(' ', [$row['name'], $row['lock'], $row['id'], $row['post'], $row['what']]), $lq) !== false) $list[] = $row;
     }
     $pct = sl_pct($c->total_weight ?: $w, $M['cap']);
@@ -245,6 +247,32 @@ function sl_consolidationDetailData($user, $core, int $id, string $type): ?array
         if ($x) $d['other'] = ['id' => (int) $x->consolidate_id, 'code' => $x->c_prefix . $x->c_no, 'type' => $om['mode']];
     }
     $d['canNew'] = $user->cdp_hasPermission($M['p']['add']);
+
+    // ── map and package pop-ups (views/sl/pages/ConsolidationDetail.php) ──
+    require_once __DIR__ . '/track_console.php';
+    $lane = sl_tcLanes()[$M['mode']];
+    $departed = null;
+    foreach (array_reverse($track) as $ev) { if (sl_stageOf($ev->status_courier) >= 3) { $departed = $ev->t_date; break; } }
+    $p = sl_tcProgress($s, $departed ?: $c->c_date, $c->estimated_eta ?? null);
+    $g = sl_tcGeometry($lane, $p);
+    $d['map'] = ['geo' => $g, 'lane' => $lane, 'pct' => (int) round($p * 100), 'glows' => sl_tcGlows(), 'arrived' => $stage >= 4,
+        'where' => $stage >= 4 ? $lane['to']['city'] : ($p < 0.1 ? $lane['from']['city'] . ' (US warehouse)' : ($M['sea'] ? 'Atlantic Ocean' : 'En route to ' . $lane['to']['city'])),
+        'eta' => !empty($c->estimated_eta) ? sl_date($c->estimated_eta) : 'Not set', 'onway' => $departed ? sl_tcSince($departed) : 'Not departed',
+        'late' => $stage < 4 && !empty($c->estimated_eta) && strtotime($c->estimated_eta . ' 23:59:59') < time()];
+    // last tracking events of every package in one query
+    $hist = [];
+    $codes = array_map(fn($r) => $r['id'], $list);
+    if ($codes) {
+        $b = []; $in = [];
+        foreach (array_values($codes) as $i => $code) { $b[':t' . $i] = $code; $in[] = ':t' . $i; }
+        foreach (sl_rows('SELECT t.order_track, t.t_date, t.comments, t.t_city, s.mod_style FROM cdb_courier_track t LEFT JOIN cdb_styles s ON s.id = t.status_courier WHERE t.order_track IN (' . implode(',', $in) . ') ORDER BY t.t_date DESC, t.id DESC', $b) as $ev) {
+            if (count($hist[$ev->order_track] ?? []) >= 6) continue;
+            $hist[$ev->order_track][] = ['t' => str_replace('_', ' ', (string) ($ev->mod_style ?: 'Update')), 'c' => trim((string) $ev->comments . ($ev->t_city ? ' · ' . $ev->t_city : ''), ' ·'), 'at' => sl_date($ev->t_date, 'M j, H:i')];
+        }
+    }
+    foreach ($d['rows'] as &$row) $row['hist'] = $hist[$row['id']] ?? [];
+    unset($row);
+    $d['money'] = function_exists('cdp_canViewMoney') && cdp_canViewMoney($user);
     return $d;
 }
 
@@ -274,4 +302,68 @@ function sl_newConsolidationData($user, $core, string $type): array
         'today' => date('Y-m-d'), 'eta' => date('Y-m-d', strtotime($M['sea'] ? '+40 days' : '+5 days')), 'dest' => $core->c_city ?: 'Accra',
         'awbReady' => cdp_awbColumnReady(),
     ];
+}
+
+/**
+ * Consolidations board (consolidate_list.php): Air and Sea statistics kept apart, then the console.
+ * Stages (same definitions as the list filters above):
+ *   loading  = still at the US warehouse, accepting parcels (not departed, not arrived)
+ *   transit  = in the air / at sea (3, 5, 7)
+ *   arrived  = arrived, not handed over yet (2, 4, 6, 32)
+ *   handed   = handed over this month (8, 15)
+ * ?mode=air|sea and ?stage=loading|transit|late|ready|done narrow the console below the statistics.
+ */
+function sl_consolidationsBoard($user, $core): array
+{
+    require_once __DIR__ . '/track_console.php';
+    require_once __DIR__ . '/overview_hero.php';
+    $can = ['air' => $user->cdp_hasPermission('view_consolidate_list'), 'sea' => $user->cdp_hasPermission('view_consolidate_package_list')];
+    $scope = sl_opsScope('c');
+    $money = function_exists('cdp_canViewMoney') && cdp_canViewMoney($user);
+    $modes = [];
+    foreach (['air', 'sea'] as $m) {
+        if (!$can[$m]) continue;
+        $M = sl_conMode($m);
+        $t = $M['head']; $dt = $M['detail'];
+        $eta = sl_columnExists($t, 'estimated_eta') ? 'c.estimated_eta' : 'NULL';
+        $n = fn(string $w) => (int) sl_scalar("SELECT COUNT(*) FROM $t c WHERE $w $scope");
+        $parcels = fn(string $w) => (int) sl_scalar("SELECT COUNT(*) FROM $dt d JOIN $t c ON c.consolidate_id = d.consolidate_id WHERE $w $scope");
+        $wLoad = "c.status_courier NOT IN ('3','5','7','2','4','6','32','8','15','21','12')";
+        $wTran = "c.status_courier IN ('3','5','7')";
+        $wArr = "c.status_courier IN ('2','4','6','32')";
+        $wDone = "c.status_courier IN ('8','15') AND c.c_date >= DATE_FORMAT(CURDATE(), '%Y-%m-01')";
+        $load = sl_row("SELECT COUNT(*) AS n, COALESCE(SUM(c.total_weight),0) AS w, MIN(c.c_date) AS oldest FROM $t c WHERE $wLoad $scope");
+        $late = $eta === 'NULL' ? 0 : $n("$wTran AND $eta IS NOT NULL AND $eta < CURDATE()");
+        $next = $eta === 'NULL' ? null : sl_row("SELECT CONCAT(c.c_prefix, c.c_no) AS code, $eta AS eta FROM $t c WHERE $wTran AND $eta >= CURDATE() $scope ORDER BY $eta ASC");
+        $unpaid = $n("c.status_invoice NOT IN (1,19) AND c.status_courier NOT IN ('21','12')");
+        $loadN = (int) $load->n;
+        $fill = $loadN ? sl_pct((float) $load->w / $loadN, $M['cap']) : 0;
+        $daily = sl_ovZeroDays();
+        foreach (sl_rows("SELECT DATE(c.c_date) AS day, COUNT(*) AS n FROM $t c WHERE c.c_date >= :d AND c.status_courier <> '21' $scope GROUP BY DATE(c.c_date)", [':d' => array_key_first($daily)]) as $r) if (isset($daily[$r->day])) $daily[$r->day] = (int) $r->n;
+        $sea = $m === 'sea';
+        $modes[$m] = [
+            'mode' => $m, 'label' => $sea ? 'Sea consolidations' : 'Air consolidations', 'unit' => $sea ? 'containers' : 'loads',
+            'icon' => $sea ? 'i-ship' : 'i-plane', 'prefix' => $sea ? 'Containers to Tema' : 'Air loads to Accra',
+            'stages' => [
+                ['k' => 'loading', 'l' => 'Loading at US warehouse', 's' => 'still taking parcels · ' . sl_num($parcels($wLoad)) . ' parcels in', 'n' => $loadN],
+                ['k' => 'transit', 'l' => $sea ? 'At sea' : 'In the air', 's' => $late ? $late . ' past ETA' : ($next && $next->eta ? 'next arrives ' . sl_date($next->eta, 'M j') : 'none due'), 'n' => $n($wTran), 'bad' => $late > 0],
+                ['k' => 'ready', 'l' => 'Arrived', 's' => 'awaiting handover · ' . sl_num($parcels($wArr)) . ' parcels', 'n' => $n($wArr)],
+                ['k' => 'done', 'l' => 'Handed over', 's' => 'this month', 'n' => $n($wDone)],
+            ],
+            'facts' => array_values(array_filter([
+                ['Average fill while loading', $loadN ? $fill . '% of ' . sl_weight($M['cap'], 0) : '—'],
+                ['Loading the longest', $load->oldest ? (int) floor((time() - strtotime($load->oldest)) / 86400) . ' days' : '—'],
+                ['Next arrival', $next ? $next->code . ' · ' . sl_date($next->eta, 'M j') : '—'],
+                $money ? ['Not paid yet', sl_num($unpaid) . ' ' . ($sea ? ($unpaid === 1 ? 'container' : 'containers') : ($unpaid === 1 ? 'load' : 'loads'))] : null,
+            ])),
+            'fill' => $fill,
+            'bars' => sl_sparkBars(array_values($daily), 4, array_map(fn($x) => date('D j M', strtotime($x)), array_keys($daily))), 'barsN' => array_sum($daily),
+            'new' => $user->cdp_hasPermission($M['p']['add']) ? sl_route('NewConsolidation', ['type' => $m]) : '',
+        ];
+    }
+    $mode = in_array($_GET['mode'] ?? '', ['air', 'sea'], true) && isset($modes[$_GET['mode']]) ? (string) $_GET['mode'] : '';
+    $stage = in_array($_GET['stage'] ?? '', ['loading', 'transit', 'late', 'ready', 'done'], true) ? (string) $_GET['stage'] : 'all';
+    $q = trim((string) ($_GET['q'] ?? ''));
+    $tc = sl_trackConsoleData($user, $core, 'consolidations', 60, ['filter' => $stage, 'mode' => $mode, 'q' => $q]);
+    return ['modes' => $modes, 'mode' => $mode, 'stage' => $stage, 'q' => $q, 'tracking' => $tc];
 }

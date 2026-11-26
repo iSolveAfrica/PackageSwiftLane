@@ -72,6 +72,12 @@
     if (e.target.closest('[data-tc-close]')) { var dl = tc.querySelector('[data-tc-dialog]'); if (dl) dl.close(); return; }
     if (e.target.matches('[data-tc-dialog]')) { e.target.close(); return; } // click on the backdrop
     var card = e.target.closest('[data-tc-key]');
+    // Consolidations: a card opens the record's own page (new tab with Ctrl / Cmd / middle click)
+    if (card && card.hasAttribute('data-tc-nav')) {
+      var url = card.getAttribute('data-tc-nav');
+      if (e.ctrlKey || e.metaKey || e.shiftKey) window.open(url, '_blank'); else location.href = url;
+      return;
+    }
     if (card) { select(tc, card.getAttribute('data-tc-key')); openPop(tc); return; }
     if (e.target.closest('[data-tc-pop-open]')) { openPop(tc); return; }
     var tab = e.target.closest('[data-tc-tab]');
@@ -81,6 +87,15 @@
       tc.querySelectorAll('[data-tc-f]').forEach(function (b) { b.classList.toggle('on', b === f); });
       filter(tc);
     }
+  });
+  // hovering an "open on click" card previews it on the map and in the panel
+  document.addEventListener('mouseover', function (e) {
+    var card = e.target.closest && e.target.closest('[data-tc-nav]');
+    if (card && !card.classList.contains('on')) select(card.closest('[data-tc]'), card.getAttribute('data-tc-key'));
+  });
+  document.addEventListener('auxclick', function (e) {
+    var card = e.button === 1 && e.target.closest && e.target.closest('[data-tc-nav]');
+    if (card) window.open(card.getAttribute('data-tc-nav'), '_blank');
   });
   document.addEventListener('input', function (e) {
     if (e.target.matches('[data-tc-q]')) filter(e.target.closest('[data-tc]'));
