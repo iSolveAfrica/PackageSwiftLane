@@ -105,8 +105,23 @@ switch ((string) ($_GET['notice'] ?? '')) {
         $notice = 'You have been signed out.';
         break;
 }
+// Single sign-on (sso.php) sends people back here with ?sso=<reason> when it could not sign them in.
+$ssoErrors = [
+    'cancelled' => 'Sign-in was cancelled.',
+    'off' => 'That sign-in option is not available.',
+    'expired' => 'The sign-in took too long or was opened in another tab. Please try again.',
+    'failed' => 'We could not confirm your sign-in with the provider. Please try again or use your password.',
+    'noemail' => 'Your account with that provider has no verified email we can match. Sign in with your password.',
+    'noaccount' => 'No account here uses that email. Sign in with your password or create an account first.',
+    'ambiguous' => 'More than one account uses that email. Sign in with your username and password.',
+    'inactive' => 'Your account is not activated yet.',
+];
+$ssoKey = (string) ($_GET['sso'] ?? '');
+if (isset($ssoErrors[$ssoKey])) $errors[] = $ssoErrors[$ssoKey];
+require_once 'helpers/sso.php';
+require_once 'helpers/webauthn.php';
 $pics = sl_loginPicturesHtml('login', 'lg');
-sl_render('Login', ['title' => 'Log in', 'board' => 'Login', 'plain' => true, 'scripts' => ['dataJs/sl/auth.js']], [
+sl_render('Login', ['title' => 'Log in', 'board' => 'Login', 'plain' => true, 'scripts' => ['dataJs/sl/auth.js', 'dataJs/sl/passkey.js'], 'styles' => ['assets/swiftlane/passkey.css']], [
     'errors' => $errors,
     'notice' => $notice,
     'username' => $submittedUsername,
@@ -117,4 +132,6 @@ sl_render('Login', ['title' => 'Log in', 'board' => 'Login', 'plain' => true, 's
     'button' => $pics['texts'][1] ?? 'Log in',
     'site' => $core->site_name ?? 'Swift Lane',
     'next' => preg_match('#^[a-z0-9_./?=&%-]+$#i', (string) ($_GET['next'] ?? '')) && strpos((string) $_GET['next'], '//') === false ? (string) $_GET['next'] : '',
+    'passkeys' => cdp_passkeysEnabled(),
+    'sso' => array_map(fn($p) => $p['label'], cdp_ssoActive()),
 ]);

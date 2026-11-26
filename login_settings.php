@@ -23,4 +23,14 @@ sl_render('LoginSettings', ['id' => 'loginpg', 'title' => 'Login page', 'board' 
     'favicon' => !empty($core->favicon) ? 'assets/' . $core->favicon : '',
     'site' => $core->site_name ?? 'Swift Lane',
     'canLogo' => $user->cdp_hasPermission('view_tools'),
+    'auth' => (function () {
+        require_once 'helpers/sso.php';
+        require_once 'helpers/webauthn.php';
+        $p = cdp_ssoProviders();
+        return [
+            'passkeys' => cdp_passkeysEnabled(), 'redirect' => cdp_ssoRedirectUri(), 'https' => cdp_ssoRedirectUri() !== '' && strpos(cdp_ssoRedirectUri(), 'https://') === 0,
+            'google' => ['on' => $p['google']['on'], 'id' => $p['google']['client_id'], 'hasSecret' => $p['google']['secret'] !== ''],
+            'microsoft' => ['on' => $p['microsoft']['on'], 'id' => $p['microsoft']['client_id'], 'hasSecret' => $p['microsoft']['secret'] !== '', 'tenant' => $p['microsoft']['tenant']],
+        ];
+    })(),
 ]);

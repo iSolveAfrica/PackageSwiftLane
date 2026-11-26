@@ -5,9 +5,11 @@
 <?php include CDP_ROOT . "/views/sl/inc/mobile_nav.php"; ?>
 <?php include CDP_ROOT . "/views/sl/inc/app_install.php"; ?>
 <div id="sl-toast" class="sl-toast" role="status" aria-live="polite" hidden></div>
+<?php if (!empty($slPasskeys)) include CDP_ROOT . '/views/sl/inc/passkey_manage.php'; ?>
 <?php if (!empty($slAiPopup)) include CDP_ROOT . '/views/sl/inc/ai_page.php'; ?>
 <script src="<?= h(cdp_asset('assets/swiftlane/swiftlane.js')) ?>"></script>
 <script src="<?= h(cdp_asset('assets/swiftlane/shortcuts.js')) ?>"></script>
+<?php if (!empty($slPasskeys)): ?><script src="<?= h(cdp_asset('dataJs/sl/passkey.js')) ?>"></script><?php endif; ?>
 <?php if (!empty($slAiPopup)): ?><script src="<?= h(cdp_asset('dataJs/sl/ai_page.js')) ?>"></script><?php endif; ?>
 <?php if (!empty($slIsClient) && sl_self() !== 'support.php'): ?>
 <a class="sl-support-link" href="support.php#hp-chat" aria-label="Chat with support"><i class="ic i-message" aria-hidden="true"></i><span>Help</span></a>

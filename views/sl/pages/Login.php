@@ -25,6 +25,17 @@ $pics = sl_get($d, 'pics', []);
       <label class="row g10" style="cursor:pointer"><span class="sl-toggle <?= sl_get($d, 'remember') ? 'on' : '' ?>" role="switch" aria-checked="<?= sl_get($d, 'remember') ? 'true' : 'false' ?>"><input type="hidden" name="remember_me" value="<?= sl_get($d, 'remember') ? '1' : '0' ?>"></span><span><?= sl_get($d, 'otp') ? 'Trust this device for 30 days (no code next time)' : 'Keep me signed in on this device' ?></span></label>
       <button class="sl-btn block" type="submit" style="height:48px;font-size:15px"><?= sl_v($d, 'button') ?></button>
     </form>
+    <?php if (sl_get($d, 'passkeys') || sl_get($d, 'sso')): ?>
+    <div class="lg-alt">
+      <?php if (sl_get($d, 'passkeys')): ?><button type="button" class="sl-btn ghost block lg-alt-btn" data-pk-login hidden><svg class="lg-fp" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M12 11v4.5a6.5 6.5 0 0 1-1.6 4.3"/><path d="M8.5 11.5a3.5 3.5 0 0 1 7 0V14a10 10 0 0 1-.8 4"/><path d="M5.5 15.5c.3-1.2.5-2.5.5-4a6 6 0 0 1 9.8-4.6"/><path d="M18 9.5c.3.6.5 1.3.5 2v2.5a13 13 0 0 1-.6 4"/><path d="M3.7 11a8.5 8.5 0 0 1 2-5.2M8 3.9A8.5 8.5 0 0 1 20.2 8"/></svg>Sign in with fingerprint or face</button><?php endif; ?>
+      <?php foreach ((array) sl_get($d, 'sso', []) as $pk => $pl): ?>
+      <a class="sl-btn ghost block lg-alt-btn" href="sso.php?p=<?= h($pk) ?><?= sl_get($d, 'next') ? '&next=' . rawurlencode((string) sl_get($d, 'next')) : '' ?>">
+        <?php if ($pk === 'google'): ?><svg class="lg-logo" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.6 13.3l7.9 6.2C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.5 2.9-2.2 5.4-4.7 7.1l7.6 5.9c4.4-4.1 6.9-10.1 6.9-17.5z"/><path fill="#FBBC05" d="M10.5 28.7A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.9-4.7l-7.9-6.2A24 24 0 0 0 0 24c0 3.9.9 7.5 2.6 10.7l7.9-6z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.9 2.3-8.3 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6C6.6 42.6 14.6 48 24 48z"/></svg>
+        <?php else: ?><svg class="lg-logo" viewBox="0 0 23 23" aria-hidden="true"><path fill="#F35325" d="M1 1h10v10H1z"/><path fill="#81BC06" d="M12 1h10v10H12z"/><path fill="#05A6F0" d="M1 12h10v10H1z"/><path fill="#FFBA08" d="M12 12h10v10H12z"/></svg><?php endif; ?>
+        Continue with <?= h($pl) ?></a>
+      <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
     <div class="sl-sep" style="margin:0">or</div>
     <a class="sl-btn ghost block" href="<?= sl_route('ForgotPassword') ?>" style="height:44px" title="We send a one-time code to your email or WhatsApp"><i class="ic ic-sm i-phone" aria-hidden="true"></i>Reset my password with a one-time code</a>
     <?php if (defined('SL_PWA_ROLE') && SL_PWA_ROLE==='rider'): ?><p class="mut sm" style="text-align:center;margin:0">Need rider access? Ask your dispatch team for an account.</p><?php else: ?>

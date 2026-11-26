@@ -1,0 +1,12 @@
+/* Fingerprint / face sign-in and SSO buttons (login page, views/sl/inc/passkey_manage.php). */
+.lg-alt { display: flex; flex-direction: column; gap: 10px; }
+.lg-alt [hidden], #pk-manage [hidden], .pk-offer[hidden] { display: none !important; }
+.lg-alt-btn { height: 46px; gap: 10px; font-size: 15px; justify-content: center; }
+.lg-fp { width: 20px; height: 20px; }
+.lg-logo { width: 18px; height: 18px; flex: none; }
+.up-l .ic-fp { flex: none; }
+.pk-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--field); }
+.pk-offer { position: fixed; left: 12px; right: 12px; bottom: calc(76px + env(safe-area-inset-bottom)); z-index: 60; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 18px; background: var(--card); border: 1px solid var(--line-2); box-shadow: 0 18px 40px -16px rgba(0,0,0,.35); max-width: 520px; margin: 0 auto; }
+.pk-offer-ic { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; color: var(--violet-ink); background: var(--violet-bg); flex: none; }
+.pk-offer .grow { flex: 1; min-width: 180px; }
+.pk-offer .row { margin-left: auto; }

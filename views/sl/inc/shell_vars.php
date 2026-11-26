@@ -60,6 +60,15 @@ $slTheme = trim('sl-app ' . ($slPage['theme'] ?? ''));
 $slHome = sl_route('Main');
 $slHub = $slIsClient ? 'My account' : ($slOffice ?: ($core->c_city ?? 'Hub'));
 $slProfileUrl = sl_route('AiStudio');
+// Fingerprint / face sign-in (passkeys): menu entry, manage dialog and the one-time offer on phones.
+require_once CDP_ROOT . '/helpers/webauthn.php';
+$slPasskeys = false; $slPkCount = 0;
+try {
+    $slPasskeys = cdp_passkeysEnabled();
+    if ($slPasskeys && sl_tableExists('cdb_passkeys')) $slPkCount = (int) sl_scalar('SELECT COUNT(*) FROM cdb_passkeys WHERE user_id = :u', [':u' => (int) $_SESSION['userid']]);
+} catch (Throwable $e) {
+    $slPasskeys = false;
+}
 $slHelpUrl = $slIsClient ? 'support.php' : sl_route('CsInbox');
 
 // Customer help opens the customer service workspace; staff AI needs its own access.

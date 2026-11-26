@@ -40,6 +40,30 @@ $bgSty = fn($s) => $s && $s['url'] !== '' ? 'background-image:url(' . $s['url'] 
 <label class="row g10" style="cursor:pointer"><span class="sl-toggle <?= !empty($look['captions']) ? 'on' : '' ?>" role="switch" aria-checked="<?= !empty($look['captions']) ? 'true' : 'false' ?>" aria-label="Show captions"><input type="hidden" name="captions" value="<?= !empty($look['captions']) ? '1' : '0' ?>"></span><span>Show captions on large screens</span></label>
 <div class="row g10 mut sm"><span class="sl-toggle on" role="switch" aria-checked="true" aria-label="Respect reduced motion" data-static></span><span>Sliding always stops for people who turn off motion</span></div></section>
 </form>
+<?php $au = (array) sl_get($d, 'auth', []); $g = $au['google'] ?? []; $m = $au['microsoft'] ?? []; $tg = fn($name, $on, $lbl) => '<label class="row g10" style="cursor:pointer"><span class="sl-toggle ' . ($on ? 'on' : '') . '" role="switch" aria-checked="' . ($on ? 'true' : 'false') . '"><input type="hidden" name="' . $name . '" value="' . ($on ? '1' : '0') . '"></span><span>' . $lbl . '</span></label>'; ?>
+<form class="col g16" id="ls-auth" data-sl-form action="<?= $ep ?>"><input type="hidden" name="op" value="auth">
+<section class="sl-card col g16"><div class="sl-ch" style="margin:0"><div><h2 class="sl-ct">Sign-in methods</h2><span class="mut sm">Ways to sign in besides username and password</span></div><button class="sl-btn sm" type="submit">Save sign-in methods</button></div>
+  <div class="ls-auth">
+    <div class="col g8"><?= $tg('passkeys', !empty($au['passkeys']), '<b class="fw5">Fingerprint and face sign-in (passkeys)</b>') ?>
+      <span class="mut sm">Customers, riders and staff can turn it on from their profile menu (Fingerprint sign-in), and phones offer it once after a normal sign-in. Uses the phone's own fingerprint, face or screen lock; nothing biometric reaches our server. Needs the https address of the site.</span>
+      <?php if (empty($au['https'])): ?><div class="sl-banner bad"><i class="ic ic-sm i-alert" aria-hidden="true"></i><span>This page is open over http. Fingerprint sign-in and single sign-on only work on the https address.</span></div><?php endif; ?></div>
+  </div>
+  <div class="ls-auth">
+    <div class="row g10"><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.6 13.3l7.9 6.2C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.5 2.9-2.2 5.4-4.7 7.1l7.6 5.9c4.4-4.1 6.9-10.1 6.9-17.5z"/><path fill="#FBBC05" d="M10.5 28.7A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.9-4.7l-7.9-6.2A24 24 0 0 0 0 24c0 3.9.9 7.5 2.6 10.7l7.9-6z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.9 2.3-8.3 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6C6.6 42.6 14.6 48 24 48z"/></svg><?= $tg('google_on', !empty($g['on']), '<b class="fw5">Continue with Google</b>') ?></div>
+    <div class="grid cols2" style="gap:12px"><label class="sl-field"><span class="sl-lab">Client ID</span><input class="sl-in mono" name="google_client_id" value="<?= h($g['id'] ?? '') ?>" placeholder="1234…apps.googleusercontent.com" autocomplete="off"></label>
+    <label class="sl-field"><span class="sl-lab">Client secret</span><input class="sl-in mono" name="google_secret" type="password" autocomplete="new-password" placeholder="<?= !empty($g['hasSecret']) ? 'Saved · type to replace' : 'GOCSPX-…' ?>"></label></div>
+    <span class="mut sm">Google Cloud Console › APIs &amp; Services › Credentials › OAuth client (Web application).</span>
+  </div>
+  <div class="ls-auth">
+    <div class="row g10"><svg width="18" height="18" viewBox="0 0 23 23" aria-hidden="true"><path fill="#F35325" d="M1 1h10v10H1z"/><path fill="#81BC06" d="M12 1h10v10H12z"/><path fill="#05A6F0" d="M1 12h10v10H1z"/><path fill="#FFBA08" d="M12 12h10v10H12z"/></svg><?= $tg('ms_on', !empty($m['on']), '<b class="fw5">Continue with Microsoft</b>') ?></div>
+    <div class="grid cols2" style="gap:12px"><label class="sl-field"><span class="sl-lab">Application (client) ID</span><input class="sl-in mono" name="ms_client_id" value="<?= h($m['id'] ?? '') ?>" placeholder="00000000-0000-0000-0000-000000000000" autocomplete="off"></label>
+    <label class="sl-field"><span class="sl-lab">Client secret</span><input class="sl-in mono" name="ms_secret" type="password" autocomplete="new-password" placeholder="<?= !empty($m['hasSecret']) ? 'Saved · type to replace' : 'Secret value' ?>"></label></div>
+    <label class="sl-field"><span class="sl-lab">Tenant</span><input class="sl-in mono" name="ms_tenant" value="<?= h($m['tenant'] ?? 'common') ?>" style="max-width:360px"><span class="mut sm">Your company's tenant ID or domain lets only your staff in. "common" also allows personal Microsoft accounts.</span></label>
+    <span class="mut sm">Azure portal › App registrations › New registration (Web).</span>
+  </div>
+  <div class="ls-auth"><span class="sl-lab">Redirect URI for both providers</span><div class="row g8"><input class="sl-in mono" readonly value="<?= h($au['redirect'] ?? '') ?>" onclick="this.select()" aria-label="Redirect URI"></div><span class="mut sm">Only existing, active accounts can use Google or Microsoft: the email on the provider must match the account's email. New customers still register and get approved as before.</span></div>
+</section>
+</form>
 </div>
 <aside class="b col g12" style="position:sticky;top:16px"><div class="row between"><span class="up">Preview</span><span class="mut sm">Picture <?= (int) sl_get($d, 'curN') + 1 ?> · <?= (int) ($look['blur'] ?? 50) ?>% blur (saved values)</span></div>
 <div class="sl-seg boxed"><?php foreach ($PG as $p): ?><a class="<?= $pv === $p[0] ? 'on' : '' ?>" href="<?= h(sl_url(['pv' => $p[0]])) ?>" style="display:inline-flex;align-items:center"><?= h($p[1]) ?></a><?php endforeach; ?></div>

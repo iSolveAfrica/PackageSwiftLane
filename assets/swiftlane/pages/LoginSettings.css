@@ -33,3 +33,7 @@
 .ls-prev.m .card{width:200px}
 .ls-prev .ln{display:flex;align-items:center;padding:0 10px;font-size:13px;color:var(--muted)}
 .ls-prev .btn{display:grid;place-items:center;color:#fff;font:600 14px var(--font)}
+
+/* Sign-in methods */
+.ls-auth { display: flex; flex-direction: column; gap: 10px; padding-top: 14px; border-top: 1px solid var(--line); }
+.sl-ch + .ls-auth { border-top: 0; padding-top: 0; }
