@@ -87,7 +87,8 @@ class Core
   public $tax;
   public $insurance;
   public $value_weight;
-  public $weight_p;
+  public $weight_p;      // weight unit as shown everywhere: "lbs" or "kg"
+  public $weight_p_raw;  // the stored setting ("lb" or "kg"), for the settings form
   public $meter;
   public $units;
   public $c_tariffs;
@@ -200,7 +201,9 @@ class Core
     $this->tax = $settings->tax;
     $this->insurance = $settings->insurance;
     $this->value_weight = $settings->value_weight;
-    $this->weight_p = $settings->weight_p;
+    // Pounds are shown as "lbs" all over the site; the stored setting stays "lb".
+    $this->weight_p_raw = $settings->weight_p;
+    $this->weight_p = in_array(strtolower(trim((string) $settings->weight_p)), ['lb', 'lbs', 'pound', 'pounds'], true) ? 'lbs' : $settings->weight_p;
     $this->meter = $settings->meter;
     $this->units = $settings->units;
     $this->c_tariffs = $settings->c_tariffs;

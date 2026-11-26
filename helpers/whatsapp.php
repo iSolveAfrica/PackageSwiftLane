@@ -420,8 +420,8 @@ if (!function_exists('cdp_wa_buildShipmentExtraLines')) {
         // package_total_weight, stored as the order's total_weight. Item weights
         // price the items — they do NOT make up the package weight — so they are
         // never summed here. Omitted when the package was never weighed.
-        $weightUnit = trim((string) ($settings->weight_p ?? 'lb'));
-        if ($weightUnit === '') { $weightUnit = 'lb'; }
+        $weightUnit = trim((string) ($settings->weight_p ?? 'lbs'));
+        if ($weightUnit === '' || in_array(strtolower($weightUnit), ['lb', 'lbs', 'pound', 'pounds'], true)) { $weightUnit = 'lbs'; } // pounds read as "lbs"
         $ptw = (isset($post['package_total_weight']) && $post['package_total_weight'] !== '')
             ? (float) $post['package_total_weight'] : 0.0;
         if ($ptw > 0) {

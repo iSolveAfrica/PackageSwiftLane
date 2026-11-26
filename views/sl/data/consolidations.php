@@ -151,7 +151,8 @@ function sl_conAvailable(array $M, string $q = '', int $limit = 60, int $dg = -1
         $b[':q'] = '%' . $q . '%';
     }
     $postal = $M['sea'] ? 'a.tracking_purchase' : "(SELECT t.tracking_number FROM cdb_package_tracking_number t WHERE t.order_id = a.order_id ORDER BY t.id DESC LIMIT 1)";
-    $rows = sl_rows("SELECT a.order_id, a.order_prefix, a.order_no, a.sender_id, a.total_weight, a.total_order, a.status_invoice, $postal AS postal,
+    $dgCol = !$M['sea'] && sl_columnExists('cdb_add_order', 'is_dangerous_good') ? 'a.is_dangerous_good' : '0';
+    $rows = sl_rows("SELECT a.order_id, a.order_prefix, a.order_no, a.sender_id, a.total_weight, a.total_order, a.status_invoice, a.status_courier, $dgCol AS dg, $postal AS postal,
             (SELECT GROUP_CONCAT(i.order_item_description SEPARATOR ', ') FROM {$M['items']} i WHERE i.order_id = a.order_id) AS what,
             (SELECT COALESCE(SUM(i.order_item_quantity),0) FROM {$M['items']} i WHERE i.order_id = a.order_id) AS pcs
         FROM $o a WHERE $w ORDER BY a.order_id DESC LIMIT $limit", $b);
@@ -159,7 +160,8 @@ function sl_conAvailable(array $M, string $q = '', int $limit = 60, int $dg = -1
     $out = [];
     foreach ($rows as $r) {
         $u = $users[(int) $r->sender_id] ?? null;
-        $out[] = ['oid' => (int) $r->order_id, 'id' => $r->order_prefix . $r->order_no, 'name' => sl_userName($u), 'lock' => $u->locker ?? '', 'sender' => (int) $r->sender_id, 'what' => $r->what ?: '—', 'post' => $r->postal ?: '—', 'w' => sl_weight($r->total_weight), 'wn' => (float) $r->total_weight, 'pcs' => (int) $r->pcs, 'amt' => (float) $r->total_order];
+        $out[] = ['oid' => (int) $r->order_id, 'id' => $r->order_prefix . $r->order_no, 'name' => sl_userName($u), 'lock' => $u->locker ?? '', 'sender' => (int) $r->sender_id, 'what' => $r->what ?: '—', 'post' => $r->postal ?: '—', 'w' => sl_weight($r->total_weight), 'wn' => (float) $r->total_weight, 'pcs' => (int) $r->pcs, 'amt' => (float) $r->total_order,
+            'st' => sl_statusLabel($r->status_courier), 'stC' => sl_statusClass($r->status_courier), 'approved' => (int) $r->status_courier === 10, 'dg' => (int) $r->dg === 1];
     }
     return $out;
 }
@@ -238,7 +240,7 @@ function sl_consolidationDetailData($user, $core, int $id, string $type): ?array
         'files' => array_map(fn($f) => ['url' => $f->url, 'name' => $f->name], sl_rows('SELECT url, name FROM cdb_order_files WHERE order_id = :id AND ' . ($M['sea'] ? '(is_consolidate = 2 OR (is_consolidate = 1 AND NOT EXISTS (SELECT 1 FROM cdb_consolidate x WHERE x.consolidate_id = cdb_order_files.order_id)))' : 'is_consolidate = 1') . ' ORDER BY id DESC', [':id' => $id])),
         'other' => [],
     ];
-    $d['avail'] = $d['adding'] ? sl_conAvailable($M, $d['q'], 40, $M['sea'] ? -1 : (int) ($c->is_dangerous_good ?? 0)) : [];
+    $d['avail'] = $d['adding'] ? sl_conAvailable($M, $d['q'], 1000, $M['sea'] ? -1 : (int) ($c->is_dangerous_good ?? 0)) : [];
     $d['noAvail'] = $d['adding'] && !$d['avail'];
     // the "other mode" chip: the latest consolidation of the other mode the user may see
     $om = sl_conMode($M['sea'] ? 'air' : 'sea');
@@ -287,21 +289,44 @@ function sl_newConsolidationData($user, $core, string $type): array
     $def = cdp_getInfoShipDefault();
     $ag = cdp_getDefaultAgencyOrigin();
     try { $num = (string) cdp_uidNext('consolidate_no'); } catch (Throwable $e) { $num = ''; }
+    // With random numbering (company setting) the number is only known once it is claimed on save.
+    $random = function_exists('cdp_uidRandomMode') && cdp_uidRandomMode('consolidate_no');
+    if ($random) $num = '';
     $modes = [];
-    foreach (['air' => ['i-plane', 'Air', 'Flights, priced per ' . ($core->weight_p ?? 'lb')], 'sea' => ['i-ship', 'Sea', 'Containers, priced per volume']] as $m => [$ic, $lab, $desc]) {
+    foreach (['air' => ['i-plane', 'Air', 'Air loads, by weight'], 'sea' => ['i-ship', 'Sea', 'Containers, by volume']] as $m => [$ic, $lab, $desc]) {
         $mm = sl_conMode($m);
         if (!$user->cdp_hasPermission($mm['p']['add'])) continue;
         $modes[] = ['m' => $m, 'cls' => $m === $M['mode'] ? 'on' : '', 'icon' => $ic, 'label' => $lab, 'd' => $desc, 'href' => sl_route('NewConsolidation', ['type' => $m])];
     }
+    $country = strtoupper(preg_replace('/[^A-Za-z]/', '', (string) ($_GET['cc'] ?? 'US'))) ?: 'US';
+    $avail = sl_conAvailable($M, $q, 1000, $M['sea'] ? -1 : $dg);
     return [
         'type' => $M['mode'], 'sea' => $M['sea'], 'modes' => $modes, 'q' => $q, 'dg' => $dg,
-        'prefix' => (string) ($M['sea'] ? 'SLC-' : ($core->prefix_consolidate ?: 'AIR-')), 'num' => $num,
-        'avail' => sl_conAvailable($M, $q, 80, $M['sea'] ? -1 : $dg), 'L' => $L, 'cap' => $M['cap'],
-        'def' => ['agency' => $ag['agency'], 'office' => $ag['origin_off'], 'courier' => (int) ($def->courier_default3 ?? 0), 'service' => (int) ($def->service_default4 ?? 0), 'delitime' => (int) ($def->time_default5 ?? 0), 'packaging' => (int) ($def->packaging_default2 ?? 0), 'category' => (int) ($def->logistics_default1 ?? 0), 'status' => (int) ($def->status_default8 ?? 13) ?: 13],
-        'rate' => (float) ($core->value_weight ?? 0), 'tax' => (float) ($core->tax ?? 0), 'insurance' => (float) ($core->insurance ?? 0), 'unit' => (string) ($core->weight_p ?? 'lb'),
-        'today' => date('Y-m-d'), 'eta' => date('Y-m-d', strtotime($M['sea'] ? '+40 days' : '+5 days')), 'dest' => $core->c_city ?: 'Accra',
+        // The code is generated on save and cannot be edited: air = consolidation prefix + number,
+        // sea = "C" + origin country + number (sl_conPrefix, used by the save handler too).
+        'prefix' => sl_conPrefix($M['sea'], $country, $core), 'num' => $num, 'random' => $random, 'country' => $country, 'countries' => sl_conCountries(),
+        'avail' => $avail, 'approvedN' => count(array_filter($avail, fn($a) => $a['approved'])), 'L' => $L,
+        'def' => ['office' => $ag['origin_off'], 'courier' => (int) ($def->courier_default3 ?? 0), 'delitime' => (int) ($def->time_default5 ?? 0), 'status' => (int) ($def->status_default8 ?? 13) ?: 13],
+        'unit' => (string) ($core->weight_p ?? 'lbs'),
+        'today' => date('Y-m-d\TH:i'), 'eta' => date('Y-m-d', strtotime($M['sea'] ? '+40 days' : '+5 days')), 'dest' => $M['sea'] ? 'Tema' : 'Accra',
         'awbReady' => cdp_awbColumnReady(),
     ];
+}
+
+/** Prefix of a new consolidation's code. Air: the consolidation prefix setting. Sea: "C" + origin country (e.g. CUS, CCN). */
+function sl_conPrefix(bool $sea, string $country, $core): string
+{
+    if ($sea) {
+        $cc = strtoupper(preg_replace('/[^A-Za-z]/', '', $country));
+        return 'C' . (strlen($cc) === 2 ? $cc : 'US');
+    }
+    return (string) (($core->prefix_consolidate ?? '') ?: 'AIR-');
+}
+
+/** Origin countries offered for sea containers (code => name). */
+function sl_conCountries(): array
+{
+    return ['US' => 'United States', 'CN' => 'China', 'GB' => 'United Kingdom', 'AE' => 'United Arab Emirates', 'TR' => 'Turkey', 'DE' => 'Germany', 'NL' => 'Netherlands', 'IN' => 'India', 'CA' => 'Canada', 'BE' => 'Belgium', 'IT' => 'Italy', 'FR' => 'France', 'ES' => 'Spain', 'ZA' => 'South Africa', 'NG' => 'Nigeria'];
 }
 
 /**

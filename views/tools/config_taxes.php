@@ -214,8 +214,8 @@ $userData = $user->cdp_getUserData();
 													</label>
 													<select class="custom-select form-control required" name="weight_p" id="weight_p">
 														<optgroup label="<?php echo $lang['tools-config80'] ?>">
-															<option value="kg" <?php if ($core->weight_p == "kg") echo " selected=\"selected\""; ?>><?php echo $lang['tools-config86'] ?></option>
-															<option value="lb" <?php if ($core->weight_p == "lb") echo " selected=\"selected\""; ?>><?php echo $lang['tools-config87'] ?></option>
+															<option value="kg" <?php if (($core->weight_p_raw ?? $core->weight_p) == "kg") echo " selected=\"selected\""; ?>><?php echo $lang['tools-config86'] ?></option>
+															<option value="lb" <?php if (($core->weight_p_raw ?? $core->weight_p) == "lb") echo " selected=\"selected\""; ?>><?php echo $lang['tools-config87'] ?></option>
 														</optgroup>
 													</select>
 												</div>

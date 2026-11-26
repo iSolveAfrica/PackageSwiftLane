@@ -140,7 +140,7 @@ function sl_newPackageData($user, $core): array
     $d['insurance'] = (float) ($core->insurance ?? 0);
     $d['meter'] = (float) ($core->meter ?: 500);
     $d['minTax'] = (float) ($core->min_cost_tax ?? 0);
-    $d['unit'] = (string) ($core->weight_p ?? 'lb');
+    $d['unit'] = (string) ($core->weight_p ?? 'lbs');
     $d['dim'] = (string) ($core->units ?? 'in');
     $d['today'] = date('Y-m-d');
     // pre-alert to import (?prealert_id=)

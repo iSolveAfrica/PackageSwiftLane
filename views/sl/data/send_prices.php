@@ -9,7 +9,7 @@ function sl_tariffSheetText(): string
     $s = $s ? $s[0] : null;
     if (!$s) return 'Prices are not set up yet.';
     $cur = (string) ($s->currency ?? '');
-    $unit = (string) ($s->weight_p ?? 'lb');
+    $unit = (string) ($s->weight_p ?? 'lbs');
     $lines = ['Price per ' . $unit . ': ' . $cur . ' ' . number_format((float) ($s->value_weight ?? 0), 2)];
     if ((float) ($s->c_tariffs ?? 0) > 0) $lines[] = 'Customs: ' . (float) $s->c_tariffs . '%';
     if ((float) ($s->tax ?? 0) > 0) $lines[] = 'Tax: ' . (float) $s->tax . '%';

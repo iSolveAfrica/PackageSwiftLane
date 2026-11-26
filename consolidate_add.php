@@ -7,4 +7,4 @@ $type = ($_GET['type'] ?? 'air') === 'sea' ? 'sea' : 'air';
 sl_gate($type === 'sea' ? 'add_consolidate_package' : 'add_consolidate_shipment');
 if (sl_userIs('client')) { header('Location: error403.php'); exit; }
 require_once 'views/sl/data/consolidations.php';
-sl_render('NewConsolidation', ['id' => 'consol', 'title' => 'New consolidation', 'board' => 'NewConsolidation', 'styles' => ['assets/swiftlane/pages/ops.css']], sl_newConsolidationData($user, $core, $type));
+sl_render('NewConsolidation', ['id' => 'consol', 'title' => 'New consolidation', 'board' => 'NewConsolidation', 'navCollapsed' => true, 'styles' => ['assets/swiftlane/pages/ops.css']], sl_newConsolidationData($user, $core, $type));

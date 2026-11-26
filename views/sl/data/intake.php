@@ -36,7 +36,7 @@ function sl_intakeData($user, $core): array
             'order_deli_time' => (int) ($info->time_default5 ?? 0), 'order_service_options' => (int) ($info->service_default4 ?? 0),
         ],
         'agencies' => $look['agencies'], 'offices' => $look['offices'], 'packaging' => $look['packaging'], 'delitimes' => $look['delitimes'],
-        'rates' => ['price' => (float) ($core->value_weight ?? 0), 'ins' => (float) ($core->insurance ?? 0), 'meter' => (float) ($core->meter ?: 500), 'rate' => (float) ($core->exchange_rate ?? 0), 'weight' => (string) ($core->weight_p ?? 'lb'), 'currency' => (string) ($core->currency ?? 'USD')],
+        'rates' => ['price' => (float) ($core->value_weight ?? 0), 'ins' => (float) ($core->insurance ?? 0), 'meter' => (float) ($core->meter ?: 500), 'rate' => (float) ($core->exchange_rate ?? 0), 'weight' => (string) ($core->weight_p ?? 'lbs'), 'currency' => (string) ($core->currency ?? 'USD')],
         'prefix' => (string) ($core->prefix_online_shopping ?: 'PK-'),
         'ai' => $ai, 'agencyLocked' => !empty($ctx['is_restricted']) && !empty($ctx['agency_id']),
         'canLabel' => $user->cdp_hasPermission('print_label'), 'canReceipt' => $user->cdp_hasPermission('print_package'),

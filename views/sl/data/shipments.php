@@ -794,7 +794,7 @@ function sl_newShipmentData($user, $core, bool $client): array
             'order_payment_method' => (int) ($info->payment_default7 ?? 0), 'status_courier' => (int) ($info->status_default8 ?? 0), 'order_item_category' => $mode === 'sea' ? 27 : 26,
         ],
         'agencyLocked' => !empty($ctx['is_restricted']) && !empty($ctx['agency_id']),
-        'rates' => ['price_lb' => (float) ($settings->value_weight ?? 0), 'tax' => 0, 'insurance' => (float) ($settings->insurance ?? 0), 'insurance_mode' => sl_slSetting('shipment_insurance_mode', 'percentage'), 'insurance_fixed' => (float) sl_slSetting('shipment_insurance_fixed', 0), 'tariffs' => 0, 'declared' => 0, 'min_tax' => 0, 'min_declared' => 0, 'meter' => (float) ($settings->meter ?? 0), 'rate' => (float) ($core->exchange_rate ?? 0), 'currency' => (string) ($core->currency ?? 'USD'), 'weight' => (string) ($core->weight_p ?? 'lb')],
+        'rates' => ['price_lb' => (float) ($settings->value_weight ?? 0), 'tax' => 0, 'insurance' => (float) ($settings->insurance ?? 0), 'insurance_mode' => sl_slSetting('shipment_insurance_mode', 'percentage'), 'insurance_fixed' => (float) sl_slSetting('shipment_insurance_fixed', 0), 'tariffs' => 0, 'declared' => 0, 'min_tax' => 0, 'min_declared' => 0, 'meter' => (float) ($settings->meter ?? 0), 'rate' => (float) ($core->exchange_rate ?? 0), 'currency' => (string) ($core->currency ?? 'USD'), 'weight' => (string) ($core->weight_p ?? 'lbs')],
         'today' => date('Y-m-d'),
         'endpoint' => $client ? 'ajax/courier/add_courier_client_ajax.php' : 'ajax/courier/add_courier_ajax.php',
         'me' => null, 'prealert' => null,

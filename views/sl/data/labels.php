@@ -170,7 +170,7 @@ function sl_labelTestData(string $size): array
     $track = 'TEST000123';
     $l = ['id' => 0, 'type' => 'air', 'track' => $track, 'carrier' => 'Test carrier', 'carrierNo' => '1Z999AA10123456784', 'mode' => 'AIR', 'svc' => 'Express', 'pack' => 'Small box',
         'locker' => '000000', 'bay' => '', 'dg' => false, 'name' => 'TEST CUSTOMER NAME', 'phone' => '+233 *** 0000', 'addr' => '12 Sample Street, East Legon', 'to' => 'ACCRA, GHANA', 'from' => 'NEW YORK, USA',
-        'hub' => mb_strtoupper((string) ($core->site_name ?? 'Swift Lane')), 'hubAddr' => '', 'weight' => '2.5 lb', 'pieces' => 1, 'received' => date('M j'), 'contents' => 'Printer test ×1', 'declared' => sl_money(0),
+        'hub' => mb_strtoupper((string) ($core->site_name ?? 'Swift Lane')), 'hubAddr' => '', 'weight' => '2.5 lbs', 'pieces' => 1, 'received' => date('M j'), 'contents' => 'Printer test ×1', 'declared' => sl_money(0),
         'total' => sl_money(0), 'paid' => true, 'url' => rtrim((string) ($core->site_url ?? ''), '/') . '/track.php', 'site' => (string) ($core->site_name ?? 'Swift Lane'), 'ini' => 'SL',
         'sender' => 'SENDER NAME', 'senderCity' => 'NEW YORK, USA', 'siteUrl' => preg_replace('#^https?://#', '', rtrim((string) ($core->site_url ?? ''), '/')), 'sitePhone' => (string) ($core->c_phone ?? '')];
     $l += ['piece' => '1 / 1', 'bc' => sl_barcodeSvg($track, 350, 88, 13), 'bcSmall' => sl_barcodeSvg($track, 178, 40, 6.5), 'qr' => sl_codeGridSvg($l['url'], 64)];

@@ -158,7 +158,7 @@ function sl_pickupsData($user, $core): array
             'addr' => $r->sender_address ?: '—', 'area' => $r->sender_city ?: '', 'win' => $win,
             'day' => $due ? (date('Y-m-d', $due) === date('Y-m-d') ? 'Today' : (date('Y-m-d', $due) === date('Y-m-d', strtotime('+1 day')) ? 'Tomorrow' : date('D M j', $due))) : '',
             'late' => in_array($stage, ['requested', 'scheduled'], true) && $due && $due < strtotime('today'),
-            'items' => (int) $r->items, 'kg' => (float) $r->total_weight > 0 ? number_format((float) $r->total_weight, 1) . ' ' . ($core->weight_p ?? 'lb') : '—', 'fee' => sl_money($r->total_order),
+            'items' => (int) $r->items, 'kg' => (float) $r->total_weight > 0 ? number_format((float) $r->total_weight, 1) . ' ' . ($core->weight_p ?? 'lbs') : '—', 'fee' => sl_money($r->total_order),
             'drv' => $r->driver_id ? sl_userName($users[(int) $r->driver_id] ?? null) : '', 'stage' => $stage, 'st' => $stages[$stage]['label'], 'cls' => $stages[$stage]['cls'],
             'step' => $stage === 'issues' ? -1 : array_search($stage, $order, true),
             'open' => in_array($stage, ['requested', 'scheduled', 'collected'], true), 'requested' => $stage === 'requested',

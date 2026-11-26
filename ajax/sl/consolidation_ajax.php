@@ -87,9 +87,17 @@ switch ($op) {
             if (count($kinds) > 1) sl_json(['success' => false, 'message' => 'A consolidation groups either dangerous goods or normal goods, never both.'], 422);
             $dg = (int) reset($kinds);
         }
-        $prefix = mb_substr(trim(cdp_sanitize($_POST['code_prefix'] ?? '')), 0, 20) ?: ($M['sea'] ? 'SLC-' : 'AIR-');
-        $no = cdp_uidClaim('consolidate_no', (string) ($_POST['order_no'] ?? ''));
-        $date = date('Y-m-d', strtotime((string) ($_POST['order_date'] ?? 'now')) ?: time());
+        // The code is generated here and cannot be chosen on the form: air = consolidation prefix setting,
+        // sea = "C" + origin country (sl_conPrefix); the number is always the next free one.
+        $prefix = sl_conPrefix($M['sea'], (string) ($_POST['country_code'] ?? 'US'), $core);
+        $no = cdp_uidClaim('consolidate_no', '');
+        // Fields no longer on the form fall back to the company defaults.
+        $shipDef = cdp_getInfoShipDefault();
+        $agDef = cdp_getDefaultAgencyOrigin();
+        // ship date and time (datetime-local "2026-11-26T14:30", or a plain date)
+        $shipTs = strtotime(str_replace('T', ' ', (string) ($_POST['order_date'] ?? 'now'))) ?: time();
+        $date = date('Y-m-d', $shipTs);
+        $time = strlen((string) ($_POST['order_date'] ?? '')) > 10 ? date('H:i:s', $shipTs) : date('H:i:s');
         $status = (int) ($_POST['status_courier'] ?? 13) ?: 13;
         if (cdp_isHandedOver($status) || $status === 21) $status = 13;
         // totals: the same arithmetic as the legacy create page, from the packages picked
@@ -102,9 +110,9 @@ switch ($op) {
         $cols = ['user_id' => $uid, 'c_prefix' => $prefix, 'c_no' => $no, 'c_date' => $date, 'sender_id' => $uid, 'sender_address_id' => 0, 'receiver_id' => 0, 'receiver_address_id' => 0,
             'tax_value' => $taxP, 'tax_insurance_value' => $insP, 'total_insured_value' => $insured, 'tax_custom_tariffis_value' => $dutyP, 'value_weight' => $rate, 'volumetric_percentage' => (string) ($core->meter ?: 500),
             'total_weight' => $w, 'sub_total' => $sub, 'tax_discount' => $discP, 'total_tax_insurance' => $ins, 'total_tax_custom_tariffis' => $duty, 'total_tax' => $tax, 'total_tax_discount' => $disc, 'total_reexp' => $reex, 'total_order' => $total,
-            'order_datetime' => $date . ' ' . date('H:i:s'), 'agency' => (string) (int) ($_POST['agency'] ?? 0), 'origin_off' => (string) (int) ($_POST['origin_off'] ?? 0), 'order_package' => (string) (int) ($_POST['order_package'] ?? 0),
-            'order_item_category' => (string) (int) (cdp_getInfoShipDefault()->logistics_default1 ?? 0), 'order_courier' => (string) (int) ($_POST['order_courier'] ?? 0), 'order_service_options' => (string) (int) ($_POST['order_service_options'] ?? 0),
-            'order_deli_time' => (string) (int) ($_POST['order_deli_time'] ?? 0), 'order_pay_mode' => (string) (int) ($_POST['order_pay_mode'] ?? 0), 'status_courier' => (string) $status, 'driver_id' => (int) ($_POST['driver_id'] ?? 0),
+            'order_datetime' => $date . ' ' . $time, 'agency' => (string) (int) ($_POST['agency'] ?? $agDef['agency'] ?? 0), 'origin_off' => (string) (int) ($_POST['origin_off'] ?? $agDef['origin_off'] ?? 0), 'order_package' => (string) (int) ($_POST['order_package'] ?? ($shipDef->packaging_default2 ?? 0)),
+            'order_item_category' => (string) (int) (cdp_getInfoShipDefault()->logistics_default1 ?? 0), 'order_courier' => (string) (int) ($_POST['order_courier'] ?? 0), 'order_service_options' => (string) (int) ($_POST['order_service_options'] ?? ($shipDef->service_default4 ?? 0)),
+            'order_deli_time' => (string) (int) ($_POST['order_deli_time'] ?? ($shipDef->time_default5 ?? 0)), 'order_pay_mode' => (string) (int) ($_POST['order_pay_mode'] ?? 0), 'status_courier' => (string) $status, 'driver_id' => (int) ($_POST['driver_id'] ?? 0),
             'seals_package' => mb_substr(cdp_sanitize($_POST['seals'] ?? ''), 0, 300), 'status_invoice' => 2, 'recipient_type' => 'recipient'];
         if ($awbCol) $cols['awb_no'] = cdp_awbNormalize($_POST['awb_no'] ?? '');
         if (sl_columnExists($M['head'], 'is_dangerous_good')) $cols['is_dangerous_good'] = $dg;

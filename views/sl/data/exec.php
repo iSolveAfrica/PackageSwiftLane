@@ -60,7 +60,7 @@ function sl_execData($user, $core): array
         ['icon' => 'i-chart', 'l' => 'Profit per shipment', 'v' => $money ? sl_money($n ? ($rev - $cost) / $n : 0) : $hid, 's' => $money ? 'after carrier and running costs' : 'hidden for your role', 'sp' => []],
         ['icon' => 'i-check', 'l' => 'On time', 'v' => ($deliv ? round(($deliv - $late) / $deliv * 100) : 100) . '%', 's' => sl_num($deliv) . ' delivered', 'sp' => []],
         ['icon' => 'i-users', 'l' => 'Active customers', 'v' => sl_num($custs), 's' => 'shipped in the period', 'sp' => []],
-        ['icon' => 'i-box', 'l' => 'Weight moved', 'v' => sl_num($kg) . ' lb', 's' => $n ? number_format($kg / $n, 1) . ' lb average' : '—', 'sp' => []],
+        ['icon' => 'i-box', 'l' => 'Weight moved', 'v' => sl_num($kg) . ' ' . ($core->weight_p ?? 'lbs'), 's' => $n ? number_format($kg / $n, 1) . ' ' . ($core->weight_p ?? 'lbs') . ' average' : '—', 'sp' => []],
     ];
     $d['bars'] = array_map(fn($x, $i) => ['c' => $i === 11 ? 'on' : '', 'h' => 'height:' . max(3, sl_pct($x['n'], $wmax)) . '%', 't' => 'Week of ' . sl_date($x['a'], 'M j') . ': ' . $x['n']], $weekly, array_keys($weekly));
     $peakW = $weekly[array_search($wmax, array_column($weekly, 'n'))] ?? null;

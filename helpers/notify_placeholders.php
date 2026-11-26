@@ -129,8 +129,8 @@ if (!function_exists('cdp_buildPackageNotifyPlaceholders')) {
         // Carry the configured unit so every caller renders "15 lb", not "15".
         if ($weight !== '' && function_exists('cdp_getSettingsCourier')) {
             $wsettings  = cdp_getSettingsCourier();
-            $weightUnit = trim((string) ($wsettings->weight_p ?? 'lb'));
-            if ($weightUnit === '') { $weightUnit = 'lb'; }
+            $weightUnit = trim((string) ($wsettings->weight_p ?? 'lbs'));
+            if ($weightUnit === '' || in_array(strtolower($weightUnit), ['lb', 'lbs', 'pound', 'pounds'], true)) { $weightUnit = 'lbs'; } // pounds read as "lbs"
             $weight .= ' ' . $weightUnit;
         }
 

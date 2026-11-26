@@ -27,7 +27,7 @@ sl_render('FinancialSheet', [
     'sid'        => (int) ($_GET['sid'] ?? 0),
     'rate'       => $rate > 0 ? $rate : 1,
     'weightRate' => (string) ($core->value_weight ?? ''),
-    'unit'       => (string) ($core->weight_p ?? 'lb'),
+    'unit'       => (string) ($core->weight_p ?? 'lbs'),
     'symbol'     => (string) ($core->for_symbol ?: '$'),
     'canRate'    => $user->cdp_hasPermission('fs_price_items'),
 ]);

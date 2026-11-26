@@ -87,7 +87,7 @@ function sl_stageOf($status, bool $inConsolidation = false): int
 function sl_weight($value, int $dec = 1): string
 {
     global $core;
-    return number_format((float) $value, $dec) . ' ' . ($core->weight_p ?? 'lb');
+    return number_format((float) $value, $dec) . ' ' . ($core->weight_p ?? 'lbs');
 }
 
 /** Users (customers) keyed by id for a set of ids, one query. */

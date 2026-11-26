@@ -158,7 +158,7 @@ if (!function_exists('cdp_notifyChannels')) {
             'tracking' => 'SL-100482', 'track_url' => ($site !== '' ? $site : 'https://example.com') . '/track.php?order_track=SL-100482',
             'company' => $company, 'date' => date('M j, Y · g:i A'),
             'status' => 'Ready for pickup', 'location' => 'Accra office', 'comment' => 'Collect from counter 2',
-            'carrier_tracking' => '9400 1112 0261 3450 9822 18', 'eta' => date('M j, Y', strtotime('+3 days')), 'weight' => '4.20 lb',
+            'carrier_tracking' => '9400 1112 0261 3450 9822 18', 'eta' => date('M j, Y', strtotime('+3 days')), 'weight' => '4.20 lbs',
             'items' => "2 x Running shoes\n1 x Phone case",
             'items_html' => '<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;font-size:14px"><tr><td style="padding:6px 0;border-bottom:1px solid #eee">Running shoes</td><td style="padding:6px 0;border-bottom:1px solid #eee;text-align:right">× 2</td></tr><tr><td style="padding:6px 0">Phone case</td><td style="padding:6px 0;text-align:right">× 1</td></tr></table>',
             'pickup_code' => 'Pickup code: *482193*. Show this code when you collect your package. Do not share it with anyone else.',

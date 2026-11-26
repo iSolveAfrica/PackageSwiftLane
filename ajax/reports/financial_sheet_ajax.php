@@ -2287,7 +2287,7 @@ if ($action === 'set_weight_rate') {
         exit;
     }
 
-    echo json_encode(['ok' => true, 'value' => $val, 'unit' => (string) ($core->weight_p ?? 'lb')]);
+    echo json_encode(['ok' => true, 'value' => $val, 'unit' => (string) ($core->weight_p ?? 'lbs')]);
     exit;
 }
 
