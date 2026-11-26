@@ -10,6 +10,7 @@ require_once __DIR__ . '/../../helpers/ajax_guard.php';
 require_once __DIR__ . '/../../helpers/sl_view.php';
 require_once __DIR__ . '/../../views/sl/data/intake.php';
 require_login();
+$user = $user ?? new User();
 require_permission(['package_intake', 'add_package']);
 $op = (string) ($_GET['op'] ?? '');
 $ctx = cdp_getAgencyContext();
@@ -29,6 +30,19 @@ if ($op === 'customer') {
     sl_json(['success' => true, 'customers' => array_values(array_filter(array_map(fn($r) => $customer((int) $r->id), $rows)))]);
 }
 
+// as-you-type: open pre-alerts whose tracking number contains what was typed (min 4 characters)
+if ($op === 'suggest') {
+    $t = strtoupper(preg_replace('/\s+/', '', (string) ($_GET['tracking'] ?? '')));
+    if (strlen($t) < 4 || strlen($t) > 60 || !preg_match('/^[A-Z0-9\-]+$/', $t)) sl_json(['success' => true, 'items' => []]);
+    $rows = sl_rows("SELECT p.pre_alert_id, p.tracking, p.provider_shop, p.package_description, p.purchase_price, p.estimated_date, p.customer_id, u.fname, u.lname, u.locker
+        FROM cdb_pre_alert p JOIN cdb_users u ON u.id = p.customer_id
+        WHERE p.is_package = 0 AND REPLACE(UPPER(p.tracking), ' ', '') LIKE :t $agencyScope
+        ORDER BY (REPLACE(UPPER(p.tracking), ' ', '') = :x) DESC, p.pre_alert_id DESC LIMIT 6", [':t' => '%' . $t . '%', ':x' => $t]);
+    sl_json(['success' => true, 'items' => array_map(fn($r) => ['id' => (int) $r->pre_alert_id, 'tracking' => (string) $r->tracking, 'shop' => (string) $r->provider_shop,
+        'what' => mb_strimwidth((string) $r->package_description, 0, 40, '…'), 'price' => sl_money($r->purchase_price), 'eta' => sl_date($r->estimated_date),
+        'customer' => trim($r->fname . ' ' . $r->lname), 'locker' => (string) $r->locker, 'customer_id' => (int) $r->customer_id], $rows)]);
+}
+
 if ($op === 'lookup') {
     $t = strtoupper(preg_replace('/\s+/', '', (string) ($_GET['tracking'] ?? '')));
     if ($t === '' || strlen($t) > 60 || !preg_match('/^[A-Z0-9\-]+$/', $t)) {
@@ -43,6 +57,7 @@ if ($op === 'lookup') {
     $out = ['success' => true, 'tracking' => $t, 'carrierGuess' => sl_intakeCarrierGuess($t), 'duplicate' => $dup ? ['id' => (int) $dup->order_id, 'track' => $dup->order_prefix . $dup->order_no] : null, 'prealert' => null, 'customer' => null, 'items' => [], 'source' => 'none', 'conf' => ''];
     if ($pa) {
         $cust = $customer((int) $pa->customer_id);
+        $out['canLink'] = $dup && (int) $pa->is_package === 0 && $user->cdp_hasPermission('prealert_edit');
         $out['prealert'] = ['id' => (int) $pa->pre_alert_id, 'shop' => (string) $pa->provider_shop, 'courier_id' => (int) $pa->courier_com, 'courier' => (string) $pa->name_com, 'desc' => (string) $pa->package_description, 'price' => (float) $pa->purchase_price, 'eta' => (string) $pa->estimated_date, 'used' => (int) $pa->is_package === 1];
         $out['customer'] = $cust;
         $out['items'] = [['name' => (string) ($pa->package_description ?: 'Package from ' . $pa->provider_shop), 'qty' => 1, 'value' => (float) $pa->purchase_price]];

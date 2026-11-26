@@ -62,7 +62,7 @@ switch ($op) {
     case 'toggle':
         if (!$row) sl_json(['success' => false, 'message' => 'Automation not found'], 404);
         $on = (int) !empty($_POST['value']);
-        $db->cdp_query('UPDATE cdb_automations SET enabled = :e, updated_at = NOW() WHERE id = :id');
+        $db->cdp_query('UPDATE cdb_automations SET enabled = :e, updated_at = NOW()' . (cdp_automationsReviewReady() && $on ? ", review_status = 'published'" : '') . ' WHERE id = :id');
         $db->bind(':e', $on); $db->bind(':id', $id);
         $ok = $db->cdp_execute();
         if ($ok) $log('toggle', ($on ? 'switched on' : 'paused') . " automation \"{$row->name}\"", $id, $row->name);
@@ -83,6 +83,23 @@ switch ($op) {
         $ok = $db->cdp_execute();
         if ($ok) $log('delete', "deleted automation \"{$row->name}\"", $id, $row->name);
         sl_json(['success' => (bool) $ok, 'message' => $ok ? 'Automation deleted' : 'Could not delete', 'redirect' => 'automations.php']);
+        break;
+    case 'approve':
+    case 'publish':
+    case 'dismiss':
+    case 'restore':
+        if (!$row) sl_json(['success' => false, 'message' => 'Automation not found'], 404);
+        if (!cdp_automationsReviewReady()) sl_json(['success' => false, 'message' => 'Run the database upgrade 2026_11_27_prealerts_automations first'], 409);
+        [$rs, $on, $msg] = ['approve' => ['approved', 0, 'Approved. Publish it to switch it on.'], 'publish' => ['published', 1, 'Published: it is now live'], 'dismiss' => ['dismissed', 0, 'Dismissed'], 'restore' => ['suggested', 0, 'Back in the suggestions']][$op];
+        $db->cdp_query('UPDATE cdb_automations SET review_status = :rs, enabled = :e, updated_at = NOW() WHERE id = :id');
+        $db->bind(':rs', $rs); $db->bind(':e', $on); $db->bind(':id', $id);
+        $ok = $db->cdp_execute();
+        if ($ok) $log($op, $op . "d automation \"{$row->name}\"", $id, $row->name);
+        sl_json(['success' => (bool) $ok, 'message' => $ok ? $msg : 'Could not save', 'reload' => true]);
+        break;
+    case 'run_scheduled':
+        $s = cdp_automationsScheduled();
+        sl_json(['success' => true, 'message' => 'Checks run: ' . $s['handled'] . ' record(s) handled by ' . $s['rules'] . ' live rule(s)', 'reload' => true]);
         break;
     case 'test':
         if (!$row) sl_json(['success' => false, 'message' => 'Save the automation first'], 422);

@@ -60,7 +60,7 @@
       $('[data-ix-track]').value = j.tracking;
       $('[data-ix-details]').hidden = false;
       box.innerHTML = '';
-      if (j.duplicate) say('Already registered as <a href="customer_packages_view.php?id=' + j.duplicate.id + '">' + esc(j.duplicate.track) + '</a>. Check before adding it again.', true);
+      if (j.duplicate) say('Already registered as <a href="customer_packages_view.php?id=' + j.duplicate.id + '">' + esc(j.duplicate.track) + '</a>. Check before adding it again.' + (j.canLink && j.prealert ? ' <button type="button" class="sl-btn sm" style="margin-left:6px" data-ix-linkpa="' + j.prealert.id + '" data-pkg="' + j.duplicate.id + '">Convert the pre-alert to ' + esc(j.duplicate.track) + '</button>' : ''), true);
       if (j.prealert) {
         var p = j.prealert;
         $('[name="prealert_id"]').value = p.used ? '' : p.id;
@@ -83,6 +83,36 @@
     }).catch(function () { $('[data-ix-loading]').hidden = true; say('Lookup failed. Check the connection and try again.', true); });
   }
   f.querySelector('[data-ix-lookup]').addEventListener('click', lookup);
+
+  // as you type: open pre-alerts with a matching tracking number; "Convert" fills the form from it
+  var trackIn = $('[data-ix-track]'), sug = document.createElement('div'), sugT = null;
+  sug.className = 'ix-sug'; sug.hidden = true; sug.setAttribute('role', 'listbox'); sug.setAttribute('aria-label', 'Matching pre-alerts');
+  trackIn.closest('.ix-find').insertAdjacentElement('afterend', sug);
+  trackIn.addEventListener('input', function () {
+    clearTimeout(sugT);
+    var t = trackIn.value.replace(/\s+/g, '');
+    if (t.length < 4) { sug.hidden = true; return; }
+    sugT = setTimeout(function () {
+      get('ajax/sl/package_intake_ajax.php?op=suggest&tracking=' + encodeURIComponent(t)).then(function (j) {
+        var it = (j.items || []);
+        if (trackIn.value.replace(/\s+/g, '') !== t) return;
+        sug.innerHTML = it.length ? '<div class="ix-sug-h"><i class="ic ic-sm i-inbox" aria-hidden="true"></i>Pre-alert' + (it.length > 1 ? 's' : '') + ' with this tracking number</div>' + it.map(function (p) {
+          return '<div class="ix-sug-row" role="option"><span class="col grow" style="min-width:0"><b class="mono">' + esc(p.tracking) + '</b><span class="mut sm">' + esc(p.customer) + (p.locker ? ' · ' + esc(p.locker) : '') + ' · ' + esc(p.shop || 'shop not given') + ' · ' + esc(p.what) + ' · ' + esc(p.price) + ' · due ' + esc(p.eta) + '</span></span><button type="button" class="sl-btn sm" data-ix-use="' + esc(p.tracking) + '">Convert to package</button></div>';
+        }).join('') : '';
+        sug.hidden = !it.length;
+      });
+    }, 300);
+  });
+  sug.addEventListener('click', function (e) { var b = e.target.closest('[data-ix-use]'); if (!b) return; trackIn.value = b.getAttribute('data-ix-use'); sug.hidden = true; lookup(); });
+  // the parcel is already registered: link the pre-alert to that package (its number goes on the pre-alert)
+  msg.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-ix-linkpa]'); if (!b) return;
+    b.disabled = true;
+    SL.post('ajax/sl/prealert_ajax.php', { op: 'link', id: b.getAttribute('data-ix-linkpa'), module: 'package', order_id: b.getAttribute('data-pkg'), fill: 1 }).then(function (j) {
+      SL.toast(j.message || '', !j.success);
+      if (j.success && j.href) setTimeout(function () { location.href = j.href; }, 700);
+    }).finally(function () { b.disabled = false; });
+  });
   $('[data-ix-track]').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); lookup(); } });
   document.querySelectorAll('[data-ix-focus]').forEach(function (b) { b.addEventListener('click', function () { var i = $('[data-ix-track]'); i.focus(); i.select(); SL.toast('Scan the barcode with the scanner: it types into the tracking box.'); }); });
 

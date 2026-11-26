@@ -37,8 +37,8 @@ function cdp_automationTriggers(): array
         'payment.received'   => ['label' => 'Payment received', 'icon' => 'i-card', 'entity' => 'payment', 'hook' => 'ajax/gateway/* after the payment row is written'],
         'invoice.overdue'    => ['label' => 'Invoice overdue (daily check)', 'icon' => 'i-receipt', 'entity' => 'shipment', 'hook' => 'cron/pickup_aging or a daily cron calling cdp_automationsFire per overdue order'],
         'customer.signed_up' => ['label' => 'Customer signs up', 'icon' => 'i-user', 'entity' => 'customer', 'hook' => 'ajax/sign_up_ajax.php after the account is created'],
-        'prealert.created'   => ['label' => 'Pre-alert created', 'icon' => 'i-inbox', 'entity' => 'prealert', 'hook' => 'ajax/pre_alerts/* after insert'],
-    ];
+        'prealert.created'   => ['label' => 'Pre-alert created', 'icon' => 'i-inbox', 'entity' => 'prealert', 'hook' => 'ajax/sl/prealert_ajax.php (wired)'],
+    ] + cdp_automationScheduledTriggers();
 }
 
 function cdp_automationConditions(): array
@@ -51,6 +51,7 @@ function cdp_automationConditions(): array
         'amount_over' => ['label' => 'amount is over', 'input' => 'number', 'hint' => 'In the site currency'],
         'is_pickup'   => ['label' => 'it is a pickup', 'input' => 'none'],
         'unpaid'      => ['label' => 'invoice is unpaid', 'input' => 'none'],
+        'days_over'   => ['label' => 'has waited at least (days)', 'input' => 'number', 'hint' => 'Days, e.g. 30'],
     ];
 }
 
@@ -64,13 +65,15 @@ function cdp_automationActions(): array
         'staff_email' => ['label' => 'E-mail the team', 'icon' => 'i-users', 'fields' => ['subject', 'message']],
         'ticket'      => ['label' => 'Open a support ticket', 'icon' => 'i-ticket', 'fields' => ['subject']],
         'log'         => ['label' => 'Write to Activity Logs', 'icon' => 'i-clock', 'fields' => []],
+        'staff_in_app' => ['label' => 'Notify the team in the app', 'icon' => 'i-bell', 'fields' => ['message']],
+        'close_prealert' => ['label' => 'Close the pre-alert (not arrived)', 'icon' => 'i-x', 'fields' => ['subject']],
     ];
 }
 
 /** Variables an automation message may use. */
 function cdp_automationVars(): array
 {
-    return ['[NAME]', '[FIRST_NAME]', '[TRACKING]', '[STATUS]', '[AMOUNT]', '[LOCKER]', '[SITE_NAME]', '[URL]'];
+    return ['[NAME]', '[FIRST_NAME]', '[TRACKING]', '[STATUS]', '[AMOUNT]', '[LOCKER]', '[SITE_NAME]', '[URL]', '[DAYS]'];
 }
 
 function cdp_automationsReady(): bool
@@ -111,9 +114,9 @@ function cdp_automationText(string $text, array $ctx, $user, $settings): string
     $first = trim((string) ($user->fname ?? '')) ?: $name;
     $amount = isset($ctx['amount']) ? (function_exists('sl_money') ? sl_money($ctx['amount']) : (string) $ctx['amount']) : '';
     return str_replace(
-        ['[NAME]', '[FIRST_NAME]', '[TRACKING]', '[STATUS]', '[AMOUNT]', '[LOCKER]', '[SITE_NAME]', '[URL]'],
+        ['[NAME]', '[FIRST_NAME]', '[TRACKING]', '[STATUS]', '[AMOUNT]', '[LOCKER]', '[SITE_NAME]', '[URL]', '[DAYS]'],
         [$name, $first, (string) ($ctx['tracking'] ?? ($ctx['entity_label'] ?? '')), (string) ($ctx['status_name'] ?? ''), $amount,
-            (string) ($user->locker ?? ''), (string) ($settings->site_name ?? 'Swift Lane'), rtrim((string) ($settings->site_url ?? ''), '/')],
+            (string) ($user->locker ?? ''), (string) ($settings->site_name ?? 'Swift Lane'), rtrim((string) ($settings->site_url ?? ''), '/'), (string) ($ctx['days'] ?? '')],
         $text
     );
 }
@@ -146,6 +149,9 @@ function cdp_automationMatches(array $auto, array $ctx, $user): bool
                 break;
             case 'unpaid':
                 if (empty($ctx['unpaid'])) return false;
+                break;
+            case 'days_over':
+                if ((int) ($ctx['days'] ?? -1) < (int) $v) return false;
                 break;
         }
     }
@@ -215,6 +221,19 @@ function cdp_automationRunAction(array $act, array $auto, array $ctx, $user, $se
             } catch (Throwable $e) {
                 return 'ticket: ' . $e->getMessage();
             }
+        case 'staff_in_app':
+            require_once __DIR__ . '/querys.php';
+            $staff = cdp_automationStaffIds();
+            if (!$staff) return 'staff_in_app: no staff';
+            $nid = function_exists('cdp_insertNotification') ? cdp_insertNotification(['user_id' => $staff[0], 'order_id' => is_numeric($ctx['entity_id'] ?? null) ? (int) $ctx['entity_id'] : 0,
+                'notification_description' => mb_substr($msg !== '' ? $msg : $subject, 0, 340), 'shipping_type' => (string) ($ctx['shipping_type'] ?? '1'), 'notification_date' => date('Y-m-d H:i:s')]) : 0;
+            if ($nid) foreach ($staff as $sid) cdp_insertNotificationsUsers($nid, $sid);
+            return 'staff_in_app: ' . ($nid ? count($staff) . ' notified' : 'failed');
+        case 'close_prealert':
+            if (($ctx['entity_type'] ?? '') !== 'prealert') return 'close_prealert: not a pre-alert';
+            require_once __DIR__ . '/prealert.php';
+            $closed = cdp_preAlertClose((int) $ctx['entity_id'], $subject !== '' && $subject !== $auto['name'] ? $subject : 'Closed automatically: not arrived', 0);
+            return 'close_prealert: ' . ($closed ? 'closed' : 'already closed');
         case 'log':
             require_once __DIR__ . '/activity_log.php';
             if (function_exists('cdp_activityLog')) {
@@ -295,3 +314,5 @@ function cdp_automationsFire(string $trigger, array $ctx = [], bool $dryRun = fa
     $depth--;
     return $out;
 }
+
+require_once __DIR__ . '/automations_scheduled.php';

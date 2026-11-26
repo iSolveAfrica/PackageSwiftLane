@@ -15,3 +15,13 @@
 .pa-what { display: block; max-width: 240px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
 @media (max-width: 1280px) { .pa-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 640px) { .pa-stats { grid-template-columns: 1fr; } .pa-what { max-width: 180px; } .pa-two { grid-template-columns: 1fr; } }
+/* clickable rows, shortened text (20 characters, full text in the pop-up), the edit / convert pop-up */
+.pa-row { cursor: pointer; }
+.pa-row:hover td { background: var(--hover); }
+.pa-row:focus-visible { outline: 2px solid var(--accent, var(--ink)); outline-offset: -2px; }
+.pa-cut { display: block; white-space: nowrap; }
+.pa-hit { display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; padding: 2px 8px; border-radius: 999px; font-size: 12.5px; background: color-mix(in srgb, var(--green) 14%, transparent); color: var(--green-ink, var(--ink)); }
+.pa-ed { width: min(640px, calc(100vw - 32px)); max-height: calc(100dvh - 48px); overflow-y: auto; gap: 12px; }
+.pa-ed .sl-ct.mono { font-size: 18px; }
+.pa-conv { border-top: 1px solid var(--line); padding-top: 14px; }
+.pa-match { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; }

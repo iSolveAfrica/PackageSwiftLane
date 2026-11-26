@@ -68,7 +68,7 @@ $opt = function (array $rows, $selected, string $labelKey = 'label') { $o = ''; 
   <button type="button" class="sl-btn ghost" data-sl-close>Close</button>
 </div></div>
 <script>
-(function () {
+document.addEventListener("DOMContentLoaded", function () { // runs after swiftlane.js (SL) is loaded
   var CFG = { rate: <?= json_encode($d['rate']) ?>, tax: <?= json_encode($d['tax']) ?>, ins: <?= json_encode($d['insurance']) ?>, meter: <?= json_encode($d['meter']) ?>, minTax: <?= json_encode($d['minTax']) ?>, sym: <?= json_encode($core->for_symbol ?? ($core->currency ?? '$')) ?>, unit: <?= json_encode($d['unit']) ?> };
   var tb = document.querySelector('#np-boxes tbody'), tpl = document.getElementById('np-row');
   function money(n) { return CFG.sym + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
@@ -112,10 +112,23 @@ $opt = function (array $rows, $selected, string $labelKey = 'label') { $o = ''; 
   cust.addEventListener('change', loadAddr); if (cust.value) loadAddr();
   document.getElementById('np-files').addEventListener('change', function () { document.getElementById('np-files-note').textContent = this.files.length ? this.files.length + ' file(s) attached' : 'Add a photo of each box before sealing'; });
   var postal = document.getElementById('np-postal'), hint = document.getElementById('np-pa-hint');
-  if (postal && hint) postal.addEventListener('change', function () {
-    SL.get('ajax/sl/package_ajax.php', { op: 'prealert', tracking: postal.value }).then(function (j) {
-      if (j.prealert) { hint.className = 'sl-banner ok'; hint.querySelector('span').textContent = 'Pre-alert matched: ' + (j.prealert.what || 'parcel') + ' from ' + j.prealert.shop + ' for ' + j.prealert.customer + '. It is linked when the package is created.'; document.querySelector('[name=prealert_id]').value = j.prealert.id; if (j.prealert.customer_id) { cust.value = j.prealert.customer_id; loadAddr(); } }
-    });
+  // as you type: open pre-alerts with a matching tracking number; "Convert" reloads the form filled from it
+  var paT = null;
+  if (postal && hint) postal.addEventListener('input', function () {
+    clearTimeout(paT);
+    var t = postal.value.replace(/\s+/g, '');
+    if (t.length < 4) return;
+    paT = setTimeout(function () {
+      SL.get('ajax/sl/package_intake_ajax.php', { op: 'suggest', tracking: t }).then(function (j) {
+        var it = j.items || [];
+        if (!it.length) { hint.className = 'sl-banner info'; hint.querySelector('span').textContent = 'No open pre-alert has this tracking number. Fill the package in by hand.'; return; }
+        hint.className = 'sl-banner ok';
+        hint.querySelector('span').innerHTML = it.map(function (p) {
+          var d = document.createElement('div'); d.textContent = 'Pre-alert ' + p.tracking + ' · ' + p.customer + (p.locker ? ' · ' + p.locker : '') + ' · ' + (p.shop || 'shop not given') + ' · ' + p.what + ' · ' + p.price;
+          return '<span class="row between g8 wrap" style="width:100%"><span>' + d.innerHTML + '</span><a class="sl-btn sm" href="customer_packages_add.php?prealert_id=' + p.id + '">Convert to package</a></span>';
+        }).join('');
+      });
+    }, 300);
   });
-})();
+});
 </script>

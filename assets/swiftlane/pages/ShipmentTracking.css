@@ -59,3 +59,7 @@
 }
 .tk-note{display:flex;gap:8px;align-items:flex-start;padding:10px 12px;border-radius:12px;background:var(--active);font-size:14px;line-height:1.45;color:var(--ink)}
 .tk-note .ic{flex:none;margin-top:2px}
+/* pickup code digits (replaces the old placeholder box); the signature box stays as it is */
+.tk-code{display:flex;gap:6px;align-items:center;min-height:60px}
+.tk-code span{display:grid;place-items:center;width:36px;height:48px;border:1px solid var(--line);border-radius:10px;background:var(--panel);font:600 24px/1 var(--mono,ui-monospace,monospace);color:var(--ink)}
+.tk-code.is-empty{width:96px;height:60px;justify-content:center;border:1px dashed var(--line);border-radius:10px;color:var(--muted)}
