@@ -171,29 +171,9 @@ switch ($op) {
         sl_json(['success' => true, 'message' => 'Saved. Customers and staff now see these pictures on the login page.', 'reload' => true]);
         break;
     case 'auth':
-        // Sign-in methods: passkeys (fingerprint / face) and single sign-on (helpers/sso.php).
-        $errors = [];
-        $gOn = !empty($_POST['google_on']); $mOn = !empty($_POST['ms_on']);
-        $gId = trim((string) ($_POST['google_client_id'] ?? '')); $mId = trim((string) ($_POST['ms_client_id'] ?? ''));
-        $gSecret = trim((string) ($_POST['google_secret'] ?? '')); $mSecret = trim((string) ($_POST['ms_secret'] ?? ''));
-        $tenant = strtolower(trim((string) ($_POST['ms_tenant'] ?? 'common'))) ?: 'common';
-        if ($gId !== '' && !preg_match('/^[A-Za-z0-9._-]{10,200}$/', $gId)) $errors['google_client_id'] = 'Not a valid client ID';
-        if ($mId !== '' && !preg_match('/^[0-9a-fA-F-]{36}$/', $mId)) $errors['ms_client_id'] = 'Application (client) ID is a 36-character GUID';
-        if (!preg_match('/^[a-z0-9.\-]{3,100}$/', $tenant)) $errors['ms_tenant'] = 'Tenant ID, domain, or common';
-        $gHas = $gSecret !== '' || (string) sl_slSetting('auth_google_secret', '') !== '';
-        $mHas = $mSecret !== '' || (string) sl_slSetting('auth_ms_secret', '') !== '';
-        if ($gOn && ($gId === '' || !$gHas)) $errors['google_client_id'] = 'Enter the client ID and secret before turning Google on';
-        if ($mOn && ($mId === '' || !$mHas)) $errors['ms_client_id'] = 'Enter the client ID and secret before turning Microsoft on';
-        if ($errors) sl_json(['success' => false, 'message' => 'Please check the highlighted fields', 'errors' => $errors], 422);
+        // Sign-in methods: fingerprint / face sign-in (passkeys, helpers/webauthn.php).
         sl_settingSet('auth_passkeys', !empty($_POST['passkeys']) ? '1' : '0', $by);
-        sl_settingSet('auth_google_on', $gOn ? '1' : '0', $by);
-        sl_settingSet('auth_google_client_id', $gId, $by);
-        if ($gSecret !== '') sl_settingSet('auth_google_secret', mb_substr($gSecret, 0, 300), $by);
-        sl_settingSet('auth_ms_on', $mOn ? '1' : '0', $by);
-        sl_settingSet('auth_ms_client_id', $mId, $by);
-        sl_settingSet('auth_ms_tenant', $tenant, $by);
-        if ($mSecret !== '') sl_settingSet('auth_ms_secret', mb_substr($mSecret, 0, 300), $by);
-        $log('Sign-in methods: fingerprint ' . (!empty($_POST['passkeys']) ? 'on' : 'off') . ', Google ' . ($gOn ? 'on' : 'off') . ', Microsoft ' . ($mOn ? 'on' : 'off'));
+        $log('Fingerprint and face sign-in turned ' . (!empty($_POST['passkeys']) ? 'on' : 'off'));
         sl_json(['success' => true, 'message' => 'Sign-in methods saved.', 'reload' => true]);
         break;
     case 'reset':

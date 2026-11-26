@@ -24,13 +24,8 @@ sl_render('LoginSettings', ['id' => 'loginpg', 'title' => 'Login page', 'board' 
     'site' => $core->site_name ?? 'Swift Lane',
     'canLogo' => $user->cdp_hasPermission('view_tools'),
     'auth' => (function () {
-        require_once 'helpers/sso.php';
         require_once 'helpers/webauthn.php';
-        $p = cdp_ssoProviders();
-        return [
-            'passkeys' => cdp_passkeysEnabled(), 'redirect' => cdp_ssoRedirectUri(), 'https' => cdp_ssoRedirectUri() !== '' && strpos(cdp_ssoRedirectUri(), 'https://') === 0,
-            'google' => ['on' => $p['google']['on'], 'id' => $p['google']['client_id'], 'hasSecret' => $p['google']['secret'] !== ''],
-            'microsoft' => ['on' => $p['microsoft']['on'], 'id' => $p['microsoft']['client_id'], 'hasSecret' => $p['microsoft']['secret'] !== '', 'tenant' => $p['microsoft']['tenant']],
-        ];
+        $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https') || in_array(cdp_waRpId(), ['localhost', '127.0.0.1'], true);
+        return ['passkeys' => cdp_passkeysEnabled(), 'https' => $https];
     })(),
 ]);

@@ -6,7 +6,7 @@
  * laptops use: ES256 (COSE -7, P-256) and RS256 (COSE -257). Attestation is not
  * requested ("none"), so registration trusts the browser's own user check.
  *
- * Storage: cdb_passkeys (migrations/2026_11_26_passkeys_sso.sql; created on demand).
+ * Storage: cdb_passkeys (migrations/2026_11_26_passkeys.sql; created on demand).
  * Flow: ajax/sl/passkey_ajax.php issues one-time challenges kept in the session and
  * calls cdp_waVerifyRegistration() / cdp_waVerifyAssertion() below.
  *
