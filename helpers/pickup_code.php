@@ -639,6 +639,60 @@ if (!function_exists('cdp_pickupCodeEnsureTables')) {
         return ['success' => true, 'message' => 'Code verified. The package can be handed over.'];
     }
 
+    /** Staff allowed to skip the pickup code at handover (permission pickup_code_skip; never a customer). */
+    function cdp_pickupCodeCanSkip($user)
+    {
+        if (!cdp_pickupCodeCanUse($user)) {
+            return false;
+        }
+        return $user->cdp_hasPermission('pickup_code_skip');
+    }
+
+    /**
+     * Authorised skip: records a "verified" code entry for the packages, marked as skipped, so the handover
+     * gate (cdp_pickupCodeGate) lets them through exactly as after a real code; the entry is consumed on
+     * handover like any code. Who skipped and why goes to the pickup-code log. Caller checks the permission.
+     *
+     * @return array{success:bool,message:string}
+     */
+    function cdp_pickupCodeSkip($module, array $orderIds, $staffId, $reason)
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $orderIds))));
+        if (!$ids || !cdp_pickupCodeEnsureTables()) {
+            return ['success' => false, 'message' => 'Nothing to skip.'];
+        }
+        $pkgs = cdp_pickupCodePackages($module, $ids);
+        if (!$pkgs) {
+            return ['success' => false, 'message' => 'Package not found.'];
+        }
+        $owners = array_values(array_unique(array_map(function ($p) { return (int) $p->sender_id; }, $pkgs)));
+        $now = date('Y-m-d H:i:s');
+        $db = new Conexion;
+        $db->cdp_query("INSERT INTO cdb_pickup_codes (code, module, owner_id, trackings, context, status, attempts, channels, created_by, created_at, expires_at, verified_by, verified_at)
+                        VALUES ('SKIPPED', :m, :o, :t, 'skipped', 'verified', 0, '', :by, :now, :exp, :by2, :now2)");
+        $db->bind(':m', cdp_pickupCodeModule($module));
+        $db->bind(':o', count($owners) === 1 ? $owners[0] : 0);
+        $db->bind(':t', mb_substr(implode(', ', array_map(function ($p) { return $p->order_prefix . $p->order_no; }, $pkgs)), 0, 2000));
+        $db->bind(':by', (int) $staffId);
+        $db->bind(':now', $now);
+        $db->bind(':exp', date('Y-m-d H:i:s', time() + CDP_PICKUP_VERIFIED_TTL));
+        $db->bind(':by2', (int) $staffId);
+        $db->bind(':now2', $now);
+        if (!$db->cdp_execute()) {
+            return ['success' => false, 'message' => 'The skip could not be saved.'];
+        }
+        $codeId = (int) $db->dbh->lastInsertId();
+        foreach ($pkgs as $p) {
+            $db->cdp_query('INSERT IGNORE INTO cdb_pickup_code_items (code_id, module, order_id) VALUES (:c, :m, :o)');
+            $db->bind(':c', $codeId);
+            $db->bind(':m', cdp_pickupCodeModule($module));
+            $db->bind(':o', (int) $p->order_id);
+            $db->cdp_execute();
+        }
+        cdp_pickupCodeLog($module, $ids, 'skip', 'Pickup code skipped by staff #' . (int) $staffId . ': ' . $reason);
+        return ['success' => true, 'message' => 'Pickup code skipped. The package can be handed over within 30 minutes.'];
+    }
+
     /**
      * The verified, unused code item covering each package, if any.
      *

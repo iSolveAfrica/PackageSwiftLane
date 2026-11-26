@@ -322,7 +322,7 @@ function sl_trackConsoleData($user, $core, string $source = 'shipments', int $li
             $M = sl_conMode($r->mode);
             if ($user->cdp_hasPermission($M['p']['print'])) $docs[] = ['Manifest', $M['url']['print'] . '?id=' . $id, 'i-file'];
             if ($user->cdp_hasPermission($M['p']['label'])) $docs[] = ['Label', $M['url']['label'] . '?id=' . $id, 'i-tag'];
-            if ($r->mode === 'air' && $user->cdp_hasPermission($M['p']['print'])) $docs[] = ['Packing list', 'consolidate_parking_list.php?id=' . $id, 'i-layers'];
+            if ($user->cdp_hasPermission($M['p']['print']) && !$client) $docs[] = ['Packing list', 'packing_list.php?id=' . $id . '&type=' . $r->mode, 'i-layers'];
         } elseif ($r->mode === 'air') {
             if ($user->cdp_hasPermission('print_shipment')) $docs[] = ['Invoice', 'print_inv_ship.php?id=' . $id, 'i-receipt'];
             if ($user->cdp_hasPermission('print_label')) $docs[] = ['Label 4×6', sl_route('Label4x6', ['id' => $id]), 'i-tag'];

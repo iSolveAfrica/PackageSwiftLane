@@ -20,6 +20,17 @@
   });
   var sb = document.getElementById('ho-send');
   if (sb) sb.addEventListener('click', function () { sb.disabled = true; SL.post('ajax/sl/warehouse_ajax.php', { op: 'send_customer', customer: cust }).then(function (j) { SL.toast(j.message || '', !j.success); }).finally(function () { setTimeout(function () { sb.disabled = false; }, 2000); }); });
+  // skip the code (warehouse / district administrators and finance only; the button is not shown to others)
+  var sk = document.getElementById('ho-skip'), skGo = document.getElementById('ho-skip-go');
+  if (sk) sk.addEventListener('click', function () { var r = document.getElementById('ho-skip-row'); r.hidden = !r.hidden; if (!r.hidden) document.getElementById('ho-skip-reason').focus(); });
+  if (skGo) skGo.addEventListener('click', function () {
+    var reason = document.getElementById('ho-skip-reason').value.trim(); if (reason.length < 4) return SL.toast('Say why the code is skipped', true);
+    skGo.disabled = true;
+    SL.post('ajax/sl/warehouse_ajax.php', { op: 'skip_customer', customer: cust, reason: reason }).then(function (j) {
+      SL.toast(j.message || '', !j.success);
+      if (j.success) { document.getElementById('ho-skip-row').hidden = true; verifiedUI(j.verified || []); }
+    }).finally(function () { skGo.disabled = false; });
+  });
   var kind = 'picked_up';
   flow.addEventListener('click', function (e) { var k = e.target.closest('[data-kind]'); if (!k) return; e.preventDefault(); kind = k.getAttribute('data-kind'); flow.querySelectorAll('[data-kind]').forEach(function (x) { x.classList.toggle('on', x === k); }); });
   function sel() { return Array.prototype.slice.call(flow.querySelectorAll('[data-item] input[type=checkbox]:checked')).map(function (c) { return c.closest('[data-item]').getAttribute('data-item'); }); }

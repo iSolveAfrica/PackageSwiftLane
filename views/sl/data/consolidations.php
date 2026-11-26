@@ -106,8 +106,8 @@ function sl_consolidationsData($user, $core): array
                 'edit' => $can('edit') && !$done && !sl_userIs('client') ? $M['url']['edit'] . '?id=' . $id : '',
                 'print' => $can('print') && !$done ? $M['url']['print'] . '?id=' . $id : '',
                 'label' => $can('label') && !$done ? $M['url']['label'] . '?id=' . $id : '',
-                'packing' => $can('print') && !sl_userIs('client') && $r->mode === 'air' ? 'consolidate_parking_list.php?id=' . $id : '',
-                'packingX' => $can('print') && !sl_userIs('client') && $r->mode === 'air' ? 'consolidate_parking_list_excel.php?id=' . $id : '',
+                'packing' => $can('print') && !sl_userIs('client') ? 'packing_list.php?id=' . $id . '&type=' . $r->mode : '',
+                'packingX' => $can('print') && !sl_userIs('client') ? 'packing_list.php?id=' . $id . '&type=' . $r->mode . '&format=csv' : '',
                 'track' => $can('track') && !$done && $s !== 21 ? $M['url']['track'] . '?id=' . $id : '',
                 'deliver' => $can('deliver') && !$done && $s !== 21 ? $M['url']['deliver'] . '?id=' . $id : '',
                 'pay' => $can('verify') && (int) $r->status_invoice === 2 ? $M['url']['pay'] . '?id_order=' . $id : '',
@@ -229,8 +229,9 @@ function sl_consolidationDetailData($user, $core, int $id, string $type): ?array
             'edit' => $canEdit ? $M['url']['edit'] . '?id=' . $id : '', 'print' => $user->cdp_hasPermission($M['p']['print']) ? $M['url']['print'] . '?id=' . $id : '',
             'label' => $user->cdp_hasPermission($M['p']['label']) ? $M['url']['label'] . '?id=' . $id : '', 'track' => $user->cdp_hasPermission($M['p']['track']) && !cdp_isHandedOver($s) && $s !== 21 ? $M['url']['track'] . '?id=' . $id : '',
             'deliver' => $user->cdp_hasPermission($M['p']['deliver']) && !cdp_isHandedOver($s) && $s !== 21 ? $M['url']['deliver'] . '?id=' . $id : '',
-            'packing' => !$M['sea'] && $user->cdp_hasPermission($M['p']['print']) && !sl_userIs('client') ? 'consolidate_parking_list.php?id=' . $id : '',
-            'packingX' => !$M['sea'] && $user->cdp_hasPermission($M['p']['print']) && !sl_userIs('client') ? 'consolidate_parking_list_excel.php?id=' . $id : '',
+            // packing list (packing_list.php): customers -> packages -> items with weights, dangerous goods apart
+            'packing' => $user->cdp_hasPermission($M['p']['print']) && !sl_userIs('client') ? 'packing_list.php?id=' . $id . '&type=' . $M['mode'] : '',
+            'packingX' => $user->cdp_hasPermission($M['p']['print']) && !sl_userIs('client') ? 'packing_list.php?id=' . $id . '&type=' . $M['mode'] . '&format=csv' : '',
             'notify' => $user->cdp_hasPermission('push_notifications'),
             'delete' => $user->cdp_hasPermission($M['p']['delete']) && !cdp_isHandedOver($s) && $s !== 21 && !sl_userIs('client'),
         ],
@@ -391,4 +392,63 @@ function sl_consolidationsBoard($user, $core): array
     $q = trim((string) ($_GET['q'] ?? ''));
     $tc = sl_trackConsoleData($user, $core, 'consolidations', 60, ['filter' => $stage, 'mode' => $mode, 'q' => $q]);
     return ['modes' => $modes, 'mode' => $mode, 'stage' => $stage, 'q' => $q, 'tracking' => $tc];
+}
+
+/**
+ * Packing list of one consolidation (packing_list.php): customers -> packages -> items, with weights,
+ * dangerous goods in their own section. No prices. Staff only (the list shows every customer).
+ */
+function sl_packingListData($user, $core, int $id, string $type): ?array
+{
+    $M = sl_conMode($type);
+    if (!$user->cdp_hasPermission([$M['p']['print'], $M['p']['view'], $M['p']['list']]) || sl_userIs('client')) return null;
+    $c = sl_row("SELECT * FROM {$M['head']} c WHERE c.consolidate_id = :id", [':id' => $id]);
+    if (!$c || !sl_opsInScope($c)) return null;
+    $o = $M['orders'];
+    $dgCol = sl_columnExists($o, 'is_dangerous_good') ? 'a.is_dangerous_good' : '0';
+    $postal = $M['sea'] ? 'a.tracking_purchase' : "(SELECT t.tracking_number FROM cdb_package_tracking_number t WHERE t.order_id = a.order_id ORDER BY t.id DESC LIMIT 1)";
+    $pk = sl_rows("SELECT d.order_id, d.order_prefix, d.order_no, d.weight, a.sender_id, a.total_weight, $dgCol AS dg, $postal AS postal
+        FROM {$M['detail']} d LEFT JOIN $o a ON a.order_id = d.order_id WHERE d.consolidate_id = :id ORDER BY d.detail_id", [':id' => $id]);
+    $items = [];
+    $ids = array_values(array_filter(array_map(fn($r) => (int) $r->order_id, $pk)));
+    if ($ids) {
+        foreach (sl_rows("SELECT order_id, order_item_description AS what, order_item_quantity AS qty, order_item_weight AS w FROM {$M['items']} WHERE order_id IN (" . implode(',', $ids) . ') ORDER BY order_item_id') as $it) {
+            $items[(int) $it->order_id][] = ['what' => trim((string) $it->what) ?: '—', 'qty' => (int) $it->qty, 'w' => (float) $it->w];
+        }
+    }
+    $users = sl_usersById(array_map(fn($r) => $r->sender_id, $pk));
+    $sections = ['normal' => [], 'dg' => []];
+    $sn = 0;
+    // customers in name order, packages in loading order
+    usort($pk, fn($a, $b) => strcasecmp(sl_userName($users[(int) $a->sender_id] ?? null), sl_userName($users[(int) $b->sender_id] ?? null)));
+    foreach ($pk as $r) {
+        $sec = (int) $r->dg === 1 ? 'dg' : 'normal';
+        $uid = (int) $r->sender_id;
+        $u = $users[$uid] ?? null;
+        $w = (float) ($r->weight ?: $r->total_weight);
+        if (!isset($sections[$sec][$uid])) $sections[$sec][$uid] = ['name' => sl_userName($u), 'locker' => (string) ($u->locker ?? ''), 'phone' => (string) ($u->phone ?? ''), 'pk' => [], 'w' => 0.0, 'pcs' => 0];
+        $its = $items[(int) $r->order_id] ?? [];
+        $pcs = array_sum(array_column($its, 'qty'));
+        $sections[$sec][$uid]['pk'][] = ['sn' => ++$sn, 'code' => $r->order_prefix . $r->order_no, 'post' => (string) ($r->postal ?: '—'), 'w' => $w, 'items' => $its, 'pcs' => $pcs];
+        $sections[$sec][$uid]['w'] += $w;
+        $sections[$sec][$uid]['pcs'] += $pcs;
+    }
+    $tot = function (array $cust) { return ['cust' => count($cust), 'pk' => array_sum(array_map(fn($c) => count($c['pk']), $cust)), 'pcs' => array_sum(array_column($cust, 'pcs')), 'w' => array_sum(array_column($cust, 'w'))]; };
+    $courier = sl_scalar('SELECT name_com FROM cdb_courier_com WHERE id = :id', [':id' => (int) $c->order_courier], '—');
+    $office = sl_row('SELECT name_off, city FROM cdb_offices WHERE id = :id', [':id' => (int) $c->origin_off]);
+    return [
+        'cid' => $id, 'type' => $M['mode'], 'sea' => $M['sea'], 'code' => $c->c_prefix . $c->c_no, 'site' => (string) ($core->site_name ?? 'Swift Lane'),
+        'unit' => (string) ($core->weight_p ?? 'lbs'), 'status' => sl_statusLabel($c->status_courier),
+        'facts' => array_values(array_filter([
+            [$M['sea'] ? 'Shipping line' : 'Airline', $courier],
+            [$M['sea'] ? 'Bill of lading' : 'Air waybill', ($c->awb_no ?? '') ?: '—'],
+            $M['sea'] && !empty($c->seals_package) ? ['Seals', $c->seals_package] : null,
+            ['Origin', $office ? ($office->name_off . ($office->city ? ' · ' . $office->city : '')) : '—'],
+            ['Shipped', sl_date($c->order_datetime ?: $c->c_date, 'M j, Y H:i')],
+            ['ETA', !empty($c->estimated_eta) ? sl_date($c->estimated_eta) : '—'],
+        ])),
+        'sections' => array_filter(['normal' => $sections['normal'], 'dg' => $sections['dg']]),
+        'totals' => ['normal' => $tot($sections['normal']), 'dg' => $tot($sections['dg']), 'all' => ['cust' => count(array_unique(array_merge(array_keys($sections['normal']), array_keys($sections['dg']))))] + $tot(array_merge(array_values($sections['normal']), array_values($sections['dg'])))],
+        'back' => sl_route('ConsolidationDetail', ['id' => $id, 'type' => $M['mode']]),
+    ];
 }

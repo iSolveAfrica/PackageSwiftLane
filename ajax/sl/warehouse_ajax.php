@@ -120,6 +120,33 @@ switch ($op) {
         sl_json(['success' => !empty($res['success']), 'message' => $res['message'], 'errors' => empty($res['success']) ? ['code' => $res['message']] : null], empty($res['success']) ? 422 : 200);
         break;
 
+    // Skip the pickup code (warehouse / district administrators and finance: permission pickup_code_skip).
+    case 'code_skip':
+    case 'skip_customer':
+        if (!cdp_pickupCodeCanSkip($user)) sl_json(['success' => false, 'message' => 'Only warehouse administrators, district administrators and finance can skip the pickup code.'], 403);
+        $reason = mb_substr(trim(strip_tags((string) ($_POST['reason'] ?? ''))), 0, 200);
+        if (mb_strlen($reason) < 4) sl_json(['success' => false, 'message' => 'Say why the code is skipped', 'errors' => ['reason' => 'Required']], 422);
+        if ($op === 'code_skip') {
+            $module = cdp_pickupCodeModule((string) ($_POST['module'] ?? 'air'));
+            $ids = slw_ids();
+            if (!$ids) sl_json(['success' => false, 'message' => 'No package specified.'], 422);
+            foreach ($ids as $id) if (!slw_pkg($module, $id)) sl_json(['success' => false, 'message' => 'Package not found'], 404);
+            $res = cdp_pickupCodeSkip($module, $ids, $uid, $reason);
+            $label = $module . ' #' . implode(',', $ids);
+            $verified = [];
+        } else {
+            $c = sl_whCustomer((int) ($_POST['customer'] ?? 0));
+            if (!$c || !$c['pkgs']) sl_json(['success' => false, 'message' => 'This customer has no parcel ready.'], 404);
+            $res = ['success' => false, 'message' => 'Nothing to skip.'];
+            foreach ($c['byMod'] as $m => $ids) if ($ids) $res = cdp_pickupCodeSkip($m, $ids, $uid, $reason);
+            $label = $c['name'];
+            $verified = [];
+            foreach ($c['byMod'] as $m => $ids) foreach (array_keys(cdp_pickupCodeVerifiedFor($m, $ids)) as $oid) $verified[] = $m . ':' . $oid;
+        }
+        cdp_activityLog(['module' => 'pickup_codes', 'action' => 'skip', 'action_label' => 'Skipped pickup code', 'verb' => 'update', 'outcome' => !empty($res['success']) ? 'ok' : 'fail', 'summary' => 'Pickup code skipped for ' . $label . ': ' . $reason, 'entity_type' => $op === 'code_skip' ? 'package' : 'customer', 'entity_id' => $op === 'code_skip' ? $ids[0] : $c['id']]);
+        sl_json(['success' => !empty($res['success']), 'message' => $res['message'], 'verified' => $verified], empty($res['success']) ? 422 : 200);
+        break;
+
     case 'verify_customer':
         // HandOut / WarehouseDelivery: the code the customer shows, checked against all their ready packages (per module).
         if (!cdp_pickupCodeCanUse($user)) sl_json(['success' => false, 'message' => 'You do not have permission to use pickup codes.'], 403);
