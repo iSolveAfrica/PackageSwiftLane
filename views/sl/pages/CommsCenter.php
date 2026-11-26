@@ -9,8 +9,8 @@ $tabs = ['overview' => 'Overview', 'automations' => 'Automations', 'templates' =
 if (!empty($d['isAdmin'])) { $tabs['settings'] = 'Settings'; }
 ?>
 <div class="ops">
-<div class="sl-head"><div><h1 class="sl-title" style="font-size:20px">Communication Center</h1><p class="sl-lede">WhatsApp, SMS and e-mail: automatic alerts, campaigns with consent, preferences and history</p></div>
-<div class="row g8 wrap"><a class="sl-btn ghost" href="<?= h(sl_route('CommsInbox')) ?>"><i class="ic ic-sm i-message" aria-hidden="true"></i>WhatsApp Inbox</a><a class="sl-btn ghost" href="<?= h(sl_route('CommsHub')) ?>">Communications hub</a></div></div>
+<?php $commsTab = 'commscenter'; include __DIR__ . '/partials/comms_tabs.php'; ?>
+<div class="sl-head"><div><h1 class="sl-title" style="font-size:20px">Communication Center</h1><p class="sl-lede">WhatsApp, SMS and e-mail: automatic alerts, campaigns with consent, preferences and history</p></div></div>
 <?php if (empty($d['ready'])): ?><div class="swl-ops-banner is-danger">The communication tables could not be created. The database user needs the CREATE privilege once.</div><?php endif; ?>
 <div class="swl-ops-tabs" role="tablist" aria-label="Communication Center sections">
 <?php $first = true; foreach ($tabs as $k => $label): ?><button type="button" role="tab" id="cm_tab_<?= h($k) ?>" aria-controls="cm_pane_<?= h($k) ?>" aria-selected="<?= $first ? 'true' : 'false' ?>" data-tab="<?= h($k) ?>"><?= h($label) ?></button><?php $first = false; endforeach; ?>

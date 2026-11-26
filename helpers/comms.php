@@ -1798,24 +1798,125 @@ if (!function_exists('cdp_commFindUserByPhone')) {
         }
     }
 
-    function cdp_commThreads($status = '', $q = '', $limit = 100)
+    /**
+     * WHERE clause shared by the inbox list and its counts, so the two always
+     * agree. $status: '' (all), 'open' (waiting for a person), 'mine'
+     * (assigned to me, not closed), 'bot' (with King), 'closed'.
+     */
+    function cdp_commThreadWhere($status, $q, array &$b)
     {
         $w = '1=1';
-        $b = [];
-        if (in_array($status, ['bot', 'open', 'closed', 'mine'], true)) {
-            if ($status === 'mine') {
-                $w .= ' AND t.assignee_id = :me AND t.status <> \'closed\'';
-                $b[':me'] = cdp_opsUid();
-            } else {
-                $w .= ' AND t.status = :s';
-                $b[':s'] = $status;
-            }
+        if ($status === 'mine') {
+            $w .= " AND t.assignee_id = :me AND t.status <> 'closed'";
+            $b[':me'] = cdp_opsUid();
+        } elseif (in_array($status, ['bot', 'open', 'closed'], true)) {
+            $w .= ' AND t.status = :s';
+            $b[':s'] = $status;
         }
+        $q = trim((string) $q);
         if ($q !== '') {
-            $w .= ' AND (t.phone LIKE :q OR t.contact_name LIKE :q OR t.last_message LIKE :q)';
-            $b[':q'] = '%' . $q . '%';
+            $w .= " AND (t.phone LIKE :q1 OR t.contact_name LIKE :q2 OR t.last_message LIKE :q3 OR u.locker LIKE :q4 OR CONCAT(COALESCE(u.fname,''),' ',COALESCE(u.lname,'')) LIKE :q5";
+            // % and _ in the search text are literal characters, not wildcards.
+            $like = '%' . addcslashes($q, '%_\\') . '%';
+            foreach ([1, 2, 3, 4, 5] as $i) {
+                $b[':q' . $i] = $like;
+            }
+            $digits = preg_replace('/\D+/', '', $q);
+            if (strlen($digits) >= 3) {
+                $w .= ' OR t.phone LIKE :qd';
+                $b[':qd'] = '%' . $digits . '%';
+            }
+            $w .= ')';
         }
-        return cdp_opsQ("SELECT t.*, u.locker FROM cdb_comm_threads t LEFT JOIN cdb_users u ON u.id = t.user_id WHERE $w ORDER BY t.updated_at DESC LIMIT " . (int) $limit, $b);
+        return $w;
+    }
+
+    function cdp_commThreads($status = '', $q = '', $limit = 100)
+    {
+        $b = [];
+        $w = cdp_commThreadWhere((string) $status, (string) $q, $b);
+        return cdp_opsQ("SELECT t.*, u.locker, TRIM(CONCAT(COALESCE(u.fname,''),' ',COALESCE(u.lname,''))) customer_name,
+                                TRIM(CONCAT(COALESCE(a.fname,''),' ',COALESCE(a.lname,''))) assignee_name
+                         FROM cdb_comm_threads t LEFT JOIN cdb_users u ON u.id = t.user_id LEFT JOIN cdb_users a ON a.id = t.assignee_id
+                         WHERE $w ORDER BY t.updated_at DESC, t.id DESC LIMIT " . (int) $limit, $b);
+    }
+
+    /** Counts per inbox filter (same search as the list): all, open, mine, bot, closed. */
+    function cdp_commThreadCounts($q = '')
+    {
+        $b = [];
+        $w = cdp_commThreadWhere('', (string) $q, $b);
+        $b[':me'] = cdp_opsUid();
+        $r = cdp_opsOne("SELECT COUNT(*) a, SUM(t.status = 'open') o, SUM(t.status = 'bot') bo, SUM(t.status = 'closed') c,
+                                SUM(t.status <> 'closed' AND t.assignee_id = :me) m
+                         FROM cdb_comm_threads t LEFT JOIN cdb_users u ON u.id = t.user_id WHERE $w", $b);
+        return ['all' => (int) ($r->a ?? 0), 'open' => (int) ($r->o ?? 0), 'mine' => (int) ($r->m ?? 0), 'bot' => (int) ($r->bo ?? 0), 'closed' => (int) ($r->c ?? 0)];
+    }
+
+    /**
+     * Conversations waiting for a person: the sidebar badge, the Communications
+     * tab and the inbox's "Waiting for a person" filter all use this one figure.
+     * Definition: status 'open'. An unread message in a thread King is handling
+     * (status 'bot') is being answered by King, so it does not wait for a
+     * person; a handoff or a failed bot answer sets the status to 'open'.
+     * One COUNT per request (static cache).
+     */
+    function cdp_commWaitingCount()
+    {
+        static $n = null;
+        if ($n === null) {
+            $n = cdp_opsTableExists('cdb_comm_threads')
+                ? (int) cdp_opsVal("SELECT COUNT(*) FROM cdb_comm_threads WHERE status = 'open'", [], 0) : 0;
+        }
+        return $n;
+    }
+
+    /** The URL a WhatsApp provider posts inbound messages to (without the secret key). */
+    function cdp_commWebhookBase()
+    {
+        $base = defined('CDP_APP_URL') && CDP_APP_URL !== '' ? (string) CDP_APP_URL : cdp_opsSiteUrl();
+        if ($base === '' && !empty($_SERVER['HTTP_HOST'])) {
+            $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+            $base = ($https ? 'https://' : 'http://') . preg_replace('/[^A-Za-z0-9.\-:\[\]]/', '', (string) $_SERVER['HTTP_HOST']);
+        }
+        return rtrim($base, '/') . '/webhooks/whatsapp.php';
+    }
+
+    /**
+     * Is WhatsApp connected? What the inbox status strip shows. Never returns
+     * a secret: only whether one is set (the admin view adds the webhook key).
+     */
+    function cdp_commConnection($isAdmin = false)
+    {
+        $s = cdp_commSettings();
+        $cloud = $s['wa_provider'] === 'cloud';
+        if ($cloud) {
+            $inbound = $s['wa_cloud_verify'] !== '' && $s['wa_cloud_app_secret'] !== '';
+            $outbound = $s['wa_cloud_phone_id'] !== '' && $s['wa_cloud_token'] !== '';
+        } else {
+            $inbound = $s['webhook_key'] !== '';
+            $cs = function_exists('cdp_getSettingsCourier') ? cdp_getSettingsCourier() : null;
+            $outbound = $cs && (int) ($cs->active_whatsapp ?? 0) === 1;
+        }
+        $aiOk = null;
+        if ($s['bot_enabled'] === '1') {
+            require_once __DIR__ . '/ai_assistant.php';
+            $aiOk = function_exists('cdp_aiConfigured') ? (bool) cdp_aiConfigured() : false;
+        }
+        $base = cdp_commWebhookBase();
+        return [
+            'provider' => $cloud ? 'cloud' : 'ultramsg',
+            'provider_label' => $cloud ? 'Meta WhatsApp Cloud API' : 'UltraMsg',
+            'inbound' => $inbound,
+            'outbound' => $outbound,
+            'bot_on' => $s['bot_enabled'] === '1',
+            'bot_ai_ok' => $aiOk,
+            'connected' => $inbound && $outbound,
+            // Admins get the full address once the key exists; nobody gets a placeholder they could copy by mistake.
+            'webhook_url' => $cloud ? $base : ($isAdmin ? ($s['webhook_key'] !== '' ? $base . '?key=' . $s['webhook_key'] : $base) : $base . '?key=…'),
+            'webhook_has_key' => $s['webhook_key'] !== '',
+            'threads' => (int) cdp_opsVal("SELECT COUNT(*) FROM cdb_comm_threads", [], 0),
+        ];
     }
 }
 

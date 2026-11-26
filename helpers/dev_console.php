@@ -323,22 +323,51 @@ function sl_devHttps(): array
     return ['request' => $req, 'configured' => stripos($url, 'https://') === 0, 'url' => $url];
 }
 
-/** Response headers this app sends (from headers_list() of the current request). */
+/**
+ * Response headers and session-cookie flags this app sends (headers_list() of the current request;
+ * loader.php sets them). Each item:
+ *   name, set (bool), value, purpose (one line), fix (what to do when missing),
+ *   applies (false when it only works over HTTPS and this request is plain HTTP),
+ *   status: 'set' | 'missing' | 'https' (applies on HTTPS only; not counted as missing).
+ * Headers added by the web server (Apache, nginx, a CDN) are not visible to PHP.
+ */
 function sl_devHeaders(): array
 {
-    $want = ['Strict-Transport-Security', 'X-Frame-Options', 'X-Content-Type-Options', 'Content-Security-Policy', 'Referrer-Policy', 'Permissions-Policy'];
+    $https = sl_devHttps()['request'];
+    $want = [
+        ['Strict-Transport-Security', 'Tells browsers to use https for this site from now on, so nobody can quietly switch a visitor to plain http.', true,
+            'Sent by loader.php on every https request. Open the site over https (see the HTTPS check).'],
+        ['X-Frame-Options', 'Stops other websites from showing these pages inside a frame (click-jacking).', false,
+            'loader.php sends SAMEORIGIN; if it is missing, another script or the web server removed it.'],
+        ['X-Content-Type-Options', 'Stops browsers from guessing file types, so an uploaded file cannot run as a script.', false,
+            'loader.php sends nosniff; if it is missing, another script or the web server removed it.'],
+        ['Content-Security-Policy', 'Limits what a page may do: here, no plugins, no foreign <base> address and no framing by other sites.', false,
+            'loader.php sends a conservative policy; if it is missing, another script or the web server removed it.'],
+        ['Referrer-Policy', 'Keeps full page addresses (which can hold tracking numbers) from leaking to other websites.', false,
+            'loader.php sends strict-origin-when-cross-origin.'],
+        ['Permissions-Policy', 'Switches off browser features the app does not use (microphone) and keeps camera and location to this site.', false,
+            'loader.php sends camera=(self), microphone=(), geolocation=(self).'],
+    ];
     $have = [];
     foreach (headers_list() as $h) {
         $have[strtolower(trim(strstr($h, ':', true)))] = trim(substr(strstr($h, ':'), 1));
     }
+    $item = function (string $name, bool $set, string $value, string $purpose, bool $httpsOnly, string $fix) use ($https): array {
+        $applies = !$httpsOnly || $https;
+        return ['name' => $name, 'set' => $set, 'value' => $value, 'purpose' => $purpose, 'fix' => $fix, 'applies' => $applies,
+            'status' => $set ? 'set' : ($applies ? 'missing' : 'https')];
+    };
     $out = [];
-    foreach ($want as $w) {
-        $out[] = ['name' => $w, 'set' => isset($have[strtolower($w)]), 'value' => $have[strtolower($w)] ?? ''];
+    foreach ($want as [$w, $purpose, $httpsOnly, $fix]) {
+        $out[] = $item($w, isset($have[strtolower($w)]), (string) ($have[strtolower($w)] ?? ''), $purpose, $httpsOnly, $fix);
     }
     $sess = session_get_cookie_params();
-    $out[] = ['name' => 'Session cookie HttpOnly', 'set' => !empty($sess['httponly']), 'value' => ''];
-    $out[] = ['name' => 'Session cookie Secure', 'set' => !empty($sess['secure']), 'value' => ''];
-    $out[] = ['name' => 'Session cookie SameSite', 'set' => !empty($sess['samesite']), 'value' => (string) ($sess['samesite'] ?? '')];
+    $out[] = $item('Session cookie HttpOnly', !empty($sess['httponly']), !empty($sess['httponly']) ? 'httponly' : '', 'Page scripts cannot read the sign-in cookie, so an injected script cannot steal a session.', false,
+        'loader.php sets it with session_set_cookie_params().');
+    $out[] = $item('Session cookie Secure', !empty($sess['secure']), !empty($sess['secure']) ? 'secure' : '', 'The sign-in cookie is only sent over https, never over plain http.', true,
+        'loader.php sets it on https requests (or X-Forwarded-Proto: https behind a proxy).');
+    $out[] = $item('Session cookie SameSite', !empty($sess['samesite']), (string) ($sess['samesite'] ?? ''), 'Other websites cannot make the browser send the sign-in cookie with their requests (CSRF).', false,
+        'loader.php sets SameSite=Lax.');
     return $out;
 }
 

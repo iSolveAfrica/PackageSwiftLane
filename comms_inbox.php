@@ -13,4 +13,11 @@ if (!cdp_commIsStaff($user)) {
     header('Location: error403.php');
     exit;
 }
-cdp_opsRender('CommsInbox', 'commsinbox', 'WhatsApp Inbox', ['dataJs/comms_inbox.js'], ['ready' => cdp_commEnsureTables()]);
+$ready = cdp_commEnsureTables();
+$isAdmin = cdp_commIsAdmin($user);
+cdp_opsRender('CommsInbox', 'commsinbox', 'WhatsApp Inbox', ['dataJs/comms_inbox.js'], [
+    'ready' => $ready,
+    'isAdmin' => $isAdmin,
+    'conn' => $ready ? cdp_commConnection($isAdmin) : null,
+    'king' => cdp_kingName(),
+]);

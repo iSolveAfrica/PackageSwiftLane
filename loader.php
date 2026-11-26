@@ -82,12 +82,44 @@ if (PHP_SAPI !== 'cli' && session_status() === PHP_SESSION_NONE) {
 }
 
 // Security headers for every web response (the API sets its own in api/v1/bootstrap.php).
+// The Security Centre (security_center.php, helpers/dev_console.php sl_devHeaders) reports on these.
 if (PHP_SAPI !== 'cli' && !headers_sent() && strpos($_SERVER['SCRIPT_NAME'] ?? '', '/api/') === false) {
     header('X-Content-Type-Options: nosniff');
     header('X-Frame-Options: SAMEORIGIN');
     header('Referrer-Policy: strict-origin-when-cross-origin');
     header('Permissions-Policy: camera=(self), microphone=(), geolocation=(self)');
-    if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+    // Content-Security-Policy, deliberately conservative: only directives that cannot break the app.
+    // No default-src / script-src / style-src, so inline scripts and styles, CDN assets, map tiles,
+    // payment redirects and form posts work as before. frame-ancestors repeats X-Frame-Options
+    // (same-origin frames such as label previews still work); base-uri 'self' allows the
+    // same-origin <base href> of the installed apps (helpers/pwa.php, apps/router.php);
+    // object-src 'none' refuses Flash-style plugins (no page uses <object> or <embed>).
+    if (!defined('CDP_CSP_HEADER')) {
+        define('CDP_CSP_HEADER', "frame-ancestors 'self'; base-uri 'self'; object-src 'none'");
+    }
+    header('Content-Security-Policy: ' . CDP_CSP_HEADER);
+    // Chrome's built-in PDF viewer can refuse to draw a PDF whose own response carries
+    // object-src 'none', so the policy is taken off again when a script answers with a PDF,
+    // image or other non-HTML body (only when it is still ours: a script that set its own
+    // policy, e.g. ajax/support/file.php, keeps it).
+    header_register_callback(function () {
+        $type = '';
+        $ours = false;
+        foreach (headers_list() as $h) {
+            if (stripos($h, 'Content-Type:') === 0) {
+                $type = strtolower(trim(substr($h, 13)));
+            } elseif (stripos($h, 'Content-Security-Policy:') === 0) {
+                $ours = trim(substr($h, 24)) === CDP_CSP_HEADER;
+            }
+        }
+        if ($ours && $type !== '' && strpos($type, 'text/html') === false) {
+            header_remove('Content-Security-Policy');
+        }
+    });
+    // HSTS only means something over HTTPS (browsers ignore it on http). Behind a TLS proxy the
+    // request reaches PHP as http with X-Forwarded-Proto: https. Port 443 counts too: the same test
+    // as helpers/dev_console.php sl_devHttps(), so the Security centre never expects HSTS that is not sent.
+    if ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https') || ((int) ($_SERVER['SERVER_PORT'] ?? 0) === 443)) {
         header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
     }
 }

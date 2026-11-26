@@ -110,6 +110,8 @@ function sl_v($data, string $path, $default = '') { $cur = is_array($data) && ar
 function sl_render(string $view, array $page, array $d = []): void { echo '<input name="username" value="' . sl_v($d, 'username') . '">'; foreach ($d['errors'] ?? [] as $e) echo '<p>' . h($e) . '</p>'; }
 PHP
 );
+// login.php loads the passkey helper (fingerprint / face sign-in); the check only needs the switch.
+file_put_contents($fixture . '/helpers/webauthn.php', '<?php if (!function_exists("cdp_passkeysEnabled")) { function cdp_passkeysEnabled() { return false; } }');
 file_put_contents($fixture . '/helpers/sl_auth.php', '<?php function sl_loginPicturesHtml(string $page, string $variant = "fs"): array { return ["texts" => []]; } if (!function_exists("cdp_otpEnabled")) { function cdp_otpEnabled() { return false; } }');
 $scenarios = ['login_missing_token', 'login_array', 'login_valid_error', 'reset_missing_token', 'reset_bad_token', 'reset_array', 'reset_short', 'reset_mismatch', 'reset_valid', 'ajax_signup_missing_token', 'ajax_forgot_missing_token', 'ajax_signup_array', 'ajax_forgot_array'];
 $failures = 0;

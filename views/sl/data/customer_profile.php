@@ -3,6 +3,7 @@
 require_once CDP_ROOT . '/helpers/sl_view.php';
 require_once CDP_ROOT . '/helpers/finance_switch.php';
 require_once CDP_ROOT . '/views/sl/data/user_360.php';
+require_once CDP_ROOT . '/views/sl/data/account_edit.php'; // ID card front / back (sl_idDocState)
 
 /** Is the viewer allowed to see this customer (agency scope)? */
 function sl_cpInScope(int $agencyId): bool
@@ -73,7 +74,8 @@ function sl_customerProfileData($user, $core, int $id): ?array
     foreach (sl_rows("SELECT DATE_FORMAT(d, '%Y-%m') AS ym, COUNT(*) AS n FROM (SELECT order_date AS d FROM cdb_add_order WHERE sender_id = :u AND is_deleted = 0 UNION ALL SELECT order_date FROM cdb_customers_packages WHERE sender_id = :u2) x WHERE d >= DATE_FORMAT(CURDATE() - INTERVAL 5 MONTH, '%Y-%m-01') GROUP BY ym", [':u' => $id, ':u2' => $id]) as $r) $map[$r->ym] = (int) $r->n;
     $mx = max(1, max($map ?: [0]));
     for ($i = 5; $i >= 0; $i--) { $ym = date('Y-m', strtotime("first day of -$i months")); $act[] = ['l' => date('M', strtotime($ym . '-01')), 'h' => 'height:' . max(3, sl_pct($map[$ym] ?? 0, $mx)) . '%', 'n' => $map[$ym] ?? 0, 'hi' => $i === 0 ? 'hi' : '']; }
-    $docUrl = !empty($u->document_photo) ? (preg_match('#^(https?:|/)#', $u->document_photo) ? $u->document_photo : (is_file(CDP_ROOT . '/' . ltrim($u->document_photo, '/')) ? ltrim($u->document_photo, '/') : 'assets/' . ltrim($u->document_photo, '/'))) : '';
+    $doc = sl_idDocState($u);
+    $docUrl = $doc['front'];
     $hist = sl_tableExists('cdb_profile_update_history') ? sl_rows('SELECT h.*, CONCAT(x.fname, " ", x.lname) AS by_name FROM cdb_profile_update_history h LEFT JOIN cdb_users x ON x.id = h.update_by WHERE h.user_id = :u ORDER BY h.id DESC LIMIT 3', [':u' => $id]) : [];
     // Account and engagement facts for the side panel.
     $lastAuth = sl_tableExists('cdb_activity_log') ? sl_row("SELECT created_at, ip, user_agent FROM cdb_activity_log WHERE user_id = :u AND module = 'auth' AND outcome = 'success' ORDER BY id DESC", [':u' => $id]) : null;
@@ -87,7 +89,7 @@ function sl_customerProfileData($user, $core, int $id): ?array
     $lastSeen = max((string) ($u->lastlogin ?? ''), (string) ($lastAuth->created_at ?? ''));
     if (strpos($lastSeen, '0000') === 0) $lastSeen = '';
     $return = ['id' => $id, 'name' => $name, 'ini' => sl_initials($name), 'locker' => $u->locker ?: '—', 'since' => sl_date($u->created, 'M Y'), 'city' => $u->city ?? '', 'mail' => $u->email, 'phone' => $u->phone ?: '—', 'username' => $u->username,
-        'company' => $u->company ?? '', 'docType' => $u->document_type, 'docNo' => $u->document_number, 'docUrl' => $docUrl, 'approve' => $approve, 'phoneV' => (bool) $phoneV, 'newsletter' => (int) $u->newsletter, 'notes' => $u->notes,
+        'company' => $u->company ?? '', 'docType' => $doc['typeLabel'], 'docNo' => $u->document_number, 'docUrl' => $docUrl, 'doc' => $doc, 'canDocument' => $user->cdp_hasPermission('edit_client_document'), 'approve' => $approve, 'phoneV' => (bool) $phoneV, 'newsletter' => (int) $u->newsletter, 'notes' => $u->notes,
         'blocked' => $blocked, 'block' => $block ? ['reason' => $block->reason, 'by' => trim((string) $block->by_name) ?: 'staff', 'at' => sl_ago($block->blocked_at)] : null,
         'st' => $blocked ? ['Blocked', 'overdue'] : (!$approve ? ['Awaiting approval', 'pending'] : ['Active', 'delivered']),
         'nShip' => $nShip, 'nPkg' => $nPkg, 'spend' => $finance ? sl_money($spend) : '—', 'due' => $finance ? sl_money($due) : '—', 'dueN' => $due, 'waiting' => $waiting, 'finance' => $finance,

@@ -62,3 +62,84 @@
 .pk-dot{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--active);position:relative;z-index:1}
 .pk-st.now .pk-dot{background:var(--ink);color:var(--inverse)}
 .pk-st b.n{font:600 22px var(--mono)}
+
+/* ---------- My account: security checklist (views/sl/pages/ProfileEdit.php) ---------- */
+.sl-seg.boxed.pe-tabs{align-self:flex-start;max-width:100%;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+.pe-tabs::-webkit-scrollbar{display:none}
+.pe-tabs button{height:36px;padding:0 14px;flex:none}
+.pe-tabs .sl-badge{height:20px;padding:0 7px;font-size:13px}
+.sec-score{display:flex;align-items:center;gap:8px;font-size:15px}
+.sec-score b{font-size:22px;font-weight:600;line-height:1}
+.sec-score .sl-steps{width:120px}
+.sec-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(420px,100%),1fr));gap:10px;align-items:start}
+.sec-it{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:6px 12px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--field)}
+.sec-it>.sl-tile{width:40px;height:40px}
+.sec-tx{display:flex;flex-direction:column;gap:3px;min-width:0}
+.sec-tx .mut{overflow-wrap:anywhere}
+.sec-ac{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.sec-more{grid-column:1/-1;margin-top:6px;padding-top:12px;border-top:1px dashed var(--line-2)}
+.sec-thumb{width:40px;height:40px;padding:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--active);cursor:zoom-in}
+.sec-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+/* Devices and sign-ins stack full width: side by side, the shorter card left a large empty block. */
+.sec-pair{display:flex;flex-direction:column;gap:16px}
+.sec-rows{display:flex;flex-direction:column}
+.sec-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.sec-rows>.sec-row:last-child{border-bottom:0}
+.sec-row .sl-btn{flex:none}
+.sec-row .mut{overflow-wrap:anywhere}
+.sec-when{flex:none;white-space:nowrap}
+.sl-tile.ok{background:var(--green-bg);color:var(--green-ink)}.sl-tile.bad{background:var(--amber-bg);color:var(--amber-ink)}
+.sec-empty{display:flex;align-items:center;gap:10px;padding:14px;border:1.5px dashed var(--line-2);border-radius:14px;color:var(--muted);font-size:15px}
+.pe-photo{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px}
+.pe-photo img{width:64px;height:64px;border-radius:50%;object-fit:cover;border:1px solid var(--line);background:var(--field);flex:none}
+.pe-photo .pe-file{flex:0 1 300px;min-width:0;height:auto;padding:8px 10px;font-size:14.5px}
+@media (max-width:560px){
+  .sec-it{grid-template-columns:40px minmax(0,1fr)}
+  .sec-ac{grid-column:2;justify-content:flex-start}
+  .sec-score .sl-steps{display:none}
+  .sl-seg.boxed.pe-tabs{align-self:stretch}
+  .pe-tabs button{flex:1 0 auto;justify-content:center;padding:0 10px}
+  .pe-tl-long{display:none}
+}
+
+/* ---------- ID card kit: front / back slots, viewer, upload with preview ----------
+   (sl_idSlotsHtml / sl_idDialogsHtml in views/sl/data/account_edit.php; also used by CustomerEdit and
+   CustomerProfile, whose board CSS imports this file) */
+.idk-wrap{display:grid;grid-template-columns:minmax(0,2fr) minmax(240px,1fr);gap:20px;align-items:start}
+@media (max-width:860px){.idk-wrap{grid-template-columns:1fr}}
+.idk-slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(220px,100%),1fr));gap:14px}
+.idk-slots.sm{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.idk-slot{display:flex;flex-direction:column;gap:10px;min-width:0;padding:12px;border:1px solid var(--line);border-radius:16px;background:var(--field)}
+.idk-slots.sm .idk-slot{padding:10px;gap:8px;border-radius:14px}
+.idk-top{display:flex;align-items:center;justify-content:space-between;gap:6px 8px;flex-wrap:wrap}
+.idk-slots.sm .idk-top{flex-direction:column;align-items:flex-start}
+.idk-lab{font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.idk-slots.sm .idk-lab{font-size:12px}
+.idk-slots.sm .sl-pill{height:22px;padding:0 8px;font-size:12.5px}
+.idk-face{display:block;width:100%;aspect-ratio:1.586;padding:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--active);cursor:zoom-in;color:inherit;font:inherit}
+.idk-face img{width:100%;height:100%;object-fit:cover;display:block}
+.idk-ph{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:12px;border:1.5px dashed var(--line-2);background:var(--card);color:var(--muted);text-align:center;font-size:14.5px;cursor:default}
+.idk-ph .ic{width:24px;height:24px}
+.idk-ph small{font-size:13px;color:var(--faint)}
+button.idk-ph{cursor:pointer}
+button.idk-ph:hover{background:var(--hover);color:var(--ink);border-color:var(--ink-2)}
+.idk-slots.sm .idk-ph{font-size:13px;gap:4px;padding:8px}
+.idk-slots.sm .idk-ph .ic{width:18px;height:18px}
+.idk-slots.sm .idk-ph small{display:none}
+.idk-face:focus-visible,.sec-thumb:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.sl-dialog .sl-modal.idv-modal{width:min(780px,100%)}
+.idv-sw{align-self:flex-start}
+.idv-sw button{height:32px;padding:0 14px}
+.idv-dot{display:inline-block;width:8px;height:8px;border-radius:50%}
+.idv-dot.ok{background:var(--green)}.idv-dot.no{background:var(--red)}
+.idv-stage{margin:0;display:grid;place-items:center;min-height:240px;border-radius:14px;background:var(--active);overflow:hidden}
+.idv-stage img{display:block;max-width:100%;max-height:min(62vh,560px);object-fit:contain}
+.idv-empty{display:flex;flex-direction:column;align-items:center;gap:6px;padding:40px 16px;text-align:center;color:var(--muted)}
+.idv-empty .ic{width:28px;height:28px}
+.idu-drop{position:relative;display:grid;place-items:center;min-height:220px;padding:12px;border:1.5px dashed var(--line-2);border-radius:16px;background:var(--field);overflow:hidden;cursor:pointer}
+.idu-drop:hover{border-color:var(--ink-2)}
+.idu-drop:focus-within{outline:2px solid var(--ink);outline-offset:2px}
+.idu-drop input[type=file]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.idu-drop img{display:block;max-width:100%;max-height:min(46vh,380px);border-radius:10px;object-fit:contain;pointer-events:none}
+.idu-ph{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;color:var(--muted);pointer-events:none}
+.idu-ph .ic{width:28px;height:28px}

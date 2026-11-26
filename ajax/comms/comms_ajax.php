@@ -220,54 +220,104 @@ switch ($action) {
         cdp_opsOut(['ok' => $r['rows'] === 1 || $q['rows'] > 0, 'unsent_cancelled' => $q['rows']]);
 
     case 'threads':
-        cdp_opsOut(['ok' => true, 'rows' => cdp_commThreads((string) $G('status'), trim((string) $G('q'))),
-            'counts' => ['bot' => (int) cdp_opsVal("SELECT COUNT(*) FROM cdb_comm_threads WHERE status='bot'"), 'open' => (int) cdp_opsVal("SELECT COUNT(*) FROM cdb_comm_threads WHERE status='open'"),
-                'mine' => (int) cdp_opsVal("SELECT COUNT(*) FROM cdb_comm_threads WHERE status<>'closed' AND assignee_id = :u", [':u' => cdp_opsUid()])],
+        // The list and its counts use the same search (cdp_commThreadWhere), so they always agree.
+        $q = mb_substr(trim((string) $G('q')), 0, 80);
+        $rows = array_map(function ($t) {
+            return ['id' => (int) $t->id, 'phone' => (string) $t->phone, 'contact_name' => (string) $t->contact_name, 'customer_name' => (string) $t->customer_name,
+                'user_id' => (int) $t->user_id, 'locker' => (string) $t->locker, 'status' => (string) $t->status, 'bot_active' => (int) $t->bot_active,
+                'assignee_id' => (int) $t->assignee_id, 'assignee_name' => (string) $t->assignee_name, 'unread' => (int) $t->unread,
+                'last_message' => (string) $t->last_message, 'updated_at' => (string) $t->updated_at, 'last_in_at' => (string) $t->last_in_at];
+        }, cdp_commThreads((string) $G('status'), $q));
+        cdp_opsOut(['ok' => true, 'rows' => $rows, 'counts' => cdp_commThreadCounts($q), 'me' => cdp_opsUid(),
             'bot_enabled' => cdp_commSetting('bot_enabled') === '1']);
 
     case 'thread':
-        $t = cdp_opsOne("SELECT t.*, u.locker FROM cdb_comm_threads t LEFT JOIN cdb_users u ON u.id = t.user_id WHERE t.id = :id", [':id' => (int) $G('id')]);
+        $t = cdp_opsOne("SELECT t.*, u.locker, TRIM(CONCAT(COALESCE(u.fname,''),' ',COALESCE(u.lname,''))) customer_name
+                         FROM cdb_comm_threads t LEFT JOIN cdb_users u ON u.id = t.user_id WHERE t.id = :id", [':id' => (int) $G('id')]);
         if (!$t) {
             cdp_opsOut(['ok' => false, 'error' => 'Conversation not found.'], 404);
         }
-        cdp_opsX("UPDATE cdb_comm_threads SET unread = 0 WHERE id = :id", [':id' => (int) $t->id]);
+        // Reading a conversation marks it read (only written when there is something unread).
+        $wasUnread = (int) $t->unread;
+        if ($wasUnread > 0) {
+            cdp_opsX("UPDATE cdb_comm_threads SET unread = 0 WHERE id = :id", [':id' => (int) $t->id]);
+            $t->unread = 0;
+        }
         $msgs = cdp_opsQ("SELECT m.id, m.direction, m.author_type, m.author_id, m.body, m.status, m.created_at FROM cdb_comm_messages m WHERE m.thread_id = :t ORDER BY m.id DESC LIMIT 200", [':t' => (int) $t->id]);
         foreach ($msgs as $m) {
             $m->author_name = $m->author_type === 'agent' ? cdp_opsUserName($m->author_id) : '';
         }
-        cdp_opsOut(['ok' => true, 'thread' => $t, 'messages' => array_reverse($msgs), 'window_open' => cdp_commWaWindowOpen($t->phone),
-            'provider' => cdp_commSetting('wa_provider'), 'assignee' => cdp_opsUserName($t->assignee_id)]);
+        $msgs = array_reverse($msgs);
+        require_once __DIR__ . '/../../helpers/sl_routes.php';
+        $uid = (int) $t->user_id;
+        $canCustomer = $uid > 0 && $user->cdp_hasPermission(['view_client_list', 'edit_client']);
+        $last = $msgs ? end($msgs) : null;
+        cdp_opsOut(['ok' => true, 'thread' => $t, 'messages' => $msgs, 'window_open' => cdp_commWaWindowOpen($t->phone),
+            'provider' => cdp_commSetting('wa_provider'), 'assignee' => cdp_opsUserName($t->assignee_id), 'me' => cdp_opsUid(), 'was_unread' => $wasUnread,
+            // Changes when a message is added or its delivery status changes: the page only re-draws the messages then.
+            'sig' => count($msgs) . ':' . ($last ? $last->id . ':' . $last->status : '0'),
+            'customer_url' => $canCustomer ? sl_route('CustomerProfile', ['id' => $uid]) : '',
+            'history_url' => $uid > 0 ? sl_route('CommsCenter') . '#customers' : '']);
 
     case 'reply':
         $t = cdp_opsOne("SELECT * FROM cdb_comm_threads WHERE id = :id", [':id' => (int) $P('id')]);
         $text = trim((string) $P('body'));
-        if (!$t || $text === '') {
-            cdp_opsOut(['ok' => false, 'error' => 'Nothing to send.']);
+        if (!$t) {
+            cdp_opsOut(['ok' => false, 'error' => 'Conversation not found.'], 404);
+        }
+        if ($text === '') {
+            cdp_opsOut(['ok' => false, 'error' => 'Write a reply first.']);
+        }
+        // A closed conversation stays closed until someone reopens it on purpose:
+        // a reply never reopens it silently (the page offers Reopen instead).
+        if ($t->status === 'closed') {
+            cdp_opsOut(['ok' => false, 'error' => 'This conversation is closed. Reopen it to reply.', 'closed' => true]);
         }
         if (cdp_commSetting('wa_provider') === 'cloud' && !cdp_commWaWindowOpen($t->phone)) {
             cdp_opsOut(['ok' => false, 'error' => 'The 24-hour WhatsApp window is closed: the customer has not written in the last 24 hours. Send an approved template from the customer history instead.']);
         }
-        // A person replying takes the thread: the bot stops answering it.
-        cdp_opsX("UPDATE cdb_comm_threads SET status = 'open', bot_active = 0, assignee_id = COALESCE(assignee_id, :u) WHERE id = :id", [':u' => cdp_opsUid(), ':id' => (int) $t->id]);
         $r = cdp_commReply($t, mb_substr($text, 0, 4000), 'agent', cdp_opsUid());
-        cdp_opsOut(['ok' => !empty($r['success']), 'error' => !empty($r['success']) ? '' : ('Not sent: ' . ($r['message'] ?? ''))]);
+        $sent = !empty($r['success']);
+        if ($sent) {
+            // A person who replied takes the thread: King stops answering it.
+            cdp_opsX("UPDATE cdb_comm_threads SET status = 'open', bot_active = 0, handoff_reason = NULL, assignee_id = COALESCE(assignee_id, :u) WHERE id = :id",
+                [':u' => cdp_opsUid(), ':id' => (int) $t->id]);
+        } else {
+            // Not sent: the thread stays as it was (King keeps it, the list preview
+            // stays the last real message). The attempt shows as "Not delivered".
+            cdp_opsX("UPDATE cdb_comm_threads SET last_message = :m, last_out_at = :o, updated_at = :u WHERE id = :id",
+                [':m' => $t->last_message, ':o' => $t->last_out_at, ':u' => $t->updated_at, ':id' => (int) $t->id]);
+        }
+        cdp_opsOut(['ok' => $sent, 'sent' => $sent, 'error' => $sent ? '' : ('Not sent: ' . (trim((string) ($r['message'] ?? '')) ?: 'WhatsApp did not accept the message.'))]);
 
     case 'thread_update':
         $id = (int) $P('id');
         $op = (string) $P('op');
         $sql = [
-            'close' => "status = 'closed', unread = 0",
-            'reopen' => "status = 'open'",
-            'assign_me' => 'assignee_id = ' . cdp_opsUid() . ", status = IF(status = 'closed', 'open', status)",
+            // Closing is deliberate and only Reopen undoes it: no other change reopens a closed thread.
+            'close' => "status = 'closed', unread = 0, handoff_reason = NULL",
+            'reopen' => "status = 'open', bot_active = 0, handoff_reason = NULL", // a person reopened it: it waits for a person
+            'assign_me' => 'assignee_id = :me',
             'unassign' => 'assignee_id = NULL',
-            'bot_on' => "bot_active = 1, status = 'bot'",
+            'bot_on' => "bot_active = 1, status = 'bot', handoff_reason = NULL",
             'bot_off' => "bot_active = 0, status = IF(status = 'bot', 'open', status)",
         ];
         if (!isset($sql[$op])) {
             cdp_opsOut(['ok' => false, 'error' => 'Unknown change.']);
         }
-        $r = cdp_opsX("UPDATE cdb_comm_threads SET " . $sql[$op] . ", updated_at = :n WHERE id = :id", [':n' => cdp_opsNow(), ':id' => $id]);
-        cdp_opsOut(['ok' => $r['ok']]);
+        $cur = cdp_opsOne("SELECT id, status FROM cdb_comm_threads WHERE id = :id", [':id' => $id]);
+        if (!$cur) {
+            cdp_opsOut(['ok' => false, 'error' => 'Conversation not found.'], 404);
+        }
+        if ($cur->status === 'closed' && in_array($op, ['assign_me', 'bot_on', 'bot_off'], true)) {
+            cdp_opsOut(['ok' => false, 'error' => 'This conversation is closed. Reopen it first.']);
+        }
+        $bind = [':n' => cdp_opsNow(), ':id' => $id];
+        if ($op === 'assign_me') {
+            $bind[':me'] = cdp_opsUid();
+        }
+        $r = cdp_opsX("UPDATE cdb_comm_threads SET " . $sql[$op] . ", updated_at = :n WHERE id = :id", $bind);
+        cdp_opsOut(['ok' => $r['ok'], 'error' => $r['ok'] ? '' : 'Not saved.']);
 
     case 'surveys':
         $from = cdp_opsDate($G('from'), date('Y-m-d', strtotime('-29 days')));

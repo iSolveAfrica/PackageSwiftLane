@@ -72,8 +72,17 @@ if (CDP_APP_MODE_DEMO === true) {
             mkdir($upload_dir, 0755, true);
         }
 
+        // side=front (default) writes cdb_users.document_photo, side=back writes document_photo_back
+        // (that column exists once migrations/2026_11_26_id_document_back.sql ran).
+        $side = (($_POST['side'] ?? 'front') === 'back') ? 'back' : 'front';
+        $column = $side === 'back' ? 'document_photo_back' : 'document_photo';
+        $db->cdp_query("SELECT COUNT(*) AS n FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_users' AND COLUMN_NAME = 'document_photo_back'");
+        $hasBackCol = (int) ($db->cdp_registro()->n ?? 0) > 0;
+
         // Verifica si se envió un archivo
-        if (isset($_FILES['document']) && $_FILES['document']['error'] == UPLOAD_ERR_OK) {
+        if ($side === 'back' && !$hasBackCol) {
+            $response = array('success' => false, 'message' => 'The back of the ID cannot be stored yet: run migrations/2026_11_26_id_document_back.sql.');
+        } elseif (isset($_FILES['document']) && $_FILES['document']['error'] == UPLOAD_ERR_OK) {
             // Obtiene la información del archivo
             $file_name = $_FILES['document']['name'];
             $file_tmp = $_FILES['document']['tmp_name'];
@@ -87,13 +96,23 @@ if (CDP_APP_MODE_DEMO === true) {
             $exts = [IMAGETYPE_JPEG => 'jpg', IMAGETYPE_PNG => 'png', IMAGETYPE_GIF => 'gif', IMAGETYPE_WEBP => 'webp'];
             require_once __DIR__ . '/../../helpers/rbac.php';
             $isCustomer = cdp_roleRankById((int) $user->userlevel) < 2; // customers, drivers, agencies: own document only
-            if ($user_id <= 0 || ($isCustomer && $user_id !== (int) ($userData->id ?? 0))) {
+            // Someone else's document: the caller must outrank the account and, when agency-restricted,
+            // stay inside their own agency (as ajax/save_profile_document_ajax.php does).
+            $db->cdp_query('SELECT id, userlevel, agency_id, document_photo' . ($hasBackCol ? ', document_photo_back' : '') . ' FROM cdb_users WHERE id = :id LIMIT 1');
+            $db->bind(':id', $user_id);
+            $target = $user_id > 0 ? $db->cdp_registro() : null;
+            if (!$target || ($isCustomer && $user_id !== (int) ($userData->id ?? 0))
+                || ($user_id !== (int) ($userData->id ?? 0)
+                    && (!cdp_canManageUser($user, (int) $target->userlevel) || !cdp_ajaxRowInAgencyScope((object) ['agency' => $target->agency_id])))) {
                 $response = array('success' => false, 'message' => 'You can only change your own document.');
+            } elseif ((int) ($_FILES['document']['size'] ?? 0) > 5242880) {
+                $response = array('success' => false, 'message' => 'The image must be under 5MB.');
             } elseif (!$img || !isset($exts[$img[2]])) {
                 $response = array('success' => false, 'message' => 'File type not allowed. Upload a JPEG, PNG, GIF or WEBP image.');
             } else {
-                $current_document = $_POST['current_document'] ?? '';
-                $file_name = $user_id . '_' . time() . '_' . bin2hex(random_bytes(6)) . '.' . $exts[$img[2]];
+                // The previous image for the history comes from the database, not from the form.
+                $current_document = (string) ($target->{$column} ?? '');
+                $file_name = $user_id . '_' . ($side === 'back' ? 'back_' : '') . time() . '_' . bin2hex(random_bytes(6)) . '.' . $exts[$img[2]];
 
                 // Ruta completa donde se guardará el archivo
                 $upload_path = $upload_dir . $file_name;
@@ -101,20 +120,20 @@ if (CDP_APP_MODE_DEMO === true) {
                 // Mueve el archivo al directorio de carga
                 if (move_uploaded_file($file_tmp, $upload_path)) {
                     // Actualiza directamente la base de datos con la nueva ruta del document
-                    $db->cdp_query('UPDATE cdb_users SET document_photo = :document_photo WHERE id = :id');
+                    $db->cdp_query('UPDATE cdb_users SET ' . $column . ' = :document_photo WHERE id = :id');
 
                     $db->bind(':document_photo', 'uploads/documents/' . $file_name);
                     $db->bind(':id', $user_id);
                     $db->cdp_execute();
 
                     // History table is created on demand; logging never breaks the save.
-                    cdp_profileHistoryLog($user_id, $userData->id, $current_document, 'Document updated');
+                    cdp_profileHistoryLog($user_id, $userData->id, $current_document, $side === 'back' ? 'Back of ID updated' : 'Document updated');
 
                     // if ($record_history) {
                     //     $response = array('success' => true, 'message' => 'Document successfully updated.');
                     // }
                     
-                    $response = array('success' => true, 'message' => 'Document successfully updated.');
+                    $response = array('success' => true, 'message' => $side === 'back' ? 'Back of the ID saved.' : 'Front of the ID saved.', 'side' => $side);
 
                 } else {
                     // Error al mover el archivo
