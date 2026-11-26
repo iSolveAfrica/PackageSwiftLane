@@ -1,6 +1,6 @@
 <?php
 // *************************************************************************
-// * Consolidation-package receipt — print_inv_ship.php design.            *
+// * Sea consolidation manifest — print_inv_ship.php design, no amounts.   *
 // *************************************************************************
 
 require_once('helpers/querys.php');
@@ -15,5 +15,9 @@ if (!isset($_GET['id']) || $data['rowCount'] != 1) {
 
 $row = $data['data'];
 $INV = cdp_invModelFromConsolidate($db, $row, 'cdb_consolidate_packages_detail');
-$page_title = ($lang['inv-shipping19'] ?? 'Invoice') . ' - ' . $INV['sys_tracking'];
+// This is the consolidation manifest opened from the consolidation pages: no amounts (show_total and the
+// PAID stamp stay off) and no billing wording. Consolidation billing documents are in Finance.
+$lang['inv-shipping5'] = 'Shipper';
+$lang['inv-shipping19'] = 'Print manifest';
+$page_title = 'Manifest - ' . $INV['sys_tracking'];
 include 'views/print/partials/inv_ship_page.php';

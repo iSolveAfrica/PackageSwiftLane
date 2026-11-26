@@ -34,3 +34,7 @@
   .cb-st:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
   .cb-foot { grid-template-columns: 1fr; }
 }
+/* No money on consolidation pages (billing is in Finance): the shared console's Cost tab, the shell's
+   exchange-rate chip and its USD / GHS switch are left out here. */
+#sl-app[data-page="consol"] .tc [data-tc-tab="cost"], #sl-app[data-page="consol"] .tc [data-tc-sec="cost"] { display: none; }
+#sl-app[data-page="consol"] .fx-chip, #sl-app[data-page="consol"] .sl-ccy-rail { display: none; }

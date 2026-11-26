@@ -432,7 +432,8 @@ function sl_trackConsoleData($user, $core, string $source = 'shipments', int $li
             'onway' => $departed || sl_stageOf($st) >= 3 ? sl_tcSince($start) : 'Not departed',
             'transit' => $etaTs && $r->dt ? max(1, (int) round(($etaTs - strtotime($r->dt)) / 86400)) . 'D' : '—',
             'estimate' => $arrived ? 'Arrived' : ($late ? 'Late' : ($eta ? 'On time' : 'No ETA')), 'estCls' => $arrived ? 'ok' : ($late ? 'bad' : ($eta ? 'ok' : 'mut')),
-            'money' => $money, 'total' => sl_money($r->amt), 'sub' => sl_money($r->sub), 'tax' => sl_money($r->tax), 'pay' => $payL, 'payCls' => $payC === 'paid' ? 'ok' : ($payC === 'overdue' ? 'bad' : 'warn'),
+            // Consolidations are operational records: no money on them anywhere (billing lives in Finance).
+            'money' => $money && !$isCon, 'total' => $isCon ? '' : sl_money($r->amt), 'sub' => $isCon ? '' : sl_money($r->sub), 'tax' => $isCon ? '' : sl_money($r->tax), 'pay' => $isCon ? '' : $payL, 'payCls' => $payC === 'paid' ? 'ok' : ($payC === 'overdue' ? 'bad' : 'warn'),
             'pct' => (int) round($p * 100), 'where' => $where,
             'geo' => $g, 'docs' => $docs, 'actions' => $acts, 'details' => $det, 'contents' => $contents, 'con' => $con, 'fk' => $mk,
             'hist' => array_map(fn($h) => ['t' => str_replace('_', ' ', (string) ($h->mod_style ?: 'Update')), 'c' => (string) $h->comments, 'at' => sl_date($h->t_date, 'M j, H:i'), 'loc' => trim((string) $h->t_city)], array_slice($hist, 0, 12)),

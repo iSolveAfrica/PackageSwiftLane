@@ -17,3 +17,18 @@
 .cd-st small{display:block;color:var(--muted);font-size:14px}
 .cd-ok{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;background:var(--green-bg);color:var(--green-ink);font-size:15.5px}
 .cd-tabs{display:flex;gap:6px}
+.cd-k small.bad{color:var(--red-ink)}
+/* No money on consolidation pages (billing is in Finance): no exchange-rate chip or USD / GHS switch here */
+#sl-app[data-page="consol"] .fx-chip,#sl-app[data-page="consol"] .sl-ccy-rail{display:none}
+@media (max-width:640px){.cd-tabs{flex-wrap:wrap}#sl-app[data-page="consol"] h1.sl-title{flex-wrap:wrap}}
+
+/* Edit consolidation (views/sl/pages/ConsolidationEdit.php): packages table. Owner and status sit under the
+   package number so weight, L / W / H and volumetric weight fit the card without a sideways scroll. */
+.ce-pk td:first-child { min-width: 150px; }
+.ce-pk-id { display: block; }
+.ce-pk-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 4px; font-family: var(--font); color: var(--muted); }
+.ce-pk-sub .sl-pill { height: 22px; font-size: 12px; padding: 0 8px; }
+.ce-pk th.num, .ce-pk td.num { width: 1%; }
+.ce-pk th.num, .ce-pk td.num { padding-left: 6px; padding-right: 6px; }
+.ce-pk td.num .sl-in { width: 64px; min-width: 56px; padding-left: 8px; padding-right: 8px; text-align: right; }
+.ce-pk td:last-child, .ce-pk th:last-child { width: 1%; }

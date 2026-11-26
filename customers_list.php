@@ -32,19 +32,27 @@
         $permissions = $user->cdp_getUserPermissions();
 
         $userData = $user->cdp_getUserData();
-        if (!$user->cdp_hasPermission('view_client_list')) {
+      require_once 'helpers/sl_view.php';
+      require_once 'views/sl/data/customers.php';
+        if (!sl_customersCanView($user)) {
             header("location: error403.php");
             exit;
         }
 
-       
-      require_once 'helpers/sl_view.php';
-      require_once 'views/sl/data/customers.php';
       if (($_GET['export'] ?? '') === 'csv') {
           require 'views/sl/export/customers_csv.php';
           exit;
       }
-      sl_render('Customers', ['id' => 'cust', 'title' => 'Customers', 'board' => 'Customers'], sl_customersData($user, $core));     
+      // The list card alone, for filtering and paging the table in place (dataJs/sl/customers_stats.js).
+      if (($_GET['partial'] ?? '') === 'list') {
+          unset($_GET['partial']);
+          header('Content-Type: text/html; charset=UTF-8');
+          header('Cache-Control: private, no-store');
+          $d = sl_customersData($user, $core, true);
+          include CDP_ROOT . '/views/sl/pages/Customers.php';
+          exit;
+      }
+      sl_render('Customers', ['id' => 'cust', 'title' => 'Customers', 'board' => 'Customers', 'scripts' => ['dataJs/sl/customers_stats.js']], sl_customersData($user, $core));
            
 
     } else{

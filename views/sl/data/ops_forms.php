@@ -161,13 +161,16 @@ function sl_consolEditData($user, $core, string $kind, int $id): array
         ? "is_consolidate = 1"
         : "(is_consolidate = 2 OR (is_consolidate = 1 AND NOT EXISTS (SELECT 1 FROM cdb_consolidate x WHERE x.consolidate_id = cdb_order_files.order_id)))";
     $files = sl_rows("SELECT id, url, name, date_file FROM cdb_order_files WHERE order_id = :id AND $fileKind ORDER BY date_file", [':id' => $id]);
-    $look = sl_opsLookups();
+    // No payment method and no quote / invoice / payment statuses here: consolidation billing is in Finance.
+    // The handler leaves the stored payment method as it is.
+    require_once __DIR__ . '/consolidations.php';
     return [
         'kind' => $kind, 'id' => $id, 'sum' => sl_opsSummary($r), 'items' => $items, 'files' => $files, 'fileDel' => $K['fileDel'],
         'action' => ($kind === 'consol' ? 'consolidate_edit.php' : 'consolidate_package_edit.php') . '?id=' . $id,
-        'statuses' => $core->cdp_getStatusByType(2) ?: [], 'payModes' => $look['payments'], 'drivers' => sl_opsDrivers(),
+        'statuses' => sl_conStatuses($core->cdp_getStatusByType(2) ?: [], (int) $o->status_courier), 'drivers' => sl_opsDrivers(),
+        'sea' => $kind === 'consol_pkg',
         'vals' => [
-            'status_courier' => (int) $o->status_courier, 'order_pay_mode' => (int) ($o->order_pay_mode ?? 0), 'driver_id' => (int) ($o->driver_id ?? 0),
+            'status_courier' => (int) $o->status_courier, 'driver_id' => (int) ($o->driver_id ?? 0),
             'seals' => (string) ($o->seals_package ?? ''), 'awb_no' => (string) ($o->awb_no ?? ''),
             'estimated_eta' => (string) cdp_getConsolidationEtaRaw($id, $kind === 'consol_pkg'),
             'sender_address_id' => (int) ($o->sender_address_id ?? 0), 'recipient_address_id' => (int) ($o->receiver_address_id ?? 0),
