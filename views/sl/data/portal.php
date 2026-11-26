@@ -383,9 +383,17 @@ function sl_userHomeData($user, $core, $userData): array
     $hasPhone = !empty($u->phone);
     $hasAddr = (bool) $addr;
     $hasPhoto = $d['avatar'] !== '';
-    $hasIdPhoto = !empty($u->document_photo);
-    $d['complete'] = (int) round((($hasDoc ? 1 : 0) + ($hasPhone ? 1 : 0) + ($hasAddr ? 1 : 0) + ($hasPhoto ? 1 : 0) + ($hasIdPhoto ? 1 : 0) + 1) / 6 * 100);
-    $d['idVerified'] = $hasIdPhoto || (int) ($u->approve ?? 0) === 1;
+    // ID photos: the front (document_photo) and, once migrations/2026_11_26_id_document_back.sql added it,
+    // the back (document_photo_back). With the back column each side is half of the "ID photo" step.
+    $idSet = fn($p) => !empty($p) && stripos((string) $p, 'blank') === false;
+    $hasIdPhoto = $idSet($u->document_photo ?? '');
+    $backCol = sl_columnExists('cdb_users', 'document_photo_back');
+    $hasIdBack = $backCol && $idSet($u->document_photo_back ?? '');
+    $idStep = $backCol ? (($hasIdPhoto ? 0.5 : 0) + ($hasIdBack ? 0.5 : 0)) : ($hasIdPhoto ? 1 : 0);
+    $d['complete'] = (int) round((($hasDoc ? 1 : 0) + ($hasPhone ? 1 : 0) + ($hasAddr ? 1 : 0) + ($hasPhoto ? 1 : 0) + $idStep + 1) / 6 * 100);
+    $d['idVerified'] = ($hasIdPhoto && (!$backCol || $hasIdBack)) || (int) ($u->approve ?? 0) === 1;
+    $d['idFront'] = $hasIdPhoto;
+    $d['idBack'] = $backCol ? $hasIdBack : null;
     $d['phoneMasked'] = sl_maskPhone($d['phone']);
     $last = sl_scalar('SELECT MAX(order_date) FROM cdb_add_order WHERE sender_id = :u AND is_deleted = 0', [':u' => $uid], '');
     $d['lastShip'] = $last ? sl_date($last, 'M j') : '—';

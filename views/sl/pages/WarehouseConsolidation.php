@@ -10,6 +10,7 @@
  */
 if (!isset($d)) { $d = []; }
 ?>
+<style>/* no money on consolidation pages: no exchange-rate chip or USD / GHS switch (billing is in Finance) */ #sl-app .fx-chip, #sl-app .sl-ccy-rail { display: none; }</style>
 <?php if ($d['cid'] <= 0): ?>
 <div class="sl-head"><div><a href="<?= sl_route('WarehouseDelivery') ?>" class="row g6 mut sm"><i class="ic ic-sm i-left" aria-hidden="true"></i>Warehouse Delivery</a><h1 class="sl-title" style="font-size:20px;margin-top:4px">By consolidation</h1><p class="sl-lede"><?= $d['finance'] ? 'Consolidations with packages Accounts has cleared for delivery.' : 'Consolidations with packages waiting in Ghana.' ?></p></div><form method="get" class="sl-search" style="min-width:280px"><input type="hidden" name="view" value="consolidations"><i class="ic ic-sm i-search" aria-hidden="true"></i><input name="q" value="<?= h($d['q']) ?>" placeholder="Consolidation, customer, locker or package" aria-label="Search"></form></div>
 <section class="sl-card flush"><div class="sl-tw"><table class="sl-table"><thead><tr><th>Consolidation</th><th>Date</th><th class="num">Weight</th><th class="num">Customers</th><th>Handed over</th><th>Awaiting clearance</th><th></th></tr></thead><tbody>

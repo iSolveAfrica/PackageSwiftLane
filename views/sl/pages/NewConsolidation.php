@@ -3,7 +3,8 @@
  * NewConsolidation - air or sea consolidation, built on one page.
  * Data: views/sl/data/consolidations.php (sl_newConsolidationData). Posts to ajax/sl/consolidation_ajax.php (op=create).
  * The code is generated on save (air: consolidation prefix + number; sea: "C" + origin country + number) and
- * cannot be edited. No prices here: the summary shows the packing list by customer and the total weight.
+ * cannot be edited. No prices or payment here: the summary shows the packing list by customer and the total
+ * weight. Consolidation billing is in Finance.
  */
 if (!isset($d)) { $d = []; }
 $L = $d['L']; $def = $d['def']; $sea = $d['sea'];
@@ -12,8 +13,18 @@ $numShow = $d['num'] !== '' ? $d['num'] : '••••••';
 $code = $d['prefix'] . $numShow;
 $showApproved = $d['approvedN'] > 0;
 ?>
+<style>/* no money on consolidation pages: no exchange-rate chip or USD / GHS switch (billing is in Finance) */ #sl-app[data-page="consol"] .fx-chip, #sl-app[data-page="consol"] .sl-ccy-rail { display: none; }
+/* package list: when the card is narrower than the full row (side menu open), stack each row so Weight and status stay inside the card */
+.nc2-fields { grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr)); }
+.nc2-pk { container-type: inline-size; }
+@container (max-width: 790px) {
+  .nc2-head { display: none; }
+  .nc2-row { grid-template-columns: 22px minmax(0, 1fr) auto; grid-template-areas: "c n w" "c t s"; row-gap: 4px; }
+  .nc2-row > :nth-child(1) { grid-area: c; } .nc2-row > :nth-child(2) { grid-area: n; } .nc2-row > :nth-child(3) { grid-area: t; }
+  .nc2-row > :nth-child(4), .nc2-row > :nth-child(5) { display: none; } .nc2-row > :nth-child(6) { grid-area: s; justify-self: end; } .nc2-row > :nth-child(7) { grid-area: w; }
+}</style>
 <form data-sl-form action="ajax/sl/consolidation_ajax.php" method="post" enctype="multipart/form-data" id="nc-form">
-<input type="hidden" name="op" value="create"><input type="hidden" name="type" value="<?= h($d['type']) ?>"><input type="hidden" name="ids" id="nc-ids" value=""><input type="hidden" name="dg" value="<?= (int) $d['dg'] ?>">
+<input type="hidden" name="op" value="create"><input type="hidden" name="type" value="<?= h($d['type']) ?>"><input type="hidden" name="ids" id="nc-ids" value=""><input type="hidden" name="dg" value="<?= (int) $d['dg'] ?>"><?php if (!$sea): ?><input type="hidden" name="order_pay_mode" value="1"><?php endif; /* not asked here; keeps the stored default an air consolidation always had (Finance reads it) */ ?>
 <div class="row g8 mut sm"><a href="<?= sl_route('Consolidations') ?>">Consolidations</a><i class="ic ic-sm i-right" aria-hidden="true"></i><span style="color:var(--ink)">New <?= $sea ? 'sea' : 'air' ?> consolidation</span></div>
 <div class="sl-head">
   <div><h1 class="sl-title" style="font-size:22px">New <?= $sea ? 'sea' : 'air' ?> consolidation</h1><p class="sl-lede"><?= $sea ? 'Load packages into a container and ship it to ' . h($d['dest']) . '.' : 'Load packages onto a flight to ' . h($d['dest']) . '.' ?> Pick the packages, then save.</p></div>
@@ -33,7 +44,7 @@ $showApproved = $d['approvedN'] > 0;
       <div class="col grow"><span class="mut sm"><?= $sea ? 'Container number' : 'Consolidation number' ?></span><b class="mono" id="nc-code" data-num="<?= h($numShow) ?>"><?= h($code) ?></b><span class="mut sm"><?= $d['num'] !== '' ? 'Given automatically when you save' : 'The number is picked automatically when you save' ?> · it cannot be edited</span></div>
       <?php if ($sea): ?><label class="sl-field" style="min-width:220px"><span class="sl-lab">Origin country</span><span class="sl-sel native"><select name="country_code" id="nc-cc"><?php foreach ($d['countries'] as $cc => $cn): ?><option value="<?= h($cc) ?>" <?= $cc === $d['country'] ? 'selected' : '' ?>><?= h($cn) ?> (<?= h($cc) ?>)</option><?php endforeach; ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></span></label><?php endif; ?>
     </div>
-    <div class="grid cols2" style="gap:12px">
+    <div class="grid nc2-fields" style="gap:12px">
       <label class="sl-field"><span class="sl-lab">Office of origin</span><span class="sl-sel native"><select name="origin_off" required><?= $opt($L['offices'], $def['office']) ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></span></label>
       <label class="sl-field"><span class="sl-lab">Consolidation status</span><span class="sl-sel native"><select name="status_courier"><?php foreach ($L['statuses'] as $st): if (cdp_isHandedOver($st->id) || (int) $st->id === 21) continue; ?><option value="<?= (int) $st->id ?>" <?= (int) $st->id === $def['status'] ? 'selected' : '' ?>><?= h(str_replace('_', ' ', $st->label)) ?></option><?php endforeach; ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></span></label>
       <label class="sl-field"><span class="sl-lab"><?= $sea ? 'Shipping line' : 'Airline' ?></span><span class="sl-sel native"><select name="order_courier"><?= $opt($L['couriers'], $def['courier']) ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></span></label>
@@ -42,18 +53,17 @@ $showApproved = $d['approvedN'] > 0;
       <label class="sl-field"><span class="sl-lab">Seals</span><input class="sl-in mono" name="seals" maxlength="300" placeholder="ML-2219904"></label>
       <label class="sl-field"><span class="sl-lab">Delivery time</span><span class="sl-sel native"><select name="order_deli_time"><?= $opt($L['delitimes'], $def['delitime']) ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></span></label>
       <?php endif; ?>
+      <label class="sl-field"><span class="sl-lab">Shipment date and time</span><input class="sl-in" type="datetime-local" name="order_date" value="<?= h($d['today']) ?>" required></label>
+      <label class="sl-field"><span class="sl-lab">Estimated time of arrival</span><input class="sl-in" type="date" name="estimated_eta" value="<?= h($d['eta']) ?>"></label>
     </div>
   </section>
 
-  <section class="sl-card col g14">
-    <h2 class="sl-ct">Dates<?= $sea ? ' and files' : ' and payment' ?></h2>
-    <div class="grid cols<?= $sea ? '2' : '3' ?>" style="gap:12px">
-      <label class="sl-field"><span class="sl-lab">Shipment date and time</span><input class="sl-in" type="datetime-local" name="order_date" value="<?= h($d['today']) ?>" required></label>
-      <label class="sl-field"><span class="sl-lab">Estimated time of arrival</span><input class="sl-in" type="date" name="estimated_eta" value="<?= h($d['eta']) ?>"></label>
-      <?php if (!$sea): ?><label class="sl-field"><span class="sl-lab">Payment method</span><span class="sl-sel native"><select name="order_pay_mode"><option value="0">Not set</option><?= $opt($L['payments'], 1) ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></span></label><?php endif; ?>
-    </div>
-    <?php if ($sea): ?><label class="sl-field"><span class="sl-lab">Attach files (bill of lading, photos)</span><span class="row g8 wrap"><label class="sl-btn ghost sm" style="cursor:pointer"><i class="ic ic-sm i-upload" aria-hidden="true"></i>Upload files<input type="file" name="files[]" multiple hidden accept=".pdf,image/*" onchange="document.getElementById('nc-doc').textContent=this.files.length+' file(s)'"></label><span class="sl-badge" id="nc-doc">No files</span></span></label><?php endif; ?>
+<?php if ($sea): ?>
+  <section class="sl-card col g12">
+    <h2 class="sl-ct">Files</h2>
+    <label class="sl-field"><span class="sl-lab">Attach files (bill of lading, photos)</span><span class="row g8 wrap"><label class="sl-btn ghost sm" style="cursor:pointer"><i class="ic ic-sm i-upload" aria-hidden="true"></i>Upload files<input type="file" name="files[]" multiple hidden accept=".pdf,image/*" onchange="document.getElementById('nc-doc').textContent=this.files.length+' file(s)'"></label><span class="sl-badge" id="nc-doc">No files</span></span></label>
   </section>
+<?php endif; ?>
 
   <section class="sl-card col g12 nc2-pk">
     <div class="sl-ch" style="margin:0"><div><h2 class="sl-ct">Packages</h2><span class="mut sm">At the warehouse and not in a consolidation yet<?= $sea ? '' : ($d['dg'] ? ' · dangerous goods only' : ' · normal goods (dangerous goods travel in their own consolidation)') ?></span></div>

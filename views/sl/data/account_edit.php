@@ -45,6 +45,212 @@ function sl_avatarSrc($stored, string $blank = 'uploads/blank.png'): string
     return function_exists('cdp_avatarUrl') ? (string) cdp_avatarUrl($stored, $blank) : ('assets/' . ($stored ?: $blank));
 }
 
+/** ID types the forms offer (code => label). Older rows store the label itself ("Ghana Card"). */
+function sl_idDocTypes(): array
+{
+    return ['PSP' => 'Passport', 'ECW' => 'Ghana Card', 'DNI' => 'National identity document'];
+}
+
+/** Display URL of a stored ID photo, or '' when nothing usable is on file (blank placeholder, bad path, missing file). */
+function sl_idPhotoUrl($stored): string
+{
+    $p = trim((string) $stored);
+    if ($p === '' || stripos($p, 'blank') !== false) {
+        return '';
+    }
+    if (preg_match('#^https?://#i', $p)) {
+        return $p;
+    }
+    $url = sl_avatarSrc($p, '');
+    if ($url === 'assets/' || substr($url, -1) === '/') {
+        return '';
+    }
+    return is_file(CDP_ROOT . '/' . $url) ? $url : '';
+}
+
+/**
+ * The ID card of an account: front (cdb_users.document_photo), back (document_photo_back, once
+ * migrations/2026_11_26_id_document_back.sql ran), type and number, with what is still missing.
+ */
+function sl_idDocState($row): array
+{
+    $types = sl_idDocTypes();
+    $type = trim((string) ($row->document_type ?? ''));
+    $number = trim((string) ($row->document_number ?? ''));
+    $code = isset($types[$type]) ? $type : (string) (array_search($type, $types, true) ?: $type);
+    $backCol = sl_columnExists('cdb_users', 'document_photo_back');
+    $front = sl_idPhotoUrl($row->document_photo ?? '');
+    $back = $backCol ? sl_idPhotoUrl($row->document_photo_back ?? '') : '';
+    $missing = [];
+    if ($type === '' || $number === '') $missing[] = 'type and number';
+    if ($front === '') $missing[] = 'front';
+    if ($backCol && $back === '') $missing[] = 'back';
+    return [
+        'type' => $code,
+        'typeLabel' => $types[$code] ?? $type,
+        'number' => $number,
+        'detailsSet' => $type !== '' && $number !== '',
+        'front' => $front,
+        'back' => $back,
+        'hasBackCol' => $backCol,
+        'missing' => $missing,
+        'complete' => !$missing,
+        'name' => trim(($row->fname ?? '') . ' ' . ($row->lname ?? '')) ?: (string) ($row->username ?? ''),
+    ];
+}
+
+/** "Front + back" style summary pill for staff views: complete, back missing, nothing. */
+function sl_idDocPill(array $doc): string
+{
+    if ($doc['front'] !== '' && ($doc['back'] !== '' || !$doc['hasBackCol'])) {
+        return sl_pill($doc['hasBackCol'] ? 'Front and back on file' : 'On file', 'delivered');
+    }
+    if ($doc['front'] === '' && $doc['back'] === '') {
+        return sl_pill('No ID photo', 'pending');
+    }
+    return sl_pill($doc['front'] === '' ? 'Front missing' : 'Back missing', 'onway');
+}
+
+/**
+ * Two labelled slots, FRONT and BACK, each with a status pill, the photo or an empty placeholder,
+ * View (in-page viewer) and Upload / Replace (upload dialog with a preview). Needs sl_idDialogsHtml() once.
+ * $o: canUpload (bool), size ('lg' | 'sm').
+ */
+function sl_idSlotsHtml(array $doc, array $o = []): string
+{
+    $can = !empty($o['canUpload']);
+    $sm = ($o['size'] ?? 'lg') === 'sm';
+    $out = '<div class="idk-slots ' . ($sm ? 'sm' : 'lg') . '">';
+    foreach (['front' => 'Front', 'back' => 'Back'] as $side => $label) {
+        if ($side === 'back' && !$doc['hasBackCol']) {
+            continue;
+        }
+        $url = $doc[$side];
+        $pill = $url !== '' ? sl_pill('Uploaded', 'delivered') : sl_pill('Not uploaded', 'pending');
+        $out .= '<div class="idk-slot' . ($url === '' ? ' is-empty' : '') . '">'
+            . '<div class="idk-top"><span class="idk-lab">' . h($label) . ($sm ? '' : ' of ID') . '</span>' . $pill . '</div>';
+        if ($url !== '') {
+            $out .= '<button type="button" class="idk-face" data-idv-open="' . $side . '" aria-label="View the ' . $side . ' of the ID card larger"><img src="' . h($url) . '" alt="' . h($label) . ' of the ID card" loading="lazy"></button>';
+        } elseif ($can) {
+            $out .= '<button type="button" class="idk-face idk-ph" data-idu-open="' . $side . '"><i class="ic i-image" aria-hidden="true"></i><span>' . h($label) . ' of ID not uploaded</span><small>Tap to add a photo</small></button>';
+        } else {
+            $out .= '<div class="idk-face idk-ph"><i class="ic i-image" aria-hidden="true"></i><span>' . h($label) . ' of ID not uploaded</span></div>';
+        }
+        $out .= '<div class="row g6 wrap">';
+        if ($url !== '') {
+            $out .= '<button type="button" class="sl-btn ghost sm" data-idv-open="' . $side . '"><i class="ic ic-sm i-eye" aria-hidden="true"></i>View</button>';
+        }
+        if ($can) {
+            $verb = $url === '' ? 'Upload' : 'Replace';
+            // In a narrow side panel a photo already on file gets an icon-only Replace next to View.
+            $out .= $sm && $url !== ''
+                ? '<button type="button" class="sl-ib sm" data-idu-open="' . $side . '" aria-label="Replace the ' . $side . ' of the ID card" title="Replace"><i class="ic ic-sm i-upload" aria-hidden="true"></i></button>'
+                : '<button type="button" class="sl-btn ' . ($url === '' ? '' : 'ghost ') . 'sm" data-idu-open="' . $side . '"><i class="ic ic-sm i-upload" aria-hidden="true"></i>' . $verb . '</button>';
+        }
+        $out .= '</div></div>';
+    }
+    return $out . '</div>';
+}
+
+/**
+ * The ID viewer pop-up (front/back switch) and the upload dialog (preview before saving), plus the
+ * script that drives them (dataJs/sl/account_security.js). Render once per page, outside other forms.
+ * $o: canUpload, endpoint, hidden (name => value), fields (['front' => ..., 'back' => ...] file field
+ * names), sideParam ('' or the name of a hidden front/back field the endpoint reads).
+ */
+function sl_idDialogsHtml(array $doc, array $o = []): string
+{
+    $can = !empty($o['canUpload']) && !empty($o['endpoint']);
+    $sub = trim(($doc['typeLabel'] !== '' ? $doc['typeLabel'] : 'ID type not set') . ($doc['number'] !== '' ? ' · ' . $doc['number'] : ''));
+    $out = '<div class="sl-dialog" id="idv" hidden data-front="' . h($doc['front']) . '" data-back="' . h($doc['back']) . '">'
+        . '<div class="sl-modal idv-modal" role="dialog" aria-modal="true" aria-labelledby="idv-t">'
+        . '<div class="row g10"><span class="sl-tile"><i class="ic i-card" aria-hidden="true"></i></span><div class="col grow"><b class="fw5" id="idv-t">ID card · ' . h($doc['name']) . '</b><span class="mut sm">' . h($sub) . '</span></div><button type="button" class="sl-ib sm" data-sl-close aria-label="Close"><i class="ic ic-sm i-x" aria-hidden="true"></i></button></div>';
+    if ($doc['hasBackCol']) {
+        $out .= '<div class="sl-seg boxed idv-sw" role="group" aria-label="Side of the card">';
+        foreach (['front' => 'Front', 'back' => 'Back'] as $side => $label) {
+            $out .= '<button type="button" data-idv-side="' . $side . '" aria-pressed="false">' . h($label) . ' <span class="idv-dot ' . ($doc[$side] !== '' ? 'ok' : 'no') . '" role="img" aria-label="' . ($doc[$side] !== '' ? 'uploaded' : 'not uploaded') . '"></span></button>';
+        }
+        $out .= '</div>';
+    }
+    $out .= '<figure class="idv-stage"><img data-idv-img alt="" hidden><div class="idv-empty" data-idv-empty hidden><i class="ic i-image" aria-hidden="true"></i><b class="fw5" data-idv-empty-t></b><span class="mut sm">No photo on file for this side yet.</span></div></figure>'
+        . '<div class="row g8 wrap">' . ($can ? '<button type="button" class="sl-btn sm" data-idu-open="front"><i class="ic ic-sm i-upload" aria-hidden="true"></i><span>Upload</span></button>' : '') . '<button type="button" class="sl-btn ghost sm" data-sl-close>Close</button></div>'
+        . '</div></div>';
+    if ($can) {
+        $fields = ($o['fields'] ?? []) + ['front' => 'document_photo', 'back' => 'document_photo_back'];
+        $out .= '<div class="sl-dialog" id="idu" hidden><form class="sl-modal idu-modal" data-sl-form data-sl-reload action="' . h($o['endpoint']) . '" method="post" enctype="multipart/form-data" role="dialog" aria-modal="true" aria-labelledby="idu-t" data-field-front="' . h($fields['front']) . '" data-field-back="' . h($fields['back']) . '" data-front="' . h($doc['front']) . '" data-back="' . h($doc['back']) . '">';
+        foreach ((array) ($o['hidden'] ?? []) as $k => $v) {
+            $out .= '<input type="hidden" name="' . h($k) . '" value="' . h($v) . '">';
+        }
+        if (!empty($o['sideParam'])) {
+            $out .= '<input type="hidden" name="' . h($o['sideParam']) . '" value="front" data-idu-side>';
+        }
+        $out .= '<div class="row g10"><span class="sl-tile"><i class="ic i-upload" aria-hidden="true"></i></span><div class="col grow"><b class="fw5" id="idu-t">Upload the front of the ID card</b><span class="mut sm">A clear photo with all four corners visible. JPEG, PNG, GIF or WEBP, up to 5 MB.</span></div><button type="button" class="sl-ib sm" data-sl-close aria-label="Close"><i class="ic ic-sm i-x" aria-hidden="true"></i></button></div>'
+            . '<label class="idu-drop"><input type="file" name="' . h($fields['front']) . '" accept="image/jpeg,image/png,image/gif,image/webp" data-idu-file required>'
+            . '<img data-idu-prev alt="" hidden><span class="idu-ph" data-idu-ph><i class="ic i-image" aria-hidden="true"></i><b class="fw5">Choose a photo</b><span class="mut sm">or take one with your phone camera</span></span></label>'
+            . '<span class="sm" data-idu-note role="status"></span>'
+            . '<div class="row g8 wrap"><button type="submit" class="sl-btn" data-idu-save disabled><i class="ic ic-sm i-check" aria-hidden="true"></i>Save photo</button><button type="button" class="sl-btn ghost" data-idu-pick><i class="ic ic-sm i-image" aria-hidden="true"></i>Choose another</button><button type="button" class="sl-btn ghost" data-sl-close>Cancel</button></div>'
+            . '</form></div>';
+    }
+    return $out . '<script src="' . h(cdp_asset('dataJs/sl/account_security.js')) . '" defer></script>';
+}
+
+/**
+ * The signed-in user's own sign-in security: remembered devices (cdb_auth_trusted_devices, with the
+ * ip / user_agent columns when migrations/2026_11_26_trusted_device_details.sql added them) and the
+ * last five sign-ins from cdb_activity_log.
+ */
+function sl_ownSignInData(int $uid, string $username): array
+{
+    require_once CDP_ROOT . '/views/sl/data/user_360.php';
+    $devices = [];
+    if (sl_tableExists('cdb_auth_trusted_devices')) {
+        $hasIp = sl_columnExists('cdb_auth_trusted_devices', 'ip');
+        $hasUa = sl_columnExists('cdb_auth_trusted_devices', 'user_agent');
+        $hasLog = sl_tableExists('cdb_activity_log');
+        $cookie = explode(':', (string) ($_COOKIE['trusted_device'] ?? ''), 2)[0];
+        $rows = sl_rows('SELECT id, selector, created_at, last_used_at, expires_at' . ($hasIp ? ', ip' : '') . ($hasUa ? ', user_agent' : '')
+            . ' FROM cdb_auth_trusted_devices WHERE user_id = :u AND revoked_at IS NULL AND expires_at > NOW() ORDER BY COALESCE(last_used_at, created_at) DESC LIMIT 50', [':u' => $uid]);
+        foreach ($rows as $r) {
+            $ua = $hasUa ? (string) ($r->user_agent ?? '') : '';
+            $ip = $hasIp ? (string) ($r->ip ?? '') : '';
+            if (($ua === '' || $ip === '') && $hasLog) {
+                // Rows from before the device columns: the sign-in that last used this device (a remembered
+                // device is checked, and its last_used_at set, at sign-in).
+                // Only a sign-in within ten minutes of that moment counts; otherwise the device stays unknown
+                // rather than borrowing another browser's sign-in.
+                $t = strtotime((string) ($r->last_used_at ?: $r->created_at)) ?: time();
+                $seen = sl_row("SELECT ip, user_agent FROM cdb_activity_log WHERE user_id = :u AND verb = 'login' AND outcome = 'success' AND created_at BETWEEN :a AND :b ORDER BY created_at DESC LIMIT 1", [':u' => $uid, ':a' => date('Y-m-d H:i:s', $t - 600), ':b' => date('Y-m-d H:i:s', $t + 600)]);
+                if ($seen) {
+                    $ua = $ua !== '' ? $ua : (string) $seen->user_agent;
+                    $ip = $ip !== '' ? $ip : (string) $seen->ip;
+                }
+            }
+            $label = sl_u360Device($ua);
+            $devices[] = [
+                'id' => (int) $r->id,
+                'label' => $label !== '' ? $label : 'Unknown device',
+                'mobile' => (bool) preg_match('/iPhone|Android|iPad|Mobile/i', $ua),
+                'ip' => $ip,
+                // The whole phrase, so a device that was never used reads "not used yet".
+                'used' => $r->last_used_at ? 'last used ' . sl_ago($r->last_used_at) : 'not used yet',
+                'usedAt' => sl_date($r->last_used_at ?: $r->created_at, 'j M Y, H:i'),
+                'added' => sl_date($r->created_at, 'j M Y'),
+                'expires' => sl_date($r->expires_at, 'j M Y'),
+                'current' => $cookie !== '' && hash_equals((string) $r->selector, $cookie),
+            ];
+        }
+    }
+    $signins = [];
+    if (sl_tableExists('cdb_activity_log')) {
+        $rows = sl_rows("SELECT created_at, outcome, ip, user_agent FROM cdb_activity_log WHERE verb = 'login' AND (user_id = :u OR (user_id IS NULL AND actor_username = :n)) ORDER BY id DESC LIMIT 5", [':u' => $uid, ':n' => $username]);
+        foreach ($rows as $r) {
+            $ok = in_array((string) $r->outcome, ['success', 'ok'], true);
+            $signins[] = ['ok' => $ok, 'device' => sl_u360Device((string) $r->user_agent) ?: 'Unknown device', 'ip' => (string) $r->ip, 'ago' => sl_ago($r->created_at), 'at' => sl_date($r->created_at, 'j M Y, H:i')];
+        }
+    }
+    return ['devices' => $devices, 'signins' => $signins, 'failed' => count(array_filter($signins, fn($s) => !$s['ok']))];
+}
+
 /** customers_edit.php: staff edit a client account. */
 function sl_customerEditData($user, int $id): ?array
 {
@@ -65,15 +271,14 @@ function sl_customerEditData($user, int $id): ?array
         'row' => $row,
         'name' => trim($row->fname . ' ' . $row->lname) ?: $row->username,
         'avatar' => sl_avatarSrc($row->avatar),
-        'document' => sl_avatarSrc($row->document_photo, 'uploads/blankID.jpg'),
-        'hasDoc' => (string) $row->document_photo !== '' && strpos((string) $row->document_photo, 'blankID') === false,
+        'doc' => sl_idDocState($row),
         'addresses' => sl_addressRows('cdb_senders_addresses', 'user_id', $id),
         'countries' => sl_countries(),
         'history' => $history,
         'canApprove' => $user->cdp_hasPermission('approve_client'),
         'canAvatar' => $user->cdp_hasPermission('edit_client_avatar'),
         'canDocument' => $user->cdp_hasPermission('edit_client_document'),
-        'docTypes' => ['PSP' => 'Passport', 'ECW' => 'Ghana Card', 'DNI' => 'National identity document'],
+        'docTypes' => sl_idDocTypes(),
     ];
 }
 
@@ -93,17 +298,71 @@ function sl_profileEditData($user, int $id): ?array
         $chk = sl_tableExists('cdb_user_details_update_check') ? sl_row('SELECT update_phone FROM cdb_user_details_update_check WHERE user_id = :u', [':u' => (int) $row->id]) : null;
         $phoneStatus = ($chk && (int) $chk->update_phone === 0) ? 'pending' : 'unknown';
     }
+    require_once CDP_ROOT . '/helpers/rbac.php';
+    $isClient = cdp_roleIsClient((int) $row->userlevel);
+    $doc = sl_idDocState($row);
+    // Password: when it was last changed (forgot-reset.php records it), and whether rotation wants a new one.
+    $changedCol = sl_columnExists('cdb_users', 'password_changed_at');
+    $changedAt = $changedCol ? (string) ($row->password_changed_at ?? '') : '';
+    if (strpos($changedAt, '0000') === 0) $changedAt = '';
+    // The inline "Change password" form saves through customers_profile_edit_ajax.php, which logs the
+    // change (changes.password) but does not stamp password_changed_at: the later of the two counts.
+    if (sl_tableExists('cdb_activity_log')) {
+        $logged = (string) sl_scalar("SELECT MAX(created_at) FROM cdb_activity_log WHERE action = 'profile.details' AND entity_type = 'user' AND entity_id = :e AND changes LIKE :p", [':e' => (string) (int) $row->id, ':p' => '%"password"%']);
+        if ($logged !== '' && ($changedAt === '' || strtotime($logged) > strtotime($changedAt))) {
+            $changedAt = $logged;
+        }
+    }
+    $ageRow = clone $row;
+    if ($changedCol && $changedAt !== '') $ageRow->password_changed_at = $changedAt;
+    $age = ($isOwn && function_exists('sl_passwordAge')) ? sl_passwordAge($ageRow) : null;
+    // Fingerprint / face sign-in manages the signed-in user's own passkeys only.
+    $passkeys = null;
+    if ($isOwn) {
+        require_once CDP_ROOT . '/helpers/webauthn.php';
+        try {
+            if (cdp_passkeysEnabled()) {
+                $passkeys = sl_tableExists('cdb_passkeys') ? (int) sl_scalar('SELECT COUNT(*) FROM cdb_passkeys WHERE user_id = :u', [':u' => (int) $row->id]) : 0;
+            }
+        } catch (Throwable $e) {
+            $passkeys = null;
+        }
+    }
+    $own = $isOwn ? sl_ownSignInData((int) $row->id, (string) $row->username) : ['devices' => [], 'signins' => [], 'failed' => 0];
+    $phone = trim((string) $row->phone);
+    // The checklist: what counts, and what still needs doing. A password with no recorded change date
+    // is neither done nor to do (rotation off and nothing recorded).
+    $checks = ['phone' => $phone !== '' && $phoneStatus === 'verified', 'idno' => $doc['detailsSet'], 'front' => $doc['front'] !== ''];
+    if ($doc['hasBackCol']) $checks['back'] = $doc['back'] !== '';
+    if ($changedAt !== '' || ($age && $age['expired'])) $checks['password'] = !($age && $age['expired']);
+    $todo = array_keys(array_filter($checks, fn($ok) => !$ok));
     return [
         'row' => $row,
         'isOwn' => $isOwn,
+        'isClient' => $isClient,
         'name' => trim($row->fname . ' ' . $row->lname) ?: $row->username,
         'avatar' => sl_avatarSrc($row->avatar),
-        'document' => sl_avatarSrc($row->document_photo, 'uploads/blankID.jpg'),
-        'hasDoc' => strpos(sl_avatarSrc($row->document_photo, 'uploads/blankID.jpg'), 'blankID') === false,
+        'doc' => $doc,
         'phoneStatus' => $phoneStatus,
         'addresses' => sl_addressRows('cdb_senders_addresses', 'user_id', (int) $row->id),
         'countries' => sl_countries(),
-        'docTypes' => ['PSP' => 'Passport', 'ECW' => 'Ghana Card', 'DNI' => 'National identity document'],
+        'docTypes' => sl_idDocTypes(),
+        'pass' => [
+            'changed' => $changedAt !== '' ? sl_date($changedAt, 'j M Y') : '',
+            'ago' => $changedAt !== '' ? sl_ago($changedAt) : '',
+            'expired' => (bool) ($age['expired'] ?? false),
+            'next' => $age ? sl_date($age['next'], 'j M Y') : '',
+            // The details endpoint only edits customer accounts; staff change theirs on the password page.
+            'inline' => $isClient,
+        ],
+        'passkeys' => $passkeys,
+        'devices' => $own['devices'],
+        'signins' => $own['signins'],
+        'failed' => $own['failed'],
+        'todo' => $todo,
+        'done' => count($checks) - count($todo),
+        'items' => count($checks),
+        'staffEdit' => !$isClient && $isOwn ? 'users_edit.php?user=' . (int) $row->id : '',
     ];
 }
 

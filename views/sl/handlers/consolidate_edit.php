@@ -154,9 +154,9 @@ if (isset($_POST["total_item"])) {
         // Air waybill (sql/consolidation_awb.sql); the column is optional until migrated.
         $awb_col = cdp_awbColumnReady();
 
+        // No payment method here: the edit page has none (billing is in Finance), so the stored value stays.
         $db->cdp_query("
             UPDATE cdb_consolidate SET
-                order_pay_mode = :order_pay_mode,
                 status_courier = :status_courier,
                 driver_id = :driver_id,
                 seals_package = :seals_package" . ($awb_col ? ",
@@ -167,7 +167,6 @@ if (isset($_POST["total_item"])) {
         if ($awb_col) {
             $db->bind(':awb_no', cdp_awbNormalize($_POST['awb_no'] ?? ''));
         }
-        $db->bind(':order_pay_mode', cdp_sanitize($_POST["order_pay_mode"] ?? ''));
         $db->bind(':status_courier', cdp_sanitize($_POST["status_courier"] ?? ''));
         $db->bind(':driver_id', cdp_sanitize($_POST["driver_id"] ?? ''));
         $db->bind(':seals_package', cdp_sanitize($_POST["seals"] ?? ''));

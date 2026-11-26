@@ -4,6 +4,8 @@
  * Data: comms_hub.php. Channel ticks reuse ajax/sl/notification_rules_ajax.php.
  */
 if (!isset($d)) { $d = []; }
+$commsTab = 'commshub';
+include __DIR__ . '/partials/comms_tabs.php';
 ?>
 <div class="sl-head"><div><h1 class="sl-title" style="font-size:22px">Messages and automation</h1><p class="sl-lede">WhatsApp, SMS and e-mail sent at every step of a shipment, plus segments, automations and costs.</p></div><div class="row g8 wrap"><a class="sl-btn ghost" href="<?= sl_route('MessageLogs') ?>">History</a><a class="sl-btn ghost" href="<?= sl_route('ComposeMessage') ?>">Send a message</a><a class="sl-btn" href="<?= sl_route('Broadcast') ?>">Send to customers</a></div></div>
 <div class="row g8 wrap"><?php foreach ($d['health'] as $h): ?><span class="ov-pill <?= h($h['pill']) ?>"><?= h($h['label']) ?> · <?= h($h['state']) ?></span><?php endforeach; ?></div>

@@ -5,8 +5,9 @@
 // *************************************************************************
 // My account (Swift Lane design).
 //   default      UserHome board (views/sl/pages/UserHome.php)
-//   ?edit=1      ProfileEdit (views/sl/pages/ProfileEdit.php): details, addresses, ID document,
-//                password and WhatsApp number with a one-time code. ?user= lets an admin edit a customer.
+//   ?edit=1      ProfileEdit (views/sl/pages/ProfileEdit.php): "Security and ID" (#account-security: password,
+//                WhatsApp number, ID card front and back, fingerprint sign-in, remembered devices, recent sign-ins)
+//                and "Details and addresses" (#details). ?user= lets an admin edit a customer.
 require_once 'loader.php';
 $user = new User();
 $core = new Core();
@@ -25,7 +26,7 @@ if (!empty($_GET['edit'])) {
         header('Location: ' . ($user->cdp_is_Admin() ? 'customers_list.php' : 'index.php'));
         exit;
     }
-    sl_render('ProfileEdit', ['id' => $d['isOwn'] && !sl_userIs('client') ? 'accountsec' : 'myaccount', 'title' => $d['isOwn'] ? 'My details' : 'Edit ' . $d['name'], 'board' => 'UserHome'], $d);
+    sl_render('ProfileEdit', ['id' => $d['isOwn'] && !sl_userIs('client') ? 'accountsec' : 'myaccount', 'title' => $d['isOwn'] ? 'My account security' : 'Account of ' . $d['name'], 'board' => 'UserHome'], $d);
     exit;
 }
 require_once 'views/sl/data/portal.php';

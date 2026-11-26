@@ -107,8 +107,12 @@ function sl_navStaff(): array
             ['id' => 'supporthub', 'label' => 'Customer Care', 'icon' => 'ticket', 'board' => 'SupportHub', 'perm' => 'cs:agent'],
             ['id' => 'campaigns', 'label' => 'Campaigns', 'icon' => 'send', 'board' => 'Campaigns', 'perm' => ['view_message_logs', 'manage_newsletter', 'push_notifications']],
             ['id' => 'commshub', 'label' => 'Communications', 'icon' => 'message', 'board' => 'CommsHub', 'perm' => ['push_notifications', 'manage_newsletter', 'view_message_logs']],
+            // WhatsApp Inbox belongs to Communications: directly under it, badge = conversations waiting for a person.
+            ['id' => 'commsinbox', 'label' => 'WhatsApp Inbox', 'icon' => 'message', 'board' => 'CommsInbox', 'perm' => 'ops:staff',
+                // Same figure as cdp_commWaitingCount() (status 'open'); that one is used when helpers/comms.php is loaded.
+                'count' => fn() => function_exists('cdp_commWaitingCount') ? cdp_commWaitingCount()
+                    : (sl_tableExists('cdb_comm_threads') ? sl_navCount("SELECT COUNT(*) FROM cdb_comm_threads WHERE status = 'open'") : 0)],
             ['id' => 'commscenter', 'label' => 'Communication Center', 'icon' => 'send', 'board' => 'CommsCenter', 'perm' => 'ops:staff'],
-            ['id' => 'commsinbox', 'label' => 'WhatsApp Inbox', 'icon' => 'message', 'board' => 'CommsInbox', 'perm' => 'ops:staff'],
             ['id' => 'security', 'label' => 'Security Center', 'icon' => 'shield', 'board' => 'SecurityCenter', 'perm' => 'view_system_logs'],
             ['id' => 'accountsec', 'label' => 'My Account Security', 'icon' => 'lock', 'board' => 'AccountSecurity', 'perm' => 'customers_profile_edit'],
         ]],

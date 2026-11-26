@@ -9,6 +9,9 @@ require_once $projectRoot . '/ajax/notify_whatsapp/api_whatsapp_service_v2.php';
 require_once $projectRoot . '/helpers/after_response.php';
 
 class OtpService {
+    /** How long a device ticked as trusted skips the sign-in code (also shown by the Security centre). */
+    const TRUSTED_DEVICE_DAYS = 60;
+
     private $db;
     private $core;
     private $user;
@@ -62,6 +65,8 @@ class OtpService {
             created_at DATETIME NOT NULL,
             last_used_at DATETIME NULL,
             revoked_at DATETIME NULL,
+            ip VARCHAR(45) NULL,
+            user_agent VARCHAR(255) NULL,
             INDEX idx_user_expires (user_id, expires_at)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8");
         $this->db->cdp_execute();
@@ -402,15 +407,51 @@ class OtpService {
         $this->db->bind(':last_used_at', date('Y-m-d H:i:s'));
         $this->db->bind(':id',           (int) $row->id);
         $this->db->cdp_execute();
+        $this->storeDeviceDetails((int) $row->id);
 
         return true;
+    }
+
+    /**
+     * Address and browser of a remembered device (cdb_auth_trusted_devices.ip / user_agent, added by
+     * migrations/2026_11_26_trusted_device_details.sql), written when the device is remembered and
+     * refreshed each time it skips the code. A separate UPDATE, so remembering a device never depends
+     * on the columns: before the migration runs this does nothing.
+     */
+    private function storeDeviceDetails($deviceId) {
+        static $hasColumns = null;
+        if ($hasColumns === null) {
+            $this->db->cdp_query("SELECT COUNT(*) AS n FROM information_schema.COLUMNS
+                WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_auth_trusted_devices' AND COLUMN_NAME IN ('ip', 'user_agent')");
+            $c = $this->db->cdp_registro();
+            $hasColumns = $c && (int) $c->n === 2;
+        }
+        if (!$hasColumns || (int) $deviceId <= 0) return;
+        // The connecting address. Client-IP / X-Forwarded-For can be set by anyone, so they are only
+        // believed when the connection itself comes from a private or loopback address (a reverse proxy
+        // or load balancer in front of the app), and only when they hold a valid IP.
+        $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+        $direct = $ip !== '' && filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false;
+        if (!$direct) {
+            foreach (['HTTP_X_FORWARDED_FOR', 'HTTP_CLIENT_IP'] as $k) {
+                $fwd = trim(explode(',', (string) ($_SERVER[$k] ?? ''))[0]);
+                if ($fwd !== '' && filter_var($fwd, FILTER_VALIDATE_IP) !== false) { $ip = $fwd; break; }
+            }
+        }
+        // User agents are ASCII; dropping anything else keeps the cut at 255 from splitting a character.
+        $ua = substr(preg_replace('/[^\x20-\x7E]/', '', (string) ($_SERVER['HTTP_USER_AGENT'] ?? '')), 0, 255);
+        $this->db->cdp_query("UPDATE cdb_auth_trusted_devices SET ip=:ip, user_agent=:ua WHERE id=:id");
+        $this->db->bind(':ip', $ip !== '' ? substr($ip, 0, 45) : null);
+        $this->db->bind(':ua', $ua !== '' ? $ua : null);
+        $this->db->bind(':id', (int) $deviceId);
+        $this->db->cdp_execute();
     }
 
     public function rememberTrustedDevice($userId) {
         $selector = bin2hex(random_bytes(12));
         $verifier = bin2hex(random_bytes(32));
         $hash     = hash('sha256', $verifier . '|' . $this->secret());
-        $ttl      = 60 * 86400;
+        $ttl      = self::TRUSTED_DEVICE_DAYS * 86400;
         $expires  = date('Y-m-d H:i:s', time() + $ttl);
 
         $this->db->cdp_query("INSERT INTO cdb_auth_trusted_devices
@@ -422,6 +463,7 @@ class OtpService {
         $this->db->bind(':expires_at',    $expires);
         $this->db->bind(':created_at',    date('Y-m-d H:i:s'));
         $this->db->cdp_execute();
+        $this->storeDeviceDetails((int) $this->db->dbh->lastInsertId());
 
         setcookie('trusted_device', $selector . ':' . $verifier, [
             'expires'  => time() + $ttl,
