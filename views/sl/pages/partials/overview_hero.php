@@ -28,7 +28,8 @@ $bars = function (array $bars, string $cls = '') {
 </header>
 <?php
 $adminView = cdp_dashboardType($user->userlevel) === 'admin';
-include __DIR__ . ($adminView ? '/overview_brief.php' : '/overview_work.php');
+// The operations briefing (partials/overview_brief.php) is not shown on the Overview.
+if (!$adminView) include __DIR__ . '/overview_work.php';
 ?>
 
 <?php if ($hv['mode'] !== 'none'): ?>
@@ -182,4 +183,4 @@ include __DIR__ . ($adminView ? '/overview_brief.php' : '/overview_work.php');
 </section>
 <?php endif; ?>
 
-<?php include __DIR__ . ($adminView ? '/overview_work.php' : '/overview_brief.php'); ?>
+<?php if ($adminView) include __DIR__ . '/overview_work.php'; ?>
