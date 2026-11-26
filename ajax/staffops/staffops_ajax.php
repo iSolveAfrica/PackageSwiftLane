@@ -206,7 +206,32 @@ switch ($action) {
                         $r['on_time_pct'], $r['shifts'], $r['attended'], $r['attendance_pct'], $r['punctual_pct'], $r['hours'], $r['per_hour'], $r['score']];
                 }, $rows)]]);
         }
-        cdp_opsOut(['ok' => true, 'from' => $from, 'to' => $to, 'rows' => $rows]);
+        // output per day for the charts: shipments and packages registered, deliveries made, by the people listed
+        $ids = array_values(array_filter(array_map(fn($r) => (int) $r['user_id'], $rows)));
+        $days = [];
+        $n = min(92, (int) floor((strtotime($to) - strtotime($from)) / 86400) + 1);
+        $start = $n < (int) floor((strtotime($to) - strtotime($from)) / 86400) + 1 ? date('Y-m-d', strtotime($to . ' -' . ($n - 1) . ' days')) : $from;
+        for ($i = 0; $i < $n; $i++) $days[date('Y-m-d', strtotime($start . " +$i days"))] = ['shipments' => 0, 'packages' => 0, 'deliveries' => 0];
+        if ($ids) {
+            $in = implode(',', $ids);
+            $b = [':f' => $start . ' 00:00:00', ':t' => $to . ' 23:59:59'];
+            foreach ([['shipments', "SELECT DATE(order_datetime) d, COUNT(*) c FROM cdb_add_order WHERE user_id IN ($in) AND order_datetime BETWEEN :f AND :t AND status_courier <> 21 GROUP BY DATE(order_datetime)"],
+                      ['packages', "SELECT DATE(order_datetime) d, COUNT(*) c FROM cdb_customers_packages WHERE user_id IN ($in) AND order_datetime BETWEEN :f AND :t GROUP BY DATE(order_datetime)"],
+                      ['deliveries', "SELECT DATE(order_date) d, COUNT(*) c FROM cdb_add_order WHERE driver_id IN ($in) AND status_courier IN (8) AND order_date BETWEEN :f AND :t GROUP BY DATE(order_date)"]] as [$k, $sql]) {
+                foreach (cdp_opsQ($sql, $b) as $r) if (isset($days[$r->d])) $days[$r->d][$k] = (int) $r->c;
+            }
+        }
+        $daily = [];
+        foreach ($days as $d => $v) $daily[] = ['day' => $d] + $v;
+        // profile photos for the people cards (uploads/blank.png means no photo)
+        $pics = [];
+        if ($ids) foreach (cdp_opsQ('SELECT id, avatar FROM cdb_users WHERE id IN (' . implode(',', $ids) . ')') as $u) {
+            $av = trim((string) $u->avatar);
+            $pics[(int) $u->id] = $av !== '' && $av !== 'uploads/blank.png' ? 'assets/' . ltrim($av, '/') : '';
+        }
+        foreach ($rows as &$row) $row['avatar'] = $pics[(int) $row['user_id']] ?? '';
+        unset($row);
+        cdp_opsOut(['ok' => true, 'from' => $from, 'to' => $to, 'rows' => $rows, 'daily' => $daily]);
 
     case 'activity':
         $branch = (int) $G('branch_id');

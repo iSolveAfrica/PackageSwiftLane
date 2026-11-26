@@ -1249,8 +1249,14 @@ if (!function_exists('cdp_staffPerformance')) {
             $w .= ' AND (a.summary LIKE :q OR a.entity_label LIKE :q OR a.action_label LIKE :q)';
             $b[':q'] = '%' . $f['q'] . '%';
         }
-        return cdp_opsQ("SELECT a.id, a.created_at, a.user_id, a.actor_name, a.role_name, a.module, a.verb, a.outcome, a.action_label, a.summary, a.entity_type, a.entity_label, a.ip
-                         FROM cdb_activity_log a WHERE $w ORDER BY a.id DESC LIMIT 300", $b);
+        $rows = cdp_opsQ("SELECT a.id, a.created_at, a.user_id, a.actor_name, a.role_name, a.module, a.verb, a.outcome, a.action_label, a.summary, a.entity_type, a.entity_label, a.ip, u.avatar
+                         FROM cdb_activity_log a LEFT JOIN cdb_users u ON u.id = a.user_id WHERE $w ORDER BY a.id DESC LIMIT 300", $b);
+        // profile photo of whoever did it (same rule as the header: uploads/blank.png means no photo)
+        foreach ($rows as $r) {
+            $av = trim((string) ($r->avatar ?? ''));
+            $r->avatar = $av !== '' && $av !== 'uploads/blank.png' ? 'assets/' . ltrim($av, '/') : '';
+        }
+        return $rows;
     }
 
     /** Cron: missed shifts, commission accrual. */
