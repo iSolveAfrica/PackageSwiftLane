@@ -30,3 +30,11 @@ jobs:
         run: php scripts/check_consolidation_load_plan.php
       - name: Check design routes
         run: node scripts/check_design_routes.cjs
+      - name: Install browser test dependency
+        run: npm install --prefix /tmp/swiftlane-tests playwright
+      - name: Install browser
+        run: /tmp/swiftlane-tests/node_modules/.bin/playwright install --with-deps chromium
+      - name: Check load plan browser flow
+        env:
+          NODE_PATH: /tmp/swiftlane-tests/node_modules
+        run: node scripts/check_load_plan_ui.cjs
