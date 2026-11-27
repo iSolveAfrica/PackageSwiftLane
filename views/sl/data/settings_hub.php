@@ -13,10 +13,11 @@ function sl_settingsIndex($user): array
             ['Backup', 'Download a database backup', 'backup.php', 'view_tools'],
             ...((int)$user->userlevel === 9 && defined('CDP_DB_IMPORT_ENABLED') && CDP_DB_IMPORT_ENABLED === true ? [['Database import', 'Upload and check a main database export', 'backup.php', 'view_tools']] : [])]],
         ['label' => 'Messaging', 'icon' => 'i-message', 'items' => [
-            ['SMS providers', 'Hubtel, mNotify, default and fallback', 'tools.php#messaging', 'view_tools'], ['SMS (legacy Nexmo / Twilio)', 'Older SMS gateways', 'config_sms.php', 'view_tools'],
-            ['Twilio', 'Twilio account', 'config_twilio.php', 'view_tools'], ['WhatsApp API', 'URL and token', 'api_connections.php?p=whatsapp', 'manage_api_settings'],
-            ['Switch SMS on or off', 'Global SMS switch', 'activate_sms.php', 'view_tools'], ['Switch WhatsApp on or off', 'Global WhatsApp switch', 'activate_whatsapp.php', 'view_tools'],
-            ['E-mail (SMTP)', 'Mail server for every e-mail', 'api_connections.php?p=smtp', 'manage_api_settings'], ['E-mail server form', 'Mailer, host, port, user and password', 'settings_form.php?f=smtp', 'view_tools'], ['Notification Center', 'Which event sends which channel', 'notification_center.php', 'view_tools']]],
+            ['WhatsApp provider', 'UltraMsg or Meta Cloud API, link the phone by QR, webhook', 'comms_settings.php#cs-whatsapp', 'view_tools'], ['SMS providers', 'Hubtel, mNotify, default and fallback', 'comms_settings.php#cs-sms', 'view_tools'],
+            ['E-mail server', 'SMTP or PHP mail, from address, check the server', 'comms_settings.php#cs-email', 'view_tools'], ['Sending rules', 'Master switch, who sends status messages, quiet hours, reminders', 'comms_settings.php#cs-rules', 'view_tools'],
+            ['Consent and opt-out', 'STOP keywords and customer choices', 'comms_settings.php#cs-consent', 'view_tools'], ['Test send', 'One WhatsApp, SMS or e-mail with the saved settings', 'comms_settings.php#cs-test', 'view_tools'],
+            ['Automations', 'Everything that sends a message, per channel', 'comms_automations.php', 'view_tools'],
+            ['SMS (legacy Nexmo / Twilio)', 'Older SMS gateways', 'config_sms.php', 'view_tools'], ['Twilio', 'Twilio account', 'config_twilio.php', 'view_tools']]],
         ['label' => 'Logistics lists', 'icon' => 'i-truck', 'items' => [
             ['Offices', 'Offices and hubs', 'offices_list.php', 'view_tools'], ['Branch offices', 'Agencies and branches', 'branchoffices_list.php', 'view_tools'], ['Courier companies', 'Carriers you work with', 'courier_company_list.php', 'view_tools'],
             ['Packaging', 'Box and bag types', 'packaging_list.php', 'view_tools'], ['Shipping modes', 'Air, sea, express…', 'shipping_mode_list.php', 'view_tools'], ['Delivery times', 'Service levels', 'delivery_time_list.php', 'view_tools'],
@@ -27,8 +28,9 @@ function sl_settingsIndex($user): array
         ['label' => 'Places', 'icon' => 'i-globe', 'items' => [
             ['Countries', 'Country list', 'countries_list.php', 'view_tools'], ['States and regions', 'State list', 'states_list.php', 'view_tools'], ['Cities', 'City list', 'cities_list.php', 'view_tools']]],
         ['label' => 'Templates', 'icon' => 'i-file', 'items' => [
-            ['SMS templates', 'Text messages', 'templates_sms.php', 'list_sms_templates'], ['WhatsApp templates', 'WhatsApp messages', 'templates_whatsapp.php', 'manage_whatsapp_templates'],
-            ['E-mail templates', 'System e-mails', 'templates_email.php', 'view_tools'], ['Default templates', 'Template per event', 'templates_default.php', 'view_tools'], ['E-mail builder', 'Drag-and-drop newsletters', 'newsletter.php', 'manage_newsletter']]],
+            ['Status messages', 'WhatsApp, SMS and e-mail text for every shipment status', 'comms_statuses.php', 'view_tools'],
+            ['Other message templates', 'Sign-up, pickup code, payments and the other triggers', 'comms_automations.php?tab=other', 'view_tools'],
+            ['E-mail builder', 'Drag-and-drop e-mails and campaigns', 'comms_send.php?mode=campaign&channel=email', 'manage_newsletter']]],
     ];
     $q = trim((string) ($_GET['sq'] ?? ''));
     $grp = (string) ($_GET['grp'] ?? '');

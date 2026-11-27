@@ -136,12 +136,7 @@ if (!function_exists('cdp_staffWorkspace')) {
             ['label' => 'Without a driver', 'value' => (int) cdp_opsVal("SELECT COUNT(*) FROM cdb_add_order o WHERE o.status_courier = 7 AND COALESCE(o.driver_id,0) = 0 $scope")]],
             'table' => cdp_wsTable([['trk', 'Tracking'], ['customer', 'Customer'], ['driver', 'Driver']], $out), 'empty' => 'Nothing on route.',
             'links' => [['href' => 'delivery_dispatch.php', 'label' => 'Delivery requests'], ['href' => 'rider_dispatch.php', 'label' => 'Dispatch board']]];
-        if (cdp_opsTableExists('cdb_comm_delivery_slots')) {
-            $slots = cdp_opsQ("SELECT s.entity_ref, s.slot_date, s.slot_window, s.address_note, TRIM(CONCAT(COALESCE(u.fname,''),' ',COALESCE(u.lname,''))) customer
-                               FROM cdb_comm_delivery_slots s LEFT JOIN cdb_users u ON u.id = s.user_id WHERE s.status = 'booked' AND s.slot_date >= CURDATE() ORDER BY s.slot_date, s.slot_window LIMIT 15");
-            $panels[] = ['title' => 'Deliveries customers booked', 'table' => cdp_wsTable([['slot_date', 'Day'], ['slot_window', 'Window'], ['entity_ref', 'Reference'], ['customer', 'Customer'], ['address_note', 'Notes']], $slots),
-                'empty' => 'No bookings ahead.', 'links' => [['href' => 'comms_center.php#deliveries', 'label' => 'All bookings']]];
-        }
+        // Customer delivery bookings were retired (delivery_schedule.php now says the link has closed).
         $send = $branches ? cdp_opsQ("SELECT t.ref, tb.name to_name, (SELECT COUNT(*) FROM cdb_staff_transfer_items i WHERE i.transfer_id = t.id) items FROM cdb_staff_transfers t
                                       LEFT JOIN cdb_staff_branches tb ON tb.id = t.to_branch_id WHERE t.status = 'approved' AND t.from_branch_id IN (" . implode(',', array_map('intval', $branches)) . ") LIMIT 15") : [];
         $panels[] = ['title' => 'Transfers to send', 'table' => cdp_wsTable([['ref', 'Transfer'], ['to_name', 'To'], ['items', 'Items']], $send), 'empty' => 'No approved transfers waiting.',
@@ -156,7 +151,7 @@ if (!function_exists('cdp_staffWorkspace')) {
         if (cdp_opsTableExists('cdb_comm_threads')) {
             $k[] = ['label' => 'WhatsApp chats waiting', 'value' => (int) cdp_opsVal("SELECT COUNT(*) FROM cdb_comm_threads WHERE status = 'open'")];
             $k[] = ['label' => 'Assigned to me', 'value' => (int) cdp_opsVal("SELECT COUNT(*) FROM cdb_comm_threads WHERE status <> 'closed' AND assignee_id = :u", [':u' => $uid])];
-            $links[] = ['href' => 'comms_inbox.php', 'label' => 'WhatsApp Inbox'];
+            $links[] = ['href' => 'comms_inbox.php', 'label' => 'WhatsApp'];
         }
         if (cdp_opsTableExists('cdb_cs_tickets')) {
             $k[] = ['label' => 'Open tickets', 'value' => (int) cdp_opsVal("SELECT COUNT(*) FROM cdb_cs_tickets WHERE disposition = 'none' AND merged_into IS NULL AND status NOT IN ('resolved','closed')")];
@@ -165,9 +160,9 @@ if (!function_exists('cdp_staffWorkspace')) {
         }
         if (cdp_opsTableExists('cdb_message_log')) {
             $k[] = ['label' => 'Messages failed (24 h)', 'value' => (int) cdp_opsVal("SELECT COUNT(*) FROM cdb_message_log WHERE status = 'failed' AND created_at >= :c", [':c' => cdp_opsNow(-86400)])];
-            $links[] = ['href' => 'message_logs.php', 'label' => 'Message logs'];
+            $links[] = ['href' => 'comms_outbox.php', 'label' => 'Outbox'];
         }
-        $links[] = ['href' => 'comms_center.php#customers', 'label' => 'Customer history'];
+        $links[] = ['href' => 'comms_customers.php', 'label' => 'Customer history'];
         return [['title' => 'Customers waiting', 'kpis' => $k, 'links' => $links]];
     }
 
@@ -217,10 +212,6 @@ if (!function_exists('cdp_staffWorkspace')) {
             'action' => 'driver_arriving',
             'links' => [['href' => 'driver_app.php', 'label' => 'Rider app']],
         ]];
-        if (cdp_opsTableExists('cdb_comm_delivery_slots')) {
-            $slots = cdp_opsQ("SELECT s.entity_ref, s.slot_date, s.slot_window, s.phone, s.address_note FROM cdb_comm_delivery_slots s WHERE s.driver_id = :u AND s.status = 'booked' ORDER BY s.slot_date LIMIT 20", [':u' => $uid]);
-            $panels[] = ['title' => 'Booked time slots', 'table' => cdp_wsTable([['slot_date', 'Day'], ['slot_window', 'Window'], ['entity_ref', 'Reference'], ['phone', 'Phone'], ['address_note', 'Notes']], $slots), 'empty' => 'No booked slots assigned to you.'];
-        }
         return $panels;
     }
 

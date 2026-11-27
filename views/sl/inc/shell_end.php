@@ -7,6 +7,7 @@
 <div id="sl-toast" class="sl-toast" role="status" aria-live="polite" hidden></div>
 <?php if (!empty($slPasskeys)) include CDP_ROOT . '/views/sl/inc/passkey_manage.php'; ?>
 <?php if (!empty($slAiPopup)) include CDP_ROOT . '/views/sl/inc/ai_page.php'; ?>
+<?php if (!empty($slIsClient)) include CDP_ROOT . '/views/sl/inc/survey_prompt.php'; ?>
 <script src="<?= h(cdp_asset('assets/swiftlane/swiftlane.js')) ?>"></script>
 <script src="<?= h(cdp_asset('assets/swiftlane/shortcuts.js')) ?>"></script>
 <?php if (!empty($slPasskeys)): ?><script src="<?= h(cdp_asset('dataJs/sl/passkey.js')) ?>"></script><?php endif; ?>

@@ -200,6 +200,15 @@ function sl_routes(): array
         // Communication, management and staff operations
         'CommsCenter'       => 'comms_center.php',
         'CommsInbox'        => 'comms_inbox.php',
+        'WhatsAppWeb'       => 'whatsapp_web.php',
+        // Communications v2 (one Notifications area; pages built by WP-1..WP-5)
+        'CommsAutomations'  => 'comms_automations.php',
+        'CommsStatuses'     => 'comms_statuses.php',
+        'CommsSend'         => 'comms_send.php',
+        'CommsOutbox'       => 'comms_outbox.php',
+        'CommsCustomers'    => 'comms_customers.php',
+        'CommsSurveys'      => 'comms_surveys.php',
+        'CommsSettings'     => 'comms_settings.php',
         'NotificationPrefs' => 'comms_preferences.php',
         'MasterView'        => 'master_view.php',
         'StaffHub'          => 'staff_hub.php',

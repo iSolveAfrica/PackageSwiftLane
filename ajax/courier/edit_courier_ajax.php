@@ -4,6 +4,12 @@ ini_set('display_errors', 0);
 require_once("../../loader.php");
 require_once __DIR__ . '/../../helpers/sl_auth.php';
 require_once("../../helpers/querys.php");
+// Message source for the message log and the transport gate (helpers/comms_gate.php),
+// named here rather than read from this endpoint's file name.
+require_once(__DIR__ . '/../../helpers/comms_gate.php');
+if (function_exists('cdp_msgSetContext')) {
+    cdp_msgSetContext(['source' => 'shipment_updated', 'source_label' => 'Shipment Updated', 'entity_type' => 'shipment']);
+}
 require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_once(__DIR__ . '/../../helpers/uploads.php');
 require_login();
@@ -940,7 +946,7 @@ if (empty($errors)) {
                 $header  = "MIME-Version: 1.0\r\n";
                 $header .= "Content-type: text/html; charset=UTF-8 \r\n";
                 $header .= "From: " . $site_email . " \r\n";
-                try { mail($recipient_obj->email, $subject, $newbody, $header); } catch (Exception $e) {}
+                try { if (cdp_commLegacyAllowed('email', ['to' => (string) $recipient_obj->email, 'subject' => (string) $subject])) { $cdpOk = @mail($recipient_obj->email, $subject, $newbody, $header); if (function_exists('cdp_msgLogPhpMail')) { cdp_msgLogPhpMail((bool) $cdpOk, $recipient_obj->email, $subject, $newbody); } } } catch (Exception $e) {}
 
             } elseif ($check_mail == 'SMTP') {
                 $mail = new PHPMailer(true);

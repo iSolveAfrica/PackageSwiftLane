@@ -268,9 +268,32 @@ if (empty($errors)) {
 
         $newbody = cdp_cleanOutx($body);
 
+        // Message source for the message log and the transport gate
+        // (helpers/comms_gate.php): a hand-over is a status announcement, sent by
+        // the Automation Center instead when it owns statuses.
+        require_once(__DIR__ . '/../../helpers/comms_gate.php');
+        require_once(__DIR__ . '/../../helpers/whatsapp.php');
+        if (function_exists('cdp_msgSetContext')) {
+            cdp_msgSetContext(['source' => 'delivery', 'source_label' => 'Delivery', 'entity_type' => 'shipment',
+                'entity_id' => (string) $shipment_id, 'entity_label' => $fullshipment, 'recipient_user_id' => (int) $shipment->sender_id]);
+        }
+
+        // Status message library (helpers/notify_studio.php), as the air status
+        // screen uses it: the text saved or drafted for this status per channel; a
+        // channel switched off there is not sent; the built-in texts below go out
+        // only when the library has nothing for the status.
+        $ns = cdp_statusNotifyResolve($status, $sender_data, $fullshipment, $app_url, 'air', $shipment_id, [
+            'status' => (string) $add_status, 'comment' => (string) $handover_done,
+            'location' => trim(cdp_sanitize($_POST['country'] ?? '') . ' | ' . cdp_sanitize($_POST['address'] ?? ''), ' |'),
+        ]);
+
         //SENDMAIL PHP
 
-        if ($check_mail == 'PHP') {
+        if (!$ns['email']['on'] || !$sender_data || empty($sender_data->email)) {
+            // E-mail switched off for this status (or no address).
+        } elseif ($ns['email']['custom']) {
+            cdp_statusNotifyEmail($sender_data, $ns['email'], $subject);
+        } elseif ($check_mail == 'PHP') {
 
             $message = $newbody;
             $to = $sender_data->email;
@@ -280,7 +303,13 @@ if (empty($errors)) {
             $header .= "Content-type: text/html; charset=UTF-8 \r\n";
             $header .= "From: " . $from . " \r\n";
 
-            mail($to, $subject, $message, $header);
+            // mail() bypasses PHPMailer, so the transport gate is asked here.
+            if (cdp_commLegacyAllowed('email', ['id' => (int) $shipment->sender_id, 'to' => (string) $to, 'subject' => $subject])) {
+                $cdpOk = @mail($to, $subject, $message, $header);
+                if (function_exists('cdp_msgLogPhpMail')) {
+                    cdp_msgLogPhpMail((bool) $cdpOk, $to, $subject, $message);
+                }
+            }
         } elseif ($check_mail == 'SMTP') {
 
             //PHPMAILER PHP   
@@ -355,7 +384,14 @@ if (empty($errors)) {
         cdp_insertNotificationsUsers($notification_id, intval($shipment->sender_id));
 
         //NOTIFY WHATSAPP API v2
-        if (!empty($sender_data->phone)) {
+        if ($ns['whatsapp']['custom']) {
+            // The library's WhatsApp text for this status (SMS goes out below).
+            try {
+                cdp_statusNotifyWaSms($sender_data, '', '', $ns);
+            } catch (Throwable $e) {
+                error_log('Error sending WhatsApp v2 notification to sender on delivery: ' . $e->getMessage());
+            }
+        } elseif ($ns['whatsapp']['on'] && !empty($sender_data->phone)) {
             try {
                 // Get template 3 for package delivery
                 $tpl = getTemplateWhatsApp(3);
@@ -418,6 +454,12 @@ if (empty($errors)) {
             $newbodyS_sender = ($status === CDP_STATUS_PICKED_UP)
                 ? cdp_handoverPickedUpText(cdp_nameWithLocker($sender_data), [$fullshipment], $msnames)
                 : generateSMSBody($sender_data, $fullshipment, $add_status, $app_url, $templatessender);
+            if ($ns['sms']['custom']) {
+                $newbodyS_sender = $ns['sms']['body'];
+            }
+            if (!$ns['sms']['on']) {
+                $notify_sms_sender = false;
+            }
             // Llamar a la función para enviar la notificación SMS al remitente
             sendNotificationSMS($sender_data, $newbodyS_sender, $notify_sms_sender);
         } catch (Exception $e) {

@@ -7,6 +7,9 @@
  * design JSON as before, so existing designs still open. ?email=a@b.c presets addresses.
  */
 require_once 'loader.php';
+// The Email builder moved into the Send page (Communications): a campaign by e-mail; ?email= addresses become a direct send.
+header('Location: comms_send.php?' . (isset($_GET['email']) ? http_build_query(['mode' => 'several', 'channel' => 'email', 'email' => (string) $_GET['email']]) : 'mode=campaign&channel=email'), true, 302);
+exit;
 $user = new User();
 $core = new Core();
 require_once 'helpers/sl_view.php';

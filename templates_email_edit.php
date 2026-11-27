@@ -1,4 +1,4 @@
 <?php
-/** templates_email_edit.php Replaced by the Swift Lane page templates_email.php; old URL kept for bookmarks. */
-header("Location: templates_email.php", true, 301);
+/** templates_email_edit.php: replaced by Communications > Automations > Other triggers; old URL kept for bookmarks. */
+header('Location: comms_automations.php?tab=other&ch=email', true, 301);
 exit;

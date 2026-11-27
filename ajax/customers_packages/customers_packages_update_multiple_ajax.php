@@ -91,6 +91,14 @@ if (cdp_pickupCodeGatedStatus($status)) {
     }
 }
 
+// Message source for the message log and the transport gate (helpers/comms_gate.php):
+// a bulk status change, sent by the Automation Center when it owns statuses.
+if (function_exists('cdp_msgSetContext')) {
+    cdp_msgSetContext(['source' => 'bulk_status_update', 'source_label' => 'Bulk Status Update', 'entity_type' => 'package']);
+}
+require_once(__DIR__ . '/../../helpers/whatsapp.php');
+require_once(__DIR__ . '/../../helpers/comms_gate.php');
+
 // Resolve new status label once (same for all shipments in this batch)
 $new_status_obj   = cdp_getCourierstatusApi($status);
 $new_status_label = $new_status_obj ? $new_status_obj->mod_style : 'Updated';
@@ -168,13 +176,28 @@ foreach ($data as $key) {
         // pickup code; ready and picked up / delivered text an SMS copy too.
         $cdp_sms_event = cdp_statusSmsEvent($status, $new_status_label);
         $cdp_code_line = cdp_pickupCodeReadyLine('sea', [(int) $courier->order_id], $status, $new_status_label);
+        $cdp_code_html = $cdp_code_line !== '' ? cdp_pickupCodeReadyLine('sea', [(int) $courier->order_id], $status, $new_status_label, true) : '';
+        if (function_exists('cdp_msgSetContext')) {
+            cdp_msgSetContext(['entity_id' => (string) $courier->order_id, 'entity_label' => $tracking, 'recipient_user_id' => (int) $courier->sender_id]);
+        }
+
+        // Status message library (helpers/notify_studio.php), as the single status
+        // screens use it: the text saved or drafted for this status per channel, a
+        // channel switched off there is not sent, and the built-in texts below go
+        // out only when the library has nothing for the status.
+        $ns = cdp_statusNotifyResolve($status, $sender_data, $tracking, $app_url, 'sea', (int) $courier->order_id, [
+            'status' => (string) $new_status_label, 'comment' => '',
+            'pickup_code' => (string) $cdp_code_line, 'pickup_code_html' => (string) $cdp_code_html,
+        ]);
 
         // =====================
         // EMAIL NOTIFICATION
         // =====================
         $email_template = cdp_getEmailTemplatesdg1i4(35);
 
-        if ($email_template && $sender_data && !empty($sender_data->email)) {
+        if ($ns['email']['custom'] && $sender_data && !empty($sender_data->email)) {
+            cdp_statusNotifyEmail($sender_data, $ns['email'], 'Shipment Status Update - ' . $tracking);
+        } elseif ($ns['email']['on'] && $email_template && $sender_data && !empty($sender_data->email)) {
 
             $body = str_replace(
                 [
@@ -211,9 +234,15 @@ foreach ($data as $key) {
                 $header  = "MIME-Version: 1.0\r\n";
                 $header .= "Content-type: text/html; charset=UTF-8 \r\n";
                 $header .= "From: " . $site_email . " \r\n";
-                try {
-                    mail($sender_data->email, $subject, $newbody, $header);
-                } catch (Exception $e) {}
+                // mail() bypasses PHPMailer, so the transport gate is asked here.
+                if (cdp_commLegacyAllowed('email', ['id' => (int) $courier->sender_id, 'to' => (string) $sender_data->email, 'subject' => $subject])) {
+                    try {
+                        $cdpOk = mail($sender_data->email, $subject, $newbody, $header);
+                        if (function_exists('cdp_msgLogPhpMail')) {
+                            cdp_msgLogPhpMail((bool) $cdpOk, $sender_data->email, $subject, $newbody);
+                        }
+                    } catch (Exception $e) {}
+                }
 
             } elseif ($check_mail == 'SMTP') {
 
@@ -264,8 +293,8 @@ foreach ($data as $key) {
                     $app_url . "\n\n" .
                     "Thank you, *{$msnames}* Team";
 
-                sendNotificationWhatsApp_v2($sender_data, $whatsapp_body, null,
-                    $cdp_sms_event !== '' ? ['sms_event' => $cdp_sms_event] : ['allow_sms' => false]);
+                // WhatsApp with its library text; the SMS copy (ready / handed over) with its own.
+                cdp_statusNotifyWaSms($sender_data, $whatsapp_body, $cdp_sms_event, $ns);
 
             } catch (Exception $e) {
                 error_log('Error sending WhatsApp status notification for ' . $tracking . ': ' . $e->getMessage());

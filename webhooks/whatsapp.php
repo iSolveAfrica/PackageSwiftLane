@@ -76,3 +76,17 @@ if ($messages) {
         }
     });
 }
+
+// The WhatsApp screen (whatsapp_web.php) keeps its own copy of every chat:
+// UltraMsg events (received, sent from the phone, ticks) are stored there too,
+// and a STOP / START also applies to contacts saved from WhatsApp (helpers/ultramsg.php).
+if (is_array($j) && isset($j['event_type'], $j['data']) && is_file(dirname(__DIR__) . '/helpers/ultramsg.php')) {
+    cdp_afterResponse(function () use ($j) {
+        try {
+            require_once dirname(__DIR__) . '/helpers/ultramsg.php';
+            cdp_umWebhookIngest($j);
+        } catch (Throwable $e) {
+            error_log('[whatsapp screen webhook] ' . $e->getMessage());
+        }
+    });
+}

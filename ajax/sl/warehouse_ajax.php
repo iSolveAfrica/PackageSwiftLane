@@ -65,32 +65,78 @@ function slw_syncConsolidation(int $orderId, bool $sea): void
         }
     }
 }
-/** One message per customer after a handover (WhatsApp with the handed_over SMS copy, and e-mail). */
-function slw_notify(int $senderId, array $trackings, int $status, $core): void
+/**
+ * One message per customer after a handover (WhatsApp with the handed_over SMS copy, and e-mail).
+ *
+ * The message source is named 'delivery' for the message log and the transport gate
+ * (helpers/comms_gate.php): with Communications > Automations owning statuses, the
+ * Automation Center announces the hand-over and these sends are logged as skipped.
+ * The text comes from the status message library (helpers/notify_studio.php,
+ * cdp_statusNotifyResolve in helpers/whatsapp.php), as on the deliver forms: the
+ * text saved or drafted for the status per channel, a channel switched off there is
+ * not sent, and the built-in text below only when the library has nothing.
+ *
+ * @param array $items [[module, order_id], ...] of the packages handed over (same order as $trackings)
+ */
+function slw_notify(int $senderId, array $trackings, int $status, $core, array $items = []): void
 {
     $sender = cdp_getSenderCourier($senderId);
     if (!$sender || !$trackings) return;
     require_once CDP_ROOT . '/helpers/after_response.php';
-    cdp_afterResponse(function () use ($sender, $trackings, $status, $core) {
+    cdp_afterResponse(function () use ($sender, $senderId, $trackings, $status, $core, $items) {
         $site = trim((string) ($core->site_name ?? ''));
         $plural = count($trackings) > 1;
+        $list = implode(', ', $trackings);
         $text = $status === CDP_STATUS_PICKED_UP ? cdp_handoverPickedUpText(cdp_nameWithLocker($sender), $trackings, $site)
-            : 'Hello ' . cdp_nameWithLocker($sender) . ",\n\nYour package" . ($plural ? 's ' : ' ') . '*' . implode(', ', $trackings) . '* ' . cdp_handoverPhrase($status, $plural) . '. Thank you for shipping with ' . ($site ?: 'us') . '!';
+            : 'Hello ' . cdp_nameWithLocker($sender) . ",\n\nYour package" . ($plural ? 's ' : ' ') . '*' . $list . '* ' . cdp_handoverPhrase($status, $plural) . '. Thank you for shipping with ' . ($site ?: 'us') . '!';
+        $module = (string) ($items[0][0] ?? 'air');
+        $orderId = count($items) === 1 ? (int) ($items[0][1] ?? 0) : 0;
+        if (function_exists('cdp_msgSetContext')) {
+            cdp_msgSetContext(['source' => 'delivery', 'source_label' => 'Delivery', 'entity_type' => $module === 'sea' ? 'package' : 'shipment',
+                'entity_id' => implode(',', array_map(function ($it) { return (string) (int) ($it[1] ?? 0); }, $items)), 'entity_label' => $list,
+                'recipient_user_id' => $senderId]);
+        }
+        $ns = ['email' => ['on' => true, 'custom' => false], 'whatsapp' => ['on' => true, 'custom' => false], 'sms' => ['on' => true, 'custom' => false]];
+        try {
+            require_once CDP_ROOT . '/helpers/whatsapp.php';
+            $trackUrl = rtrim((string) ($core->site_url ?? ''), '/') . '/track.php?order_track=' . rawurlencode((string) $trackings[0]);
+            $ns = cdp_statusNotifyResolve($status, $sender, $list, $trackUrl, $module, $orderId, [
+                'status' => cdp_handoverLabel($status), 'comment' => cdp_handoverTrackComment($status), 'location' => 'Warehouse',
+            ]);
+            // The drafted texts speak about one package; several packages keep the
+            // plural built-in text unless a text was saved for the status.
+            if ($plural) {
+                foreach (['email', 'whatsapp', 'sms'] as $ch) {
+                    if (($ns[$ch]['source'] ?? '') === 'draft') $ns[$ch]['custom'] = false;
+                }
+            }
+        } catch (Throwable $e) { error_log('sl handover library: ' . $e->getMessage()); }
         try {
             if (trim((string) ($sender->phone ?? '')) !== '') {
                 require_once CDP_ROOT . '/ajax/notify_whatsapp/api_whatsapp_service_v2.php';
-                sendNotificationWhatsApp_v2($sender, $text, 'GH', ['sms_event' => 'handed_over']);
+                if (function_exists('cdp_statusNotifyWaSms')) {
+                    cdp_statusNotifyWaSms($sender, $text, 'handed_over', $ns, 'GH');
+                } else {
+                    sendNotificationWhatsApp_v2($sender, $text, 'GH', ['sms_event' => 'handed_over']);
+                }
             }
         } catch (Throwable $e) { error_log('sl handover WA: ' . $e->getMessage()); }
         try {
             $email = trim((string) ($sender->email ?? ''));
-            if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            if (!empty($ns['email']['on']) && $email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 require_once CDP_ROOT . '/helpers/phpmailer/class.phpmailer.php';
                 require_once CDP_ROOT . '/helpers/phpmailer/class.smtp.php';
-                $subject = cdp_handoverSubject($status, implode(', ', $trackings));
-                cdp_sendTemplateEmail(29, $email, ['[USERNAME]' => htmlspecialchars(cdp_nameWithLocker($sender)), '[SUBJECT]' => $subject, '[MESSAGE]' => '<p>' . nl2br(htmlspecialchars(str_replace('*', '', $text))) . '</p>'], $subject . ($site ? ' — ' . $site : ''));
+                $subject = cdp_handoverSubject($status, $list);
+                if (!empty($ns['email']['custom']) && function_exists('cdp_statusNotifyEmail')) {
+                    cdp_statusNotifyEmail($sender, $ns['email'], $subject . ($site ? ' — ' . $site : ''));
+                } else {
+                    cdp_sendTemplateEmail(29, $email, ['[USERNAME]' => htmlspecialchars(cdp_nameWithLocker($sender)), '[SUBJECT]' => $subject, '[MESSAGE]' => '<p>' . nl2br(htmlspecialchars(str_replace('*', '', $text))) . '</p>'], $subject . ($site ? ' — ' . $site : ''));
+                }
             }
         } catch (Throwable $e) { error_log('sl handover mail: ' . $e->getMessage()); }
+        if (function_exists('cdp_msgClearContext')) {
+            cdp_msgClearContext(['source', 'source_label', 'entity_type', 'entity_id', 'entity_label', 'recipient_user_id']);
+        }
     });
 }
 
@@ -207,7 +253,7 @@ switch ($op) {
             if (!$gate['ok']) sl_json(['success' => false, 'message' => $gate['message'], 'pickup_code' => ['module' => $m, 'order_ids' => $gate['missing']]], 409);
         }
         if (!$rows) sl_json(['success' => false, 'message' => 'These packages were already handed over.'], 409);
-        $bySender = [];
+        $bySender = []; $itemsBySender = [];
         foreach ($rows as [$m, $r]) {
             $table = $m === 'sea' ? 'cdb_customers_packages' : 'cdb_add_order';
             $db = new Conexion; $db->cdp_query("UPDATE $table SET status_courier = :s WHERE order_id = :id"); $db->bind(':s', $status); $db->bind(':id', (int) $r->order_id); $db->cdp_execute();
@@ -218,8 +264,9 @@ switch ($op) {
             slw_syncConsolidation((int) $r->order_id, $m === 'sea');
             cdp_activityLogStatus($m === 'sea' ? 'packages' : 'shipments', $m === 'sea' ? 'package' : 'shipment', (int) $r->order_id, $trk, $status, $label, sl_statusLabel($r->status_courier));
             $bySender[(int) $r->sender_id][] = $trk;
+            $itemsBySender[(int) $r->sender_id][] = [$m, (int) $r->order_id];
         }
-        foreach ($bySender as $sid => $trks) slw_notify($sid, $trks, $status, $core);
+        foreach ($bySender as $sid => $trks) slw_notify($sid, $trks, $status, $core, $itemsBySender[$sid] ?? []);
         sl_json(['success' => true, 'message' => count($rows) . ' package' . (count($rows) === 1 ? '' : 's') . ' ' . strtolower($label), 'label' => $label, 'n' => count($rows)]);
         break;
 

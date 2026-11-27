@@ -349,6 +349,13 @@ function cdp_sendTemplateEmail($templateId, $toEmail, array $replacements = [], 
     // stored subject — callers supply their own via $subjectOverride.
     $subject = ($subjectOverride !== null && $subjectOverride !== '') ? $subjectOverride : $tpl->subject;
 
+    // One switch for every message (helpers/comms_gate.php). The SMTP path
+    // asks again in PHPMailer::send(); the answer is the same.
+    require_once __DIR__ . '/comms_gate.php';
+    if (!cdp_commLegacyAllowed('email', ['to' => (string) $toEmail, 'subject' => (string) $subject, 'body' => trim(strip_tags((string) $body))])) {
+        return ['ok' => true, 'skipped' => true];
+    }
+
     if ($core->mailer === 'PHP') {
         $headers  = "MIME-Version: 1.0\r\n";
         $headers .= "Content-type: text/html; charset=UTF-8\r\n";

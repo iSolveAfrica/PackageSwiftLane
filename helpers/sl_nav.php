@@ -101,19 +101,14 @@ function sl_navStaff(): array
             ['id' => 'execdash', 'label' => 'Management Center', 'icon' => 'chart', 'board' => 'ExecDashboard', 'perm' => ['main_dashboard_index', 'view_exec_dashboard']],
             ['id' => 'masterview', 'label' => 'Gerald Master View', 'icon' => 'gauge', 'board' => 'MasterView', 'perm' => 'ops:mgmt'],
             ['id' => 'aicenter', 'label' => 'AI Automation Center', 'icon' => 'ai', 'board' => 'AiCenter', 'perm' => 'ai:manage'],
-            ['id' => 'notifc', 'label' => 'Notification Control', 'icon' => 'bell', 'board' => 'NotificationCenter', 'perm' => ['manage_notification_rules', 'view_tools']],
-            ['id' => 'notifystudio', 'label' => 'Notification Studio', 'icon' => 'send', 'board' => 'NotifyStudio', 'perm' => ['manage_notification_rules', 'view_tools']],
             ['id' => 'pay', 'label' => 'Payment Gateways', 'icon' => 'card', 'board' => 'Payments', 'perm' => 'view_global_payments', 'finance' => true],
             ['id' => 'loyalty', 'label' => 'Loyalty & Referrals', 'icon' => 'star', 'board' => 'LoyaltyRewards', 'perm' => 'manage_loyalty'],
             ['id' => 'supporthub', 'label' => 'Customer Care', 'icon' => 'ticket', 'board' => 'SupportHub', 'perm' => 'cs:agent'],
-            ['id' => 'campaigns', 'label' => 'Campaigns', 'icon' => 'send', 'board' => 'Campaigns', 'perm' => ['view_message_logs', 'manage_newsletter', 'push_notifications']],
-            ['id' => 'commshub', 'label' => 'Communications', 'icon' => 'message', 'board' => 'CommsHub', 'perm' => ['push_notifications', 'manage_newsletter', 'view_message_logs']],
-            // WhatsApp Inbox belongs to Communications: directly under it, badge = conversations waiting for a person.
-            ['id' => 'commsinbox', 'label' => 'WhatsApp Inbox', 'icon' => 'message', 'board' => 'CommsInbox', 'perm' => 'ops:staff',
-                // Same figure as cdp_commWaitingCount() (status 'open'); that one is used when helpers/comms.php is loaded.
-                'count' => fn() => function_exists('cdp_commWaitingCount') ? cdp_commWaitingCount()
-                    : (sl_tableExists('cdb_comm_threads') ? sl_navCount("SELECT COUNT(*) FROM cdb_comm_threads WHERE status = 'open'") : 0)],
-            ['id' => 'commscenter', 'label' => 'Communication Center', 'icon' => 'send', 'board' => 'CommsCenter', 'perm' => 'ops:staff'],
+            // One Notifications area: the item opens a sub-menu of every messaging page (sl_navCommsChildren).
+            // The badge is the WhatsApp conversations waiting for a person (shown while the sub-menu is closed).
+            ['id' => 'commshub', 'label' => 'Notifications & Messages', 'icon' => 'message', 'board' => 'CommsHub',
+                'perm' => ['ops:staff', 'push_notifications', 'manage_newsletter', 'view_message_logs'],
+                'count' => fn() => sl_navCommsWaiting(), 'children' => sl_navCommsChildren()],
             ['id' => 'security', 'label' => 'Security Center', 'icon' => 'shield', 'board' => 'SecurityCenter', 'perm' => 'view_system_logs'],
             ['id' => 'accountsec', 'label' => 'My Account Security', 'icon' => 'lock', 'board' => 'AccountSecurity', 'perm' => 'customers_profile_edit'],
         ]],
@@ -176,17 +171,13 @@ function sl_navStaff(): array
         ['label' => 'Insights', 'items' => [
             ['id' => 'reports', 'label' => 'Reports', 'icon' => 'chart', 'board' => 'Reports', 'perm' => 'view_general_reports'],
             ['id' => 'activity', 'label' => 'Activity Logs', 'icon' => 'clock', 'board' => 'ActivityLogs', 'perm' => 'view_activity_logs'],
-            ['id' => 'messages', 'label' => 'Message Logs', 'icon' => 'archive', 'board' => 'MessageLogs', 'perm' => 'view_message_logs'],
+            ['id' => 'messages', 'label' => 'Message Logs', 'icon' => 'archive', 'board' => 'CommsOutbox', 'perm' => 'view_message_logs'],
         ]],
         ['label' => 'Settings', 'items' => [
             ['id' => 'general', 'label' => 'General', 'icon' => 'cog', 'board' => 'SettingsHub', 'perm' => 'view_tools'],
             ['id' => 'apis', 'label' => 'API Connections', 'icon' => 'link', 'board' => 'ApiConnections', 'perm' => 'manage_api_settings',
                 'count' => fn() => sl_tableExists('cdb_api_connections') ? sl_navCount("SELECT COUNT(*) FROM cdb_api_connections") : 0],
             ['id' => 'apitraffic', 'label' => 'Live API Traffic', 'icon' => 'activity', 'board' => 'ApiTraffic', 'perm' => 'view_api_logs'],
-            ['id' => 'ebuild', 'label' => 'Email Builder', 'icon' => 'mail', 'board' => 'EmailBuilder', 'perm' => 'manage_newsletter'],
-            ['id' => 'msgtpl', 'label' => 'SMS & WhatsApp', 'icon' => 'message', 'board' => 'MessageTemplates', 'perm' => ['list_sms_templates', 'manage_whatsapp_templates']],
-            ['id' => 'compose', 'label' => 'Compose Message', 'icon' => 'mail', 'board' => 'ComposeMessage', 'perm' => ['push_notifications', 'manage_newsletter']],
-            ['id' => 'bcast', 'label' => 'Push Notifications', 'icon' => 'send', 'board' => 'Broadcast', 'perm' => 'push_notifications'],
             ['id' => 'costs', 'label' => 'Operating Costs', 'icon' => 'dollar', 'board' => 'CostSettings', 'perm' => 'superadmin'],
             ['id' => 'addr', 'label' => 'Shipping Addresses', 'icon' => 'pin', 'board' => 'ShippingAddresses', 'perm' => 'view_tools'],
             ['id' => 'loginpg', 'label' => 'Login Page', 'icon' => 'image', 'board' => 'LoginSettings', 'perm' => 'view_tools'],
@@ -198,6 +189,37 @@ function sl_navStaff(): array
             ['id' => 'auto', 'label' => 'Automations', 'icon' => 'bolt', 'board' => 'Automations', 'perm' => 'manage_automations'],
         ]],
     ];
+}
+
+/**
+ * The Notifications & Messages sub-menu: one list for the sidebar
+ * (children of 'commshub') and the page tabs (views/sl/pages/partials/comms_tabs.php).
+ * 'perm' uses the same rules as the pages themselves: rank 2+ staff (ops:staff),
+ * the Outbox also for view_message_logs, Settings for administrators (ops:admin).
+ */
+function sl_navCommsChildren(): array
+{
+    return [
+        ['id' => 'commsoverview', 'label' => 'Overview', 'icon' => 'grid', 'board' => 'CommsHub', 'perm' => ['ops:staff', 'push_notifications', 'manage_newsletter', 'view_message_logs']],
+        ['id' => 'commsautomations', 'label' => 'Automations', 'icon' => 'bolt', 'board' => 'CommsAutomations', 'perm' => 'ops:staff'],
+        ['id' => 'commsstatuses', 'label' => 'Status messages', 'icon' => 'track', 'board' => 'CommsStatuses', 'perm' => 'ops:staff'],
+        ['id' => 'commssend', 'label' => 'Send', 'icon' => 'send', 'board' => 'CommsSend', 'perm' => 'ops:staff'],
+        ['id' => 'commsoutbox', 'label' => 'Outbox', 'icon' => 'archive', 'board' => 'CommsOutbox', 'perm' => ['ops:staff', 'view_message_logs']],
+        ['id' => 'commsinbox', 'label' => 'WhatsApp', 'icon' => 'message', 'board' => 'CommsInbox', 'perm' => 'ops:staff',
+            'count' => fn() => sl_navCommsWaiting()],
+        ['id' => 'commscustomers', 'label' => 'Customer history', 'icon' => 'user', 'board' => 'CommsCustomers', 'perm' => 'ops:staff'],
+        ['id' => 'commssurveys', 'label' => 'Surveys', 'icon' => 'star', 'board' => 'CommsSurveys', 'perm' => 'ops:staff'],
+        ['id' => 'commssettings', 'label' => 'Settings', 'icon' => 'cog', 'board' => 'CommsSettings', 'perm' => 'ops:admin'],
+    ];
+}
+
+/** WhatsApp conversations waiting for a person: cdp_commWaitingCount() when comms.php is loaded, else one cached COUNT. */
+function sl_navCommsWaiting(): int
+{
+    if (function_exists('cdp_commWaitingCount')) {
+        return (int) cdp_commWaitingCount();
+    }
+    return sl_tableExists('cdb_comm_threads') ? sl_navCount("SELECT COUNT(*) FROM cdb_comm_threads WHERE status = 'open'") : 0;
 }
 
 /** Customer navigation (ClientDashboard.dc.html sidebar). */
@@ -262,13 +284,15 @@ function sl_navAllowed($perm, array $ctx): bool
             case 'cs:manage':
                 if (sl_userIs('admin')) return true;
                 break;
-            case 'ops:staff':   // Communication Center, WhatsApp Inbox, Staff & Branches (rank 2+)
+            case 'ops:staff':   // Notifications & Messages pages, Staff & Branches (rank 2+)
+            case 'ops:admin':   // Notifications & Messages settings (administrators, rank 3+)
             case 'ops:member':  // My Workspace (staff, drivers, agents: rank 1+)
             case 'ops:mgmt':    // Gerald Master View
             case 'ops:agent':   // Partner Portal
                 require_once CDP_ROOT . '/helpers/staffops.php';
                 $rk = cdp_opsRank($user);
                 if ($p === 'ops:staff' && $rk >= 2) return true;
+                if ($p === 'ops:admin' && $rk >= 3) return true;
                 if ($p === 'ops:member' && $rk >= 1) return true;
                 if ($p === 'ops:agent' && cdp_staffJobRole($user) === 'agent') return true;
                 if ($p === 'ops:mgmt') {
@@ -321,25 +345,38 @@ function sl_navResolve(string $activeId): array
             if (function_exists('sl_navItemEnabled') && !sl_navItemEnabled($it['id'])) {
                 continue;
             }
+            // A parent with children (sub-menu) shows only when at least one child may be opened.
+            $kids = [];
+            if (!empty($it['children'])) {
+                $kids = sl_navResolveChildren($it['children'], $activeId);
+                if (!$kids) {
+                    continue;
+                }
+            }
             $c1 = isset($it['count']) ? (string) $it['count']() : '';
             $c2 = isset($it['count2']) ? (string) $it['count2']() : '';
             if ($c1 === '0') {
                 $c1 = '';
                 $c2 = '';
             }
+            $kidActive = $kids && in_array('is-active', array_column($kids, 'cls'), true);
             $items[] = [
                 'id' => $it['id'],
-                'href' => $it['href'] ?? sl_route($it['board']),
+                'href' => $kids ? $kids[0]['href'] : ($it['href'] ?? sl_route($it['board'])),
                 'label' => $it['label'],
                 'icon' => 'i-' . $it['icon'],
-                'cls' => $it['id'] === $activeId ? 'is-active' : '',
+                'cls' => !$kids && $it['id'] === $activeId ? 'is-active' : '',
                 'ok' => !empty($it['ok']) ? 'ok' : '',
                 'c1' => $c1,
                 'c2' => $c2,
+                'children' => $kids,
+                // the sub-menu starts open on its own pages
+                'open' => $kids && ($kidActive || $it['id'] === $activeId),
+                'act' => $it['id'] === $activeId || $kidActive,
             ];
         }
         if ($items) {
-            $out[] = ['label' => $g['label'], 'items' => $items, 'open' => in_array($activeId, array_column($items, 'id'), true)];
+            $out[] = ['label' => $g['label'], 'items' => $items, 'open' => in_array(true, array_column($items, 'act'), true)];
         }
     }
     // one group open at a time: the first that holds the current page, or the first group
@@ -347,6 +384,33 @@ function sl_navResolve(string $activeId): array
     foreach ($out as &$o) { $o['open'] = $o['open'] && !$seen; $seen = $seen || $o['open']; }
     unset($o);
     if (!$seen && $out) $out[0]['open'] = true;
+    return $out;
+}
+
+/**
+ * Children of a nav item (sub-menu), filtered like the items themselves. A
+ * child is current when the page passed its id or when the page being served
+ * is the child's own script (the sub-pages render with their parent's id).
+ */
+function sl_navResolveChildren(array $children, string $activeId): array
+{
+    $self = sl_self();
+    $out = [];
+    $hit = false;
+    foreach ($children as $ch) {
+        if (!sl_navAllowed($ch['perm'] ?? null, $ch)) {
+            continue;
+        }
+        if (function_exists('sl_navItemEnabled') && !sl_navItemEnabled($ch['id'])) {
+            continue;
+        }
+        $href = $ch['href'] ?? sl_route($ch['board']);
+        $c1 = isset($ch['count']) ? (string) $ch['count']() : '';
+        $on = !$hit && ($ch['id'] === $activeId || strtok($href, '?#') === $self);
+        $hit = $hit || $on;
+        $out[] = ['id' => $ch['id'], 'href' => $href, 'label' => $ch['label'], 'icon' => 'i-' . ($ch['icon'] ?? 'grid'),
+            'cls' => $on ? 'is-active' : '', 'ok' => '', 'c1' => $c1 === '0' ? '' : $c1, 'c2' => ''];
+    }
     return $out;
 }
 
@@ -373,6 +437,11 @@ function sl_navIdForBoard(string $board): string
         foreach ($g['items'] as $it) {
             if ($it['board'] === $board) {
                 return $it['id'];
+            }
+            foreach ($it['children'] ?? [] as $ch) {
+                if ($ch['board'] === $board) {
+                    return $ch['id'];
+                }
             }
         }
     }

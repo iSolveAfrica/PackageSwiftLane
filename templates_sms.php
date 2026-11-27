@@ -1,10 +1,4 @@
 <?php
-/** SMS and WhatsApp templates page, sms tab (MessageTemplates artboard). */
-require_once 'loader.php';
-$user = new User();
-$core = new Core();
-require_once 'helpers/sl_view.php';
-sl_gate(['list_sms_templates', 'view_tools']);
-require_once 'helpers/push_compose.php';
-require_once 'views/sl/data/message_templates.php';
-sl_render('MessageTemplates', ['id' => 'msgtpl', 'title' => 'Message templates', 'board' => 'MessageTemplates'], sl_messageTemplatesData($user, $core, 'sms'));
+/** templates_sms.php: old-screen sms templates are edited in Communications > Automations > Other triggers; kept for bookmarks. */
+header('Location: comms_automations.php?tab=other&ch=sms', true, 301);
+exit;

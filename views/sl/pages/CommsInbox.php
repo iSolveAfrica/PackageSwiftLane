@@ -22,6 +22,7 @@ $waiting = function_exists('cdp_commWaitingCount') && !empty($d['ready']) ? cdp_
 <nav class="ib-crumb" aria-label="Breadcrumb"><a href="<?= h($commsHome) ?>">Communications</a><i class="ic ic-sm i-right" aria-hidden="true"></i><span aria-current="page">WhatsApp Inbox</span></nav>
 <div class="sl-head"><div><h1 class="sl-title" style="font-size:22px">WhatsApp Inbox</h1>
 <p class="sl-lede">Messages customers send to your WhatsApp number arrive here. <?= h($king) ?> answers first while switched on and hands the chat to a person; your team replies from this page.</p></div>
+<?php if (empty($c) || $c['provider'] !== 'cloud'): ?><div class="row g8 wrap"><a class="sl-btn ghost sm" href="<?= h(sl_route('WhatsAppWeb')) ?>" title="Every chat and group of the company number, with QR linking, attachments and ticks"><i class="ic ic-sm i-phone" aria-hidden="true"></i>Open WhatsApp screen</a></div><?php endif; ?>
 </div>
 
 <?php if (empty($d['ready'])): ?>

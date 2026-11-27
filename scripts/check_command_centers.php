@@ -6,9 +6,10 @@ require CDP_ROOT . '/helpers/sl_nav.php';
 $groups = sl_navStaff();
 $names = array_column($groups, 'label');
 $expectedGroups = ['Operations', 'Command Centers', 'Developer', 'Support'];
-if (array_slice($names, 0, 4) !== $expectedGroups) throw new RuntimeException('The primary sidebar groups are out of order.');
+// Other groups (e.g. RIDERS) may sit between them; these four keep their order and Operations comes first.
+if ($names[0] !== 'Operations' || array_values(array_intersect($names, $expectedGroups)) !== $expectedGroups) throw new RuntimeException('The primary sidebar groups are out of order.');
 $expected = [
-    'Command Centers' => ['Management Center', 'AI Automation Center', 'Notification Control', 'Payment Gateways', 'Loyalty & Referrals', 'Customer Care', 'Communications', 'Security Center', 'My Account Security'],
+    'Command Centers' => ['Management Center', 'Gerald Master View', 'AI Automation Center', 'Payment Gateways', 'Loyalty & Referrals', 'Customer Care', 'Notifications & Messages', 'Security Center', 'My Account Security'],
     'Developer' => ['Developer Console'],
     'Support' => ['Support Desk', 'Service Panel', 'Service Reports', 'Playbooks', 'Knowledge Base', 'Support Settings'],
 ];
@@ -19,12 +20,26 @@ foreach ($groups as $group) {
         throw new RuntimeException('Incorrect destinations in ' . $group['label']);
     }
     foreach ($group['items'] as $item) {
-        if (isset($ids[$item['id']])) throw new RuntimeException('Duplicate navigation id: ' . $item['id']);
-        $ids[$item['id']] = true;
-        $url = $item['href'] ?? sl_route($item['board']);
-        if (preg_match('~^(?:https?:)?//~i', $url) || !is_file(CDP_ROOT . '/' . strtok($url, '?#'))) {
-            throw new RuntimeException('Missing or external destination: ' . $url);
+        // A sub-menu's children are checked like items (ids unique across the whole sidebar).
+        foreach (array_merge([$item], $item['children'] ?? []) as $it) {
+            if (isset($ids[$it['id']])) throw new RuntimeException('Duplicate navigation id: ' . $it['id']);
+            $ids[$it['id']] = true;
+            $url = $it['href'] ?? sl_route($it['board']);
+            if (preg_match('~^(?:https?:)?//~i', $url) || !is_file(CDP_ROOT . '/' . strtok($url, '?#'))) {
+                throw new RuntimeException('Missing or external destination: ' . $url);
+            }
         }
     }
 }
-echo "PASS: center, developer and support navigation uses unique ids and local pages.\n";
+// Notifications & Messages: one Command Centers item whose sub-menu lists every messaging page, in this order.
+$comms = array_column(sl_navCommsChildren(), 'label');
+$expectedComms = ['Overview', 'Automations', 'Status messages', 'Send', 'Outbox', 'WhatsApp', 'Customer history', 'Surveys', 'Settings'];
+if ($comms !== $expectedComms) throw new RuntimeException('The Notifications & Messages sub-menu is not ' . implode(', ', $expectedComms));
+foreach ($groups as $group) {
+    foreach ($group['items'] as $item) {
+        if (in_array($item['id'], ['notifc', 'notifystudio', 'campaigns', 'commscenter', 'ebuild', 'msgtpl', 'compose', 'bcast'], true)) {
+            throw new RuntimeException('Retired messaging item still in the sidebar: ' . $item['label']);
+        }
+    }
+}
+echo "PASS: center, developer and support navigation (with the Notifications & Messages sub-menu) uses unique ids and local pages.\n";

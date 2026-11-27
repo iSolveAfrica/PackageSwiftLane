@@ -282,6 +282,14 @@ if (empty($errors)) {
         // e-mail, SMS, WhatsApp and in-app message, or a channel switched off. With
         // nothing saved for this status, the built-in messages below go out unchanged.
         require_once __DIR__ . '/../../helpers/notify_studio.php';
+        // Message source for the message log and the transport gate
+        // (helpers/comms_gate.php): with the Automation Center owning statuses,
+        // it sends this update and the sends below are logged as skipped.
+        require_once __DIR__ . '/../../helpers/comms_gate.php';
+        if (function_exists('cdp_msgSetContext')) {
+            cdp_msgSetContext(['source' => 'tracking_update', 'source_label' => 'Tracking Update', 'entity_type' => 'shipment',
+                'entity_id' => (string) $shipment_id, 'entity_label' => (string) $fullshipment, 'recipient_user_id' => (int) $shipment->sender_id]);
+        }
         $nsKey = 'status:' . (int) $status;
         $nsVars = cdp_notifyBaseVars($sender_data, $fullshipment, $app_url) + cdp_notifyPackageVars((int) $shipment_id, 'air') + [
             'status' => (string) $add_status,
@@ -325,7 +333,13 @@ if (empty($errors)) {
             $header .= "Content-type: text/html; charset=UTF-8 \r\n";
             $header .= "From: " . $from . " \r\n";
 
-            mail($to, $subject, $message, $header);
+            // mail() bypasses PHPMailer, so the transport gate is asked here.
+            if (cdp_commLegacyAllowed('email', ['id' => (int) $shipment->sender_id, 'to' => (string) $to, 'subject' => $subject])) {
+                $cdpOk = @mail($to, $subject, $message, $header);
+                if (function_exists('cdp_msgLogPhpMail')) {
+                    cdp_msgLogPhpMail((bool) $cdpOk, $to, $subject, $message);
+                }
+            }
         } elseif ($check_mail == 'SMTP') {
 
             //PHPMAILER PHP   

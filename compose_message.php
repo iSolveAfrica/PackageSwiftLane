@@ -1,6 +1,9 @@
 <?php
 /** Compose message: send e-mail, SMS or WhatsApp to a customer, a segment or a list. */
 require_once 'loader.php';
+// Replaced by the Send page (Communications): the same query (ids, id, segment, channel) opens it there.
+header('Location: comms_send.php' . (($_SERVER['QUERY_STRING'] ?? '') !== '' ? '?' . $_SERVER['QUERY_STRING'] : ''), true, 302);
+exit;
 $user = new User();
 $core = new Core();
 require_once 'helpers/sl_view.php';

@@ -47,6 +47,16 @@ require_once $projectRoot . '/helpers/hubtel_sms.php';
  *                'wa_sent' => bool, 'sms_sent' => bool]
  */
 function sendNotificationWhatsApp_v2($sender, $template_whatsapp_body, $countryHint = null, array $opts = []) {
+    // One switch for every message (helpers/comms_gate.php), asked before a
+    // deferred send while the message context still describes this message.
+    // A blocked WhatsApp is logged as skipped; an SMS copy owed still asks
+    // the gate for the SMS channel itself (cdp_sendSms).
+    if (!isset($opts['comms_gate'])) {
+        require_once dirname(__DIR__, 2) . '/helpers/comms_gate.php';
+        $gateWho = function_exists('cdp_msgRecipientFromEntity') ? cdp_msgRecipientFromEntity($sender) : ['id' => 0, 'name' => '', 'phone' => ''];
+        $opts['comms_gate'] = cdp_commLegacyAllowed('whatsapp', ['id' => (int) ($gateWho['id'] ?? 0), 'name' => (string) ($gateWho['name'] ?? ''),
+            'to' => (string) ($gateWho['phone'] ?? ''), 'body' => (string) $template_whatsapp_body]) ? 'allowed' : 'blocked';
+    }
     // Respond first, deliver after (helpers/after_response.php). The number
     // check and the send are two API calls; a request that opted into queued
     // notifications gets an optimistic result and the message log records the
@@ -96,6 +106,14 @@ function sendNotificationWhatsApp_v2($sender, $template_whatsapp_body, $countryH
             'provider_response' => $response,
         ]);
     };
+
+    if (($opts['comms_gate'] ?? '') === 'blocked') {
+        return $finish([
+            'success' => false,
+            'skipped' => true,
+            'message' => 'Not sent by this screen (Communications > Automations).',
+        ]);
+    }
 
     // Global kill-switch: if WhatsApp is disabled, send nothing.
     if (intval($settings->active_whatsapp) != 1) {

@@ -35,6 +35,11 @@ cdp_purgeDeliveredVideosLater();   // videos of delivered packages are deleted a
 
 require_once("../../helpers/querys.php");
 require_once("../notify_whatsapp/api_whatsapp_service_v2.php");
+// Message source for the message log and the transport gate (helpers/comms_gate.php):
+// a bulk status change, sent by the Automation Center when it owns statuses.
+if (function_exists('cdp_msgSetContext')) {
+    cdp_msgSetContext(['source' => 'bulk_status_update', 'source_label' => 'Bulk Status Update']);
+}
 
 session_start();
 
@@ -160,6 +165,9 @@ foreach ($data as $key) {
         try {
             $sender_data = cdp_getSenderCourier(intval($courier->sender_id));
 
+            if (function_exists('cdp_msgSetContext')) {
+                cdp_msgSetContext(['entity_id' => (string) $courier->order_id, 'recipient_user_id' => (int) $courier->sender_id]);
+            }
             if (!empty($sender_data->phone)) {
                 // Ready for pickup / delivery carries the pickup code; ready and
                 // picked up / delivered also text an SMS copy (the automations).

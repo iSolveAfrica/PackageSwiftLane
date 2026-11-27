@@ -1,0 +1,122 @@
+/* Communications > Status messages (views/sl/pages/CommsStatuses.php). The shared block is repeated in CommsAutomations.css. */
+/* Communications sub-nav (views/sl/pages/partials/comms_tabs.php) */
+.cm-tabs{display:flex;gap:2px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--line);margin:0 0 4px}
+.cm-tabs::-webkit-scrollbar{display:none}
+.cm-tabs a{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 12px;white-space:nowrap;color:var(--muted);font:500 15.5px var(--font);border-bottom:2px solid transparent;margin-bottom:-1px;text-decoration:none}
+.cm-tabs a:hover{color:var(--ink)}
+.cm-tabs a.on{color:var(--ink);border-bottom-color:var(--accent,var(--ink))}
+.cm-tabs em{font-style:normal;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--amber-bg);color:var(--amber-ink);font:600 13px var(--font);display:inline-grid;place-items:center}
+
+/* Shared by Automations and Status messages (dataJs/sl/comms_automations.js) */
+.ca-page{display:flex;flex-direction:column;gap:16px;min-width:0}
+.ca-vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.ca-k{color:var(--violet,#7C5CFA);font-size:14px;line-height:1}
+.ca-strip,.cs-strip{display:flex;flex-wrap:wrap;gap:14px 28px;align-items:flex-start;justify-content:space-between}
+.ca-master{display:flex;gap:12px;align-items:flex-start;max-width:520px}
+.ca-master .sl-toggle{margin-top:3px}
+.ca-facts{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1 1 320px;max-width:640px}
+.ca-fact{display:flex;gap:8px;align-items:flex-start;font-size:15px;color:var(--ink-2)}
+.ca-fact .ic{margin-top:3px;color:var(--muted);flex:none}
+.ca-bar{display:flex;gap:10px 14px;align-items:center;flex-wrap:wrap}
+.ca-q{flex:1 1 240px;max-width:360px}
+.ca-seg{flex-wrap:wrap}
+.ca-ai-note{margin-left:auto;display:inline-flex;gap:6px;align-items:center}
+.ca-group{overflow:hidden}
+.ca-gh{display:flex;gap:4px 12px;align-items:baseline;flex-wrap:wrap;padding:14px 18px 10px;border-bottom:1px solid var(--line)}
+.ca-tw{overflow-x:auto}
+.ca-table{width:100%;border-collapse:collapse;font-size:15px;table-layout:fixed;min-width:880px}
+.ca-c-ch{width:104px}.ca-c-cs{width:150px}.ca-c-n{width:104px}.ca-c-a{width:170px}.ca-c-a2{width:104px}
+.ca-table thead th{position:sticky;top:0;background:var(--panel);text-align:left;font:500 13.5px var(--font);color:var(--muted);padding:9px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+.ca-table th.ca-chh{text-align:center}
+.ca-table th.ca-chh .ic{margin-right:5px;vertical-align:-2px}
+.ca-table td,.ca-table tbody th{padding:12px;border-bottom:1px solid var(--line);vertical-align:middle}
+.ca-table tbody tr:last-child td,.ca-table tbody tr:last-child th{border-bottom:0}
+.ca-table tbody tr:hover{background:var(--hover)}
+.ca-table tbody th{font-weight:400;text-align:left}
+.ca-name{min-width:240px}
+.ca-nt{display:flex;align-items:center;gap:8px;font-weight:500;color:var(--ink)}
+.ca-sub{display:block;margin-top:2px;max-width:520px}
+.ca-tags{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px}
+.ca-tags .sl-badge .ic{margin-right:3px;vertical-align:-2px}
+.ca-cell{text-align:center;white-space:nowrap}
+.ca-num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--ink-2)}
+.ca-act{text-align:right;white-space:nowrap}
+.ca-act .sl-btn+.sl-btn{margin-left:6px}
+.ca-none{padding:28px;text-align:center}
+.ca-foot{margin:0}
+.ca-ed .ca-src{font-size:12.5px;color:var(--muted);margin-left:4px}
+.ca-lang{display:inline-flex;align-items:center;gap:6px;margin-left:auto;margin-right:8px}
+.ca-lang select{height:32px;padding:0 8px;font-size:14px;width:auto}
+.ca-cloud{border:1px dashed var(--line-2);border-radius:12px;padding:10px 12px}
+.ca-cloud summary{cursor:pointer}
+.ca-cloud p{margin:8px 0}
+.ca-cloud-g{display:grid;grid-template-columns:1fr 120px;gap:10px}
+.ca-cloud-p{grid-column:1/-1}
+.ca-leg{display:flex;flex-direction:column;gap:8px}
+.ca-leg p{margin:0}
+
+@media (max-width:760px){
+  .ca-ai-note{margin-left:0}
+  .ca-q{max-width:none}
+  .ca-table thead{display:none}
+  .ca-table,.ca-table tbody,.ca-table tr{display:block;width:100%;min-width:0}
+  .ca-table colgroup{display:none}
+  .ca-table tbody tr{padding:12px 14px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px}
+  .ca-table tbody tr:last-child{border-bottom:0}
+  .ca-table tbody th,.ca-table td{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0;border:0;min-width:0}
+  .ca-table tbody th{grid-column:1/-1;display:block}
+  .ca-name{min-width:0}
+  .ca-table td[data-label]::before{content:attr(data-label);font-size:13.5px;color:var(--muted)}
+  .ca-cell{justify-content:space-between;text-align:left}
+  .ca-act{grid-column:1/-1;justify-content:flex-start;text-align:left}
+  .ca-act:empty{display:none}
+  .ca-cloud-g{grid-template-columns:1fr}
+}
+
+/* Status messages only */
+.cs-owner a{color:inherit;text-decoration:underline}
+.cs-any{display:flex;flex-direction:column;gap:8px;min-width:0}
+.cs-anysw{display:inline-flex;align-items:center;gap:8px;cursor:pointer}
+.cs-counts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.cs-chip{display:inline-flex;gap:5px;align-items:baseline;padding:4px 10px;border-radius:999px;font-size:14px;background:var(--active);color:var(--ink-2)}
+.cs-chip.custom{background:var(--sky-bg);color:var(--sky-ink)}
+.cs-chip.off{background:var(--red-bg);color:var(--red-ink)}
+.cs-chip.drafted{background:var(--green-bg);color:var(--green-ink)}
+.cs-key{display:inline-flex;gap:6px;margin-left:auto}
+.cs-sw{width:10px;height:10px;border-radius:3px;flex:none}
+.cs-cw{display:inline-flex;align-items:center;gap:8px}
+.cs-st{display:inline-flex;align-items:center;height:24px;padding:0 9px;border-radius:999px;border:0;font:500 13px var(--font);cursor:pointer;background:var(--active);color:var(--ink-2);min-width:64px;justify-content:center}
+.cs-st.drafted{background:var(--green-bg);color:var(--green-ink)}
+.cs-st.custom{background:var(--sky-bg);color:var(--sky-ink)}
+.cs-st.off{background:var(--red-bg);color:var(--red-ink)}
+.cs-key .cs-st{cursor:default;min-width:0}
+button.cs-st:hover{filter:brightness(.96)}
+button.cs-st:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.cs-inapp{width:min(620px,100%)}
+.cs-inapp-ta{min-height:84px;resize:vertical}
+.cs-bell{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+.cs-bell-ic{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:var(--sky-bg);color:var(--sky-ink);flex:none}
+.cs-rd{width:min(760px,100%)}
+.cs-rd-ch{border:0;padding:0;margin:0;display:flex;gap:8px 18px;flex-wrap:wrap;align-items:center}
+.cs-rd-ch legend{margin-bottom:6px;width:100%}
+.cs-rd-prog{display:flex;flex-direction:column;gap:6px}
+.cs-rd-bar{height:6px;border-radius:999px;background:var(--active);overflow:hidden}
+.cs-rd-bar i{display:block;height:100%;width:0;background:var(--green);transition:width .2s}
+.cs-rd-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;max-height:46vh;overflow:auto}
+.cs-rd-it{border:1px solid var(--line);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;background:var(--card)}
+.cs-rd-pv{display:flex;flex-direction:column;gap:4px}
+.cs-rd-bub{padding:8px 10px;border-radius:12px;font-size:14.5px;line-height:1.45;max-width:520px;white-space:normal;word-break:break-word}
+.cs-rd-bub.whatsapp{background:#DCF8C6;color:#111}
+.cs-rd-bub.sms{background:var(--active);color:var(--ink)}
+.cs-rd-w{margin:0;padding-left:18px;color:var(--amber-ink)}
+.cs-rd-bad{color:var(--red-ink)}
+@media (max-width:760px){
+  .cs-key{margin-left:0}
+  .cs-cw{gap:6px}
+  .cs-st{min-width:64px}
+  .cs-grid .ca-table tbody tr{grid-template-columns:minmax(0,1fr)}
+  .cs-grid .ca-num{display:none}
+  .cs-grid .ca-act{position:absolute;right:14px;top:10px}
+  .cs-grid .ca-table tbody tr{position:relative}
+  .cs-grid .ca-name{padding-right:90px}
+}
