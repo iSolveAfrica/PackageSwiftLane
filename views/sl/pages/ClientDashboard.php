@@ -18,7 +18,7 @@ $steps = sl_get($d, 'latestSteps');
         <?php include __DIR__ . '/partials/track_console.php'; ?>
         <?php endif; ?>
         <div class="sl-dashboard-detail">
-        <?php include __DIR__ . '/partials/portal_addresses.php'; ?>
+        <?php if (empty($d['cc'])) include __DIR__ . '/partials/portal_addresses.php'; /* the overview shows the addresses in its top grid */ ?>
         <div class="split">
           <section class="a sl-card flush sl-desktop-shipments">
             <div class="row between" style="padding: 14px 16px"><h2 class="sl-ct">My shipments</h2><a href="<?= sl_route('UserHome') ?>" class="sm fw5 row g6">View all <i class="ic ic-sm i-right" aria-hidden="true"></i></a></div>

@@ -31,3 +31,38 @@
 :is(html.sl-dark,.sl-app.dk) .co-legend i.air,:is(html.sl-dark,.sl-app.dk) .co-cols i.air{background:color-mix(in srgb,var(--ch-2) 70%,#fff)}
 @media (max-width:1000px){.co-year{grid-template-columns:1fr}}
 @media (max-width:640px){.co-stats{grid-template-columns:1fr 1fr}.co-axis span:nth-child(even){visibility:hidden}.co-cols{gap:4px}}
+
+/* Locker ID + warehouse addresses in the top grid (in place of the old pickup / pre-alert cards).
+   One country shows at a time; the country tabs wrap (up to ~3 rows, then scroll), so any number of addresses fits. */
+.co-addr{display:flex;flex-direction:column;min-width:0;border:1px solid var(--line);border-radius:var(--r-xl);background:var(--card);color:var(--ink);overflow:hidden}
+.co-addr-hero{display:flex;flex-direction:column;gap:6px;padding:18px 20px;color:#fff;background:radial-gradient(120% 140% at 100% 0%,#1F9D62 0%,transparent 55%),linear-gradient(135deg,#0A3D2C,#0E5A40)}
+.co-addr-hero .la-id b{font-size:clamp(30px,3.2vw,40px)}
+.co-addr-hero p{margin:0;font-size:13px;opacity:.85}
+.co-addr-hero .la-link{font-size:13px}
+.co-addr-empty{margin:0;padding:18px 20px}
+.co-at{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.co-addr-tabs{display:flex;flex-wrap:wrap;gap:6px;padding:12px 14px 4px;max-height:126px;overflow-y:auto;scrollbar-width:thin}
+.co-addr-tabs label{flex:none;display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 11px;border-radius:100px;max-width:100%;border:1px solid transparent;background:var(--field);color:var(--muted);font-size:13.5px;font-weight:500;white-space:nowrap;cursor:pointer;transition:background .15s,color .15s}
+.co-addr-tabs label:hover{color:var(--ink)}
+.co-fl{font-size:16px;line-height:1;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",var(--font)}
+.co-main{width:6px;height:6px;border-radius:50%;background:var(--green)}
+.co-addr-panes{flex:1;display:flex;flex-direction:column;min-height:0}
+.co-addr-p{display:none;flex:1;flex-direction:column}
+.co-addr-p .la-ch{padding:14px 18px 8px}
+.co-addr-p .la-lines li{grid-template-columns:58px minmax(0,1fr) 30px;padding:6px 10px}
+.co-addr-p .la-cf{padding:12px 18px 16px}
+
+/* layout: 2 columns = you on top, cards left, addresses right; 3 columns = you | cards | addresses */
+.co-grid > .ovh-card{grid-column:1}
+.co-grid > .co-addr{grid-column:2;grid-row:2 / span 2}
+.co-grid.co-one > .co-addr{grid-row:2}
+@container ovh (min-width: 1240px){
+  .ovh-grid.co-grid{grid-template-columns:minmax(360px,1.1fr) minmax(0,1fr) minmax(320px,1.1fr)}
+  .co-grid > .ovh-card{grid-column:2}
+  .co-grid.co-one > .ovh-card{grid-row:1 / span 2}
+  .co-grid > .co-addr,.co-grid.co-one > .co-addr{grid-column:3;grid-row:1 / span 2}
+}
+@container ovh (max-width: 640px){
+  .co-grid > .ovh-card,.co-grid > .co-addr,.co-grid.co-one > .co-addr{grid-column:1;grid-row:auto}
+  .co-grid > .ovh-card{order:1}
+}

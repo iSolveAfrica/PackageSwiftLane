@@ -2,8 +2,9 @@
 /**
  * Customer dashboard top (desktop and tablet; phones use partials/mobile_dashboard.php), in the same
  * card style as the staff control panel (partials/overview_hero.php, assets/swiftlane/overview-hero.css):
- * the customer's card on the left, parcel / pickup / bills / pre-alert cards on the right, then the
- * last 12 months, what they ship most and where their parcels are now.
+ * the customer's card on the left, parcel and bills cards in the middle, the locker ID and warehouse
+ * addresses on the right (one country at a time, tabs scroll when there are many), then the last 12 months
+ * and what they ship most.
  * Data: sl_clientDashboardData() + sl_clientCardsData() in views/sl/data/portal.php.
  */
 $cc = $d['cc'];
@@ -19,10 +20,17 @@ $bars = function (array $bars, string $cls = '', string $label = 'Last 14 days')
 $yearN = max(1, (int) $d['year']);
 $wherePeak = max(1, max(array_map(fn($w) => $w['n'], $cc['where']) ?: [0]));
 $delivery = $d['mobileDelivery'] ?? null;
+$addrs = array_values((array) ($d['addresses'] ?? []));
+$locker = (string) ($d['locker'] ?? '');
+$addrOn = 0;
+foreach ($addrs as $i => $a) if (!empty($a['default'])) { $addrOn = $i; break; }
+$addrMark = fn(string $t) => $locker !== '' ? str_replace(h($locker), '<mark class="la-lk">' . h($locker) . '</mark>', h($t)) : h($t);
+$addrMore = $GLOBALS['user']->cdp_hasPermission('client_virtual_mail_box_addresses') ? 'client_virtual_mail_box_addresses.php' : '';
 ?>
 <link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/overview-hero.css')) ?>">
+<link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/locker-addresses.css')) ?>">
 <link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/client-overview.css')) ?>">
-<div class="ovh-wrap"><div class="ovh-grid co-grid" style="--rows:<?= max(1, (int) ceil(count($cc['cards']) / 2)) ?>">
+<div class="ovh-wrap"><div class="ovh-grid co-grid<?= count($cc['cards']) < 2 ? ' co-one' : '' ?>" style="--rows:2">
   <section class="ovh-me" aria-label="Your account">
     <div class="ovh-me-top">
       <?= $slPic(64, false) ?>
@@ -91,6 +99,39 @@ $delivery = $d['mobileDelivery'] ?? null;
     <div class="ovh-foot"><span><?= h($c['barsL']) ?></span><span><?= h($c['barsR']) ?></span></div>
   </a>
   <?php endforeach; ?>
+
+  <section class="co-addr" id="addresses" aria-labelledby="co-addr-h">
+    <div class="co-addr-hero">
+      <div class="row between"><span class="la-eyebrow" id="co-addr-h"><i class="ic ic-sm i-key" aria-hidden="true"></i>Your locker ID</span><?php if ($addrMore): ?><a class="la-link" href="<?= h($addrMore) ?>">How it works <i class="ic ic-sm i-right" aria-hidden="true"></i></a><?php endif; ?></div>
+      <div class="la-id"><b class="mono"><?= h($locker !== '' ? $locker : '—') ?></b><?php if ($locker !== ''): ?><button type="button" class="la-copy" data-sl-copy="<?= h($locker) ?>" aria-label="Copy locker ID"><i class="ic ic-sm i-copy" aria-hidden="true"></i>Copy</button><?php endif; ?></div>
+      <p>Works at <?= count($addrs) === 1 ? 'our warehouse' : 'all ' . count($addrs) . ' warehouses (pick a country below)' ?>. Put it on every order so we know the parcel is yours.</p>
+    </div>
+    <?php if (!$addrs): ?>
+    <p class="mut sm co-addr-empty">No warehouse address is set up yet. New addresses appear here as soon as we add them.</p>
+    <?php else: ?>
+    <style><?php foreach ($addrs as $i => $a): ?>#co-at-<?= $i ?>:checked~.co-addr-panes .co-p<?= $i ?>{display:flex}#co-at-<?= $i ?>:checked~.co-addr-tabs [for=co-at-<?= $i ?>]{background:var(--card);color:var(--ink);border-color:var(--line-2);box-shadow:0 1px 2px rgba(0,0,0,.06)}#co-at-<?= $i ?>:focus-visible~.co-addr-tabs [for=co-at-<?= $i ?>]{outline:2px solid var(--focus,var(--green));outline-offset:1px}<?php endforeach; ?></style>
+    <?php foreach ($addrs as $i => $a): ?><input class="co-at" type="radio" name="co-at" id="co-at-<?= $i ?>" <?= $i === $addrOn ? 'checked' : '' ?> aria-label="<?= h($a['label']) ?> address"><?php endforeach; ?>
+    <?php if (count($addrs) > 1): ?>
+    <div class="co-addr-tabs" aria-hidden="true">
+      <?php foreach ($addrs as $i => $a): ?><label for="co-at-<?= $i ?>"><span class="co-fl"><?= h($a['flag'] !== '' ? $a['flag'] : $a['cc']) ?></span><?= h($a['label']) ?><?= $a['default'] ? '<i class="co-main" title="Main address"></i>' : '' ?></label><?php endforeach; ?>
+    </div>
+    <?php endif; ?>
+    <div class="co-addr-panes">
+      <?php foreach ($addrs as $i => $a):
+        $rows = array_merge([['Name', trim((($d['name'] ?? '') ?: $a['recipient']) . ($a['hasLocker'] || $locker === '' ? '' : ' (' . $locker . ')'))]], array_map(fn($l, $j) => [$j ? '' : 'Address', $l], $a['lines'], array_keys($a['lines'])));
+        if (!$a['hasLocker'] && $locker !== '') $rows[] = ['Suite', 'Suite ' . $locker];
+        if ($a['phone'] !== '') $rows[] = ['Phone', $a['phone']]; ?>
+      <div class="co-addr-p co-p<?= $i ?>">
+        <div class="la-ch"><span class="la-flag" aria-hidden="true"><?= h($a['flag'] !== '' ? $a['flag'] : $a['cc']) ?></span><div class="la-ct"><b><?= h($a['label']) ?></b><span><?= h(trim($a['city'] . ($a['zip'] !== '' ? ' · ' . $a['zip'] : ''), ' ·')) ?: 'Warehouse' ?></span></div><?php if ($a['default']): ?><span class="la-def">Main</span><?php endif; ?></div>
+        <ul class="la-lines">
+          <?php foreach ($rows as [$k, $v]): ?><li><small><?= h($k) ?></small><span><?= $addrMark($v) ?></span><button type="button" class="la-ib" data-sl-copy="<?= h($v) ?>" aria-label="Copy <?= h(($k ?: 'line') . ': ' . $v) ?>"><i class="ic ic-sm i-copy" aria-hidden="true"></i></button></li><?php endforeach; ?>
+        </ul>
+        <div class="la-cf"><button type="button" class="sl-btn sm" data-sl-copy="<?= h($a['full']) ?>"><i class="ic ic-sm i-copy" aria-hidden="true"></i>Copy full address</button><?php if ($locker !== ''): ?><span class="la-check"><i class="ic ic-sm i-check" aria-hidden="true"></i>Locker included</span><?php endif; ?></div>
+      </div>
+      <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
+  </section>
 </div></div>
 
 <?php
