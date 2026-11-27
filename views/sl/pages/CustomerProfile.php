@@ -9,24 +9,67 @@ if (!isset($d)) { $d = []; }
 $tabs = ['all' => 'Everything', 'ship' => 'Shipments', 'pkg' => 'Packages', 'pay' => 'Payments', 'msg' => 'Messages', 'recip' => 'Recipients'];
 $heads = ['ship' => ['Tracking', 'Date', 'Destination', 'Weight', 'Amount', 'Status'], 'pkg' => ['Tracking', 'Date', 'Bay', 'Weight', 'Amount', 'Status'], 'pay' => ['Invoice', 'Date', 'Payment', '', 'Amount', 'Status'], 'msg' => ['Channel', 'Sent', 'Message', '', 'Source', 'Status'], 'recip' => ['Recipient', '', 'Phone', 'E-mail', 'Shipments', '']];
 ?>
+        <?php
+          require_once CDP_ROOT . '/helpers/sl_chart_interactions.php';
+          $idd = $d['doc'];
+          $cpAct = (array) ($d['parcelActivity'] ?? []);
+          $cpBars = $cpAct && array_sum($cpAct) ? sl_sparkBars(array_values($cpAct), 4, array_map(fn($x) => date('D j M', strtotime($x)), array_keys($cpAct))) : [];
+          $cpYear = max(1, (int) $d['year']);
+          $cpPic = $d['avatar'] !== '' ? 'background-image:url(' . h($d['avatar']) . ');background-size:cover;' : 'background:var(--ink);';
+        ?>
+        <link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/overview-hero.css')) ?>">
         <a href="<?= sl_route('Customers') ?>" class="row g6 mut sm"><i class="ic ic-sm i-left" aria-hidden="true"></i>Customers</a>
-        <section class="sl-card row g16 wrap">
-          <span class="sl-av lg dark"><?= h($d['ini']) ?></span>
-          <div class="grow"><div class="row g8 wrap"><h1 class="sl-title" style="font-size: 20px"><?= h($d['name']) ?></h1><span class="sl-pill <?= h($d['st'][1]) ?>"><?= h($d['st'][0]) ?></span><?php if ($d['phoneV']): ?><span class="sl-badge ok">Phone verified</span><?php endif; ?><?php $idd = $d['doc']; if ($idd['front'] !== '' || $idd['back'] !== ''): $idFull = $idd['front'] !== '' && ($idd['back'] !== '' || !$idd['hasBackCol']); ?><a href="#cp-id" class="sl-badge <?= $idFull ? ($d['approve'] ? 'ok' : '') : 'warn' ?>"><?= $idFull ? 'ID on file' : ($idd['front'] === '' ? 'ID front missing' : 'ID back missing') ?></a><?php endif; ?></div><div class="mut"><?= h($d['locker']) ?> · Customer since <?= h($d['since']) ?><?= $d['city'] ? ' · ' . h($d['city']) : '' ?><?= $d['company'] ? ' · ' . h($d['company']) : '' ?></div></div>
-          <div class="row g8 wrap"><a class="sl-btn ghost" href="<?= sl_route('ComposeMessage', ['to' => $d['id']]) ?>"><i class="ic ic-sm i-send" aria-hidden="true"></i>Message</a><?php if ($d['canEdit']): ?><a class="sl-btn ghost" href="customers_edit.php?user=<?= (int) $d['id'] ?>"><i class="ic ic-sm i-edit" aria-hidden="true"></i>Edit</a><?php if ($d['blocked']): ?><button class="sl-btn ghost" data-sl-action="ajax/sl/customer_status_ajax.php" data-p-op="unblock" data-p-id="<?= (int) $d['id'] ?>" data-sl-reload><i class="ic ic-sm i-check" aria-hidden="true"></i>Unblock</button><?php else: ?><button class="sl-btn ghost" style="color:var(--red-ink)" data-sl-open="cp-block"><i class="ic ic-sm i-ban" aria-hidden="true"></i>Block</button><?php endif; ?><?php endif; ?><?php if ($d['canViewAs']): ?><a class="sl-btn ghost" href="view_as.php?id=<?= (int) $d['id'] ?>" data-sl-confirm="View the portal as <?= h($d['name']) ?>? This is recorded."><i class="ic ic-sm i-eye" aria-hidden="true"></i>View as</a><?php endif; ?><?php if ($d['canShip']): ?><a class="sl-btn" href="<?= sl_route('NewShipment', ['sender' => $d['id']]) ?>"><i class="ic ic-sm i-plus" aria-hidden="true"></i>New Shipment</a><?php endif; ?></div>
+        <section class="ovh-me cp-hero" aria-label="Customer <?= h($d['name']) ?>">
+          <div class="ovh-me-top">
+            <span class="me-pic" style="width:72px;height:72px;font-size:26px;<?= $cpPic ?>"><?= $d['avatar'] !== '' ? '' : h($d['ini']) ?></span>
+            <div class="col grow" style="min-width:0">
+              <span class="ovh-eyebrow">Customer<?= $d['locker'] !== '—' ? ' · Locker ' . h($d['locker']) : '' ?></span>
+              <div class="row g8 wrap"><h1 class="ovh-name"><?= h($d['name']) ?></h1><span class="sl-pill <?= h($d['st'][1]) ?>"><?= h($d['st'][0]) ?></span><?php if ($d['phoneV']): ?><span class="sl-badge ok">Phone verified</span><?php endif; ?><?php if ($idd['front'] !== '' || $idd['back'] !== ''): $idFull = $idd['front'] !== '' && ($idd['back'] !== '' || !$idd['hasBackCol']); ?><a href="#cp-id" class="sl-badge <?= $idFull ? ($d['approve'] ? 'ok' : '') : 'warn' ?>"><?= $idFull ? 'ID on file' : ($idd['front'] === '' ? 'ID front missing' : 'ID back missing') ?></a><?php endif; ?></div>
+              <span class="mut sm">Customer since <?= h($d['since']) ?><?= $d['city'] ? ' · ' . h($d['city']) : '' ?><?= $d['company'] ? ' · ' . h($d['company']) : '' ?> · <?= h($d['mail']) ?><?= $d['phone'] !== '—' ? ' · ' . h($d['phone']) : '' ?></span>
+            </div>
+            <div class="row g8 wrap">
+              <a class="sl-btn ghost sm" href="<?= sl_route('ComposeMessage', ['to' => $d['id']]) ?>"><i class="ic ic-sm i-send" aria-hidden="true"></i>Message</a>
+              <?php if ($d['canEdit']): ?><a class="sl-btn ghost sm" href="customers_edit.php?user=<?= (int) $d['id'] ?>"><i class="ic ic-sm i-edit" aria-hidden="true"></i>Edit</a><?php if ($d['blocked']): ?><button class="sl-btn ghost sm" data-sl-action="ajax/sl/customer_status_ajax.php" data-p-op="unblock" data-p-id="<?= (int) $d['id'] ?>" data-sl-reload><i class="ic ic-sm i-check" aria-hidden="true"></i>Unblock</button><?php else: ?><button class="sl-btn ghost sm" style="color:var(--red-ink)" data-sl-open="cp-block"><i class="ic ic-sm i-ban" aria-hidden="true"></i>Block</button><?php endif; ?><?php endif; ?>
+              <?php if ($d['canShip']): ?><a class="sl-btn sm" href="<?= sl_route('NewShipment', ['sender' => $d['id']]) ?>"><i class="ic ic-sm i-plus" aria-hidden="true"></i>New Shipment</a><?php endif; ?>
+            </div>
+          </div>
+          <?php if ($d['canViewAs']): ?>
+          <div class="customer-next cp-viewas">
+            <div><small>Customer view</small><h2>See exactly what <?= h($d['first']) ?> sees</h2><p>Open their portal: home page, parcels, bills and pickup codes. Your visit is recorded.</p></div>
+            <a class="sl-btn" href="view_as.php?id=<?= (int) $d['id'] ?>" data-sl-confirm="View the portal as <?= h($d['name']) ?>? This is recorded."><i class="ic ic-sm i-eye" aria-hidden="true"></i>View as customer</a>
+          </div>
+          <?php endif; ?>
+          <div class="ovh-me-mid">
+            <div class="ovh-ring" style="--p:<?= sl_pct($d['deliveredYear'], $cpYear) ?>" role="img" aria-label="<?= (int) $d['deliveredYear'] ?> of <?= (int) $d['year'] ?> parcels this year delivered"><b><?= (int) $d['deliveredYear'] ?></b><span>of <?= (int) $d['year'] ?> delivered<br>this year</span></div>
+            <dl class="ovh-stats">
+              <div><dt>On the way</dt><dd><b><?= sl_num($d['onWay']) ?></b> parcel<?= (int) $d['onWay'] === 1 ? '' : 's' ?></dd></div>
+              <div><dt>At the warehouse</dt><dd><b><?= sl_num($d['waiting']) ?></b> received</dd></div>
+              <div><dt>Ready for pickup</dt><dd><b class="<?= (int) $d['ready'] ? 'ok' : '' ?>"><?= sl_num($d['ready']) ?></b> waiting</dd></div>
+              <div><dt>Lifetime parcels</dt><dd><b><?= sl_num($d['nShip'] + $d['nPkg']) ?></b> <?= (int) $d['nShip'] ?> air · <?= (int) $d['nPkg'] ?> sea</dd></div>
+              <?php if ($d['finance']): ?><div><dt>Total spend</dt><dd><b><?= h($d['spend']) ?></b></dd></div>
+              <div><dt>Balance due</dt><dd><b class="<?= $d['dueN'] > 0 ? 'bad' : '' ?>"><?= h($d['due']) ?></b></dd></div><?php endif; ?>
+            </dl>
+          </div>
+          <?php if ($cpBars): ?>
+          <div class="ovh-me-bars">
+            <div class="row between sm"><span class="mut">Parcels registered, 14 days · <?= sl_num(array_sum($cpAct)) ?> in total</span></div>
+            <div class="ovh-bars violet" role="img" aria-label="Parcels registered per day, last 14 days"><?php $n = count($cpBars); foreach ($cpBars as $i => $bb): ?><i class="<?= $i === $n - 1 ? 'now' : '' ?>" style="<?= h($bb['s']) ?>" title="<?= h($bb['t']) ?>"></i><?php endforeach; ?></div>
+          </div>
+          <?php endif; ?>
+          <div class="ovh-chips">
+            <a href="<?= h(sl_url(['tab' => 'ship', 'page' => null, 'k' => null, 'n' => null])) ?>"><i class="ic ic-sm i-box" aria-hidden="true"></i>Last shipment <b><?= h($d['lastShip']) ?></b></a>
+            <a href="<?= h(sl_url(['tab' => 'all', 'k' => 'account', 'n' => null])) ?>#everything"><i class="ic ic-sm i-shield" aria-hidden="true"></i>Last sign-in <b><?= h($d['lastLogin']) ?></b><?= $d['lastDevice'] ? ' · ' . h($d['lastDevice']) : '' ?></a>
+            <a href="<?= h(sl_route('CsCustomer', ['id' => $d['id']])) ?>"><i class="ic ic-sm i-message" aria-hidden="true"></i>Open support <b><?= (int) $d['openTickets'] ?></b></a>
+            <a href="<?= h(sl_route('AirShipments', ['q' => $d['locker']])) ?>"><i class="ic ic-sm i-route" aria-hidden="true"></i>All their shipments</a>
+          </div>
         </section>
         <?php if ($d['block']): ?><div class="sl-banner" style="background:var(--red-bg);color:var(--red-ink);border-color:transparent"><i class="ic i-ban" aria-hidden="true"></i><span class="grow"><b class="fw5">Blocked</b> · <?= h($d['block']['reason']) ?> · by <?= h($d['block']['by']) ?>, <?= h($d['block']['at']) ?>. Log-in, pickups and offers are off.</span></div><?php elseif ($d['blocked']): ?><div class="sl-banner" style="background:var(--red-bg);color:var(--red-ink);border-color:transparent"><i class="ic i-ban" aria-hidden="true"></i><span class="grow">The account is inactive.</span></div><?php endif; ?>
         <?php if (!$d['approve'] && !$d['blocked']): ?><section class="sl-card row g12 wrap" style="align-items:center"><span class="sl-tile" style="background:var(--amber-bg);color:var(--amber-ink)"><i class="ic i-shield" aria-hidden="true"></i></span><div class="col grow"><b class="fw5">KYC to review</b><span class="mut sm"><?= $d['docUrl'] ? h(trim(($d['docType'] ?: 'ID') . ' ' . ($d['docNo'] ?: ''))) . ' uploaded' . ($idd['hasBackCol'] && $idd['back'] === '' ? ' (front only, the back is missing)' : '') . '. Check the photos, then approve.' : ($idd['back'] !== '' ? 'Only the back of the ID is uploaded.' : 'No ID document uploaded yet.') ?></span></div><?php if ($d['docUrl'] || $idd['back'] !== ''): ?><button type="button" class="sl-btn ghost" data-idv-open="<?= $d['docUrl'] ? 'front' : 'back' ?>"><i class="ic ic-sm i-eye" aria-hidden="true"></i>View ID card</button><?php endif; ?><?php if ($d['canApprove']): ?><button class="sl-btn" data-sl-action="ajax/sl/customer_status_ajax.php" data-p-op="approve" data-p-id="<?= (int) $d['id'] ?>" data-sl-confirm="Approve <?= h($d['name']) ?>?" data-sl-reload><i class="ic ic-sm i-check" aria-hidden="true"></i>Approve</button><?php endif; ?></section><?php endif; ?>
-        <div class="grid u3-kpis">
-          <div class="sl-card sl-metric"><div class="sl-ml"><span>Lifetime parcels</span></div><div class="sl-mv"><?= sl_num($d['nShip'] + $d['nPkg']) ?> <i><?= (int) $d['nShip'] ?> air · <?= (int) $d['nPkg'] ?> sea</i></div><div class="sl-ticks"><i style="width: <?= min(100, ($d['nShip'] + $d['nPkg']) * 2) ?>%"></i></div></div>
-          <div class="sl-card sl-metric"><div class="sl-ml"><span>Total spend</span></div><div class="sl-mv"><?= h($d['spend']) ?></div><div class="sl-ticks y"><i style="width: 70%"></i></div></div>
-          <div class="sl-card sl-metric"><div class="sl-ml"><span>Balance due</span></div><div class="sl-mv"><?= h($d['due']) ?></div><div class="sl-ticks <?= $d['dueN'] > 0 ? 'r' : '' ?>"><i style="width: <?= $d['dueN'] > 0 ? 60 : 0 ?>%"></i></div></div>
-          <div class="sl-card sl-metric"><div class="sl-ml"><span>Waiting at warehouse</span></div><div class="sl-mv"><?= (int) $d['waiting'] ?></div><div class="sl-ticks v"><i style="width: <?= min(100, $d['waiting'] * 20) ?>%"></i></div></div>
-          <div class="sl-card sl-metric"><div class="sl-ml"><span>Last shipment</span></div><div class="sl-mv" style="font-size:22px"><?= h($d['lastShip']) ?></div><div class="mut sm">Customer since <?= h($d['created']) ?></div></div>
-          <div class="sl-card sl-metric"><div class="sl-ml"><span>Last sign-in</span></div><div class="sl-mv" style="font-size:22px"><?= h($d['lastLogin']) ?></div><div class="mut sm"><?= h($d['lastDevice'] ?: ($d['lastLoginAt'] ?: 'No sign-in yet')) ?></div></div>
-          <div class="sl-card sl-metric"><div class="sl-ml"><span>Open support</span></div><div class="sl-mv"><?= (int) $d['openTickets'] ?></div><div class="mut sm"><?= $d['openTickets'] ? 'tickets waiting' : 'Nothing open' ?></div></div>
-        </div>
-        <?php $moving = $d['moving']; $movingTitle = 'Parcels on the move'; include __DIR__ . '/partials/user_moving.php'; ?>
+        <?php if (!empty($d['tracking']['items'])): $tc = $d['tracking']; $tcTitle = 'Parcels on the move'; $tcNoun = 'parcels'; $tcNavigate = true; $tcExpand = sl_route('AirShipments', ['q' => $d['locker']]); ?>
+        <?php include __DIR__ . '/partials/track_console.php'; ?>
+        <?php else: ?>
+        <section class="sl-card row g12" style="align-items:center"><span class="sl-tile"><i class="ic i-route" aria-hidden="true"></i></span><div class="col grow"><b class="fw5">Parcels on the move</b><span class="mut sm">Nothing on the way for <?= h($d['first']) ?> right now.</span></div></section>
+        <?php endif; ?>
         <div class="split">
           <div class="a col g16">
             <section class="sl-card flush">

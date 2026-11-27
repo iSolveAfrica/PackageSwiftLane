@@ -36,3 +36,10 @@ svg.sl-interactive-chart{pointer-events:all}
 svg.sl-interactive-chart [data-chart-selected]{filter:drop-shadow(0 0 4px color-mix(in srgb,var(--ink,#34374b) 35%,transparent))}
 svg.sl-interactive-chart circle{transition:r .15s}
 svg.sl-interactive-chart circle[data-chart-selected]{r:6}
+/* Summary shown when a chart point is clicked (replaces the old CSV download) */
+.sl-chart-tip-summary{margin-top:10px;padding-top:10px;border-top:1px solid var(--line-2,#e6e2da);display:flex;flex-direction:column;gap:6px}
+.sl-chart-tip-sh{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted,#77756f)}
+.sl-chart-tip-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;margin:0}
+.sl-chart-tip-grid dt{font-size:12px;color:var(--muted,#77756f)}
+.sl-chart-tip-grid dd{margin:0;font-weight:600;overflow-wrap:anywhere}
+.sl-chart-tip-grid dd.up{color:var(--green-ink,#0b7a55)}.sl-chart-tip-grid dd.dn{color:var(--red-ink,#b42318)}

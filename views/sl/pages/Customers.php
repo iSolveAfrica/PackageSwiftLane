@@ -42,13 +42,68 @@ $listUrl = fn(array $p) => h(sl_url($p + ['page' => null, 'q' => null, 'city' =>
             <thead><tr><th style="width: 40px"><span class="sl-chk"></span></th><th data-sort>Customer</th><th>ID</th><th>Phone</th><th data-sort>City</th><th class="num" data-sort>Parcels</th><th class="num" data-sort>Balance</th><th>Status</th><th></th></tr></thead>
             <tbody>
               <?php foreach ($d['rows'] as $r): ?>
-                <tr class="<?= $r['blocked'] ? 'cb-blocked' : '' ?>" data-sl-row><td><span class="sl-chk"></span></td><td><a href="<?= sl_route('CustomerProfile', ['id' => $r['id']]) ?>" class="sl-cell"><span class="sl-av sm"><?= h($r['ini']) ?></span><span><span class="fw5"><?= h($r['name']) ?></span><span class="sub"><?= h($r['mail']) ?></span></span></a></td><td class="mono sm"><?= h($r['locker']) ?></td><td><?= h($r['phone']) ?></td><td><?= h($r['city']) ?></td><td class="num" title="<?= h($r['nTip']) ?>"><?= (int) $r['n'] ?></td><td class="num"><?= h($r['bal']) ?></td><td><span class="col"><span class="sl-pill <?= h($r['cls']) ?>"><?= h($r['st']) ?></span><span class="mut" style="font-size:13.5px"><?= h($r['why']) ?></span></span></td><td><span class="row g4 cx-act"><?php if ($d['canApprove'] && !$r['approve'] && !$r['blocked']): ?><button class="sl-btn ghost sm" data-sl-action="ajax/sl/customer_status_ajax.php" data-p-op="approve" data-p-id="<?= (int) $r['id'] ?>" data-sl-reload title="Approve"><i class="ic ic-sm i-check" aria-hidden="true"></i><span class="cx-act-t">Approve</span></button><?php endif; ?><?php if ($d['canEdit']): ?><?php if ($r['blocked']): ?><button class="sl-btn ghost sm" data-sl-action="ajax/sl/customer_status_ajax.php" data-p-op="unblock" data-p-id="<?= (int) $r['id'] ?>" data-sl-reload title="Unblock"><i class="ic ic-sm i-check" aria-hidden="true"></i><span class="cx-act-t">Unblock</span></button><?php else: ?><button class="sl-btn ghost sm cb-b" data-sl-open="cb-dialog" data-cb-id="<?= (int) $r['id'] ?>" data-cb-name="<?= h($r['name']) ?>" title="Block"><i class="ic ic-sm i-ban" aria-hidden="true"></i><span class="cx-act-t">Block</span></button><?php endif; ?><?php endif; ?><a class="sl-ib sm" href="<?= sl_route('CustomerProfile', ['id' => $r['id']]) ?>" aria-label="Open customer"><i class="ic i-more" aria-hidden="true"></i></a></span></td></tr>
+                <tr class="<?= $r['blocked'] ? 'cb-blocked' : '' ?>" data-sl-row><td><span class="sl-chk"></span></td><td><a href="<?= sl_route('CustomerProfile', ['id' => $r['id']]) ?>" class="sl-cell"><span class="sl-av sm"><?= h($r['ini']) ?></span><span><span class="fw5"><?= h($r['name']) ?></span><span class="sub"><?= h($r['mail']) ?></span></span></a></td><td class="mono sm"><?= h($r['locker']) ?></td><td><?= h($r['phone']) ?></td><td><?= h($r['city']) ?></td><td class="num" title="<?= h($r['nTip']) ?>"><?= (int) $r['n'] ?></td><td class="num"><?= h($r['bal']) ?></td><td><span class="col"><span class="sl-pill <?= h($r['cls']) ?>"><?= h($r['st']) ?></span><span class="mut" style="font-size:13.5px"><?= h($r['why']) ?></span></span></td><td><span class="row g4 cx-act"><?php if ($d['canApprove'] && !$r['approve'] && !$r['blocked']): ?><button class="sl-btn ghost sm" data-sl-action="ajax/sl/customer_status_ajax.php" data-p-op="approve" data-p-id="<?= (int) $r['id'] ?>" data-sl-reload title="Approve"><i class="ic ic-sm i-check" aria-hidden="true"></i><span class="cx-act-t">Approve</span></button><?php endif; ?><?php if ($d['canEdit']): ?><?php if ($r['blocked']): ?><button class="sl-btn ghost sm" data-sl-action="ajax/sl/customer_status_ajax.php" data-p-op="unblock" data-p-id="<?= (int) $r['id'] ?>" data-sl-reload title="Unblock"><i class="ic ic-sm i-check" aria-hidden="true"></i><span class="cx-act-t">Unblock</span></button><?php else: ?><button class="sl-btn ghost sm cb-b" data-sl-open="cb-dialog" data-cb-id="<?= (int) $r['id'] ?>" data-cb-name="<?= h($r['name']) ?>" title="Block"><i class="ic ic-sm i-ban" aria-hidden="true"></i><span class="cx-act-t">Block</span></button><?php endif; ?><?php endif; ?><span class="cx-mw"><button type="button" class="sl-ib sm cx-more" aria-haspopup="menu" aria-expanded="false" aria-label="More actions for <?= h($r['name']) ?>" data-cx-more><i class="ic i-more" aria-hidden="true"></i></button>
+                  <div class="cx-menu" role="menu" aria-label="Actions for <?= h($r['name']) ?>" hidden>
+                    <div class="cx-mh"><span class="sl-av sm"><?= h($r['ini']) ?></span><span class="col" style="min-width:0"><b class="fw5"><?= h($r['name']) ?></b><span class="mut" style="font-size:13px"><?= h($r['locker']) ?> · <?= h($r['mail']) ?></span></span></div>
+                    <a role="menuitem" href="<?= sl_route('CustomerProfile', ['id' => $r['id']]) ?>"><i class="ic ic-sm i-user" aria-hidden="true"></i>Open profile</a>
+                    <?php if (!empty($d['canViewAs'])): ?><a role="menuitem" href="view_as.php?id=<?= (int) $r['id'] ?>" data-sl-confirm="View the portal as <?= h($r['name']) ?>? This is recorded."><i class="ic ic-sm i-eye" aria-hidden="true"></i>View as customer</a><?php endif; ?>
+                    <?php if (!empty($d['canShip'])): ?><a role="menuitem" href="<?= sl_route('NewShipment', ['sender' => $r['id']]) ?>"><i class="ic ic-sm i-plus" aria-hidden="true"></i>New shipment</a><?php endif; ?>
+                    <a role="menuitem" href="<?= sl_route('ComposeMessage', ['to' => $r['id']]) ?>"><i class="ic ic-sm i-send" aria-hidden="true"></i>Send a message</a>
+                    <?php if ($r['locker'] !== '—' && !empty($d['canShipList'])): ?><a role="menuitem" href="<?= sl_route('AirShipments', ['q' => $r['locker']]) ?>"><i class="ic ic-sm i-plane" aria-hidden="true"></i>Their shipments</a><?php endif; ?>
+                    <?php if ($r['locker'] !== '—' && !empty($d['canPkgList'])): ?><a role="menuitem" href="<?= sl_route('SeaPackages', ['q' => $r['locker']]) ?>"><i class="ic ic-sm i-box" aria-hidden="true"></i>Their packages</a><?php endif; ?>
+                    <?php if ($d['canEdit']): ?><span class="cx-msep" role="separator"></span><a role="menuitem" href="customers_edit.php?user=<?= (int) $r['id'] ?>"><i class="ic ic-sm i-edit" aria-hidden="true"></i>Edit details</a><?php endif; ?>
+                    <?php if ($d['canApprove'] && !$r['approve'] && !$r['blocked']): ?><button type="button" role="menuitem" data-sl-action="ajax/sl/customer_status_ajax.php" data-p-op="approve" data-p-id="<?= (int) $r['id'] ?>" data-sl-confirm="Approve <?= h($r['name']) ?>?" data-sl-reload><i class="ic ic-sm i-check" aria-hidden="true"></i>Approve account</button><?php endif; ?>
+                    <?php if ($d['canEdit']): ?><?php if ($r['blocked']): ?><button type="button" role="menuitem" data-sl-action="ajax/sl/customer_status_ajax.php" data-p-op="unblock" data-p-id="<?= (int) $r['id'] ?>" data-sl-reload><i class="ic ic-sm i-check" aria-hidden="true"></i>Unblock</button><?php else: ?><button type="button" role="menuitem" class="cx-mdanger" data-sl-open="cb-dialog" data-cb-id="<?= (int) $r['id'] ?>" data-cb-name="<?= h($r['name']) ?>"><i class="ic ic-sm i-ban" aria-hidden="true"></i>Block customer</button><?php endif; ?><?php endif; ?>
+                    <?php if (!empty($d['canDelete'])): ?><button type="button" role="menuitem" class="cx-mdanger" data-sl-action="ajax/sl/customer_profile_ajax.php" data-p-op="delete" data-p-id="<?= (int) $r['id'] ?>" data-sl-confirm="Delete <?= h($r['name']) ?> permanently? Only possible without shipments." data-sl-reload><i class="ic ic-sm i-trash" aria-hidden="true"></i>Delete customer</button><?php endif; ?>
+                  </div></span></span></td></tr>
               <?php endforeach; ?>
               <?php if (!$d['rows']): ?><tr><td colspan="9"><div class="sl-empty"><span class="sl-tile"><i class="ic i-users" aria-hidden="true"></i></span>No customers match this search.</div></td></tr><?php endif; ?>
             </tbody>
           </table></div>
           <?= sl_pager($d['page'], $d['per'], $d['count'], 'customers') ?>
         </div>
+<?php if (!$listOnly): ?>
+<script>
+/* Three-dot menu on each customer row: opens a drop-down of actions next to the button. */
+(function () {
+  var open = null;
+  function shut() { if (!open) return; open.menu.hidden = true; open.btn.setAttribute('aria-expanded', 'false'); open.btn.classList.remove('on'); open = null; }
+  function place(btn, menu) {
+    var r = btn.getBoundingClientRect(), w = menu.offsetWidth, h = menu.offsetHeight;
+    var left = Math.max(8, Math.min(innerWidth - w - 8, r.right - w));
+    var top = r.bottom + 6; if (top + h > innerHeight - 8 && r.top - h - 6 > 8) top = r.top - h - 6;
+    menu.style.left = left + 'px'; menu.style.top = Math.max(8, top) + 'px';
+  }
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-cx-more]');
+    if (btn) {
+      e.preventDefault();
+      var menu = btn.parentElement.querySelector('.cx-menu');
+      if (open && open.btn === btn) { shut(); return; }
+      shut();
+      menu.hidden = false; place(btn, menu);
+      btn.setAttribute('aria-expanded', 'true'); btn.classList.add('on');
+      open = { btn: btn, menu: menu, at: Date.now() };
+      var first = menu.querySelector('[role=menuitem]'); if (first) first.focus({ preventScroll: true });
+      return;
+    }
+    if (open && !open.menu.contains(e.target)) shut();
+    else if (open && e.target.closest('.cx-menu [role=menuitem]')) setTimeout(shut, 0);
+  });
+  document.addEventListener('keydown', function (e) {
+    if (!open) return;
+    if (e.key === 'Escape') { var b = open.btn; shut(); b.focus(); return; }
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      var items = Array.prototype.slice.call(open.menu.querySelectorAll('[role=menuitem]')), i = items.indexOf(document.activeElement);
+      e.preventDefault(); items[(i + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus();
+    }
+  });
+  // scrolling closes the menu, except the small scroll a tap itself causes (the table sliding to the button)
+  window.addEventListener('scroll', function () { if (open && Date.now() - open.at > 400) shut(); else if (open) place(open.btn, open.menu); }, true);
+  window.addEventListener('resize', shut);
+})();
+</script>
+<?php endif; ?>
 <?php if (!$listOnly && $d['canEdit']): ?>
 <div class="sl-dialog" id="cb-dialog" hidden><form class="sl-modal cb-dlg" data-sl-form data-sl-reload action="ajax/sl/customer_status_ajax.php" method="post" role="dialog" aria-label="Block customer">
   <input type="hidden" name="op" value="block"><input type="hidden" name="id" id="cb-id" value="">

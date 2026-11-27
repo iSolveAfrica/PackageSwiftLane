@@ -46,8 +46,8 @@ $client = !empty($d['client']);
                 <?php foreach ($d['rows'] as $r): $cols = 8 - ($client ? 1 : 0) - ($d['canSelect'] ? 0 : 1); ?>
                   <tr data-as-row>
                     <?php if ($d['canSelect']): ?><td><?php if ($r['selectable']): ?><label class="sl-chk" aria-label="Select <?= h($r['track']) ?>"><input type="checkbox" value="<?= (int) $r['id'] ?>" data-as-pick data-track="<?= h($r['track']) ?>" style="position:absolute;opacity:0;width:0;height:0"></label><?php endif; ?></td><?php endif; ?>
-                    <td class="as-trk"><a class="id" href="<?= sl_route('ShipmentDetail', ['id' => $r['id']]) ?>"><?= h($r['carrier'] !== '' ? $r['carrier'] : $r['track']) ?></a><?php if ($r['carrier'] !== ''): ?><span class="sub mono"><?= h($r['track']) ?></span><?php endif; ?></td>
-                    <td class="nowrap"><?= h($r['date']) ?><span class="sub mono"><?= h($r['time'] ?: 'Time not recorded') ?></span></td>
+                    <td class="as-trk"><a class="id" href="<?= sl_route('ShipmentDetail', ['id' => $r['id']]) ?>"><?= h($r['track']) ?></a><span class="sub"><?= $r['carrier'] !== '' ? 'Postal: ' . h($r['carrier']) : 'No postal tracking yet' ?></span></td>
+                    <td class="nowrap"><?= h($r['date']) ?><span class="sub"><?= h($r['time'] ?: 'Time not recorded') ?></span></td>
                     <?php if (!$client): ?><td class="as-snd"><div><a href="<?= sl_route('CustomerProfile', ['id' => $r['sender_id']]) ?>" style="color:inherit"><?= h($r['sender']) ?></a><span class="sub"><?= h($r['from']) ?></span></div></td><?php endif; ?>
                     <td class="num"><?= h($r['kg']) ?></td>
                     <td><span class="col g4"><span class="sl-pill <?= h($r['payCls']) ?>"><?= h($r['pay']) ?></span><span class="mut mono" style="font-size:13.5px"><?= h($r['total']) ?></span></span></td>

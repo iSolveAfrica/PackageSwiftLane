@@ -112,3 +112,5 @@
 .si-wdl .si-track{margin:0}.si-wdl b{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
 .si-wdl li.top span:first-child{font-weight:650}
 @media (max-width:900px){.si-intake-body{grid-template-columns:1fr}}
+/* Shipments list reads in Figtree throughout: tracking, postal number, time and weight */
+.as-table-wrap .sl-table,.as-table-wrap .sl-table .id,.as-table-wrap .sl-table .num,.as-table-wrap .sl-table .mono{font-family:var(--font);font-variant-numeric:tabular-nums;letter-spacing:0}
