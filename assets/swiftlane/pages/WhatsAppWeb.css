@@ -247,3 +247,4 @@
   .ww-down{bottom:80px;right:12px}
 }
 .ww-quick>.sl-btn,.ww-king>.sl-btn,.ww-pc>.sl-btn{align-self:flex-start}
+.ww-modal .col>.sl-btn,.ww-modal .col>a.sl-btn{align-self:flex-start}
