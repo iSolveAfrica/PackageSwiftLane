@@ -11,7 +11,8 @@
 <script src="<?= h(cdp_asset('assets/swiftlane/shortcuts.js')) ?>"></script>
 <?php if (!empty($slPasskeys)): ?><script src="<?= h(cdp_asset('dataJs/sl/passkey.js')) ?>"></script><?php endif; ?>
 <?php if (!empty($slAiPopup)): ?><script src="<?= h(cdp_asset('dataJs/sl/ai_page.js')) ?>"></script><?php endif; ?>
-<?php if (!empty($slIsClient) && sl_self() !== 'support.php'): ?>
+<?php if (($slKingChat ?? '') === 'dock'): $kcMode = 'dock'; include CDP_ROOT . '/views/sl/inc/king_chat.php'; ?>
+<?php elseif (!empty($slIsClient) && sl_self() !== 'support.php' && ($slKingChat ?? '') === ''): ?>
 <a class="sl-support-link" href="support.php#hp-chat" aria-label="Chat with support"><i class="ic i-message" aria-hidden="true"></i><span>Help</span></a>
 <?php endif; ?>
 <?php foreach ((array) ($slPage['scripts'] ?? []) as $slJs): ?>

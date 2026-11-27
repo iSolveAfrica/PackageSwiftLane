@@ -78,3 +78,17 @@ $slAssistantUrl = $slCanAskAI ? sl_route('StaffAI', ['q' => 'Explain this page',
 // The AI pop-up (views/sl/inc/ai_page.php) on every page whose user may ask the assistant
 // (staff with AI access; customers too when the assistant's audience includes them), except the assistant itself.
 $slAiPopup = sl_navAllowed('ai:use', []) && ($slPage['board'] ?? '') !== 'StaffAI';
+// King, the customer care chat (views/sl/inc/king_chat.php), for customer accounts (role rank 0): the panel on the
+// dashboard ('inline', ClientDashboard includes it), the docked bubble on every other page ('dock'), none on the
+// Help page (its own chat). Customers get King instead of the staff AI pop-up: never both on one page.
+$slKingChat = '';
+if ($slIsClient && sl_self() !== 'support.php' && empty($slPage['legacy'])) { // legacy pages (views/inc/topbar.php) keep what they had
+    require_once CDP_ROOT . '/helpers/support.php';
+    if (function_exists('cdp_csIsCustomer') && cdp_csIsCustomer($user)) {
+        $slKingChat = ($slPage['board'] ?? '') === 'ClientDashboard' ? 'inline' : 'dock';
+        $slPage['styles'] = array_merge((array) ($slPage['styles'] ?? []), ['assets/swiftlane/king_chat.css']); // in <head>
+    }
+}
+if ($slKingChat !== '' || ($slIsClient && sl_self() === 'support.php' && empty($slPage['legacy']))) {
+    $slAiPopup = false;
+}
