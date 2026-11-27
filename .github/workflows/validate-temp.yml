@@ -38,3 +38,9 @@ jobs:
         env:
           NODE_PATH: /tmp/swiftlane-tests/node_modules
         run: node scripts/check_load_plan_ui.cjs
+      - name: Check shared app interactions
+        env:
+          NODE_PATH: /tmp/swiftlane-tests/node_modules
+        run: node -e "process.env.CHROMIUM_PATH=require('playwright').chromium.executablePath(); require('./scripts/check_interactions.cjs')"
+      - name: Check page shell
+        run: node scripts/check_page_shell.js
