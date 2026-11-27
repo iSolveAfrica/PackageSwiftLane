@@ -112,7 +112,9 @@ if (empty($userData) && isset($user) && is_object($user) && method_exists($user,
 
 					<?php
 					require_once __DIR__ . '/../../helpers/pickup_code.php';
-					if (isset($user) && cdp_pickupCodeCanUse($user)) { ?>
+					// Pickup-code shortcuts are omitted from dashboard and air shipment screens.
+					$pickupCodeHiddenPage = in_array(basename((string) ($_SERVER['SCRIPT_NAME'] ?? '')), ['index.php', 'dashboard_roles.php', 'courier_list.php', 'courier_view.php'], true);
+					if (!$pickupCodeHiddenPage && isset($user) && cdp_pickupCodeCanUse($user)) { ?>
 					<li class="nav-item">
 						<a class="nav-link waves-effect waves-dark cdp-pickup-code-list" href="javascript:void(0)" title="Pickup Codes" aria-label="Pickup Codes">
 							<iconify-icon icon="solar:key-linear"></iconify-icon>
