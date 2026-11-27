@@ -67,8 +67,7 @@ requests.
 
 ## Migrations to run on live for the rider side
 
-All are inside `database/upgrade_existing_database.sql`; the newest five are also in
-`database/live_update_2026_11_27.sql`.
+All are inside `database/upgrade_existing_database.sql`, the one file to import on live.
 
 | Migration | Rider tables |
 |---|---|
