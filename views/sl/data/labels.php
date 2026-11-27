@@ -6,8 +6,12 @@
 require_once CDP_ROOT . '/helpers/sl_view.php';
 require_once CDP_ROOT . '/views/sl/data/ops_common.php';
 require_once CDP_ROOT . '/views/sl/data/shipments.php';
+require_once CDP_ROOT . '/helpers/sl_qr.php';
 
-/** Code 128 (set B) as an SVG of the given size, with the text under it when $font > 0. */
+/**
+ * Code 128 (set B) as an SVG of the given size, with the text under it when $font > 0.
+ * A 10-module quiet zone is kept clear on each side (scanners need it) and bars are drawn crisp.
+ */
 function sl_barcodeSvg(string $text, int $w, int $h, float $font = 0): string
 {
     static $pat = ['212222','222122','222221','121223','121322','131222','122213','122312','132212','221213','221312','231212','112232','122132','122231','113222','123122','123221','223211','221132','221231','213212','223112','312131','311222','321122','321221','312212','322112','322211','212123','212321','232121','111323','131123','131321','112313','132113','132311','211313','231113','231311','112133','112331','132131','113123','113321','133121','313121','211331','231131','213113','213311','213131','311123','311321','331121','312113','312311','332111','314111','221411','431111','111224','111422','121124','121421','141122','141221','112214','112412','122114','122411','142112','142211','241211','221114','413111','241112','134111','111242','121142','121241','114212','124112','124211','411212','421112','421211','212141','214121','412121','111143','111341','131141','114113','114311','411113','411311','113141','114131','311141','411131','211412','211214','211232','2331112'];
@@ -15,11 +19,27 @@ function sl_barcodeSvg(string $text, int $w, int $h, float $font = 0): string
     if ($text === '') {
         return '';
     }
-    $codes = [104];
-    foreach (str_split($text) as $ch) {
-        $codes[] = ord($ch) - 32;
+    // Set B for text, set C (two digits per symbol) for runs of 4+ digits: shorter code, wider bars.
+    $codes = [];
+    $set = '';
+    $len = strlen($text);
+    for ($i = 0; $i < $len;) {
+        $run = strspn($text, '0123456789', $i);
+        if ($run >= 4 || ($run >= 2 && $set === 'C')) {
+            if ($run % 2 === 1) { // odd run: the first digit goes in set B
+                if ($set !== 'B') { $codes[] = $set === '' ? 104 : 100; $set = 'B'; }
+                $codes[] = ord($text[$i]) - 32;
+                $i++; $run--;
+            }
+            if ($set !== 'C') { $codes[] = $set === '' ? 105 : 99; $set = 'C'; }
+            for ($e = $i + $run; $i < $e; $i += 2) $codes[] = (int) substr($text, $i, 2);
+            continue;
+        }
+        if ($set !== 'B') { $codes[] = $set === '' ? 104 : 100; $set = 'B'; }
+        $codes[] = ord($text[$i]) - 32;
+        $i++;
     }
-    $sum = 104;
+    $sum = $codes[0];
     foreach (array_slice($codes, 1) as $i => $c) {
         $sum += $c * ($i + 1);
     }
@@ -31,11 +51,12 @@ function sl_barcodeSvg(string $text, int $w, int $h, float $font = 0): string
             $mods[] = [(int) $n, $k % 2 === 0];
         }
     }
-    $total = array_sum(array_map(fn($m) => $m[0], $mods));
+    $quiet = 10;
+    $total = array_sum(array_map(fn($m) => $m[0], $mods)) + 2 * $quiet;
     $unit = $w / max(1, $total);
     $barH = $font > 0 ? $h - $font - 3 : $h;
-    $x = 0.0;
-    $out = '<svg viewBox="0 0 ' . $w . ' ' . $h . '" width="' . $w . '" height="' . $h . '" role="img" aria-label="Barcode ' . h($text) . '">';
+    $x = $quiet * $unit;
+    $out = '<svg class="sl-bc" viewBox="0 0 ' . $w . ' ' . $h . '" width="' . $w . '" height="' . $h . '" role="img" aria-label="Barcode ' . h($text) . '" shape-rendering="crispEdges"><rect width="' . $w . '" height="' . $h . '" fill="#fff"></rect>';
     foreach ($mods as [$n, $bar]) {
         if ($bar) {
             $out .= '<rect x="' . number_format($x, 2, '.', '') . '" y="0" width="' . number_format($n * $unit, 2, '.', '') . '" height="' . $barH . '" fill="#000"></rect>';
@@ -48,28 +69,10 @@ function sl_barcodeSvg(string $text, int $w, int $h, float $font = 0): string
     return $out . '</svg>';
 }
 
-/** Simple square "QR-style" grid from a hash (visual locator for the tracking URL; not a scannable QR). */
+/** Scannable QR code for $text (helpers/sl_qr.php). Kept under this name for existing callers. */
 function sl_codeGridSvg(string $text, int $size): string
 {
-    $n = 21;
-    $cell = $size / $n;
-    $bits = '';
-    foreach (str_split(hash('sha256', $text) . hash('sha256', strrev($text))) as $hx) {
-        $bits .= str_pad(base_convert($hx, 16, 2), 4, '0', STR_PAD_LEFT);
-    }
-    $out = '<svg viewBox="0 0 ' . $size . ' ' . $size . '" width="' . $size . '" height="' . $size . '" aria-hidden="true">';
-    $finder = function ($r, $c) { foreach ([[0, 0], [0, 14], [14, 0]] as [$fr, $fc]) { if ($r >= $fr && $r < $fr + 7 && $c >= $fc && $c < $fc + 7) { $rr = $r - $fr; $cc = $c - $fc; return ($rr === 0 || $rr === 6 || $cc === 0 || $cc === 6 || ($rr >= 2 && $rr <= 4 && $cc >= 2 && $cc <= 4)) ? 1 : 0; } } return null; };
-    $i = 0;
-    for ($r = 0; $r < $n; $r++) {
-        for ($c = 0; $c < $n; $c++) {
-            $f = $finder($r, $c);
-            $on = $f === null ? ($bits[$i++ % strlen($bits)] === '1') : (bool) $f;
-            if ($on) {
-                $out .= '<rect x="' . number_format($c * $cell, 2, '.', '') . '" y="' . number_format($r * $cell, 2, '.', '') . '" width="' . number_format($cell, 2, '.', '') . '" height="' . number_format($cell, 2, '.', '') . '" fill="#000"></rect>';
-            }
-        }
-    }
-    return $out . '</svg>';
+    return sl_qrSvg($text, $size, 'Scan to track');
 }
 
 function sl_labelOptions(): array
@@ -155,11 +158,11 @@ function sl_labelPrintData(array $ids, string $size, string $type = 'air'): arra
         if (isset($_GET['pieces'])) $per = max(1, min(50, (int) $_GET['pieces']));
         for ($p = 1; $p <= $per; $p++) {
             for ($c = 0; $c < $copies; $c++) {
-                $labels[] = $l + ['piece' => $p . ' / ' . $per, 'bc' => sl_barcodeSvg($l['track'], 350, 88, 13), 'bcSmall' => sl_barcodeSvg($size === '12' && $opt['small']['use'] === 'carrier' && $l['carrierNo'] !== '' ? $l['carrierNo'] : $l['track'], 178, 40, 6.5), 'qr' => sl_codeGridSvg($l['url'], 64)];
+                $labels[] = $l + ['piece' => $p . ' / ' . $per, 'bc' => sl_barcodeSvg($l['track'], 350, 88, 13), 'bcSmall' => sl_barcodeSvg($size === '12' && $opt['small']['use'] === 'carrier' && $l['carrierNo'] !== '' ? $l['carrierNo'] : $l['track'], 178, 40, 6.5), 'qr' => sl_codeGridSvg($l['url'], 84)];
             }
         }
     }
-    return ['labels' => $labels, 'o' => $opt['big'], 's' => $opt['small'], 'size' => $size, 'p' => sl_printerOptions(), 'test' => false];
+    return ['labels' => $labels, 'o' => $opt['big'], 's' => $opt['small'], 'size' => $size, 'p' => sl_printerOptions(), 'test' => false, 'lay' => sl_labelLayout()];
 }
 
 /** A calibration label with sample data, to check alignment and darkness on a printer. */
@@ -173,8 +176,93 @@ function sl_labelTestData(string $size): array
         'hub' => mb_strtoupper((string) ($core->site_name ?? 'Swift Lane')), 'hubAddr' => '', 'weight' => '2.5 lbs', 'pieces' => 1, 'received' => date('M j'), 'contents' => 'Printer test ×1', 'declared' => sl_money(0),
         'total' => sl_money(0), 'paid' => true, 'url' => rtrim((string) ($core->site_url ?? ''), '/') . '/track.php', 'site' => (string) ($core->site_name ?? 'Swift Lane'), 'ini' => 'SL',
         'sender' => 'SENDER NAME', 'senderCity' => 'NEW YORK, USA', 'siteUrl' => preg_replace('#^https?://#', '', rtrim((string) ($core->site_url ?? ''), '/')), 'sitePhone' => (string) ($core->c_phone ?? '')];
-    $l += ['piece' => '1 / 1', 'bc' => sl_barcodeSvg($track, 350, 88, 13), 'bcSmall' => sl_barcodeSvg($track, 178, 40, 6.5), 'qr' => sl_codeGridSvg($l['url'], 64)];
-    return ['labels' => [$l], 'o' => $opt['big'], 's' => $opt['small'], 'size' => $size, 'p' => sl_printerOptions(), 'test' => true];
+    $l += ['piece' => '1 / 1', 'bc' => sl_barcodeSvg($track, 350, 88, 13), 'bcSmall' => sl_barcodeSvg($track, 178, 40, 6.5), 'qr' => sl_codeGridSvg($l['url'], 84)];
+    return ['labels' => [$l], 'o' => $opt['big'], 's' => $opt['small'], 'size' => $size, 'p' => sl_printerOptions(), 'test' => true, 'lay' => sl_labelLayout()];
+}
+
+/**
+ * Receipt layout, set in Receipt Studio (receipt_studio.php) and stored in cdb_sl_settings receipt_options.
+ * Sections print in the saved order; each can be switched off. Field switches fine-tune a section.
+ */
+function sl_receiptCatalog(): array
+{
+    return [
+        'blocks' => [
+            'logo'     => ['Swift Lane logo', 'Brand logo at the top of the receipt'],
+            'contact'  => ['Company contact', 'Phone, email and address under the logo'],
+            'barcode'  => ['Tracking barcode', 'Receipt number, date and a scannable barcode'],
+            'stamp'    => ['Paid / Not paid stamp', 'Large status banner'],
+            'bill'     => ['Bill to', 'Customer name, locker, location, phone'],
+            'shipment' => ['Shipment', 'Courier, category, carrier tracking number'],
+            'items'    => ['Items', 'Quantities, descriptions and weight'],
+            'charges'  => ['Charges', 'Freight, fees and the total'],
+            'payment'  => ['Payment', 'Method, reference, date (paid receipts)'],
+            'howtopay' => ['How to pay', 'Pay instructions (unpaid receipts)'],
+            'qr'       => ['Tracking QR code', 'Customer scans it to open the tracking page'],
+            'footer'   => ['Footer note', 'Tracking link and your closing message'],
+        ],
+        'fields' => [
+            'billPhone'  => ['Bill to · phone', 'bill'],
+            'billLoc'    => ['Bill to · location', 'bill'],
+            'carrierNo'  => ['Shipment · carrier tracking #', 'shipment'],
+            'carrierBc'  => ['Shipment · carrier barcode', 'shipment'],
+            'weight'     => ['Items · package weight', 'items'],
+            'breakdown'  => ['Charges · line-by-line breakdown', 'charges'],
+            'cedis'      => ['Charges · amount in cedis', 'charges'],
+            'payRef'     => ['Payment · reference', 'payment'],
+            'payBy'      => ['Payment · received by', 'payment'],
+            'trackLink'  => ['Footer · tracking link', 'footer'],
+        ],
+    ];
+}
+
+function sl_receiptOptionsClean($in): array
+{
+    $cat = sl_receiptCatalog();
+    $in = is_array($in) ? $in : [];
+    $order = [];
+    foreach ((array) ($in['order'] ?? []) as $k) {
+        if (is_string($k) && isset($cat['blocks'][$k]) && !in_array($k, $order, true)) $order[] = $k;
+    }
+    foreach (array_keys($cat['blocks']) as $k) {
+        if (!in_array($k, $order, true)) $order[] = $k; // new sections join at the end
+    }
+    $hide = [];
+    foreach ((array) ($in['hide'] ?? []) as $k => $v) {
+        if (isset($cat['blocks'][$k]) && !empty($v)) $hide[$k] = 1;
+    }
+    $fields = [];
+    foreach (array_keys($cat['fields']) as $k) {
+        $fields[$k] = (int) (array_key_exists($k, (array) ($in['fields'] ?? [])) ? !empty($in['fields'][$k]) : 1);
+    }
+    $note = mb_substr(trim(strip_tags((string) ($in['note'] ?? ''))), 0, 300);
+    $title = mb_substr(trim(strip_tags((string) ($in['title'] ?? ''))), 0, 40);
+    $logo = ($in['logo'] ?? '') === 'black' ? 'black' : 'color';
+    return ['order' => $order, 'hide' => $hide, 'fields' => $fields, 'note' => $note, 'title' => $title, 'logo' => $logo];
+}
+
+/** Sample receipt for Receipt Studio when there is no shipment to preview with. */
+function sl_receiptSample(bool $paid): array
+{
+    global $core;
+    $url = rtrim((string) ($core->site_url ?? ''), '/') . '/track.php?order_track=SAMPLE0001';
+    $rate = (float) ($core->exchange_rate ?? 0);
+    return [
+        'id' => 0, 'type' => 'air', 'track' => 'SAMPLE0001', 'carrier' => 'FEDEX GROUND', 'carrierNo' => '1Z999AA10123456784', 'mode' => 'AIR', 'svc' => '24 - 48 Hours',
+        'weight' => '1.0 lbs', 'url' => $url, 'serial' => '', 'fsPay' => null, 'paidState' => $paid, 'date' => date('M j, Y · H:i'), 'office' => '',
+        'bill' => ['name' => 'SAMPLE CUSTOMER', 'locker' => '000000', 'phone' => '+233 000 000 000', 'loc' => 'ACCRA, GHANA'],
+        'items' => [['q' => 1, 'd' => 'Sample item']], 'charges' => [['l' => 'Freight · 1.0 lbs × ' . sl_money(8), 'v' => sl_money(8)]],
+        'total' => sl_money(8), 'totalRaw' => 8.0, 'ghs' => $rate > 0 ? '₵' . number_format(8 * $rate, 2) : '', 'due' => '',
+        'pay' => $paid ? ['method' => 'Mobile Money', 'ref' => 'REF123456', 'on' => date('M j, Y · H:i'), 'by' => 'Online'] : null,
+        'bcTrack' => sl_barcodeSvg('SAMPLE0001', 340, 74, 12), 'bcCarrier' => sl_barcodeSvg('1Z999AA10123456784', 340, 60, 10), 'qr' => sl_codeGridSvg($url, 120),
+        'company' => ['name' => (string) ($core->site_name ?? 'Swift Lane'), 'phone' => (string) ($core->c_phone ?? ''), 'mail' => (string) ($core->site_email ?? ''), 'addr' => trim(($core->c_address ?? '') . ', ' . ($core->c_city ?? '') . ', ' . ($core->c_country ?? ''), ', ')],
+        'payUrl' => '#',
+    ];
+}
+
+function sl_receiptOptions(): array
+{
+    return sl_receiptOptionsClean(json_decode((string) sl_slSetting('receipt_options', ''), true));
 }
 
 /** Receipt (paid / not paid) for an air shipment or a sea package. */
@@ -232,8 +320,8 @@ function sl_receiptData(int $id, string $type): ?array
         'items' => array_map(fn($i) => ['q' => 0 + $i->q, 'd' => $i->d], $items),
         'charges' => $charges, 'totalRaw' => (float) $o->total_order, 'ghs' => $rate > 0 ? '₵' . number_format((float) $o->total_order * $rate, 2) : '',
         'due' => !empty($o->due_date) ? sl_date($o->due_date) : '', 'pay' => $pay,
-        'bcTrack' => sl_barcodeSvg($l['track'], 170, 46), 'bcCarrier' => $l['carrierNo'] !== '' ? sl_barcodeSvg($l['carrierNo'], 340, 52, 9) : '',
-        'qr' => sl_codeGridSvg($l['url'], 86),
+        'bcTrack' => sl_barcodeSvg($l['track'], 340, 74, 12), 'bcCarrier' => $l['carrierNo'] !== '' ? sl_barcodeSvg($l['carrierNo'], 340, 60, 10) : '',
+        'qr' => sl_codeGridSvg($l['url'], 120),
         'company' => ['name' => (string) ($core->site_name ?? 'Swift Lane'), 'phone' => (string) ($core->c_phone ?? ''), 'mail' => (string) ($core->site_email ?? ''), 'addr' => trim(($core->c_address ?? '') . ', ' . ($core->c_city ?? '') . ', ' . ($core->c_country ?? ''), ', ')],
         'payUrl' => $type === 'air' ? 'add_payment_gateways_courier.php?id_order=' . $id : 'add_payment_gateways_package.php?id_order=' . $id,
     ];
@@ -261,7 +349,7 @@ function sl_labelStudioData($user, int $id, string $q, string $view): array
     $d = [
         'o' => $o, 's' => $opt['small'], 'l' => $l, 'q' => $q, 'view' => $view, 'onCount' => $on,
         'recent' => array_map(fn($r) => ['id' => (int) $r->order_id, 'track' => $r->order_prefix . $r->order_no], $recent),
-        'canEdit' => $user->cdp_hasPermission('view_tools'),
+        'canEdit' => $user->cdp_hasPermission('view_tools'), 'lay' => sl_labelLayout(), 'blocks' => sl_labelBlocks(),
     ];
     if ($l) {
         $d['bc'] = sl_barcodeSvg($l['track'], 340, 70, 12);
@@ -328,4 +416,68 @@ function sl_printerPage(array $p, string $kind): array
 function sl_printerStyle(array $p): string
 {
     return '--lb-dx:' . (float) $p['dx'] . 'mm;--lb-dy:' . (float) $p['dy'] . 'mm;--lb-scale:' . ((int) $p['scale'] / 100) . ';';
+}
+
+/** Receipt Studio: saved receipt layout and a preview with a real shipment (or a sample). */
+function sl_receiptStudioData($user, int $id, string $q, string $as): array
+{
+    $scope = sl_opsScope('a');
+    if ($id <= 0 && $q !== '') {
+        $id = (int) sl_scalar("SELECT a.order_id FROM cdb_add_order a WHERE a.is_deleted = 0 $scope AND CONCAT(a.order_prefix, a.order_no) LIKE :q ORDER BY a.order_id DESC", [':q' => '%' . $q . '%'], 0);
+    }
+    $recent = sl_rows("SELECT a.order_id, a.order_prefix, a.order_no FROM cdb_add_order a WHERE a.is_deleted = 0 $scope ORDER BY a.order_id DESC LIMIT 4");
+    if ($id <= 0 && $recent && $q === '') {
+        $id = (int) $recent[0]->order_id;
+    }
+    $l = $id > 0 ? sl_labelFor($id, 'air') : null;
+    $as = in_array($as, ['paid', 'due'], true) ? $as : 'paid';
+    $src = 'print_invoice_package.php?' . ($l ? 'id=' . (int) $l['id'] . '&type=air' : 'sample=' . $as) . '&as=' . $as . '&embed=1';
+    return [
+        'o' => sl_receiptOptions(), 'cat' => sl_receiptCatalog(), 'l' => $l, 'q' => $q, 'as' => $as, 'src' => $src,
+        'recent' => array_map(fn($r) => ['id' => (int) $r->order_id, 'track' => $r->order_prefix . $r->order_no], $recent),
+        'canEdit' => $user->cdp_hasPermission('view_tools'),
+    ];
+}
+
+/**
+ * 4 x 6 label layout, arranged by drag and drop in Label Studio (cdb_sl_settings label_layout).
+ * "from" and "cont" are switched with the existing sender / contents label options.
+ */
+function sl_labelBlocks(): array
+{
+    return [
+        'top'   => ['Logo & service', 'Swift logo with AIR / SEA and the service'],
+        'trk'   => ['Tracking number & QR', 'Big tracking number, piece count, QR code'],
+        'to'    => ['Deliver to', 'Customer, locker, address'],
+        'route' => ['Route', 'From → destination'],
+        'facts' => ['Weight · pieces · date · payment', 'Four fact boxes'],
+        'from'  => ['Sender', 'Who sent it'],
+        'cont'  => ['Contents', 'Items and declared value'],
+        'flags' => ['Handling flags', 'Fragile, dangerous goods, this side up'],
+        'bc'    => ['Barcode', 'Scannable tracking barcode'],
+        'foot'  => ['Footer', 'Hub and tracking link'],
+    ];
+}
+
+function sl_labelLayoutClean($in): array
+{
+    $cat = sl_labelBlocks();
+    $in = is_array($in) ? $in : [];
+    $order = [];
+    foreach ((array) ($in['order'] ?? []) as $k) {
+        if (is_string($k) && isset($cat[$k]) && !in_array($k, $order, true)) $order[] = $k;
+    }
+    foreach (array_keys($cat) as $k) {
+        if (!in_array($k, $order, true)) $order[] = $k;
+    }
+    $hide = [];
+    foreach ((array) ($in['hide'] ?? []) as $k => $v) {
+        if (isset($cat[$k]) && !in_array($k, ['from', 'cont'], true) && !empty($v)) $hide[$k] = 1;
+    }
+    return ['order' => $order, 'hide' => $hide];
+}
+
+function sl_labelLayout(): array
+{
+    return sl_labelLayoutClean(json_decode((string) sl_slSetting('label_layout', ''), true));
 }

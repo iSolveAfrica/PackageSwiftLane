@@ -19,7 +19,7 @@ $pill = function (string $group, string $k, string $v, string $label, $cur) use 
 };
 $printUrl = $l ? 'print_label_ship.php?id=' . (int) $l['id'] : '';
 ?>
-<div class="sl-head"><div><h1 class="sl-title" style="font-size:20px">Label Studio</h1><p class="sl-lede"><?= $l ? h($l['track'] . ' · ' . ucwords(strtolower($l['name']))) . ' · ' : '' ?>choose what every label shows, preview it live, print</p></div><div class="row g8 wrap"><a class="sl-btn ghost" href="<?= sl_route('PackageIntake') ?>"><i class="ic ic-sm i-left" aria-hidden="true"></i>Back to intake</a><?php if ($l): ?><a class="sl-btn ghost" href="<?= h($printUrl . '&size=12') ?>" target="_blank"><i class="ic ic-sm i-tag" aria-hidden="true"></i>Small 1 × 2 label</a><a class="sl-btn" href="<?= h($printUrl . '&size=46') ?>" target="_blank"><i class="ic ic-sm i-print" aria-hidden="true"></i>Print <?= (int) $l['pieces'] * (int) $o['copies'] ?></a><?php endif; ?></div></div>
+<div class="sl-head"><div><h1 class="sl-title" style="font-size:20px">Label Studio</h1><p class="sl-lede"><?= $l ? h($l['track'] . ' · ' . ucwords(strtolower($l['name']))) . ' · ' : '' ?>choose what every label shows, preview it live, print</p></div><div class="row g8 wrap"><a class="sl-btn ghost" href="<?= sl_route('PackageIntake') ?>"><i class="ic ic-sm i-left" aria-hidden="true"></i>Back to intake</a><?php if ($canEdit): ?><a class="sl-btn ghost" href="<?= sl_route('ReceiptStudio') ?>"><i class="ic ic-sm i-receipt" aria-hidden="true"></i>Receipt layout</a><?php endif; ?><?php if ($l): ?><a class="sl-btn ghost" href="<?= h($printUrl . '&size=12') ?>" target="_blank"><i class="ic ic-sm i-tag" aria-hidden="true"></i>Small 1 × 2 label</a><a class="sl-btn" href="<?= h($printUrl . '&size=46') ?>" target="_blank"><i class="ic ic-sm i-print" aria-hidden="true"></i>Print <?= (int) $l['pieces'] * (int) $o['copies'] ?></a><?php endif; ?></div></div>
 <form method="get" class="row g8 wrap sm"><span class="mut">Preview with shipment:</span><span class="sl-search" style="max-width:260px"><i class="ic ic-sm i-search" aria-hidden="true"></i><input name="q" value="<?= h($d['q']) ?>" placeholder="Tracking number" aria-label="Shipment for the preview"></span><button class="sl-btn sm ghost" type="submit">Load</button><?php foreach ($d['recent'] as $r): ?><a class="sl-btn sm <?= $l && $r['id'] === $l['id'] ? '' : 'ghost' ?>" href="<?= h(sl_url(['id' => $r['id'], 'q' => null])) ?>"><?= h($r['track']) ?></a><?php endforeach; ?></form>
 <?php if (!$canEdit): ?><div class="sl-banner warn">You can preview labels. Changing the label options needs the Settings permission.</div><?php endif; ?>
 <div class="lsx">
@@ -58,6 +58,22 @@ $printUrl = $l ? 'print_label_ship.php?id=' . (int) $l['id'] : '';
 </div>
 </div>
 
+<section class="sl-card col g16" id="layout" style="margin-top:16px">
+  <div class="sl-ch" style="margin:0"><h2 class="sl-ct"><i class="ic ic-sm i-sliders" aria-hidden="true"></i> Label layout (4 × 6)</h2><span class="mut sm">Drag <b>⠿</b> to arrange the label from top to bottom; switch a block off to leave it out. The preview above updates as you go.</span></div>
+  <ol class="lo-list" data-lo-list<?= $canEdit ? '' : ' data-lo-ro' ?> id="ll-list" style="max-width:640px">
+  <?php foreach ($d['lay']['order'] as $k): [$t, $sub] = $d['blocks'][$k]; $on = $k === 'from' ? !empty($o['sender']) : ($k === 'cont' ? !empty($o['contents']) : empty($d['lay']['hide'][$k])); ?>
+    <li class="lo-row<?= $on ? '' : ' off' ?>" data-k="<?= h($k) ?>">
+      <button type="button" class="lo-grip" data-lo-grip aria-label="Drag <?= h($t) ?>"<?= $canEdit ? '' : ' disabled' ?>>⠿</button>
+      <span class="lo-t"><b><?= h($t) ?></b><small><?= h($sub) ?></small></span>
+      <span class="lo-mv"><button type="button" data-lo-up aria-label="Move <?= h($t) ?> up">▲</button><button type="button" data-lo-down aria-label="Move <?= h($t) ?> down">▼</button></span>
+      <button type="button" class="lo-sw" role="switch" aria-checked="<?= $on ? 'true' : 'false' ?>" aria-label="Show <?= h($t) ?>" data-ll-show<?= $canEdit ? '' : ' disabled' ?>></button>
+    </li>
+  <?php endforeach; ?>
+  </ol>
+  <?php if ($canEdit): ?><div class="row g8"><button type="button" class="sl-btn sm ghost" id="ll-reset">Reset label layout</button><span class="mut sm" id="ll-status" role="status"></span></div><?php endif; ?>
+</section>
+<?php include __DIR__ . '/partials/layout_sort.php'; ?>
+
 <section class="sl-card col g16" id="printer" style="margin-top:16px">
   <div class="sl-ch" style="margin:0"><h2 class="sl-ct"><i class="ic ic-sm i-print" aria-hidden="true"></i> Printer settings</h2><span class="mut sm">Paper, alignment, darkness and logo for the label printers</span></div>
   <?php require_once CDP_ROOT . '/views/sl/data/labels.php'; $pp = sl_printerOptions(); $ppScope = 'me'; include __DIR__ . '/partials/printer_panel.php'; ?>
@@ -76,6 +92,33 @@ $printUrl = $l ? 'print_label_ship.php?id=' . (int) $l['id'] : '';
     e.preventDefault(); save(b.getAttribute('data-ls-set'), b.getAttribute('data-k'), b.getAttribute('data-v'));
   });
   document.querySelectorAll('[data-ls-text]').forEach(function (i) { i.addEventListener('change', function () { save(i.getAttribute('data-ls-text'), i.getAttribute('data-k'), i.value); }); });
+
+  // Label layout: drag order + show/hide, saved without reloading the page
+  var ll = document.getElementById('ll-list'), llStatus = document.getElementById('ll-status'), frame = document.querySelector('.ls-frame');
+  function refreshPreview() { if (frame) frame.src = frame.src.replace(/&_=\d+/, '') + '&_=' + Date.now(); }
+  function saveLayout(reset) {
+    var hide = {};
+    if (!reset) ll.querySelectorAll('[data-k]').forEach(function (li) { var k = li.getAttribute('data-k'); if (k !== 'from' && k !== 'cont' && li.querySelector('[data-ll-show]').getAttribute('aria-checked') !== 'true') hide[k] = 1; });
+    llStatus.textContent = 'Saving…';
+    return SL.post('ajax/sl/label_options_ajax.php', { group: 'layout', key: 'layout', value: JSON.stringify(reset ? {} : { order: SLLayout.order(ll), hide: hide }) }).then(function (j) {
+      if (!j.success) { llStatus.textContent = ''; SL.toast(j.message || 'Not saved', true); return; }
+      if (reset) { location.reload(); return; }
+      llStatus.textContent = 'Saved · preview updated'; refreshPreview();
+    });
+  }
+  if (ll) {
+    ll.addEventListener('lo:change', function () { saveLayout(); });
+    ll.addEventListener('click', function (e) {
+      var sw = e.target.closest('[data-ll-show]'); if (!sw) return;
+      var on = sw.getAttribute('aria-checked') !== 'true', k = sw.closest('[data-k]').getAttribute('data-k');
+      sw.setAttribute('aria-checked', on ? 'true' : 'false'); sw.closest('.lo-row').classList.toggle('off', !on);
+      if (k === 'from' || k === 'cont') {
+        // these two are the Sender block / Contents label options
+        SL.post('ajax/sl/label_options_ajax.php', { group: 'big', key: k === 'from' ? 'sender' : 'contents', value: on ? 1 : 0 }).then(function (j) { if (j.success) location.reload(); else SL.toast(j.message || 'Not saved', true); });
+      } else saveLayout();
+    });
+    document.getElementById('ll-reset').addEventListener('click', function () { if (confirm('Put the label blocks back in the default order and show them all?')) saveLayout(true); });
+  }
 })();
 </script>
 <?php endif; ?>

@@ -15,12 +15,20 @@ $type = ($_GET['type'] ?? 'sea') === 'air' ? 'air' : 'sea';
 sl_gate(sl_userIs('client') ? null : ($type === 'air' ? 'print_shipment' : 'print_package'));
 require_once 'helpers/activity_log.php';
 require_once 'views/sl/data/labels.php';
-cdp_activityLogDocument();
-$r = sl_receiptData((int) ($_GET['id'] ?? 0), $type);
+// Receipt Studio previews (embed=1, sample=paid|due, as=paid|due) are not documents and need view_tools.
+$canStudio = $user->cdp_hasPermission('view_tools');
+$isPreview = !empty($_GET['embed']) && $canStudio;
+if (!$isPreview) cdp_activityLogDocument();
+$sample = $isPreview ? (string) ($_GET['sample'] ?? '') : '';
+$r = $sample !== '' ? sl_receiptSample($sample === 'paid') : sl_receiptData((int) ($_GET['id'] ?? 0), $type);
+if ($r && $isPreview && in_array($_GET['as'] ?? '', ['paid', 'due'], true)) {
+    $r['paidState'] = $_GET['as'] === 'paid';
+    if ($r['paidState'] && !$r['pay']) $r['pay'] = ['method' => '—', 'ref' => '—', 'on' => '', 'by' => 'Online'];
+}
 if (!$r) {
     http_response_code(404);
     sl_render('ReceiptNotPaid', ['title' => 'Receipt', 'board' => 'ReceiptNotPaid', 'plain' => true, 'id' => ''], ['r' => null]);
     exit;
 }
 $board = $r['paidState'] ? 'ReceiptPaid' : 'ReceiptNotPaid';
-sl_render($board, ['id' => $type === 'air' ? 'air' : 'sea', 'title' => 'Receipt ' . $r['track'], 'board' => $board, 'plain' => true], ['r' => $r, 'canPay' => sl_userIs('client')]);
+sl_render($board, ['id' => $type === 'air' ? 'air' : 'sea', 'title' => 'Receipt ' . $r['track'], 'board' => $board, 'plain' => true], ['r' => $r, 'canPay' => sl_userIs('client'), 'canStudio' => $canStudio && !sl_userIs('client')]);

@@ -8,6 +8,12 @@ if (!isset($d)) { $d = []; }
 $o = $d['o'];
 $p = $d['p'];
 $page = sl_printerPage($p, 'big');
+$lay = $d['lay'] ?? sl_labelLayout();
+// The barcode sits at the bottom of the label (above the footer) only while it is placed last;
+// moved higher, it stays in line with the other blocks.
+$visible = array_values(array_filter($lay['order'], fn($k) => empty($lay['hide'][$k])));
+$bcAt = array_search('bc', $visible, true);
+$bcBottom = $bcAt !== false && !array_diff(array_slice($visible, $bcAt + 1), ['foot']);
 $pp = $p; $ppTeam = $user->cdp_hasPermission('view_tools'); $ppScope = 'me';
 ?>
 <?php if (empty($_GET['embed'])): ?><div class="sl-noprint lb-bar">
@@ -18,31 +24,42 @@ $pp = $p; $ppTeam = $user->cdp_hasPermission('view_tools'); $ppScope = 'me';
 <?php foreach ($d['labels'] as $l): ?>
 <div class="sl-page<?= $p['big'] === 'a4' ? ' a4' : '' ?>">
 <div class="lb lb46<?= $p['big'] === '44' ? ' sq' : '' ?><?= $p['dark'] ? ' dark' : '' ?><?= $p['border'] ? '' : ' nob' ?><?= $d['test'] ? ' test' : '' ?>" style="<?= h(sl_printerStyle($p)) ?>">
+  <?php foreach ($lay['order'] as $blk): if (!empty($lay['hide'][$blk])) continue; switch ($blk): case 'top': ?>
   <div class="l-top">
     <?php if ($p['logo']): ?><?= sl_brandLogo('black', 40, 'l-logo') ?><?php else: ?><b class="l-site"><?= h($l['site']) ?></b><?php endif; ?>
     <div class="l-mode"><b><?= h($l['mode']) ?></b><span><?= h(trim($l['svc'] ?: $l['pack'])) ?></span></div>
   </div>
+  <?php break; case 'trk': ?>
   <div class="l-trk">
     <div class="col"><span class="k">Tracking number</span><b class="l-no"><?= h($l['track']) ?></b><span class="l-sub"><?= h($l['pack']) ?> · piece <?= h($l['piece']) ?></span></div>
     <?php if (!empty($o['qr'])): ?><div class="l-qr"><?= $l['qr'] ?></div><?php endif; ?>
   </div>
+  <?php break; case 'to': ?>
   <div class="l-to">
     <div class="row between" style="align-items:flex-start;gap:8px"><span class="k">Deliver to</span><span class="l-lock">Locker <b><?= h($l['locker'] ?: '—') ?></b><?= $l['bay'] !== '' ? ' · Bay <b>' . h($l['bay']) . '</b>' : '' ?></span></div>
     <b class="l-name"><?= h($l['name']) ?></b>
     <span class="l-addr"><?= h(trim($l['addr'] . ', ' . $l['to'], ', ')) ?><?php if (!empty($o['phone']) && $l['phone'] !== ''): ?> · <?= h($l['phone']) ?><?php endif; ?></span>
   </div>
+  <?php break; case 'route': ?>
   <div class="l-route"><span><?= h($l['from'] ?: '—') ?></span><i>→</i><span class="dst"><?= h($l['to']) ?></span></div>
+  <?php break; case 'facts': ?>
   <div class="l-facts">
     <div><span class="k">Weight</span><b><?= h($l['weight']) ?></b></div>
     <div><span class="k">Pieces</span><b><?= h($l['piece']) ?></b></div>
     <div><span class="k">Received</span><b><?= h($l['received']) ?></b></div>
     <div class="<?= $l['paid'] ? '' : 'inv' ?>"><span class="k">Payment</span><b><?= $l['paid'] ? 'PAID' : 'COLLECT' ?></b></div>
   </div>
+  <?php break; case 'from': ?>
   <?php if (!empty($o['sender']) && $l['sender'] !== ''): ?><div class="l-from"><span class="k">From</span> <?= h($l['sender']) ?><?= $l['senderCity'] !== '' ? ' · ' . h($l['senderCity']) : '' ?></div><?php endif; ?>
+  <?php break; case 'cont': ?>
   <?php if (!empty($o['contents'])): ?><div class="l-cont"><b>Contents:</b> <?= h($l['contents']) ?><?php if (!empty($o['value'])): ?> · declared <?= h($l['declared']) ?><?php endif; ?></div><?php endif; ?>
+  <?php break; case 'flags': ?>
   <?php if (!empty($o['fragile']) || !empty($l['dg']) || !empty($o['care'])): ?><div class="l-flags"><?php if (!empty($o['fragile'])): ?><span>FRAGILE</span><?php endif; ?><?php if (!empty($l['dg'])): ?><span>DANGEROUS GOODS</span><?php endif; ?><?php if (!empty($o['care'])): ?><span>⬆ THIS SIDE UP</span><?php endif; ?></div><?php endif; ?>
-  <div class="l-bc"><?= $l['bc'] ?><?php if ($l['carrierNo'] !== ''): ?><span class="l-car"><?= h(trim($l['carrier'] . ' ' . $l['carrierNo'])) ?></span><?php endif; ?></div>
+  <?php break; case 'bc': ?>
+  <div class="l-bc<?= $bcBottom ? ' end' : '' ?>"><?= $l['bc'] ?><?php if ($l['carrierNo'] !== ''): ?><span class="l-car"><?= h(trim($l['carrier'] . ' ' . $l['carrierNo'])) ?></span><?php endif; ?></div>
+  <?php break; case 'foot': ?>
   <div class="l-foot"><span><?= h($l['hub']) ?></span><span><?= h($l['siteUrl'] !== '' ? 'Track: ' . $l['siteUrl'] . '/track.php' : '') ?></span></div>
+  <?php break; endswitch; endforeach; ?>
   <?php if ($d['test']): ?><div class="l-test"><b>TEST PRINT</b><span><?= h($p['name']) ?> · <?= h($page['label']) ?> · <?= h($p['dpi']) ?> dpi · move <?= h($p['dx']) ?>/<?= h($p['dy']) ?> mm · <?= (int) $p['scale'] ?>%</span><i class="c tl"></i><i class="c tr"></i><i class="c bl"></i><i class="c br"></i><i class="x"></i></div><?php endif; ?>
 </div>
 </div>
@@ -70,7 +87,7 @@ $pp = $p; $ppTeam = $user->cdp_hasPermission('view_tools'); $ppScope = 'me';
 .l-trk{display:flex;justify-content:space-between;align-items:center;gap:8px;border:2.5px solid #000;border-radius:8px;padding:8px 10px}
 .l-no{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:34px;font-weight:800;letter-spacing:-.01em;line-height:1.05}
 .l-sub{font-size:10px;font-weight:600}
-.l-qr svg{width:64px;height:64px;display:block}
+.l-qr svg{width:84px;height:84px;display:block}
 .l-to{display:flex;flex-direction:column;gap:2px;border:2px solid #000;border-radius:8px;padding:7px 10px}
 .l-name{font-size:21px;font-weight:800;line-height:1.15}
 .l-addr{font-size:11.5px;line-height:1.3}
@@ -84,7 +101,8 @@ $pp = $p; $ppTeam = $user->cdp_hasPermission('view_tools'); $ppScope = 'me';
 .l-facts .inv{background:#000;color:#fff}
 .l-from,.l-cont{font-size:10px;line-height:1.3}
 .l-flags{display:flex;gap:5px;flex-wrap:wrap}.l-flags span{font-size:9.5px;font-weight:900;border:2px solid #000;padding:1px 6px;border-radius:4px}
-.l-bc{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:1px}
+.l-bc{margin-top:0;display:flex;flex-direction:column;align-items:center;gap:1px}
+.l-bc.end{margin-top:auto}
 .l-car{font-family:"JetBrains Mono",monospace;font-size:9px}
 .l-foot{display:flex;justify-content:space-between;gap:8px;font-size:8.5px;font-weight:600;border-top:1.5px solid #000;padding-top:3px}
 .l-test{position:absolute;inset:0;pointer-events:none}

@@ -205,6 +205,7 @@ function sl_navStaff(): array
             ['id' => 'devmod', 'label' => 'Modules', 'icon' => 'sliders', 'board' => 'ModuleController', 'perm' => 'superadmin'],
             ['id' => 'perm', 'label' => 'Permissions', 'icon' => 'key', 'board' => 'StaffPermissions', 'perm' => 'view_role_assignment'],
             ['id' => 'lblstudio', 'label' => 'Label Printing', 'icon' => 'print', 'board' => 'LabelStudio', 'perm' => ['view_tools', 'print_label']],
+            ['id' => 'rcptstudio', 'label' => 'Receipt Layout', 'icon' => 'receipt', 'board' => 'ReceiptStudio', 'perm' => 'view_tools'],
             ['id' => 'auto', 'label' => 'Automations', 'icon' => 'bolt', 'board' => 'Automations', 'perm' => 'manage_automations'],
         ]],
     ];
