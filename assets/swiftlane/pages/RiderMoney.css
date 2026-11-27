@@ -3,10 +3,12 @@
    Loaded by the web pages (board RiderMoney) and by the phone screens (views/sl/data/rider_money.php sl_rmOpen). */
 
 /* the phone frame's body has no .mxp resets */
-.mx-body.rm a{color:inherit;text-decoration:none}
-.mx-body.rm button{font-family:inherit;color:inherit}
-.mx-body.rm button.mx-btn{border:0;cursor:pointer;width:100%}
-.mx-body.rm button.mx-btn.sec{border:1px solid var(--line-2)}
+/* :where() keeps these at element specificity so component colours (.rc-day.on, .mx-btn) still win */
+:where(.mx-body.rm) a{color:inherit;text-decoration:none}
+:where(.mx-body.rm) button{font-family:inherit;color:inherit}
+.mx-body.rm button.mx-btn{border:0;cursor:pointer;width:100%;color:var(--inverse)}
+.mx-body.rm button.mx-btn.sec{border:1px solid var(--line-2);color:var(--ink)}
+.mx-body.rm button.mx-btn.rs-amb{color:var(--ink)}
 .mx-body.rm form{display:contents}
 .mx-body.rm input.mx-in,.mx-body.rm select.mx-in{width:100%;font:inherit;color:var(--ink);font-size:16px}
 .mx-body.rm .mxp-empty{background:var(--card)}
@@ -60,3 +62,8 @@ a.rd-sosb{text-decoration:none;color:#fff!important}
 .rm-fields{display:flex;flex-direction:column;gap:12px}
 .rm-fields[hidden]{display:none}
 .rd-pf .mx-rm small{white-space:normal}
+.rc-to .mx-rm small,.rm-hist .mx-rm small:not(.mono){white-space:normal}
+/* the phone frame resets every link in .mx-body to inherit; give these components their design colours back */
+body.mx-page .mx-body.rm a.rc-day.on{color:var(--inverse)}
+body.mx-page .mx-body.rm .mx-sec a,body.mx-page .mx-body.rm .mxp-empty a.mx-lnk{color:var(--orange)}
+.mxp .mxp-empty a.mx-lnk{color:var(--orange)}

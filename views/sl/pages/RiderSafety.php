@@ -26,12 +26,14 @@ $total = count($d['checklist']);
   <?php else: ?><small>No emergency or office number is set up. Use your phone’s dialler to call the emergency services, and add an emergency contact below.</small><?php endif; ?>
   <?php if ($d['plate'] !== ''): ?><span class="rd-gps rm-plate"><i class="ic ic-sm i-scooter" aria-hidden="true"></i> Your plate: <?= h($d['plate']) ?></span><?php endif; ?></div>
 </section>
+<?php if ($d['emergency'] !== '' || $d['dispatch'] || $c['set']): ?>
 <section class="mx-act c3 rm-act">
   <?php if ($d['emergency'] !== ''): ?><a href="tel:<?= h($d['emergency']) ?>"><span><i class="ic i-alert" aria-hidden="true"></i></span><small>Emergency <?= h($d['emergency']) ?></small></a><?php endif; ?>
   <?php foreach (array_slice($d['dispatch'], 0, 2) as $x): ?><a href="<?= h($x['tel']) ?>"><span><i class="ic i-phone" aria-hidden="true"></i></span><small><?= h($x['label']) ?></small></a><?php endforeach; ?>
   <?php if ($c['set']): ?><a href="<?= h($c['tel']) ?>"><span><i class="ic i-user" aria-hidden="true"></i></span><small>Call <?= h(explode(' ', $c['name'])[0]) ?></small></a><?php endif; ?>
   <a href="<?= h(sl_route('RiderChat')) ?>"><span><i class="ic i-message" aria-hidden="true"></i></span><small>All contacts</small></a>
 </section>
+<?php endif; ?>
 <?php if ($d['emergency'] === ''): ?><p class="mx-note">The office has not set a national emergency number for this app, so none is shown.</p><?php endif; ?>
 <?= sl_mxSec('Share where you are') ?>
 <section class="mx-card rd-share">
@@ -43,7 +45,7 @@ $total = count($d['checklist']);
   <small class="mx-note" data-rm-locate-status role="status">Sends a map link of where your phone is at this moment. It is a single position, not live tracking, and nothing is stored.</small>
 </section>
 <section class="mx-card rd-chk" aria-label="Before you ride">
-  <div class="rd-chkh"><span class="mx-li"><i class="ic i-scooter" aria-hidden="true"></i></span><span class="mx-rm"><b>Before you ride</b><small data-rm-chk-count><?= $done ?> of <?= $total ?> done today</small></span><span class="sl-pill <?= $done === $total ? 'delivered' : 'pending' ?>" data-rm-chk-pill><?= $done === $total ? 'Ready' : 'To do' ?></span></div>
+  <div class="rd-chkh"><span class="mx-li"><i class="ic i-scooter" aria-hidden="true"></i></span><span class="mx-rm"><b>Before you ride</b><small data-rm-chk-count><?= $done ?> of <?= $total ?> done today</small></span><span class="sl-pill <?= $done === $total ? 'delivered' : 'plain' ?>" data-rm-chk-pill><?= $done === $total ? 'Ready' : 'To do' ?></span></div>
   <ol><?php foreach ($d['checklist'] as $k => $label): $on = in_array($k, $d['checked'], true); ?><li class="<?= $on ? 'on' : '' ?>"><button type="button" class="rm-chk" role="checkbox" aria-checked="<?= $on ? 'true' : 'false' ?>" data-rm-chk="<?= h($k) ?>" data-rm-url="<?= h($ajax) ?>"<?= $d['ready'] ? '' : ' disabled' ?>><span><i class="ic ic-sm i-check" aria-hidden="true"></i></span><?= h($label) ?></button></li><?php endforeach; ?></ol>
   <small class="mx-note">Your own daily check. It resets every morning.</small>
 </section>

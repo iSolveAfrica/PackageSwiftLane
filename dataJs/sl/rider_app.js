@@ -28,7 +28,7 @@
       if (j.success !== true) { set(!on); toast(j.message || 'Not saved', true); return; }
       var card = b.closest('.rd-chk'), c = card.querySelector('[data-rm-chk-count]'), p = card.querySelector('[data-rm-chk-pill]'), all = j.done === j.total;
       if (c) c.textContent = j.done + ' of ' + j.total + ' done today';
-      if (p) { p.textContent = all ? 'Ready' : 'To do'; p.classList.toggle('delivered', all); p.classList.toggle('pending', !all); }
+      if (p) { p.textContent = all ? 'Ready' : 'To do'; p.classList.toggle('delivered', all); p.classList.toggle('plain', !all); }
     }).catch(function (err) { set(!on); toast(err.message || 'Network error. Please try again.', true); }).finally(function () { b.removeAttribute('aria-busy'); });
   });
 

@@ -60,7 +60,7 @@ $o = $d['open'];
 </section>
 <?= sl_mxSec('Payout history') ?>
 <?php if ($d['history']): ?>
-<section class="mx-card mx-list"><?php foreach ($d['history'] as $x): ?><div class="mx-row"><span class="mx-li"><i class="ic i-<?= h($x['icon']) ?>" aria-hidden="true"></i></span><span class="mx-rm"><b><?= h($x['title']) ?></b><small><?= h($x['sub']) ?></small><?php if ($x['note'] !== ''): ?><small><?= h($x['note']) ?></small><?php endif; ?><small class="mono"><?= h($x['ref']) ?></small></span><span class="mx-rr"><span class="sl-pill <?= h($x['cls']) ?>"><?= h($x['pill']) ?></span><b><?= h($x['amount']) ?></b></span></div><?php endforeach; ?></section>
+<section class="mx-card mx-list rm-hist"><?php foreach ($d['history'] as $x): ?><div class="mx-row"><span class="mx-li"><i class="ic i-<?= h($x['icon']) ?>" aria-hidden="true"></i></span><span class="mx-rm"><b><?= h($x['title']) ?></b><small><?= h($x['sub']) ?></small><?php if ($x['note'] !== ''): ?><small><?= h($x['note']) ?></small><?php endif; ?><small class="mono"><?= h($x['ref']) ?></small></span><span class="mx-rr"><span class="sl-pill <?= h($x['cls']) ?>"><?= h($x['pill']) ?></span><b><?= h($x['amount']) ?></b></span></div><?php endforeach; ?></section>
 <?php else: ?>
 <?= sl_mxEmpty('download', 'No payouts yet', 'Settlements the office records and your payout requests are listed here.') ?>
 <?php endif; ?>

@@ -49,10 +49,11 @@ function sl_rmNotRider(): string
 /** Link to the finished-trip screen. */
 function sl_rmTripHref(array $t): string
 {
-    if ($t['k'] === 'd') {
-        return sl_route('DeliveryJob', ['id' => $t['id']]);
+    // rider_done.php (views/sl/data/rider_ops.php ro_stop) takes id = "o<order id>" or "d<delivery request id>".
+    if (is_file(CDP_ROOT . '/rider_done.php')) {
+        return sl_route('RiderDone', ['id' => $t['k'] . $t['id']]);
     }
-    return is_file(CDP_ROOT . '/rider_done.php') ? sl_route('RiderDone', ['id' => $t['id'], 'k' => 'o']) : sl_route('RiderQueue');
+    return $t['k'] === 'd' ? sl_route('DeliveryJob', ['id' => $t['id']]) : sl_route('RiderQueue');
 }
 
 function sl_rmTripRow(array $t): array
@@ -141,7 +142,7 @@ function sl_riderEarningsData($user, $core): array
 
 function sl_rmRequestRow($r): array
 {
-    $map = ['requested' => ['Waiting for the office', 'pending'], 'approved' => ['Approved · being paid', 'onway'], 'paid' => ['Paid', 'paid'], 'declined' => ['Declined', 'overdue'], 'cancelled' => ['Cancelled', 'plain']];
+    $map = ['requested' => ['Waiting for the office', 'onway'], 'approved' => ['Approved · being paid', 'sorting'], 'paid' => ['Paid', 'paid'], 'declined' => ['Declined', 'overdue'], 'cancelled' => ['Cancelled', 'plain']];
     [$label, $cls] = $map[$r->status] ?? [ucfirst((string) $r->status), 'plain'];
     return ['id' => (int) $r->id, 'amount' => sl_money($r->amount), 'status' => $r->status, 'label' => $label, 'cls' => $cls, 'at' => sl_date($r->created_at, 'D j M H:i'), 'note' => (string) ($r->note ?? ''), 'staffNote' => (string) ($r->staff_note ?? ''),
         'when' => $r->status === 'paid' && $r->paid_at ? 'paid ' . sl_date($r->paid_at, 'j M') : ($r->decided_at ? sl_date($r->decided_at, 'j M') : '')];

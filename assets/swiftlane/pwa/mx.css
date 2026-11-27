@@ -2216,8 +2216,8 @@ body.mx-page .mx-bare .mx-body{padding-top:max(24px,calc(env(safe-area-inset-top
 body.mx-page .mx-tab{padding-bottom:max(22px,env(safe-area-inset-bottom))}
 body.mx-page .mx-pill{bottom:max(18px,calc(env(safe-area-inset-bottom) + 8px))}
 body.mx-page .mx-foot{padding-bottom:env(safe-area-inset-bottom)}
-body.mx-page .mx-body a:not(.mx-btn):not(.mx-av):not(.mx-hb),body.mx-page .mx-top a:not(.mx-av){color:inherit;text-decoration:none}
-body.mx-page a.mx-av,body.mx-page a.mx-btn{text-decoration:none}
+/* zero specificity: the design's own link colours (.mx-sec a, .rc-day.on, .mx-btn, .mx-av …) always win */
+:where(body.mx-page) :where(.mx-body,.mx-top,.mx-foot) a{color:inherit;text-decoration:none}
 body.mx-page .mx-body button,body.mx-page .mx-foot button{font-family:inherit;cursor:pointer}
 body.mx-page input,body.mx-page select,body.mx-page textarea{font-family:inherit}
 body.mx-page input.mx-in,body.mx-page select.mx-in,body.mx-page textarea.mx-in{width:100%;box-sizing:border-box;color:var(--ink);font-size:16px}
