@@ -147,6 +147,7 @@ function sl_caRewardsData(int $uid): array
     $d['rateSea'] = (float) $s['loyalty_points_sea'];
     $d['referralOn'] = $s['referral_enabled'] === '1' && sl_tableExists('cdb_referrals');
     $d['referrerPoints'] = (int) $s['referral_referrer_points'];
+    $d['signupLink'] = function_exists('sl_loyaltySignupLink') && !empty($d['code']) ? sl_loyaltySignupLink((string) $d['code']) : 'sign-up.php';
     $d['friendReward'] = trim((string) $s['referral_friend_reward']);
     $d['rewarded'] = $d['referralOn'] ? (int) sl_scalar("SELECT COUNT(*) FROM cdb_referrals WHERE referrer_id = :u AND status = 'rewarded'", [':u' => $uid]) : 0;
     $d['referralPoints'] = (int) sl_scalar("SELECT COALESCE(SUM(points),0) FROM cdb_loyalty_events WHERE user_id = :u AND kind = 'referral'", [':u' => $uid]);

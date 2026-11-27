@@ -19,7 +19,7 @@ $groups = [
     'Business' => [
         ['i-warehouse', 'Company', 'Name, logo, addresses, sign-up rules', 'settings_form.php?f=system', $can('view_tools')],
         ['i-sliders', 'Modules', 'Air, sea, finance, AI, loyalty on/off', sl_route('ModuleController'), $modulesOk],
-        ['i-tag', 'Rates & tariffs', 'Air per lb, sea per CBM', sl_route('Tariffs'), true],
+        ['i-tag', 'Rates & tariffs', 'Freight price, taxes and route prices', sl_route('Tariffs'), true],
         ['i-pin', 'Shipping addresses', 'Warehouses customers ship to', sl_route('ShippingAddresses'), $can(['manage_shipping_addresses', 'view_tools'])],
         ['i-bell', 'Notifications', 'When and how customers hear', sl_route('NotificationCenter'), $can(['manage_notification_rules', 'view_tools'])],
         ['i-message', 'Message templates', 'WhatsApp, SMS, email', sl_route('MessageTemplates'), $can(['list_sms_templates', 'view_tools'])],
@@ -45,6 +45,7 @@ $row = fn($icon, $t, $sub, $href) => '<a class="mx-row" href="' . h($href) . '" 
 <link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/pwa/phone-settings.css')) ?>">
 <?= sl_phoneTop('Settings', '', ['back' => 'menu.php']) ?>
 <main class="mx-body">
+<?php require_once CDP_ROOT . '/helpers/sl_setup_checks.php'; foreach (sl_setupChecks($core) as [$ck, $ct, $cx, $ch, $cl]): ?><a class="mx-ban warn" href="<?= h($ch) ?>"><i class="ic ic-sm i-alert" aria-hidden="true"></i><span><b><?= h($ct) ?>.</b> <?= h($cx) ?> <u><?= h($cl) ?></u></span></a><?php endforeach; ?>
 <div class="mx-srch"><label><i class="ic i-search" aria-hidden="true"></i><input type="search" aria-label="Search settings" placeholder="Search <?= (int) $d['allN'] ?> settings" data-mx-menu-q></label></div>
 <?php foreach ($groups as $label => $items): $items = array_filter($items, fn($i) => $i[4]); if (!$items) continue; ?>
 <div data-mx-menu-group>

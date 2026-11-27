@@ -22,7 +22,8 @@ $edit = fn(string $group, string $label) => '<div class="mx-btns"><a class="mx-b
 </div>
 <div class="sp-panel sp-wrap" data-mx-panel-of="freight">
   <section class="mx-card mx-list"><?php foreach ($d['freight'] as $r) echo $row($r); ?><?php foreach ($d['bands'] as $r) echo $row($r); ?></section>
-  <p class="mx-note">New shipments, package intake and invoices start from the freight price.<?= $d['bands'] ? ' The public rate calculator quotes from the route prices.' : ' No route prices are set, so the public rate calculator cannot quote yet.' ?></p>
+  <p class="mx-note">New shipments, package intake and invoices start from the freight price.<?= $d['bands'] ? ' The public rate calculator quotes from the route prices.' : ' No route prices are set, so the public rate calculator quotes the standard freight price.' ?></p>
+  <section class="mx-card mx-list"><?= sl_mxRow('route', 'Route prices', 'Price per weight by route, for the rate calculator', '', 'rate_bands.php') ?></section>
   <?php if ($can['taxes']) echo $edit('taxes', 'Edit rates'); ?>
 </div>
 <div class="sp-panel sp-wrap" data-mx-panel-of="charges" hidden>

@@ -26,7 +26,7 @@ $num = fn($v) => (float) $v > 0 ? rtrim(rtrim(number_format((float) $v, 2, '.', 
 <div class="up">Your estimate</div><div style="font-size:44px;font-weight:600;letter-spacing:-.02em"><?= h($r['total']) ?></div><?php if ($r['local']): ?><div class="mut sm">≈ <?= h($r['local']) ?></div><?php endif; ?>
 <div class="sl-ticks" role="img" aria-label="Chargeable weight <?= h($r['charge']) ?> in band <?= h($r['band']) ?>"><i style="width:<?= (int) $r['fill'] ?>%"></i></div><div class="row between sm mut"><span>Chargeable weight <?= h($r['charge']) ?> <?= sl_v($d, 'unit') ?></span><span>Volumetric <?= h($r['vol'] ?: '0') ?> <?= sl_v($d, 'unit') ?></span></div>
 <div class="ov-row sm"><span class="grow">Freight · <?= h($r['charge']) ?> <?= sl_v($d, 'unit') ?> × <?= h($r['perUnit']) ?></span><span class="mono"><?= h($r['freight']) ?></span></div>
-<div class="ov-row sm"><span class="grow">Weight band</span><span class="mono"><?= h($r['band']) ?> <?= sl_v($d, 'unit') ?></span></div>
+<div class="ov-row sm"><span class="grow">Weight band</span><span class="mono"><?= h($r['band']) ?><?= empty($r['standard']) ? ' ' . sl_v($d, 'unit') : '' ?></span></div>
 <div class="ov-row sm"><span class="grow">Customs, duties, insurance</span><span class="mut">Billed on arrival</span></div>
 <div class="mut sm">Estimate only. The final price is set when our warehouse weighs the parcel.</div>
 <?php else: ?>

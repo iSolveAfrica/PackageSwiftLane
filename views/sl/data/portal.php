@@ -177,33 +177,42 @@ function sl_quoteData($core): array
         return sl_row($sql, $b);
     };
     $first = $fee($d['weight'], $d['cat']);
-    $volPct = $first ? max(1, (int) $first->volumetric_percentage) : 5000;
+    // No route price for this route and weight: quote the standard freight price from Settings (the price the
+    // shipment forms start from), with the system's volumetric divisor. Said plainly on the result.
+    $stdPrice = (float) ($core->value_weight ?? 0);
+    $stdDiv = (int) ($core->meter ?? 0) > 0 ? (int) $core->meter : 5000;
+    $volPct = $first ? max(1, (int) $first->volumetric_percentage) : $stdDiv;
     $vol = ($d['l'] > 0 && $d['w'] > 0 && $d['h'] > 0) ? round($d['l'] * $d['w'] * $d['h'] / $volPct, 2) : 0;
     $charge = max($d['weight'], $vol);
     $row = $charge !== $d['weight'] ? ($fee($charge, $d['cat']) ?: $first) : $first;
-    if (!$row) {
-        $d['error'] = 'No tariff is configured for this route and weight yet. Create an account and we will quote you.';
+    if (!$row && $stdPrice <= 0) {
+        $d['error'] = 'No price is set for this route and weight yet. Create an account and we will quote you.';
         return $d;
     }
-    // cdb_shipping_fees.price is the price per weight unit for the band (same rule as the staff rate editor).
-    $freight = round((float) $row->price * $charge, 2);
+    $standard = !$row;
+    $perUnit = $standard ? $stdPrice : (float) $row->price;
+    $freight = round($perUnit * $charge, 2);
+    $min = $standard ? 0.0 : (float) ($row->min_charge ?? 0);
+    if ($min > $freight) $freight = round($min, 2);
     $d['result'] = [
-        'tariff' => (int) $row->id,
-        'perUnit' => sl_money($row->price),
-        'freight' => sl_money($freight),
-        'total' => sl_money($freight),
+        'tariff' => $standard ? 0 : (int) $row->id,
+        'standard' => $standard,
+        'perUnit' => sl_moneyExact($perUnit),
+        'freight' => sl_moneyExact($freight),
+        'total' => sl_moneyExact($freight),
+        'minApplied' => $min > 0 && $freight === round($min, 2),
         'local' => $d['rate'] > 0 ? 'GHS ' . number_format($freight * $d['rate'], 2) . ' at USD 1 = GHS ' . number_format($d['rate'], 2) : '',
         'charge' => rtrim(rtrim(number_format($charge, 2), '0'), '.'),
         'vol' => rtrim(rtrim(number_format($vol, 2), '0'), '.'),
-        'band' => rtrim(rtrim(number_format((float) $row->initial_range, 2), '0'), '.') . '–' . rtrim(rtrim(number_format((float) $row->final_range, 2), '0'), '.'),
-        'fill' => sl_pct($charge, max(1, (float) $row->final_range)),
+        'band' => $standard ? 'Standard rate' : rtrim(rtrim(number_format((float) $row->initial_range, 2), '0'), '.') . '–' . rtrim(rtrim(number_format((float) $row->final_range, 2), '0'), '.'),
+        'fill' => $standard ? 100 : sl_pct($charge, max(1, (float) $row->final_range)),
     ];
-    // price by weight chart, 1..max(12, weight)
+    // price by weight chart, 1..max(12, weight): route price where one exists, else the standard price
     $max = (int) max(4, min(50, ceil($d['weight'])));
     $vals = [];
     for ($w = 1; $w <= $max; $w++) {
         $r = $fee((float) $w, $d['cat']);
-        $vals[] = $r ? round((float) $r->price * $w, 2) : 0;
+        $vals[] = $r ? round(max((float) $r->price * $w, (float) ($r->min_charge ?? 0)), 2) : round($stdPrice * $w, 2);
     }
     $top = max(1, max($vals));
     $d['chart'] = ['values' => $vals, 'weights' => range(1, count($vals)), 'path' => sl_svgLinePath($vals, 1030, 170, 12, $top, 44), 'max' => $max, 'top' => $top, 'labels' => [1, (int) round($max / 3), (int) round($max * 2 / 3), $max]];

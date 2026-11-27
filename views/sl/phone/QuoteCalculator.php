@@ -70,7 +70,7 @@ $big = max($actual, $vol, 0.01);
 </div>
 </section>
 <section class="mx-card b2-ml">
-<div><span>Weight band<small><?= h($r['band']) ?> <?= h($unit) ?></small></span><em><?= h($r['perUnit']) ?> / <?= h($unit) ?></em></div>
+<div><span>Weight band<small><?= h($r['band']) ?><?= empty($r['standard']) ? ' ' . h($unit) : '' ?></small></span><em><?= h($r['perUnit']) ?> / <?= h($unit) ?></em></div>
 <div><span>Freight<small><?= h($r['charge']) ?> <?= h($unit) ?> × <?= h($r['perUnit']) ?></small></span><em><?= h($r['freight']) ?></em></div>
 <div class="mu"><span>Customs, duties, insurance<small>Billed on arrival</small></span><em>—</em></div>
 <div class="tot"><span>Estimate</span><em><?= h($r['total']) ?></em></div>

@@ -15,11 +15,11 @@ $rate = fn(float $r) => rtrim(rtrim(number_format($r, 2), '0'), '.');
 </main>
 <?php return; endif; ?>
 <section class="mx-hero"><div class="mx-hk"><?= h($d['tier']) ?> member<span class="mx-tag"><?= h($d['tier']) ?></span></div><b class="mx-hv"><?= sl_num($d['balance']) ?> points</b><small><?php if ($d['next_tier']): ?><?= sl_num($d['toNext']) ?> points to <?= h($d['next_tier'][0]) ?> · <?php endif; ?>worth <?= h($d['worth']) ?> off your shipping</small><?php if ($d['next_tier']): ?><div class="mx-prog" role="progressbar" aria-valuemin="0" aria-valuemax="<?= (int) $d['next_tier'][1] ?>" aria-valuenow="<?= (int) min($d['lifetime'], $d['next_tier'][1]) ?>" aria-label="Progress to <?= h($d['next_tier'][0]) ?>"><i style="width:<?= (int) $d['pct'] ?>%"></i></div><?php endif; ?></section>
-<?php if ($d['referralOn']): $shareText = 'Ship with ' . $d['site'] . '. Mention my referral code ' . $d['code'] . ' when you register.'; ?>
+<?php if ($d['referralOn']): $shareText = 'Ship with ' . $d['site'] . '. Register with my code ' . $d['code'] . ': ' . $d['signupLink']; ?>
 <section class="b2-hd"><b>Invite a friend, earn <?= sl_num($d['referrerPoints']) ?> points</b>
 <div class="mx-in"><span class="mono"><?= h($d['code']) ?></span><button type="button" class="ca-copy" data-sl-copy="<?= h($d['code']) ?>" aria-label="Copy referral code"><i class="ic ic-sm i-copy" aria-hidden="true"></i></button></div>
 <a class="b2-cta" href="https://wa.me/?text=<?= h(rawurlencode($shareText)) ?>" target="_blank" rel="noopener"><i class="ic ic-sm i-message" aria-hidden="true"></i>Share on WhatsApp</a>
-<small class="mx-note"><?= sl_num($d['referrals']) ?> friend<?= $d['referrals'] === 1 ? '' : 's' ?> joined<?= $d['referralPoints'] > 0 ? ' · ' . sl_num($d['referralPoints']) . ' points earned' : '' ?>. Your friend mentions the code to our team when they register; you get the points when their first shipment is delivered.<?= $d['friendReward'] !== '' ? ' They get: ' . h($d['friendReward']) . '.' : '' ?></small></section>
+<small class="mx-note"><?= sl_num($d['referrals']) ?> friend<?= $d['referrals'] === 1 ? '' : 's' ?> joined<?= $d['referralPoints'] > 0 ? ' · ' . sl_num($d['referralPoints']) . ' points earned' : '' ?>. Your friend enters the code when they register, or opens your link, which fills it in; you get the points when their first shipment is delivered.<?= $d['friendReward'] !== '' ? ' They get: ' . h($d['friendReward']) . '.' : '' ?></small></section>
 <?php endif; ?>
 <div class="mx-sec"><h2>Use points</h2></div>
 <section class="mx-card mx-list">

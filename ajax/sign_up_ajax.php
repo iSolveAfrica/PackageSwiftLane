@@ -110,6 +110,20 @@ if (empty($error)) {
     }
 }
 
+// Optional referral code (sign-up.php?ref=CODE fills it): an unknown code is said plainly before anything is created.
+$referralCode = '';
+if (empty($error) && trim((string) ($_POST['referral_code'] ?? '')) !== '') {
+    require_once __DIR__ . '/../helpers/sl_view.php';
+    require_once __DIR__ . '/../helpers/loyalty.php';
+    if (sl_loyaltyReferralOn()) {
+        $referralCode = sl_loyaltyCleanCode((string) $_POST['referral_code']);
+        if (!sl_loyaltyReferrer($referralCode)) {
+            $error = 'We could not find the referral code ' . htmlspecialchars($referralCode, ENT_QUOTES, 'UTF-8') . '. Check it with your friend, or leave the field empty.';
+            $referralCode = '';
+        }
+    }
+}
+
 if (empty($error)) {
     $settings = cdp_getSettingsCourier();
     $prefixlk = $settings->prefix_locker;
@@ -316,6 +330,11 @@ if (empty($error)) {
         'state'   => cdp_sanitize($_POST['state']),
         'postal'  => cdp_sanitize($_POST['postal']),
     ]);
+
+    // The friend who brought this customer gets the referral once the new account ships (helpers/loyalty.php).
+    if ($referralCode !== '') {
+        sl_loyaltyLinkReferral($userId, $referralCode, 'signup');
+    }
 
     // The OTP is created + emailed when the user lands on the OTP page (see
     // auth-otp.php), so the code and its countdown start then — not now, where a

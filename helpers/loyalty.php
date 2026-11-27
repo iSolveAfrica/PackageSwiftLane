@@ -196,6 +196,33 @@ function sl_loyaltyRedeem(int $userId, int $points, string $note = '', ?int $by 
 }
 
 /** Records that $refereeId signed up with $code. Returns the referrer id or 0. */
+/** True when customers can bring friends with a referral code (Loyalty settings, and the table exists). */
+function sl_loyaltyReferralOn(): bool
+{
+    return sl_loyaltyEnabled() && sl_tableExists('cdb_referrals') && (sl_loyaltySettings()['referral_enabled'] ?? '0') === '1';
+}
+
+/** A referral code as typed or linked: letters, digits and dashes, upper case, at most 32 characters. */
+function sl_loyaltyCleanCode(string $code): string
+{
+    return substr(preg_replace('/[^A-Z0-9-]/', '', strtoupper(trim($code))), 0, 32);
+}
+
+/** The customer who owns a referral code, or null. */
+function sl_loyaltyReferrer(string $code)
+{
+    $code = sl_loyaltyCleanCode($code);
+    if ($code === '' || !sl_loyaltyEnabled()) return null;
+    return sl_row('SELECT a.user_id FROM cdb_loyalty_accounts a JOIN cdb_users u ON u.id = a.user_id WHERE a.referral_code = :c AND u.active = 1', [':c' => $code]);
+}
+
+/** Link to the sign-up form with this customer's code already filled in. */
+function sl_loyaltySignupLink(string $code): string
+{
+    $base = defined('CDP_APP_URL') && CDP_APP_URL !== '' && CDP_APP_URL !== 'https://example.com' ? rtrim(CDP_APP_URL, '/') . '/' : '';
+    return $base . 'sign-up.php?ref=' . rawurlencode(sl_loyaltyCleanCode($code));
+}
+
 function sl_loyaltyLinkReferral(int $refereeId, string $code, string $channel = 'web'): int
 {
     $code = strtoupper(trim($code));
