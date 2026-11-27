@@ -49,9 +49,38 @@ if (!defined('CDP_CS_SCHEMA')) {
 
 if (!function_exists('cdp_csNow')) {
 
+    /**
+     * The one clock every support row is stamped with: the server's (php.ini
+     * date.timezone, else UTC), the same as the database's NOW(). Fixed on
+     * purpose: pages and the phone app switch PHP to the site's timezone
+     * (Core), and rows written from there must still agree with the desk's.
+     */
+    function cdp_csClockTz()
+    {
+        static $tz = null;
+        if ($tz === null) {
+            try {
+                $tz = new DateTimeZone(ini_get('date.timezone') ?: 'UTC');
+            } catch (Throwable $e) {
+                $tz = new DateTimeZone('UTC');
+            }
+        }
+        return $tz;
+    }
+
+    /** A support-clock datetime (cdp_csNow) as a Unix timestamp, whatever timezone PHP is on. */
+    function cdp_csTs($dt)
+    {
+        try {
+            return (new DateTime((string) $dt, cdp_csClockTz()))->getTimestamp();
+        } catch (Throwable $e) {
+            return 0;
+        }
+    }
+
     function cdp_csNow($offsetSeconds = 0)
     {
-        return date('Y-m-d H:i:s', time() + (int) $offsetSeconds);
+        return (new DateTime('@' . (time() + (int) $offsetSeconds)))->setTimezone(cdp_csClockTz())->format('Y-m-d H:i:s');
     }
 
     /** Runs a SELECT, returns rows as objects ([] on failure). */
@@ -857,17 +886,30 @@ if (!function_exists('cdp_csOwnerTransitions')) {
             }
             cdp_csMessageAdd($convId, $ticketId, 'system', null, implode("\n", $lines), 'internal', ['meta' => ['kind' => 'handover_packet']]);
 
+            // Records the customer named (one of their own, checked again by cdp_csLinkAdd) are linked to the ticket.
+            foreach ((array) ($packet['links'] ?? []) as $l) {
+                if (is_array($l) && count($l) >= 2) {
+                    cdp_csLinkAdd($ticketId, (string) $l[0], (int) $l[1], '', null);
+                }
+            }
             $hours = trim((string) cdp_csSetting('business_hours', ''));
-            $note = "You're in the queue for a member of our team. They'll see this whole conversation, so you won't need to repeat anything.";
-            if ($hours !== '') {
-                $note .= "\n\nOur support hours: " . $hours;
-            }
-            $note .= "\n\n" . trim((string) cdp_csSetting('offline_note', ''));
             $tk = cdp_csTicket($ticketId);
-            if ($tk) {
-                $note .= "\n\nYour ticket reference is **" . $tk->public_ref . "**.";
+            if (!empty($packet['short_note'])) {
+                // The King chat: King already said what happens next and the chat's header shows the queue, so only the facts.
+                $note = ($tk ? 'Reference **' . $tk->public_ref . '**' : '') . ($hours !== '' ? ($tk ? ' · ' : '') . 'Hours: ' . $hours : '');
+            } else {
+                $note = "You're in the queue for a member of our team. They'll see this whole conversation, so you won't need to repeat anything.";
+                if ($hours !== '') {
+                    $note .= "\n\nOur support hours: " . $hours;
+                }
+                $note .= "\n\n" . trim((string) cdp_csSetting('offline_note', ''));
+                if ($tk) {
+                    $note .= "\n\nYour ticket reference is **" . $tk->public_ref . "**.";
+                }
             }
-            cdp_csMessageAdd($convId, $ticketId, 'system', null, trim($note), 'public', ['meta' => ['kind' => 'handover']]);
+            if (trim($note) !== '') {
+                cdp_csMessageAdd($convId, $ticketId, 'system', null, trim($note), 'public', ['meta' => ['kind' => 'handover']]);
+            }
             if ($tk && in_array($tk->status, ['resolved', 'closed'], true)) {
                 cdp_csTicketUpdate($ticketId, ['status' => 'open'], $actorType, $actorId, null, ['reason' => 'Customer asked for a person again']);
             }
@@ -913,9 +955,103 @@ if (!function_exists('cdp_csOwnerTransitions')) {
                 cdp_csTicketUpdate($ticketId, ['assignee_id' => (int) $agentId] + ($tk->status === 'new' ? ['status' => 'open'] : []), 'staff', $agentId);
             }
         }
-        $first = explode(' ', cdp_csUserName($agentId))[0] ?: 'A member of our team';
-        cdp_csMessageAdd($convId, $ticketId ?: null, 'system', null, $first . ' from our support team has joined the chat.', 'public', ['meta' => ['kind' => 'joined']]);
+        cdp_csJoinedNote($convId, $ticketId, $agentId);
         return ['ok' => true];
+    }
+
+    /** "Ama from our customer care team has joined the chat." Shown to the customer when a person takes over. */
+    function cdp_csJoinedNote($convId, $ticketId, $agentId)
+    {
+        $first = explode(' ', cdp_csUserName($agentId))[0] ?: 'A member of our team';
+        // The same person rejoining (a take-over handed straight back) is not news: no second identical note.
+        $prev = cdp_csOne("SELECT author_type, meta FROM cdb_cs_messages WHERE conversation_id = :c AND visibility = 'public' ORDER BY id DESC LIMIT 1", [':c' => (int) $convId]);
+        if ($prev && $prev->author_type === 'system' && (cdp_csDecode($prev->meta)['kind'] ?? '') === 'joined' && (cdp_csDecode($prev->meta)['agent'] ?? '') === $first) {
+            return;
+        }
+        cdp_csMessageAdd($convId, $ticketId ?: null, 'system', null, $first . ' from our customer care team has joined the chat.', 'public',
+            ['meta' => ['kind' => 'joined', 'agent' => $first]]);
+    }
+
+    /**
+     * What a customer waiting for a person is told (King chat, Help page):
+     * their place in the queue, who the chat is assigned to, whether anyone on
+     * the team is working right now, the published support hours, and the
+     * usual wait: the median of the last 30 days, only when there are at least
+     * five handovers to base it on (never a guess). Null when not queued.
+     */
+    function cdp_csQueueInfo($conv)
+    {
+        $conv = is_object($conv) ? $conv : cdp_csConv($conv);
+        if (!$conv || $conv->owner_state !== 'handoff_queued') {
+            return null;
+        }
+        $ahead = cdp_csOne("SELECT COUNT(*) AS n FROM cdb_cs_conversations WHERE owner_state = 'handoff_queued' AND id <> :i AND handover_at IS NOT NULL AND handover_at < :h",
+            [':i' => (int) $conv->id, ':h' => $conv->handover_at ?: cdp_csNow()]);
+        $team = cdp_csTeamPulse();
+        $typical = $team['typical_min'];
+        $online = $team['online'];
+        $assignee = '';
+        if ($conv->ticket_id) {
+            $tk = cdp_csTicket($conv->ticket_id);
+            if ($tk && $tk->assignee_id) {
+                $assignee = explode(' ', cdp_csUserName($tk->assignee_id))[0];
+            }
+        }
+        return [
+            'position' => (int) ($ahead->n ?? 0) + 1, 'typical_min' => $typical, 'online' => (bool) $online, 'assignee' => $assignee,
+            'hours' => trim((string) cdp_csSetting('business_hours', '')), 'since' => (string) $conv->handover_at,
+        ];
+    }
+
+    /**
+     * The team right now, shared by every waiting customer and worked out at
+     * most once a minute (a small cache file): whether anyone on the team is
+     * working (desk presence, or staff activity in the last 10 minutes) and
+     * the usual wait, the median of the last 30 days, only with at least five
+     * handovers to base it on (never a guess).
+     */
+    function cdp_csTeamPulse()
+    {
+        static $memo = null;
+        if ($memo !== null) {
+            return $memo;
+        }
+        $file = rtrim(sys_get_temp_dir(), '/\\') . '/cdp_cs_pulse_' . md5((defined('CDP_DB_NAME') ? CDP_DB_NAME : '') . __DIR__) . '.json';
+        $raw = @file_get_contents($file);
+        $c = $raw ? json_decode($raw, true) : null;
+        if (is_array($c) && isset($c['at']) && $c['at'] > time() - 60) {
+            return $memo = ['online' => !empty($c['online']), 'typical_min' => $c['typical_min'] ?? null];
+        }
+        $waits = [];
+        foreach (cdp_csQ("SELECT TIMESTAMPDIFF(SECOND, handover_at, accepted_at) AS s FROM cdb_cs_conversations
+            WHERE handover_at >= :since AND accepted_at IS NOT NULL AND accepted_at >= handover_at
+            ORDER BY id DESC LIMIT 200", [':since' => cdp_csNow(-30 * 86400)]) as $r) {
+            $waits[] = (int) $r->s;
+        }
+        $typical = null;
+        if (count($waits) >= 5) {
+            sort($waits);
+            $typical = max(1, (int) ceil($waits[(int) floor((count($waits) - 1) / 2)] / 60));
+        }
+        // Someone with the Customer Care desk open (its presence pings use the support clock) ...
+        $online = (bool) cdp_csOne("SELECT 1 AS x FROM cdb_cs_presence WHERE seen_at >= :s LIMIT 1", [':s' => cdp_csNow(-600)]);
+        if (!$online) {
+            // ... or staff at work anywhere in the app. The activity log is written in the site's timezone
+            // (cdp_activityNow), so the cutoff is computed in that clock, not with the database's NOW().
+            if (!function_exists('cdp_activityNow') && is_file(__DIR__ . '/activity_log.php')) {
+                require_once __DIR__ . '/activity_log.php';
+            }
+            $cut = function_exists('cdp_activityNow') ? date('Y-m-d H:i:s', (int) strtotime(cdp_activityNow()) - 600) : cdp_csNow(-600);
+            foreach (cdp_csQ("SELECT DISTINCT u.userlevel FROM cdb_activity_log l JOIN cdb_users u ON u.id = l.user_id WHERE l.created_at >= :c AND COALESCE(u.active, 1) = 1", [':c' => $cut]) as $r) {
+                if (function_exists('cdp_roleRankById') && cdp_roleRankById((int) $r->userlevel) >= 2) {
+                    $online = true;
+                    break;
+                }
+            }
+        }
+        $memo = ['online' => $online, 'typical_min' => $typical];
+        @file_put_contents($file, json_encode($memo + ['at' => time()]), LOCK_EX);
+        return $memo;
     }
 }
 
@@ -2353,7 +2489,8 @@ if (!function_exists('cdp_csPresencePing')) {
     {
         return array_map(function ($p) {
             return ['id' => (int) $p->user_id, 'name' => cdp_csUserName($p->user_id),
-                'typing' => $p->typing_at && strtotime($p->typing_at) > time() - 8];
+                // typing_at is on the support clock: read it in that clock, whatever timezone PHP is on now.
+                'typing' => $p->typing_at && cdp_csTs($p->typing_at) > time() - 8];
         }, cdp_csQ("SELECT * FROM cdb_cs_presence WHERE ticket_id = :t AND user_id <> :u AND seen_at > :since",
             [':t' => (int) $ticketId, ':u' => (int) $exceptUid, ':since' => cdp_csNow(-40)]));
     }
@@ -2401,8 +2538,10 @@ if (!function_exists('cdp_csStaffSend')) {
         }
         if (!$isNote && $tk->conversation_id) {
             $conv = cdp_csConv($tk->conversation_id);
-            if ($conv && $conv->owner_state !== 'human_active') {
-                cdp_csOwnerMove($conv->id, 'human_active', 'staff', $agentId, 'Staff replied', null, $agentId);
+            if ($conv && $conv->owner_state !== 'human_active' && cdp_csOwnerMove($conv->id, 'human_active', 'staff', $agentId, 'Staff replied', null, $agentId)
+                && in_array($conv->owner_state, ['ai_active', 'handoff_queued'], true)) {
+                // The customer sees who joined, as when the chat is taken from the queue.
+                cdp_csJoinedNote($conv->id, $ticketId, $agentId);
             }
         }
         $m = cdp_csMessageAdd($tk->conversation_id, $ticketId, 'staff', $agentId, $body, $isNote ? 'internal' : 'public', [

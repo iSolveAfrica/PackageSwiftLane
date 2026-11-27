@@ -70,15 +70,15 @@
   var thread = $('hp-thread'), scroll = $('hp-scroll'), text = $('hp-text');
   function header() {
     var s = st.owner, name = king.name || 'King', line;
-    if (s === 'ai_active') line = 'Ask for a person any time';
-    else if (s === 'handoff_queued') { name = 'Support team'; line = 'Waiting for a person · we reply here'; }
-    else if (s === 'human_active') { name = st.ownerName ? st.ownerName + ' · Support team' : 'Support team'; line = 'You are chatting with a person'; }
+    if (s === 'ai_active') line = 'Automated customer care assistant · ask for a person any time';
+    else if (s === 'handoff_queued') { name = 'Customer care team'; line = 'Connecting you to our customer care team · we reply here'; }
+    else if (s === 'human_active') { name = st.ownerName ? st.ownerName + ' · Customer care' : 'Customer care team'; line = (st.ownerName || 'A member of our team') + ' from our customer care team is with you'; }
     else { name = 'Support'; line = 'Resolved · write again to reopen'; }
     $('hp-name').textContent = name; $('hp-state').textContent = line + (st.ticketRef ? ' · Ticket ' + st.ticketRef : '');
     $('hp-av').textContent = s === 'ai_active' ? name.charAt(0) : '';
     if (s !== 'ai_active') $('hp-av').innerHTML = '<i class="ic ic-sm i-user" aria-hidden="true"></i>';
     $('hp-human').hidden = s === 'handoff_queued' || s === 'human_active';
-    $('hp-disclose').textContent = s === 'ai_active' ? name + ' is our automated helper and reads your own account only. ' + name + ' can make mistakes; a person checks anything ' + name + ' cannot answer.' : 'Never share passwords, one-time codes or card numbers in chat.';
+    $('hp-disclose').textContent = s === 'ai_active' ? name + ' is Swift Lane\'s automated customer care assistant and reads your own account only. A person from our team checks anything ' + name + ' cannot answer.' : 'Never share passwords, one-time codes or card numbers in chat.';
   }
   function state(r) { if (!r) return; if (r.owner) st.owner = r.owner; st.ownerName = r.owner_name || ''; st.ticketRef = r.ticket_ref || ''; header(); }
   function bubble(m) {
@@ -86,9 +86,10 @@
     if (t === 'system') return '<div class="mut sm" style="text-align:center;padding:4px 12px" data-id="' + esc(m.id) + '">' + md(m.body) + '</div>';
     var cards = '';
     if (m.meta && m.meta.cards && m.meta.cards.length) {
-      cards = m.meta.cards.map(function (c) { var l = safeUrl(c.link); return '<div class="sl-card col g4" style="padding:10px;margin-top:6px"><b class="mono sm">' + esc(c.tracking) + '</b><span class="sm">' + esc(c.status || 'Status not recorded') + (c.payment ? ' · ' + esc(c.payment) : '') + '</span>' + (c.updated ? '<span class="mut sm">Last update ' + esc(full(c.updated)) + '</span>' : '') + (l ? '<a class="sm fw5" href="' + esc(l) + '">Open</a>' : '') + '</div>'; }).join('');
+      // King chat answers (views/sl/inc/king_chat.php) carry their own card format; their text already lists the same records.
+      cards = m.meta.cards.filter(function (c) { return !c.k; }).map(function (c) { var l = safeUrl(c.link); return '<div class="sl-card col g4" style="padding:10px;margin-top:6px"><b class="mono sm">' + esc(c.tracking) + '</b><span class="sm">' + esc(c.status || 'Status not recorded') + (c.payment ? ' · ' + esc(c.payment) : '') + '</span>' + (c.updated ? '<span class="mut sm">Last update ' + esc(full(c.updated)) + '</span>' : '') + (l ? '<a class="sm fw5" href="' + esc(l) + '">Open</a>' : '') + '</div>'; }).join('');
     }
-    var who = t === 'king' ? (m.author || 'King') + ' · AI' : (t === 'staff' ? m.author : '');
+    var who = t === 'king' ? (m.author || 'King') + ' · Automated assistant' : (t === 'staff' ? m.author + ' · Customer care' : '');
     var meta = (who ? esc(who) + ' · ' : '') + esc(m.created_at ? when(m.created_at) : '');
     return '<div class="bub' + (mine ? ' me' : '') + '" data-id="' + esc(m.id) + '">' + (meta ? '<small data-meta>' + meta + '</small>' : '<small data-meta></small>') + md(m.body) + cards + atts(m.attachments) + '</div>';
   }
@@ -269,7 +270,7 @@
     $('hp-tk-thread').innerHTML = (r.messages || []).map(function (m) {
       if (m.author_type === 'system') return '<div class="mut sm" style="text-align:center">' + md(m.body) + '</div>';
       var mine = m.author_type === 'customer';
-      return '<div class="bub' + (mine ? ' me' : '') + '"><small>' + esc((mine ? 'You' : m.author + (m.author_type === 'king' ? ' · AI' : '')) + ' · ' + when(m.created_at)) + '</small>' + md(m.body) + atts(m.attachments) + '</div>';
+      return '<div class="bub' + (mine ? ' me' : '') + '"><small>' + esc((mine ? 'You' : m.author + (m.author_type === 'king' ? ' · Automated assistant' : '')) + ' · ' + when(m.created_at)) + '</small>' + md(m.body) + atts(m.attachments) + '</div>';
     }).join('');
     $('hp-tk-reply').hidden = t.status_key === 'closed';
     setTimeout(function () { var s = $('hp-tk-scroll'); s.scrollTop = s.scrollHeight; }, 30);
