@@ -1,0 +1,61 @@
+/* Customer app screens built from the phone kit (assets/swiftlane/pwa/mx.css): my_account.php, notifications.php,
+   my_rewards.php, delivery_pricing.php, delivery_done.php. Only what the kit does not have. */
+.ca .mx-note a,.ca a.mx-lnk{color:var(--orange);font-weight:500;min-height:0}
+.ca .ca-a{color:var(--orange);font-weight:600}
+.ca-copy{border:0;background:none;color:var(--muted);min-width:44px;min-height:44px;display:inline-grid;place-items:center;cursor:pointer;margin:-12px -12px -12px 0;vertical-align:middle}
+.ca .mx-row .mx-lnk{font-weight:600}
+
+/* account: identity card */
+.ca-id{padding:16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.ca-ava{width:64px;height:64px;font-size:20px;border-radius:50%;object-fit:cover;flex:none}
+.ca-idm{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.ca-idm b{font-size:18px;font-weight:600;overflow-wrap:anywhere}
+.ca-idm small{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.ca-tier{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 14px;border-radius:99px;background:var(--active);font-size:13px;font-weight:600;white-space:nowrap}
+.ca-tier .ic{color:var(--orange)}
+.ca .mx-kv b{overflow-wrap:anywhere}
+.ca-kv div{align-items:flex-start}
+.ca-kv span{flex:none}
+
+/* notifications */
+.ca .mx-seg a.ca-segb{flex:none;min-height:40px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink-2);font-weight:500;font-size:13px;display:inline-flex;align-items:center;white-space:nowrap}
+.ca .mx-seg a.ca-segb.on{background:var(--ink);color:var(--inverse);border-color:var(--ink)}
+.ca-n{display:flex;align-items:stretch;border-top:1px solid var(--line)}
+.ca-n:first-child{border-top:0}
+.ca-n .mx-row{flex:1;min-width:0;border-top:0}
+.ca-n .mx-rm b{white-space:normal;overflow-wrap:anywhere;font-weight:500}
+.ca-n.new .mx-rm b{font-weight:600}
+.ca-n.new .mx-li{background:var(--green-bg);color:var(--green-ink)}
+.ca-nread{flex:none;width:44px;border:0;background:none;cursor:pointer;display:grid;place-items:center;padding:0}
+.ca-nread i{width:10px;height:10px;border-radius:50%;background:var(--orange)}
+
+/* rewards */
+.ca-ref{padding:14px;display:flex;flex-direction:column;gap:10px}
+.ca-ref>b{font-size:15px;font-weight:600}
+.ca-pos{color:var(--green-ink)}
+.ca-neg{color:var(--red-ink)}
+
+/* delivery status: four real stages instead of the canvas' five */
+.ca-st.cd-st{grid-template-columns:repeat(4,1fr)}
+.ca-ok.failed .cd-okc{background:var(--orange)}
+.ca-ok.cancelled .cd-okc,.ca-ok.pending .cd-okc{background:rgba(255,255,255,.18)}
+.ca-ok .cd-eta b{white-space:normal}
+.ca .cd-rda.ca-two{grid-template-columns:repeat(2,1fr)}
+.ca .mx-foot .mx-btn{width:100%}
+
+/* pricing calculator: a real range input in the look of .cd-rg */
+.ca-range{-webkit-appearance:none;appearance:none;width:100%;height:44px;margin:0;background:transparent;cursor:pointer}
+.ca-range::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:var(--active)}
+.ca-range::-moz-range-track{height:6px;border-radius:3px;background:var(--active)}
+.ca-range::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;margin-top:-10px;border-radius:50%;background:var(--field);border:2px solid var(--ink);box-shadow:0 2px 6px rgba(22,22,21,.15)}
+.ca-range::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--field);border:2px solid var(--ink)}
+.ca .cd-calc .mx-f{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--muted)}
+.ca .cd-calc select.mx-in{font-size:14px}
+.ca .cd-tr span{min-width:0;overflow-wrap:anywhere}
+
+/* phone screens (views/sl/phone): filter chips are links, so the filter survives a reload */
+.mx .mx-body .b3-chs a.ca-chip{flex:none;min-height:44px;padding:0 15px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink-2);font:500 13px var(--font);display:inline-flex;align-items:center;white-space:nowrap}
+.mx .mx-body .b3-chs a.ca-chip.on{background:var(--ink);color:var(--inverse);border-color:var(--ink)}
+.mx-body.ca .b3-nr .mx-rm b{white-space:normal;overflow-wrap:anywhere}
+.mx-body.ca .b3-cap a{color:var(--orange);font-weight:500}
+.mx-body.ca .mx-row.b3-rw{border-radius:24px}

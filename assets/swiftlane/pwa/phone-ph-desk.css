@@ -1,0 +1,29 @@
+/* Phone screens by "ph-desk" (support desk + freight): the few rules mx.css does not have. Design tokens only. */
+.mx-seg a{flex:none;min-height:40px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink-2);font:500 13px var(--font);white-space:nowrap;display:inline-flex;align-items:center;text-decoration:none}
+.mx-seg a.on{background:var(--ink);color:var(--inverse);border-color:var(--ink)}
+.mx button.mx-btn{width:100%;cursor:pointer;font-family:inherit}
+.mx button.mx-btn:not(.sec){border:0}
+.mx a.mx-btn:not(.sec){color:var(--inverse)}
+button.mx-fab{border:0;cursor:pointer}
+.pd-f{display:flex;flex-direction:column;gap:6px;min-width:0}
+.pd-f>small{font-size:12px;color:var(--muted);font-weight:500}
+.pd-in{width:100%;min-height:48px;border-radius:13px;background:var(--field);border:1px solid var(--line-2);padding:0 14px;font:16px var(--font);color:var(--ink);box-sizing:border-box}
+textarea.pd-in{min-height:96px;padding:12px 14px;resize:vertical}
+select.pd-in{appearance:none;-webkit-appearance:none;padding-right:34px;background:var(--field) url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%236B6A65%27 stroke-width=%272%27%3E%3Cpath d=%27m6 9 6 6 6-6%27/%3E%3C/svg%3E") right 12px center/16px no-repeat}
+.pd-in:focus{outline:2px solid var(--ink);outline-offset:1px}
+.mx-msg.note p{background:var(--amber-bg,var(--active));border-color:transparent;color:var(--ink)}
+.mx-msg.sys{align-self:center;max-width:100%}
+.mx-msg.sys p{background:transparent;border:0;color:var(--muted);font-size:12px;padding:2px 6px;text-align:center}
+.mx-msg p{white-space:pre-line;overflow-wrap:anywhere}
+.pd-row2{display:flex;gap:8px}
+.pd-row2>*{flex:1}
+.pd-sheet{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.4)}
+.pd-sheet[hidden]{display:none}
+.pd-sheet>form,.pd-sheet>div{width:100%;max-width:520px;max-height:92vh;overflow:auto;background:var(--bg);border-radius:22px 22px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:12px;box-sizing:border-box}
+.pd-sheet h2{margin:0;font-size:17px;font-weight:600}
+.pd-sheet .pd-note{font-size:13px;color:var(--muted);margin:0}
+.pd-chk{display:flex;align-items:center;gap:10px;min-height:44px;font-size:14px}
+.pd-chk input{width:20px;height:20px;accent-color:var(--ink)}
+.mx-row .mx-rm small.pd-wrap{white-space:normal}
+.pd-pager{display:flex;justify-content:space-between;gap:8px}
+.pd-pager a{min-height:44px;display:inline-flex;align-items:center;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:13px;text-decoration:none}

@@ -1,0 +1,69 @@
+/* Rider work-flow screens (M-RHome, M-RTasks, M-ROffer, M-RQueue, M-RMap, M-RNavPickup, M-RPickup, M-RJob, M-RProof, M-RDone):
+   the few rules the phone kit (mx.css) has no class for. Design tokens only. Loaded by the phone templates and,
+   through pages/RiderOps.css, by the same screens on a computer. */
+.ro-map{background:var(--active);display:block}
+.ro-map iframe{width:100%;height:100%;border:0;display:block}
+.ro-map-ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--muted);text-align:center;padding:16px;font-size:13px}
+.ro-map-ph>.ic{width:28px;height:28px}
+.ro-map-ph .mx-btn{width:auto!important;padding:0 18px;background:var(--card)}
+.rs-mtop .ro-map-ph{padding-top:64px}
+/* avatar with initials where the design draws a portrait */
+.ro-ava{width:56px;height:56px;font-size:17px}
+.ro-ava i{width:13px;height:13px}
+/* the on/off duty switch is a real button */
+button.ra-big{width:100%;color:var(--muted)}
+button.ra-big[aria-busy="true"]{opacity:.6}
+.ro-off .ra-pulse{background:var(--faint)}.ro-off .ra-pulse::after{display:none}
+.ra-ofs .mx-li{background:var(--orange);color:#fff}
+/* stop lists: the text of a stop is a link */
+.ra-ns a.ro-st{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;padding-top:3px;min-height:44px}
+.ra-ns .ro-stb{display:flex;gap:2px;flex:none;margin:-6px -8px 0 0}
+.ra-ns .ro-stb .mx-ib{width:44px;height:44px;border:0;background:none;box-shadow:none}
+.ra-ns .ro-stb .mx-ib[aria-pressed="true"]{color:var(--orange)}
+.ra-bta.ro-eq{grid-template-columns:1fr 1fr;padding-bottom:14px}
+.ra-ofp>span.ro-mut{color:var(--muted)}
+.ra-tc .ra-tp{font-size:22px}
+.mx-foot .ra-ofoot{padding:0;border:0;background:none;box-shadow:none}
+.ra-ofoot.ro-one{grid-template-columns:1fr}
+.ra-ofoot button.mx-btn{border:0;cursor:pointer;font:600 15px var(--font);width:100%}
+/* scanner */
+.mx-scan video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:10px}
+.mx-scan .mx-vf.live{background:none}.mx-scan .mx-vf:not(.live) em{display:none}
+.ro-code{display:grid;grid-template-columns:1fr auto;gap:8px;flex:none}
+.ro-code input{min-height:52px;border-radius:16px;border:1px solid var(--line-2);background:var(--field);padding:0 16px;font:500 16px var(--mono);color:var(--ink);min-width:0;width:100%;text-transform:uppercase}
+.ro-code input:focus{outline:0;border-color:var(--ink)}
+.ro-code .mx-btn{width:auto!important;padding:0 22px;border:0;cursor:pointer;font:600 15px var(--font)}
+.rb-ck .ro-un{width:44px;height:44px;border:0;background:none;color:var(--muted);display:grid;place-items:center;cursor:pointer;flex:none;margin-right:-10px}
+.rb-ck:not(.ok) .ro-un{display:none}
+.ro-act[hidden]{display:none}
+.ro-act{padding:0 14px 14px}
+.ro-act .mx-btn{min-height:48px;font-size:14px;width:100%;border:0;cursor:pointer;font-family:var(--font)}
+/* handover form (M-RJob, M-RProof and the shipment handover) */
+.ro-form{display:flex;flex-direction:column;gap:12px}
+.ro-form fieldset{border:0;margin:0;padding:0;min-width:0;display:flex;flex-direction:column;gap:12px}
+.ro-form fieldset[hidden]{display:none}
+.ro-form legend{padding:0;font-size:15px;font-weight:600;margin-bottom:8px}
+.ro-in{min-height:52px;width:100%;border-radius:16px;border:1px solid var(--line-2);background:var(--field);padding:0 16px;font:16px var(--font);color:var(--ink);box-sizing:border-box}
+textarea.ro-in{padding:12px 16px;min-height:96px;resize:vertical}
+.ro-in:focus{outline:0;border-color:var(--ink)}
+.ro-in.ro-pin{font:600 24px var(--mono);letter-spacing:.3em;text-align:center}
+.ro-photo{min-height:96px;border-radius:18px;border:1.5px dashed var(--line-2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--ink-2);font-size:14px;font-weight:500;cursor:pointer;position:relative;padding:12px;text-align:center}
+.ro-photo.on{border-style:solid;border-color:var(--green);background:var(--green-bg);color:var(--green-ink)}
+.ro-photo input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.ro-prev{width:100%;max-height:260px;object-fit:cover;border-radius:18px}
+.ro-prev[hidden]{display:none}
+.ro-check{display:flex;align-items:center;gap:10px;min-height:48px;font-size:14px}
+.ro-check input{width:22px;height:22px;flex:none;accent-color:var(--ink)}
+.ro-form button.mx-btn,.ro-btn{border:0;cursor:pointer;font:600 15px var(--font);width:100%}
+.ro-form button.mx-btn.sec,.ro-btn.sec{border:1px solid var(--line-2)}
+.ro-form [hidden]{display:none}
+.ro-bad{padding:12px 14px;border-radius:14px;background:var(--red-bg);color:var(--red-ink);font-size:13px}
+.ro-bad[hidden]{display:none}
+.rb-steps li[aria-current="step"] i{background:var(--orange);color:#fff}
+details.ro-more>summary{list-style:none;cursor:pointer}
+details.ro-more>summary::-webkit-details-marker{display:none}
+details.ro-more[open]>summary{margin-bottom:12px}
+.ro-tl{list-style:none;margin:0;padding:14px;display:flex;flex-direction:column;gap:10px}
+.ro-tl li{display:flex;justify-content:space-between;gap:10px;font-size:13px}
+.ro-tl small{color:var(--muted);flex:none}
+.rs-cust .rs-rb{box-shadow:none;background:var(--card)}

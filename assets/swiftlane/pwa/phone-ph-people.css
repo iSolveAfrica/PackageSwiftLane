@@ -1,0 +1,23 @@
+/* Phone screens by "ph-people" (customers, staff, finance): the few rules mx.css does not have. */
+.mx-seg a{flex:none;display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink-2);font:500 13px var(--font);white-space:nowrap;text-decoration:none}
+.mx-seg a.on{background:var(--ink);color:var(--inverse);border-color:var(--ink)}
+.pp-pg{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;color:var(--muted)}
+.pp-pg a,.pp-pg span.pp-off{display:inline-flex;align-items:center;gap:4px;min-height:44px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-weight:500;text-decoration:none}
+.pp-pg span.pp-off{color:var(--faint);border-style:dashed}
+.mx a.mx-btn:not(.sec):not(.or){color:var(--inverse)}
+.mx button.mx-btn{width:100%;cursor:pointer;font-family:inherit;border:0}
+.mx button.mx-btn.sec{border:1px solid var(--line-2)}
+.mx-fseg button{cursor:pointer}
+.pp-form{flex:1;min-height:0;display:flex;flex-direction:column}
+.pp-foot{padding:10px 16px;border-top:1px solid var(--line);background:var(--bg)}
+.pp-hide[hidden]{display:none}
+.pp-pick{display:flex;align-items:center;gap:12px;min-height:52px;padding:8px 14px;border-top:1px solid var(--line);cursor:pointer}
+.pp-pick:first-child{border-top:0}
+.pp-pick input{width:20px;height:20px;flex:none;accent-color:var(--ink)}
+.pp-pick .mx-rm{flex:1;min-width:0}
+.pp-det>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:48px;padding:0 14px;font-weight:600;font-size:14px}
+.pp-det>summary::-webkit-details-marker{display:none}
+.pp-det[open]>summary{border-bottom:1px solid var(--line)}
+.pp-wrap .mx-rm small{white-space:normal;line-height:1.35}
+.mx-kv b{overflow-wrap:anywhere}
+.pp-otp{font-family:var(--mono);font-size:22px;letter-spacing:.3em;text-align:center}
