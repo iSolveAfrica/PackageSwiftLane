@@ -26,5 +26,7 @@ jobs:
           tail -n 5 /tmp/php-lint.log
       - name: Check route engine
         run: php scripts/check_route_engine.php
+      - name: Check load plan validation
+        run: php scripts/check_consolidation_load_plan.php
       - name: Check design routes
         run: node scripts/check_design_routes.cjs

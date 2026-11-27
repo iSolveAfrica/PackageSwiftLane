@@ -97,7 +97,7 @@ function sl_moduleRouteMap(): array
         ['~^ajax/(consolidate_packages/|dashboard/consolidated_package/)~', ['sea', 'consolidation']],
         // Consolidations hub (air and sea in one page)
         ['~^(consolidate_list|consolidate_view|consolidate_add|consolidate_edit|consolidate_parking_list|packing_list)~', ['consolidation']],
-        ['~^ajax/sl/consolidation_ajax~', ['consolidation']],
+        ['~^ajax/sl/consolidation_load_plan|consolidation_ajax~', ['consolidation']],
         // Pre-alerts
         ['~^(prealert_|customer_packages_add_from_prealert)~', ['prealerts']],
         ['~^ajax/(pre_alerts/|sl/prealert_ajax|sl/shipment_prealert_ajax)~', ['prealerts']],
