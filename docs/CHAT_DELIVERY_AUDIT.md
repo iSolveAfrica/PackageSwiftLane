@@ -27,15 +27,15 @@ This is a source audit and automated regression report. Installation, provider c
 
 The validation workflow runs application PHP syntax checks, the existing route-engine suite, design-route checks, load-position validation, browser interaction checks, and page-shell checks.
 
-An initial Chromium run caught phone-width overflow in the new load planner. The CSS correction is committed and subsequent checks must pass before considering this work verified.
+An initial Chromium run caught phone-width overflow in the new load planner. The CSS correction passed the subsequent Chromium run, including phone-width overflow checks. Shared chart, download, AI-formatting and mobile interaction tests passed. The page-shell check was corrected to recognize dynamic titles and distinguish actual includes from comments.
 
 ## Database migrations introduced in this work
 
 - migrations/2026_11_27_rider_positions.sql
 - migrations/2026_11_27_consolidation_load_plans.sql
 
-These files have been committed. Their presence does not establish installation in a hosted database.
+These files have been committed. Delivery, zone, position and load-plan tables can initialize additively on an authenticated administrator visit. The isolated MySQL test verifies that existing configuration survives repeat setup. Installation on Cloudways remains unverified.
 
 ## Deployment blocker
 
-The selected cloud workspace cannot execute commands. No staging URL or hosted database connection has been confirmed for the temp branch. GitHub Actions can verify source and isolated fixtures, while complete authenticated site and database verification remains pending.
+The selected cloud workspace cannot execute commands. The staging URL supplied by the user is https://phpstack-1641621-6696762.cloudwaysapps.com/. An authenticated browser, server or database connection is still unavailable. GitHub Actions can verify source and isolated fixtures, while complete authenticated site and database verification remains pending.
