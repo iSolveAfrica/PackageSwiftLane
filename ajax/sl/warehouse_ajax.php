@@ -5,7 +5,10 @@
  * Pickup codes (helpers/pickup_code.php, rules in docs/HANDOVER_PICKUP_CODES_SMS.md):
  *   op=code_state | code_send | code_verify   module=air|sea  ids=1,2,3
  * Handover (helpers/handover.php: 15 Picked up / 8 Delivered, Picked up is the default):
- *   op=handover  items=air:12,sea:7  handover_type=picked_up|delivered
+ *   op=handover  items=air:12,sea:7  handover_type=picked_up|delivered  [skip_code=1 skip_reason=]
+ *     skip_code: managers (cdp_handoverCanSkipCode: admin, super admin or warehouse_skip_pickup_code) hand over without
+ *     the customer's code; the skip and its reason are written to the hand-out log and the activity log.
+ *     Every package handed over is written to cdb_warehouse_handovers (helpers/handover_log.php).
  *     every package needs a verified pickup code (cdp_pickupCodeGate) and, for air, Accounts clearance (cdp_fsIsCleared);
  *     the code items are spent (cdp_pickupCodeConsume), a track row and history line are written, the consolidation of an
  *     air package closes as Picked up when every package in it was picked up, otherwise Delivered (same rule as
@@ -21,6 +24,7 @@ require_once __DIR__ . '/../../helpers/sl_view.php';
 require_once __DIR__ . '/../../helpers/activity_log.php';
 require_once __DIR__ . '/../../helpers/querys.php';
 require_once __DIR__ . '/../../helpers/pickup_code.php';
+require_once __DIR__ . '/../../helpers/handover_log.php';
 require_once CDP_ROOT . '/views/sl/data/warehouse.php';
 $user = new User; $core = new Core;
 require_login();
@@ -239,6 +243,9 @@ switch ($op) {
         if ($total > 1 && !$user->cdp_hasPermission('warehouse_deliver_user')) sl_json(['success' => false, 'message' => 'You may hand over one package at a time.'], 403);
         $status = cdp_handoverStatusFromInput($_POST['handover_type'] ?? '');
         $label = cdp_handoverLabel($status);
+        $skip = !empty($_POST['skip_code']);
+        $skipReason = mb_substr(trim(cdp_sanitize((string) ($_POST['skip_reason'] ?? ''))), 0, 200);
+        if ($skip && !cdp_handoverCanSkipCode($user)) sl_json(['success' => false, 'message' => 'Only a warehouse manager or administrator can hand over without the pickup code.'], 403);
         $rows = [];
         foreach ($items as $m => $ids) {
             foreach ($ids as $id) {
@@ -249,7 +256,7 @@ switch ($op) {
                 if ($m === 'air' && !cdp_fsIsCleared($r->fs_cleared_for_delivery ?? 0)) sl_json(['success' => false, 'message' => $r->order_prefix . $r->order_no . ' is not cleared by Accounts yet.'], 409);
                 $rows[] = [$m, $r];
             }
-            $gate = cdp_pickupCodeGate($m, $ids, $status);
+            $gate = $skip ? ['ok' => true] : cdp_pickupCodeGate($m, $ids, $status);
             if (!$gate['ok']) sl_json(['success' => false, 'message' => $gate['message'], 'pickup_code' => ['module' => $m, 'order_ids' => $gate['missing']]], 409);
         }
         if (!$rows) sl_json(['success' => false, 'message' => 'These packages were already handed over.'], 409);
@@ -263,6 +270,8 @@ switch ($op) {
             cdp_insertCourierShipmentUserHistory(['user_id' => $uid, 'order_id' => (int) $r->order_id, 'order_track' => $trk, 'action' => 'Warehouse — package ' . strtolower($label), 'date_history' => date('Y-m-d H:i:s')]);
             slw_syncConsolidation((int) $r->order_id, $m === 'sea');
             cdp_activityLogStatus($m === 'sea' ? 'packages' : 'shipments', $m === 'sea' ? 'package' : 'shipment', (int) $r->order_id, $trk, $status, $label, sl_statusLabel($r->status_courier));
+            cdp_handoverLogAdd($m, $r, $status, $uid, $skip ? 'skipped' : 'code', $skipReason);
+            if ($skip) cdp_activityLog(['module' => 'warehouse', 'action' => 'skip_pickup_code', 'action_label' => 'Handed over without pickup code', 'verb' => 'update', 'outcome' => 'ok', 'summary' => $trk . ' handed over without the pickup code' . ($skipReason !== '' ? ' · ' . $skipReason : ''), 'entity_type' => $m === 'sea' ? 'package' : 'shipment', 'entity_id' => (int) $r->order_id, 'entity_label' => $trk]);
             $bySender[(int) $r->sender_id][] = $trk;
             $itemsBySender[(int) $r->sender_id][] = [$m, (int) $r->order_id];
         }

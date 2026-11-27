@@ -1,4 +1,5 @@
 <?php
+require_once CDP_ROOT . '/helpers/prealert_receive.php';
 /** Data for PreAlerts.dc.html (cdb_pre_alert). */
 require_once __DIR__ . '/ops_common.php';
 require_once CDP_ROOT . '/helpers/prealert.php';

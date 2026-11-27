@@ -616,6 +616,8 @@ function wd_do_deliver(Conexion $db, $row, $uid, array $terminal, $status)
         cdp_updateShipTrackingMultiple($tracking, $status, cdp_handoverLabel($status) . ' via Warehouse Delivery', $row->origin_off ?? 0, $uid);
     }
     wd_log($uid, (int) $row->order_id, $tracking, 'package ' . strtolower(cdp_handoverLabel($status)));
+    require_once CDP_ROOT . '/helpers/handover_log.php';
+    cdp_handoverLogAdd('air', $row, (int) $status, (int) $uid, 'code', '', 'warehouse_delivery');
     return ['ok' => true, 'order_id' => (int) $row->order_id,
             'tracking' => $tracking, 'sender_id' => (int) $row->sender_id];
 }

@@ -185,6 +185,8 @@
     renderTracks();
   }
   function flushTrack() { if (trim(trackInput.value)) { addTracks(trackInput.value); trackInput.value = ''; } }
+  // opened from a pre-alert (?prealert_id=): that match is approved already
+  var initialPa = String(($('[name="prealert_id"]') || {}).value || '');
   function detectPrealert() {
     if (trackValue.value === detectedTracking) return Promise.resolve();
     var scannedValue = trackValue.value;
@@ -196,23 +198,41 @@
       var alerts = matches.map(function (j) { return j.prealert; }).filter(Boolean);
       var ids = Array.from(new Set(alerts.map(function (p) { return String(p.id); })));
       var note = $('[data-ns-prealert-note]');
-      if (ids.length > 1) { $('[name="prealert_id"]').value = ''; note.hidden = false; note.textContent = 'Multiple pre-alerts detected. Create a separate shipment for each pre-alert.'; return; }
-      var p = alerts[0];
-      $('[name="prealert_id"]').value = p ? p.id : '';
-      note.hidden = !p;
-      if (!p) return;
-      note.textContent = 'Pre-alert linked: ' + p.tracking;
-      if (!client) {
-        senderInfo = { id: p.customer_id, name: p.customer || p.locker || 'Sender', locker: p.locker || '', phone: '', text: p.customer || '' };
-        sSel.replaceChildren(new Option(senderInfo.name, String(p.customer_id), true, true));
-        findInput.value = p.locker || p.customer || '';
-        searchBlock.hidden = true; senderResults.hidden = true; senderFields.hidden = false; recipPanel.hidden = false;
-        sSel.dispatchEvent(new Event('change'));
+      if (ids.length > 1) { $('[name="prealert_id"]').value = ''; $('[data-ns-pa]').hidden = true; note.hidden = false; note.textContent = 'Multiple pre-alerts detected. Create a separate shipment for each pre-alert.'; return; }
+      var p = alerts[0], card = $('[data-ns-pa]');
+      var escH = function (v) { var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML; };
+      if (!p) {
+        $('[name="prealert_id"]').value = ''; note.hidden = true;
+        var rec = matches.map(function (j) { return j.received; }).filter(Boolean)[0];
+        card.hidden = !rec;
+        if (rec) { var rr = rec.receipt || {}; card.innerHTML = '<div class="row g8 wrap" style="align-items:center"><span class="sl-pill pending">Pre-alert already received</span><span class="sm">' + escH(rec.tracking) + ' was keyed in' + (rr.at ? ' on ' + escH(rr.at) : '') + (rr.by ? ' by ' + escH(rr.by) : '') + (rr.track ? ' as <a href="' + escH(rr.href) + '">' + escH(rr.track) + '</a>' : '') + '. Check before adding it again.</span></div>'; }
+        return;
       }
-      if (p.courier_id) $('[name="order_courier"]').value = String(p.courier_id);
-      var first = $('[data-ns-item]');
-      if (first) { first.querySelector('[data-k="description"]').value = p.desc || ''; first.querySelector('[data-k="declared_value"]').value = p.price || ''; }
-      quote();
+      // show the match; staff approve it before its data fills the form
+      $('[name="prealert_id"]').value = '';
+      var rows = [['Customer', (p.customer || '—') + (p.locker ? ' · ' + p.locker : '')], ['Shop', p.shop || '—'], ['Carrier', p.courier || '—'], ['What', p.desc || '—'], ['Declared value', p.price ? String(p.price) : '—'], ['Expected', p.eta || '—'], ['Pre-alerted', p.sent || '—']];
+      card.innerHTML = '<div class="row g8 wrap" style="align-items:center"><span class="sl-pill paid">In pre-alert</span><b class="fw5">' + escH(p.tracking) + '</b><span class="mut sm">Pre-alert #' + p.id + '</span></div><div class="sl-kv">' + rows.map(function (x) { return '<div><span>' + escH(x[0]) + '</span><span>' + escH(x[1]) + '</span></div>'; }).join('') + '</div><div class="row g8 wrap"><button type="button" class="sl-btn sm" data-ns-pa-ok><i class="ic ic-sm i-check" aria-hidden="true"></i>Approve match · use pre-alert</button><button type="button" class="sl-btn ghost sm" data-ns-pa-no>Not this parcel</button></div>';
+      card.hidden = false;
+      card.onclick = function (e) {
+        if (e.target.closest('[data-ns-pa-no]')) { card.hidden = true; $('[name="prealert_id"]').value = ''; note.hidden = true; return; }
+        if (!e.target.closest('[data-ns-pa-ok]')) return;
+        $('[name="prealert_id"]').value = p.id;
+        card.innerHTML = '<div class="row g8 wrap" style="align-items:center"><span class="sl-pill paid">Pre-alert approved</span><span class="sm mut">' + escH(p.tracking) + ' · pre-alert #' + p.id + ' is marked received when you save.</span></div>';
+        note.hidden = true;
+        if (!client) {
+          senderInfo = { id: p.customer_id, name: p.customer || p.locker || 'Sender', locker: p.locker || '', phone: '', text: p.customer || '' };
+          sSel.replaceChildren(new Option(senderInfo.name, String(p.customer_id), true, true));
+          findInput.value = p.locker || p.customer || '';
+          searchBlock.hidden = true; senderResults.hidden = true; senderFields.hidden = false; recipPanel.hidden = false;
+          sSel.dispatchEvent(new Event('change'));
+        }
+        if (p.courier_id) $('[name="order_courier"]').value = String(p.courier_id);
+        var first = $('[data-ns-item]');
+        if (first) { first.querySelector('[data-k="description"]').value = p.desc || ''; first.querySelector('[data-k="declared_value"]').value = p.price || ''; }
+        quote();
+      };
+      var okb = card.querySelector('[data-ns-pa-ok]');
+      if (okb && initialPa && initialPa !== '0' && String(p.id) === initialPa) { initialPa = ''; okb.click(); } else if (okb) okb.focus();
     });
   }
   renderTracks();

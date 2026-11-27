@@ -12,4 +12,4 @@ if (!empty($_GET['tracking']) && empty($_GET['customer'])) {
     $o = sl_scalar("SELECT sender_id FROM cdb_add_order WHERE CONCAT(order_prefix, order_no) = :t AND is_deleted = 0 UNION SELECT sender_id FROM cdb_customers_packages WHERE CONCAT(order_prefix, order_no) = :t2 OR tracking_purchase = :t3", [':t' => $t, ':t2' => $t, ':t3' => $t], 0);
     if ($o) { header('Location: pickup_client.php?customer=' . (int) $o); exit; }
 }
-sl_render('HandOut', ['id' => 'handout', 'title' => 'Hand out packages', 'board' => 'HandOut', 'styles' => ['assets/swiftlane/pages/ops.css']], sl_handOutData($user, $core));
+sl_render('HandOut', ['id' => 'handout', 'title' => 'Hand out packages', 'board' => 'HandOut', 'styles' => ['assets/swiftlane/pages/ops.css'], 'scripts' => ['dataJs/sl/handout.js']], sl_handOutData($user, $core));

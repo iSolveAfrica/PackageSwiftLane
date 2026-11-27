@@ -1,13 +1,14 @@
 <?php
 /**
- * HandOut - from docs/handover/artifact-source/HandOut.dc.html. Counter hand-out by pickup code or tracking.
- * Data: views/sl/data/warehouse.php (sl_handOutData). Steps: pick the customer from the queue (or search name, locker,
- * phone or tracking) → enter the code they show → fetch from the bay and scan each label → checks → hand over (Picked up).
- * Writes: ajax/sl/warehouse_ajax.php (verify_customer, send_customer, handover). Search by tracking: pickup_client.php?tracking=.
+ * HandOut - counter hand-out (Warehouse menu). Data: views/sl/data/warehouse.php (sl_handOutData).
+ * Left: live search (dataJs/sl/handout.js → ajax/sl/handout_ajax.php op=search) filters while you type and opens
+ * the customer as soon as there is one match or an exact tracking number. Right: the customer panel
+ * (partials/handout_panel.php): the pickup code checks itself on the 6th digit, managers can skip it, each
+ * package opens in a pop-up (contents, payment, history) and is ticked with one click, then Hand over.
+ * Writes: ajax/sl/warehouse_ajax.php (verify_customer, send_customer, handover). Every hand-over lands in the Hand-out Log.
  */
 if (!isset($d)) { $d = []; }
 $c = $d['c'];
-$st = !$c ? 1 : 2;
 ?>
 <div class="sl-head"><div><h1 class="sl-title" style="font-size:22px">Hand out packages</h1><p class="sl-lede">Counter at <?= h($d['office']) ?> · enter the pickup code, fetch from the bay, scan each package to confirm, hand over.</p></div><div class="row g8 wrap"><span class="sl-badge row g6"><span class="pr-dot" style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span><?= (int) $d['doneToday'] ?> handed out today</span><a class="sl-btn ghost" href="<?= sl_route('WarehousePickups') ?>"><i class="ic ic-sm i-clock" aria-hidden="true"></i>Today's hand-outs</a></div></div>
 <div class="ho-steps"><?php foreach (['Customer', 'Pickup code', 'Scan packages', 'Hand over'] as $i => $t): ?><span class="<?= $i + 1 < $st ? 'done' : ($i + 1 === $st ? 'on' : '') ?>"><b><?= $i + 1 ?></b><?= h($t) ?></span><?php endforeach; ?></div>
