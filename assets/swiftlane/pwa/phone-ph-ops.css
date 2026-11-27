@@ -1,0 +1,11 @@
+/* ph-ops phone screens: helpers not in mx.css */
+.mx [data-mx-panel-of]:not([hidden]){display:contents}
+.mx [hidden]{display:none!important}
+.mx a.mx-kt{color:inherit;text-decoration:none}
+.mx .mx-formcontents{display:contents}
+.mx .mx-seg a.mx-segl{flex:none;display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink-2);font:500 13px var(--font);white-space:nowrap;text-decoration:none}
+.mx .mx-seg a.mx-segl.on{background:var(--ink);color:var(--inverse);border-color:var(--ink)}
+.mx .mx-row a.mx-rm{color:inherit;text-decoration:none}
+.mx .mx-dotbtn{width:44px;height:32px;margin:-6px -12px -6px 0;border:0;background:transparent;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.mx .mx-dotbtn i{width:9px;height:9px;border-radius:50%;background:var(--orange)}
+.mx .mx-row.unread b{font-weight:650}

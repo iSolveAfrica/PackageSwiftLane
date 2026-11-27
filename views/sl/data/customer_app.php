@@ -286,11 +286,15 @@ function sl_caOpen(bool $phone, string $title, string $sub, string $back, string
     return '<div class="mxp wide ca">' . sl_mxHead($title, $sub, $back, $actions);
 }
 
-/** Closes sl_caOpen(). $foot: trusted HTML of the sticky action row (buttons), or ''. */
-function sl_caClose(bool $phone, string $foot = ''): string
+/**
+ * Closes sl_caOpen(). $foot: trusted HTML of the action row (buttons), or ''. On a phone the sticky .mx-foot
+ * sits where the floating tab bar is, so a screen that keeps the tab bar passes $inline and gets the action
+ * as the last block of the body instead.
+ */
+function sl_caClose(bool $phone, string $foot = '', bool $inline = false): string
 {
     if ($phone) {
-        return '</main>' . ($foot !== '' ? '<div class="mx-foot"><div class="cd-ft">' . $foot . '</div></div>' : '');
+        return $inline ? $foot . '</main>' : '</main>' . ($foot !== '' ? '<div class="mx-foot"><div class="cd-ft">' . $foot . '</div></div>' : '');
     }
     return ($foot !== '' ? '<div class="mx-foot">' . $foot . '</div>' : '') . '</div>';
 }

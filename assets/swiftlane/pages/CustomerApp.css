@@ -59,3 +59,14 @@
 .mx-body.ca .b3-nr .mx-rm b{white-space:normal;overflow-wrap:anywhere}
 .mx-body.ca .b3-cap a{color:var(--orange);font-weight:500}
 .mx-body.ca .mx-row.b3-rw{border-radius:24px}
+.ca-ok .cd-eta span:first-child b{font-size:19px;white-space:nowrap}
+.ca .cd-res>span:first-child{flex:none}
+.ca .cd-res b{font-size:22px;white-space:nowrap}
+
+/* phone delivery request (views/sl/phone/DeliveryRequest.php): real checkboxes and form controls in the design's shells */
+.cd-pk input:checked+.cd-cb{background:var(--ink);border-color:var(--ink)}
+.cd-pk input:not(:checked)+.cd-cb .ic{visibility:hidden}
+.cd-pk input:focus-visible+.cd-cb{outline:2px solid var(--orange);outline-offset:2px}
+.ca .dp-map .dl-map{width:100%;height:100%}
+.ca gmp-place-autocomplete{width:100%;color-scheme:light}
+.ca-quote{display:flex;flex-direction:column;gap:12px}

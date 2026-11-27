@@ -1,6 +1,6 @@
 /* Phone screens by "ph-people" (customers, staff, finance): the few rules mx.css does not have. */
 .mx-seg a{flex:none;display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink-2);font:500 13px var(--font);white-space:nowrap;text-decoration:none}
-.mx-seg a.on{background:var(--ink);color:var(--inverse);border-color:var(--ink)}
+.mx .mx-seg a.on{background:var(--ink);color:var(--inverse);border-color:var(--ink)}
 .pp-pg{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;color:var(--muted)}
 .pp-pg a,.pp-pg span.pp-off{display:inline-flex;align-items:center;gap:4px;min-height:44px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-weight:500;text-decoration:none}
 .pp-pg span.pp-off{color:var(--faint);border-style:dashed}
@@ -21,3 +21,6 @@
 .pp-wrap .mx-rm small{white-space:normal;line-height:1.35}
 .mx-kv b{overflow-wrap:anywhere}
 .pp-otp{font-family:var(--mono);font-size:22px;letter-spacing:.3em;text-align:center}
+.mx form.mx-srch{flex-direction:row;align-items:center}
+.mx .mx-seg a{color:var(--ink-2)}
+.mx .mx-seg a.on{color:var(--inverse)}

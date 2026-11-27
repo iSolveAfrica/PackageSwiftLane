@@ -24,11 +24,11 @@ $caPhone = !empty($caPhone);
   <?php else: ?>
   <section class="mx-card mx-list">
     <?php foreach ($d['requests'] as $q): ?>
-    <a class="mx-row" href="<?= h(sl_route('DeliveryDone', ['id' => (int) $q->id])) ?>"><span class="mx-li"><i class="ic i-truck" aria-hidden="true"></i></span><span class="mx-rm"><b>Delivery #<?= (int) $q->id ?> · <?= h(dl_money((int) $q->amount_cents, $q->currency)) ?></b><small><?= h($q->address) ?> · <?= h(sl_date($q->created_at)) ?></small></span><span class="mx-rr"><span class="sl-pill <?= h($statePill[$q->state] ?? 'plain') ?>"><?= h($stateLabel[$q->state] ?? ucfirst($q->state)) ?></span></span></a>
+    <a class="mx-row" href="<?= h(sl_route('DeliveryDone', ['id' => (int) $q->id])) ?>"><span class="mx-li"><i class="ic i-truck" aria-hidden="true"></i></span><span class="mx-rm"><b>Delivery #<?= (int) $q->id ?></b><small><?= h(dl_money((int) $q->amount_cents, $q->currency)) ?> · <?= h($q->address) ?> · <?= h(sl_date($q->created_at)) ?></small></span><span class="mx-rr"><span class="sl-pill <?= h($statePill[$q->state] ?? 'plain') ?>"><?= h($stateLabel[$q->state] ?? ucfirst($q->state)) ?></span></span></a>
     <?php endforeach; ?>
   </section>
   <?php endif; ?>
-<?= sl_caClose($caPhone, !empty($d['available']) ? '<a class="mx-btn" href="' . h(sl_route('DeliveryRequest')) . '"><i class="ic ic-sm i-truck" aria-hidden="true"></i>Request door delivery</a>' : '') ?>
+<?= sl_caClose($caPhone, !empty($d['available']) ? '<a class="mx-btn" href="' . h(sl_route('DeliveryRequest')) . '"><i class="ic ic-sm i-truck" aria-hidden="true"></i>Request door delivery</a>' : '', true) ?>
 <?php return; endif;
 
 $state = (string) $r->state;
@@ -121,4 +121,5 @@ if ($open) {
     $foot = '<a class="mx-btn" href="' . h(sl_route('DeliveryRequest')) . '"><i class="ic ic-sm i-truck" aria-hidden="true"></i>Request another delivery</a>';
 }
 ?>
-<?= sl_caClose($caPhone, $foot) ?>
+<?php if ($caPhone && $open) { $slPhone['nav'] = 'none'; } // the design's sticky Track / Cancel row takes the place of the tab bar ?>
+<?= sl_caClose($caPhone, $foot, !$open) ?>

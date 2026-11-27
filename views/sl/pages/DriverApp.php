@@ -112,8 +112,8 @@ if ($ph):
 endif; ?>
 <div class="mxp-grid">
 <div class="mxp-col">
-<h2 class="rs-hl">Today’s deliveries<span><?= count($d['open']) ?> to go · <?= count($d['done']) ?> done.</span></h2>
-<form class="rs-sr" method="get" action="<?= h(sl_route('RiderScan')) ?>" role="search"><label class="rs-sp"><i class="ic i-search" aria-hidden="true"></i><input name="q" aria-label="Check a tracking number against your jobs" placeholder="Check a tracking number" autocomplete="off" autocapitalize="characters" maxlength="60"></label><a class="rs-scan" href="<?= h(sl_route('RiderScan')) ?>" aria-label="Scan a parcel label"><i class="ic i-scan" aria-hidden="true"></i></a></form>
+<h2 class="rs-hl">Today’s deliveries<span><?= count($d['open']) ?> to go · <?= (int) $d['trips'] ?> done.</span></h2>
+<div class="rs-sr"><form class="rs-sp" method="get" action="<?= h(sl_route('RiderScan')) ?>" role="search"><i class="ic i-search" aria-hidden="true"></i><input name="q" aria-label="Check a tracking number against your jobs" placeholder="Check a tracking number" autocomplete="off" autocapitalize="characters" maxlength="60" enterkeyhint="search"></form><a class="rs-scan" href="<?= h(sl_route('RiderScan')) ?>" aria-label="Scan a parcel label"><i class="ic i-scan" aria-hidden="true"></i></a></div>
 <div class="mx-sec rs-sec"><h2>Delivery overview</h2><a href="<?= h(sl_route('RiderQueue')) ?>">See all</a></div>
 <section class="rs-ovw">
 <div class="rs-ot"><div class="rs-oth"><span class="rs-ob"><i class="ic i-box" aria-hidden="true"></i></span></div><b class="rs-ov"><?= (int) $d['trips'] ?></b><small>Deliveries today</small><div class="rs-vs"><span><?= $week ? (int) $week['yesterday']['n'] . ' yesterday' : count($d['open']) . ' to go' ?></span><a class="rs-go" href="<?= h(sl_route('RiderQueue')) ?>" aria-label="Open my jobs"><i class="ic ic-sm i-arrow" aria-hidden="true"></i></a></div></div>

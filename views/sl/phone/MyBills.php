@@ -42,7 +42,7 @@ $cur = $bars ? $bars[count($bars) - 1] : null;
 </div></div>
 <div class="b2-lg"><span><i class=""></i>Billed</span><span><i class="ow"></i>Owing</span><span><i class="cur"></i>This month</span></div></section>
 <?php endif; ?>
-<form class="mx-seg" method="get" action="<?= h(sl_route('MyBills')) ?>"><?php foreach (['all' => 'All', 'owing' => 'Owing', 'settled' => 'Settled'] as $k => $l): ?><button type="submit" name="filter" value="<?= h($k) ?>" aria-pressed="<?= $f === $k ? 'true' : 'false' ?>" class="<?= $f === $k ? 'on' : '' ?>"><?= h($l) ?><?= $k === 'owing' && $owingN ? ' ' . $owingN : ($k === 'settled' && (int) ($d['settledN'] ?? 0) ? ' ' . (int) $d['settledN'] : '') ?></button><?php endforeach; ?></form>
+<form method="get" action="<?= h(sl_route('MyBills')) ?>"><div class="mx-seg"><?php foreach (['all' => 'All', 'owing' => 'Owing', 'settled' => 'Settled'] as $k => $l): ?><button type="submit" name="filter" value="<?= h($k) ?>" aria-pressed="<?= $f === $k ? 'true' : 'false' ?>" class="<?= $f === $k ? 'on' : '' ?>"><?= h($l) ?><?= $k === 'owing' && $owingN ? ' ' . $owingN : ($k === 'settled' && (int) ($d['settledN'] ?? 0) ? ' ' . (int) $d['settledN'] : '') ?></button><?php endforeach; ?></div></form>
 <?php if ($bills): ?>
 <section class="mx-card mx-list">
 <?php foreach ($bills as $b):

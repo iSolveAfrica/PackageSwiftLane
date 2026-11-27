@@ -10,7 +10,7 @@ $slPhone['tab'] = 'Menu';
 $t = $d['tot'];
 $pct = $t['assigned'] ? sl_pct($t['done'], $t['assigned']) : 0;
 $daily = slpc_riderDaily(12);
-$segs = ['route' => ['On route', $t['onroute']], 'avail' => ['Available', $t['avail']], 'off' => ['Suspended', $t['off']], 'all' => ['All', $d['n']]];
+$segs = ['all' => ['All', $d['n']], 'route' => ['On route', $t['onroute']], 'avail' => ['Available', $t['avail']], 'off' => ['Suspended', $t['off']]];
 $acts = ($d['canMoney'] ? sl_phoneIcon('sliders', 'Split rules', sl_route('RiderSettings')) : '') . sl_phoneIcon('route', 'Live tracking', sl_route('DeliveryTracking'));
 ?>
 <link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/pwa/phone-centres.css')) ?>">
@@ -29,7 +29,7 @@ $acts = ($d['canMoney'] ? sl_phoneIcon('sliders', 'Split rules', sl_route('Rider
   <a role="tab" aria-selected="<?= $d['filter'] === $k ? 'true' : 'false' ?>" class="<?= $d['filter'] === $k ? 'on' : '' ?>" href="<?= h(sl_url(['filter' => $k, 'page' => null])) ?>"><?= h($s[0]) ?> <?= (int) $s[1] ?></a>
 <?php endforeach; ?>
 </div>
-<form method="get" class="mx-srch"><input type="hidden" name="filter" value="<?= h($d['filter']) ?>"><input type="hidden" name="period" value="<?= h($d['period']) ?>"><label><i class="ic i-search" aria-hidden="true"></i><input type="search" name="q" value="<?= h($d['q']) ?>" aria-label="Search riders" placeholder="Search name, phone or plate" autocomplete="off"></label></form>
+<form method="get"><input type="hidden" name="filter" value="<?= h($d['filter']) ?>"><input type="hidden" name="period" value="<?= h($d['period']) ?>"><div class="mx-srch"><label><i class="ic i-search" aria-hidden="true"></i><input type="search" name="q" value="<?= h($d['q']) ?>" aria-label="Search riders" placeholder="Search name, phone or plate" autocomplete="off"></label></div></form>
 <?php if ($d['rows']): ?>
 <section class="mx-card mx-list">
 <?php foreach ($d['rows'] as $r): ?>

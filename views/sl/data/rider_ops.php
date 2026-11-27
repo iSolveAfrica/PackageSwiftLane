@@ -42,6 +42,21 @@ function ro_cents(int $cents, string $currency): string
     return ($site === '' || strtoupper($currency) === $site) ? sl_money($cents / 100) : dl_money($cents, $currency);
 }
 
+/** Adds amounts up per currency (shipment fees are in the site currency, a door delivery in its own): "$10 + GHS 45.50". */
+function ro_sumTxt(array $pairs): string
+{
+    global $core;
+    $site = strtoupper(trim((string) ($core->currency ?? '')));
+    $by = [];
+    foreach ($pairs as [$amount, $cur]) {
+        $k = ($cur === '' || $cur === $site) ? '' : $cur;
+        $by[$k] = ($by[$k] ?? 0) + $amount;
+    }
+    if (!$by) return sl_money(0);
+    ksort($by);
+    return implode(' + ', array_map(fn($k) => $k === '' ? sl_money($by[$k]) : dl_money((int) round($by[$k] * 100), $k), array_keys($by)));
+}
+
 function ro_navUrl(int $riderId, string $address): string
 {
     return function_exists('sl_riderNavUrl') ? sl_riderNavUrl($riderId, $address) : sl_riderNavigation($address);
@@ -88,10 +103,10 @@ function ro_stops($me): array
             $origin = json_decode((string) $r->origin_json, true) ?: [];
             $state = ['assigned' => 'new', 'onroute' => 'active', 'failed' => 'failed', 'delivered' => 'done'][$r->state] ?? 'new';
             $label = ['assigned' => ['Not started', 'sorting'], 'onroute' => ['On the way', 'onway'], 'failed' => ['With dispatch', 'overdue'], 'delivered' => ['Delivered', 'delivered']][$r->state] ?? [ucfirst((string) $r->state), 'plain'];
-            $stops[] = ['key' => 'd' . $rid, 'src' => 'request', 'id' => $rid, 'kind' => 'door', 'kindTxt' => 'Door delivery', 'pickup' => false,
+            $stops[] = ['key' => 'd' . $rid, 'cur' => strtoupper((string) $r->currency), 'src' => 'request', 'id' => $rid, 'kind' => 'door', 'kindTxt' => 'Door delivery', 'pickup' => false,
                 'name' => trim((string) $r->contact_name) ?: 'Customer', 'addr' => (string) $r->address, 'phone' => (string) $r->contact_phone, 'note' => (string) $r->instructions,
                 'ref' => 'Delivery #' . $rid, 'parcels' => $parcels, 'n' => $n, 'kg' => null, 'state' => $state, 'st' => $label[0], 'cls' => $label[1],
-                'fee' => (int) $r->amount_cents / 100, 'feeTxt' => ro_cents((int) $r->amount_cents, (string) $r->currency), 'pay' => (int) $r->rider_cents / 100, 'payTxt' => ro_cents((int) $r->rider_cents, (string) $r->currency),
+                'fee' => (int) $r->amount_cents / 100, 'feeTxt' => ro_cents((int) $r->amount_cents, (string) $r->currency), 'pay' => (int) $r->rider_cents / 100, 'payTxt' => ro_cents((int) $r->rider_cents, (string) $r->currency), 'swiftTxt' => ro_cents(max(0, (int) $r->amount_cents - (int) $r->rider_cents), (string) $r->currency),
                 'pct' => (int) $r->amount_cents > 0 ? (int) round((int) $r->rider_cents * 100 / (int) $r->amount_cents) : 0, 'collect' => true, 'collected' => (int) $r->fee_collected === 1,
                 'km' => (int) $r->distance_m > 0 ? round((int) $r->distance_m / 1000, 1) : null, 'from' => (string) ($origin['address'] ?? ''),
                 'at' => $r->state === 'delivered' ? (string) $r->completed_at : '', 'since' => (string) ($r->assigned_at ?: $r->approved_at), 'receiver' => (string) ($r->receiver_name ?? ''),
@@ -107,11 +122,11 @@ function ro_stops($me): array
         $row = sl_rdJobRow($x);
         $pickup = (bool) $row['pickup'];
         $state = $row['state'] === 'done' ? 'done' : ($row['state'] === 'failed' ? 'failed' : ($pickup || $row['st'] === 'On route' ? 'active' : 'new'));
-        $stops[] = ['key' => 'o' . $row['id'], 'src' => 'order', 'id' => $row['id'], 'kind' => $pickup ? 'pickup' : 'delivery', 'kindTxt' => $pickup ? 'Pickup' : 'Delivery', 'pickup' => $pickup,
-            'name' => $row['cust'] === 'Contact not supplied' ? ($pickup ? 'Pickup contact not supplied' : 'Receiver not supplied') : $row['cust'], 'addr' => $row['addr'] === '—' ? '' : (string) $row['addr'], 'phone' => $row['phone'], 'note' => '',
+        $stops[] = ['key' => 'o' . $row['id'], 'cur' => '', 'src' => 'order', 'id' => $row['id'], 'kind' => $pickup ? 'pickup' : 'delivery', 'kindTxt' => $pickup ? 'Pickup' : 'Delivery', 'pickup' => $pickup,
+            'name' => $row['cust'] === 'Contact not supplied' ? $row['trk'] : $row['cust'], 'addr' => $row['addr'] === '—' ? '' : (string) $row['addr'], 'phone' => $row['phone'], 'note' => '',
             'ref' => $row['trk'], 'parcels' => [['module' => 'air', 'id' => $row['id'], 'trk' => $row['trk'], 'scanned' => isset($scanned['air:' . $row['id']])]], 'n' => 1, 'kg' => $row['kg'] > 0 ? $row['kg'] : null,
             'state' => $state, 'st' => $state === 'new' ? 'Not started' : $row['st'], 'cls' => $row['cls'],
-            'fee' => (float) $x['f']['fee'], 'feeTxt' => $row['fee'], 'pay' => (float) $x['f']['rider'], 'payTxt' => $row['rid'], 'pct' => $row['pct'], 'collect' => false, 'collected' => false,
+            'fee' => (float) $x['f']['fee'], 'feeTxt' => $row['fee'], 'pay' => (float) $x['f']['rider'], 'payTxt' => $row['rid'], 'swiftTxt' => $row['sw'], 'pct' => $row['pct'], 'collect' => false, 'collected' => false,
             'km' => null, 'from' => '', 'at' => $state === 'done' ? (string) $j->done_at : '', 'since' => '', 'receiver' => (string) ($row['receiver'] ?? ''),
             'proof' => $pickup ? 'Name of who handed it over' : ($codes ? 'Name and photo, PIN if set' : 'Name and photo'), 'open' => sl_route('RiderHome', ['job' => $row['id']]), 'navDest' => ''];
     }
@@ -165,7 +180,7 @@ function ro_data($user, $core): array
         $d['trips'] = count($d['done']);
     }
     $d['earnedTxt'] = sl_money($d['earned']);
-    $d['openPay'] = sl_money(array_sum(array_map(fn($s) => $s['pay'], $d['open'])));
+    $d['openPay'] = ro_sumTxt(array_map(fn($s) => [$s['pay'], $s['cur']], $d['open']));
     $d['pct'] = (int) sl_rdFee((object) ['is_pickup' => 0], $me)['pct'];
     return $d;
 }
@@ -191,7 +206,7 @@ function ro_pastStop($me, string $key): ?array
         $cnt = count($trk) ?: count(json_decode((string) $r->parcel_json, true) ?: []);
         return ['key' => $key, 'src' => 'request', 'id' => $n, 'kind' => 'door', 'kindTxt' => 'Door delivery', 'pickup' => false, 'name' => trim((string) $r->contact_name) ?: 'Customer', 'addr' => (string) $r->address, 'ref' => 'Delivery #' . $n,
             'parcels' => $trk, 'n' => $cnt, 'nTxt' => $cnt . ' parcel' . ($cnt === 1 ? '' : 's'), 'kg' => null, 'state' => 'done', 'fee' => (int) $r->amount_cents / 100, 'feeTxt' => ro_cents((int) $r->amount_cents, (string) $r->currency), 'pay' => (int) $r->rider_cents / 100,
-            'payTxt' => ro_cents((int) $r->rider_cents, (string) $r->currency), 'pct' => (int) $r->amount_cents > 0 ? (int) round((int) $r->rider_cents * 100 / (int) $r->amount_cents) : 0, 'collect' => true, 'collected' => (int) $r->fee_collected === 1,
+            'payTxt' => ro_cents((int) $r->rider_cents, (string) $r->currency), 'swiftTxt' => ro_cents(max(0, (int) $r->amount_cents - (int) $r->rider_cents), (string) $r->currency), 'pct' => (int) $r->amount_cents > 0 ? (int) round((int) $r->rider_cents * 100 / (int) $r->amount_cents) : 0, 'collect' => true, 'collected' => (int) $r->fee_collected === 1,
             'km' => (int) $r->distance_m > 0 ? round((int) $r->distance_m / 1000, 1) : null, 'at' => (string) $r->completed_at, 'atTxt' => sl_date($r->completed_at, 'H:i'), 'receiver' => (string) ($r->receiver_name ?? ''), 'proof' => 'PIN and photo', 'ini' => sl_initials((string) $r->contact_name)];
     }
     $from = date('Y-m-d', strtotime('-120 day'));
@@ -199,7 +214,7 @@ function ro_pastStop($me, string $key): ?array
         if ((int) $x['j']->order_id !== $n || $x['st'][2] !== 'done') continue;
         $row = sl_rdJobRow($x);
         return ['key' => $key, 'src' => 'order', 'id' => $n, 'kind' => $row['pickup'] ? 'pickup' : 'delivery', 'kindTxt' => $row['pickup'] ? 'Pickup' : 'Delivery', 'pickup' => (bool) $row['pickup'], 'name' => $row['cust'], 'addr' => $row['addr'], 'ref' => $row['trk'],
-            'parcels' => [['trk' => $row['trk']]], 'n' => 1, 'nTxt' => '1 parcel', 'kg' => $row['kg'] > 0 ? $row['kg'] : null, 'state' => 'done', 'fee' => (float) $x['f']['fee'], 'feeTxt' => $row['fee'], 'pay' => (float) $x['f']['rider'], 'payTxt' => $row['rid'], 'pct' => $row['pct'],
+            'parcels' => [['trk' => $row['trk']]], 'n' => 1, 'nTxt' => '1 parcel', 'kg' => $row['kg'] > 0 ? $row['kg'] : null, 'state' => 'done', 'fee' => (float) $x['f']['fee'], 'feeTxt' => $row['fee'], 'pay' => (float) $x['f']['rider'], 'payTxt' => $row['rid'], 'swiftTxt' => $row['sw'], 'pct' => $row['pct'],
             'collect' => false, 'collected' => false, 'km' => null, 'at' => (string) $x['j']->done_at, 'atTxt' => sl_date($x['j']->done_at, 'H:i'), 'receiver' => (string) ($row['receiver'] ?? ''), 'proof' => '', 'ini' => sl_initials($row['cust'])];
     }
     return null;

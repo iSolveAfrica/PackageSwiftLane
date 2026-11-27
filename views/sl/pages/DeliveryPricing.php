@@ -97,4 +97,4 @@ $explain = ['zone' => 'One price for each delivery zone.', 'kilometre' => 'Price
       </section>
     </div>
   </div>
-<?= sl_caClose($caPhone, '<a class="mx-btn" href="' . h(sl_route('DeliveryRequest')) . '"><i class="ic ic-sm i-truck" aria-hidden="true"></i>Request door delivery</a>') ?>
+<?= sl_caClose($caPhone, '<a class="mx-btn" href="' . h(sl_route('DeliveryRequest')) . '"><i class="ic ic-sm i-truck" aria-hidden="true"></i>Request door delivery</a>', true) ?>

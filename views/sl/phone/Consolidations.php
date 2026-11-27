@@ -3,6 +3,7 @@
  * M-Consol: air loads and sea containers. Same $d as the web page (views/sl/data/consolidations.php
  * sl_consolidationsBoard). Tabs are links to the same page with the parameters the web page reads (mode, stage).
  */
+require_once CDP_ROOT . '/helpers/sl_mx.php';
 $slPhone['nav'] = 'staff';
 $slPhone['tab'] = 'Shipments';
 $tc = $d['tracking'];

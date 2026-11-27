@@ -41,7 +41,7 @@ function sl_pmThread(int $id): ?array
 function sl_pmCenter(): array
 {
     $camps = function_exists('cdp_commCampaigns') ? array_slice(cdp_commCampaigns(), 0, 20) : [];
-    $out = cdp_opsQ('SELECT id, channel, recipient, subject, status, last_error, created_at FROM cdb_comm_outbox ORDER BY id DESC LIMIT 20');
+    $out = cdp_opsQ('SELECT id, channel, recipient_to, event_key, kind, subject, status, last_error, created_at FROM cdb_comm_outbox ORDER BY id DESC LIMIT 20');
     $rules = cdp_opsDecode(cdp_commSetting('rules'), []);
     $autos = [];
     foreach (cdp_commEvents() as $k => $e) {

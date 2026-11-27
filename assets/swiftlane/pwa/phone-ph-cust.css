@@ -1,0 +1,23 @@
+/* Phone customer screens (ph-cust): real form controls inside the design's field shells. Tokens only. */
+.pc-form{display:contents}
+.pc-step[hidden]{display:none!important}
+.pc-step{display:flex;flex-direction:column;gap:inherit}
+.b1-dd>div>select,.b1-dd>div>input,.b1-dd>div>textarea,.b1-chipin>input{flex:1;min-width:0;border:0;background:transparent;color:var(--ink);font:16px var(--font);outline:none;appearance:none;-webkit-appearance:none;min-height:44px;padding:0}
+.b1-dd>div>textarea,.pc-ta{resize:vertical;padding:12px 0;line-height:1.4}
+.b1-dd>div:focus-within,.b1-chipin:focus-within{box-shadow:0 0 0 2px var(--ink)}
+.b1-chipin>input{min-width:110px;padding:0 6px}
+.b1-chipin .pc-chip{flex:none;display:inline-flex;align-items:center;gap:4px;min-height:32px;padding:0 2px 0 12px;border-radius:999px;background:var(--field);font:500 12.5px var(--mono);border:1px solid var(--line)}
+.b1-chipin .pc-chip button{width:28px;height:28px;border-radius:50%;border:0;background:transparent;color:var(--muted);display:grid;place-items:center;cursor:pointer}
+.pc-chipadd{width:44px;height:44px;border-radius:50%;background:var(--ink);color:var(--inverse);display:grid;place-items:center;flex:none;margin-left:auto;border:0;cursor:pointer}
+.pc-vh{position:absolute;opacity:0;width:1px;height:1px}
+label.b1-tick{cursor:pointer;position:relative}
+.b1-tick:focus-within{box-shadow:0 0 0 2px var(--ink)}
+.b1-tick>i>.ic{display:none}
+.b1-tick.on>i>.ic{display:block}
+button.b1-x.pc-x{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:var(--muted);justify-self:end;border:0;background:transparent;cursor:pointer}
+.b1-thumbs .pc-fill{position:absolute;inset:0;display:grid;place-items:center;cursor:pointer;border-radius:inherit}
+.b1-thumbs .pc-fill:focus-within{box-shadow:0 0 0 2px var(--ink)}
+button.b1-amb,button.b1-wht{cursor:pointer;font-family:var(--font)}
+button.b1-amb[hidden]{display:none}
+.pc-ck-row{display:flex;align-items:center;gap:12px}
+.mx-tg button.mx-sw[disabled]{opacity:.5}

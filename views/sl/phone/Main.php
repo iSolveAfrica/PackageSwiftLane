@@ -46,6 +46,7 @@ if ($can('prealert_list')) $actions[] = ['inbox', 'Pre-alerts', sl_route('PreAle
 if (sl_navAllowed('ops:staff', [])) $actions[] = ['message', 'WhatsApp', sl_route('CommsInbox')];
 if (sl_navAllowed('ai:use', [])) $actions[] = ['ai', 'Ask ' . (function_exists('cdp_kingName') ? cdp_kingName() : 'King'), sl_route('StaffAI')];
 ?>
+<link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/pwa/phone-ph-ops.css')) ?>">
 <header class="mx-top"><a class="mx-av" href="<?= h(sl_route('Workspace')) ?>" aria-label="My account"><?= h($me['ini']) ?><i aria-hidden="true"></i></a><div class="mx-ttl"><h1><span data-sl-greet><?= h((int) date('G') < 12 ? 'Good morning' : ((int) date('G') < 17 ? 'Good afternoon' : 'Good evening')) ?></span>, <?= h($me['first']) ?></h1></div><?= sl_phoneIcon('search', 'Search', sl_route('LockerSearch')) . sl_phoneIcon('bell', 'Notifications', sl_route('Notifications'), $ph['unread']) ?></header>
 <main class="mx-body">
 <?php if ($ph['fx'] !== ''): ?>

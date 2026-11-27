@@ -67,3 +67,5 @@ details.ro-more[open]>summary{margin-bottom:12px}
 .ro-tl li{display:flex;justify-content:space-between;gap:10px;font-size:13px}
 .ro-tl small{color:var(--muted);flex:none}
 .rs-cust .rs-rb{box-shadow:none;background:var(--card)}
+form.rs-sp{display:flex;background:var(--card);margin:0}
+.mx-kt>b{min-width:0}

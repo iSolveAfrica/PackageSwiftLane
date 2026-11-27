@@ -1,0 +1,20 @@
+/* Phone sign-in screens (views/sl/phone/PasswordReset.php, SignUp.php): states set by dataJs/sl/auth.js. */
+.pa-pw{position:relative}.pa-pw .mx-inp{padding-right:52px}.pa-pw .mx-ib{position:absolute;right:2px;top:2px;border:0;background:transparent}
+.pa-meter i{width:0;transition:width .2s}
+.pa-meter.s1 i{width:25%;background:var(--red)}.pa-meter.s2 i{width:50%;background:var(--yellow)}.pa-meter.s3 i{width:75%;background:var(--green)}.pa-meter.s4 i{width:100%;background:var(--green)}
+.mx-mt b.ok,.mx-f small.ok,.mx-vh.ok{color:var(--green-ink)}.mx-mt b.bad,.mx-f small.bad{color:var(--red-ink)}.mx-mt b.mut{color:var(--muted)}
+.pa-rules span{display:inline-flex;align-items:center;gap:4px}.pa-rules span.ok{background:var(--green-bg);color:var(--green-ink)}
+.pa-up{position:relative;cursor:pointer;text-align:center;padding:6px}.pa-up input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.pa-up:focus-within{outline:2px solid var(--ink);outline-offset:2px}
+.mx-ph .pa-up{aspect-ratio:1;border-radius:14px;border:1.5px dashed var(--line-2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--muted);background:var(--card);min-width:0}
+.mx-ph .pa-up small{font-size:11px;overflow-wrap:anywhere}
+.mx-sw[role="checkbox"]{cursor:pointer}
+body.mx-page .mx-auth-hero a.mx-lnk{color:#fff}
+body.mx-page .b4-tbar a.b4-li,body.mx-page .b4-cta .b4-ca a:not(.sec){color:var(--inverse)}
+/* M-CQuote: actual / volumetric / chargeable rows (design classes missing from mx.css) */
+.b2-cv{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.b2-cvr{display:grid;grid-template-columns:86px 1fr auto;align-items:center;gap:10px;font-size:12.5px;color:var(--muted)}
+.b2-cvr b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums;min-width:54px;text-align:right}
+.b2-trk i.ok{background:var(--green)}
+#quote-form+*{margin-top:0}
+body.mx-page .mx-body>form>button.b2-cta,body.mx-page .mx-body button.b2-cta{align-self:flex-start}
