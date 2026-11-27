@@ -28,6 +28,9 @@ $slBoardCss = $slPage['board'] ? 'assets/swiftlane/pages/' . $slPage['board'] . 
 <link rel="stylesheet" href="<?= h(cdp_asset($slCss)) ?>">
 <?php endforeach; ?>
 <link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/experience.css')) ?>">
+<?php require_once CDP_ROOT . '/helpers/export_guard.php'; if (!cdp_canExportData()): /* exports are admin-only: hide every export control (the server refuses them too) */ ?>
+<style>a[href*="export=csv"],a[href*="export=xls"],a[href*="export=xlsx"],a[href*="_excel.php"],a[href*="format=csv"],a[href*="format=xls"],a[href*="format=xlsx"],a[href*="action=export"],a[href*="op=export"],a[href*="_export_ajax.php"],[data-rv-export],[data-export],button[onclick*="exportExcel"],button[onclick*="_excel"]{display:none!important}</style>
+<?php endif; ?>
 <link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/surface-colors.css')) ?>">
 <script defer src="<?= h(cdp_asset('assets/swiftlane/experience.js')) ?>"></script>
 <script>

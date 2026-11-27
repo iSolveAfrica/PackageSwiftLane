@@ -22,17 +22,27 @@ function sl_seaTowerData($user, $core, array $packages): array
         foreach ($rows as $row) $values[$row->month_id] = (int)$row->$field;
         return ['name'=>$name,'color'=>$color,'values'=>array_values($values)];
     };
-    $sea = $series($groups,'registered','Sea','#21877c');
-    $modes = [$sea];
-    foreach ([['view_shipment_list',0,'Air','#5d82b7'],['view_pickup_list',1,'Home pickups','#a38355']] as [$permission,$pickup,$name,$color]) {
-        if (!$user->cdp_hasPermission($permission)) continue;
+    // Sea only on the sea control tower: no air shipments and no home pickups here.
+    $modes = [$series($groups,'registered','Sea packages','#21877c')];
+    // Sea-freight shipments booked in the shipments table (category Ocean / Sea freight).
+    $seaCats = [];
+    foreach (sl_rows('SELECT id, name_item FROM cdb_category') as $c) {
+        if (preg_match('/ocean|\bsea\b|mar[ií]tim|barco|vessel/u', mb_strtolower((string) $c->name_item, 'UTF-8'))) $seaCats[] = (int) $c->id;
+    }
+    if ($seaCats && $user->cdp_hasPermission(['view_shipment_list', 'view_general_shipments'])) {
         $rows = sl_rows("SELECT DATE_FORMAT(a.order_date,'%Y-%m') AS month_id, COUNT(*) AS registered
-            FROM cdb_add_order a WHERE a.is_deleted=0 AND a.is_pickup=$pickup AND $period GROUP BY month_id", $bind);
-        $modes[] = $series($rows,'registered',$name,$color);
+            FROM cdb_add_order a WHERE a.is_deleted=0 AND a.order_item_category IN (" . implode(',', $seaCats) . ") AND $period GROUP BY month_id", $bind);
+        $modes[] = $series($rows,'registered','Sea-freight shipments','#3f6fa8');
+    }
+    // Containers (sea consolidations) opened per month.
+    if ($user->cdp_hasPermission('view_consolidate_package_list') && sl_tableExists('cdb_consolidate_packages')) {
+        $rows = sl_rows("SELECT DATE_FORMAT(a.c_date,'%Y-%m') AS month_id, COUNT(*) AS registered
+            FROM cdb_consolidate_packages a WHERE a.c_date >= :start AND a.c_date < :end $scope GROUP BY month_id", $bind);
+        $modes[] = $series($rows,'registered','Containers','#c98a2b');
     }
     $charts = [
         ['title'=>'Registrations & pre-alerts','series'=>[$series($groups,'registered','Registered','#518ac6'),$series($groups,'alerted','With pre-alert','#21877c')]],
-        ['title'=>'Shipment volume by service','series'=>$modes]
+        ['title'=>'Sea volume by type','series'=>$modes]
     ];
     $selected = (int)($_GET['cargo'] ?? 0);
     $ids = array_column($packages['rows'],'id');

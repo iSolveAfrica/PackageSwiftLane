@@ -11,11 +11,13 @@ $client = !empty($d['client']);
           <div class="row g8 wrap"><?php if (!$client): ?><a class="sl-btn ghost" href="<?= sl_route('SeaPackages') ?>"><i class="ic ic-sm i-layers" aria-hidden="true"></i>Package management</a><button type="button" class="sl-btn ghost" data-sl-ai><i class="ic ic-sm i-spark" aria-hidden="true"></i>Ask <?= h(cdp_kingName()) ?></button><?php endif; ?><?php if ($d['canExport']): ?><button type="button" class="sl-btn ghost" data-sl-open="as-export"><i class="ic ic-sm i-download" aria-hidden="true"></i>Export</button><?php endif; ?><?php if ($d['canAdd']): ?><a class="sl-btn" href="<?= $client ? 'courier_add_client.php' : sl_route('NewShipment') ?>">New Shipment</a><?php endif; ?></div>
         </div>
 
+        <?php if (!empty($d['ins'])): include __DIR__ . '/partials/shipment_insights.php'; else: ?>
         <div class="grid cols4">
           <?php foreach ($d['metrics'] as $i => $m): $f = ['open', 'delivered', 'unpaid', 'consol'][$i]; ?>
           <a class="sl-card sl-metric" href="<?= h(sl_url(['filter' => $f, 'page' => null])) ?>"><div class="sl-ml"><span><?= h($m['label']) ?></span></div><div class="sl-mv"><?= sl_num($m['v']) ?> <i>/ <?= sl_num($d['all']) ?></i></div><div class="sl-ticks <?= h($m['cls']) ?>"><i style="width: <?= sl_pct($m['v'], $d['all']) ?>%"></i></div></a>
           <?php endforeach; ?>
         </div>
+        <?php endif; ?>
 
         <div class="sl-card flush" id="as-list">
           <form method="get" class="row wrap g12" style="padding: 14px 16px">
@@ -44,8 +46,8 @@ $client = !empty($d['client']);
                 <?php foreach ($d['rows'] as $r): $cols = 8 - ($client ? 1 : 0) - ($d['canSelect'] ? 0 : 1); ?>
                   <tr data-as-row>
                     <?php if ($d['canSelect']): ?><td><?php if ($r['selectable']): ?><label class="sl-chk" aria-label="Select <?= h($r['track']) ?>"><input type="checkbox" value="<?= (int) $r['id'] ?>" data-as-pick data-track="<?= h($r['track']) ?>" style="position:absolute;opacity:0;width:0;height:0"></label><?php endif; ?></td><?php endif; ?>
-                    <td class="as-trk"><a class="id" href="<?= sl_route('ShipmentDetail', ['id' => $r['id']]) ?>"><?= h($r['carrier'] !== '' ? $r['carrier'] : $r['track']) ?></a><?php if ($r['carrier'] !== ''): ?><span class="sub mono"><?= h($r['track']) ?></span><?php endif; ?></td>
-                    <td class="nowrap"><?= h($r['date']) ?><span class="sub mono"><?= h($r['time'] ?: 'Time not recorded') ?></span></td>
+                    <td class="as-trk"><a class="id" href="<?= sl_route('ShipmentDetail', ['id' => $r['id']]) ?>"><?= h($r['track']) ?></a><span class="sub"><?= $r['carrier'] !== '' ? 'Postal: ' . h($r['carrier']) : 'No postal tracking yet' ?></span></td>
+                    <td class="nowrap"><?= h($r['date']) ?><span class="sub"><?= h($r['time'] ?: 'Time not recorded') ?></span></td>
                     <?php if (!$client): ?><td class="as-snd"><div><a href="<?= sl_route('CustomerProfile', ['id' => $r['sender_id']]) ?>" style="color:inherit"><?= h($r['sender']) ?></a><span class="sub"><?= h($r['from']) ?></span></div></td><?php endif; ?>
                     <td class="num"><?= h($r['kg']) ?></td>
                     <td><span class="col g4"><span class="sl-pill <?= h($r['payCls']) ?>"><?= h($r['pay']) ?></span><span class="mut mono" style="font-size:13.5px"><?= h($r['total']) ?></span></span></td>

@@ -73,6 +73,7 @@ function sl_routes(): array
         'HandOut'             => 'pickup_client.php',
         'LockerSearch'        => 'locker_search.php',
         'LabelStudio'         => 'label_studio.php',
+        'ReceiptStudio'       => 'receipt_studio.php',
         'Label4x6'            => 'print_label_ship.php',
         'Label1x2'            => 'print_label_ship.php',
         'ReceiptPaid'         => 'print_invoice_package.php',

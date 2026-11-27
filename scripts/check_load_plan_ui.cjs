@@ -27,7 +27,12 @@ const assert=require('node:assert/strict');
   await page.locator('[type=submit]').click();
   await page.waitForFunction(()=>document.querySelector('[data-load-feedback]').textContent.includes('Another dispatcher'));
   assert.equal(calls,1);
-  for(const view of ['side','3d','top']){await page.locator('[data-load-view="'+view+'"]').click();assert.equal(await page.locator('[data-load-plan]').getAttribute('data-view'),view);}
+  // cargo view: every package sits in a drawn position, and tapping a position lists its packages
+  const loaded=page.locator('[data-ccv-pos].on');assert(await loaded.count()>0);
+  await loaded.first().click();
+  const pos=await loaded.first().getAttribute('data-ccv-pos');
+  assert(await page.locator('[data-ccv-of="'+pos+'"]').isVisible());
+  assert(await page.locator('[data-ccv-of="'+pos+'"] .ccv-pk').count()>0);
   for(const width of [1440,390]){await page.setViewportSize({width,height:900});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2));}
   assert.deepEqual(errors,[]);
   console.log('Load-plan browser checks passed');

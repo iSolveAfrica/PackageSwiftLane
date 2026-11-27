@@ -59,3 +59,14 @@
   }catch(error){status.textContent=error.message;}finally{button.disabled=false;}
  });
 })();
+/* Cargo view: tap a cargo position in the drawing to list its packages */
+(() => {
+ const box=document.querySelector('.ccv-craftbox');if(!box)return;
+ function pick(i){
+  box.querySelectorAll('[data-ccv-pos]').forEach(g=>g.classList.toggle('sel',g.dataset.ccvPos===i));
+  box.querySelectorAll('[data-ccv-of]').forEach(p=>p.hidden=p.dataset.ccvOf!==i);
+ }
+ box.addEventListener('click',e=>{const g=e.target.closest('[data-ccv-pos]');if(g)pick(g.dataset.ccvPos);});
+ box.addEventListener('keydown',e=>{const g=e.target.closest('[data-ccv-pos]');if(g&&(e.key==='Enter'||e.key===' ')){e.preventDefault();pick(g.dataset.ccvPos);}});
+ const first=box.querySelector('[data-ccv-pos].on');if(first)pick(first.dataset.ccvPos);
+})();
