@@ -188,6 +188,17 @@ function sl_render(string $view, array $page, array $d = []): void
     $page += ['id' => '', 'title' => $core->site_name ?? 'Swift Lane', 'board' => '', 'actions' => '', 'theme' => '', 'plain' => false, 'scripts' => [], 'styles' => []];
     $slPage = $page;
     $viewFile = CDP_ROOT . '/views/sl/pages/' . $view . '.php';
+    // Phones get the phone app screen of this page when there is one (helpers/sl_phone.php); computers and
+    // tablets always get the web page.
+    require_once CDP_ROOT . '/helpers/sl_phone.php';
+    $slPhoneFile = sl_phoneView($view);
+    if ($slPhoneFile !== '') {
+        $slPhoneView = $view;
+        include CDP_ROOT . '/views/sl/phone/_start.php';
+        include $slPhoneFile;
+        include CDP_ROOT . '/views/sl/phone/_end.php';
+        return;
+    }
     if ($page['plain']) {
         include CDP_ROOT . '/views/sl/inc/plain_start.php';
         include $viewFile;

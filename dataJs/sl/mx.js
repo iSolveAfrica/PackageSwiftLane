@@ -87,3 +87,17 @@
   }
   if (document.querySelector('[data-mx-countdown]')) { tick(); setInterval(tick, 1000); }
 })();
+
+/* M-Menu: filter every page as you type; groups open when they hold a match */
+(function () {
+  var q = document.querySelector('[data-mx-menu-q]');
+  if (!q) return;
+  q.addEventListener('input', function () {
+    var t = q.value.trim().toLowerCase();
+    document.querySelectorAll('[data-mx-menu-group]').forEach(function (g) {
+      var any = false;
+      g.querySelectorAll('[data-mx-menu-item]').forEach(function (a) { var m = !t || a.textContent.toLowerCase().indexOf(t) >= 0; a.hidden = !m; any = any || m; });
+      g.hidden = !any; if (t) g.open = any;
+    });
+  });
+})();

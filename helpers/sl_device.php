@@ -266,3 +266,27 @@ if (!function_exists('sl_device')) {
         return $d['label'] . ($d['standalone'] ? ' · installed app' : '');
     }
 }
+
+if (!function_exists('sl_isPhone')) {
+    /**
+     * True when this request gets the phone app screens (design canvas Page 2) instead of the web pages.
+     * Phones only: tablets and computers always get the web design. "View full website" on the phone menu
+     * sets sl_view=web for people who need a web-only tool; "Back to the app" clears it.
+     */
+    function sl_isPhone(): bool
+    {
+        static $phone = null;
+        if ($phone !== null) {
+            return $phone;
+        }
+        $want = (string) ($_GET['view'] ?? '');
+        if (($want === 'web' || $want === 'app') && PHP_SAPI !== 'cli' && !headers_sent()) {
+            setcookie('sl_view', $want === 'web' ? 'web' : '', ['expires' => $want === 'web' ? time() + 86400 * 30 : time() - 3600, 'path' => '/', 'samesite' => 'Lax', 'secure' => !empty($_SERVER['HTTPS'])]);
+            $_COOKIE['sl_view'] = $want === 'web' ? 'web' : '';
+        }
+        if (($_COOKIE['sl_view'] ?? '') === 'web') {
+            return $phone = false;
+        }
+        return $phone = sl_device()['form'] === 'phone';
+    }
+}
