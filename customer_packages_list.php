@@ -14,4 +14,17 @@ if (($_GET['export'] ?? '') === 'csv') {
     foreach ($d['rows'] as $r) { fputcsv($out, [$r['trk'], $r['date'], $r['name'], $r['locker'], $r['box'], $r['items'], $r['what'], $r['w'], $r['amt'], $r['pay'], $r['st']]); }
     exit;
 }
+if (in_array($_GET['panel'] ?? '', ['tower','tracking'], true) && !$d['isClient']) {
+    require_once 'views/sl/data/sea_tower.php';
+    require_once 'helpers/sl_nav.php';
+    $d['tower'] = sl_seaTowerData($user, $core, $d);
+    $vector = 'assets/template/assets/extra-libs/jvector/';
+    sl_render('SeaTower', [
+        'id'=>'sea', 'title'=>'Sea shipping control tower', 'board'=>'SeaPackages',
+        'styles'=>['assets/swiftlane/pages/SeaTower.css', $vector.'jquery-jvectormap-2.0.2.css'],
+        'scripts'=>['assets/js/jquery.min.js', $vector.'jquery-jvectormap-2.0.2.min.js',
+            $vector.'jquery-jvectormap-world-mill-en.js','dataJs/sl/sea_tower.js']
+    ], $d);
+    return;
+}
 sl_render('SeaPackages', ['id' => 'sea', 'title' => 'Sea Packages', 'board' => 'SeaPackages', 'styles' => ['assets/swiftlane/pages/ops.css']], $d);

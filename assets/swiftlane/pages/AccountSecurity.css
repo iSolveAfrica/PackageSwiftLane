@@ -1,0 +1,11 @@
+/* AccountSecurity (account_security.php): the few pieces the phone kit does not have. */
+.mxp .as-out,.mxp .as-lnk{min-height:44px;padding:0 10px;margin-right:-10px;border:0;background:none;font:inherit;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;border-radius:10px}
+.mxp .as-out:hover,.mxp .as-lnk:hover{background:var(--active)}
+.mxp .as-out.loading{opacity:.5}
+.mxp .mx-tg>.sl-pill{flex:none}
+.mxp .mx-li.as-bad{background:var(--red-bg);color:var(--red-ink)}
+.mxp .mx-btns .mx-btn{gap:8px}
+/* mx.css `.mxp a{color:inherit}` outranks `.mx-btn`, so a link button would be ink on ink. */
+.mxp a.mx-btn:not(.sec){color:var(--inverse)}
+.mxp .mx-tg .mx-rm small{white-space:normal;line-height:1.35}
+.mxp .mx-tg{padding-top:10px;padding-bottom:10px}

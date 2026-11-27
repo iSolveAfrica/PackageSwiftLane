@@ -35,7 +35,7 @@ $rrHL = ['fragile' => 'Fragile', 'cold' => 'Keep cold', 'high_value' => 'High va
     <?php if ($s['wa']): ?><a class="rr-btn" href="<?= h($s['wa']) ?>" target="_blank" rel="noopener"><i class="ic i-message" aria-hidden="true"></i>WhatsApp</a><?php endif; ?>
   </div>
   <?php if (!$rv['onroute']): ?>
-  <a class="rr-btn pri" href="<?= h(sl_route('DriverApp', ['tab' => 'load'])) ?>"><i class="ic i-check" aria-hidden="true"></i>Load parcels and start route (<?= (int) $rv['inventory']['loaded'] ?>/<?= (int) $rv['inventory']['total'] ?>)</a>
+  <a class="rr-btn pri" href="<?= h(sl_route('RiderMap', ['view' => 'load'])) ?>"><i class="ic i-check" aria-hidden="true"></i>Load parcels and start route (<?= (int) $rv['inventory']['loaded'] ?>/<?= (int) $rv['inventory']['total'] ?>)</a>
   <?php else: ?>
   <div class="rr-do">
     <?php if ($s['status'] === 'pending'): ?><button type="button" class="rr-btn arrive" data-rr-op="arrive" data-stop="<?= (int) $s['id'] ?>"><i class="ic i-pin" aria-hidden="true"></i>Arrived</button><?php endif; ?>

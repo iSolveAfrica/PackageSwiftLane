@@ -1,0 +1,38 @@
+/* Device manners (helpers/sl_device.php + device.js). Layout stays with width / pointer media queries;
+   these rules only adapt details to the phone or browser in hand. */
+
+/* typing on a phone: the tab bar and sticky footers step aside so the field and keyboard have the screen */
+html.sl-kb .sl-mobile-nav, html.sl-kb .sl-support-link, html.sl-kb .pwa-banner { display: none !important; }
+html.sl-kb .mxp .mx-foot { position: static; }
+
+/* offline notice */
+.sl-net-strip { position: fixed; left: 0; right: 0; top: 0; z-index: 10000; padding: calc(8px + env(safe-area-inset-top)) 16px 8px; background: var(--ink, #161615); color: var(--inverse, #fff); font: 500 13px/1.35 var(--font, system-ui, sans-serif); text-align: center; }
+
+/* Back button the installed iPhone app adds to screens below a tab */
+.sl-top .pwa-back { order: -1; }
+.sl-top .pwa-back + .nav-open { display: none; }
+
+/* iPhone and iPad: text fields at 16px so Safari does not zoom the page on focus; momentum scrolling in boxes */
+html[data-os="ios"] :is(input, select, textarea) { font-size: max(16px, 1em); }
+html[data-os="ios"] :is(.table-responsive, .sl-tw, .mx-chips) { -webkit-overflow-scrolling: touch; }
+/* installed on iOS: the status bar sits over the page */
+html[data-os="ios"][data-standalone] .sl-plain .sl-auth, html[data-os="ios"][data-standalone] .mxp-screen > .mx-top { padding-top: max(14px, env(safe-area-inset-top)); }
+
+/* Android: the system draws its own press feedback; keep it visible but quiet, and stop pull-to-refresh
+   from reloading a half-filled form inside the installed app */
+html[data-os="android"] :is(.sl-mobile-nav a, .sl-mobile-nav button, .mx-row, .mx-btn, .sl-btn) { -webkit-tap-highlight-color: rgba(22, 22, 21, .08); }
+html[data-os="android"][data-standalone] body { overscroll-behavior-y: contain; }
+
+/* Samsung Internet and Edge put their toolbar at the bottom: lift floating helpers above it */
+html[data-browser="samsung"]:not([data-standalone]) .sl-support-link, html[data-browser="edge"][data-os="android"]:not([data-standalone]) .sl-support-link { margin-bottom: 8px; }
+
+/* slow or data-saving connection (2G, Data Saver): drop the blur and the looping decoration */
+html[data-net="slow"] :is(.sl-mobile-nav, .sl-top, .mx-foot, .pwa-gate) { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+html[data-net="slow"] :is(.ra-pulse, .ra-cd, .ra-rg, .ra-accf, .mx-dash, .rc-live i)::after, html[data-net="slow"] :is(.ra-pulse, .mx-dash, .rc-live i) { animation: none !important; }
+
+/* show a block only on one kind of device: data-only-form="phone tablet" | "desktop" */
+html[data-form="desktop"] [data-only-form]:not([data-only-form~="desktop"]),
+html[data-form="phone"] [data-only-form]:not([data-only-form~="phone"]),
+html[data-form="tablet"] [data-only-form]:not([data-only-form~="tablet"]) { display: none !important; }
+/* installed app vs browser tab */
+html[data-standalone] [data-only-context="browser"], html:not([data-standalone]) [data-only-context="app"] { display: none !important; }

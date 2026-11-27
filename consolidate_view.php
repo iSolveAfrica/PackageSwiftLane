@@ -11,5 +11,8 @@ require_once 'views/sl/data/consolidations.php';
 $d = sl_consolidationDetailData($user, $core, (int) ($_GET['id'] ?? 0), $type);
 if (!$d) { header('Location: ' . sl_route('Consolidations', ['mode' => $type])); exit; }
 $board = $type === 'sea' ? 'ConsolidationDetail' : 'ConsolidationAir';
+// Phones: the app screen (views/sl/phone/ConsolidationDetail.php) for air and sea alike.
+require_once 'helpers/sl_phone.php';
+if (sl_phoneView('ConsolidationDetail') !== '') { sl_render('ConsolidationDetail', ['id' => 'consol', 'title' => $d['code'], 'board' => $board], $d); exit; }
 // Wide view: the menu starts collapsed so the map and the package list get the room.
-sl_render($board, ['id' => 'consol', 'title' => $d['code'], 'board' => $board, 'navCollapsed' => true, 'styles' => ['assets/swiftlane/pages/ops.css']], $d);
+sl_render($board, ['id' => 'consol', 'title' => $d['code'], 'board' => $board, 'navCollapsed' => true, 'styles' => ['assets/swiftlane/pages/ops.css', 'assets/swiftlane/pages/ConLoadPlan.css']], $d);

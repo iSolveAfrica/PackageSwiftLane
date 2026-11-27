@@ -220,11 +220,22 @@ function sl_riderDetailData($user, $core, int $id): ?array
     $lastSettle = $settle[0]->period_end ?? null;
     $from = $lastSettle ? date('Y-m-d', strtotime($lastSettle . ' +1 day')) : date('Y-m-01');
     $due = $from <= $today ? sl_rdStats($from, $today, $id)[$id] : null;
+    // Payout requests from the rider app (helpers/rider_money.php) and the all-time balance that subtracts them,
+    // so a paid request is never paid again through a period settlement.
+    $payouts = []; $balance = null; $payAccount = null;
+    if (is_file(CDP_ROOT . '/helpers/rider_money.php') && is_file(CDP_ROOT . '/views/sl/data/rider_money.php')) {
+        require_once CDP_ROOT . '/helpers/rider_money.php';
+        require_once CDP_ROOT . '/views/sl/data/rider_money.php';
+        $payouts = array_map('sl_rmRequestRow', sl_rmPayoutRequests($id, false, 10));
+        $balance = sl_rmBalance($id);
+        $payAccount = sl_rmPayoutAccount($id);
+    }
     $act = cdp_activityTableReady() ? sl_rows("SELECT created_at, summary, action_label FROM cdb_activity_log WHERE (user_id = :d OR (module IN ('drivers','shipments','pickups') AND summary LIKE :n)) AND verb <> 'view' ORDER BY id DESC LIMIT 10", [':d' => $id, ':n' => '%' . $r->name . '%']) : [];
     return ['id' => $id, 'name' => $r->name, 'ini' => sl_initials($r->name), 'veh' => trim(($r->vehicle_type ?: 'Vehicle') . ' ' . ($r->enrollment ?: '')), 'phone' => $r->phone ?: '—', 'mail' => $r->email, 'since' => sl_date($r->created, 'M Y'), 'zone' => $r->zone ?: '—', 'active' => (int) $r->active,
         'st' => !(int) $r->active ? ['Suspended', 'overdue'] : ($t['open'] ? ['On route', 'onway'] : ['Available', 'delivered']),
         'today' => $t, 'month' => $m, 'run' => $run, 'runNo' => 'RS-' . date('md') . '-' . $id, 'pct' => (int) $t['pct'], 'settle' => array_map(fn($s) => ['id' => (int) $s->id, 'span' => sl_date($s->period_start, 'M j') . ' – ' . sl_date($s->period_end, 'M j'), 'n' => (int) $s->deliveries + (int) $s->pickups, 'gross' => sl_money($s->gross), 'rid' => sl_money($s->rider_share), 'status' => $s->status, 'paid' => $s->paid_at ? sl_date($s->paid_at) : ''], $settle),
         'paid' => sl_money($paid), 'due' => $due ? ['from' => $from, 'to' => $today, 'n' => $due['done'], 'fees' => $due['fees'], 'rid' => $due['rid'], 'txt' => sl_money($due['rid'])] : null, 'activity' => array_map(fn($a) => ['at' => sl_date($a->created_at, 'M j H:i'), 'what' => $a->summary ?: $a->action_label], $act),
+        'payouts' => $payouts, 'balance' => $balance, 'payAccount' => $payAccount,
         'canSettle' => $user->cdp_hasPermission('manage_rider_fees'), 'canEdit' => $user->cdp_hasPermission(['drivers_edit', 'edit_user']) && cdp_canManageUser($user, (int) $r->userlevel), 'canDispatch' => $user->cdp_hasPermission(['dispatch_riders', 'assign_drivers', 'assign_driver_pickup'])];
 }
 

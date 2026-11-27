@@ -54,6 +54,6 @@ $rrLocked = !$rv['can_load'];
     <button type="button" class="rr-btn pri" data-rr-op="start" <?= $rv['all_loaded'] ? '' : 'disabled' ?>><i class="ic i-truck" aria-hidden="true"></i>Start route</button>
   </div>
   <?php elseif ($rv['onroute']): ?>
-  <div class="da-ok"><i class="ic i-check" aria-hidden="true"></i><span>Route started<?= $rv['started_at'] ? ' at ' . h($rv['started_at']) : '' ?>. <a href="<?= h(sl_route('DriverApp')) ?>">Go to next stop</a></span></div>
+  <div class="da-ok"><i class="ic i-check" aria-hidden="true"></i><span>Route started<?= $rv['started_at'] ? ' at ' . h($rv['started_at']) : '' ?>. <a href="<?= h(sl_route('RiderMap')) ?>">Go to next stop</a></span></div>
   <?php endif; ?>
 </section>

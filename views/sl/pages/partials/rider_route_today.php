@@ -57,7 +57,7 @@ $stats = $d['rpStats'] ?? null;
   <?php elseif (!$rv['onroute']): ?>
   <section class="rr-start-cta" aria-label="Loading">
     <div><span class="up">Before you go</span><b><?= (int) $inv['loaded'] ?> of <?= (int) $inv['total'] ?> parcels loaded</b><small>Tick or scan each parcel, then start the route.</small></div>
-    <a class="rr-btn pri" href="<?= h(sl_route('DriverApp', ['tab' => 'load'])) ?>"><i class="ic i-scan" aria-hidden="true"></i>Open loading checklist</a>
+    <a class="rr-btn pri" href="<?= h(sl_route('RiderMap', ['view' => 'load'])) ?>"><i class="ic i-scan" aria-hidden="true"></i>Open loading checklist</a>
   </section>
   <?php endif; ?>
 

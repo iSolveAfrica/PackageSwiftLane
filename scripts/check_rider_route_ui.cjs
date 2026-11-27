@@ -84,7 +84,7 @@ async function login(ctx) {
   // The phone install screen (assets/swiftlane/pwa/app.js) is snoozed, as "Continue in the browser for now" does.
   await ctx.addInitScript(() => { try { localStorage.setItem('slpwa.rider.snooze', String(Date.now() + 864e5)); } catch (e) { /* ignore */ } });
   const p = await ctx.newPage();
-  await p.goto(BASE + 'login.php');
+  await p.goto(BASE + 'login.php?form=1');
   await p.fill('input[name="username"]', RIDER);
   await p.fill('input[type="password"]', PASS);
   await Promise.all([p.waitForNavigation({ waitUntil: 'load' }).catch(() => {}), p.click('button[type="submit"]')]);
@@ -100,8 +100,9 @@ async function noHScroll(page, tag) {
   assert(over <= 1, tag + ': horizontal scroll ' + over + 'px');
 }
 async function openApp(page, q) {
-  await page.goto(BASE + 'driver_app.php' + (q || ''), { waitUntil: 'load' });
-  await page.waitForSelector('.da');
+  // driver_app.php?tab=route|load redirects to the rider app's Route screen (rider_route.php).
+  await page.goto(BASE + 'driver_app.php' + (q || '?tab=route'), { waitUntil: 'load' });
+  await page.waitForSelector('.da.rr-wrap');
 }
 
 (async () => {
@@ -115,10 +116,10 @@ async function openApp(page, q) {
       const ctx = await b.newContext({ ...opts });
       await ctx.route(TILE, r => r.abort());
       const p = await login(ctx); watchErrors(p, errs, name);
-      for (const tab of ['', '?tab=route', '?tab=load']) {
+      for (const tab of ['?tab=route', '?tab=load']) {
         await openApp(p, tab);
         assert.equal(await p.evaluate(() => document.documentElement.dataset.riderLayout), want, name + ' layout');
-        await noHScroll(p, name + ' ' + (tab || 'today'));
+        await noHScroll(p, name + ' ' + tab);
       }
       await openApp(p, '?tab=route');
       await p.waitForFunction(() => { const m = document.querySelector('[data-rr-map]'); return m && m.getAttribute('data-map-provider') === 'schematic'; }, null, { timeout: 12000 });
@@ -132,7 +133,7 @@ async function openApp(page, q) {
         // Manual switch to phone view and back to auto (cookie + localStorage).
         await p.click('[data-rider-layout-set="phone"]');
         assert.equal(await p.evaluate(() => document.documentElement.dataset.riderLayout), 'phone');
-        await openApp(p);
+        await openApp(p, '?tab=route');
         assert(await p.locator('.da.is-phone').count(), 'phone view kept after reload');
         const cookie = (await ctx.cookies()).find(c => c.name === 'sl_rider_layout');
         assert.equal(cookie && cookie.value, 'phone');

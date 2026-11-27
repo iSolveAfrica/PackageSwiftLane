@@ -1,0 +1,55 @@
+/* Swift Lane phone app, Warm Ledger finish (design: Swift Lane UI Redesign, canvas Page 2 "M-*" screens).
+   Loaded last by helpers/pwa.php so it settles the look of every page on a phone and in the installed app:
+   one dark action, orange only as the accent, colour kept for status, 44px+ targets, safe areas. */
+@media (max-width: 767px), (max-height: 500px) and (max-width: 950px) and (pointer: coarse) {
+  body[data-mobile-role]:not([data-mobile-role=""]) { --pwa-accent: var(--ink); --pwa-soft: var(--active); --pwa-glow: var(--orange); overscroll-behavior-y: contain; }
+
+  /* app bar: paper background, large title, 44px icon buttons */
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-top { background: color-mix(in srgb, var(--bg) 92%, transparent); padding-top: max(10px, env(safe-area-inset-top)); }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-top .sl-ib { width: 44px; height: 44px; border-radius: 14px; border: 1px solid var(--line); background: var(--card); }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-title { font-size: 26px !important; font-weight: 600; letter-spacing: -.02em; }
+
+  /* tab bar: ink for the current tab with an orange marker, raised dark square for the centre action */
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-mobile-nav { background: var(--panel); border-top: 1px solid var(--line); border-radius: 0; box-shadow: none; padding-bottom: max(10px, env(safe-area-inset-bottom)); }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-mobile-nav a, body[data-mobile-role]:not([data-mobile-role=""]) .sl-mobile-nav button { min-height: 52px; font-size: 11.5px; font-weight: 500; color: var(--muted); background: transparent; border-radius: 0; }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-mobile-nav :is(a, button):not(.is-fab)::before { top: -7px; width: 22px; height: 3px; border-radius: 0 0 3px 3px; background: var(--orange); }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-mobile-nav :is(a[aria-current="page"], button[aria-expanded="true"]) { color: var(--ink); background: transparent; }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-mobile-nav :is(a[aria-current="page"], button[aria-expanded="true"]):not(.is-fab) .ic { color: var(--ink); background: currentColor; transform: none; }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-mobile-nav > .is-fab::before { top: -20px; width: 48px; height: 48px; border-radius: 16px; background: var(--ink); opacity: 1; scale: 1; box-shadow: 0 6px 16px rgba(22, 22, 21, .22); }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-mobile-nav > .is-fab[aria-current="page"]::before { background: var(--ink); outline: 3px solid color-mix(in srgb, var(--orange) 45%, transparent); }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-mobile-nav > .is-fab .ic { margin-top: -22px; margin-bottom: 10px; }
+
+  /* surfaces: 18px cards on paper, list rows at least 64px, one dark primary button */
+  body[data-mobile-role]:not([data-mobile-role=""]) :is(.sl-card, .ovh-card, .ov-card, .pf-kpi, .pf-panel, .pf-card) { border-radius: 18px; border: 1px solid var(--line); background: var(--card); }
+  body[data-mobile-role]:not([data-mobile-role=""]) :is(.pwa-latest-card, .pwa-rider-hero) { background: var(--ink); color: var(--inverse); }
+  body[data-mobile-role]:not([data-mobile-role=""]) :is(.pwa-latest-card, .pwa-rider-hero) :is(.pwa-eyebrow, p, small) { color: color-mix(in srgb, var(--inverse) 72%, transparent); }
+  body[data-mobile-role]:not([data-mobile-role=""]) :is(.pwa-latest-card .pwa-track-bar span, .pwa-track-bar span) { background: var(--orange); }
+  body[data-mobile-role]:not([data-mobile-role=""]) .pwa-rider-hero .sl-btn:not(.ghost) { background: var(--orange); border-color: var(--orange); color: #fff; }
+  body[data-mobile-role]:not([data-mobile-role=""]) .pwa-ready-card { background: var(--green-bg); border-color: transparent; color: var(--green-ink); }
+  body[data-mobile-role]:not([data-mobile-role=""]) .pwa-ready-card .sl-btn:not(.ghost) { background: var(--ink); border-color: var(--ink); color: var(--inverse); }
+  body[data-mobile-role]:not([data-mobile-role=""]) .pwa-ready-card .sl-btn.ghost { color: var(--ink); border-color: var(--line-2); }
+  body[data-mobile-role]:not([data-mobile-role=""]) .pwa-home-actions .ic, body[data-mobile-role]:not([data-mobile-role=""]) .pwa-address-link > span:first-child { color: var(--ink); }
+  body[data-mobile-role]:not([data-mobile-role=""]) .pwa-home-search button { background: var(--ink); }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-btn { min-height: 48px; border-radius: 14px; }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-btn.primary, body[data-mobile-role]:not([data-mobile-role=""]) .da-pri { background: var(--ink); color: var(--inverse); border-color: var(--ink); }
+  body[data-mobile-role]:not([data-mobile-role=""]) :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]) { min-height: 48px; border-radius: 13px; font-size: 16px; }
+
+  /* the full menu: a full-screen sheet with every group from the sidebar as card rows */
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-app .sl-side { width: 100vw; border-radius: 0; background: var(--bg); padding: max(12px, env(safe-area-inset-top)) 16px calc(96px + env(safe-area-inset-bottom)); }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-side .sl-gl { min-height: 44px; font-size: 12px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-side .sl-nav { background: var(--card); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; padding: 0; margin-bottom: 8px; }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-side .sl-nav a { min-height: 56px; padding: 8px 14px; border-radius: 0; border-top: 1px solid var(--line); gap: 12px; font-size: 15px; }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-side .sl-nav a:first-child { border-top: 0; }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-side .sl-nav a > .ic { width: 36px; height: 36px; padding: 9px; border-radius: 11px; background: var(--active); color: var(--ink-2); -webkit-mask-origin: content-box; mask-origin: content-box; }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-side .sl-nav a[aria-current="page"] { background: var(--active); }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-side .sl-nav .cnt { min-width: 24px; height: 22px; border-radius: 11px; background: var(--active); font-size: 11.5px; font-weight: 600; }
+}
+
+/* installed app: no browser chrome, so respect the notch and avoid web-page behaviours */
+@media (display-mode: standalone) {
+  body[data-mobile-role]:not([data-mobile-role=""]) { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }
+  body[data-mobile-role]:not([data-mobile-role=""]) :is(.sl-mobile-nav, .sl-top, .sl-btn, .sl-ib) { -webkit-user-select: none; user-select: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-mobile-nav :is(a, button)::before { transition: none; }
+}

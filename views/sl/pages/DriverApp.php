@@ -1,118 +1,150 @@
 <?php
 /**
- * DriverApp - from docs/handover/artifact-source/DriverApp.dc.html (plain, mobile).
- * Data: views/sl/data/riders.php (sl_driverAppData) for the logged-in rider.
- * Deliveries post to the legacy ajax/courier/add_courier_delivered_ajax.php (photo, receiver,
+ * Rider home (design: M-RHome) and, with ?job=ID, the handover / collection form of one assigned shipment.
+ * Data: views/sl/data/rider_ops.php (ro_data) + sl_driverAppData() for the job. The phone template
+ * (views/sl/phone/DriverApp.php) includes this file with $roPhone set; a computer gets the same blocks in two columns.
+ *
+ * Left out because the system records nothing for them: demand heat map, boosts, acceptance rate, rating,
+ * the offer countdown. Deliveries post to the legacy ajax/courier/add_courier_delivered_ajax.php (photo, receiver,
  * pickup-code gate, notifications); pickups and failed attempts to ajax/sl/rider_ajax.php.
  */
 if (!isset($d)) { $d = []; }
+$ph = !empty($roPhone);
+if (empty($d['isRider'])) { ro_notRider($ph, 'Rider app'); return; }
 $j = $d['job'] ?? null;
-$tab = (string) ($_GET['tab'] ?? 'home');
-if ($tab === 'today') $tab = 'home';
-if (!in_array($tab, ['home', 'route', 'load', 'pay'], true)) $tab = 'home';
-$rv = $d['rv'] ?? null;
-$layout = (string) ($d['layout'] ?? 'auto');
-$titles = ['home' => 'Hi ' . explode(' ', ($d['name'] ?? '') ?: 'rider')[0], 'route' => "Today's route", 'load' => 'Load parcels', 'pay' => 'My earnings'];
+
+/* ---------- one assigned shipment or pickup: details and handover ---------- */
+if ($j || !empty($d['missingJob'])):
+    $slPhone['tab'] = 'Jobs';
+    echo ro_open($ph, $j ? ($j['pickup'] ? 'Pickup' : 'Drop-off') : 'Job', $j ? $j['trk'] : '', ['back' => sl_route('RiderQueue')], sl_mxIcon('shield', 'Safety', sl_route('RiderSafety')));
+    if (!$j):
+        echo sl_mxEmpty('box', 'This job is no longer yours', 'It was finished or dispatch moved it to someone else.', 'Back to my jobs', sl_route('RiderQueue'));
+        echo ro_close($ph);
+        return;
+    endif;
+    $nav = ro_navUrl((int) $d['id'], $j['addr'] === '—' ? '' : (string) $j['addr']);
+    $tel = ro_tel((string) $j['phone']);
+    $wa = sl_riderMessageLink((string) $j['phone']);
 ?>
-<div class="da<?= $layout !== 'auto' ? ' is-' . h($layout) : '' ?>" data-layout="<?= h($layout) ?>" data-tab="<?= h($j ? 'job' : $tab) ?>">
-<script>/* Device check before first paint (assets/swiftlane/rider-device.js keeps it in sync): phones and tablets get the phone layout, desktops the web layout, unless the rider chose one. */
-(function (el) { var m = el.getAttribute('data-layout') || 'auto'; try { if (m === 'auto') m = localStorage.getItem('sl.rider.layout') || 'auto'; } catch (e) {}
-  var phone = (window.matchMedia && matchMedia('(pointer:coarse)').matches && Math.min(screen.width, screen.height) <= 1024) || !!(navigator.userAgentData && navigator.userAgentData.mobile);
-  var r = m === 'phone' || m === 'web' ? m : (phone ? 'phone' : 'web'); document.documentElement.setAttribute('data-rider-layout', r); el.classList.remove('is-phone', 'is-web'); el.classList.add('is-' + r); })(document.currentScript.parentNode);</script>
-<header class="da-top"><?php if ($j || $tab !== 'home'): ?><a class="da-ib" aria-label="Back" href="<?= sl_route('DriverApp') ?>"><i class="ic i-left" aria-hidden="true"></i></a><?php else: ?><span class="sl-av" style="width:44px;height:44px"><?= h($d['ini']) ?></span><?php endif; ?><h1><?= h($j ? $j['trk'] : $titles[$tab]) ?></h1><a class="da-ib" href="<?= sl_route('Notifications') ?>" aria-label="Alerts"><i class="ic i-bell" aria-hidden="true"></i><?php if (!empty($d['unread'])): ?><b><?= (int) $d['unread'] ?></b><?php endif; ?></a></header>
-<div class="rr-offline" data-rr-offline role="status" hidden><i class="ic ic-sm i-alert" aria-hidden="true"></i><span data-rr-offline-msg>You are offline. Showing your route as last loaded; actions need a connection.</span><button type="button" class="sl-btn sm" data-rr-retry>Retry</button></div>
-<main class="da-body" id="sl-main">
-<?php if (!empty($d['rpError'])): ?><div class="sl-banner warn">Today's route could not be loaded. Pull to refresh, or contact dispatch.</div><?php endif; ?>
-<?php if (!empty($d['isRider']) && !$j && $tab==='home') include __DIR__ . '/partials/rider_app_hero.php'; ?>
-<?php if (!empty($d['isRider']) && !$j && $rv && in_array($tab, ['home', 'route'], true)) { $rrMode = $tab; include __DIR__ . '/partials/rider_route_today.php'; } ?>
-<?php if (!empty($d['isRider']) && !$j && $tab !== 'load') include __DIR__ . '/partials/rider_delivery_requests.php'; ?>
-<?php if (!$d['isRider']): ?>
-<section class="da-sheet"><b class="fw5">This screen is for riders</b><span class="mut sm">Sign in with a rider account to see assigned pickups and deliveries. Staff can assign jobs on the dispatch board.</span><a class="da-pri" href="<?= sl_route('RiderDispatch') ?>">Open dispatch board</a><a class="da-sec" href="<?= sl_route('Main') ?>" style="flex:none">Back to overview</a></section>
-<?php elseif (!empty($d['missingJob'])): ?><section class="da-sheet"><h2 class="sl-ct">Job unavailable</h2><p class="mut">This job is no longer in your assigned list.</p><a class="da-pri" href="<?= sl_route('DriverApp') ?>">Back to my jobs</a></section>
-<?php elseif ($j): ?>
-<section class="da-sheet"><div class="da-row"><span class="sl-av" style="width:52px;height:52px"><?= h(sl_initials($j['cust'])) ?></span><span class="col grow"><b class="fw5" style="font-size:17px"><?= h($j['cust']) ?></b><span class="mut sm"><?= $j['pickup'] ? 'Pickup' : 'Delivery' ?><?= $j['phone'] ? ' · ' . h($j['phone']) : '' ?></span></span><span class="sl-pill <?= h($j['cls']) ?>"><?= h($j['st']) ?></span></div>
-<div class="da-row"><i class="ic i-pin" aria-hidden="true"></i><span class="grow"><?= h($j['addr']) ?></span></div>
-<div class="da-row" style="gap:8px"><?php if ($j['phone']): ?><a class="da-sec" href="tel:<?= h(preg_replace('/[^0-9+]/', '', $j['phone'])) ?>"><i class="ic ic-sm i-phone" aria-hidden="true"></i>Call</a><a class="da-sec" href="https://wa.me/<?= h(preg_replace('/[^0-9]/', '', $j['phone'])) ?>" target="_blank" rel="noopener"><i class="ic ic-sm i-message" aria-hidden="true"></i>WhatsApp</a><?php endif; ?><?php if ($navUrl = sl_riderNavigation($j['addr'])): ?><a class="da-sec" href="<?= h($navUrl) ?>" target="_blank" rel="noopener"><i class="ic ic-sm i-route" aria-hidden="true"></i>Navigate</a><?php endif; ?></div>
-<div class="da-kv"><div><small>Tracking</small><b class="mono"><?= h($j['trk']) ?></b></div><div><small>Weight</small><b><?= h($j['kg']) ?> kg</b></div><div><small>Value</small><b><?= h($j['value']) ?></b></div><div><small>Delivery fee</small><b><?= h($j['fee']) ?></b></div><div><small>You get (<?= (int) $j['pct'] ?>%)</small><b><?= h($j['rid']) ?></b></div><div><small>Status</small><b><?= h($j['st']) ?></b></div></div></section>
+<div class="rs-oid"><div><b><?= h($j['trk']) ?></b><span><?= h($j['addr']) ?></span></div><span class="rs-st<?= $j['state'] === 'open' ? '' : ' ok' ?>"><?= h($j['st']) ?></span></div>
+<div class="mxp-grid">
+<div class="mxp-col">
+<section class="mx-card rs-cust"><span class="mx-ava"><?= h(sl_initials($j['cust'])) ?></span><span class="mx-rm"><b><?= h($j['cust']) ?></b><small><?= $j['pickup'] ? 'Hands the parcel to you' : 'Receives the parcel' ?><?= $j['phone'] ? ' · ' . h($j['phone']) : '' ?></small></span><?php if ($nav !== ''): ?><a class="rs-rb" href="<?= h($nav) ?>" target="_blank" rel="noopener" aria-label="Directions in your maps app"><i class="ic i-route" aria-hidden="true"></i></a><?php endif; ?></section>
+<?php if ($tel !== '' || $wa !== ''): ?><div class="rs-pair"><?php if ($tel !== ''): ?><a class="mx-btn rs-amb" href="<?= h($tel) ?>"><i class="ic ic-sm i-phone" aria-hidden="true"></i>Call</a><?php endif; ?><?php if ($wa !== ''): ?><a class="mx-btn sec rs-out" href="<?= h($wa) ?>" target="_blank" rel="noopener"><i class="ic ic-sm i-message" aria-hidden="true"></i>WhatsApp</a><?php else: ?><a class="mx-btn sec rs-out" href="<?= h(sl_route('RiderNav', ['id' => 'o' . (int) $j['id']])) ?>"><i class="ic ic-sm i-pin" aria-hidden="true"></i>Address</a><?php endif; ?></div><?php endif; ?>
+<section class="ra-fx"><div><span><i class="ic ic-sm i-box" aria-hidden="true"></i></span><small>Weight</small><b><?= h($j['kg']) ?> kg</b></div><div><span><i class="ic ic-sm i-receipt" aria-hidden="true"></i></span><small>Delivery fee</small><b><?= h($j['fee']) ?></b></div><div><span><i class="ic ic-sm i-dollar" aria-hidden="true"></i></span><small>You get (<?= (int) $j['pct'] ?>%)</small><b><?= h($j['rid']) ?></b></div></section>
+</div>
+<div class="mxp-col">
 <?php if ($j['state'] === 'open' && !$j['pickup']): ?>
-<?php if ($j['st'] !== 'On route'): ?><button class="da-sec" style="flex:none" data-sl-action="ajax/sl/rider_ajax.php" data-p-op="onroute" data-p-id="<?= (int) $j['id'] ?>" data-sl-reload><i class="ic ic-sm i-truck" aria-hidden="true"></i>Start: I have the package</button><?php endif; ?>
-<form class="da-sheet" id="da-deliver" enctype="multipart/form-data"><b class="fw5">Hand over</b>
-<?php if ($d['codesOn']): ?><label class="sl-field"><span class="sl-lab">Customer's pickup code (if they have one)</span><input class="sl-in mono" name="code" inputmode="numeric" maxlength="6" placeholder="6 digits" autocomplete="off" style="font-size:22px;letter-spacing:.3em;text-align:center"></label><?php endif; ?>
-<label class="sl-field"><span class="sl-lab">Who received it</span><input class="sl-in" name="person_receives" required placeholder="Full name"></label>
-<label class="da-photo"><span><i class="ic i-image" aria-hidden="true"></i> <span id="da-photo-l">Take a photo of the hand-over</span></span><input type="file" name="miarchivo" accept="image/*" capture="environment" class="da-file-input" aria-label="Add handover photo"></label>
-<input type="hidden" name="shipment_id" value="<?= (int) $j['id'] ?>"><input type="hidden" name="driver_id" value="<?= (int) $_SESSION['userid'] ?>"><input type="hidden" name="handover_type" value="delivered"><input type="hidden" name="deliver_date" value="<?= date('Y-m-d') ?>"><input type="hidden" name="country" value=""><input type="hidden" name="address" value="<?= h($j['addr']) ?>"><input type="hidden" name="comments" value="Delivered by rider app">
-<div role="alert" tabindex="-1" class="da-bad" id="da-bad" style="display:none"><i class="ic ic-sm i-x" aria-hidden="true"></i><span></span></div>
-<button class="da-pri sl-mobile-sticky" type="submit"><i class="ic ic-sm i-check" aria-hidden="true"></i>Confirm delivery</button>
-<button class="da-sec" type="button" style="flex:none" data-sl-action="ajax/sl/rider_ajax.php" data-p-op="failed" data-p-id="<?= (int) $j['id'] ?>" data-p-note="Customer not home" data-sl-confirm="Record a failed attempt?">Customer not home · try later</button></form>
-<?php elseif ($j['state'] === 'open' && $j['pickup']): ?>
-<form class="da-sheet" data-sl-form action="ajax/sl/rider_ajax.php" method="post" enctype="multipart/form-data" data-sl-redirect><b class="fw5">Collect the parcel</b><input type="hidden" name="op" value="collected"><input type="hidden" name="id" value="<?= (int) $j['id'] ?>">
-<label class="sl-field"><span class="sl-lab">Who handed it over</span><input class="sl-in" name="person" required placeholder="Full name"></label>
-<label class="da-photo"><span><i class="ic i-image" aria-hidden="true"></i> <span>Photo of the parcel</span></span><input type="file" name="photo" accept="image/*" capture="environment" class="da-file-input" aria-label="Add handover photo"></label>
-<input class="sl-in" name="note" aria-label="Note (optional)" placeholder="Note (optional)"><button class="da-pri sl-mobile-sticky" type="submit"><i class="ic ic-sm i-check" aria-hidden="true"></i>Mark collected</button>
-<button class="da-sec" type="button" style="flex:none" data-sl-action="ajax/sl/rider_ajax.php" data-p-op="failed" data-p-id="<?= (int) $j['id'] ?>" data-p-note="Customer not available" data-sl-confirm="Record a failed attempt?">Customer not there · try later</button></form>
-<?php else: ?><div class="da-ok"><i class="ic i-check" aria-hidden="true"></i><span><?= h($j['st']) ?><?= $j['receiver'] ? ' to ' . h($j['receiver']) : '' ?>. <?= $j['state'] === 'done' ? h($j['rid']) . ' added to today’s earnings.' : 'Contact dispatch to arrange another attempt.' ?></span></div><a class="da-pri" href="<?= sl_route('DriverApp') ?>">Next package</a><?php endif; ?>
-<?php elseif ($tab === 'load'): ?>
-<?php if ($rv): include __DIR__ . '/partials/rider_load_checklist.php'; else: ?><section class="da-sheet"><h2 class="sl-ct">Nothing to load yet</h2><p class="mut">When dispatch confirms today's route, your parcels appear here as a checklist to scan or tick before you leave the office.</p><a class="da-pri" href="<?= h(sl_route('DriverApp')) ?>">Back to today</a></section><?php endif; ?>
-<?php elseif ($tab === 'pay'): ?>
-<section class="da-sheet"><span class="up">Other assigned jobs · earned today</span><b style="font:600 38px var(--font);letter-spacing:-.02em"><?= h($d['earned']) ?></b><span class="mut sm"><?= (int) $d['done'] ?> jobs · <?= (int) $d['pct'] ?>% of <?= h($d['feesToday']) ?> in fees</span><div class="da-bars"><?php foreach ($d['week'] as $w): ?><i class="<?= h($w['cls']) ?>" style="<?= h($w['h']) ?>" title="<?= h($w['t']) ?>"></i><?php endforeach; ?></div><div class="row between mut" style="font-size:13.5px"><?php foreach ($d['week'] as $w): ?><span><?= h($w['l']) ?></span><?php endforeach; ?></div></section>
-<div class="da-k"><div><b><?= h($d['weekEarned']) ?></b><small>Last 7 days</small></div><div><b><?= (int) $d['done'] ?></b><small>Done today</small></div><div><b><?= (int) $d['left'] ?></b><small>Still to do</small></div></div>
-<?php elseif ($tab === 'route' && $rv): ?>
-<?php if ($d['jobs']): ?><details class="da-sheet rr-other"><summary><b class="fw5">Other jobs</b> <span class="mut sm"><?= (int) $d['left'] ?> to do · not in the planned route</span></summary>
-<?php foreach ($d['jobs'] as $i => $p): ?><a class="da-pk" href="<?= h(sl_route('DriverApp', ['job' => $p['id']])) ?>" style="color:inherit"><span class="da-n <?= $p['state'] === 'open' ? '' : 'done' ?>"><?= $i + 1 ?></span><span class="m"><b class="fw5"><?= h($p['cust']) ?></b><small><?= h($p['addr']) ?></small></span><span class="sl-pill <?= h($p['cls']) ?>"><?= h($p['st']) ?></span></a><?php endforeach; ?></details><?php endif; ?>
-<?php elseif ($rv && !$d['total']): ?>
+<?php if ($j['st'] !== 'On route'): ?><button type="button" class="mx-btn sec ro-btn" data-sl-action="ajax/sl/rider_ajax.php" data-p-op="onroute" data-p-id="<?= (int) $j['id'] ?>" data-sl-reload><i class="ic ic-sm i-truck" aria-hidden="true"></i>I have the parcel · start delivery</button><?php endif; ?>
+<form class="ro-form" id="da-deliver" enctype="multipart/form-data" data-done="<?= h(sl_route('RiderDone', ['id' => 'o' . (int) $j['id']])) ?>">
+<div class="mx-sec"><h2>Hand over</h2></div>
+<?php if (!empty($d['codesOn'])): ?><label class="mx-f"><small>Customer’s pickup code (if they have one)</small><input class="ro-in ro-pin" name="code" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" placeholder="······" autocomplete="one-time-code"></label><?php endif; ?>
+<label class="mx-f"><small>Who received it</small><input class="ro-in" name="person_receives" required maxlength="150" autocomplete="name" placeholder="Full name"></label>
+<label class="ro-photo"><i class="ic i-image" aria-hidden="true"></i><span data-ro-photo-label>Take a photo of the handover</span><input type="file" name="miarchivo" accept="image/*" capture="environment" aria-label="Handover photo"></label>
+<input type="hidden" name="shipment_id" value="<?= (int) $j['id'] ?>"><input type="hidden" name="driver_id" value="<?= (int) $d['id'] ?>"><input type="hidden" name="handover_type" value="delivered"><input type="hidden" name="deliver_date" value="<?= h(date('Y-m-d')) ?>"><input type="hidden" name="country" value=""><input type="hidden" name="address" value="<?= h($j['addr']) ?>"><input type="hidden" name="comments" value="Delivered by rider app">
+<div class="ro-bad" id="da-bad" role="alert" tabindex="-1" hidden></div>
+<button class="mx-btn" type="submit"><i class="ic ic-sm i-check" aria-hidden="true"></i>Confirm delivery</button>
+<button class="mx-btn sec" type="button" data-sl-action="ajax/sl/rider_ajax.php" data-p-op="failed" data-p-id="<?= (int) $j['id'] ?>" data-p-note="Customer not home" data-sl-confirm="Record a failed attempt? Dispatch will see it.">Customer not home · try later</button>
+</form>
+<?php elseif ($j['state'] === 'open'): ?>
+<form class="ro-form" data-sl-form data-sl-reload action="ajax/sl/rider_ajax.php" method="post" enctype="multipart/form-data">
+<div class="mx-sec"><h2>Collect the parcel</h2></div>
+<input type="hidden" name="op" value="collected"><input type="hidden" name="id" value="<?= (int) $j['id'] ?>">
+<label class="mx-f"><small>Who handed it over</small><input class="ro-in" name="person" required maxlength="150" autocomplete="name" placeholder="Full name"></label>
+<label class="ro-photo"><i class="ic i-image" aria-hidden="true"></i><span data-ro-photo-label>Photo of the parcel (optional)</span><input type="file" name="photo" accept="image/*" capture="environment" aria-label="Photo of the parcel"></label>
+<label class="mx-f"><small>Note (optional)</small><input class="ro-in" name="note" maxlength="250"></label>
+<button class="mx-btn" type="submit"><i class="ic ic-sm i-check" aria-hidden="true"></i>Mark collected</button>
+<a class="mx-btn sec" href="<?= h(sl_route('RiderScan', ['id' => 'o' . (int) $j['id']])) ?>"><i class="ic ic-sm i-scan" aria-hidden="true"></i>Scan the label first</a>
+<button class="mx-btn sec" type="button" data-sl-action="ajax/sl/rider_ajax.php" data-p-op="failed" data-p-id="<?= (int) $j['id'] ?>" data-p-note="Customer not available" data-sl-confirm="Record a failed attempt? Dispatch will see it.">Customer not there · try later</button>
+</form>
 <?php else: ?>
-<?php if ($rv): ?><div class="da-row rr-other-h"><b class="fw5 grow">Other jobs</b><span class="mut sm">pickups and deliveries outside the planned route</span></div><?php endif; ?>
-<div class="da-k da-job-stats"><div><b><?= (int) $d['left'] ?></b><small>To do</small></div><div><b><?= (int) $d['done'] ?></b><small>Done</small></div><div><b><?= h($d['earned']) ?></b><small>Earned today</small></div></div>
-<?php if ($d['next'] && $tab === 'home'): $n = $d['next']; ?><section class="da-next" aria-label="Next stop"><div class="in"><div class="da-row"><span class="up grow">Next stop</span><span class="sl-pill <?= h($n['cls']) ?>"><?= h($n['st']) ?></span></div><div class="da-row"><span class="col grow"><b class="fw5" style="font-size:17px"><?= h($n['cust']) ?></b><span class="mut sm"><?= h($n['addr']) ?></span></span><span class="da-fee"><?= h($n['fee']) ?><small>you get <?= h($n['rid']) ?></small></span></div>
-<div class="da-row" style="gap:8px"><?php if ($n['phone']): ?><a class="da-sec" href="tel:<?= h(preg_replace('/[^0-9+]/', '', $n['phone'])) ?>"><i class="ic ic-sm i-phone" aria-hidden="true"></i>Call</a><?php endif; ?><?php if ($navUrl = sl_riderNavigation($n['addr'])): ?><a class="da-sec" href="<?= h($navUrl) ?>" target="_blank" rel="noopener"><i class="ic ic-sm i-route" aria-hidden="true"></i>Navigate</a><?php endif; ?></div>
-<a class="da-pri" href="<?= h(sl_url(['job' => $n['id']])) ?>"><i class="ic ic-sm i-key" aria-hidden="true"></i><?= $n['pickup'] ? 'Collect' : 'Deliver' ?></a></div></section><?php endif; ?>
-<?php if (!$rv) include __DIR__ . '/partials/rider_map.php'; ?>
-<div class="da-row"><b class="fw5 grow"><?= $rv ? 'Other packages' : 'My packages' ?></b><span class="mut sm"><?= (int) $d['total'] ?> today</span></div>
-<div class="da-seg"><?php foreach ($d['segs'] as $g): ?><a class="<?= $g['k'] === $d['seg'] ? 'on' : '' ?>" href="<?= h(sl_url(['seg' => $g['k']])) ?>"><?= h($g['label']) ?></a><?php endforeach; ?></div>
-<?php foreach ($d['jobs'] as $i => $p): ?><a class="da-pk" href="<?= h(sl_url(['job' => $p['id']])) ?>" style="color:inherit"><span class="da-n <?= $p['state'] === 'open' ? '' : 'done' ?>"><?= $i + 1 ?></span><span class="m"><b class="fw5"><?= h($p['cust']) ?></b><small><?= h($p['addr']) ?></small><small class="mono"><?= h($p['trk']) ?> · <?= $p['pickup'] ? 'pickup' : 'delivery' ?></small></span><span class="col" style="align-items:flex-end;gap:6px"><span class="sl-pill <?= h($p['cls']) ?>"><?= h($p['st']) ?></span><span class="da-fee"><?= h($p['fee']) ?></span></span></a><?php endforeach; ?>
-<?php if (!$d['jobs']): ?><div class="da-sheet mut sm">Nothing here. New jobs appear when the office assigns them.</div><?php endif; ?>
+<div class="mx-ban warn"><i class="ic ic-sm i-alert" aria-hidden="true"></i><span><?= h($j['st']) ?>. Contact dispatch to arrange another attempt.</span></div>
+<div class="mx-btns"><a class="mx-btn" href="<?= h(sl_route('RiderQueue')) ?>">Back to my jobs</a></div>
 <?php endif; ?>
-</main>
-<?php if ($d['isRider']): ?>
-<div class="rr-layout" role="group" aria-label="Screen layout"><span class="mut sm">Layout</span><?php foreach (['auto' => 'Auto', 'phone' => 'Phone view', 'web' => 'Web view'] as $k => $lbl): ?><button type="button" class="<?= $layout === $k ? 'on' : '' ?>" aria-pressed="<?= $layout === $k ? 'true' : 'false' ?>" data-rider-layout-set="<?= h($k) ?>"><?= h($lbl) ?></button><?php endforeach; ?></div>
-<?php endif; ?>
-<?php if ($rv && !$j): ?>
-<dialog class="rr-dialog" data-rr-fail-dialog aria-labelledby="rr-fail-h"><form method="dialog" class="col g12" data-rr-fail-form novalidate>
-<h2 class="sl-ct" id="rr-fail-h">Delivery failed: <span data-rr-fail-name></span></h2>
-<fieldset class="rr-reasons"><legend class="sl-lab">What happened?</legend><?php foreach ($rv['fail_reasons'] as $i => $reason): ?><label class="rr-radio"><input type="radio" name="reason" value="<?= h($reason) ?>"><span><?= h($reason) ?></span></label><?php endforeach; ?><label class="rr-radio"><input type="radio" name="reason" value="Other"><span>Other</span></label></fieldset>
-<label class="sl-field"><span class="sl-lab">Note for dispatch (optional)</span><textarea class="sl-in" name="note" maxlength="400" rows="2" placeholder="E.g. called twice, gate locked"></textarea></label>
-<div class="rr-dialog-actions"><p class="da-bad" data-rr-fail-err role="alert" hidden></p>
-<div class="row g8"><button type="button" class="rr-btn" value="cancel" data-rr-fail-cancel>Back</button><button type="submit" class="rr-btn bad" value="ok">Report failed</button></div></div>
-</form></dialog>
-<script type="application/json" id="rr-data"><?= json_encode($rv['json'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES) ?></script>
-<?php endif; ?>
-<?php if ($d['isRider']): ?><nav class="da-tab da-tab-bottom" aria-label="Rider app"><?php foreach ($d['tabs'] ?? [] as $t): $on = $tab === $t['k'] && !$j; ?><a class="<?= $on ? 'on' : '' ?>"<?= $on ? ' aria-current="page"' : '' ?> href="<?= h($t['k'] === 'home' ? sl_route('DriverApp') : sl_route('DriverApp', ['tab' => $t['k']])) ?>"><i class="ic i-<?= h($t['icon']) ?>" aria-hidden="true"></i><?= h($t['label']) ?><?php if ($t['k'] === 'load' && $rv && $rv['inventory']['pending_load'] && in_array($rv['status'], ['planned', 'loading'], true)): ?><b class="rr-tab-n"><?= (int) $rv['inventory']['pending_load'] ?></b><?php endif; ?></a><?php endforeach; ?></nav><?php endif; ?>
+</div>
 </div>
 <script>
 (function () {
-  document.querySelectorAll('.da-photo input[type=file]').forEach(function (inp) { inp.addEventListener('change', function () { var l = inp.closest('.da-photo').querySelector('span span, span'); if (inp.files[0]) { inp.closest('.da-photo').classList.add('on'); l.lastChild.textContent = ' Photo added: ' + inp.files[0].name; } }); });
+  document.querySelectorAll('.ro-photo input[type=file]').forEach(function (inp) {
+    inp.addEventListener('change', function () { var box = inp.closest('.ro-photo'), l = box.querySelector('[data-ro-photo-label]'); if (inp.files[0]) { box.classList.add('on'); l.textContent = 'Photo added: ' + inp.files[0].name; } });
+  });
   var f = document.getElementById('da-deliver'); if (!f) return;
   var bad = document.getElementById('da-bad');
-  function fail(m) { bad.style.display = ''; bad.querySelector('span').textContent = m; bad.focus(); }
+  function fail(m) { bad.hidden = false; bad.textContent = m; bad.focus(); }
   f.addEventListener('submit', function (e) {
-    e.preventDefault(); if (f.getAttribute('aria-busy') === 'true') return; f.setAttribute('aria-busy','true'); bad.style.display = 'none';
+    e.preventDefault(); if (f.getAttribute('aria-busy') === 'true') return; f.setAttribute('aria-busy', 'true'); bad.hidden = true;
     var btn = f.querySelector('[type=submit]'); btn.disabled = true;
     var code = f.querySelector('[name=code]'), id = f.querySelector('[name=shipment_id]').value;
     var step = code && code.value.trim() ? SL.post('ajax/pickup_code/pickup_code_ajax.php', { action: 'verify', module: 'air', 'order_ids[]': id, code: code.value.trim() }) : Promise.resolve({ success: true });
     step.then(function (j) {
-      if (!j.success) throw new Error(j.message || 'That code does not match');
+      if (!j.success) throw new Error(j.message || 'That code does not match. Do not hand over the parcel.');
       var fd = new FormData(f); fd.delete('code');
       return SL.post('ajax/courier/add_courier_delivered_ajax.php', fd);
     }).then(function (j) {
-      if (!j.success) { var er = j.errors || {}; throw new Error(Object.keys(er).map(function (k) { return er[k]; }).join(' ') || j.message || 'Could not deliver'); }
-      SL.toast('Delivered'); setTimeout(function () { location.href = location.pathname; }, 500);
+      if (!j.success) { var er = j.errors || {}; throw new Error(Object.keys(er).map(function (k) { return er[k]; }).join(' ') || j.message || 'The delivery was not saved. Try again.'); }
+      SL.toast('Delivered'); setTimeout(function () { location.href = f.getAttribute('data-done'); }, 500);
     }).catch(function (err) { fail(err.message); }).finally(function () { btn.disabled = false; f.removeAttribute('aria-busy'); });
   });
 })();
 </script>
-<style>/* links in place of the design's buttons (server-side navigation) */
-.da-seg a{flex:none;height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--line-2);background:var(--card);font:500 15.5px var(--font);color:var(--ink);display:inline-flex;align-items:center}
-.da-seg a.on{background:var(--ink);color:var(--inverse);border-color:var(--ink)}
-.da-tab-bottom a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;height:54px;font:500 13.5px var(--font);color:var(--muted);border-radius:14px}
-.da-tab a.on{color:var(--ink)}.da-tab a.on .ic{color:#E2632A}
-.da-photo{cursor:pointer}.da-body{padding-bottom:96px}</style>
+<?php
+    echo ro_close($ph);
+    return;
+endif;
+
+/* ---------- home ---------- */
+$duty = $d['duty'];
+$next = $d['next'];
+$newN = count($d['new']);
+$week = $d['week'] ?? [];
+$hour = (int) date('G');
+$greet = $hour < 12 ? 'Good morning' : ($hour < 18 ? 'Good afternoon' : 'Good evening');
+$shift = $d['shift'] ?? null;
+if ($ph):
+    $slPhone['cls'] = 'rs-r rs-nohd';
+    $slPhone['tab'] = 'Home';
+    $slPhone['scripts'][] = 'dataJs/sl/rider_map.js';
+?>
+<main class="mx-body" id="sl-main" tabindex="-1">
+<header class="rs-hd"><a class="mx-av ro-ava" href="<?= h(sl_route('RiderAccount')) ?>" aria-label="My account<?= $duty['online'] ? ', online' : ', offline' ?>"><?= h($d['ini']) ?><?php if ($duty['online']): ?><i aria-hidden="true"></i><?php endif; ?></a><div class="rs-hi"><small><i class="ic ic-sm i-sun" aria-hidden="true"></i><?= h($greet) ?></small><b><?= h($d['first']) ?></b></div><a class="rs-chat" href="<?= h(sl_route('RiderChat')) ?>">Chat</a><a class="rs-rb rs-bell" href="<?= h(sl_route('Notifications')) ?>" aria-label="Notifications<?= $d['unread'] ? ', ' . (int) $d['unread'] . ' new' : '' ?>"><i class="ic i-bell" aria-hidden="true"></i><?php if ($d['unread']): ?><b aria-hidden="true"><?= $d['unread'] > 99 ? '99+' : (int) $d['unread'] ?></b><?php endif; ?></a></header>
+<?php else:
+    echo ro_open(false, 'Hi, ' . $d['first'], $d['sub'], ['avatar' => $d['ini'], 'href' => sl_route('RiderAccount'), 'online' => $duty['online']], ro_topActions($d));
+endif; ?>
+<div class="mxp-grid">
+<div class="mxp-col">
+<h2 class="rs-hl">Today’s deliveries<span><?= count($d['open']) ?> to go · <?= (int) $d['trips'] ?> done.</span></h2>
+<div class="rs-sr"><form class="rs-sp" method="get" action="<?= h(sl_route('RiderScan')) ?>" role="search"><i class="ic i-search" aria-hidden="true"></i><input name="q" aria-label="Check a tracking number against your jobs" placeholder="Check a tracking number" autocomplete="off" autocapitalize="characters" maxlength="60" enterkeyhint="search"></form><a class="rs-scan" href="<?= h(sl_route('RiderScan')) ?>" aria-label="Scan a parcel label"><i class="ic i-scan" aria-hidden="true"></i></a></div>
+<div class="mx-sec rs-sec"><h2>Delivery overview</h2><a href="<?= h(sl_route('RiderQueue')) ?>">See all</a></div>
+<section class="rs-ovw">
+<div class="rs-ot"><div class="rs-oth"><span class="rs-ob"><i class="ic i-box" aria-hidden="true"></i></span></div><b class="rs-ov"><?= (int) $d['trips'] ?></b><small>Deliveries today</small><div class="rs-vs"><span><?= $week ? (int) $week['yesterday']['n'] . ' yesterday' : count($d['open']) . ' to go' ?></span><a class="rs-go" href="<?= h(sl_route('RiderQueue')) ?>" aria-label="Open my jobs"><i class="ic ic-sm i-arrow" aria-hidden="true"></i></a></div></div>
+<div class="rs-ot"><div class="rs-oth"><span class="rs-ob"><i class="ic i-dollar" aria-hidden="true"></i></span></div><b class="rs-ov"><?= h($d['earnedTxt']) ?></b><small>Earned today</small><div class="rs-vs"><span><?= $week ? h($week['yesterday']['txt']) . ' yesterday' : 'Your share' ?></span><a class="rs-go" href="<?= h(sl_route('RiderEarnings')) ?>" aria-label="Open earnings"><i class="ic ic-sm i-arrow" aria-hidden="true"></i></a></div></div>
+</section>
+<div class="rs-onw"><section class="ra-on<?= $duty['online'] ? '' : ' ro-off' ?>">
+<div class="ra-onh"><span class="ra-pulse" aria-hidden="true"></span><span class="mx-rm"><b><?= $duty['suspended'] ? 'Your account is suspended' : ($duty['online'] ? 'You’re online' : 'You’re offline') ?></b><small><?= $duty['suspended'] ? 'Contact the office' : ($duty['online'] ? 'Dispatch can send you jobs' : 'No new door deliveries until you go online') ?></small></span><?php if ($duty['since'] !== ''): ?><span class="ra-onm">since <?= h(sl_date($duty['since'], date('Y-m-d', strtotime($duty['since'])) === date('Y-m-d') ? 'H:i' : 'M j')) ?></span><?php endif; ?></div>
+<?php if ($duty['ready'] && !$duty['suspended']): ?><button type="button" class="ra-big" role="switch" aria-checked="<?= $duty['online'] ? 'true' : 'false' ?>" aria-label="<?= $duty['online'] ? 'Online. Tap to go offline' : 'Offline. Tap to go online' ?>" data-sl-action="ajax/sl/rider_ops_ajax.php" data-p-op="online" data-p-value="<?= $duty['online'] ? '0' : '1' ?>"><span class="<?= $duty['online'] ? '' : 'on' ?>">Offline</span><span class="<?= $duty['online'] ? 'on' : '' ?>"><i class="ic ic-sm i-bolt" aria-hidden="true"></i>Online</span></button><?php endif; ?>
+<div class="ra-stat"><div><b><?= (int) $d['trips'] ?></b><small>Trips</small></div><div><b><?= count($d['open']) ?></b><small>To do</small></div><div><b><?= (int) $d['parcelsOpen'] ?></b><small>Parcels</small></div><div><b><?= (int) $d['pct'] ?>%</b><small>Your share</small></div></div>
+</section></div>
+<?php if ($newN): $first = $d['new'][0]; ?>
+<a class="ra-ofs" href="<?= h($newN === 1 ? $first['offer'] : sl_route('RiderTasks')) ?>"><span class="mx-li"><i class="ic i-inbox" aria-hidden="true"></i></span><span class="mx-rm"><b><?= $newN === 1 ? 'New job · ' . h($first['payTxt']) : $newN . ' jobs to start' ?></b><small><?= h($first['name'] . ' · ' . ($first['addr'] ?: 'address not supplied')) ?></small></span><i class="ic ic-sm mx-ch i-right" aria-hidden="true"></i></a>
+<?php endif; ?>
+</div>
+<div class="mxp-col">
+<?php if ($week): ?>
+<section class="rs-wk"><div class="rs-wkh"><b>Weekly earnings overview</b><a class="rs-dd" href="<?= h(sl_route('RiderEarnings')) ?>"><?= h($week['total']) ?><i class="ic ic-sm i-right" aria-hidden="true"></i></a></div>
+<div class="rs-wkc"><div class="rs-y" aria-hidden="true"><?php for ($i = 4; $i >= 0; $i--): ?><small><?= h(sl_num($week['top'] * $i / 4)) ?></small><?php endfor; ?></div>
+<div class="rs-cols"><?php foreach ($week['days'] as $w): ?><a class="rs-bar <?= h($w['cls']) ?>" href="<?= h(sl_route('RiderEarnings')) ?>" aria-label="<?= h($w['date'] . ': ' . ($w['cls'] === 'fut' ? 'no trips yet' : $w['txt'] . ', ' . $w['n'] . ' trips')) ?>"><span style="height:<?= (int) $w['h'] ?>%"><?php if ($w['cls'] === 'now'): ?><span class="rs-tip" role="tooltip"><small><?= h($w['date']) ?></small><span><i>Earned</i><b><?= h($w['txt']) ?></b></span><span><i>Trips</i><b><?= (int) $w['n'] ?></b></span></span><?php endif; ?></span><small><?= h($w['day']) ?></small></a><?php endforeach; ?></div></div></section>
+<?php endif; ?>
+<div class="mx-sec rs-sec"><h2>Next stop</h2><a href="<?= h(sl_route('RiderMap')) ?>">Open map</a></div>
+<?php if ($next): ?>
+<section class="mx-card rs-cust"><span class="mx-ava"><?= h($next['ini']) ?></span><a class="mx-rm" href="<?= h($next['href']) ?>"><b><?= h($next['name']) ?></b><small><?= h($next['kindTxt'] . ' · ' . ($next['addr'] ?: 'address not supplied')) ?></small></a><?php if ($next['nav'] !== ''): ?><a class="rs-rb" href="<?= h($next['nav']) ?>" target="_blank" rel="noopener" aria-label="Directions in your maps app"><i class="ic i-route" aria-hidden="true"></i></a><?php endif; ?></section>
+<a class="ra-swipe" href="<?= h($next['href']) ?>"><span class="ra-knob"><i class="ic i-right" aria-hidden="true"></i></span><span class="ra-swt"><b><?= $next['state'] === 'new' ? 'See the job and start' : ($next['pickup'] ? 'Go to the pickup' : 'Continue the delivery') ?></b><small><?= h($next['ref'] . ' · ' . $next['nTxt'] . ' · you get ' . $next['payTxt']) ?></small></span></a>
+<?php else: ?>
+<?= sl_mxEmpty('check', 'You’re all caught up', 'Your next job appears here when dispatch assigns it.') ?>
+<?php endif; ?>
+<a class="mx-card ra-en" href="<?= h(sl_route('RiderTasks')) ?>"><span class="mx-li"><i class="ic i-inbox" aria-hidden="true"></i></span><span class="mx-rm"><b>Task list</b><small><?= $newN ? $newN . ' assigned, not started' : 'Nothing waiting to start' ?></small></span><?php if ($newN): ?><span class="mx-cnt"><?= $newN ?></span><?php endif; ?><i class="ic ic-sm mx-ch i-right" aria-hidden="true"></i></a>
+<?php if ($shift): ?><a class="mx-card ra-en" href="<?= h(sl_route('RiderShifts')) ?>"><span class="mx-li"><i class="ic i-calendar" aria-hidden="true"></i></span><span class="mx-rm"><b><?= h($shift['when']) ?></b><small><?= h($shift['hub'] ?: 'Your next shift') ?></small></span><span class="sl-pill delivered">Booked</span><i class="ic ic-sm mx-ch i-right" aria-hidden="true"></i></a><?php endif; ?>
+<?php if ($d['failed']): ?><a class="mx-card ra-en" href="<?= h(sl_route('RiderQueue')) ?>"><span class="mx-li"><i class="ic i-alert" aria-hidden="true"></i></span><span class="mx-rm"><b><?= count($d['failed']) ?> with dispatch</b><small>Failed attempts waiting for a decision</small></span><i class="ic ic-sm mx-ch i-right" aria-hidden="true"></i></a><?php endif; ?>
+<p class="mx-note">You keep <?= (int) $d['pct'] ?>% of the delivery fee on assigned shipments; door deliveries show your share on the job. Payouts are in <a href="<?= h(sl_route('RiderWallet')) ?>">Wallet</a>.</p>
+</div>
+</div>
+<?= ro_close($ph) ?>

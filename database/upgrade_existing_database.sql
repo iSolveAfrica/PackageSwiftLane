@@ -1,4 +1,4 @@
--- Swift Lane database package, generated 2026-11-11 by scripts/build_database_package.php
+-- Swift Lane database package, generated 2026-11-27 by scripts/build_database_package.php
 -- Engine: MySQL 8.0+ (tested on 9.7) or MariaDB 10.6+. Character set utf8mb4.
 -- UPGRADE of an existing Swift Lane database (baseline: the vendor dump of 2026-02-28 or any later production schema).
 -- Every statement is idempotent; the file can be run again after a failure.
@@ -2407,4 +2407,632 @@ CREATE TABLE IF NOT EXISTS cdb_delivery_outbox (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 INSERT IGNORE INTO cdb_schema_migrations(name,applied_at) VALUES ('2026_11_11_courier_delivery',NOW());
 SELECT 'ok: 2026_11_11_courier_delivery' AS result;
+
+
+-- >>> migrations/2026_11_21_login_attempts.sql
+-- Failed sign-in log used by User::cdp_loginThrottled() (web and API login
+-- brute-force protection). lib/User.php also creates it on demand; this file
+-- makes the table part of the normal migration run. Idempotent.
+SET NAMES utf8mb4;
+CREATE TABLE IF NOT EXISTS cdb_login_attempts (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ username VARCHAR(190) NOT NULL,
+ ip VARCHAR(45) NOT NULL DEFAULT '',
+ created_at DATETIME NOT NULL,
+ KEY idx_login_attempt_user (username, created_at),
+ KEY idx_login_attempt_ip (ip, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+INSERT IGNORE INTO cdb_schema_migrations(name,applied_at) VALUES ('2026_11_21_login_attempts',NOW());
+SELECT 'ok: 2026_11_21_login_attempts' AS result;
+
+
+-- >>> migrations/2026_11_21_tracking_perf_indexes.sql
+-- Read-path indexes for the Overview, Live Tracking console, public tracking and
+-- the nav badges. cdb_courier_track is looked up by tracking code
+-- (sl_trackHistory, the track console, cdp_getTrackEvents, portal) and had no key
+-- on order_track, so every lookup was a full scan of the event log.
+-- cdb_customers_packages status counts (nav badges, overview) had no key led by
+-- status_courier. Additive and re-runnable.
+SET NAMES utf8mb4;
+
+SET @c := (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_courier_track' AND INDEX_NAME = 'idx_track_code');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_courier_track ADD KEY idx_track_code (order_track, t_date)', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+
+SET @c := (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_customers_packages' AND INDEX_NAME = 'idx_pkg_status');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_customers_packages ADD KEY idx_pkg_status (status_courier)', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+
+INSERT INTO cdb_schema_migrations (name, applied_at) SELECT '2026_11_21_tracking_perf_indexes', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_schema_migrations WHERE name = '2026_11_21_tracking_perf_indexes');
+SELECT 'ok: 2026_11_21_tracking_perf_indexes' AS result;
+
+
+-- >>> migrations/2026_11_22_payment_reference_unique.sql
+-- One gateway (non-cash) payment reference may be booked in cdb_fs_payments only
+-- once. The app checks for an existing row before inserting (fs_reference_taken),
+-- but two concurrent Record Payment / Clear Debt / checkout completions could both
+-- pass that check and book the same Paystack/Hubtel payment twice. This unique key
+-- makes the database refuse the second insert; the app reports it as
+-- 'duplicate_reference'.
+--
+-- ref_online_key is the reference for online modes and NULL for cash (cash receipt
+-- numbers may legitimately repeat; NULLs never collide in a unique key). It uses the
+-- table's case-insensitive collation, so references differing only in letter case
+-- or trailing spaces count as the same payment.
+--
+-- If the ledger ALREADY holds duplicate online references, the unique key is not
+-- added (it would fail); the last SELECT lists them. Reconcile those rows (e.g. move
+-- the reference of the wrong duplicate into its note), then re-run this file.
+-- Additive and re-runnable.
+SET NAMES utf8mb4;
+
+SET @t := (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_fs_payments');
+
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_fs_payments' AND COLUMN_NAME = 'ref_online_key');
+SET @sql := IF(@t = 1 AND @c = 0,
+    'ALTER TABLE cdb_fs_payments ADD COLUMN ref_online_key VARCHAR(190) GENERATED ALWAYS AS (IF(mode = ''cash'' OR reference = '''', NULL, reference)) STORED',
+    'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+
+SET @dups := IF(@t = 1, (SELECT COUNT(*) FROM (
+    SELECT ref_online_key FROM cdb_fs_payments WHERE ref_online_key IS NOT NULL
+    GROUP BY ref_online_key HAVING COUNT(*) > 1) d), 0);
+SET @i := (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_fs_payments' AND INDEX_NAME = 'uq_fs_ref_online');
+SET @sql := IF(@t = 1 AND @i = 0 AND @dups = 0,
+    'ALTER TABLE cdb_fs_payments ADD UNIQUE KEY uq_fs_ref_online (ref_online_key)',
+    'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+
+-- Only mark the migration applied once the key really exists.
+SET @i := (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_fs_payments' AND INDEX_NAME = 'uq_fs_ref_online');
+INSERT INTO cdb_schema_migrations (name, applied_at) SELECT '2026_11_22_payment_reference_unique', NOW() FROM DUAL WHERE @i > 0 AND NOT EXISTS (SELECT 1 FROM cdb_schema_migrations WHERE name = '2026_11_22_payment_reference_unique');
+
+SET @sql := IF(@t = 1 AND @i = 0,
+    'SELECT ref_online_key AS duplicate_reference, COUNT(*) AS rows_booked, GROUP_CONCAT(id ORDER BY id) AS payment_ids FROM cdb_fs_payments WHERE ref_online_key IS NOT NULL GROUP BY ref_online_key HAVING COUNT(*) > 1',
+    'SELECT IF(@t = 1, ''ok: 2026_11_22_payment_reference_unique'', ''skipped: cdb_fs_payments not installed yet'') AS result');
+PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+
+
+-- >>> migrations/2026_11_23_consolidation_file_kind.sql
+-- Consolidation attachments in cdb_order_files record WHICH consolidation table owns them.
+-- order_id holds a consolidate_id of either cdb_consolidate (air) or cdb_consolidate_packages
+-- (sea), and the two tables' ids collide. Every consolidation file used to be stored with
+-- is_consolidate = 1, so air #N's attachments showed on sea #N (and vice versa) and the
+-- delete endpoints could not tell which agency a file belonged to.
+--
+-- From now on: is_consolidate = 0 shipment file, 1 = air consolidation, 2 = sea consolidation.
+-- Backfill: a 1-row whose order_id exists ONLY in cdb_consolidate_packages is a sea file -> 2.
+-- Rows whose id exists in both tables (or in neither) are ambiguous and stay 1; the app
+-- treats those fail-closed (see ajax/consolidate*/consolidate_files_uploads_delete_ajax.php).
+-- The index serves the per-consolidation file lists. Additive and re-runnable.
+SET NAMES utf8mb4;
+
+SET @t := (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME IN ('cdb_order_files', 'cdb_consolidate', 'cdb_consolidate_packages'));
+
+SET @sql := IF(@t = 3,
+    'UPDATE cdb_order_files f SET f.is_consolidate = 2 WHERE f.is_consolidate = 1 AND EXISTS (SELECT 1 FROM cdb_consolidate_packages p WHERE p.consolidate_id = f.order_id) AND NOT EXISTS (SELECT 1 FROM cdb_consolidate c WHERE c.consolidate_id = f.order_id)',
+    'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+
+SET @f := (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_order_files');
+SET @c := (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_order_files' AND INDEX_NAME = 'idx_order_files_order');
+SET @sql := IF(@f = 1 AND @c = 0, 'ALTER TABLE cdb_order_files ADD KEY idx_order_files_order (order_id, is_consolidate)', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+
+INSERT INTO cdb_schema_migrations (name, applied_at) SELECT '2026_11_23_consolidation_file_kind', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_schema_migrations WHERE name = '2026_11_23_consolidation_file_kind');
+SELECT 'ok: 2026_11_23_consolidation_file_kind' AS result;
+
+
+-- >>> migrations/2026_11_26_dev_access_modules.sql
+-- Developer console: per-section access and the locked shutdown (helpers/dev_access.php).
+--
+--   cdb_dev_section_grants   one row per (super admin, developer section) granted. Sections:
+--                            overview services logs metrics infrastructure overrides deployments github
+--                            database alerts issues modules access shutdown. The owner (first assigned
+--                            super admin, cdb_dev_state 'owner_uid') holds every section without rows.
+--   cdb_dev_unlock_attempts  every unlock-code attempt (kind 'unlock') and every shutdown password
+--                            re-authentication (kind 'password'). Limits: 5 wrong per user per 15 min;
+--                            unlock also 10 per address per 15 min and 25 overall per hour (the owner is
+--                            exempt from those two). The row is written before the check, so a burst of
+--                            parallel requests cannot get past the limit.
+--   cdb_dev_state            'console_lock' = {"locked":true,"hash":"<password_hash>",...} while the
+--                            console is shut down; recovery: php scripts/dev_unlock.php on the server.
+--
+-- Module switches need no table: cdb_sl_settings module_<id> = '0' | '1' (absent = on), Financial
+-- keeps its existing 'finance_enabled' row. The code creates these tables on first use as well
+-- (and adds the 'kind' column to an older cdb_dev_unlock_attempts), and gives developers assigned
+-- before this change the observe sections only (overview services logs metrics infrastructure alerts
+-- issues deployments github), recorded as one cdb_activity_log row. Owner-only grants: access,
+-- shutdown, database.
+-- Additive and re-runnable.
+SET NAMES utf8mb4;
+
+CREATE TABLE IF NOT EXISTS cdb_dev_section_grants (
+    user_id INT NOT NULL,
+    section VARCHAR(32) NOT NULL,
+    granted_by INT NULL,
+    granted_at DATETIME NOT NULL,
+    PRIMARY KEY (user_id, section)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS cdb_dev_unlock_attempts (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    user_id INT NULL,
+    ip VARCHAR(45) NULL,
+    kind VARCHAR(16) NOT NULL DEFAULT 'unlock',
+    ok TINYINT NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    KEY idx_user (user_id, created_at),
+    KEY idx_ip (ip, created_at),
+    KEY idx_at (created_at),
+    KEY idx_kind (kind, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+-- >>> migrations/2026_11_26_dev_github.sql
+-- Developer console: GitHub (read-only cache), deployment records and database deploy jobs.
+-- Used by helpers/dev_github.php (sl_ghEnsureTables creates the same tables on first use, so this
+-- file is optional on hosts where the app user may CREATE TABLE). Idempotent.
+--   cdb_dev_gh_commits      commits of the tracked branch (change log source)
+--   cdb_dev_gh_runs         GitHub Actions workflow runs (+ jobs/steps JSON when fetched)
+--   cdb_dev_gh_releases     releases / tags
+--   cdb_dev_gh_pulls        recent pull requests
+--   cdb_dev_gh_deployments  GitHub deployments (environment, latest status)
+--   cdb_dev_deploy_records  deployments recorded by hand on the Deployments page
+--   cdb_dev_db_jobs         database backups / uploads / imports with their step log
+-- Settings (repository, API base, encrypted token) live in cdb_dev_state under key 'github'.
+SET NAMES utf8mb4;
+
+CREATE TABLE IF NOT EXISTS cdb_dev_gh_commits (
+    sha          CHAR(40) NOT NULL,
+    branch       VARCHAR(120) NULL,
+    title        VARCHAR(255) NOT NULL,
+    body         TEXT NULL,
+    ctype        VARCHAR(20) NOT NULL DEFAULT 'other',
+    cscope       VARCHAR(60) NULL,
+    breaking     TINYINT NOT NULL DEFAULT 0,
+    is_merge     TINYINT NOT NULL DEFAULT 0,
+    author       VARCHAR(120) NULL,
+    author_login VARCHAR(120) NULL,
+    committed_at DATETIME NULL,
+    url          VARCHAR(255) NULL,
+    synced_at    DATETIME NOT NULL,
+    PRIMARY KEY (sha),
+    KEY idx_when (committed_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS cdb_dev_gh_runs (
+    id            BIGINT NOT NULL,
+    workflow_id   BIGINT NULL,
+    workflow_name VARCHAR(160) NULL,
+    title         VARCHAR(255) NULL,
+    event         VARCHAR(40) NULL,
+    branch        VARCHAR(160) NULL,
+    head_sha      CHAR(40) NULL,
+    status        VARCHAR(20) NULL,
+    conclusion    VARCHAR(20) NULL,
+    run_number    INT NULL,
+    run_attempt   INT NULL,
+    actor         VARCHAR(120) NULL,
+    created_at    DATETIME NULL,
+    started_at    DATETIME NULL,
+    updated_at    DATETIME NULL,
+    duration_s    INT NULL,
+    url           VARCHAR(255) NULL,
+    jobs_json     MEDIUMTEXT NULL,
+    jobs_at       DATETIME NULL,
+    synced_at     DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    KEY idx_created (created_at),
+    KEY idx_branch (branch)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS cdb_dev_gh_releases (
+    id           BIGINT NOT NULL,
+    tag          VARCHAR(120) NOT NULL,
+    name         VARCHAR(255) NULL,
+    target       VARCHAR(160) NULL,
+    draft        TINYINT NOT NULL DEFAULT 0,
+    prerelease   TINYINT NOT NULL DEFAULT 0,
+    author       VARCHAR(120) NULL,
+    published_at DATETIME NULL,
+    url          VARCHAR(255) NULL,
+    body         TEXT NULL,
+    synced_at    DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    KEY idx_pub (published_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS cdb_dev_gh_pulls (
+    number     INT NOT NULL,
+    title      VARCHAR(255) NOT NULL,
+    state      VARCHAR(12) NOT NULL,
+    draft      TINYINT NOT NULL DEFAULT 0,
+    author     VARCHAR(120) NULL,
+    head_ref   VARCHAR(160) NULL,
+    base_ref   VARCHAR(160) NULL,
+    created_at DATETIME NULL,
+    updated_at DATETIME NULL,
+    merged_at  DATETIME NULL,
+    closed_at  DATETIME NULL,
+    url        VARCHAR(255) NULL,
+    synced_at  DATETIME NOT NULL,
+    PRIMARY KEY (number),
+    KEY idx_upd (updated_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS cdb_dev_gh_deployments (
+    id          BIGINT NOT NULL,
+    environment VARCHAR(80) NULL,
+    ref         VARCHAR(160) NULL,
+    sha         CHAR(40) NULL,
+    task        VARCHAR(60) NULL,
+    creator     VARCHAR(120) NULL,
+    created_at  DATETIME NULL,
+    state       VARCHAR(20) NULL,
+    state_at    DATETIME NULL,
+    url         VARCHAR(255) NULL,
+    synced_at   DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    KEY idx_sha (sha),
+    KEY idx_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS cdb_dev_deploy_records (
+    id          INT NOT NULL AUTO_INCREMENT,
+    environment VARCHAR(40) NOT NULL DEFAULT 'production',
+    version     VARCHAR(60) NULL,
+    commit_sha  VARCHAR(40) NULL,
+    branch      VARCHAR(120) NULL,
+    status      VARCHAR(12) NOT NULL DEFAULT 'success',
+    duration_s  INT NULL,
+    notes       VARCHAR(500) NULL,
+    recorded_by INT NULL,
+    deployed_at DATETIME NOT NULL,
+    created_at  DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    KEY idx_when (deployed_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS cdb_dev_db_jobs (
+    id          INT NOT NULL AUTO_INCREMENT,
+    kind        VARCHAR(12) NOT NULL,
+    status      VARCHAR(12) NOT NULL,
+    mode        VARCHAR(12) NULL,
+    file_name   VARCHAR(190) NULL,
+    stored_name VARCHAR(120) NULL,
+    file_bytes  BIGINT NULL,
+    sha256      CHAR(64) NULL,
+    tables_n    INT NULL,
+    backup_file VARCHAR(190) NULL,
+    log         MEDIUMTEXT NULL,
+    user_id     INT NULL,
+    started_at  DATETIME NOT NULL,
+    finished_at DATETIME NULL,
+    PRIMARY KEY (id),
+    KEY idx_started (started_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT IGNORE INTO cdb_schema_migrations (name, applied_at) VALUES ('2026_11_26_dev_github', NOW());
+SELECT 'ok: 2026_11_26_dev_github' AS result;
+
+
+-- >>> migrations/2026_11_26_dev_request_metrics.sql
+-- Developer console: request metrics (helpers/dev_metrics.php).
+--
+-- loader.php arms a sampled recorder (cdp_reqmArm). At the end of every web request a shutdown
+-- function decides whether to keep the request: every 5xx, fatal error and slow request (>= 1 s)
+-- is kept with weight 1; other requests are kept with probability CDP_REQ_METRICS_RATE (default
+-- 0.5) and weight round(1 / rate), so SUM(w) estimates the real request count without bias.
+-- No query string, no user id, no IP is stored: only the script path, method, status and timings.
+--
+-- Raw rows are kept CDP_REQ_METRICS_DAYS days (default 8); finished days are rolled up into
+-- cdb_dev_request_daily (one row per day and route plus a '*' row for the whole site) and kept
+-- 400 days. The helper creates both tables on first use too, so this file is for installations
+-- that apply migrations by hand.
+
+CREATE TABLE IF NOT EXISTS cdb_dev_requests (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    ts DATETIME NOT NULL,
+    route VARCHAR(120) NOT NULL,
+    method VARCHAR(7) NOT NULL DEFAULT 'GET',
+    status SMALLINT UNSIGNED NOT NULL DEFAULT 200,
+    ms INT UNSIGNED NOT NULL DEFAULT 0,
+    mem_kb INT UNSIGNED NULL,
+    w SMALLINT UNSIGNED NOT NULL DEFAULT 1,
+    kind VARCHAR(8) NOT NULL DEFAULT 'page',
+    fatal TINYINT NOT NULL DEFAULT 0,
+    load1 DECIMAL(6,2) NULL,
+    mem_pct DECIMAL(5,1) NULL,
+    PRIMARY KEY (id),
+    KEY idx_ts (ts),
+    KEY idx_route_ts (route, ts)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS cdb_dev_request_daily (
+    day DATE NOT NULL,
+    route VARCHAR(120) NOT NULL,
+    n INT UNSIGNED NOT NULL DEFAULT 0,
+    samples INT UNSIGNED NOT NULL DEFAULT 0,
+    err5 INT UNSIGNED NOT NULL DEFAULT 0,
+    err4 INT UNSIGNED NOT NULL DEFAULT 0,
+    sum_ms BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    max_ms INT UNSIGNED NOT NULL DEFAULT 0,
+    p50_ms INT UNSIGNED NULL,
+    p95_ms INT UNSIGNED NULL,
+    mem_kb_max INT UNSIGNED NULL,
+    active_min INT UNSIGNED NOT NULL DEFAULT 0,
+    PRIMARY KEY (day, route)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+-- >>> migrations/2026_11_26_id_document_back.sql
+-- The back of the customer's ID card. cdb_users.document_photo stays the FRONT of the card;
+-- document_photo_back holds the photo of the back (same format: a path under assets/, e.g.
+-- "uploads/users/document_back_19_....jpg"). Written by ajax/save_profile_document_ajax.php
+-- (document_photo_back) and ajax/customers/customers_document_edit_ajax.php (side=back).
+-- The app checks for the column before reading or writing it, so it keeps working before this runs.
+-- Additive and re-runnable.
+SET NAMES utf8mb4;
+
+SET @t := (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_users');
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_users' AND COLUMN_NAME = 'document_photo_back');
+SET @sql := IF(@t = 1 AND @c = 0, 'ALTER TABLE cdb_users ADD COLUMN document_photo_back VARCHAR(255) NULL DEFAULT NULL AFTER document_photo', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+
+INSERT INTO cdb_schema_migrations (name, applied_at) SELECT '2026_11_26_id_document_back', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_schema_migrations WHERE name = '2026_11_26_id_document_back');
+SELECT 'ok: 2026_11_26_id_document_back' AS result;
+
+
+-- >>> migrations/2026_11_26_passkeys.sql
+-- Fingerprint / face sign-in (passkeys, helpers/webauthn.php). The table is also created on
+-- first use; this file makes it part of the normal migration run. Idempotent.
+SET NAMES utf8mb4;
+CREATE TABLE IF NOT EXISTS cdb_passkeys (
+ id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ user_id INT NOT NULL,
+ credential_id VARCHAR(255) NOT NULL,
+ public_key TEXT NOT NULL,
+ alg INT NOT NULL DEFAULT -7,
+ sign_count BIGINT UNSIGNED NOT NULL DEFAULT 0,
+ label VARCHAR(120) NOT NULL DEFAULT '',
+ created_at DATETIME NOT NULL,
+ last_used_at DATETIME NULL,
+ UNIQUE KEY uq_passkey_cred (credential_id),
+ KEY idx_passkey_user (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+INSERT IGNORE INTO cdb_schema_migrations(name,applied_at) VALUES ('2026_11_26_passkeys',NOW());
+SELECT 'ok: 2026_11_26_passkeys' AS result;
+
+
+-- >>> migrations/2026_11_26_pickup_code_skip.sql
+-- Pickup code skip at handover (helpers/pickup_code.php cdp_pickupCodeSkip, ajax/sl/warehouse_ajax.php
+-- code_skip / skip_customer). Granted to Super admin, Administrator and to roles named like warehouse administrator,
+-- district administrator or finance; change it per role in Settings › Permissions. Idempotent.
+SET NAMES utf8mb4;
+INSERT INTO cdb_user_module_permissions (module_name, description) SELECT 'SWIFTLANE_UI', 'Swift Lane interface, logs, finance and warehouse permissions' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_user_module_permissions WHERE module_name = 'SWIFTLANE_UI');
+SET @mod := (SELECT id FROM cdb_user_module_permissions WHERE module_name = 'SWIFTLANE_UI' LIMIT 1);
+INSERT INTO cdb_user_module_actions (module_id, action_name, description_module)
+SELECT @mod, 'pickup_code_skip', 'Hand out: skip the pickup code (warehouse / district administrators, finance)' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM cdb_user_module_actions x WHERE x.action_name = 'pickup_code_skip');
+INSERT INTO cdb_user_role_permissions (role_id, module_action_id, permitted, created_at)
+SELECT r.role_id, ma.id, 1, NOW() FROM cdb_user_module_actions ma JOIN cdb_user_roles r
+  ON (r.role_id IN (9, 2) OR LOWER(r.role_name) LIKE '%warehouse%admin%' OR LOWER(r.role_name) LIKE '%district%admin%' OR LOWER(r.role_name) LIKE '%financ%')
+WHERE ma.action_name = 'pickup_code_skip'
+  AND NOT EXISTS (SELECT 1 FROM cdb_user_role_permissions p WHERE p.role_id = r.role_id AND p.module_action_id = ma.id);
+INSERT IGNORE INTO cdb_schema_migrations (name, applied_at) VALUES ('2026_11_26_pickup_code_skip', NOW());
+SELECT 'ok: 2026_11_26_pickup_code_skip' AS result;
+
+
+-- >>> migrations/2026_11_26_trusted_device_details.sql
+-- Remembered ("trusted") sign-in devices get the address and browser they were remembered from,
+-- so the Security Centre and My account security can describe a device ("Chrome on Windows,
+-- 102.176.4.18") instead of showing an anonymous row.
+--
+--   cdb_auth_trusted_devices.ip          VARCHAR(45)  NULL  address of the last sign-in from the device
+--   cdb_auth_trusted_devices.user_agent  VARCHAR(255) NULL  browser of the last sign-in from the device
+--
+-- lib/OtpService.php writes both when a device is remembered and refreshes them each time the
+-- device skips the one-time code. Older rows stay NULL; the pages then fall back to the user's
+-- nearest sign-in in cdb_activity_log. The code checks the columns exist, so it works before this
+-- runs. The table itself is normally created on demand by OtpService; it is created here too
+-- (same definition) so a fresh install can run this file first. Additive and re-runnable.
+SET NAMES utf8mb4;
+
+CREATE TABLE IF NOT EXISTS cdb_auth_trusted_devices (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    selector VARCHAR(24) NOT NULL UNIQUE,
+    verifier_hash VARCHAR(255) NOT NULL,
+    expires_at DATETIME NOT NULL,
+    created_at DATETIME NOT NULL,
+    last_used_at DATETIME NULL,
+    revoked_at DATETIME NULL,
+    INDEX idx_user_expires (user_id, expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_auth_trusted_devices' AND COLUMN_NAME = 'ip');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_auth_trusted_devices ADD COLUMN ip VARCHAR(45) NULL AFTER revoked_at', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_auth_trusted_devices' AND COLUMN_NAME = 'user_agent');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_auth_trusted_devices ADD COLUMN user_agent VARCHAR(255) NULL AFTER ip', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+
+INSERT IGNORE INTO cdb_schema_migrations (name, applied_at) VALUES ('2026_11_26_trusted_device_details', NOW());
+SELECT 'ok: 2026_11_26_trusted_device_details' AS result;
+
+
+-- >>> migrations/2026_11_27_prealerts_automations.sql
+-- Pre-alerts: edit, convert / link to a registered package, auto-close after 30 days overdue.
+-- Automations: suggested rules (review_status suggested -> approved -> published), scheduled checks
+-- (helpers/automations.php cdp_automationsScheduled, cron/automations.php) with editable params.
+-- cdb_pre_alert.is_package: 0 open, 1 arrived / linked to a package, 2 closed (not arrived).
+-- Additive and re-runnable.
+SET NAMES utf8mb4;
+
+-- The automation tables come from 2026_11_06_messaging_settings; create them here too, so this
+-- file works on a database where that upgrade was never run (same definitions, IF NOT EXISTS).
+CREATE TABLE IF NOT EXISTS cdb_automations (
+    id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    name          VARCHAR(150) NOT NULL,
+    trigger_key   VARCHAR(60) NOT NULL,
+    conditions    TEXT NULL,            -- JSON list [{key,op,value}]
+    actions       TEXT NULL,            -- JSON list [{type, ...params}]
+    enabled       TINYINT(1) NOT NULL DEFAULT 1,
+    run_count     INT UNSIGNED NOT NULL DEFAULT 0,
+    last_run_at   DATETIME NULL,
+    created_by    INT NULL,
+    created_at    DATETIME NOT NULL,
+    updated_at    DATETIME NULL,
+    PRIMARY KEY (id),
+    KEY idx_trigger (trigger_key, enabled)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS cdb_automation_runs (
+    id             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    automation_id  INT UNSIGNED NOT NULL,
+    trigger_key    VARCHAR(60) NOT NULL,
+    entity_type    VARCHAR(40) NULL,
+    entity_id      VARCHAR(64) NULL,
+    entity_label   VARCHAR(190) NULL,
+    outcome        VARCHAR(12) NOT NULL DEFAULT 'ok',   -- ok | skipped | failed | test
+    detail         VARCHAR(500) NULL,
+    created_at     DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    KEY idx_auto (automation_id, created_at),
+    KEY idx_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_pre_alert' AND COLUMN_NAME = 'package_ref');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_pre_alert ADD COLUMN package_ref VARCHAR(60) NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_pre_alert' AND COLUMN_NAME = 'package_module');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_pre_alert ADD COLUMN package_module VARCHAR(10) NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_pre_alert' AND COLUMN_NAME = 'package_id');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_pre_alert ADD COLUMN package_id INT NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_pre_alert' AND COLUMN_NAME = 'linked_at');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_pre_alert ADD COLUMN linked_at DATETIME NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_pre_alert' AND COLUMN_NAME = 'closed_at');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_pre_alert ADD COLUMN closed_at DATETIME NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_pre_alert' AND COLUMN_NAME = 'closed_reason');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_pre_alert ADD COLUMN closed_reason VARCHAR(200) NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_pre_alert' AND COLUMN_NAME = 'updated_at');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_pre_alert ADD COLUMN updated_at DATETIME NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_pre_alert' AND COLUMN_NAME = 'updated_by');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_pre_alert ADD COLUMN updated_by INT NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_automations' AND COLUMN_NAME = 'description');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_automations ADD COLUMN description VARCHAR(500) NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_automations' AND COLUMN_NAME = 'origin');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_automations ADD COLUMN origin VARCHAR(20) NOT NULL DEFAULT ''custom''', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_automations' AND COLUMN_NAME = 'review_status');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_automations ADD COLUMN review_status VARCHAR(20) NOT NULL DEFAULT ''published''', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_automations' AND COLUMN_NAME = 'suggest_key');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_automations ADD COLUMN suggest_key VARCHAR(60) NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_automations' AND COLUMN_NAME = 'params');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_automations ADD COLUMN params TEXT NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_automations' AND INDEX_NAME = 'uq_automation_suggest');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_automations ADD UNIQUE KEY uq_automation_suggest (suggest_key)', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_pre_alert' AND INDEX_NAME = 'idx_prealert_tracking');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_pre_alert ADD KEY idx_prealert_tracking (tracking(40), is_package)', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_automation_runs' AND INDEX_NAME = 'idx_auto_runs_entity');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_automation_runs ADD KEY idx_auto_runs_entity (automation_id, entity_type, entity_id)', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+
+-- Permission: edit any pre-alert (customers can always edit their own open ones).
+INSERT INTO cdb_user_module_permissions (module_name, description) SELECT 'SWIFTLANE_UI', 'Swift Lane interface, logs, finance and warehouse permissions' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_user_module_permissions WHERE module_name = 'SWIFTLANE_UI');
+SET @mod := (SELECT id FROM cdb_user_module_permissions WHERE module_name = 'SWIFTLANE_UI' LIMIT 1);
+INSERT INTO cdb_user_module_actions (module_id, action_name, description_module)
+SELECT @mod, 'prealert_edit', 'Pre-alerts: edit, close, reopen and link any pre-alert to a package' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM cdb_user_module_actions x WHERE x.action_name = 'prealert_edit');
+INSERT INTO cdb_user_role_permissions (role_id, module_action_id, permitted, created_at)
+SELECT r.role_id, ma.id, 1, NOW() FROM cdb_user_module_actions ma JOIN cdb_user_roles r ON r.role_id IN (9, 2, 4)
+WHERE ma.action_name = 'prealert_edit'
+  AND NOT EXISTS (SELECT 1 FROM cdb_user_role_permissions p WHERE p.role_id = r.role_id AND p.module_action_id = ma.id);
+
+INSERT INTO cdb_schema_migrations (name, applied_at) SELECT '2026_11_27_prealerts_automations', NOW() FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM cdb_schema_migrations WHERE name = '2026_11_27_prealerts_automations');
+SELECT 'ok: 2026_11_27_prealerts_automations' AS result;
+
+
+-- >>> migrations/2026_11_27_rider_app.sql
+-- =============================================================================
+-- 2026-11-27  Rider app: wallet, quests, shifts, safety and account screens
+-- Run:  mysql -u USER -p DBNAME < migrations/2026_11_27_rider_app.sql
+-- Safe to run again (CREATE TABLE IF NOT EXISTS). Nothing is dropped.
+-- Code: helpers/rider_money.php, views/sl/data/rider_money.php, ajax/sl/rider_app_ajax.php.
+-- =============================================================================
+SET NAMES utf8mb4;
+
+-- A rider asks to be paid; staff approve, decline and mark paid. No money moves by itself.
+CREATE TABLE IF NOT EXISTS cdb_rider_payout_requests (
+    id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    rider_id    INT NOT NULL,
+    amount      DECIMAL(12,2) NOT NULL,
+    note        VARCHAR(255) NULL,
+    status      VARCHAR(12) NOT NULL DEFAULT 'requested',   -- requested | approved | paid | declined | cancelled
+    staff_note  VARCHAR(255) NULL,
+    created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    decided_by  INT NULL,
+    decided_at  DATETIME NULL,
+    paid_by     INT NULL,
+    paid_at     DATETIME NULL,
+    PRIMARY KEY (id),
+    KEY idx_payout_rider (rider_id, status),
+    KEY idx_payout_status (status, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Staff-defined quests: finish target_trips between starts_at and ends_at, earn reward.
+CREATE TABLE IF NOT EXISTS cdb_rider_quests (
+    id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    title         VARCHAR(120) NOT NULL,
+    target_trips  INT UNSIGNED NOT NULL,
+    reward        DECIMAL(12,2) NOT NULL DEFAULT 0,
+    starts_at     DATETIME NOT NULL,
+    ends_at       DATETIME NOT NULL,
+    active        TINYINT(1) NOT NULL DEFAULT 1,
+    created_by    INT NULL,
+    created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_quest_window (active, starts_at, ends_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Availability blocks a rider books for themselves.
+CREATE TABLE IF NOT EXISTS cdb_rider_shifts (
+    id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    rider_id    INT NOT NULL,
+    day         DATE NOT NULL,
+    start_time  TIME NOT NULL,
+    end_time    TIME NOT NULL,
+    hub         VARCHAR(120) NOT NULL DEFAULT '',
+    status      VARCHAR(12) NOT NULL DEFAULT 'booked',      -- booked | cancelled
+    created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    cancelled_at DATETIME NULL,
+    PRIMARY KEY (id),
+    KEY idx_shift_rider (rider_id, day, status),
+    KEY idx_shift_day (day, status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Per-rider preferences and details (nav_app, offer_sounds, payout_*, ec_* emergency contact, checklist).
+-- rider_id 0 holds site-wide rider app settings (emergency_number).
+CREATE TABLE IF NOT EXISTS cdb_rider_prefs (
+    rider_id    INT NOT NULL,
+    pref_key    VARCHAR(40) NOT NULL,
+    pref_value  VARCHAR(500) NOT NULL DEFAULT '',
+    updated_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (rider_id, pref_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+INSERT INTO cdb_schema_migrations (name, applied_at)
+SELECT '2026_11_27_rider_app', NOW() FROM DUAL
+WHERE EXISTS (SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_schema_migrations')
+  AND NOT EXISTS (SELECT 1 FROM cdb_schema_migrations WHERE name = '2026_11_27_rider_app');
+
+SELECT 'ok: 2026_11_27_rider_app' AS result;
+
+
+-- >>> migrations/2026_11_27_rider_ops.sql
+-- Rider app work-flow screens: when a rider went on or off duty, and the parcels a rider ticked off at pickup.
+-- The on/off duty flag itself is cdb_users.rider_status (2026_11_06_people_staff). Additive and re-runnable.
+SET NAMES utf8mb4;
+CREATE TABLE IF NOT EXISTS cdb_rider_status_log (
+ id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, user_id INT NOT NULL, online TINYINT NOT NULL,
+ changed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, KEY rider_status_user (user_id,id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+-- A checklist only: scanning never changes a parcel or job status.
+CREATE TABLE IF NOT EXISTS cdb_rider_scans (
+ user_id INT NOT NULL, module VARCHAR(8) NOT NULL, order_id INT NOT NULL, tracking VARCHAR(400) NOT NULL,
+ scanned_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (user_id,module,order_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+INSERT IGNORE INTO cdb_schema_migrations(name,applied_at) VALUES ('2026_11_27_rider_ops',NOW());
+SELECT 'ok: 2026_11_27_rider_ops' AS result;
 

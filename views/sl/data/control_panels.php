@@ -127,7 +127,7 @@ function sl_controlPanelsData($user, $core): array
         foreach ($s['rows'] as [$board, $icon, $label, $sub, $perm, $count]) {
             if ($board === 'Payments' && !$finance) continue;
             if (!$ok($perm)) continue;
-            $rows[] = ['href' => sl_route($board), 'icon' => $icon, 'label' => $label, 'sub' => $sub, 'n' => $count ? (string) $count() : ''];
+            $rows[] = ['href' => sl_route($board, $board === 'SeaPackages' ? ['panel'=>'tower'] : []), 'icon' => $icon, 'label' => $label, 'sub' => $sub, 'n' => $count ? (string) $count() : ''];
         }
         if ($rows) $d['sections'][] = ['id' => $s['id'], 'icon' => $s['icon'], 't' => $s['t'], 's' => $s['s'], 'featured' => !empty($s['featured']), 'rows' => $rows];
     }
@@ -174,7 +174,7 @@ function sl_controlPanelSections(callable $c, string $w = '', bool $money = fals
         ]],
         ['id' => 'shipments', 'icon' => 'i-plane', 't' => 'Shipping & freight', 's' => 'Everything moving between the US and Ghana', 'rows' => [
             ['AirShipments', 'i-plane', 'Air shipments', 'Not yet delivered', 'view_shipment_list', fn() => $c("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.is_pickup = 0 AND a.status_courier NOT IN (8,15,21) $w")],
-            ['SeaPackages', 'i-ship', 'Sea packages', 'Containers and LCL boxes', 'view_package_list', fn() => $c("SELECT COUNT(*) FROM cdb_customers_packages a WHERE a.status_courier NOT IN (8,15,21) $w")],
+            ['SeaPackages', 'i-ship', 'Sea packages', 'Sea control tower, containers and LCL boxes', 'view_package_list', fn() => $c("SELECT COUNT(*) FROM cdb_customers_packages a WHERE a.status_courier NOT IN (8,15,21) $w")],
             ['Consolidations', 'i-layers', 'Consolidations', 'Open air and sea consolidations', ['view_consolidate_list', 'view_consolidate_package_list'], fn() => sl_num(
                 // agency-scoped like the other counts, and only the modes the user may open
                 (sl_navAllowed('view_consolidate_list', []) ? (int) sl_scalar("SELECT COUNT(*) FROM cdb_consolidate a WHERE a.status_courier NOT IN ('8','15','21') $w") : 0)
