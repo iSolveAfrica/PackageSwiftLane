@@ -13,7 +13,7 @@ $icons = ['infra' => 'i-cloud', 'messages' => 'i-message', 'rent' => 'i-warehous
 $amt = fn($o) => ($o['cur'] === 'USD' ? 'US$' : 'GH₵') . number_format((float) $o['amt'], (float) $o['amt'] == floor((float) $o['amt']) ? 0 : 2);
 ?>
 <link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/pwa/phone-settings.css')) ?>">
-<?= sl_phoneTop('Operating costs', $d['ready'] && $d['rows'] ? 'About ' . $d['grandF'] . ' a month' : '', ['back' => sl_route('SettingsHub')], ($user->cdp_hasPermission('view_financial_overview') ? sl_phoneIcon('chart', 'Financial overview', sl_route('FinancialOverview')) : '')) ?>
+<?= sl_phoneTop('Operating costs', $d['ready'] && $d['grand'] > 0 ? 'About ' . $d['grandF'] . ' a month' : '', ['back' => sl_route('SettingsHub')], ($user->cdp_hasPermission('view_financial_overview') ? sl_phoneIcon('chart', 'Financial overview', sl_route('FinancialOverview')) : '')) ?>
 <main class="mx-body">
 <?php if (!$d['ready']): ?>
 <section class="mx-card"><?= sl_mxEmpty('dollar', 'Costs table not installed', 'Run the finance database upgrade to record operating costs.') ?></section>
@@ -23,7 +23,7 @@ $amt = fn($o) => ($o['cur'] === 'USD' ? 'US$' : 'GH₵') . number_format((float)
 <div class="mx-row"><span class="mx-li"><i class="ic <?= h($icons[$o['cat']] ?? 'i-dollar') ?>" aria-hidden="true"></i></span><span class="mx-rm"><b><?= h($o['name']) ?></b><small><?= h(($d['cats'][$o['cat']] ?? ucfirst($o['cat'])) . ' · ' . ($d['freqs'][$o['freq']] ?? $o['freq']) . ($o['unit'] ? ' · ' . $o['unit'] : '')) ?></small></span><span class="mx-rr"><b><?= h($amt($o)) ?></b></span><?php if ($d['canEdit']): ?><button class="mx-ib" type="button" aria-label="Remove <?= h($o['name']) ?>" data-sl-action="<?= h($ajax) ?>" data-p-op="delete" data-p-id="<?= (int) $o['id'] ?>" data-sl-confirm="Remove <?= h($o['name']) ?>?" data-sl-reload><i class="ic ic-sm i-trash" aria-hidden="true"></i></button><?php endif; ?></div>
 <?php endforeach; ?>
 <?php foreach ($d['msgCount'] as $m): ?>
-<a class="mx-row" href="<?= h(sl_route('MessageCosts')) ?>"><span class="mx-li"><i class="ic i-message" aria-hidden="true"></i></span><span class="mx-rm"><b><?= h(ucfirst($m->channel)) ?> messages</b><small>From usage this month</small></span><span class="mx-rr"><b><?= h(sl_num($m->n)) ?> sent</b></span></a>
+<a class="mx-row" href="<?= h(sl_route('MessageCosts')) ?>"><span class="mx-li"><i class="ic i-message" aria-hidden="true"></i></span><span class="mx-rm"><b><?= h((['sms' => 'SMS', 'whatsapp' => 'WhatsApp', 'email' => 'E-mail'][$m->channel] ?? ucfirst($m->channel))) ?> messages</b><small>From usage this month</small></span><span class="mx-rr"><b><?= h(sl_num($m->n)) ?> sent</b></span></a>
 <?php endforeach; ?>
 <?php if (!$d['rows'] && !$d['msgCount']): ?><?= sl_mxEmpty('dollar', 'No cost lines yet', $d['canEdit'] ? 'Add what you pay for servers, rent, staff and messages.' : 'A super admin adds them.') ?><?php endif; ?>
 </section>

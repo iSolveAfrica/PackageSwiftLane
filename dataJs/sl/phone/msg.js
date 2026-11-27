@@ -93,8 +93,6 @@
         SL.post(AJ + '?action=reply', { action: 'reply', id: tid, body: text }).then(function (j) {
           if (okOf(j)) { ta.value = ''; toast('Sent'); location.reload(); return; }
           if (err) { err.hidden = false; err.textContent = (j.error || 'Not sent.') + ' Your text is still in the box.'; }
-          // the failed attempt is stored as "Not delivered": show it
-          setTimeout(function () { location.reload(); }, 2500);
         }).catch(function (x) { if (err) { err.hidden = false; err.textContent = 'Not sent: ' + (x.message || 'the request failed') + '. Your text is still in the box.'; } })
           .finally(function () { busy(sendB, false); ta.readOnly = false; });
       });

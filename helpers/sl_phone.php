@@ -52,6 +52,7 @@ function sl_phoneTabs(string $set): array
         case 'dev':
             return [['Console', 'terminal', sl_route('DevOverview')], ['Logs', 'activity', sl_route('DevLogs')], ['Alerts', 'alert', sl_route('DevAlerts'), true], ['Issues', 'bug', sl_route('DevIssues')], ['Menu', 'more', 'menu.php']];
         case 'staff':
+            require_once __DIR__ . '/sl_nav.php';
             $tabs = [['Home', 'grid', sl_route('Main')]];
             $tabs[] = ['Shipments', 'plane', sl_route('AirShipments')];
             $tabs[] = ['Scan', 'scan', $can(['package_intake', 'add_package']) ? sl_route('PackageIntake') : sl_route('LockerSearch'), true];

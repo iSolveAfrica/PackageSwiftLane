@@ -78,7 +78,7 @@ function sl_appScreens(): array
         ['Staff app · messages and automation', 'M-Compose', 'Compose message', 'compose_message.php', 'staff'],
         ['Staff app · messages and automation', 'M-Push', 'Push notifications', 'push_notifications.php', 'staff'],
         ['Staff app · messages and automation', 'M-Templates', 'SMS & WhatsApp', 'templates_whatsapp.php', 'staff'],
-        ['Staff app · messages and automation', 'M-EmailBuilder', 'Email builder', 'templates_email.php', 'staff'],
+        ['Staff app · messages and automation', 'M-EmailBuilder', 'Email builder', 'newsletter.php', 'staff'],
         ['Staff app · support desk', 'M-Desk', 'Support desk', 'support_inbox.php', 'staff'],
         ['Staff app · support desk', 'M-Ticket', '#4821', 'support_ticket.php', 'staff'],
         ['Staff app · support desk', 'M-CsReports', 'Service reports', 'support_reports.php', 'staff'],
