@@ -83,7 +83,7 @@
                 $('#' + prefix + '_pane_' + $(this).data('tab')).prop('hidden', !on);
                 if (on && focus) { this.focus(); }
             });
-            try { window.history.replaceState(null, '', '#' + key); } catch (e) { /* ignore */ }
+            try { window.history.replaceState(null, '', location.pathname + location.search + '#' + key); /* full path: inside the app a <base> would turn '#x' into the app root */ } catch (e) { /* ignore */ }
             if (onShow) { onShow(key); }
         }
         $tabs.on('click', function () { show($(this).data('tab'), false); });

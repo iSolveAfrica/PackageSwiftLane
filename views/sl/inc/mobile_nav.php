@@ -5,7 +5,8 @@ if ($mobileLinks):
 $mobilePath = sl_self();
 ?>
 <nav class="sl-mobile-nav" aria-label="<?= sl_mobileRole() === 'rider' ? 'Rider' : (sl_mobileRole() === 'customer' ? 'Customer' : 'Staff') ?> app" style="--nav-count:<?= count($mobileLinks) ?>">
-<?php foreach ($mobileLinks as [$label, $icon, $href]):
+<?php $mobileFab = count($mobileLinks) === 5 && in_array(sl_bodyRole(), ['staff', 'customer'], true) ? 2 : -1; // centre tab raised (design: ControlPanelsMobile) ?>
+<?php foreach ($mobileLinks as $mobileI => [$label, $icon, $href]):
     if ($href === '#menu'): ?>
 <button type="button" data-sl-nav aria-controls="sl-navigation" aria-expanded="false" aria-label="Open the menu"><i class="ic i-<?= h($icon) ?>" aria-hidden="true"></i><span><?= h($label) ?></span></button>
 <?php continue; endif;
@@ -18,7 +19,7 @@ $mobilePath = sl_self();
     if ($label === 'Jobs' && $mobilePath === 'delivery_job.php') $active = true;
     if ($label === 'Bills' && in_array($mobilePath, ['pay_checkout.php', 'payment_return.php'], true)) $active = true;
 ?>
-<a href="<?= h($href) ?>"<?= $active ? ' aria-current="page"' : '' ?>><i class="ic i-<?= h($icon) ?>" aria-hidden="true"></i><span><?= h($label) ?></span></a>
+<a href="<?= h($href) ?>"<?= $mobileI === $mobileFab ? ' class="is-fab"' : '' ?><?= $active ? ' aria-current="page"' : '' ?>><i class="ic i-<?= h($icon) ?>" aria-hidden="true"></i><span><?= h($label) ?></span></a>
 <?php endforeach; ?>
 </nav>
 <?php endif; ?>

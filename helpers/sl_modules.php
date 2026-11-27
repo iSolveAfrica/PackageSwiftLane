@@ -40,6 +40,7 @@ function sl_modules(): array
         'api'           => ['label' => 'REST API', 'group' => 'insights', 'desc' => 'Partner API keys, monitoring and live traffic', 'nav' => ['apis', 'apitraffic'], 'customer' => true, 'api' => ['*']],
         // Customer portal only
         'portal_track'  => ['label' => 'Public tracking', 'group' => 'portal', 'desc' => 'Track a parcel without signing in', 'nav' => [], 'customer' => true, 'api' => ['tracking']],
+        'pwa_install'   => ['label' => 'Install the phone app', 'group' => 'portal', 'desc' => 'On phones, everyone (customers, riders, staff) gets a full-screen prompt to install the Swift Lane app before using the site in the browser', 'nav' => [], 'customer' => true, 'api' => []],
         'portal_quote'  => ['label' => 'Quote calculator', 'group' => 'portal', 'desc' => 'Price a shipment before booking', 'nav' => [], 'customer' => true, 'api' => []],
     ];
 }

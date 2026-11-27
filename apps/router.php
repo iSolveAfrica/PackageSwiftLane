@@ -1,7 +1,7 @@
 <?php
 /** PATH_INFO adapter keeps existing PHP screens and AJAX inside disjoint PWA scopes.
  * No controller authorization is replaced. Do not allow arbitrary includes/paths. */
-if(!defined('SL_PWA_ROLE')||!in_array(SL_PWA_ROLE,['customer','rider'],true)){http_response_code(404);exit;}
+if(!defined('SL_PWA_ROLE')||!in_array(SL_PWA_ROLE,['customer','rider','staff'],true)){http_response_code(404);exit;}
 $root=dirname(__DIR__);
 $script=str_replace('\\','/',(string)($_SERVER['SCRIPT_NAME']??''));
 $marker='/apps/'.SL_PWA_ROLE.'/app.php';$pos=strpos($script,$marker);
@@ -30,14 +30,14 @@ if((!$publicPage&&!$ajax)||!$controller||!is_file($controller)||!str_starts_with
 chdir($root);require_once $root.'/loader.php';require_once $root.'/helpers/pwa.php';
 $user=new User();$core=new Core();
 $authPages=['login.php','logout.php','auth-otp.php','forgot-password.php','forgot-reset.php','sign-up.php','terms.php'];
-$actual=sl_mobileRole();
+$actual=sl_bodyRole(); // customer | rider | staff ('' when signed out)
 header('Cache-Control: private, no-store');header('X-Content-Type-Options: nosniff');
 if($user->cdp_loginCheck()&&$actual!==SL_PWA_ROLE&&$path!=='logout.php'){
     $actual=$actual?:'staff';
     http_response_code(403);
     if($ajax){header('Content-Type: application/json');echo json_encode(['success'=>false,'message'=>'Open the app for your signed-in account, or switch accounts']);exit;}
-    $other=$actual==='staff'?SL_PWA_ROOT_URL.'index.php':sl_pwa_scope($actual).'app.php/'.($actual==='rider'?'driver_app.php':'index.php');
-    ?><!doctype html><html lang="en"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Switch Swift Lane app</title><link rel="stylesheet" href="<?= h(SL_PWA_ROOT_URL.'assets/swiftlane/pwa/entry.css') ?>"><main class="entry"><span class="eyebrow"><?= SL_PWA_ROLE==='rider'?'Rider app':'Customer app' ?></span><h1>Open the right app for this account</h1><p>This browser is signed in with a <?= h($actual) ?> account. Open that app, or sign out to switch accounts.</p><a class="primary" href="<?= h($other) ?>">Open <?= h($actual) ?> app</a><a class="secondary" href="<?= h($scope.'app.php/logout.php') ?>">Sign out and switch account</a></main></html><?php exit;
+    $other=sl_pwa_scope($actual).'app.php/'.($actual==='rider'?'driver_app.php':'index.php');
+    ?><!doctype html><html lang="en"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Switch Swift Lane app</title><link rel="stylesheet" href="<?= h(SL_PWA_ROOT_URL.'assets/swiftlane/pwa/entry.css') ?>"><main class="entry"><span class="eyebrow"><?= SL_PWA_ROLE==='rider'?'Rider app':(SL_PWA_ROLE==='staff'?'Staff app':'Customer app') ?></span><h1>Open the right app for this account</h1><p>This browser is signed in with a <?= h($actual) ?> account. Open that app, or sign out to switch accounts.</p><a class="primary" href="<?= h($other) ?>">Open <?= h($actual) ?> app</a><a class="secondary" href="<?= h($scope.'app.php/logout.php') ?>">Sign out and switch account</a></main></html><?php exit;
 }
 if(!$user->cdp_loginCheck()&&!in_array($path,$authPages,true)){
     if($ajax){header('Content-Type: application/json');http_response_code(401);echo json_encode(['success'=>false,'message'=>'Your session ended. Sign in to continue.']);exit;}
