@@ -12,6 +12,7 @@ $slPhone['tab'] = 'Menu';
 $slPhone['scripts'][] = 'dataJs/sl/phone/settings.js';
 $can = fn($p) => $user->cdp_hasPermission($p);
 $super = function_exists('sl_userIs') && sl_userIs('superadmin');
+@include_once CDP_ROOT . '/helpers/devops.php';
 @include_once CDP_ROOT . '/helpers/dev_access.php';
 $modulesOk = function_exists('cdp_devSectionAllowed') ? cdp_devSectionAllowed($user, 'modules') : $super;
 $groups = [

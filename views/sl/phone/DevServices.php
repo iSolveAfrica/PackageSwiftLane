@@ -12,9 +12,9 @@ $shown = array_values(array_filter($d['rows'] ?? [], fn($r) => !$r['hidden']));
 ?>
 <?= sl_phoneTop('Services', (int) $c['ok'] . ' healthy · ' . (int) $c['degraded'] . ' degraded · ' . (int) $c['down'] . ' down', ['back' => sl_route('DevOverview')], sl_phDevMore()) ?>
 <main class="mx-body">
-<form class="mx-seg" method="get" aria-label="Status"><?php if (($d['q'] ?? '') !== ''): ?><input type="hidden" name="q" value="<?= h($d['q']) ?>"><?php endif; ?>
+<div class="mx-seg" role="group" aria-label="Status"><form method="get" style="display:contents"><?php if (($d['q'] ?? '') !== ''): ?><input type="hidden" name="q" value="<?= h($d['q']) ?>"><?php endif; ?>
 <?php foreach ($d['tabs'] ?? [] as $t): ?><button type="submit" name="filter" value="<?= h($t['k']) ?>" class="<?= h($t['cls']) ?>" aria-pressed="<?= $t['cls'] ? 'true' : 'false' ?>"><?= h($t['label']) ?> <?= (int) $t['n'] ?></button><?php endforeach; ?>
-</form>
+</form></div>
 <?php if ($sel): ?>
 <section class="mx-card mx-kv" aria-label="<?= h($sel['name']) ?>">
 <div><span><b style="color:var(--ink);font-weight:600"><?= h($sel['name']) ?></b></span><b><span class="sl-pill <?= h(sl_phDevPill($sel['cls'])) ?>"><?= h($sel['st']) ?></span></b></div>

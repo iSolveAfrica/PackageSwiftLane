@@ -11,3 +11,7 @@
 .ph-form[hidden]{display:none}
 .ph-total{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;font-size:14px}
 .ph-total b{font-family:var(--mono)}
+.ph-foot{padding:10px 16px calc(10px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:var(--bg)}
+.ph-foot .mx-btn{width:100%;border:0;cursor:pointer;font-family:inherit}
+.ph-foot .mx-btns{display:flex;gap:8px}
+.ph-foot .mx-btns>*{flex:1}

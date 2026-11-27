@@ -25,7 +25,7 @@ $nb = count($d['bars']);
 </div>
 <div class="mx-chips"><?php foreach ($d['modes'] as $m): ?><a class="<?= h($m['cls']) ?>" href="<?= h(sl_url(['mode' => $m['f']])) ?>"<?= $m['cls'] === 'on' ? ' aria-current="true"' : '' ?>><?= h($m['label']) ?></a><?php endforeach; ?></div>
 <section class="mx-k c2">
-<?php foreach (array_slice($d['kpis'], 0, 4) as $k): $tr = str_starts_with((string) $k['s'], '+') || stripos((string) $k['s'], 'up') === 0 ? 'up' : (str_starts_with((string) $k['s'], '-') || stripos((string) $k['s'], 'down') === 0 ? 'down' : ''); ?>
+<?php foreach (array_slice($d['kpis'], 0, 4) as $k): $ks = (string) $k['s']; $tr = (str_contains($ks, '▲') || str_starts_with($ks, '+')) ? 'up' : ((str_contains($ks, '▼') || str_starts_with($ks, '-')) ? 'down' : ''); ?>
   <div class="mx-kt"><div class="mx-kh"><span class="mx-kb"><i class="ic ic-sm <?= h($k['icon']) ?>" aria-hidden="true"></i></span><small><?= h($k['l']) ?></small></div><b><?= h($k['v']) ?></b><em class="<?= $tr ?>"><?= h($k['s']) ?></em><?= $sp($k['sp']) ?></div>
 <?php endforeach; ?>
 </section>

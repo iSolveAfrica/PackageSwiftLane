@@ -26,7 +26,7 @@ $del = fn(array $r) => $d['canEdit'] ? '<button type="button" class="mx-ib pc-bt
 <?= sl_mxSec('Base fee') ?>
 <section class="mx-card mx-list pc-wrap">
 <?php foreach ($d['base'] as $r): ?>
-<div class="mx-row"><span class="mx-li"><i class="ic i-<?= $r['type'] === 'per_pickup' ? 'download' : 'truck' ?>" aria-hidden="true"></i></span><span class="mx-rm"><b><?= h($r['label']) ?></b><small><?= $r['type'] === 'per_pickup' ? 'Each collected pickup' : 'Each delivered package' ?> · <?= h($cur) ?> / % rider</small></span><span class="mx-rr pc-inl"><?= $amt($r, 'Fee for ' . $r['label']) ?><?= $pct($r, 'Rider share for ' . $r['label']) ?></span></div>
+<div class="mx-row"><span class="mx-li"><i class="ic i-<?= $r['type'] === 'per_pickup' ? 'download' : 'truck' ?>" aria-hidden="true"></i></span><span class="mx-rm"><b><?= h($r['label']) ?></b><small><?= $r['type'] === 'per_pickup' ? 'Pickup' : 'Delivery' ?> · <?= h($cur) ?> fee · % rider</small></span><span class="mx-rr pc-inl"><?= $amt($r, 'Fee for ' . $r['label']) ?><?= $pct($r, 'Rider share for ' . $r['label']) ?></span></div>
 <?php endforeach; ?>
 <?php if (!$d['base']): ?><?= sl_mxEmpty('truck', 'No base fee yet') ?><?php endif; ?>
 </section>

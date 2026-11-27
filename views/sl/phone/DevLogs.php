@@ -42,7 +42,7 @@ $picked = !empty($_GET['row']) ? ($d['sel'] ?? null) : null;
 <div class="mx-btns"><button type="button" class="mx-btn sec" data-sl-copy="<?= h((string) $picked['raw']) ?>">Copy raw line</button><?php if (!empty($d['issuesOk'])): ?><a class="mx-btn sec" href="<?= h(sl_dvxTicketHref($picked)) ?>">Open a ticket</a><?php endif; ?></div>
 <?php endif; ?>
 <section class="mx-card" style="padding:12px;font:11.5px/1.6 var(--mono);display:flex;flex-direction:column;gap:2px;word-break:break-word" role="log" aria-label="Log lines, newest first" data-ph-tail data-since="<?= h($d['newest'] ?? '') ?>" data-source="<?= h($src) ?>" data-level="<?= h($lv) ?>" data-q="<?= h($q) ?>" data-view="<?= h($view) ?>">
-<?php foreach ($rows as $r): ?><a href="<?= h(sl_url(['row' => $r['id']])) ?>" data-id="<?= h($r['id']) ?>" style="color:inherit"><span style="color:var(--muted)"><?= h($r['time']) ?></span> <b style="color:<?= $color[$r['lc']] ?? $color['i'] ?>"><?= h($r['level']) ?></b> <?= h($r['service']) ?> <?= h($r['message']) ?></a>
+<?php foreach ($rows as $r): ?><a href="<?= h(sl_url(['row' => $r['id']])) ?>" data-id="<?= h($r['id']) ?>" style="color:inherit"><span style="color:var(--muted)"><?= h(substr((string) $r['ts'], 11, 8) ?: $r['time']) ?></span> <b style="color:<?= $color[$r['lc']] ?? $color['i'] ?>"><?= h($r['level']) ?></b> <?= h($r['service']) ?> <?= h($r['message']) ?></a>
 <?php endforeach; ?>
 <?php if (!$rows): ?><span data-ph-empty style="color:var(--muted)">No event matches these filters in this window.</span><?php endif; ?>
 </section>
@@ -52,7 +52,7 @@ $picked = !empty($_GET['row']) ? ($d['sel'] ?? null) : null;
 <div><span>Window</span><b><?php foreach ($d['windows'] ?? [] as $k => $l): ?><?php if ((int) $k === $win): ?><?= h($l) ?><?php endif; ?><?php endforeach; ?></b></div>
 <?php if (count($d['rows'] ?? []) > count($rows)): ?><div><span>Shown here</span><b>Newest <?= count($rows) ?></b></div><?php endif; ?>
 </section>
-<form class="mx-seg" method="get" aria-label="Time window"><?php foreach (['source' => $src, 'level' => $lv, 'view' => $view, 'q' => $q] as $k => $v): if ($v !== ''): ?><input type="hidden" name="<?= h($k) ?>" value="<?= h($v) ?>"><?php endif; endforeach; ?>
+<div class="mx-seg" role="group" aria-label="Time window"><form method="get" style="display:contents"><?php foreach (['source' => $src, 'level' => $lv, 'view' => $view, 'q' => $q] as $k => $v): if ($v !== ''): ?><input type="hidden" name="<?= h($k) ?>" value="<?= h($v) ?>"><?php endif; endforeach; ?>
 <?php foreach ($d['windows'] ?? [] as $k => $l): ?><button type="submit" name="window" value="<?= (int) $k ?>" class="<?= (int) $k === $win ? 'on' : '' ?>" aria-pressed="<?= (int) $k === $win ? 'true' : 'false' ?>"><?= h($l) ?></button><?php endforeach; ?>
-</form>
+</form></div>
 </main>

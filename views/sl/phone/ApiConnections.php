@@ -32,7 +32,7 @@ $c = $d['cur'];
 <?php endforeach; ?>
 <div class="mx-btns"><a class="mx-btn" href="<?= h(sl_route('NewIntegration')) ?>">Add connection</a></div>
 </main>
-<?php else: ?>
+<?php else: $slPhone['nav'] = 'none'; ?>
 <?= sl_phoneTop($c['name'], $c['desc'], ['back' => sl_route('ApiConnections')]) ?>
 <form data-sl-form data-sl-reload action="<?= h($ajax) ?>" method="post" autocomplete="off">
 <main class="mx-body">
@@ -48,6 +48,6 @@ $c = $d['cur'];
 <section class="mx-card mx-tgs"><?= sl_mxToggle('Use this connection', 'Switch off to stop using it without deleting the keys', (bool) $c['on'], $ajax, '', ['op' => 'toggle', 'provider' => $c['k']], !$d['canEdit']) ?></section>
 <?php endif; ?>
 </main>
-<div class="mx-foot"><div class="mx-btns"><button class="mx-btn sec" type="button" data-sl-action="<?= h($ajax) ?>" data-p-op="test" data-p-provider="<?= h($c['k']) ?>" data-sl-reload>Test connection</button><?php if ($d['canEdit']): ?><button class="mx-btn" type="submit">Save</button><?php endif; ?></div></div>
+<div class="mx-foot ph-foot"><div class="mx-btns"><button class="mx-btn sec" type="button" data-sl-action="<?= h($ajax) ?>" data-p-op="test" data-p-provider="<?= h($c['k']) ?>" data-sl-reload>Test connection</button><?php if ($d['canEdit']): ?><button class="mx-btn" type="submit">Save</button><?php endif; ?></div></div>
 </form>
 <?php endif; ?>

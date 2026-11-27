@@ -2,7 +2,7 @@
 /**
  * M-Automations: rules that run by themselves. Same $d as the web page (views/sl/data/automations.php).
  * The switch on each row pauses / starts it through ajax/sl/automations_ajax.php (op=toggle, id, value),
- * like the web switch. Building a rule needs the full builder, so "New automation" and a row open the
+ * like the web switch. Building a rule needs the full builder, so "New automation" opens the
  * web builder (view=web).
  */
 require_once CDP_ROOT . '/helpers/sl_mx.php';

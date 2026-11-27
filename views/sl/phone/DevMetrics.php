@@ -26,9 +26,9 @@ $slowMax = $slow ? max(1, max(array_map(fn($r) => (int) ($r['p95'] ?? $r['avg'])
 ?>
 <?= sl_phoneTop('Metrics', (string) ($d['host'] ?? ''), ['back' => sl_route('DevOverview')], sl_phDevMore()) ?>
 <main class="mx-body">
-<form class="mx-seg" method="get" aria-label="Range">
+<div class="mx-seg" role="group" aria-label="Range"><form method="get" style="display:contents">
 <?php foreach ($d['ranges'] ?? [] as $r): ?><button type="submit" name="range" value="<?= h($r['label']) ?>" class="<?= h($r['cls']) ?>" aria-pressed="<?= $r['cls'] ? 'true' : 'false' ?>"><?= h(str_replace(['h', 'd'], [' h', ' d'], $r['label'])) ?></button><?php endforeach; ?>
-</form>
+</form></div>
 <section class="mx-k c2">
 <?php foreach ($tiles as [$k, $icon, $label, $sp]): $t = $tile[$k] ?? ['v' => '—', 'u' => '', 'sub' => '']; ?>
 <div class="mx-kt" title="<?= h($t['sub']) ?>"><div class="mx-kh"><span class="mx-kb"><i class="ic ic-sm i-<?= h($icon) ?>" aria-hidden="true"></i></span><small><?= h($label) ?></small></div><b><?= h($t['v'] . ($t['v'] !== '—' && in_array($t['u'], ['%'], true) ? $t['u'] : ($k === 'lat' && $t['v'] !== '—' ? ' ms' : ''))) ?></b><?= sl_phDevSparkHtml(sl_phDevSpark($sp)) ?></div>

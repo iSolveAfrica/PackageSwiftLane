@@ -13,9 +13,9 @@ $tabKeys = ['open', 'resolved', 'all'];
 ?>
 <?= sl_phoneTop('Alerts', (int) ($d['openN'] ?? 0) . ' open', ['avatar' => $me['ini'], 'href' => sl_route('Workspace'), 'online' => true], sl_phoneIcon('search', 'Search', sl_route('LockerSearch')) . sl_phoneIcon('bell', 'Notifications', sl_route('Notifications'))) ?>
 <main class="mx-body">
-<form class="mx-seg" method="get" aria-label="Status"><?php if (($d['sev'] ?? '') !== ''): ?><input type="hidden" name="sev" value="<?= h($d['sev']) ?>"><?php endif; ?>
+<div class="mx-seg" role="group" aria-label="Status"><form method="get" style="display:contents"><?php if (($d['sev'] ?? '') !== ''): ?><input type="hidden" name="sev" value="<?= h($d['sev']) ?>"><?php endif; ?>
 <?php foreach ($d['tabs'] ?? [] as $i => $t): ?><button type="submit" name="tab" value="<?= h($tabKeys[$i] ?? 'open') ?>" class="<?= h($t['cls']) ?>" aria-pressed="<?= $t['cls'] ? 'true' : 'false' ?>"><?= h($t['label']) ?> <?= (int) $t['n'] ?></button><?php endforeach; ?>
-</form>
+</form></div>
 <?php if (!empty($d['selOutside'])): ?><div class="mx-ban info"><i class="ic ic-sm i-info" aria-hidden="true"></i><span>That alert is not in this filter. <a href="<?= h($d['selOutside']) ?>">Show all alerts</a></span></div><?php endif; ?>
 <?php if ($sel): $sp = $sevPill[$sel['sev']] ?? ['plain', ucfirst($sel['sev'])]; ?>
 <section class="mx-card mx-kv" aria-label="<?= h($sel['t']) ?>">

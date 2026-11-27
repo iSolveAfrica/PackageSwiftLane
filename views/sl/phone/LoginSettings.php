@@ -29,7 +29,7 @@ $auth = (array) ($d['auth'] ?? []);
 <link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/pwa/phone-settings.css')) ?>">
 <?= sl_phoneTop('Login page', (int) $d['onCount'] . ' of ' . count($d['slides']) . ' pictures showing', ['back' => sl_route('SettingsHub')], sl_phoneIcon('eye', 'Open the login page', sl_route('Login'))) ?>
 <main class="mx-body">
-<section class="mx-cv ph-bg" style="min-height:200px;<?= h($bg) ?>" aria-label="Preview of the sign-in screen"><b style="font-size:18px"><?= h($txt('login', 0)) ?></b><small style="opacity:.7">Preview of the sign-in screen</small></section>
+<section class="mx-cv<?= $bg !== '' ? ' ph-bg' : '' ?>" style="min-height:200px;<?= h($bg) ?>" aria-label="Preview of the sign-in screen"><b style="font-size:18px"><?= h($txt('login', 0)) ?></b><small style="opacity:.7">Preview of the sign-in screen</small></section>
 <form data-sl-form data-sl-reload action="<?= h($ep) ?>" method="post">
 <input type="hidden" name="op" value="save">
 <input type="hidden" name="dim" value="<?= (int) ($look['dim'] ?? 30) ?>"><input type="hidden" name="interval" value="<?= (int) ($look['interval'] ?? 6) ?>"><input type="hidden" name="captions" value="<?= !empty($look['captions']) ? '1' : '0' ?>">

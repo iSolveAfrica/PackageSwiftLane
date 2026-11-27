@@ -6,7 +6,7 @@
   var root = document.querySelector('[data-ro-scan]');
   if (!root || !window.SL) return;
   var url = root.getAttribute('data-ro-scan');
-  var form = root.querySelector('[data-ro-form]'), input = form.querySelector('input[name=code]');
+  var form = root.querySelector('[data-ro-form]'), input = form.querySelector('input[name=q]');
   var status = root.querySelector('[data-ro-status]'), hint = root.querySelector('[data-ro-hint]');
   var busy = false, lastCode = '', lastAt = 0;
 
@@ -43,11 +43,11 @@
         say(j.trk + ' is yours', shown ? j.scanned + ' of ' + j.total + ' on this job' : 'It is on another of your open jobs.');
         SL.toast(j.message);
         input.value = '';
-        if (navigator.vibrate) navigator.vibrate(60);
+        if (navigator.vibrate && navigator.userActivation && navigator.userActivation.hasBeenActive) navigator.vibrate(60);
       } else {
         say('Not on your jobs', j.message || 'Check the number and try again.');
         SL.toast(j.message || 'Not on your jobs', true);
-        if (navigator.vibrate) navigator.vibrate([80, 60, 80]);
+        if (navigator.vibrate && navigator.userActivation && navigator.userActivation.hasBeenActive) navigator.vibrate([80, 60, 80]);
       }
     }).catch(function (err) { say('Could not check', err.message || 'Network error. Try again.'); SL.toast(err.message || 'Network error. Try again.', true); })
       .finally(function () { busy = false; });

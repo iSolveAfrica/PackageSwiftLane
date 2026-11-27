@@ -18,3 +18,6 @@ body.mx-page .b4-tbar a.b4-li,body.mx-page .b4-cta .b4-ca a:not(.sec){color:var(
 .b2-trk i.ok{background:var(--green)}
 #quote-form+*{margin-top:0}
 body.mx-page .mx-body>form>button.b2-cta,body.mx-page .mx-body button.b2-cta{align-self:flex-start}
+/* status tabs as links (M-CParcels, M-CTrack): same look as .mx-seg buttons */
+.mx-seg a{flex:none;display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink-2);font:500 13px var(--font);white-space:nowrap}
+body.mx-page .mx-body .mx-seg a.on{background:var(--ink);color:var(--inverse);border-color:var(--ink)}

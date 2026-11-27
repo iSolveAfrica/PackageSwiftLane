@@ -34,7 +34,7 @@ $back = sl_route('ShippingAddresses');
 <p class="mx-note">“LOCKER ID” in an address is replaced with each customer's locker number.</p>
 <?php if ($d['canEdit']): ?><div class="mx-btns"><a class="mx-btn" href="<?= h(sl_route('ShippingAddresses', ['edit' => 'new'])) ?>">Add address</a></div><?php endif; ?>
 </main>
-<?php else: ?>
+<?php else: $slPhone['nav'] = 'none'; ?>
 <?= sl_phoneTop($ed['id'] ? 'Edit address' : 'New address', '', ['back' => $back]) ?>
 <form data-sl-form action="<?= h($ajax) ?>" method="post" data-ph-done="<?= h($back) ?>">
 <main class="mx-body">
@@ -52,6 +52,6 @@ $back = sl_route('ShippingAddresses');
 <?php endif; ?>
 <?php if ($ed['id']): ?><button class="mx-btn sec" type="button" data-sl-action="<?= h($ajax) ?>" data-p-op="delete" data-p-id="<?= (int) $ed['id'] ?>" data-sl-confirm="Delete this address? Customers stop seeing it.">Delete address</button><?php endif; ?>
 </main>
-<div class="mx-foot"><div class="mx-btns"><button class="mx-btn" type="submit"><?= $ed['id'] ? 'Save' : 'Save and show to customers' ?></button></div></div>
+<div class="mx-foot ph-foot"><div class="mx-btns"><button class="mx-btn" type="submit"><?= $ed['id'] ? 'Save' : 'Save and show to customers' ?></button></div></div>
 </form>
 <?php endif; ?>

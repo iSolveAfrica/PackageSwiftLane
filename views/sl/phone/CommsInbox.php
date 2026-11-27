@@ -58,11 +58,11 @@ $me2 = sl_phoneMe();
 <div class="mx-comp"><span>This conversation is closed. Reopen it to reply.</span></div>
 <?php else: ?>
 <p class="pm-err" id="pm-reply-err" hidden></p>
-<form class="mx-comp" id="pm-reply" data-pm-reply="<?= h($ajax) ?>">
+<div class="mx-comp"><form id="pm-reply" data-pm-reply="<?= h($ajax) ?>">
 <input type="hidden" name="id" value="<?= (int) $t->id ?>">
 <textarea name="body" rows="1" aria-label="Reply on WhatsApp" placeholder="Reply on WhatsApp" maxlength="4000" required<?= $windowShut ? ' disabled' : '' ?>></textarea>
 <button class="mx-send" type="submit" aria-label="Send"<?= $windowShut ? ' disabled' : '' ?>><i class="ic i-send" aria-hidden="true"></i></button>
-</form>
+</form></div>
 <?php endif; ?>
 </div>
 <?php else:

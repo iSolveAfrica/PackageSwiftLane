@@ -5,6 +5,7 @@
  * build. Reads only what the console pages read (request recorder helpers/dev_metrics.php), after the
  * page's own gate has run.
  */
+require_once CDP_ROOT . '/helpers/sl_mx.php';
 
 /** Heights (0-100) of the last $n values for a .mx-sp sparkline; nulls count as 0. Empty when nothing was measured. */
 function sl_phDevSpark(array $vals, int $n = 12): array

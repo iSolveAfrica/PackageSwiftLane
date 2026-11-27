@@ -60,7 +60,7 @@
             seen[r.id] = 1;
             var a = document.createElement('a');
             a.href = r.href || '#'; a.setAttribute('data-id', r.id); a.style.color = 'inherit';
-            var ts = document.createElement('span'); ts.style.color = 'var(--muted)'; ts.textContent = r.time || '';
+            var ts = document.createElement('span'); ts.style.color = 'var(--muted)'; ts.textContent = (r.ts && r.ts.length >= 19) ? r.ts.slice(11, 19) : (r.time || '');
             var lv = document.createElement('b'); lv.style.color = lc[r.lc] || lc.i; lv.textContent = r.level || 'INFO';
             a.appendChild(ts); a.appendChild(document.createTextNode(' ')); a.appendChild(lv);
             a.appendChild(document.createTextNode(' ' + (r.service || '') + ' ' + (r.message || '')));

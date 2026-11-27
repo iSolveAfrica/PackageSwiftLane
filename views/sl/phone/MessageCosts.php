@@ -20,9 +20,9 @@ $back = $slPhone['nav'] === 'dev' ? sl_route('DevOverview') : 'menu.php';
 <?= sl_phoneTop('Message costs', $rangeLabel, ['back' => $back], sl_phoneIcon('more', 'Unit costs and full report', sl_url(['view' => 'web']) . '#unit-costs')) ?>
 <main class="mx-body">
 <?php if (empty($d['ok'])): ?><div class="mx-ban warn"><i class="ic ic-sm i-alert" aria-hidden="true"></i><span>The message log is not set up on this database yet.</span></div><?php endif; ?>
-<form class="mx-seg" method="get" aria-label="Period"><?php if (!empty($_GET['group'])): ?><input type="hidden" name="group" value="<?= h((string) $_GET['group']) ?>"><?php endif; ?>
+<div class="mx-seg" role="group" aria-label="Period"><form method="get" style="display:contents"><?php if (!empty($_GET['group'])): ?><input type="hidden" name="group" value="<?= h((string) $_GET['group']) ?>"><?php endif; ?>
 <?php foreach ($d['ranges'] ?? [] as $x): $on = $x['k'] === ($d['range'] ?? 'month'); ?><button type="submit" name="range" value="<?= h($x['k']) ?>" class="<?= $on ? 'on' : '' ?>" aria-pressed="<?= $on ? 'true' : 'false' ?>"><?= h($x['l']) ?></button><?php endforeach; ?>
-</form>
+</form></div>
 <section class="mx-k c2">
 <div class="mx-kt"><div class="mx-kh"><span class="mx-kb"><i class="ic ic-sm i-dollar" aria-hidden="true"></i></span><small><?= h($rangeLabel) ?></small></div><b><?= h((string) ($d['grand'] ?? '—')) ?></b><?= sl_phDevSparkHtml(sl_phDevSpark($series)) ?></div>
 <div class="mx-kt"><div class="mx-kh"><span class="mx-kb"><i class="ic ic-sm i-box" aria-hidden="true"></i></span><small>Per <?= h((string) ($d['group'] ?? 'day')) ?></small></div><b><?= h((string) ($d['avg'] ?? '—')) ?></b><small style="color:var(--muted);font-size:11.5px">Average</small></div>

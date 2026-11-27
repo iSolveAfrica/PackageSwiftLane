@@ -33,7 +33,7 @@ $total = (int) ($d['total'] ?? 0);
     $pill = !$r['assigned'] ? ['plain', 'Not added'] : ($r['owner'] ? ['delivered', 'Owner'] : ($full ? ['delivered', 'Full'] : ['pending', 'Limited']));
     $sub = $r['assigned'] ? ($r['owner'] ? 'Every section' : $r['n'] . ' of ' . $total . ' sections') . ($r['since'] !== '' ? ' · since ' . $r['since'] : '') : 'Super admin, not on the console';
 ?>
-<details class="mx-grp"<?= isset($_GET['u']) && (int) $_GET['u'] === (int) $r['id'] ? ' open' : '' ?>><summary class="mx-row" style="list-style:none;cursor:pointer"><span class="mx-ava"><?= h($r['ini']) ?></span><span class="mx-rm"><b><?= h($r['name'] . ($r['me'] ? ' (you)' : '')) ?></b><small><?= h($sub) ?></small></span><span class="mx-rr"><span class="sl-pill <?= h($pill[0]) ?>"><?= h($pill[1]) ?></span></span></summary>
+<details class="ph-da"<?= isset($_GET['u']) && (int) $_GET['u'] === (int) $r['id'] ? ' open' : '' ?>><summary class="mx-row" style="list-style:none;cursor:pointer"><span class="mx-ava"><?= h($r['ini']) ?></span><span class="mx-rm"><b><?= h($r['name'] . ($r['me'] ? ' (you)' : '')) ?></b><small><?= h($sub) ?></small></span><span class="mx-rr"><span class="sl-pill <?= h($pill[0]) ?>"><?= h($pill[1]) ?></span></span></summary>
 <div style="padding:0 14px 12px">
 <?php if (!$r['assigned']): ?>
 <div class="mx-btns"><button type="button" class="mx-btn" data-sl-action="<?= h($ajax) ?>" data-p-op="assign" data-p-user_id="<?= (int) $r['id'] ?>" data-p-value="1" data-sl-reload data-sl-confirm="Give <?= h($r['name']) ?> access to the developer console? They start with the Overview section only.">Add to console</button></div>
