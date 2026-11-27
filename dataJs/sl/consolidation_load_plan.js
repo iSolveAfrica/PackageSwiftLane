@@ -27,7 +27,7 @@
   const target=root.querySelector('[data-load-balance]');target.replaceChildren();
   for(const [bay,weight] of [...totals.entries()].sort((a,b)=>a[0]-b[0])){
    const node=document.createElement('div');node.setAttribute('role','listitem');
-   node.textContent='Bay '+bay+' · '+weight.toLocaleString(undefined,{maximumFractionDigits:2})+' kg';
+   node.textContent='Bay '+bay+' · '+weight.toLocaleString(undefined,{maximumFractionDigits:2})+' '+root.dataset.weightUnit;
    target.append(node);
   }
   if(!totals.size)target.textContent='Save cargo positions to see recorded weight by bay.';

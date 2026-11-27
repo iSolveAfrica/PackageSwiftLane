@@ -10,7 +10,7 @@ foreach($positions as $pos)$positionMap[(int)$pos['id']]=$pos;
 $editable=$d['canEdit'] && $d['lq']==='' && sl_tableExists('cdb_consolidation_load_plans');
 
 ?>
-<section data-load-plan data-revision="<?= (int)($stored->revision??0) ?>" data-id="<?= (int)$d['cid'] ?>" data-type="<?= h($d['type']) ?>" class="clp" id="load-plan" aria-label="<?= $sea?'Sea':'Air' ?> load plan">
+<section data-load-plan data-weight-unit="<?= h($core->weight_p ?? 'lbs') ?>" data-revision="<?= (int)($stored->revision??0) ?>" data-id="<?= (int)$d['cid'] ?>" data-type="<?= h($d['type']) ?>" class="clp" id="load-plan" aria-label="<?= $sea?'Sea':'Air' ?> load plan">
 <div class="clp-heading"><div><span class="mut sm"><?= $sea?'Sea container':'Air cargo' ?> · <?= h($d['code']) ?></span><h2>Load plan</h2></div><div class="row wrap g8">
 <a class="sl-btn ghost sm" href="#manifest">Manifest</a>
 <?php if ($can['packing']): ?><a class="sl-btn ghost sm" href="<?= h($can['packing']) ?>" target="_blank">Packing list</a><?php endif; ?>
