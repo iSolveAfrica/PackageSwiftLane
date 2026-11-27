@@ -37,6 +37,7 @@ if (!function_exists('cdp_aiSiteIndex')) {
             'LockerSearch' => 'Smart Search: search anything (tracking or store number, locker, customer, phone, container, ticket, staff, page) and open a customer card with open parcels and virtual mailbox.',
             'Campaigns' => 'E-mail, SMS and WhatsApp campaigns: sent, delivered, opened, clicked, failed and cost per campaign.',
             'Documents' => 'Every invoice, receipt, label, manifest and export printed or downloaded, with search by tracking, customer, person and date.',
+            'ReceiptStudio' => 'Receipt layout: choose which sections the package receipt shows (logo, barcode, items, charges, QR code...), drag them into order, live preview.',
             'LabelStudio' => 'Label options and printer settings (paper size, alignment, darkness, logo, test print) for shipping and small labels.',
             'EmailBuilder' => 'Design and send newsletters and e-mail campaigns to customers, with recipients, cost and results.',
             'MessageCosts' => 'Prices per SMS, WhatsApp and e-mail, and what messaging costs over time.',
