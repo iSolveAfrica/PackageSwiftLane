@@ -100,12 +100,10 @@ if ($numrows > 0) { ?>
 					<th><b><?php echo $lang['ltracking'] ?></b></th>
 					<th><b>Carrier Tracking</b></th>
 					<th><b><?php echo $lang['ddate'] ?></b></th>
-					<th><b><?php echo $lang['left498'] ?></b></th>
-					<th><b><?php echo $lang['left499'] ?></b></th>
+					<th><b>Sender</b></th>
+					<th><b>Recipient</b></th>
 					<th><b><?php echo $lang['ldestination'] ?></b></th>
-					<?php if ($userData->userlevel == 1) { // customers see their package weight ?>
-						<th><b>Weight</b></th>
-					<?php } ?>
+					<th><b>Weight</b></th>
 					<th class=""><b><?php echo $lang['ship-all5'] ?></b></th>
 					<th></th>
 					<th><b><?php echo $lang['lstatusshipment'] ?></b></th>
@@ -117,7 +115,7 @@ if ($numrows > 0) { ?>
 
 				<?php if (!$data) { ?>
 					<tr>
-						<td colspan="6">
+						<td colspan="11">
 							<?php echo "<i align='center' class='display-3 text-warning d-block'><img src='assets/images/alert/ohh_shipment.png' width='150' /></i>", false; ?>
 						</td>
 					</tr>
@@ -189,13 +187,11 @@ if ($numrows > 0) { ?>
 							<td><?php echo htmlspecialchars(trim(($sender_data->fname ?? '') . ' ' . ($sender_data->lname ?? '')) ?: '—', ENT_QUOTES, 'UTF-8'); ?></td>
 
 							<td>
-								<?php echo $recipient_type == 'user' ? $sender_data->fname : $receiver_data->fname; ?> <?php echo $recipient_type == 'user' ? $sender_data->lname : $receiver_data->lname; ?>
+								<?php echo htmlspecialchars(trim(($receiver_data->fname ?? '') . ' ' . ($receiver_data->lname ?? '')) ?: '—', ENT_QUOTES, 'UTF-8'); ?>
 							</td>
 
 							<td><?php echo $recipient_type == 'user' ? $address_order->sender_country : $address_order->recipient_country; ?>-<?php echo $recipient_type == 'user' ? $address_order->sender_city : $address_order->recipient_city; ?></td>
-							<?php if ($userData->userlevel == 1) { ?>
-								<td class="text-nowrap"><?php echo ((float) $row->total_weight > 0) ? number_format((float) $row->total_weight, 2) . ' ' . htmlspecialchars((string) $core->weight_p, ENT_QUOTES, 'UTF-8') : '—'; ?></td>
-							<?php } ?>
+							<td class="text-nowrap"><?php echo ((float) $row->total_weight > 0) ? number_format((float) $row->total_weight, 2) . ' ' . htmlspecialchars((string) $core->weight_p, ENT_QUOTES, 'UTF-8') : '—'; ?></td>
 
 							<td>
 								<?php echo cdb_money_format($row->total_order); ?>
