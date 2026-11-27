@@ -69,3 +69,10 @@ details.ro-more[open]>summary{margin-bottom:12px}
 .rs-cust .rs-rb{box-shadow:none;background:var(--card)}
 form.rs-sp{display:flex;background:var(--card);margin:0}
 .mx-kt>b{min-width:0}
+/* the kit flattens forms (display:contents); these three are laid out as boxes */
+body.mx-page form.ro-code,.mxp form.ro-code{display:grid}
+body.mx-page form.ro-form,.mxp form.ro-form{display:flex}
+body.mx-page form.rs-sp,.mxp form.rs-sp{display:flex}
+.ro-code input{letter-spacing:0;font-family:var(--font)}
+.ro-code input:not(:placeholder-shown){font-family:var(--mono)}
+.ro-code input::placeholder{text-transform:none}

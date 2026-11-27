@@ -93,7 +93,7 @@ $courierCur = (int) ($pa['courier_id'] ?? ($df['order_courier'] ?? 0));
 <input type="hidden" name="order_courier" value="<?= $courierCur ?>">
 <section class="b1-card">
 <div class="b1-dd"><small id="pns-track-l">Tracking numbers · one per box</small><div class="b1-chipin" style="padding:8px 8px 8px 10px;min-height:56px" data-pns-chips role="group" aria-labelledby="pns-track-l"><input data-pns-track-input class="mono" placeholder="Enter or scan" autocomplete="off" autocapitalize="characters" enterkeyhint="enter" aria-label="Add a tracking number"><button type="button" class="pc-chipadd" data-pns-track-add aria-label="Add this tracking number"><i class="ic ic-sm i-plus" aria-hidden="true"></i></button></div></div>
-<?php if (!empty($d['payModes'])): ?><label class="b1-dd"><small>Payment method</small><div><select name="order_pay_mode"><?= $opts((array) $d['payModes'], $df['order_pay_mode'] ?? 0) ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></div></label><?php endif; ?>
+<label class="b1-dd"><small>Payment method</small><div><select name="order_pay_mode"><?= !empty($d['payModes']) ? $opts((array) $d['payModes'], $df['order_pay_mode'] ?? 0) : '<option value="">No payment method is open yet</option>' ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></div></label>
 </section>
 <input type="hidden" name="is_dangerous_good" value="0">
 <label class="b1-tick" data-pns-danger-box><input type="checkbox" name="is_dangerous_good" value="1" class="pc-vh" data-pns-danger><i aria-hidden="true"><i class="ic ic-sm i-check" aria-hidden="true"></i></i><span><b>Contains dangerous goods</b>Batteries on their own, perfume, aerosols, nail polish, power banks. Tick it so we route it safely; batteries inside a device are fine.</span></label>

@@ -28,7 +28,7 @@ echo ro_open($ph, 'Pickup scan', $focus ? $focus['name'] . ' · ' . $focus['ref'
 <form class="ro-code" data-ro-form><input name="code" aria-label="Tracking number" placeholder="Tracking number" value="<?= h($q) ?>" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="60" enterkeyhint="go"<?= $ready && $total ? '' : ' disabled' ?>><button class="mx-btn" type="submit"<?= $ready && $total ? '' : ' disabled' ?>>Check</button></form>
 </div>
 <div class="mxp-col">
-<div class="mx-sec"><h2>Parcels on your open jobs</h2><a href="<?= h(sl_route('RiderQueue')) ?>"><span data-ro-ticked><?= $ticked ?></span> of <?= $total ?></a></div>
+<div class="mx-sec"><h2>Parcels on your open jobs</h2><a href="<?= h(sl_route('RiderQueue')) ?>"><span data-ro-ticked><?= $ticked ?></span>&nbsp;of <?= $total ?></a></div>
 <?php if (!$stops): ?>
 <?= sl_mxEmpty('scan', 'Nothing to scan', 'Parcels appear here when dispatch assigns you a pickup or a delivery.', 'Open my jobs', sl_route('RiderQueue')) ?>
 <?php endif; ?>

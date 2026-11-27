@@ -13,5 +13,12 @@ if (!cdp_mgmtCanView($user)) {
     header('Location: error403.php');
     exit;
 }
+require_once 'helpers/sl_phone.php';
+if (sl_phoneView('MasterView') !== '') {
+    require_once 'helpers/sl_phone_centres.php';
+    cdp_mgmtEnsureTables();
+    sl_render('MasterView', ['id' => 'masterview', 'title' => 'Gerald Master View'], slpc_masterData($user, $core));
+    exit;
+}
 cdp_opsRender('MasterView', 'masterview', 'Gerald Master View', ['dataJs/master_view.js'],
     ['ready' => cdp_mgmtEnsureTables(), 'isAdmin' => cdp_opsRank($user) >= 3, 'currency' => (string) ($core->currency ?? '')]);

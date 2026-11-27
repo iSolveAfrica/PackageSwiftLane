@@ -24,3 +24,6 @@
 .mx form.mx-srch{flex-direction:row;align-items:center}
 .mx .mx-seg a{color:var(--ink-2)}
 .mx .mx-seg a.on{color:var(--inverse)}
+body.mx-page form.mx-srch{display:flex}
+body.mx-page form.mx-form{display:flex}
+body.mx-page form[hidden]{display:none}

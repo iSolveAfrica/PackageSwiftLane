@@ -21,3 +21,4 @@ button.b1-amb,button.b1-wht{cursor:pointer;font-family:var(--font)}
 button.b1-amb[hidden]{display:none}
 .pc-ck-row{display:flex;align-items:center;gap:12px}
 .mx-tg button.mx-sw[disabled]{opacity:.5}
+.mx-two>*{min-width:0}

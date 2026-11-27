@@ -66,3 +66,21 @@ function slpc_wa(?string $phone): string
     $p = preg_replace('/[^0-9]/', '', (string) $phone);
     return strlen((string) $p) >= 6 ? 'https://wa.me/' . $p : '';
 }
+
+/**
+ * Figures for the phone Master View (M-Master), from the same helpers/mgmt.php functions and branch scope
+ * as ajax/mgmt/mgmt_ajax.php ("data"), for the default last-30-days window. Money only when cdp_mgmtCanMoney().
+ */
+function slpc_masterData($user, $core): array
+{
+    $f = cdp_mgmtFilters($_GET);
+    $s = cdp_mgmtShipmentStats($f['from'], $f['to'], $f['scope']);
+    $p = cdp_mgmtShipmentStats($f['prev_from'], $f['prev_to'], $f['scope']);
+    $daily = cdp_mgmtDailySeries('cdb_add_order', 'o.order_date', date('Y-m-d', strtotime($f['to'] . ' -11 days')), $f['to'], 'AND ' . cdp_mgmtShipBase() . ' ' . $f['scope'], 'COUNT(*)', 'o');
+    $delayed = cdp_mgmtDelayed($f['scope'], 5);
+    $cx = cdp_mgmtComplaints($f['from'], $f['to']);
+    $branches = cdp_mgmtBranches($f['from'], $f['to']);
+    return ['from' => $f['from'], 'to' => $f['to'], 'money' => (bool) $f['money'], 'stats' => $s, 'prev' => $p, 'pct' => cdp_mgmtPct($s['n'], $p['n']),
+        'spark' => $daily['values'], 'delayed' => $delayed, 'open' => (int) ($cx['open'] ?? 0), 'cxReady' => !empty($cx['available']), 'branches' => $branches,
+        'linked' => count(array_filter($branches, fn($b) => $b['linked'])), 'isAdmin' => cdp_opsRank($user) >= 3, 'currency' => (string) ($core->currency ?? '')];
+}

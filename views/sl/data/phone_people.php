@@ -4,6 +4,7 @@
  * Only reads what the matching web page already shows; every query is scoped like the web page.
  */
 require_once CDP_ROOT . '/helpers/sl_view.php';
+require_once CDP_ROOT . '/helpers/sl_mx.php';
 
 /** Previous / next links for a paged phone list (same "page" parameter as the web table). */
 function sl_ppPager(int $page, int $per, int $count): string

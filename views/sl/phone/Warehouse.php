@@ -19,7 +19,7 @@ foreach (array_chunk($d['bays'], 10) as $chunk) {
 <?= sl_phoneTop('Warehouse', $d['lede'], ['back' => 'menu.php'], sl_phoneIcon('search', 'Locker search', sl_route('LockerSearch'))) ?>
 <main class="mx-body">
 <section class="mx-k c2">
-<?= sl_mxKpi('warehouse', 'Ready to hand over', sl_num($d['count'])) ?>
+<?= sl_mxKpi('warehouse', 'Ready', sl_num($d['count'])) ?>
 <?= sl_mxKpi('clock', 'Over 7 days', sl_num($old), $old ? 'storage fee' : '', $old ? 'warn' : '') ?>
 <?= sl_mxKpi('box', 'No bay yet', sl_num($toSort), $d['count'] > count($d['rows']) ? 'on this page' : '') ?>
 <?= sl_mxKpi('layers', 'Space used', $d['hasBay'] ? (int) $d['fullPct'] . '%' : '—', $d['hasBay'] ? sl_num($d['free']) . ' bays free' : '') ?>

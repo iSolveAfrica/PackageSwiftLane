@@ -9,3 +9,10 @@
 .mx .mx-dotbtn{width:44px;height:32px;margin:-6px -12px -6px 0;border:0;background:transparent;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
 .mx .mx-dotbtn i{width:9px;height:9px;border-radius:50%;background:var(--orange)}
 .mx .mx-row.unread b{font-weight:650}
+.mx .mx-fld{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--ink-2);font-weight:500}
+.mx .mx-fld input,.mx .mx-fld select,.mx .mx-fld textarea{min-height:48px;border-radius:13px;background:var(--field);border:1px solid var(--line-2);padding:0 14px;font:16px var(--font);color:var(--ink);width:100%;box-sizing:border-box}
+.mx .mx-fld textarea{min-height:84px;padding-top:12px}
+.mx .mx-chipbtn{min-height:36px;min-width:44px;padding:0 12px;border-radius:999px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);font:500 13px var(--font);cursor:pointer}
+.mx .mx-chipbtn.on{background:var(--ink);color:var(--card);border-color:var(--ink)}
+.mx .mx-mut{color:var(--muted)}
+.mx .mx-act a[role=button]{cursor:pointer}
