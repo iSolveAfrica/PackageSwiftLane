@@ -1,3 +1,9 @@
+<?php if (!empty($d['rv'])): $rmv = $d['rv']; ?>
+<section class="da-map-card" aria-label="Route map">
+<div class="da-map-heading"><span><b>Today's route</b><small><?= count($rmv['stops']) ?> stop<?= count($rmv['stops']) === 1 ? '' : 's' ?> · <?= h($rmv['left_km']) ?> and <?= h($rmv['left_time']) ?> left<?= $rmv['estimate'] ? ' (estimate)' : '' ?></small></span><a class="sl-btn sm ghost" href="<?= h(sl_route('DriverApp', ['tab' => 'route'])) ?>">All stops</a></div>
+<div class="rr-map" data-rr-map role="region" aria-label="Map of today's stops"></div>
+</section>
+<?php return; endif; ?>
 <section class="da-map-card" aria-label="Route map">
 <div class="da-map-heading"><span><b><?= $d['route']['leg'] ? 'Next route leg' : 'Your next stop' ?></b><small><?= count($d['route']['stops']) ?> mapped stop<?= count($d['route']['stops']) === 1 ? '' : 's' ?> · assigned order</small></span><a class="sl-btn sm ghost" href="<?= h(sl_route('DriverApp', ['tab' => 'route'])) ?>">All stops</a></div>
 <?php if ($d['route']['embed']): ?>

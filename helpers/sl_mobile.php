@@ -22,11 +22,11 @@ function sl_bodyRole(): string
 function sl_mobileLinks($user): array
 {
     if (sl_mobileRole() === 'rider') return [
-        ['Jobs', 'box', sl_route('DriverApp')],
+        ['Today', 'box', sl_route('DriverApp')],
         ['Route', 'route', sl_route('DriverApp', ['tab' => 'route'])],
+        ['Load', 'check', sl_route('DriverApp', ['tab' => 'load'])],
         ['Earnings', 'dollar', sl_route('DriverApp', ['tab' => 'pay'])],
         ['Alerts', 'bell', sl_route('Notifications')],
-        ['Account', 'user', sl_route('AiStudio')],
     ];
     if (sl_mobileRole() !== 'customer') {
         if (sl_bodyRole() !== 'staff') return [];

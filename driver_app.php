@@ -10,4 +10,5 @@ if (!sl_userIs('driver') && !$user->cdp_hasPermission('view_user_list')) {
     exit;
 }
 require_once 'views/sl/data/riders.php';
-sl_render('DriverApp', ['id' => 'drvapp', 'title' => 'Rider app', 'board' => 'DriverApp', 'plain' => true, 'scripts' => ['dataJs/sl/rider_map.js']], sl_driverAppData($user, $core));
+header('Cache-Control: private, no-store');
+sl_render('DriverApp', ['id' => 'drvapp', 'title' => 'Rider app', 'board' => 'DriverApp', 'plain' => true, 'styles' => ['assets/swiftlane/route-map.css'], 'scripts' => ['dataJs/sl/rider_map.js', 'assets/swiftlane/route-map.js', 'assets/swiftlane/rider-device.js', 'dataJs/sl/rider_route.js']], sl_driverAppData($user, $core));

@@ -155,6 +155,7 @@ function sl_routes(): array
         'InsuranceClaims' => 'insurance_claims.php',
         'FreightPartners' => 'freight_partners.php',
         'LastMile'        => 'last_mile.php',
+        'RoutePlanner'    => 'route_planner.php',
         'LoyaltyRewards'  => 'loyalty_rewards.php',
         'SecurityCenter'  => 'security_center.php',
 
