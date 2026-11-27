@@ -189,6 +189,7 @@ function sl_routes(): array
         'DevAlerts'         => 'dev_alerts.php',
         'DevIssues'         => 'dev_issues.php',
         'DevIntegrations'   => 'dev_integrations.php',
+        'DevAccess'         => 'dev_access.php',
     ];
     return $routes;
 }

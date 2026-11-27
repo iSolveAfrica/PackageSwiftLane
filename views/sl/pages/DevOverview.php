@@ -1,16 +1,93 @@
 <?php
 /**
- * DevOverview - from docs/handover/artifact-source/DevOverview.dc.html (dark).
- * Data: views/sl/data/dev.php (sl_devOverviewData), live engine helpers/devops.php.
- * The design's cloud-cost and seat cards are replaced by measured disk, memory and database gauges.
+ * DevOverview - DevOps overview of this installation (dark DevOps theme, assets/swiftlane/dev_theme.css).
+ * Data: views/sl/data/dev_observe.php sl_dvxOverviewData (request recorder helpers/dev_metrics.php,
+ * live snapshot helpers/devops.php, alerts, deployments, merged logs). Live parts: dataJs/sl/dev_observe.js.
  */
 if (!isset($d)) { $d = []; }
 $c = $d['counts'];
+$cov = $d['cov'];
+$dvxActive = 'overview';
+include CDP_ROOT . '/views/sl/pages/partials/dev_subnav.php';
 ?>
-<div class="sl-head"><div><h1 class="sl-title">Developer Overview</h1><p class="sl-lede">Health, traffic and deploys for this installation · <?= sl_v($d, 'host') ?> · <?= (int) $c['operational'] ?> healthy · <?= (int) $c['degraded'] ?> degraded · <?= (int) $c['down'] ?> down</p></div><div class="row g8 wrap"><a class="sl-btn ghost" href="<?= sl_route('DevIssues') ?>"><i class="ic ic-sm i-bug" aria-hidden="true"></i>Issues and change log</a><a class="chipbtn" href="<?= sl_v($d, 'liveUrl') ?>"><i class="ic ic-sm i-activity" aria-hidden="true"></i>Live console</a><div class="sl-seg boxed"><?php foreach ((array) sl_get($d, 'ranges', []) as $r): ?><a class="<?= sl_v($r, 'cls') ?>" href="<?= sl_v($r, 'href') ?>"><?= sl_v($r, 'label') ?></a><?php endforeach; ?></div></div></div>
-<div class="grid cols3"><?php foreach ((array) sl_get($d, 'gauges', []) as $g): ?><section class="sl-card col g12"><div class="row g8 mut sm"><i class="ic ic-sm <?= sl_v($g, 'icon') ?>" aria-hidden="true"></i><span><?= sl_v($g, 't') ?></span></div><div class="mono fw5"><?= sl_v($g, 'v') ?></div><div class="sl-ticks <?= sl_v($g, 'cls') ?>" role="img" aria-label="<?= sl_v($g, 'v') ?>"><i style="width:<?= (int) $g['w'] ?>%"></i></div><div class="mono mut sm"><?= sl_v($g, 'sub') ?></div><div class="row g8" style="justify-content:flex-end;margin-top:4px"><a class="sl-btn sm ghost" href="<?= sl_v($g, 'href') ?>">Details</a></div></section><?php endforeach; ?></div>
-<section class="sl-card col g12"><h2 class="sl-ct">Quick actions</h2><div class="row g8 wrap"><a class="chipbtn" href="<?= sl_route('DevLogs') ?>"><i class="ic ic-sm i-terminal" aria-hidden="true"></i>View logs<i class="ic ic-sm i-right" aria-hidden="true"></i></a><a class="chipbtn" href="<?= sl_route('DevAlerts') ?>"><i class="ic ic-sm i-bell" aria-hidden="true"></i><?= (int) $d['openAlerts'] ?> open alerts<i class="ic ic-sm i-right" aria-hidden="true"></i></a><a class="chipbtn" href="<?= sl_route('DevIssues') ?>"><i class="ic ic-sm i-bug" aria-hidden="true"></i><?= (int) $d['openIssues'] ?> open tickets<i class="ic ic-sm i-right" aria-hidden="true"></i></a><a class="chipbtn" href="<?= sl_route('DevIntegrations') ?>"><i class="ic ic-sm i-link" aria-hidden="true"></i>Integrations<i class="ic ic-sm i-right" aria-hidden="true"></i></a><span class="grow"></span><a class="sl-btn soft" href="<?= sl_route('ApiAccess') ?>"><i class="ic ic-sm i-plus" aria-hidden="true"></i>Create API key</a></div></section>
-<div class="grid cols4"><?php foreach ((array) sl_get($d, 'kpis', []) as $k): ?><div class="dv-kpi"><div class="t"><?= sl_v($k, 't') ?></div><div class="v"><?= sl_v($k, 'v') ?><small><?= sl_v($k, 'u') ?></small></div><div class="d <?= sl_v($k, 'dc') ?>"><?= sl_v($k, 'd') ?></div><?php if ($k['sp']['line']): ?><svg <?= sl_chartAttrs([['name' => $k['l'] ?? $k['label'] ?? $k['t'] ?? 'Value', 'values' => $k['sp']['values'] ?? []]], [], $k['l'] ?? $k['label'] ?? $k['t'] ?? 'Metric') ?> viewBox="0 0 240 46" preserveAspectRatio="none" aria-hidden="true"><path d="<?= h($k['sp']['area']) ?>" fill="<?= h($k['c']) ?>" opacity=".14"></path><path d="<?= h($k['sp']['line']) ?>" fill="none" stroke="<?= h($k['c']) ?>" stroke-width="1.8" vector-effect="non-scaling-stroke"></path></svg><?php else: ?><span class="mut sm">Not enough samples yet</span><?php endif; ?></div><?php endforeach; ?></div>
-<div class="grid cols2"><section class="sl-card col g12"><h2 class="sl-ct">Actions by outcome · 24 h</h2><div class="row g24 wrap"><div class="donut" <?= sl_chartAttrs([['name' => 'Actions', 'values' => array_column($d['outcomes']['rows'], 2)]], array_column($d['outcomes']['rows'], 1), 'Actions by outcome', null, null, 'donut') ?> style="background:<?= h($d['outcomes']['conic']) ?>"><b><?= h(sl_num($d['outcomes']['n'])) ?><small>actions</small></b></div><div class="col g8 grow"><?php foreach ($d['outcomes']['rows'] as $o): ?><span class="lgd"><i style="background:<?= h($o[0]) ?>"></i><?= h($o[1]) ?><span class="mut" style="margin-left:auto"><?= h(sl_num($o[2])) ?></span></span><?php endforeach; ?></div></div></section>
-<section class="sl-card col g12"><div class="sl-ch"><h2 class="sl-ct">Recent deployments</h2><a class="sm fw5" href="<?= sl_route('DevDeployments') ?>">View all</a></div><?php foreach ((array) sl_get($d, 'deploys', []) as $dp): ?><div class="dv-row"><span class="dv-dot <?= sl_v($dp, 'w') ?>"><i class="ic ic-sm i-rocket" aria-hidden="true"></i></span><div class="grow"><div class="fw5"><?= sl_v($dp, 't') ?></div><div class="mut sm"><?= sl_v($dp, 's') ?></div></div><span class="mut sm"><?= sl_v($dp, 'at') ?></span></div><?php endforeach; ?><?php if (!sl_get($d, 'deploys')): ?><div class="mut sm">No git history in this checkout.</div><?php endif; ?></section></div>
-<section class="sl-card col g12"><div class="sl-ch"><h2 class="sl-ct">Latest log lines · 24 h</h2><a class="sm fw5" href="<?= sl_route('DevLogs') ?>">Open log explorer</a></div><div class="term"><?php foreach ((array) sl_get($d, 'logs', []) as $l): ?><div class="ln"><span class="ts"><?= sl_v($l, 'ts') ?></span><span class="sv"><?= sl_v($l, 'sv') ?></span><span class="lv <?= sl_v($l, 'lc') ?>"><?= sl_v($l, 'lv') ?></span><span><?= sl_v($l, 'm') ?></span></div><?php endforeach; ?><?php if (!sl_get($d, 'logs')): ?><div class="ln"><span>No log lines in 24 hours.</span></div><?php endif; ?></div></section>
+<div class="dvx-page" data-dvx-page="overview" data-dvx-ajax="<?= h($d['ajax']) ?>">
+<header class="dvx-head">
+  <div class="col g4"><h1 class="dvx-title">DevOps overview</h1><p class="dvx-lede"><span class="mono"><?= h($d['host']) ?></span> · PHP <?= h(PHP_VERSION) ?> · <?= h((string) ($d['dbv']['version'] ?? 'database down')) ?> · <span class="dvx-ok"><?= (int) $c['operational'] ?> healthy</span> · <span class="dvx-warn"><?= (int) $c['degraded'] ?> degraded</span> · <span class="dvx-bad"><?= (int) $c['down'] ?> down</span></p></div>
+  <div class="row g8 wrap"><span class="dvx-live" data-dvx-live><i class="dvx-pulse" aria-hidden="true"></i><span data-dvx-live-t>Live</span></span><?php if ($d['ok']['services']): ?><a class="dvx-btn" href="<?= h(sl_route('DevServices')) ?>"><i class="ic ic-sm i-server" aria-hidden="true"></i>Services</a><?php endif; ?><?php if ($d['ok']['logs']): ?><a class="dvx-btn" href="<?= h(sl_route('DevLogs')) ?>"><i class="ic ic-sm i-terminal" aria-hidden="true"></i>Logs</a><?php endif; ?><a class="dvx-btn" href="<?= h(sl_self()) ?>"><i class="ic ic-sm i-refresh" aria-hidden="true"></i>Refresh</a></div>
+</header>
+<?php if (!$cov['rows']): ?><div class="dvx-note" role="note"><i class="ic i-info" aria-hidden="true"></i><span>Request metrics are starting: the recorder in <span class="mono">helpers/dev_metrics.php</span> keeps a sample of every request from now on, so uptime, response time, error rate and throughput fill in as the site is used.</span></div><?php endif; ?>
+
+<section class="dvx-kpis" aria-label="Key figures">
+<?php foreach ($d['kpis'] as $k): ?>
+  <a class="dvx-kpi" href="<?= h($k['href']) ?>" data-dvx-kpi="<?= h($k['k']) ?>" style="--k:<?= h($k['c']) ?>">
+    <span class="dvx-kpi-t"><i class="ic ic-sm <?= h($k['icon']) ?>" aria-hidden="true"></i><?= h($k['t']) ?></span>
+    <span class="dvx-kpi-v"><b data-dvx-v><?= h($k['v']) ?></b><small><?= h($k['u']) ?></small></span>
+    <span class="dvx-delta <?= h($k['delta']['c']) ?>"><?= h($k['delta']['t']) ?></span>
+    <?php if ($k['sp']['line']): ?><svg <?= $k['sp']['attrs'] ?> class="dvx-spark" viewBox="0 0 240 44" preserveAspectRatio="none" aria-hidden="true"><?php if ($k['sp']['area']): ?><path d="<?= h($k['sp']['area']) ?>" fill="var(--k)" opacity=".14"></path><?php endif; ?><path d="<?= h($k['sp']['line']) ?>" fill="none" stroke="var(--k)" stroke-width="1.8" vector-effect="non-scaling-stroke"></path></svg><?php else: ?><span class="dvx-spark-empty">30-day trend appears after two days of data</span><?php endif; ?>
+    <span class="dvx-kpi-s"><?= h($k['sub']) ?></span>
+  </a>
+<?php endforeach; ?>
+</section>
+
+<div class="dvx-grid dvx-g-arch">
+<section class="dvx-card" aria-labelledby="dvx-arch-h">
+  <div class="dvx-ch"><div><h2 class="dvx-ct" id="dvx-arch-h">System architecture</h2><p class="dvx-cs">The parts of this installation and how they connect · health from live checks · click a part for its detail</p></div><span class="dvx-legend"><span><i style="background:#34D399"></i>Healthy</span><span><i style="background:#FBBF24"></i>Degraded</span><span><i style="background:#F87171"></i>Down</span><span><i style="background:#64748B"></i>Not set up</span></span></div>
+  <div class="dvx-arch">
+  <?php foreach ($d['arch'] as $i => $lane): ?>
+    <div class="dvx-lane"><span class="dvx-lane-t"><?= h($lane['t']) ?></span><div class="dvx-lane-n">
+    <?php foreach ($lane['nodes'] as $n): ?>
+      <a class="dvx-node <?= h($n['cls']) ?>" href="<?= h($n['href']) ?>" title="<?= h($n['st'] . ': ' . $n['detail']) ?>"><span class="dvx-node-i"><i class="ic ic-sm <?= h($n['icon']) ?>" aria-hidden="true"></i></span><span class="col dvx-node-b"><b><?= h($n['name']) ?></b><small><?= h($n['sub']) ?></small></span><span class="dvx-dot <?= h($n['cls']) ?>" role="img" aria-label="<?= h($n['st']) ?>"></span></a>
+    <?php endforeach; ?>
+    </div></div>
+    <?php if ($i < count($d['arch']) - 1): ?><span class="dvx-flow" aria-hidden="true"></span><?php endif; ?>
+  <?php endforeach; ?>
+  </div>
+</section>
+<section class="dvx-card" aria-labelledby="dvx-st-h">
+  <div class="dvx-ch"><h2 class="dvx-ct" id="dvx-st-h">System status</h2><a class="dvx-link" href="<?= h(sl_route('DevServices')) ?>">All services</a></div>
+  <div class="dvx-status">
+  <?php foreach ($d['status'] as $s): ?>
+    <a class="dvx-st-row" href="<?= h($s['href']) ?>"><span class="dvx-dot <?= h($s['cls']) ?>" aria-hidden="true"></span><span class="grow dvx-ell"><?= h($s['name']) ?></span><span class="dvx-st-u mono" title="<?= h($s['uptime_label']) ?>"><?= $s['uptime'] !== null ? h(sl_dvxPct($s['uptime'], 2)) : '<span class="dvx-mut">' . h($s['st']) . '</span>' ?></span></a>
+  <?php endforeach; ?>
+  </div>
+  <p class="dvx-cs">Percentages are success shares over 24 h from each part's own ledger (requests, cron runs, message log, AI runs); hover for the source.</p>
+</section>
+</div>
+
+<div class="dvx-grid dvx-g2" id="charts">
+<?php foreach ($d['charts'] as $ch): ?>
+<section class="dvx-card" id="<?= h($ch['id']) ?>">
+  <div class="dvx-ch"><div><h2 class="dvx-ct"><?= h($ch['t']) ?></h2><p class="dvx-cs"><?= h($ch['sub']) ?></p></div><div class="dvx-seg" role="group" aria-label="Range"><?php foreach ($d['ranges'] as $r): ?><a class="<?= h($r['cls']) ?>" href="<?= h($r['href']) ?>" data-dvx-range="<?= h($r['label']) ?>"<?= $r['cls'] ? ' aria-current="true"' : '' ?>><?= h($r['label']) ?></a><?php endforeach; ?></div></div>
+  <div class="dvx-chart-body" data-dvx-chart="<?= h($ch['id']) ?>"><?= sl_dvxChartBody($ch) ?></div>
+</section>
+<?php endforeach; ?>
+</div>
+
+<div class="dvx-grid dvx-g2">
+<section class="dvx-card" aria-labelledby="dvx-al-h">
+  <div class="dvx-ch"><h2 class="dvx-ct" id="dvx-al-h">Active alerts <span class="dvx-badge <?= $d['alertsOpen'] ? 'bad' : '' ?>"><?= (int) $d['alertsOpen'] ?></span></h2><a class="dvx-link" href="<?= h(sl_route('DevAlerts')) ?>">Manage alerts</a></div>
+  <?php foreach ($d['alerts'] as $a): ?>
+    <a class="dvx-row" href="<?= h(sl_route('DevAlerts')) ?>"><span class="dvx-sev <?= $a['sev'] === 'critical' ? 'bad' : 'warn' ?>"><?= h(ucfirst($a['sev'])) ?></span><span class="col grow dvx-min"><b class="dvx-ell"><?= h($a['t']) ?></b><small class="dvx-ell"><?= h($a['s']) ?></small></span><span class="dvx-mut sm"><?= h($a['at']) ?><?= $a['st'] === 'acknowledged' ? ' · ack' : '' ?></span></a>
+  <?php endforeach; ?>
+  <?php if (!$d['alerts']): ?><div class="dvx-empty"><i class="ic i-check" aria-hidden="true"></i>No open alerts.</div><?php endif; ?>
+</section>
+<section class="dvx-card" aria-labelledby="dvx-dp-h">
+  <div class="dvx-ch"><h2 class="dvx-ct" id="dvx-dp-h">Recent deployments</h2><a class="dvx-link" href="<?= h(sl_route('DevDeployments')) ?>">All deployments</a></div>
+  <?php foreach ($d['deploys'] as $dp): ?>
+    <a class="dvx-row" href="<?= h($dp['href']) ?>"><span class="dvx-dot <?= $dp['state'] === 'ok' ? 'ok' : ($dp['state'] === 'failed' ? 'bad' : 'warn') ?>" aria-hidden="true"></span><span class="col grow dvx-min"><b class="dvx-ell"><?= h($dp['t']) ?></b><small class="dvx-ell mono"><?= h($dp['s']) ?></small></span><span class="dvx-mut sm"><?= h($dp['at']) ?></span></a>
+  <?php endforeach; ?>
+  <?php if (!$d['deploys']): ?><div class="dvx-empty">No deployment recorded: this checkout has no git history.</div><?php endif; ?>
+</section>
+</div>
+
+<section class="dvx-card" aria-labelledby="dvx-lt-h">
+  <div class="dvx-ch"><div><h2 class="dvx-ct" id="dvx-lt-h">Live logs</h2><p class="dvx-cs">All sources, newest first · refreshes every 5 s</p></div><div class="row g8"><button class="dvx-btn sm" type="button" data-dvx-pause aria-pressed="false"><i class="ic ic-sm i-clock" aria-hidden="true"></i><span>Pause</span></button><?php if ($d['ok']['logs']): ?><a class="dvx-link" href="<?= h(sl_route('DevLogs')) ?>">Open log explorer</a><?php endif; ?></div></div>
+  <div class="dvx-term" data-dvx-tail data-dvx-since="<?= h($d['logs'][0]['ts'] ?? $d['now']) ?>" data-dvx-max="14" role="log" aria-live="off" aria-label="Live log lines">
+  <?php foreach ($d['logs'] as $l): ?>
+    <a class="dvx-ln" data-dvx-id="<?= h($l['id']) ?>" href="<?= $d['ok']['logs'] ? h(sl_route('DevLogs', ['source' => $l['source'], 'window' => 1440, 'row' => $l['id']])) : '#' ?>"><span class="ts"><?= h($l['time']) ?></span><span class="lv <?= h($l['lc']) ?>"><?= h($l['level']) ?></span><span class="sv"><?= h($l['service']) ?></span><span class="msg"><?= h($l['message']) ?></span></a>
+  <?php endforeach; ?>
+  <?php if (!$d['logs']): ?><div class="dvx-ln dvx-ln-empty" data-dvx-empty><span class="msg">No log line in the last hour. New lines appear here as they are written.</span></div><?php endif; ?>
+  </div>
+</section>
+</div>
+<?= sl_dvxSubnavEnd() ?>

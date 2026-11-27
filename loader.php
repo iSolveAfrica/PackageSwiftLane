@@ -144,3 +144,11 @@ require_once CDP_ROOT . '/helpers/functions.php';
 require_once CDP_ROOT . '/helpers/function_exist.php';
 require_once CDP_ROOT . '/helpers/querys.php';
 require_once CDP_ROOT . '/helpers/pagination.php';
+require_once CDP_ROOT . '/helpers/dev_metrics.php';   // developer console: sampled request metrics (cdb_dev_requests)
+cdp_reqmArm();
+// Module Controller: switched-off modules answer 403 for pages, AJAX, API and cron; the developer
+// console lock and per-section access apply to direct requests too (helpers/sl_modules.php).
+if (is_file(CDP_ROOT . '/helpers/sl_modules.php')) {
+    require_once CDP_ROOT . '/helpers/sl_modules.php';
+    sl_moduleGuardRequest('any');
+}

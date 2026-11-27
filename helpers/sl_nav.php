@@ -127,6 +127,7 @@ function sl_navStaff(): array
                 'count' => fn() => sl_tableExists('cdb_dev_alerts') ? sl_navCount("SELECT COUNT(*) FROM cdb_dev_alerts WHERE status = 'active'") : 0],
             ['id' => 'devissues', 'label' => 'Issues & Change Log', 'icon' => 'bug', 'board' => 'DevIssues', 'perm' => 'view_developer',
                 'count' => fn() => sl_tableExists('cdb_dev_issues') ? sl_navCount("SELECT COUNT(*) FROM cdb_dev_issues WHERE status IN ('open','in_progress')") : 0],
+            ['id' => 'devaccess', 'label' => 'Developer Access', 'icon' => 'lock', 'board' => 'DevAccess', 'perm' => 'view_developer'],
             ['id' => 'devbilling', 'label' => 'Message Costs', 'icon' => 'dollar', 'board' => 'DevBilling', 'perm' => ['view_developer', 'view_message_logs']],
             ['id' => 'devint', 'label' => 'Integrations', 'icon' => 'puzzle', 'board' => 'DevIntegrations', 'perm' => 'view_developer'],
         ]],

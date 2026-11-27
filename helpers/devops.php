@@ -158,6 +158,10 @@ if (!function_exists('cdp_devQ')) {
         if (!cdp_devIsSuper($user) || !cdp_devEnsureTables()) {
             return false;
         }
+        // Locked shutdown (helpers/dev_access.php): nobody uses the console until the unlock code is entered.
+        if (function_exists('cdp_devLocked') && cdp_devLocked()) {
+            return false;
+        }
         $uid = (int) $user->uid;
         if (cdp_devOne("SELECT user_id FROM cdb_dev_access WHERE user_id = :u", [':u' => $uid])) {
             return true;
@@ -175,6 +179,9 @@ if (!function_exists('cdp_devQ')) {
     {
         if (!cdp_devIsSuper($user)) {
             return false;
+        }
+        if (function_exists('cdp_devLocked') && cdp_devLocked()) {
+            return cdp_devAssigned($user); // only the way to the unlock form
         }
         if (!cdp_devTableExists('cdb_dev_access')) {
             return true;
@@ -214,18 +221,43 @@ if (!function_exists('cdp_devQ')) {
     function cdp_devAccessSet($targetId, $on, $byId)
     {
         $targetId = (int) $targetId;
+        // Create / seed the per-section tables BEFORE a new row lands in cdb_dev_access, so the one-time
+        // upgrade seeding never mistakes the developer being added now for a legacy one.
+        if (function_exists('cdp_devAccessEnsure')) {
+            cdp_devAccessEnsure();
+        }
+        // Per-section access (helpers/dev_access.php): only holders of "access" assign developers,
+        // the owner can never be removed, and a new developer starts with the Overview only.
+        if (function_exists('cdp_devSectionAllowed')) {
+            if (!cdp_devSectionAllowed((int) $byId, 'access')) {
+                return ['ok' => false, 'error' => 'You cannot change developer access.'];
+            }
+            if (!$on && $targetId === cdp_devOwnerId()) {
+                return ['ok' => false, 'error' => 'The owner of the developer console cannot be removed.'];
+            }
+            if (!$on && $targetId === (int) $byId) {
+                return ['ok' => false, 'error' => 'You cannot remove yourself. Ask the owner.'];
+            }
+        }
         $u = cdp_devOne("SELECT id, userlevel FROM cdb_users WHERE id = :i", [':i' => $targetId]);
         if (!$u || !cdp_roleHasFlag((int) $u->userlevel, 'is_superadmin')) {
             return ['ok' => false, 'error' => 'Only super admins can be assigned the developer dashboard.'];
         }
         if ($on) {
-            cdp_devX("INSERT IGNORE INTO cdb_dev_access (user_id, granted_by, granted_at) VALUES (:u, :b, :n)", [':u' => $targetId, ':b' => (int) $byId, ':n' => cdp_devNow()]);
+            $now = function_exists('cdp_devAppNow') ? cdp_devAppNow() : cdp_devNow();
+            cdp_devX("INSERT IGNORE INTO cdb_dev_access (user_id, granted_by, granted_at) VALUES (:u, :b, :n)", [':u' => $targetId, ':b' => (int) $byId, ':n' => $now]);
+            if (function_exists('cdp_devAccessEnsure') && cdp_devAccessEnsure()) {
+                cdp_devX("INSERT IGNORE INTO cdb_dev_section_grants (user_id, section, granted_by, granted_at) VALUES (:u, 'overview', :b, :n)", [':u' => $targetId, ':b' => (int) $byId, ':n' => $now]);
+            }
         } else {
             $n = cdp_devOne("SELECT COUNT(*) AS n FROM cdb_dev_access");
             if ($n && (int) $n->n <= 1) {
                 return ['ok' => false, 'error' => 'At least one super admin must keep access.'];
             }
             cdp_devX("DELETE FROM cdb_dev_access WHERE user_id = :u", [':u' => $targetId]);
+            if (cdp_devTableExists('cdb_dev_section_grants')) {
+                cdp_devX("DELETE FROM cdb_dev_section_grants WHERE user_id = :u", [':u' => $targetId]);
+            }
         }
         return ['ok' => true];
     }
@@ -1579,3 +1611,6 @@ if (!function_exists('cdp_devUsers')) {
         return cdp_devX("DELETE FROM cdb_dev_ai_reports WHERE id = :i", [':i' => (int) $id]);
     }
 }
+
+// Per-section developer access and the locked shutdown: cdp_devSectionAllowed, cdp_devRequireSection, cdp_devLocked.
+require_once __DIR__ . '/dev_access.php';

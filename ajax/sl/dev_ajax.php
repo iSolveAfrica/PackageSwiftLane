@@ -19,6 +19,15 @@ if (CDP_APP_MODE_DEMO === true) {
     sl_json(['success' => false, 'message' => 'Demo mode: changes are disabled'], 403);
 }
 require_permission('view_developer');
+// The developer console is super-admin-only (cdb_dev_access), can be locked, and is split into
+// sections: view_developer alone is not enough (staff can hold it).
+if (!cdp_devCanUse($user) || (function_exists('cdp_devLocked') && cdp_devLocked())) {
+    sl_json(['success' => false, 'message' => 'Developer console access required'], 403);
+}
+$devOpSection = in_array((string) ($_POST['op'] ?? ''), ['alert_ack', 'alert_resolve', 'evaluate', 'rule_save', 'rule_toggle'], true) ? 'alerts' : 'issues';
+if (function_exists('cdp_devSectionAllowed') && !cdp_devSectionAllowed($user, $devOpSection)) {
+    sl_json(['success' => false, 'message' => 'This developer section is not granted to you'], 403);
+}
 $db = new Conexion();
 $actor = (int) $_SESSION['userid'];
 $actorName = trim((string) sl_scalar("SELECT CONCAT(fname,' ',lname) FROM cdb_users WHERE id = :u", [':u' => $actor], '')) ?: 'Developer';

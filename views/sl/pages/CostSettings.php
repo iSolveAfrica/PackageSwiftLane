@@ -28,3 +28,19 @@ $ro = $d['canEdit'] ? '' : ' disabled';
 </aside></div>
 <?php endif; ?>
 </form>
+<?php if (!empty($d['infra'])): $inf = $d['infra']; ?>
+<section class="sl-card col g12 cs-infra" id="infra-overrides" aria-labelledby="cs-infra-h">
+<div class="sl-ch" style="margin:0"><div><h2 class="sl-ct" id="cs-infra-h"><i class="ic ic-sm i-cloud" aria-hidden="true"></i> Infrastructure overrides</h2><div class="mut sm">Developer-only. Figures the server cannot report (or reports wrongly), entered by a super admin. The same values appear on the developer console's Infrastructure page, labelled with who set them and when. Monthly server cost here replaces the sum of the "Servers" lines on the developer pages only; the lines above still feed Financial Overview.</div></div><a class="sl-btn ghost sm" href="<?= h($inf['href']) ?>"><i class="ic ic-sm i-server" aria-hidden="true"></i>Open Infrastructure</a></div>
+<?php $infEdit = !empty($inf['canEdit']); if (!$infEdit): ?><p class="mut sm" style="margin:0"><i class="ic ic-sm i-lock" aria-hidden="true"></i> View only: changing these figures needs the developer section “Infrastructure overrides”.</p><?php endif; ?>
+<?php foreach ($inf['rows'] as $o): ?>
+<?php if (!$infEdit): ?><div class="cs-io cs-io-ro"><span class="col cs-io-l"><b class="fw5"><?= h($o['label']) ?></b><span class="mut sm">Measured: <?= h($o['measured']) ?><?= $o['src'] ? ' · ' . h($o['src']) : '' ?></span><?php if ($o['set']): ?><span class="sm cs-io-by">Override <?= h($o['shown']) ?> · <?= h($o['by']) ?></span><?php endif; ?></span><span class="mono"><?= $o['set'] ? h($o['shown']) : '<span class="mut">—</span>' ?></span></div><?php continue; endif; ?>
+<form class="cs-io" data-sl-form data-sl-reload action="<?= h($inf['ajax']) ?>" method="post"><input type="hidden" name="op" value="ovr_save"><input type="hidden" name="key" value="<?= h($o['k']) ?>">
+  <span class="col cs-io-l"><b class="fw5"><?= h($o['label']) ?></b><span class="mut sm">Measured: <?= h($o['measured']) ?><?= $o['src'] ? ' · ' . h($o['src']) : '' ?></span><?php if ($o['set']): ?><span class="sm cs-io-by">Override <?= h($o['shown']) ?> · <?= h($o['by']) ?></span><?php endif; ?></span>
+  <?php if ($o['type'] === 'enum'): ?><label class="sl-sel native cs-io-in"><select name="value" aria-label="<?= h($o['label']) ?>"><?php if ($o['value'] === ''): ?><option value="" selected disabled>Not set</option><?php endif; ?><?php foreach ($o['opts'] as $op): ?><option<?= $o['value'] === $op ? ' selected' : '' ?>><?= h($op) ?></option><?php endforeach; ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></label>
+  <?php else: ?><input class="sl-in cs-io-in<?= $o['type'] === 'num' ? ' mono' : '' ?>" name="value" type="<?= $o['type'] === 'date' ? 'date' : 'text' ?>"<?= $o['type'] === 'num' ? ' inputmode="decimal"' : '' ?> value="<?= h($o['value']) ?>" placeholder="<?= h($o['unit'] ?: 'value') ?>" aria-label="<?= h($o['label']) ?> override<?= $o['unit'] ? ' in ' . h($o['unit']) : '' ?>"><?php endif; ?>
+  <span class="row g6"><button class="sl-btn sm" type="submit">Save</button><?php if ($o['set']): ?><button class="sl-btn ghost sm" type="button" data-sl-action="<?= h($inf['ajax']) ?>" data-p-op="ovr_clear" data-p-key="<?= h($o['k']) ?>" data-sl-confirm="Clear the override of <?= h($o['label']) ?>?" data-sl-reload>Clear</button><?php endif; ?></span>
+</form>
+<?php endforeach; ?>
+</section>
+<style>.cs-io{display:grid;grid-template-columns:minmax(0,1fr) 170px auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}.cs-io-by{color:var(--violet-ink,#6D28D9)}.cs-io-in{width:100%}.cs-io-ro{grid-template-columns:minmax(0,1fr) auto}@media (max-width:640px){.cs-io{grid-template-columns:minmax(0,1fr) auto}.cs-io-l{grid-column:1/-1}}</style>
+<?php endif; ?>

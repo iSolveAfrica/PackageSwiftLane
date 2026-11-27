@@ -278,6 +278,11 @@ function sl_gate($permission = null): void
         header('Location: error403.php');
         exit;
     }
+    // Module Controller + developer console lock / sections (helpers/sl_modules.php sl_moduleGuardRequest).
+    if (is_file(CDP_ROOT . '/helpers/sl_modules.php')) {
+        require_once CDP_ROOT . '/helpers/sl_modules.php';
+        sl_moduleGuardRequest('gate');
+    }
 }
 
 /** Current user's effective role flags. */

@@ -34,6 +34,15 @@ function sl_costSettingsData($user, $core): array
     $d['cats'] = sl_costCats();
     $d['freqs'] = sl_costFreqs();
     $d['rows'] = []; $d['totals'] = []; $d['grand'] = 0; $d['history'] = [];
+    // Infrastructure overrides (developer console, one store: cdb_dev_overrides via helpers/dev_infra.php).
+    // Shown only to assigned developers who may open Infrastructure.
+    $d['infra'] = null;
+    try {
+        require_once CDP_ROOT . '/helpers/dev_infra.php';
+        $d['infra'] = sl_dinfCostPanel($user);
+    } catch (Throwable $e) {
+        $d['infra'] = null;
+    }
     if (!$d['ready']) return $d;
     $byCat = [];
     foreach (sl_rows('SELECT * FROM cdb_operating_costs WHERE is_active = 1 ORDER BY category, id') as $r) {

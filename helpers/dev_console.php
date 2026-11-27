@@ -7,6 +7,7 @@
  * masked before they leave this file.
  */
 require_once __DIR__ . '/sl_view.php';
+require_once __DIR__ . '/dev_infra.php'; // infra package: overrides (cdp_devOverride), extra alert metrics, alert e-mails
 
 /** Mask a secret: first 2 and last 2 characters only. */
 function sl_devMask($v): string
@@ -190,6 +191,11 @@ function sl_devCronJobs(): array
         $runs = 0;
         if ($hasRuns) {
             $last = sl_row('SELECT started_at, finished_at, status, duration_ms, message FROM cdb_cron_runs WHERE job = :j ORDER BY id DESC', [':j' => $name]);
+            if ($last && function_exists('sl_dinfDbToApp')) {
+                // cdb_cron_runs is stamped with the database's NOW() (helpers/cron_run.php): show it on the app clock
+                $last->started_at = sl_dinfDbToApp($last->started_at);
+                $last->finished_at = $last->finished_at ? sl_dinfDbToApp($last->finished_at) : null;
+            }
             $fails = (int) sl_scalar("SELECT COUNT(*) FROM cdb_cron_runs WHERE job = :j AND status = 'failed' AND started_at >= NOW() - INTERVAL 1 DAY", [':j' => $name]);
             $runs = (int) sl_scalar("SELECT COUNT(*) FROM cdb_cron_runs WHERE job = :j AND started_at >= NOW() - INTERVAL 1 DAY", [':j' => $name]);
         }
@@ -212,20 +218,28 @@ function sl_devQueue(): array
 function sl_devBackup(): array
 {
     $dir = CDP_ROOT . '/backups';
-    $files = is_dir($dir) ? (glob($dir . '/*.sql') ?: []) : [];
+    global $core;
+    if (function_exists('sl_dinfBackups')) {
+        // .sql, .sql.gz and .zip in backups/, console backups (private folder, cdb_dev_db_jobs): helpers/dev_infra.php
+        $all = sl_dinfBackups();
+        $l = $all[0] ?? null;
+        return ['dir' => $dir, 'count' => count($all), 'latest' => $l ? $l['name'] : '', 'latest_at' => $l ? $l['at'] : 0, 'latest_size' => $l ? $l['bytes'] : 0,
+            'latest_src' => $l ? $l['src'] : '', 'setting' => (string) ($core->backup ?? '')];
+    }
+    $files = is_dir($dir) ? array_merge(glob($dir . '/*.sql') ?: [], glob($dir . '/*.sql.gz') ?: [], glob($dir . '/*.zip') ?: []) : [];
     $latest = null;
     foreach ($files as $f) {
         if (!$latest || filemtime($f) > filemtime($latest)) {
             $latest = $f;
         }
     }
-    global $core;
     return [
         'dir' => $dir,
         'count' => count($files),
         'latest' => $latest ? basename($latest) : '',
         'latest_at' => $latest ? filemtime($latest) : 0,
         'latest_size' => $latest ? filesize($latest) : 0,
+        'latest_src' => 'backups/',
         'setting' => (string) ($core->backup ?? ''),
     ];
 }
@@ -458,6 +472,9 @@ function sl_devServices(): array
     $fails = array_sum(array_column($jobs, 'fails24'));
     $ran = array_sum(array_column($jobs, 'runs24'));
     $lastAny = sl_tableExists('cdb_cron_runs') ? (string) sl_scalar('SELECT MAX(started_at) FROM cdb_cron_runs', [], '') : '';
+    if ($lastAny !== '' && function_exists('sl_dinfDbToApp')) {
+        $lastAny = sl_dinfDbToApp($lastAny); // database clock -> app clock
+    }
     $s[] = ['key' => 'cron', 'name' => 'Cron jobs', 'icon' => 'i-clock', 'status' => $fails ? 'bad' : ($ran ? 'ok' : 'warn'), 'version' => count($jobs) . ' scripts', 'detail' => $ran ? $ran . ' runs in 24 h · ' . $fails . ' failed · last ' . sl_ago($lastAny) : (sl_tableExists('cdb_cron_runs') ? 'No run recorded in 24 h' : 'Ledger table missing (run the upgrade)'), 'ms' => null, 'href' => sl_route('DevLogs', ['tab' => 'cron'])];
     $q = sl_devQueue();
     $s[] = ['key' => 'queue', 'name' => 'Notification outbox', 'icon' => 'i-send', 'status' => !$q['exists'] ? 'off' : ($q['dead'] > 0 || $q['oldest_min'] > 30 ? 'warn' : 'ok'), 'version' => 'cdb_cs_outbox', 'detail' => $q['exists'] ? $q['queued'] . ' waiting · ' . $q['retry'] . ' retrying · ' . $q['dead'] . ' dead · ' . $q['sent24'] . ' sent in 24 h' : 'Created when the Customer Service module is first used', 'ms' => null, 'href' => sl_route('CsChannels')];
@@ -483,25 +500,35 @@ function sl_devServices(): array
 /** Value of an alert metric right now. */
 function sl_devMetric(string $metric, int $windowMin): ?float
 {
+    // disk (with the super-admin override), memory, CPU, request error rate / latency, dead letters,
+    // backup age, database ping: helpers/dev_infra.php
+    if (function_exists('sl_dinfAppTz')) {
+        sl_dinfAppTz();
+    }
+    if (function_exists('sl_dinfMetricValue') && in_array($metric, ['disk_pct', 'mem_pct', 'cpu_pct', 'db_ms', 'error_rate', 'resp_p95', 'resp_avg', 'dead_letters', 'backup_age_h'], true)) {
+        return sl_dinfMetricValue($metric, $windowMin);
+    }
     switch ($metric) {
         case 'disk_pct':
             return (float) sl_devDisk()['pct'];
         case 'failed_cron':
-            return sl_tableExists('cdb_cron_runs') ? (float) sl_scalar("SELECT COUNT(*) FROM cdb_cron_runs WHERE status = 'failed' AND started_at >= NOW() - INTERVAL :m MINUTE", [':m' => max(1, $windowMin)]) : 0.0;
+            // cdb_cron_runs.started_at is written with the database's NOW(): compare on the same clock
+            return sl_tableExists('cdb_cron_runs') ? (float) sl_scalar("SELECT COUNT(*) FROM cdb_cron_runs WHERE status = 'failed' AND job NOT LIKE '%\\_manual' AND started_at >= NOW() - INTERVAL " . max(1, $windowMin) . " MINUTE") : 0.0;
         case 'cron_stale_min':
             if (!sl_tableExists('cdb_cron_runs')) {
                 return null;
             }
-            $last = (string) sl_scalar('SELECT MAX(started_at) FROM cdb_cron_runs', [], '');
-            return $last ? (float) floor((time() - strtotime($last)) / 60) : null;
+            // same clock as the stored rows (database NOW()); runs started by a button (job *_manual) do not count
+            $age = sl_scalar("SELECT TIMESTAMPDIFF(MINUTE, MAX(started_at), NOW()) FROM cdb_cron_runs WHERE job NOT LIKE '%\\_manual'", [], null);
+            return $age === null || $age === '' ? null : (float) max(0, (int) $age);
         case 'failed_logins':
-            return sl_tableExists('cdb_activity_log') ? (float) sl_scalar("SELECT COUNT(*) FROM cdb_activity_log WHERE verb = 'login' AND outcome IN ('failure','denied') AND created_at >= NOW() - INTERVAL :m MINUTE", [':m' => max(1, $windowMin)]) : 0.0;
+            return sl_tableExists('cdb_activity_log') ? (float) sl_scalar("SELECT COUNT(*) FROM cdb_activity_log WHERE verb = 'login' AND outcome IN ('failure','denied') AND created_at >= :since", [':since' => date('Y-m-d H:i:s', time() - 60 * max(1, $windowMin))]) : 0.0;
         case 'queue_backlog':
             return (float) sl_devQueue()['queued'];
         case 'php_errors':
             return sl_devErrorLogPath() !== '' ? (float) sl_devPhpErrorCount(max(1, $windowMin)) : null;
         case 'otp_failures':
-            return sl_tableExists('cdb_auth_otp_challenges') ? (float) sl_scalar("SELECT COUNT(*) FROM cdb_auth_otp_challenges WHERE status IN ('failed','expired','locked') AND created_at >= NOW() - INTERVAL :m MINUTE", [':m' => max(1, $windowMin)]) : 0.0;
+            return sl_tableExists('cdb_auth_otp_challenges') ? (float) sl_scalar("SELECT COUNT(*) FROM cdb_auth_otp_challenges WHERE status IN ('failed','expired','locked') AND created_at >= :since", [':since' => date('Y-m-d H:i:s', time() - 60 * max(1, $windowMin))]) : 0.0;
     }
     return null;
 }
@@ -525,13 +552,20 @@ function sl_devCompare(?float $value, string $cmp, float $threshold): bool
  * ones. Returns a summary. Used by cron/dev_alerts.php and the "Evaluate now"
  * button on the Alerts page.
  */
-function sl_devEvaluateAlerts(): array
+function sl_devEvaluateAlerts(bool $notify = true): array
 {
     $out = ['checked' => 0, 'firing' => 0, 'opened' => 0, 'resolved' => 0, 'rules' => []];
     if (!sl_tableExists('cdb_dev_alert_rules') || !sl_tableExists('cdb_dev_alerts')) {
         return $out;
     }
+    if (function_exists('sl_dinfAppTz')) {
+        sl_dinfAppTz(); // cron runs without Core: stamp with the application clock like every other console row
+    }
+    if (function_exists('sl_dinfRepairRuleAlerts')) {
+        sl_dinfRepairRuleAlerts(); // rule alerts the built-in checks closed by mistake (helpers/dev_infra.php)
+    }
     $db = new Conexion();
+    $now = cdp_devNow(); // application clock, as cdp_devEvaluate and the rest of the console (not the database's NOW())
     foreach (sl_rows('SELECT * FROM cdb_dev_alert_rules ORDER BY id') as $r) {
         $out['checked']++;
         $value = sl_devMetric($r->metric, (int) $r->window_min);
@@ -544,22 +578,31 @@ function sl_devEvaluateAlerts(): array
         if ($fires) {
             $out['firing']++;
             if ($open) {
-                $db->cdp_query('UPDATE cdb_dev_alerts SET last_seen = NOW(), detail = :d, context = :c WHERE id = :id');
-                $db->bind(':d', $detail); $db->bind(':c', $ctx); $db->bind(':id', (int) $open->id);
+                $db->cdp_query('UPDATE cdb_dev_alerts SET last_seen = :n, detail = :d, context = :c WHERE id = :id');
+                $db->bind(':n', $now); $db->bind(':d', $detail); $db->bind(':c', $ctx); $db->bind(':id', (int) $open->id);
                 $db->cdp_execute();
             } else {
-                $db->cdp_query('INSERT INTO cdb_dev_alerts (alert_key, severity, service, title, detail, context, status, first_seen, last_seen) VALUES (:k, :s, :sv, :t, :d, :c, :st, NOW(), NOW())');
-                $db->bind(':k', $key); $db->bind(':s', $r->severity === 'critical' ? 'critical' : 'warning'); $db->bind(':sv', 'Alert rules'); $db->bind(':t', $r->label); $db->bind(':d', $detail); $db->bind(':c', $ctx); $db->bind(':st', 'active');
+                $db->cdp_query('INSERT INTO cdb_dev_alerts (alert_key, severity, service, title, detail, context, status, first_seen, last_seen) VALUES (:k, :s, :sv, :t, :d, :c, :st, :n, :n2)');
+                $db->bind(':n', $now); $db->bind(':n2', $now);
+                $db->bind(':k', $key); $db->bind(':s', in_array($r->severity, ['critical', 'warning', 'info'], true) ? $r->severity : 'warning'); $db->bind(':sv', 'Alert rules'); $db->bind(':t', $r->label); $db->bind(':d', $detail); $db->bind(':c', $ctx); $db->bind(':st', 'active');
                 $db->cdp_execute();
                 $out['opened']++;
             }
         } elseif ($open) {
-            $db->cdp_query('UPDATE cdb_dev_alerts SET status = :s, resolved_at = NOW(), detail = :d WHERE id = :id');
-            $db->bind(':s', 'resolved'); $db->bind(':d', $detail . ' · cleared'); $db->bind(':id', (int) $open->id);
+            $db->cdp_query('UPDATE cdb_dev_alerts SET status = :s, resolved_at = :n, detail = :d WHERE id = :id');
+            $db->bind(':s', 'resolved'); $db->bind(':n', $now); $db->bind(':d', $detail . ' · cleared'); $db->bind(':id', (int) $open->id);
             $db->cdp_execute();
             $out['resolved']++;
         }
         $out['rules'][] = ['key' => $r->rule_key, 'value' => $value, 'fires' => $fires, 'enabled' => (int) $r->enabled];
+    }
+    // e-mail the developers about alerts that opened since the last sweep (helpers/dev_infra.php)
+    if ($notify && function_exists('sl_dinfNotifySweep')) {
+        try {
+            $out['notified'] = sl_dinfNotifySweep();
+        } catch (Throwable $e) {
+            error_log('dev alerts notify: ' . $e->getMessage());
+        }
     }
     return $out;
 }
