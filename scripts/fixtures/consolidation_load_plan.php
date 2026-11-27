@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__.'/../../helpers/sl_chart_interactions.php';
 function h($v){return htmlspecialchars((string)$v,ENT_QUOTES,'UTF-8');}
 function sl_weight($v,$digits=1){return number_format((float)$v,$digits).' kg';}
 function sl_tableExists($table){return true;}

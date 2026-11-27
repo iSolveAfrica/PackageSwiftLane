@@ -23,7 +23,7 @@ $editable=$d['canEdit'] && $d['lq']==='' && sl_tableExists('cdb_consolidation_lo
 <div class="clp-grid"><?php foreach ($rows as $i=>$r): ?><a class="clp-slot" href="<?= h($r['href']) ?>" title="<?= h($r['id'].' · '.$r['name'].' · '.$r['w']) ?>"><small data-load-label="<?= (int)$r['oid'] ?>"><?= isset($positionMap[(int)$r['oid']]) ? h(implode('-',[$positionMap[(int)$r['oid']]['bay'],$positionMap[(int)$r['oid']]['row'],$positionMap[(int)$r['oid']]['tier']])) : 'Unplaced' ?></small><b><?= h($r['id']) ?></b><span><?= h($r['w']) ?></span></a><?php endforeach; ?>
 <?php if (!$rows): ?><p class="sl-empty">The load is empty. Add packages to see them here.</p><?php endif; ?></div>
 <p class="mut sm">Bay, row and tier refer to recorded cargo positions.</p>
-</div><div class="clp-payload"><h3>Payload</h3><div class="clp-gauge" style="--fill:<?= $percent ?>%"><span><small><?= $percent ?>% recorded</small><strong><?= h(sl_weight($loaded,0)) ?></strong></span></div>
+</div><div class="clp-payload"><h3>Payload</h3><div class="clp-gauge" <?= sl_chartAttrs([['name'=>'Recorded payload','color'=>'#7043c1','values'=>[$loaded]]],[$d['code']],'Payload') ?> style="--fill:<?= $percent ?>%"><span><small><?= $percent ?>% recorded</small><strong><?= h(sl_weight($loaded,0)) ?></strong></span></div>
 <div class="row between"><span>Recorded weight</span><b><?= h(sl_weight($loaded,0)) ?></b></div>
 <div class="row between"><span>Configured capacity</span><b><?= $capacity>0?h(sl_weight($capacity,0)):'Not set' ?></b></div>
 <div class="row between"><span>Pieces</span><b><?= (int)$d['pcsN'] ?></b></div>
