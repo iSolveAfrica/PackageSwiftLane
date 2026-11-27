@@ -471,6 +471,7 @@ function sl_shipmentDetailCharts(array $s, int $step): array
     $declared = array_sum(array_map(fn($it) => (float) $it->order_item_declared_value * max(1, (float) $it->order_item_quantity), $s['items']));
     $url = rtrim((string) ($core->site_url ?? ''), '/') . '/track.php?order_track=' . rawurlencode($s['track']);
     return [
+        'scene' => sl_shipmentScene($s),
         'ch' => [
             'stage' => $stage, 'span' => $span, 'days' => $days, 'done' => $done, 'reached' => array_map(fn($t) => date('M j', $t), $reached), 'marks' => $marks,
             'startLabel' => date('M j, Y', $start), 'endLabel' => $done ? date('M j, Y', $endT) : 'now',
@@ -482,6 +483,43 @@ function sl_shipmentDetailCharts(array $s, int $step): array
             'bc' => sl_barcodeSvg($s['track'], 300, 58), 'qr' => sl_qrSvg($url, 96, 'Scan to open tracking'),
         ],
     ];
+}
+
+/**
+ * The illustration for where the parcel is now (assets/swiftlane/cargo/stage/, the owner's drawings):
+ * air - loading at the warehouse, in flight, unloading in Accra; sea - packing the container, ship at the
+ * quay, at sea, unloading at port, container yard, emptying the container; ready or handed over - the
+ * Swift courier with the parcel. The images are used exactly as supplied (original PNGs, not resized or recompressed).
+ */
+function sl_shipmentScene(array $s): array
+{
+    $o = $s['o'];
+    $sid = (int) $s['eff']->status_id;
+    $name = str_replace('_', ' ', (string) $s['eff']->mod_style);
+    $dir = 'assets/swiftlane/cargo/stage/';
+    $agent = ['img' => $dir . 'courier-ready.png', 'title' => 'With the Swift team in Accra', 'text' => 'Your parcel is here and ready to hand over.', 'agent' => true];
+    if (in_array($sid, [6, 32], true)) return array_merge($agent, ['title' => 'Ready for pickup']);
+    if (cdp_isHandedOver($sid)) return array_merge($agent, ['title' => 'Handed over', 'text' => 'Delivered to the customer by the Swift team.']);
+    if ((int) $o->order_item_category === 27) {
+        $i = (int) (cdp_trackProgress($sid, $name)['index'] ?? 0);
+        $sea = [
+            ['sea-1-packing', 'Packing the container', 'Checked in and packed into a container for the next sailing.'],
+            ['sea-2-at-quay', 'Booked on a ship', 'The container is at the quay, waiting to be loaded.'],
+            ['sea-3-at-sea', 'On the water', 'Sailing towards Ghana.'],
+            ['sea-4-unloading', 'Unloading at the port', 'Arrived at the port of entry and clearing customs.'],
+            ['sea-5-container-yard', 'At the container yard', 'Off the ship and on its way to the Accra office.'],
+            ['sea-6-emptying', 'Unpacking the container', 'Being unpacked and sorted at the Accra office.'],
+        ];
+        [$f, $t, $x] = $sea[min($i, 5)];
+        return ['img' => $dir . $f . '.png', 'title' => $t, 'text' => $x, 'agent' => false];
+    }
+    $a = cdp_airStageIndex($sid, $name);
+    $step = sl_shipmentStep($sid, $name);
+    $a = $a ?? [1 => 0, 2 => 2, 3 => 5, 4 => 7, 5 => 10][$step];
+    if ($a >= 10) return $agent;
+    if ($a >= 7) return ['img' => $dir . 'air-3-unloading.png', 'title' => 'Landed in Accra', 'text' => 'Off the plane, through customs and into sorting.', 'agent' => false];
+    if ($a >= 5) return ['img' => $dir . 'air-2-in-flight.png', 'title' => 'In the air', 'text' => 'Flying to Accra.', 'agent' => false];
+    return ['img' => $dir . 'air-1-loading.png', 'title' => 'At the warehouse', 'text' => 'Checked in, weighed and being loaded for the next flight.', 'agent' => false];
 }
 
 /** Shipment tracking (advanced) page. $id = 0 shows the finder with recent shipments. */
