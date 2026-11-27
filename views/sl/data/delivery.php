@@ -57,3 +57,16 @@ function dl_jobData(int $rider): array
     $s=new DeliveryService();try{$d['request']=$s->get((int)($_GET['id']??0),$rider,'rider');$d['events']=$s->sql('SELECT * FROM cdb_delivery_events WHERE request_id=? ORDER BY id DESC',[$d['request']->id])->fetchAll(PDO::FETCH_OBJ);}catch(DomainException $e){$d['notFound']=true;}
     return $d;
 }
+
+function dl_fleetSnapshot(): array
+{
+ $agency=dl_agency();
+ $scope=$agency?' AND r.agency_id=:agency':'';
+ $bind=$agency?[':agency'=>$agency]:[];
+ $position=sl_tableExists('cdb_rider_positions');
+ $join=$position?"LEFT JOIN cdb_rider_positions p ON p.driver_id=r.driver_id AND p.request_id=r.id AND r.state='onroute' AND p.recorded_at>=UTC_TIMESTAMP()-INTERVAL 2 MINUTE":'';
+ $coords=$position?'p.latitude,p.longitude,p.recorded_at':'NULL AS latitude,NULL AS longitude,NULL AS recorded_at';
+ $stops=sl_rows("SELECT r.id,r.driver_id,r.address,r.lat,r.lng,r.state,$coords FROM cdb_delivery_requests r $join WHERE r.state IN ('assigned','onroute') $scope ORDER BY r.id DESC LIMIT 200",$bind);
+ $totals=sl_row("SELECT COUNT(*) AS total,SUM(r.state IN ('assigned','onroute')) AS active,SUM(r.state='delivered') AS completed,SUM(r.state='failed') AS failed FROM cdb_delivery_requests r WHERE r.state<>'quoted' $scope",$bind);
+ return ['stops'=>$stops,'totals'=>$totals,'asOf'=>gmdate('c')];
+}
