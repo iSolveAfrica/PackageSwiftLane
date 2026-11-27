@@ -3,7 +3,14 @@
 ?>
 <a class="sl-skip" href="#sl-main">Skip to main content</a>
 <div class="<?= h($slTheme) ?>" id="sl-app" data-page="<?= h($slPage['id'] ?? '') ?>">
-  <?php $slNavCollapsed = ($slPage['navCollapsed'] ?? true) !== false; /* menu starts collapsed on every page for a wider view; a page can pass navCollapsed => false */ ?>
+  <?php
+  /* The menu stays open on every page. Only the tracking and warehouse pages start wide
+     (menu folded); a page can still pass navCollapsed => true or false to choose. */
+  $slWideIds = ['livetrack', 'shiptrack', 'airtrack', 'seatrack', 'dtrack', 'warehouse', 'intake', 'whpick', 'handout'];
+  $slWide = in_array((string) ($slPage['id'] ?? ''), $slWideIds, true)
+      || (($slPage['id'] ?? '') === 'sea' && ($_GET['panel'] ?? '') === 'tracking');
+  $slNavCollapsed = (bool) ($slPage['navCollapsed'] ?? $slWide);
+  ?>
   <input type="checkbox" id="navtg" class="nav-tg" aria-hidden="true" tabindex="-1"<?= $slNavCollapsed ? ' checked' : '' ?>>
   <?php if ($slNavCollapsed): ?><script>/* on phones the same box opens the drawer, so keep it shut there */ if (matchMedia('(max-width: 900px)').matches) document.getElementById('navtg').checked = false;</script><?php endif; ?>
   <header class="sl-top">
