@@ -32,6 +32,7 @@ function sl_routes(): array
         'MyNotifications'      => 'notifications.php',
         'MyRewards'            => 'my_rewards.php',
         'AppScreens'           => 'app_screens.php',
+        'StatusPictures'       => 'status_pictures.php',
         'DesignSystem'         => 'design_system.php',
         'Piece-7d1a'           => 'index.php',
 

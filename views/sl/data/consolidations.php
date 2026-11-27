@@ -124,7 +124,7 @@ function sl_consolidationDetailData($user, $core, int $id, string $type): ?array
         ? [['Shipping line', $courier], ['Container', $code], ['Bill of lading', $c->awb_no ?: 'Not set'], ['Seal', $c->seals_package ?: '—'], ['Route', $route], ['Sailed · ETA', sl_date($c->c_date) . ' · ' . ($c->estimated_eta ? sl_date($c->estimated_eta) : '—')], ['Driver to port', $driver], ['Agency', $agency]]
         : [['Carrier', $courier], ['Master air waybill', $c->awb_no ?: 'Not set'], ['Seals / ULD', $c->seals_package ?: '—'], ['Route', $route], ['Departs', sl_date($c->c_date)], ['ETA ' . $dest, $c->estimated_eta ? sl_date($c->estimated_eta) : '—'], ['Driver', $driver], ['Agency', $agency]];
     $d = [
-        'cid' => $id, 'type' => $M['mode'], 'code' => $code, 'st' => sl_statusLabel($s), 'stCls' => sl_statusClass($s), 'sea' => $M['sea'],
+        'cid' => $id, 'type' => $M['mode'], 'code' => $code, 'st' => sl_statusLabel($s), 'stCls' => sl_statusClass($s), 'stId' => $s, 'sea' => $M['sea'],
         'lede' => $n . ' package' . ($n === 1 ? '' : 's') . ' from ' . count($cust) . ' customer' . (count($cust) === 1 ? '' : 's') . ' · ' . $route . ' · created ' . sl_date($c->c_date),
         'capV' => sl_weight($c->total_weight ?: $w, 0) . ' / ' . sl_weight($M['cap'], 0), 'capW' => 'width:' . $pct . '%', 'capCls' => sl_conCapClass($pct), 'capS' => $pct . '% of capacity',
         'capacityKg' => (float) $M['cap'], 'weightKg' => (float) $w, 'pkN' => $n, 'custN' => count($cust), 'pcsN' => $pcs, 'wt' => sl_weight($w), 'wt2' => number_format($v, 1) . ' vol. weight', 'vTot' => number_format($v, 1),

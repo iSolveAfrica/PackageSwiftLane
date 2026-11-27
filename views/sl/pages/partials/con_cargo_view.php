@@ -63,17 +63,21 @@ $late = !empty($d['map']['late']);
   <section class="ccv-craftbox" aria-label="<?= $sea ? 'Container ship and bays' : 'Aircraft and cargo positions' ?>">
     <div class="ccv-ch"><b><?= $sea ? 'Container' : 'Main deck' ?> · <?= count($d['rows']) ?> package<?= count($d['rows']) === 1 ? '' : 's' ?></b><small><?= $slots ?> <?= $sea ? 'bays' : 'cargo positions' ?> below · tap one to see what is in it</small></div>
 <?php
-    // The owner's illustrations (assets/swiftlane/cargo, stored unaltered), one per stage of the operation timeline.
-    $stageImg = max(1, min(5, $stageNow ?: 1));
-    $art = $sea
-        ? [1 => ['sea-1-packing-container', 'Container being packed at origin'], 2 => ['sea-2-loading-at-port', 'Container lifted onto the ship at port'], 3 => ['sea-3-ship-at-sea', 'Container ship at sea'], 4 => ['sea-4-container-yard', 'Containers in the port yard awaiting customs'], 5 => ['sea-5-container-opened', 'Container opened, cargo ready to hand out']][$stageImg]
-        : ['air-cargo-plane', 'Cargo aircraft with its main-deck cargo'];
-    $stageName = $d['steps'][$stageImg - 1]['t'] ?? '';
-    $artFile = 'assets/swiftlane/cargo/' . $art[0] . '.webp';
+    // The owner's illustrations (assets/swiftlane/cargo, stored unaltered): the picture follows the current status
+    // (helpers/cargo_art.php; changeable per status on Settings › Status pictures).
+    if (defined('CDP_ROOT')) {
+        require_once CDP_ROOT . '/helpers/cargo_art.php';
+        $artPick = sl_cargoArtFor((int) ($d['stId'] ?? 0), (string) ($d['st'] ?? ''), $sea);
+    } else { // stand-alone test page without the app
+        $artPick = $sea ? ['key' => 'packing', 'file' => 'assets/swiftlane/cargo/sea-1-packing-container.webp', 'alt' => 'Container being packed'] : ['key' => 'plane', 'file' => 'assets/swiftlane/cargo/air-cargo-plane.webp', 'alt' => 'Cargo aircraft'];
+    }
+    $art = [$artPick['key'], $artPick['alt']];
+    $artFile = $artPick['file'];
+    $stageName = (string) ($d['st'] ?? '');
 ?>
-    <figure class="ccv-art<?= $art[0] === 'sea-3-ship-at-sea' ? ' blend' : '' ?>">
-      <img src="<?= h(function_exists('cdp_asset') ? cdp_asset($artFile) : $artFile) ?>" alt="<?= h($art[1]) ?>" width="2000" height="<?= $art[0] === 'sea-5-container-opened' || $art[0] === 'sea-2-loading-at-port' ? 1000 : 667 ?>" decoding="async">
-      <?php if ($stageName !== ''): ?><figcaption><span class="ccv-step"><?= $stageImg ?>/5</span><?= h($stageName) ?></figcaption><?php endif; ?>
+    <figure class="ccv-art<?= $art[0] === 'ship' ? ' blend' : '' ?>">
+      <img src="<?= h(function_exists('cdp_asset') ? cdp_asset($artFile) : $artFile) ?>" alt="<?= h($art[1]) ?>" width="2000" height="<?= in_array($art[0], ['opened', 'loading'], true) ? 1000 : 667 ?>" decoding="async">
+      <?php if ($stageName !== ''): ?><figcaption><span class="ccv-dot" aria-hidden="true"></span><?= h($stageName) ?></figcaption><?php endif; ?>
     </figure>
     <div class="ccv-slots" role="group" aria-label="<?= $sea ? 'Bays' : 'Cargo positions' ?>">
 <?php foreach ($pos as $i => $p): $lv = (int) round(100 * $level($p['w'])); ?>
