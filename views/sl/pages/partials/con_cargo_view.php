@@ -61,46 +61,25 @@ $late = !empty($d['map']['late']);
   </section>
 
   <section class="ccv-craftbox" aria-label="<?= $sea ? 'Container ship and bays' : 'Aircraft and cargo positions' ?>">
-    <div class="ccv-ch"><b><?= $sea ? 'On deck' : 'Main deck' ?> · <?= count($d['rows']) ?> package<?= count($d['rows']) === 1 ? '' : 's' ?></b><small><?= $slots ?> <?= $sea ? 'bays' : 'ULD positions' ?> · tap one to see what is in it</small></div>
-<?php if (!$sea): ?>
-    <div class="ccv-scroll"><svg class="ccv-svg" viewBox="0 0 1000 250" role="img" aria-label="Aircraft side view with <?= count(array_filter($pos, fn($p) => $p['w'] > 0)) ?> of <?= $slots ?> cargo positions loaded">
-      <defs><pattern id="ccvh" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><path d="M0 0V7" stroke="var(--line-2)" stroke-width="1"/></pattern>
-      <clipPath id="ccvbody"><path d="M28 132 C28 98 62 80 118 78 L812 74 C860 74 900 84 930 104 L972 112 L972 124 C944 146 892 168 830 172 L118 174 C62 174 28 162 28 132 Z"/></clipPath></defs>
-      <path class="ccv-wing far" d="M470 128 L560 128 L640 92 L612 92 Z"/>
-      <path class="ccv-fin" d="M826 80 L884 8 L930 8 L914 100 Z"/><path class="ccv-line" d="M852 46 H908 M840 64 H904"/>
-      <path class="ccv-tail" d="M880 104 L990 92 L994 102 L896 122 Z"/>
-      <path class="ccv-body" d="M28 132 C28 98 62 80 118 78 L812 74 C860 74 900 84 930 104 L972 112 L972 124 C944 146 892 168 830 172 L118 174 C62 174 28 162 28 132 Z"/>
-      <g clip-path="url(#ccvbody)"><rect x="0" y="0" width="1000" height="250" fill="url(#ccvh)" opacity=".28"/>
-        <path class="ccv-line" d="M28 150 H972" opacity=".5"/><?php for ($k = 0; $k < 16; $k++): ?><path class="ccv-line" d="M<?= 150 + $k * 44 ?> 76 V174" opacity=".25"/><?php endfor; ?></g>
-      <path class="ccv-cock" d="M44 104 C56 92 72 87 90 86 L104 86 L100 104 Z"/><path class="ccv-line" d="M72 88 L70 104"/>
-      <rect class="ccv-door" x="118" y="86" width="26" height="40" rx="3"/>
-      <rect class="ccv-hold" x="156" y="84" width="660" height="70" rx="12"/>
-<?php foreach ($pos as $i => $p): $x = 162 + $i * 65.2; $h = round(58 * $level($p['w']), 1); ?>
-      <g class="ccv-uld<?= $p['w'] > 0 ? ' on' : '' ?>" data-ccv-pos="<?= $i ?>" tabindex="0" role="button" aria-label="Position <?= $i + 1 ?>: <?= count($p['items']) ?> packages, <?= h($fmtW($p['w'])) ?>">
-        <path class="ccv-shell" d="M<?= $x ?> 150 V100 C<?= $x ?> 93 <?= $x + 7 ?> 89 <?= $x + 15 ?> 89 H<?= $x + 46 ?> C<?= $x + 54 ?> 89 <?= $x + 59 ?> 94 <?= $x + 59 ?> 102 V150 Z"/>
-        <?php if ($h > 0): ?><rect class="ccv-load" x="<?= $x + 2.5 ?>" y="<?= round(148.5 - $h, 1) ?>" width="54" height="<?= $h ?>" rx="4"/><?php endif; ?>
-        <text x="<?= $x + 29.5 ?>" y="166" text-anchor="middle"><?= $i + 1 ?></text>
-      </g>
+    <div class="ccv-ch"><b><?= $sea ? 'Container' : 'Main deck' ?> · <?= count($d['rows']) ?> package<?= count($d['rows']) === 1 ? '' : 's' ?></b><small><?= $slots ?> <?= $sea ? 'bays' : 'cargo positions' ?> below · tap one to see what is in it</small></div>
+<?php
+    // The owner's illustrations (assets/swiftlane/cargo, stored unaltered), one per stage of the operation timeline.
+    $stageImg = max(1, min(5, $stageNow ?: 1));
+    $art = $sea
+        ? [1 => ['sea-1-packing-container', 'Container being packed at origin'], 2 => ['sea-2-loading-at-port', 'Container lifted onto the ship at port'], 3 => ['sea-3-ship-at-sea', 'Container ship at sea'], 4 => ['sea-4-container-yard', 'Containers in the port yard awaiting customs'], 5 => ['sea-5-container-opened', 'Container opened, cargo ready to hand out']][$stageImg]
+        : ['air-cargo-plane', 'Cargo aircraft with its main-deck cargo'];
+    $stageName = $d['steps'][$stageImg - 1]['t'] ?? '';
+    $artFile = 'assets/swiftlane/cargo/' . $art[0] . '.webp';
+?>
+    <figure class="ccv-art<?= $art[0] === 'sea-3-ship-at-sea' ? ' blend' : '' ?>">
+      <img src="<?= h(function_exists('cdp_asset') ? cdp_asset($artFile) : $artFile) ?>" alt="<?= h($art[1]) ?>" width="2000" height="<?= $art[0] === 'sea-5-container-opened' || $art[0] === 'sea-2-loading-at-port' ? 1000 : 667 ?>" decoding="async">
+      <?php if ($stageName !== ''): ?><figcaption><span class="ccv-step"><?= $stageImg ?>/5</span><?= h($stageName) ?></figcaption><?php endif; ?>
+    </figure>
+    <div class="ccv-slots" role="group" aria-label="<?= $sea ? 'Bays' : 'Cargo positions' ?>">
+<?php foreach ($pos as $i => $p): $lv = (int) round(100 * $level($p['w'])); ?>
+      <button type="button" class="ccv-uld<?= $p['w'] > 0 ? ' on' : '' ?>" data-ccv-pos="<?= $i ?>" aria-label="<?= $sea ? 'Bay' : 'Position' ?> <?= $i + 1 ?>: <?= count($p['items']) ?> packages, <?= h($fmtW($p['w'])) ?>"><span class="ccv-bar"><i style="height:<?= $lv ?>%"></i></span><small><?= $i + 1 ?></small></button>
 <?php endforeach; ?>
-      <path class="ccv-wing" d="M420 172 L540 172 L742 240 L700 246 Z"/><path class="ccv-line" d="M560 176 L726 238"/>
-      <path class="ccv-eng" d="M548 196 C548 186 560 180 576 180 L652 180 C666 180 672 188 672 196 C672 204 666 212 652 212 L576 212 C560 212 548 206 548 196 Z"/><ellipse class="ccv-intake" cx="553" cy="196" rx="7" ry="15"/><path class="ccv-line" d="M590 180 V212 M630 180 V212"/>
-      <path class="ccv-line" d="M300 174 V200 M290 200 H312 M760 172 V198 M750 198 H772"/><circle class="ccv-wheel" cx="301" cy="206" r="8"/><circle class="ccv-wheel" cx="761" cy="204" r="8"/>
-    </svg></div>
-<?php else: ?>
-    <div class="ccv-scroll"><svg class="ccv-svg" viewBox="0 0 1000 300" role="img" aria-label="Container ship with <?= count(array_filter($pos, fn($p) => $p['w'] > 0)) ?> of <?= $slots ?> bays loaded">
-      <defs><pattern id="ccvh" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><path d="M0 0V8" stroke="var(--line-2)" stroke-width="1"/></pattern></defs>
-      <path class="ccv-body" d="M40 170 L960 170 L930 252 C900 266 860 270 800 270 L150 270 C90 270 60 250 52 232 C30 226 24 200 40 170 Z"/>
-      <path class="ccv-hatch" d="M40 170 L960 170 L930 252 C900 266 860 270 800 270 L150 270 C90 270 60 250 52 232 C30 226 24 200 40 170 Z" fill="url(#ccvh)" opacity=".35"/>
-      <path class="ccv-line" d="M44 196 H950 M60 236 H930"/>
-      <path class="ccv-fin" d="M842 72 H930 V170 H842 Z"/><path class="ccv-line" d="M852 90 H920 M852 110 H920 M852 130 H920 M886 72 V40 M876 40 H896"/>
-<?php foreach ($pos as $i => $p): $x = 92 + $i * 61; $tiers = $p['w'] <= 0 ? 0 : max(1, (int) ceil(3 * $level($p['w']))); ?>
-      <g class="ccv-uld<?= $p['w'] > 0 ? ' on' : '' ?>" data-ccv-pos="<?= $i ?>" tabindex="0" role="button" aria-label="Bay <?= $i + 1 ?>: <?= count($p['items']) ?> packages, <?= h($fmtW($p['w'])) ?>">
-        <?php for ($t = 0; $t < 3; $t++): $y = 140 - $t * 32; ?><rect class="<?= $t < $tiers ? 'ccv-load' : 'ccv-shell' ?>" x="<?= $x ?>" y="<?= $y ?>" width="56" height="30" rx="2"/><?php endfor; ?>
-        <text x="<?= $x + 28 ?>" y="188" text-anchor="middle"><?= $i + 1 ?></text>
-      </g>
-<?php endforeach; ?>
-    </svg></div>
-<?php endif; ?>
+    </div>
     <div class="ccv-legend"><span><i class="ccv-sw on"></i>Loaded</span><span><i class="ccv-sw"></i>Empty</span><span>Fill = weight against an even share of capacity (<?= h($fmtW($per)) ?> each)</span></div>
     <div class="ccv-pos-list">
 <?php foreach ($pos as $i => $p): if (!$p['items']) continue; ?>
