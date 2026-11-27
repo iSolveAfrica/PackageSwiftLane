@@ -21,7 +21,7 @@ if (!function_exists('cdp_mailboxAddressHtml')) {
         $isPlain = (strip_tags($address) === $address);
         $lockerOut = $isPlain ? $locker : htmlspecialchars($locker, ENT_QUOTES, 'UTF-8');
         if ($locker !== '') {
-            $address = preg_replace('/\(?\s*locker\s*id\s*\)?/i', ' (' . $lockerOut . ') ', $address);
+            $address = preg_replace('/\(?[ \t]*locker[ \t]*id[ \t]*\)?/i', ' (' . $lockerOut . ') ', $address);
             $address = preg_replace('/[ \t]{2,}/', ' ', $address);
         }
         if (!$isPlain) {

@@ -13,7 +13,7 @@ $steps = sl_get($d, 'latestSteps');
         <?php include CDP_ROOT . '/views/sl/inc/king_chat.php'; /* King greets the customer: the panel (desktop) or the card that opens the chat (phones) */ ?>
         <?php endif; ?>
         <?php include __DIR__ . '/partials/mobile_dashboard.php'; ?>
-        <div class="sl-dashboard-detail"><?php include __DIR__ . '/partials/client_hero.php'; ?></div>
+        <div class="sl-dashboard-detail"><?php include __DIR__ . (!empty($d['cc']) ? '/partials/client_overview.php' : '/partials/client_hero.php'); ?></div>
         <?php if (!empty($d['tracking']['items'])): $tc = $d['tracking']; $tcTitle = 'On the move'; $tcNoun = 'parcels'; $tcExpand = sl_route('LiveTracking'); ?>
         <?php include __DIR__ . '/partials/track_console.php'; ?>
         <?php endif; ?>

@@ -478,7 +478,9 @@ function sl_mailboxData($core, $userData): array
             'postcode' => (string) ($mb->postcode ?? ''),
         ];
     }
-    return ['list' => $list, 'all' => $all, 'filter' => $filter, 'locker' => $locker];
+    require_once CDP_ROOT . '/helpers/sl_auth.php';
+    $addr = array_values(array_filter(sl_customerAddresses($userData, $core), fn($a) => !$filter || (int) ($a['id'] ?? 0) === $filter));
+    return ['list' => $list, 'all' => $all, 'filter' => $filter, 'locker' => $locker, 'addr' => $addr, 'name' => trim(($userData->fname ?? '') . ' ' . ($userData->lname ?? ''))];
 }
 
 /** backup.php: files in backups/ (newest first), the latest one marked. */
