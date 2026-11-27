@@ -16,7 +16,7 @@ function sl_pwa_head(): void
 {
     $role=sl_pwa_role();if(!in_array($role,['customer','rider','staff'],true))return;
     $root=sl_pwa_root();$scope=sl_pwa_scope($role);$inside=defined('SL_PWA_ROLE');
-    $name=$role==='rider'?'Swift Lane Rider':($role==='staff'?'Swift Lane Staff':'Swift Lane');$theme=$role==='rider'?'#14252b':($role==='staff'?'#1e1d1a':'#123d35');
+    $name=$role==='rider'?'Swift Lane Rider':($role==='staff'?'Swift Lane Staff':'Swift Lane');$theme='#F3F2EF'; // status bar matches the paper app bar on every role
     if($inside)echo '<base href="'.h($scope.'app.php/').'">' . "\n";
     require_once __DIR__.'/sl_modules.php';
     $force=function_exists('sl_moduleEnabled')&&sl_moduleEnabled('pwa_install')?'1':'0'; // Settings › Modules › Install the phone app
@@ -29,4 +29,6 @@ function sl_pwa_head(): void
     // app look on phones for every page + tables as cards (all roles)
     echo '<link rel="stylesheet" href="'.h(cdp_asset($root.'assets/swiftlane/pwa/app-shell.css')).'">';
     echo '<script defer src="'.h(cdp_asset($root.'assets/swiftlane/pwa/app-tables.js')).'"></script>';
+    // Warm Ledger finish for the phone app (matches the M-* mobile screens of the design canvas)
+    echo '<link rel="stylesheet" href="'.h(cdp_asset($root.'assets/swiftlane/pwa/app-ledger.css')).'">';
 }
