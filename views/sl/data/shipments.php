@@ -406,7 +406,82 @@ function sl_shipmentDetailData($user, $core, int $id): array
         'office' => (int) $o->origin_off, 'statusId' => (int) $o->status_courier,
         'publicUrl' => 'track.php?order_track=' . rawurlencode($s['track']),
     ];
-    return $d;
+    return $d + sl_shipmentDetailCharts($s, $step);
+}
+
+/**
+ * Charts on the shipment view: time spent in each of the 5 journey steps (from the tracking events),
+ * days on the way against recent deliveries of the same mode, the charges split, item weight shares,
+ * the sender's last 12 months, plus the tracking barcode and QR.
+ */
+function sl_shipmentDetailCharts(array $s, int $step): array
+{
+    global $core;
+    require_once CDP_ROOT . '/views/sl/data/labels.php';
+    $o = $s['o'];
+    $now = time();
+    $start = strtotime((string) ($o->order_datetime ?: $o->order_date)) ?: $now;
+    $done = cdp_isHandedOver($o->status_courier);
+    // time in each step: from each event to the next one (the last one runs until now, unless delivered)
+    $stage = array_fill(1, 5, 0);
+    $ev = array_values(array_filter($s['events'], fn($e) => strtotime((string) $e->t_date)));
+    $marks = [];
+    $prevT = $start;
+    $prevStep = 1;
+    foreach ($ev as $e) {
+        $t = max($start, strtotime((string) $e->t_date));
+        $st = sl_shipmentStep((int) $e->status_courier, str_replace('_', ' ', (string) ($e->mod_style ?? '')));
+        $stage[$prevStep] += max(0, $t - $prevT);
+        $marks[] = ['t' => $t, 'label' => str_replace('_', ' ', (string) ($e->mod_style ?: 'Update')), 'when' => sl_date($e->t_date, 'M j, H:i'), 'step' => $st];
+        $prevT = $t;
+        $prevStep = $st;
+    }
+    $endT = $done ? $prevT : $now;
+    if (!$done) $stage[$prevStep] += max(0, $now - $prevT);
+    $span = max(1, $endT - $start);
+    $days = round(($endT - $start) / 86400, 1);
+    // stage dates: first time each step was reached
+    $reached = [1 => $start];
+    foreach ($marks as $m) if (!isset($reached[$m['step']])) $reached[$m['step']] = $m['t'];
+    // usual days for the same mode (delivered in the last 6 months)
+    $lane = sl_row("SELECT AVG(x.d) AS avg, COUNT(*) AS n FROM (SELECT DATEDIFF(MIN(t.t_date), a.order_date) AS d FROM cdb_add_order a
+        INNER JOIN cdb_courier_track t ON t.order_id = a.order_id AND t.status_courier IN (8,15)
+        WHERE a.is_deleted = 0 AND a.order_item_category = :c AND a.order_date >= CURDATE() - INTERVAL 6 MONTH AND a.order_id <> :id
+        GROUP BY a.order_id ORDER BY a.order_id DESC LIMIT 300) x WHERE x.d >= 0", [':c' => (int) $o->order_item_category, ':id' => (int) $o->order_id]);
+    // charges
+    $charges = [];
+    if ((float) $o->sub_total != 0) $charges[] = ['l' => 'Freight', 'v' => (float) $o->sub_total];
+    foreach ([['total_tax_insurance', 'Insurance'], ['total_tax_custom_tariffis', 'Customs tariff'], ['total_tax', 'Tax'], ['total_declared_value', 'Declared value fee'], ['total_fixed_value', 'Handling'], ['total_reexp', 'Re-shipping']] as [$col, $lab]) {
+        if (isset($o->$col) && (float) $o->$col > 0) $charges[] = ['l' => $lab, 'v' => (float) $o->$col];
+    }
+    $discount = (float) ($o->total_tax_discount ?? 0);
+    // item weight shares
+    $iw = [];
+    foreach ($s['items'] as $it) $iw[] = (float) $it->order_item_weight * max(1, (float) $it->order_item_quantity);
+    $iwTotal = array_sum($iw);
+    // the sender's last 12 months
+    $months = [];
+    for ($i = 11; $i >= 0; $i--) $months[date('Y-m', strtotime("first day of -$i month"))] = 0;
+    foreach (sl_rows("SELECT DATE_FORMAT(order_date, '%Y-%m') AS m, COUNT(*) AS n FROM cdb_add_order WHERE sender_id = :u AND is_deleted = 0 AND order_date >= DATE_FORMAT(CURDATE() - INTERVAL 11 MONTH, '%Y-%m-01') GROUP BY DATE_FORMAT(order_date, '%Y-%m')", [':u' => (int) $o->sender_id]) as $r) {
+        if (isset($months[$r->m])) $months[$r->m] = (int) $r->n;
+    }
+    $senderAll = (int) sl_scalar('SELECT COUNT(*) FROM cdb_add_order WHERE sender_id = :u AND is_deleted = 0', [':u' => (int) $o->sender_id]);
+    $senderNo = (int) sl_scalar('SELECT COUNT(*) FROM cdb_add_order WHERE sender_id = :u AND is_deleted = 0 AND order_id <= :id', [':u' => (int) $o->sender_id, ':id' => (int) $o->order_id]);
+    $pieces = (int) array_sum(array_map(fn($it) => max(1, (int) $it->order_item_quantity), $s['items']));
+    $declared = array_sum(array_map(fn($it) => (float) $it->order_item_declared_value * max(1, (float) $it->order_item_quantity), $s['items']));
+    $url = rtrim((string) ($core->site_url ?? ''), '/') . '/track.php?order_track=' . rawurlencode($s['track']);
+    return [
+        'ch' => [
+            'stage' => $stage, 'span' => $span, 'days' => $days, 'done' => $done, 'reached' => array_map(fn($t) => date('M j', $t), $reached), 'marks' => $marks,
+            'startLabel' => date('M j, Y', $start), 'endLabel' => $done ? date('M j, Y', $endT) : 'now',
+            'laneAvg' => $lane && (int) $lane->n >= 3 ? round((float) $lane->avg, 1) : null, 'laneN' => (int) ($lane->n ?? 0),
+            'charges' => $charges, 'discount' => $discount, 'chargeTotal' => (float) $o->total_order,
+            'iw' => $iw, 'iwTotal' => $iwTotal,
+            'months' => $months, 'senderAll' => $senderAll, 'senderNo' => $senderNo,
+            'pieces' => $pieces, 'declared' => $declared, 'rate' => (float) ($o->value_weight ?? 0),
+            'bc' => sl_barcodeSvg($s['track'], 300, 58), 'qr' => sl_qrSvg($url, 96, 'Scan to open tracking'),
+        ],
+    ];
 }
 
 /** Shipment tracking (advanced) page. $id = 0 shows the finder with recent shipments. */
