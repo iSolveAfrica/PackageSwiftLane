@@ -71,6 +71,43 @@ $rank = function (array $rows, string $valueKey, callable $labelFn, callable $su
     </article>
   </div>
 
+  <?php
+  // month labels: drop one that would sit within 3 weeks of the next (the partial first month)
+  $hm = $in['heatMonths'];
+  $hk = array_keys($hm);
+  foreach ($hk as $i => $c) if (isset($hk[$i + 1]) && $hk[$i + 1] - $c < 3) unset($hm[$c]);
+  $wdNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  $wdOrder = [1, 2, 3, 4, 5, 6, 0];
+  $wdPeak = max(1, max($in['weekday']));
+  $wdBusy = array_search(max($in['weekday']), $in['weekday'], true);
+  ?>
+  <article class="si-card si-intake" aria-labelledby="si-intake-h">
+    <div class="si-ch"><div><span class="si-k" id="si-intake-h">Daily intake · packages received per day</span><div class="si-big"><?= sl_num($in['heatTotal']) ?> <small>in the last 12 months</small></div></div>
+      <span class="si-pill">Peak <?= sl_num($in['heatPeak']) ?> a day</span></div>
+    <p class="si-sub">Busiest day: <b><?= h($in['heatPeakDay'] ?: '—') ?></b> · intake on <?= sl_num($in['heatActive']) ?> days · <?= h(sl_num($in['heatAvg'], 1)) ?> a day on days with intake · hover or tap a square for the day's count</p>
+    <div class="si-intake-body">
+      <div class="si-heatwrap">
+        <div class="sl-heatbox">
+          <div class="sl-heatdays" aria-hidden="true"><span></span><span>Mon</span><span></span><span>Wed</span><span></span><span>Fri</span><span></span></div>
+          <div class="sl-heatcol">
+            <div class="si-heatmonths" aria-hidden="true" style="grid-template-columns:repeat(<?= (int) $in['heatWeeks'] ?>,minmax(0,1fr))"><?php foreach ($hm as $c => $m): ?><span style="grid-column:<?= (int) $c + 1 ?> / span 3"><?= h($m) ?></span><?php endforeach; ?></div>
+            <div class="sl-heat si-heat" style="grid-template-columns:repeat(<?= (int) $in['heatWeeks'] ?>,minmax(0,1fr))" role="img" aria-label="Packages registered per day over the last 12 months">
+              <?php foreach ($in['heat'] as $c): ?><b title="<?= h($c['t']) ?>" class="<?= h($c['c']) ?><?= $c['today'] ? ' today' : '' ?>"></b><?php endforeach; ?>
+            </div>
+          </div>
+        </div>
+        <div class="sl-legend" style="justify-content:space-between;margin-top:8px"><span class="row g6">Quiet <b style="background:var(--heat-0)"></b><b style="background:var(--heat-1)"></b><b style="background:var(--heat-2)"></b><b style="background:var(--heat-3)"></b> Busy</span><span>Outlined square = today</span></div>
+      </div>
+      <div class="si-wd">
+        <span class="si-k">By day of the week</span>
+        <ol class="si-wdl" <?= sl_chartAttrs([['name' => 'Packages registered', 'values' => array_map(fn($w) => $in['weekday'][$w], $wdOrder)]], array_map(fn($w) => $wdNames[$w] . 'days', $wdOrder), 'Packages registered by day of the week, last 12 months') ?>>
+          <?php foreach ($wdOrder as $w): ?><li class="<?= $w === $wdBusy ? 'top' : '' ?>"><span><?= $wdNames[$w] ?></span><span class="si-track"><i style="width:<?= max(1, round(100 * $in['weekday'][$w] / $wdPeak, 1)) ?>%"></i></span><b><?= sl_num($in['weekday'][$w]) ?></b></li><?php endforeach; ?>
+        </ol>
+        <p class="si-sub" style="font-size:12px">Busiest: <b><?= $wdNames[$wdBusy] ?>days</b> · plan staff for intake on that day</p>
+      </div>
+    </div>
+  </article>
+
   <div class="si-grid3">
     <article class="si-card">
       <div class="si-ch"><div><span class="si-k">Status mix</span><div class="si-mid"><?= sl_num($in['rangeTotal']) ?> <small>shipments · <?= h(strtolower($in['rangeLabel'])) ?></small></div></div></div>

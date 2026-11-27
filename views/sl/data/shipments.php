@@ -915,7 +915,41 @@ function sl_shipmentInsightsData(string $range): array
         $items[] = ['label' => ucfirst(trim((string) $r->label)), 'q' => (float) $r->q, 'n' => (int) $r->n];
     }
 
+    // daily intake grid: one square per day for the rolling year, weeks as columns (Sunday on top)
+    require_once CDP_ROOT . '/helpers/sl_charts.php';
+    $end = new DateTimeImmutable('today');
+    $start = $end->modify('-364 days');
+    $start = $start->modify('-' . (int) $start->format('w') . ' days'); // back to Sunday
+    $heatMap = [];
+    foreach (sl_rows("SELECT DATE(a.order_date) AS d, COUNT(*) AS n $base AND a.order_date >= :from GROUP BY DATE(a.order_date)", [':from' => $start->format('Y-m-d')]) as $r) {
+        $heatMap[$r->d] = (int) $r->n;
+    }
+    $heatPeak = max(1, max($heatMap ?: [0]));
+    $heat = [];
+    $heatMonths = [];
+    $weekday = array_fill(0, 7, 0);
+    $activeDays = 0;
+    $col = 0;
+    for ($day = $start; $day <= $end; $day = $day->modify('+1 day')) {
+        $n = $heatMap[$day->format('Y-m-d')] ?? 0;
+        $w = (int) $day->format('w');
+        if ($w === 0 || $day == $start) {
+            $col = intdiv((int) $start->diff($day)->days, 7);
+            if ((int) $day->format('j') <= 7 || $day == $start) $heatMonths[$col] = $day->format('M');
+        }
+        $heat[] = ['c' => sl_heatLevel($n, $heatPeak), 't' => $day->format('D, M j, Y') . ': ' . number_format($n) . ' package' . ($n === 1 ? '' : 's') . ' registered', 'today' => $day == $end];
+        $weekday[$w] += $n;
+        if ($n > 0) $activeDays++;
+    }
+    $heatTotal = array_sum($heatMap);
+    arsort($heatMap);
+    $peakDay = key($heatMap);
+    $heatWeeks = $col + 1;
+
     return [
+        'heat' => $heat, 'heatWeeks' => $heatWeeks, 'heatMonths' => $heatMonths, 'heatTotal' => $heatTotal, 'heatPeak' => $heatMap ? (int) reset($heatMap) : 0,
+        'heatPeakDay' => $peakDay ? date('D, M j, Y', strtotime($peakDay)) : '', 'heatActive' => $activeDays,
+        'heatAvg' => $activeDays ? round($heatTotal / $activeDays, 1) : 0, 'weekday' => $weekday,
         'range' => $range, 'rangeLabel' => $rangeLabel, 'rangeTotal' => $rangeTotal,
         'month' => $month, 'monthName' => date('F'), 'today' => $today, 'byDay' => $byDay, 'lastSame' => $lastSame, 'lastFull' => $lastFull,
         'change' => $lastSame > 0 ? (int) round(100 * ($month - $lastSame) / $lastSame) : null,

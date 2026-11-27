@@ -97,3 +97,18 @@
 @media (max-width:1100px){.si-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.si-grid3{grid-template-columns:1fr 1fr}.si-grid3>:last-child{grid-column:1/-1}}
 @media (max-width:720px){.si-ai .si-ch{flex-direction:column;align-items:stretch}.si-tiles,.si-grid2,.si-grid3{grid-template-columns:1fr}.si-grid3>:last-child{grid-column:auto}.si-axis.m span:nth-child(even){visibility:hidden}.si-askf{flex-direction:column}}
 @media print{.si{display:none}}
+/* daily intake grid (shipment insights) */
+.si-intake-body{display:grid;grid-template-columns:minmax(0,1fr) 240px;gap:24px;align-items:start;margin-top:6px}
+.si-heatwrap{min-width:0;overflow-x:auto}
+.si-heatwrap .sl-heatbox{min-width:640px}
+.si-heatmonths{display:grid;font-size:12.5px;color:var(--ink-2);padding:0 0 6px}
+.si-heatmonths span{white-space:nowrap}
+.si-heat{grid-template-rows:repeat(7,15px)}.si-intake .sl-heatdays{grid-template-rows:repeat(7,15px);font-size:12px;margin-top:24px}
+.si-heat b{width:11px;height:11px}
+.si-heat b.today{outline:2px solid var(--ink);outline-offset:1px}
+.si-wd{display:flex;flex-direction:column;gap:8px}
+.si-wdl{--si-bar:var(--ch-1);list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.si-wdl li{display:grid;grid-template-columns:34px minmax(0,1fr) 52px;align-items:center;gap:8px;font-size:13px}
+.si-wdl .si-track{margin:0}.si-wdl b{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+.si-wdl li.top span:first-child{font-weight:650}
+@media (max-width:900px){.si-intake-body{grid-template-columns:1fr}}
