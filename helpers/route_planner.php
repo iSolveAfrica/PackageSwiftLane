@@ -71,6 +71,8 @@ function rp_ensureSchema(): void
 {
     static $done = false;
     if ($done) return;
+    require_once __DIR__.'/delivery_storage.php';
+    dl_ensureStorage();
     rp__alignClock();
     $have = (int) rp_val('SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME IN (' . rp_in(RP_TABLES) . ')', RP_TABLES);
     if ($have < count(RP_TABLES)) {
@@ -166,10 +168,22 @@ function rp_saveSettings(array $in, int $actor): array
 
 /* ------------------------------------------------------------------ vehicles & parcels */
 
+/** Legacy installations may only store vehiclecode and have no rider-profile columns. */
+function rp__userSelect(array $columns): string
+{
+    $select=[];
+    foreach($columns as $column) {
+        if(rp__hasColumn('cdb_users',$column))$select[]=$column;
+        elseif($column==='vehicle_type' && rp__hasColumn('cdb_users','vehiclecode'))$select[]='vehiclecode AS vehicle_type';
+        else $select[]=($column==='agency_id'?'0':"''").' AS '.$column;
+    }
+    return implode(', ',$select);
+}
+
 function rp_vehicle(int $driverId): array
 {
     rp_ensureSchema();
-    $u = rp_one('SELECT id, vehicle_type, vehiclecode, agency_id FROM cdb_users WHERE id = ?', [$driverId]) ?? [];
+    $u = rp_one('SELECT '.rp__userSelect(['id','vehicle_type','vehiclecode','agency_id']).' FROM cdb_users WHERE id = ?', [$driverId]) ?? [];
     $row = rp_one('SELECT * FROM cdb_rp_vehicles WHERE driver_id = ?', [$driverId]);
     $type = rp_vehicleType($row['vehicle_type'] ?? ($u['vehicle_type'] ?? $u['vehiclecode'] ?? null));
     $def = rp_settings()['vehicle_defaults'][$type] ?? rp_defaultSettings()['vehicle_defaults']['motorbike'];
@@ -457,7 +471,7 @@ function rp__openActivity(int $driverId): ?array
 function rp__riders(int $agency = 0): array
 {
     $roles = array_map('intval', function_exists('sl_riderRoleIds') ? sl_riderRoleIds() : [3]);
-    $rows = rp_all('SELECT id, username, fname, lname, phone, active, agency_id, vehicle_type, vehiclecode, zone, rider_status FROM cdb_users WHERE active = 1 AND userlevel IN (' . implode(',', $roles) . ')' . ($agency ? ' AND agency_id = ?' : '') . ' ORDER BY fname, lname, id', $agency ? [$agency] : []);
+    $rows = rp_all('SELECT '.rp__userSelect(['id','username','fname','lname','phone','active','agency_id','vehicle_type','vehiclecode','zone','rider_status']).' FROM cdb_users WHERE active = 1 AND userlevel IN (' . implode(',', $roles) . ')' . ($agency ? (rp__hasColumn('cdb_users','agency_id')?' AND agency_id = ?':' AND 1=0') : '') . ' ORDER BY fname, lname, id', $agency && rp__hasColumn('cdb_users','agency_id') ? [$agency] : []);
     $out = [];
     foreach ($rows as $r) { $r['name'] = trim($r['fname'] . ' ' . $r['lname']) ?: $r['username']; $out[(int) $r['id']] = $r; }
     return $out;

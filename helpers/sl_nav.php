@@ -81,7 +81,17 @@ function sl_navStaff(): array
             ['id' => 'docs', 'label' => 'Documents', 'icon' => 'file', 'board' => 'Documents', 'perm' => ['view_documents', 'view_general_reports']],
             ['id' => 'locker', 'label' => 'Smart Search', 'icon' => 'search', 'board' => 'LockerSearch', 'perm' => ['view_shipment_list', 'view_package_list', 'view_client_list', 'view_consolidate_list', 'prealert_list', 'view_user_list']],
         ]],
-        ['label' => 'RIDERS', 'items' => [
+        ['label' => 'Air Shipping', 'items' => [
+            ['id'=>'airregister','label'=>'Shipment Register','icon'=>'plane','board'=>'AirShipments','perm'=>'view_shipment_list'],
+            ['id'=>'airloads','label'=>'Consolidations & Load Plans','icon'=>'layers','board'=>'Consolidations','href'=>sl_route('Consolidations',['mode'=>'air']),'perm'=>'view_consolidate_list'],
+            ['id'=>'airtrack','label'=>'Track Air Shipments','icon'=>'route','board'=>'LiveTracking','href'=>sl_route('LiveTracking',['f'=>'air']),'perm'=>'view_shipment_list'],
+        ]],
+        ['label' => 'Sea Shipping', 'items' => [
+            ['id'=>'seatower','label'=>'Control Tower','icon'=>'gauge','board'=>'SeaPackages','href'=>sl_route('SeaPackages',['panel'=>'tower']),'perm'=>'view_package_list'],
+            ['id'=>'seatrack','label'=>'Track Sea Shipments','icon'=>'route','board'=>'SeaPackages','href'=>sl_route('SeaPackages',['panel'=>'tracking']),'perm'=>'view_package_list'],
+            ['id'=>'sealoads','label'=>'Consolidations & Load Plans','icon'=>'layers','board'=>'Consolidations','href'=>sl_route('Consolidations',['mode'=>'sea']),'perm'=>'view_consolidate_package_list'],
+        ]],
+        ['label' => 'Delivery & Riders', 'items' => [
             ['id' => 'pickup', 'label' => 'Home Pickups', 'icon' => 'truck', 'board' => 'Pickups', 'perm' => 'view_pickup_list',
                 'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_pickup = 1 AND a.is_deleted = 0 AND a.status_courier IN (1,14) $w"),
                 'count2' => fn() => '/ ' . sl_navCount("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_pickup = 1 AND a.is_deleted = 0 AND a.order_date >= CURDATE() AND a.order_date < CURDATE() + INTERVAL 1 DAY $w")],

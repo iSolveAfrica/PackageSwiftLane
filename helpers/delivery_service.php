@@ -164,6 +164,7 @@ class DeliveryService
                 foreach($items as $p)if(!in_array((int)$p->status_courier,[8,15,21],true))$this->sql("UPDATE $table SET driver_id=NULL,status_courier=CASE WHEN status_courier=7 THEN 6 ELSE status_courier END WHERE order_id=? AND driver_id=?",[$p->order_id,$r->driver_id]);
                 $this->sql('DELETE FROM cdb_delivery_claims WHERE request_id=?',[$id]);
             }elseif($op==='assign'){
+                if(!empty($input['pending_only']) && ($from!=='pending'||$r->driver_id))throw new DomainException('This request already has an assignment. Refresh dispatch.');
                 if($role!=='manager'||!in_array($from,['pending','assigned','failed'],true))throw new DomainException('Only dispatch can assign an open request');
                 $driver=(int)($input['driver_id']??0);
                 if(!$this->rider($driver,(int)$r->agency_id))throw new DomainException('Choose an active rider in this agency');

@@ -8,6 +8,8 @@
  * COD to collect = cash-payment orders out for delivery whose invoice is still pending (23).
  */
 require_once CDP_ROOT . '/helpers/sl_view.php';
+require_once CDP_ROOT . '/helpers/delivery_storage.php';
+dl_ensureStorage();
 
 /** Zone matching a city (first zone whose city list contains it). */
 function sl_lmZoneFor(string $city, array $zones): ?array

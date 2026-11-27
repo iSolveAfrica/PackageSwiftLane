@@ -27,6 +27,7 @@ $lab = fn($rows, $id, $key) => (function () use ($rows, $id, $key) { foreach ($r
 $pa = $d['prealert'];
 $unit = h($d['rates']['weight']);
 ?>
+<?php if ($client): require_once CDP_ROOT . '/helpers/sl_setup_checks.php'; if (!sl_setupHasPaymentMethod()): ?><div class="sl-banner warn" role="status">Booking is not open yet: we have not switched on a way to pay. Please message us and we will book it for you.</div><?php endif; endif; ?>
 <form id="ns-form" class="col g16 ns-form" action="<?= h($d['endpoint']) ?>" method="post" enctype="multipart/form-data" novalidate
   data-client="<?= $client ? '1' : '0' ?>" data-prefix="<?= h($d['prefix']) ?>" data-rates="<?= h(json_encode($d['rates'])) ?>" data-detail="<?= h(sl_route('ShipmentDetail')) ?>" data-new="<?= h(sl_self()) ?>" data-labels="<?= h(sl_route('LabelStudio')) ?>">
   <input type="hidden" name="quick_load_v2" value="1">

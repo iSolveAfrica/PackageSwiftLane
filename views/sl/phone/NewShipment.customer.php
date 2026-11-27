@@ -29,7 +29,7 @@ $courierCur = (int) ($pa['courier_id'] ?? ($df['order_courier'] ?? 0));
 <form id="pns-form" action="<?= h($d['endpoint'] ?? 'ajax/courier/add_courier_client_ajax.php') ?>" method="post" enctype="multipart/form-data" novalidate class="pc-form"
   data-rates="<?= h(json_encode($rates)) ?>" data-uid="<?= (int) ($me['id'] ?? 0) ?>" data-detail="<?= h(sl_route('ShipmentDetail')) ?>" data-new="courier_add_client.php">
 <header class="mx-top"><a class="mx-ib" href="<?= h(sl_route('MyParcels')) ?>" data-pns-back aria-label="Back"><i class="ic i-left" aria-hidden="true"></i></a><div class="mx-ttl"><h1>Create shipment</h1></div><a class="mx-ib" href="support.php" aria-label="Get help"><i class="ic i-help" aria-hidden="true"></i></a></header>
-<main class="mx-body">
+<main class="mx-body"><?php require_once CDP_ROOT . '/helpers/sl_setup_checks.php'; if (!sl_setupHasPaymentMethod()): ?><div class="mx-ban warn"><i class="ic ic-sm i-alert" aria-hidden="true"></i><span>Booking is not open yet: we have not switched on a way to pay. <a class="mx-lnk" href="support.php">Message us</a> and we will book it for you.</span></div><?php endif; ?>
 <ol class="b1-steps" aria-label="Step 1 of 3" data-pns-steps><li class="cur"><i></i>1 · Addresses</li><li class=""><i></i>2 · Items</li><li class=""><i></i>3 · Price</li></ol>
 
 <input type="hidden" name="quick_load_v2" value="1">

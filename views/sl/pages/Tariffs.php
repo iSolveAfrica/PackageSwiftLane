@@ -23,11 +23,11 @@ $edit = fn(string $group, string $label) => '<a class="sl-btn ghost sm" href="' 
             <div class="sl-ch" style="margin:0"><div><h2 class="sl-ct">Freight</h2><span class="mut sm">Base price of every shipment</span></div><?= $can['taxes'] ? $edit('taxes', 'Edit') : '' ?></div>
             <?= $rows($d['freight']) ?>
             <span class="mut sm">New shipments, package intake and invoices start from this price. Staff can still change the price on a single shipment.</span>
-            <div class="sl-ch" style="margin:0"><div><h2 class="sl-ct">Route weight bands</h2><span class="mut sm">Used by the public rate calculator</span></div><a class="sl-btn ghost sm" href="<?= h(sl_route('QuoteCalculator')) ?>">Open calculator</a></div>
+            <div class="sl-ch" style="margin:0"><div><h2 class="sl-ct">Route weight bands</h2><span class="mut sm">Used by the public rate calculator</span></div><div class="row g6"><a class="sl-btn ghost sm" href="<?= h(sl_route('QuoteCalculator')) ?>">Open calculator</a><a class="sl-btn ghost sm" href="rate_bands.php"><?= $can['taxes'] ? 'Manage' : 'View all' ?></a></div></div>
 <?php if ($d['bands']): ?>
             <?= $rows($d['bands']) ?>
 <?php else: ?>
-            <div class="sl-empty">No route prices are set, so the public rate calculator cannot give a price yet. This system has no screen to add them.</div>
+            <div class="sl-empty">No route prices are set, so the public rate calculator quotes the standard freight price on every route. Add route prices to charge differently by route and weight.</div>
 <?php endif; ?>
           </section>
           <section class="sl-card col g12">

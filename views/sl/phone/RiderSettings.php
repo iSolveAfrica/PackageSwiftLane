@@ -1,4 +1,12 @@
 <?php
+if (($_GET['section'] ?? '') === 'quests' && !empty($d['ra'])) {
+    $ra = $d['ra']; $phone = true; $slPhone['tab'] = 'Menu';
+    echo sl_phoneTop('Quests and SOS', '', ['back' => 'rider_settings.php']);
+    echo '<main class="mx-body">';
+    include CDP_ROOT . '/views/sl/pages/partials/rider_admin.php';
+    echo '</main>';
+    return;
+}
 /**
  * M-RiderFees: rider fee rules and split. Same $d as the web page (views/sl/data/riders.php sl_riderSettingsData).
  * Writes: the existing ajax/sl/rider_fees_ajax.php with the web form's field names
@@ -68,6 +76,7 @@ $del = fn(array $r) => $d['canEdit'] ? '<button type="button" class="mx-ib pc-bt
 <?php foreach ($d['log'] as $l): ?><div class="mx-row"><span class="mx-rm"><b><?= h($l['who']) ?></b><small><?= h($l['what']) ?></small></span><span class="mx-rr"><small><?= h($l['at']) ?></small></span></div><?php endforeach; ?>
 </section>
 <?php endif; ?>
+<?php if (!empty($d['ra'])): ?><section class="mx-card mx-list"><?= sl_mxRow('flag', 'Quests and emergency number', 'Extra pay for trips, and who SOS calls', '', '?section=quests') ?></section><?php endif; ?>
 </main>
 <?php if ($d['canEdit']): ?><div class="mx-foot pc-foot"><div class="mx-btns"><button type="submit" class="mx-btn pc-btn">Save changes</button></div></div><?php endif; ?>
 </form>

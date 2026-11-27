@@ -34,17 +34,10 @@ function sl_tariffsPct($v): string
     return rtrim(rtrim(number_format((float) $v, 2), '0'), '.') . '%';
 }
 
-/** Money for a rate: like sl_tariffsMoney(), but never rounded to whole units (a per-kg price of 3.55 is not 4). */
+/** Money for a rate, never rounded to whole units (helpers/sl_view.php sl_moneyExact). */
 function sl_tariffsMoney($amount): string
 {
-    global $core;
-    $symbol = (string) ($core->for_symbol ?? ($core->currency ?? '$'));
-    if (function_exists('sl_showGhs') && sl_showGhs()) {
-        $amount = sl_displayAmount($amount);
-        $symbol = '₵';
-    }
-    $text = number_format((float) $amount, max(2, (int) ($core->for_decimal ?? 2)), $core->dec_point ?? '.', $core->thousands_sep ?? ',');
-    return ($core->cformat ?? '1') == '2' ? $text . ' ' . $symbol : $symbol . $text;
+    return sl_moneyExact($amount);
 }
 
 function sl_tariffsNum($v): string

@@ -81,13 +81,13 @@ for (const file of walk(path.join(root, "views"), [])) {
     // views/inc/ holds the shared pieces (top bar, footer, the header), not pages.
     if (rel.startsWith("views/inc/")) { continue; }
     const src = fs.readFileSync(file, "utf8");
-    if (!/inc\/topbar\.php/.test(src)) { continue; }
+    if (!/\b(?:include|require)(?:_once)?\b[^\n;]*inc\/topbar\.php/.test(src)) { continue; }
 
     // shell: the title row
     const m = /<div[^>]*class="[^"]*\bpage-wrapper\b[^"]*"[^>]*>/.exec(src);
     if (!m) { found.shell.push(rel + ": no <div class=\"page-wrapper\">"); continue; }
     let rest = stripLead(src.slice(m.index + m[0].length));
-    const call = /^<\?php\s+cdp_pageHeader\(\s*(['"])(.*?)\1|^<\?php\s+cdp_pageHeader\(\s*\$/.exec(rest);
+    const call = /^<\?php\s+cdp_pageHeader\(\s*(?:(['"])(.*?)\1|\$|[A-Za-z_]\w*\s*\()/.exec(rest);
     if (call) {
         if (call[1] !== undefined && call[2].trim() === "") { found.shell.push(rel + ": cdp_pageHeader() is given an empty title"); }
         rest = rest.slice(rest.indexOf("?>") + 2);

@@ -52,7 +52,19 @@ Database: `migrations/2026_11_27_rider_app.sql` (payout requests, quests, shifts
 ## Known gaps (no backend yet)
 
 Rider: self-claiming jobs, decline, boosts, heat map, tips, star ratings, cash on delivery amounts, instant cash-out,
-staff screens for quests and the emergency number. Customer: referral code at sign-up, delivery time slots and
-speed options, promo codes, close account. Staff: sign-in alerts, ending other sessions, a public quote calculator
-fed by the freight rate, payment gateway on/off from the phone. Door-delivery earnings need an exchange rate when
-delivery is priced in a different currency from the books.
+automatic payment of quest rewards (staff pay the riders the Rider fees page lists as having reached a quest).
+Customer: delivery time slots and speed options, promo codes, close account. Staff: sign-in alerts, ending other
+sessions, payment gateway on/off from the phone.
+
+## Added after the first release
+
+- Route prices (`rate_bands.php`, `ajax/sl/rate_bands_ajax.php`): add, edit and delete the public weight bands per
+  route (no overlaps). The rate calculator falls back to the standard freight price where no band matches, and
+  shows rates with cents (`sl_moneyExact()`).
+- Referral codes at sign-up: `sign-up.php?ref=CODE` fills the field; unknown codes are refused before the account is
+  created; valid ones link the friend (`sl_loyaltyLinkReferral`). Rewards screens share that link.
+- Rider fees page: rider quests (add, edit, pause, who reached them) and the emergency number for the rider SOS
+  button; on the phone at `rider_settings.php?section=quests`.
+- Setup checks (`helpers/sl_setup_checks.php`) on Settings: no payment method switched on, and door delivery priced
+  in another currency without an exchange rate. Customers see a plain notice on the shipment form when booking
+  cannot succeed.

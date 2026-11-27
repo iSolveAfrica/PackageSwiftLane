@@ -1,0 +1,23 @@
+<?php
+require_once __DIR__.'/../../loader.php';
+require_once CDP_ROOT.'/helpers/ajax_guard.php';
+require_once CDP_ROOT.'/views/sl/data/delivery.php';
+require_once CDP_ROOT.'/helpers/ai_assistant.php';
+require_once CDP_ROOT.'/helpers/ai_assistant_llm.php';
+$user=new User();require_login();$user->cdp_getUserPermissions();
+header('Cache-Control: private, no-store');
+if($_SERVER['REQUEST_METHOD']!=='POST'||!cdp_csrf_validate_request()||!dl_manager($user)||!cdp_aiCanUse($user)||!cdp_aiConfigured()||CDP_APP_MODE_DEMO)sl_json(['message'=>'Route AI is unavailable for this account'],403);
+$hits=array_filter((array)($_SESSION['dispatch_ai_hits']??[]),fn($t)=>$t>time()-300);
+if(count($hits)>=8)sl_json(['message'=>'Please wait before requesting another recommendation'],429);
+$hits[]=time();$_SESSION['dispatch_ai_hits']=$hits;
+$_GET=['state'=>'pending'];
+$d=dl_dispatchData();
+$candidates=array_slice($d['suggestions'][(int)($_POST['id']??0)]??[],0,8);
+if(!$candidates)sl_json(['message'=>'No eligible riders. Refresh dispatch.'],409);
+$facts=[];
+foreach($candidates as $i=>$c)$facts[]=['choice'=>$i+1,'active_stops'=>$c['stops'],'nearby_km'=>$c['nearby']];
+$reply=cdp_aiComplete('Select a courier balancing active workload and proximity to assigned stops. Null distance means no assigned stops. Reply only with one integer choice from the supplied list.',json_encode($facts),null,null,null,128);
+$choice=trim($reply['text']??'');
+if(empty($reply['ok'])||!ctype_digit($choice)||!isset($candidates[(int)$choice-1]))sl_json(['message'=>'AI unavailable. You can use the workload recommendation.'],503);
+$c=$candidates[(int)$choice-1];
+sl_json(['id'=>$c['id'],'message'=>'AI suggests '.$c['name'].' · '.$c['stops'].' active stops'.($c['nearby']===null?'':' · '.$c['nearby'].' km from an assigned stop')]);

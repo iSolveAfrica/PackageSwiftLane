@@ -28,9 +28,9 @@ $rate = fn(float $r) => rtrim(rtrim(number_format($r, 2), '0'), '.');
       <?php if ($d['referralOn']): ?>
       <section class="mx-card ca-ref">
         <b>Invite a friend, earn <?= sl_num($d['referrerPoints']) ?> points</b>
-        <small class="mx-note">Your friend mentions this code to our team when they register. You get the points when their first shipment is delivered.<?= $d['friendReward'] !== '' ? ' Your friend gets: ' . h($d['friendReward']) . '.' : '' ?></small>
+        <small class="mx-note">Your friend enters this code when they register, or opens your link, which fills it in. You get the points when their first shipment is delivered.<?= $d['friendReward'] !== '' ? ' Your friend gets: ' . h($d['friendReward']) . '.' : '' ?></small>
         <div class="mx-in"><span class="mono"><?= h($d['code']) ?></span><button type="button" class="ca-copy" data-sl-copy="<?= h($d['code']) ?>" aria-label="Copy referral code"><i class="ic ic-sm i-copy" aria-hidden="true"></i></button></div>
-        <button type="button" class="mx-btn" data-mx-share="<?= h(rtrim((string) ($core->site_url ?? ''), '/') . '/') ?>" data-title="<?= h($d['site']) ?>" data-text="Ship with <?= h($d['site']) ?>. Mention my referral code <?= h($d['code']) ?> when you register."><i class="ic ic-sm i-send" aria-hidden="true"></i>Share my code</button>
+        <button type="button" class="mx-btn" data-mx-share="<?= h($d['signupLink']) ?>" data-title="<?= h($d['site']) ?>" data-text="Ship with <?= h($d['site']) ?>. Register with my code <?= h($d['code']) ?>:"><i class="ic ic-sm i-send" aria-hidden="true"></i>Share my code</button>
         <small class="mx-note"><?= sl_num($d['referrals']) ?> friend<?= $d['referrals'] === 1 ? '' : 's' ?> joined<?= $d['referralPoints'] > 0 ? ' · ' . sl_num($d['referralPoints']) . ' points earned' : '' ?>..</small>
       </section>
       <?php endif; ?>
