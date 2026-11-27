@@ -1,6 +1,7 @@
 <?php
 require_once CDP_ROOT.'/helpers/delivery_service.php';
-function dl_baseData(): array{return ['ready'=>sl_tableExists('cdb_delivery_requests'),'config'=>dl_config()];}
+require_once CDP_ROOT.'/helpers/delivery_storage.php';
+function dl_baseData(): array{dl_ensureStorage();return ['ready'=>sl_tableExists('cdb_delivery_requests'),'config'=>dl_config()];}
 function dl_customerData(int $owner): array
 {
     $d=dl_baseData();$d+=['request'=>null,'events'=>[],'parcels'=>[],'requests'=>[]];if(!$d['ready'])return $d;

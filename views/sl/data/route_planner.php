@@ -38,7 +38,7 @@ function rpv_call(string $fn, array $args, $default, array &$notes)
         return $fn(...$args);
     } catch (Throwable $e) {
         error_log('[route_planner] ' . $fn . ': ' . $e->getMessage());
-        $notes[] = $fn . ': ' . $e->getMessage();
+        $notes[] = 'Some route data is unavailable. Check delivery setup or contact an administrator.';
         return $default;
     }
 }

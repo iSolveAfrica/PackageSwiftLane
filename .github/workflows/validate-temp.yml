@@ -24,6 +24,8 @@ jobs:
           set -euo pipefail
           git ls-files -z '*.php' ':!:helpers/vendor/**' ':!:helpers/stripe/**' ':!:helpers/phpmailer/**' ':!:vendor/**' | xargs -0 -r -n1 php -l > /tmp/php-lint.log
           tail -n 5 /tmp/php-lint.log
+      - name: Check delivery schema definitions
+        run: php scripts/check_delivery_storage.php
       - name: Check route engine
         run: php scripts/check_route_engine.php
       - name: Check load plan validation
