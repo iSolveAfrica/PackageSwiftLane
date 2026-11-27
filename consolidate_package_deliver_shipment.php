@@ -15,4 +15,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 require_once 'views/sl/data/ops_forms.php';
 $d = sl_handoverData($user, $core, 'consol_pkg', (int) ($_GET['id'] ?? 0));
-sl_render('Handover', ['id' => 'consol', 'title' => 'Hand over ' . $d['sum']['track'], 'board' => 'HandOut', 'styles' => ['assets/swiftlane/pages/ops.css'], 'scripts' => ['dataJs/sl/ops_forms.js']], $d);
+sl_render('Handover', ['id' => 'consol_sea', 'title' => 'Hand over ' . $d['sum']['track'], 'board' => 'HandOut', 'styles' => ['assets/swiftlane/pages/ops.css'], 'scripts' => ['dataJs/sl/ops_forms.js']], $d);
