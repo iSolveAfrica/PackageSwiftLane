@@ -15,4 +15,4 @@ $board = $type === 'sea' ? 'ConsolidationDetail' : 'ConsolidationAir';
 require_once 'helpers/sl_phone.php';
 if (sl_phoneView('ConsolidationDetail') !== '') { sl_render('ConsolidationDetail', ['id' => 'consol', 'title' => $d['code'], 'board' => $board], $d); exit; }
 // Wide view: the menu starts collapsed so the map and the package list get the room.
-sl_render($board, ['id' => 'consol', 'title' => $d['code'], 'board' => $board, 'navCollapsed' => true, 'styles' => ['assets/swiftlane/pages/ops.css']], $d);
+sl_render($board, ['id' => 'consol', 'title' => $d['code'], 'board' => $board, 'navCollapsed' => true, 'styles' => ['assets/swiftlane/pages/ops.css', 'assets/swiftlane/pages/ConLoadPlan.css']], $d);

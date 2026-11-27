@@ -102,7 +102,7 @@ function sl_consolidationDetailData($user, $core, int $id, string $type): ?array
             'post' => $r->postal ?: '—', 'what' => $r->what ?: '—', 'pcs' => (int) $r->pcs, 'w' => sl_weight($r->weight), 'v' => number_format((float) $r->weight_vol, 1),
             'cls' => cdp_isHandedOver($r->status_courier) ? 'mut' : '', 'canDel' => $canEdit && !cdp_isHandedOver($r->status_courier),
             'stL' => sl_statusLabel($r->status_courier), 'stC' => sl_statusClass($r->status_courier), 'phone' => (string) ($u->phone ?? ''),
-            'vn' => (float) $r->weight_vol];
+            'vn' => (float) $r->weight_vol, 'weightKg' => (float) $r->weight];
         if ($lq === '' || stripos(implode(' ', [$row['name'], $row['lock'], $row['id'], $row['post'], $row['what']]), $lq) !== false) $list[] = $row;
     }
     $pct = sl_pct($c->total_weight ?: $w, $M['cap']);
@@ -127,7 +127,7 @@ function sl_consolidationDetailData($user, $core, int $id, string $type): ?array
         'cid' => $id, 'type' => $M['mode'], 'code' => $code, 'st' => sl_statusLabel($s), 'stCls' => sl_statusClass($s), 'sea' => $M['sea'],
         'lede' => $n . ' package' . ($n === 1 ? '' : 's') . ' from ' . count($cust) . ' customer' . (count($cust) === 1 ? '' : 's') . ' · ' . $route . ' · created ' . sl_date($c->c_date),
         'capV' => sl_weight($c->total_weight ?: $w, 0) . ' / ' . sl_weight($M['cap'], 0), 'capW' => 'width:' . $pct . '%', 'capCls' => sl_conCapClass($pct), 'capS' => $pct . '% of capacity',
-        'pkN' => $n, 'custN' => count($cust), 'pcsN' => $pcs, 'wt' => sl_weight($w), 'wt2' => number_format($v, 1) . ' vol. weight', 'vTot' => number_format($v, 1),
+        'capacityKg' => (float) $M['cap'], 'weightKg' => (float) $w, 'pkN' => $n, 'custN' => count($cust), 'pcsN' => $pcs, 'wt' => sl_weight($w), 'wt2' => number_format($v, 1) . ' vol. weight', 'vTot' => number_format($v, 1),
         'rows' => $list, 'lq' => $lq, 'info' => $info, 'steps' => $steps,
         'flash' => isset($_GET['created']) ? 'Consolidation ' . $code . ' created.' : '',
         'adding' => !empty($_GET['add']) && $canEdit, 'canEdit' => $canEdit, 'q' => trim((string) ($_GET['q'] ?? '')),
