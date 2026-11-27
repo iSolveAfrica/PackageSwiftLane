@@ -61,7 +61,7 @@ function sl_mobileTabFamily(): array
         'Account' => ['rider_account.php', 'rider_ratings.php', 'rider_safety.php', 'rider_chat.php', 'account_security.php', 'notifications_list.php'],
     ];
     if ($role === 'customer') return [
-        'Parcels' => ['my_parcels.php', 'courier_view.php', 'customer_packages_view.php', 'courier_shipment_tracking.php', 'customer_package_tracking.php'],
+        'Parcels' => ['delivery_request.php', 'delivery_done.php', 'delivery_pricing.php', 'my_parcels.php', 'courier_view.php', 'customer_packages_view.php', 'courier_shipment_tracking.php', 'customer_package_tracking.php'],
         'Track' => ['live_tracking.php', 'track.php', 'tracking.php'],
         'Bills' => ['my_bills.php', 'pay_checkout.php', 'payment_return.php'],
     ];
