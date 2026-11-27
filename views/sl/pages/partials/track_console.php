@@ -173,7 +173,7 @@ $chip = function (float $x, float $y, string $k, string $v, string $anchor = 'le
         <div class="tc-sec on" data-tc-sec="overview">
           <div class="tc-ov<?= !empty($it['office']) ? ' has-agent' : '' ?>">
             <div class="tc-veh-card">
-              <?php if (empty($it['office'])): ?><svg class="tc-art" viewBox="<?= $it['mode'] === 'sea' && empty($it['office']) ? '0 0 360 120' : '0 0 600 190' ?>" aria-hidden="true"><use href="#<?= $tcUid ?>-<?= !empty($it['office']) ? 'office' : ($it['mode'] === 'sea' ? 'ship' : 'plane') ?>"/></svg><?php endif; ?>
+              <?php if (!empty($it['art'])): ?><figure class="tc-art-img<?= $it['art']['key'] === 'ship' ? ' light' : '' ?>"><img src="<?= h(cdp_asset($it['art']['file'])) ?>" alt="<?= h($it['art']['alt']) ?>" decoding="async"></figure><?php endif; ?>
               <b><?= h($it['carrier']) ?> / <?= h($it['vehicle']) ?></b>
               <span><?= $it['flight'] !== '' ? 'Flight ' . h($it['flight']) . ' · ' : '' ?><?= $it['awb'] !== '' ? 'AWB ' . h($it['awb']) : h($it['modeL']) . ' · ' . h($it['weight']) ?><?= $it['customer'] !== $it['weight'] ? ' · ' . h($it['customer']) : '' ?></span>
             </div>
