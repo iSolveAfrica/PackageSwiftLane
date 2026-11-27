@@ -3,6 +3,7 @@ require_once 'loader.php';$user=new User();$core=new Core();require_once 'helper
 if(!dl_manager($user)){header('Location: error403.php');exit;}
 require_once 'views/sl/data/delivery.php';
 if(isset($_GET['snapshot'])){
+ if(!sl_tableExists('cdb_delivery_requests'))sl_json(['message'=>'Delivery data unavailable'],503);
  header('Cache-Control: private, no-store');
  sl_json(dl_fleetSnapshot());
 }
