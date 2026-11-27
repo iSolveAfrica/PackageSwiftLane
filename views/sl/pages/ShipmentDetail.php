@@ -121,17 +121,33 @@ $mPeak = max(1, max($ch['months']));
               <?php if ($d['canVerify']): ?><a class="sl-btn ghost sm" href="courier_list.php?verify=<?= (int) $d['id'] ?>"><i class="ic ic-sm i-dollar" aria-hidden="true"></i>Verify payment</a><?php endif; ?>
               <?php if ($d['canPay']): ?><a class="sl-btn block" href="add_payment_gateways_courier.php?id_order=<?= (int) $d['id'] ?>">Pay now</a><?php endif; ?>
             </section>
-            <?php if (!$d['client']): $pk = $d['pickup']; $pkState = empty($pk['assigned']) ? ['Not assigned', 'plain'] : (!empty($pk['verified']) ? ['Verified', 'delivered'] : (!empty($pk['sent']) ? ['Sent', 'paid'] : ['Assigned', 'pending'])); ?>
+            <?php if (!$d['client']):
+              $pk = $d['pickup'];
+              $pkState = empty($pk['assigned']) ? ['Not assigned', 'is-off'] : (!empty($pk['verified']) ? ['Verified', 'is-ok'] : (!empty($pk['sent']) ? ['Sent', 'is-sent'] : ['Waiting to send', 'is-wait']));
+              // "SMS ****5009, WhatsApp ****5009, E-mail he***@x.com" -> one row per channel
+              $pkCh = [];
+              foreach (array_filter(array_map('trim', explode(',', (string) ($pk['channels'] ?? '')))) as $c) {
+                  [$name, $to] = array_pad(explode(' ', $c, 2), 2, '');
+                  $k = strtolower(preg_replace('/[^a-z]/i', '', $name));
+                  $pkCh[] = ['name' => $name, 'to' => trim($to), 'k' => $k, 'ic' => ['sms' => 'i-message', 'whatsapp' => 'i-phone', 'email' => 'i-mail'][$k] ?? 'i-send'];
+              }
+              $pkSteps = [['Assigned', $pk['created'] ?? '', 'i-key'], ['Sent', $pk['sent'] ?? '', 'i-send'], ['Verified', $pk['verified'] ?? '', 'i-check']]; ?>
             <section class="sl-card col g12 pk-card" id="pickup-code" aria-labelledby="pk-title">
-              <div class="row between"><h2 class="sl-ct" id="pk-title">Pickup code</h2><span class="sl-pill <?= h($pkState[1]) ?>"><?= h($pkState[0]) ?></span></div>
+              <div class="row between"><h2 class="sl-ct row g8" id="pk-title"><i class="ic ic-sm i-key" aria-hidden="true"></i>Pickup code</h2><span class="pk-state <?= h($pkState[1]) ?>"><i aria-hidden="true"></i><?= h($pkState[0]) ?></span></div>
               <?php if (!empty($pk['assigned'])): ?>
-                <div class="pk-code mono"><span class="sd-vh">Code </span><?= h($pk['code']) ?></div>
-                <div class="sl-kv">
-                  <div><span>Assigned</span><span><?= h($d['pickup']['created']) ?></span></div>
-                  <div><span>Sent</span><span><?= $d['pickup']['sent'] !== '' ? h($d['pickup']['sent']) : 'Not yet. It is sent automatically when the package is ready for pickup.' ?></span></div>
-                  <?php if ($d['pickup']['channels'] !== ''): ?><div><span>Channels</span><span><?= h($d['pickup']['channels']) ?></span></div><?php endif; ?>
-                  <?php if (!empty($pk['verified'])): ?><div><span>Verified</span><span><?= h($pk['verified']) ?></span></div><?php endif; ?>
+                <div class="pk-code"><b class="mono"><span class="sd-vh">Code </span><?= h(trim(chunk_split((string) $pk['code'], 3, ' '))) ?></b><button type="button" class="sl-ib sm" data-sl-copy="<?= h($pk['code']) ?>" aria-label="Copy pickup code"><i class="ic ic-sm i-copy" aria-hidden="true"></i></button></div>
+                <ol class="pk-steps" aria-label="Pickup code progress">
+                  <?php foreach ($pkSteps as [$l, $t, $ic]): ?><li class="<?= $t !== '' ? 'done' : '' ?>"><span class="pk-dot"><i class="ic ic-sm <?= $t !== '' ? 'i-check' : $ic ?>" aria-hidden="true"></i></span><b><?= h($l) ?></b><small><?= $t !== '' ? implode('', array_map(fn($x) => '<span>' . h(trim($x)) . '</span>', explode('·', $t, 2))) : 'Not yet' ?></small></li><?php endforeach; ?>
+                </ol>
+                <?php if (empty($pk['sent'])): ?><p class="pk-note"><i class="ic ic-sm i-clock" aria-hidden="true"></i>Sent automatically when the package is ready for pickup.</p><?php endif; ?>
+                <?php if ($pkCh): ?>
+                <div class="pk-ch">
+                  <span class="pk-lab"><?= empty($pk['sent']) ? 'Will be sent to' : 'Sent to' ?></span>
+                  <ul>
+                    <?php foreach ($pkCh as $c): ?><li class="pk-<?= h($c['k']) ?>"><span class="pk-ico"><i class="ic ic-sm <?= h($c['ic']) ?>" aria-hidden="true"></i></span><b><?= h($c['name']) ?></b><span class="mono"><?= h($c['to']) ?></span></li><?php endforeach; ?>
+                  </ul>
                 </div>
+                <?php endif; ?>
               <?php else: ?>
                 <p class="mut sm">No code yet. A code is assigned when the package is created and sent when it is ready for pickup.</p>
               <?php endif; ?>
@@ -161,15 +177,39 @@ $mPeak = max(1, max($ch['months']));
               <?php endforeach; ?>
             </div>
           </div>
-          <div class="act-list" id="act-list" role="list">
-            <?php foreach ($d['activity']['rows'] as $a): ?>
-            <div class="act-row" role="listitem" data-act-kind="<?= h($a['kind']) ?>">
-              <span class="act-time mono"><?= h($a['when']) ?></span>
-              <span class="act-kind"><?= h($a['kind']) ?></span>
-              <span class="act-body"><b class="fw5"><?= h($a['what']) ?></b><?php if ($a['detail'] !== ''): ?><span class="mut sm act-detail"><?= h($a['detail']) ?></span><?php endif; ?></span>
-              <span class="act-who"><?= h($a['who']) ?><?php if ($a['outcome'] !== '' && $a['outcome'] !== 'ok'): ?><span class="act-out"><?= h($a['outcome']) ?></span><?php endif; ?></span>
-            </div>
+          <?php
+          $actIcon = function (array $a): string {
+              $w = strtolower($a['what']);
+              foreach (['view' => 'i-eye', 'print' => 'i-print', 'label' => 'i-print', 'creat' => 'i-plus', 'status' => 'i-refresh', 'pay' => 'i-dollar', 'invoice' => 'i-receipt',
+                        'delet' => 'i-trash', 'cancel' => 'i-ban', 'sent' => 'i-send', 'verif' => 'i-check', 'assign' => 'i-user', 'edit' => 'i-edit', 'updat' => 'i-edit', 'chang' => 'i-edit'] as $k => $ic) {
+                  if (strpos($w, $k) !== false) return $a['kind'] === 'Pickup code' && $ic === 'i-plus' ? 'i-key' : $ic;
+              }
+              return ['Pickup code' => 'i-key', 'Customer' => 'i-user', 'Package' => 'i-box'][$a['kind']] ?? 'i-file';
+          };
+          $actTone = ['Shipment' => 'blue', 'Package' => 'violet', 'Customer' => 'amber', 'Pickup code' => 'green'];
+          $actDay = function (int $ts): string {
+              if (!$ts) return 'Earlier';
+              $d = date('Y-m-d', $ts);
+              return $d === date('Y-m-d') ? 'Today' : ($d === date('Y-m-d', strtotime('-1 day')) ? 'Yesterday' : date('l, M j, Y', $ts));
+          };
+          $lastDay = null;
+          ?>
+          <div class="act-list" id="act-list">
+            <?php foreach ($d['activity']['rows'] as $a): $day = $actDay((int) $a['ts']); $out = strtolower($a['outcome']); $bad = in_array($out, ['failure', 'failed', 'denied', 'error'], true); ?>
+            <?php if ($day !== $lastDay): if ($lastDay !== null) echo '</ol>'; $lastDay = $day; ?>
+            <div class="act-day" data-act-day><?= h($day) ?></div>
+            <ol class="act-tl">
+            <?php endif; ?>
+              <li class="act-row t-<?= h($actTone[$a['kind']] ?? 'blue') ?><?= $bad ? ' bad' : '' ?>" data-act-kind="<?= h($a['kind']) ?>">
+                <span class="act-dot" aria-hidden="true"><i class="ic ic-sm <?= h($bad ? 'i-alert' : $actIcon($a)) ?>"></i></span>
+                <div class="act-body">
+                  <div class="act-top"><b><?= h($a['what']) ?></b><time class="act-time"><?= h(preg_replace('/^.*·\s*/', '', $a['when'])) ?></time></div>
+                  <?php if ($a['detail'] !== ''): ?><span class="act-detail"><?= h($a['detail']) ?></span><?php endif; ?>
+                  <div class="act-meta"><span class="act-kind"><?= h($a['kind']) ?></span><span class="act-who"><i class="ic ic-sm i-user" aria-hidden="true"></i><?= h($a['who']) ?></span><?php if ($out !== '' && $out !== 'ok' && $out !== 'success'): ?><span class="act-out<?= $bad ? ' bad' : '' ?>"><?= h(ucfirst($a['outcome'])) ?></span><?php endif; ?></div>
+                </div>
+              </li>
             <?php endforeach; ?>
+            <?php if ($lastDay !== null) echo '</ol>'; ?>
             <?php if (empty($d['activity']['rows'])): ?><div class="sl-empty">Nothing recorded on this package yet.</div><?php endif; ?>
             <div class="sl-empty" data-act-none hidden>Nothing of this kind recorded on this package.</div>
           </div>
@@ -185,6 +225,7 @@ $mPeak = max(1, max($ch['months']));
               var f = b.getAttribute('data-act-f'), shown = 0;
               btns.forEach(function (x) { var on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on ? 'true' : 'false'); });
               rows.forEach(function (r) { var hide = f !== 'all' && r.getAttribute('data-act-kind') !== f; r.hidden = hide; if (!hide) shown++; });
+              card.querySelectorAll('.act-tl').forEach(function (l) { var vis = l.querySelectorAll('.act-row:not([hidden])'); l.hidden = !vis.length; l.previousElementSibling.hidden = !vis.length; l.querySelectorAll('.act-row').forEach(function (x) { x.classList.toggle('end', x === vis[vis.length - 1]); }); });
               if (none) none.hidden = shown > 0 || rows.length === 0;
               if (status) status.textContent = shown + ' ' + (shown === 1 ? 'entry' : 'entries') + ' shown';
             });
