@@ -5,7 +5,9 @@
   const role = meta.content, root = new URL(meta.dataset.root, location.origin), scope = new URL(meta.dataset.scope, location.origin);
   const inside = meta.dataset.context === 'app';
   const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
-  const phone = matchMedia('(max-width:767px), (max-height:500px) and (max-width:950px) and (pointer:coarse)').matches;
+  let framed = false; try { framed = window.top !== window.self; } catch (e) { framed = true; }
+  // inside the PC app window (views/sl/inc/app_frame.php) the page is phone-width but on a computer: no app redirect, no install screen
+  const phone = !framed && matchMedia('(max-width:767px), (max-height:500px) and (max-width:950px) and (pointer:coarse)').matches;
   const name = meta.dataset.name || (role === 'rider' ? 'Swift Lane Rider' : (role === 'staff' ? 'Swift Lane Staff' : 'Swift Lane'));
   const force = meta.dataset.force === '1';
   const home = role === 'rider' ? 'driver_app.php' : 'index.php';

@@ -36,4 +36,8 @@ $slBoardCss = $slPage['board'] ? 'assets/swiftlane/pages/' . $slPage['board'] . 
 
 <?php require_once __DIR__ . '/../../../helpers/pwa.php'; sl_pwa_head(); ?>
 <link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/auth-mobile.css')) ?>">
+<?php if (function_exists('sl_userIs') && sl_userIs('client')): require_once CDP_ROOT . '/helpers/sl_appframe.php'; ?>
+<meta name="sl-appframe" content="<?= sl_appFrameable() && ($_COOKIE['sl_appview'] ?? '') !== 'off' && empty($slPage['legacy']) ? '1' : '0' ?>">
+<script defer src="<?= h(cdp_asset('dataJs/sl/appframe.js')) ?>"></script>
+<?php endif; ?>
 <link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/shortcuts.css')) ?>">

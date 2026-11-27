@@ -139,10 +139,11 @@ html.pwa-gated, html.pwa-gated body { overflow: hidden; }
   /* tab bar: frosted, with the centre item raised like the design's action button */
   body[data-mobile-role]:not([data-mobile-role=""]) .sl-mobile-nav { background: color-mix(in srgb, var(--panel, var(--card)) 90%, transparent); -webkit-backdrop-filter: saturate(1.6) blur(18px); backdrop-filter: saturate(1.6) blur(18px); }
   body[data-mobile-role]:not([data-mobile-role=""]) .sl-mobile-nav > .is-fab { position: relative; color: var(--ink); }
-  body[data-mobile-role]:not([data-mobile-role=""]) .sl-mobile-nav > .is-fab::before { content: ''; position: absolute; top: -22px; left: 50%; width: 52px; height: 52px; transform: translateX(-50%);
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-mobile-nav > .is-fab::before { content: ''; position: absolute; top: -26px; left: 50%; width: 50px; height: 50px; transform: translateX(-50%);
     border-radius: 18px; background: var(--ink); box-shadow: 0 8px 20px rgba(20, 20, 30, .28); transition: transform .15s; opacity: 1 !important; scale: 1 !important; }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-mobile-nav > .is-fab span { position: relative; z-index: 1; }
   body[data-mobile-role]:not([data-mobile-role=""]) .sl-mobile-nav > .is-fab:active::before { transform: translateX(-50%) scale(.94); }
-  body[data-mobile-role]:not([data-mobile-role=""]) .sl-mobile-nav > .is-fab .ic { position: relative; z-index: 1; margin-top: -26px; margin-bottom: 8px; color: var(--inverse, #fff) !important; transform: none !important; }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-mobile-nav > .is-fab .ic { position: relative; z-index: 1; margin-top: -28px; margin-bottom: 12px; color: var(--inverse, #fff) !important; transform: none !important; }
   body[data-mobile-role]:not([data-mobile-role=""]) .sl-mobile-nav > .is-fab[aria-current="page"]::before { background: var(--accent-ink, var(--ink)); }
 
   /* the full menu (Menu tab) slides up as a sheet */

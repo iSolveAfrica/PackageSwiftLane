@@ -38,8 +38,7 @@ function sl_mobileLinks($user): array
         $links[] = ['Menu', 'sidebar', '#menu'];
         return $links;
     }
-    $links = [['Home', 'grid', sl_route('Main')], ['Parcels', 'box', sl_route('MyParcels')], ['Codes', 'key', sl_route('PickupCodes')]];
-    if (cdp_financeEnabled() && $user->cdp_hasPermission('view_my_bills')) $links[] = ['Bills', 'card', sl_route('MyBills')];
-    $links[] = ['Support', 'message', 'support.php'];
-    return $links;
+    // Customer app (phones and the PC app window): Home, Parcels, the full menu raised in the middle, Support, Account.
+    // Pickup codes and bills are on the home screen and in the menu.
+    return [['Home', 'grid', sl_route('Main')], ['Parcels', 'box', sl_route('MyParcels')], ['Menu', 'sidebar', '#menu'], ['Support', 'message', 'support.php'], ['Account', 'user', sl_route('AiStudio')]];
 }
