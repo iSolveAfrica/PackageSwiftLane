@@ -15,21 +15,7 @@ $editable=$d['canEdit'] && $d['lq']==='' && sl_tableExists('cdb_consolidation_lo
 <a class="sl-btn ghost sm" href="#manifest">Manifest</a>
 <?php if ($can['packing']): ?><a class="sl-btn ghost sm" href="<?= h($can['packing']) ?>" target="_blank">Packing list</a><?php endif; ?>
 <?php if ($d['canEdit']): ?><a class="sl-btn sm" href="<?= h($self.'&add=1') ?>">Add cargo</a><?php endif; ?></div></div>
-<div class="clp-main"><div class="clp-deck">
-<div class="row wrap g8" aria-label="Load view">
-<button class="sl-btn ghost sm" type="button" data-load-view="top" aria-pressed="true">Top</button><button class="sl-btn ghost sm" type="button" data-load-view="side" aria-pressed="false">Side</button><button class="sl-btn ghost sm" type="button" data-load-view="3d" aria-pressed="false">3D</button>
-<button class="sl-btn ghost sm" type="button" data-load-zoom="in" aria-label="Zoom in">+</button><button class="sl-btn ghost sm" type="button" data-load-zoom="out" aria-label="Zoom out">−</button><button class="sl-btn ghost sm" type="button" data-load-zoom="reset">Reset</button></div>
-<div class="clp-deck-header"><strong><?= $sea?'Container cargo':'Air cargo' ?></strong><span><?= count($rows) ?> units recorded</span></div>
-<div class="clp-grid"><?php foreach ($rows as $i=>$r): ?><a class="clp-slot" href="<?= h($r['href']) ?>" title="<?= h($r['id'].' · '.$r['name'].' · '.$r['w']) ?>"><small data-load-label="<?= (int)$r['oid'] ?>"><?= isset($positionMap[(int)$r['oid']]) ? h(implode('-',[$positionMap[(int)$r['oid']]['bay'],$positionMap[(int)$r['oid']]['row'],$positionMap[(int)$r['oid']]['tier']])) : 'Unplaced' ?></small><b><?= h($r['id']) ?></b><span><?= h($r['w']) ?></span></a><?php endforeach; ?>
-<?php if (!$rows): ?><p class="sl-empty">The load is empty. Add packages to see them here.</p><?php endif; ?></div>
-<p class="mut sm">Bay, row and tier refer to recorded cargo positions.</p>
-</div><div class="clp-payload"><h3>Payload</h3><div class="clp-gauge" <?= sl_chartAttrs([['name'=>'Recorded payload','color'=>'#7043c1','values'=>[$loaded]]],[$d['code']],'Payload') ?> style="--fill:<?= $percent ?>%"><span><small><?= $percent ?>% recorded</small><strong><?= h(sl_weight($loaded,0)) ?></strong></span></div>
-<div class="row between"><span>Recorded weight</span><b><?= h(sl_weight($loaded,0)) ?></b></div>
-<div class="row between"><span>Configured capacity</span><b><?= $capacity>0?h(sl_weight($capacity,0)):'Not set' ?></b></div>
-<div class="row between"><span>Pieces</span><b><?= (int)$d['pcsN'] ?></b></div>
-<div class="row between"><span>Customers</span><b><?= (int)$d['custN'] ?></b></div>
-<?php if ($capacity>0 && $loaded>$capacity): ?><p class="sl-banner warn">Recorded weight exceeds the configured capacity.</p><?php endif; ?>
-</div></div>
+<?php include __DIR__ . '/con_cargo_view.php'; ?>
 <details class="clp-editor"><summary>Recorded cargo positions</summary>
 <?php if($editable): ?><form data-load-form><div class="sl-tw"><table class="sl-table"><thead><tr><th>Package</th><th>Bay</th><th>Row</th><th>Tier</th><th></th></tr></thead><tbody><?php foreach($rows as $r): $pos=$positionMap[(int)$r['oid']]??[]; ?><tr data-load-row="<?= (int)$r['oid'] ?>" data-weight="<?= (float)$r['weightKg'] ?>"><td><?= h($r['id']) ?></td><?php foreach(['bay'=>100,'row'=>20,'tier'=>10] as $axis=>$limit): ?><td><input class="sl-in" type="number" min="1" max="<?= $limit ?>" name="<?= $axis ?>" aria-label="<?= h(ucfirst($axis).' for '.$r['id']) ?>" value="<?= isset($pos[$axis])?(int)$pos[$axis]:'' ?>"></td><?php endforeach; ?><td><button class="sl-btn ghost sm" data-load-clear type="button">Clear</button></td></tr><?php endforeach; ?></tbody></table></div><button class="sl-btn" type="submit">Save positions</button><span data-load-feedback role="status" class="mut sm"></span></form>
 <?php else: ?><p class="mut sm"><?= $d['lq']!==''?'Clear the package search to edit the complete load plan.':'Cargo positions are available when load planning is enabled for this consolidation.' ?></p><?php endif; ?></details>
