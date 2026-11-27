@@ -77,7 +77,7 @@ function sl_codeGridSvg(string $text, int $size): string
 
 function sl_labelOptions(): array
 {
-    $def = ['size' => '46', 'sender' => 1, 'fragile' => 0, 'phone' => 1, 'qr' => 1, 'contents' => 1, 'value' => 1, 'customs' => 0, 'code' => 1, 'postage' => 0, 'care' => 1, 'ret' => 0, 'copies' => 1, 'printer' => 'Default printer'];
+    $def = ['size' => '46', 'sender' => 1, 'fragile' => 0, 'phone' => 1, 'qr' => 1, 'contents' => 1, 'value' => 1, 'customs' => 0, 'code' => 1, 'postage' => 0, 'care' => 1, 'ret' => 0, 'copies' => 1, 'printer' => 'Default printer', 'qrData' => 'details'];
     $o = json_decode((string) sl_slSetting('label_options', ''), true);
     $s = json_decode((string) sl_slSetting('label_small_options', ''), true);
     return ['big' => array_merge($def, is_array($o) ? $o : []), 'small' => array_merge(['use' => 'locker', 'size' => '17', 'tag' => 1, 'barcode' => 1, 'code' => 0], is_array($s) ? $s : [])];
@@ -145,6 +145,34 @@ function sl_labelFor(int $id, string $type = 'air'): ?array
     ];
 }
 
+/**
+ * Barcodes and QR for one 4 x 6 label: the top barcode is our tracking number (SAS...), the bottom
+ * barcode is the courier's original tracking number, and the QR carries the whole package
+ * (or only the tracking link when Label Studio's "QR contents" is set to link).
+ */
+function sl_labelCodes(array $l, array $o, string $piece): array
+{
+    $qrText = $l['url'];
+    if (($o['qrData'] ?? 'details') === 'details') {
+        $qrText = implode("\n", array_filter([
+            ($l['site'] ?: 'Swift Lane') . ' · ' . $l['track'],
+            'To: ' . $l['name'] . ($l['locker'] !== '' ? ' · Locker ' . $l['locker'] : ''),
+            'Route: ' . ($l['from'] ?: '—') . ' > ' . $l['to'],
+            $l['carrier'] !== '' || $l['carrierNo'] !== '' ? 'Courier: ' . trim($l['carrier'] . ' ' . $l['carrierNo']) : '',
+            'Service: ' . $l['mode'] . ($l['svc'] !== '' ? ' · ' . $l['svc'] : ''),
+            'Weight: ' . $l['weight'] . ' · Piece ' . $piece,
+            'Contents: ' . mb_substr($l['contents'], 0, 120),
+            'Received: ' . $l['received'] . ' · ' . ($l['paid'] ? 'PAID' : 'PAYMENT DUE'),
+            'Track: ' . $l['url'],
+        ]));
+    }
+    return [
+        'bcTrack' => sl_barcodeSvg($l['track'], 230, 56),
+        'bc' => $l['carrierNo'] !== '' ? sl_barcodeSvg($l['carrierNo'], 350, 80, 13) : '',
+        'qr' => sl_qrSvg($qrText, 104, 'Package details') ?: sl_qrSvg($l['url'], 104, 'Scan to track'),
+    ];
+}
+
 /** Print data for print_label_ship.php: one or more shipments, size 46 (4x6) or 12 (1x2). */
 function sl_labelPrintData(array $ids, string $size, string $type = 'air'): array
 {
@@ -158,7 +186,7 @@ function sl_labelPrintData(array $ids, string $size, string $type = 'air'): arra
         if (isset($_GET['pieces'])) $per = max(1, min(50, (int) $_GET['pieces']));
         for ($p = 1; $p <= $per; $p++) {
             for ($c = 0; $c < $copies; $c++) {
-                $labels[] = $l + ['piece' => $p . ' / ' . $per, 'bc' => sl_barcodeSvg($l['track'], 350, 88, 13), 'bcSmall' => sl_barcodeSvg($size === '12' && $opt['small']['use'] === 'carrier' && $l['carrierNo'] !== '' ? $l['carrierNo'] : $l['track'], 178, 40, 6.5), 'qr' => sl_codeGridSvg($l['url'], 84)];
+                $labels[] = $l + ['piece' => $p . ' / ' . $per, 'bcSmall' => sl_barcodeSvg($size === '12' && $opt['small']['use'] === 'carrier' && $l['carrierNo'] !== '' ? $l['carrierNo'] : $l['track'], 178, 40, 6.5)] + sl_labelCodes($l, $opt['big'], $p . ' / ' . $per);
             }
         }
     }
@@ -176,7 +204,7 @@ function sl_labelTestData(string $size): array
         'hub' => mb_strtoupper((string) ($core->site_name ?? 'Swift Lane')), 'hubAddr' => '', 'weight' => '2.5 lbs', 'pieces' => 1, 'received' => date('M j'), 'contents' => 'Printer test ×1', 'declared' => sl_money(0),
         'total' => sl_money(0), 'paid' => true, 'url' => rtrim((string) ($core->site_url ?? ''), '/') . '/track.php', 'site' => (string) ($core->site_name ?? 'Swift Lane'), 'ini' => 'SL',
         'sender' => 'SENDER NAME', 'senderCity' => 'NEW YORK, USA', 'siteUrl' => preg_replace('#^https?://#', '', rtrim((string) ($core->site_url ?? ''), '/')), 'sitePhone' => (string) ($core->c_phone ?? '')];
-    $l += ['piece' => '1 / 1', 'bc' => sl_barcodeSvg($track, 350, 88, 13), 'bcSmall' => sl_barcodeSvg($track, 178, 40, 6.5), 'qr' => sl_codeGridSvg($l['url'], 84)];
+    $l += ['piece' => '1 / 1', 'bcSmall' => sl_barcodeSvg($track, 178, 40, 6.5)] + sl_labelCodes($l, $opt['big'], '1 / 1');
     return ['labels' => [$l], 'o' => $opt['big'], 's' => $opt['small'], 'size' => $size, 'p' => sl_printerOptions(), 'test' => true, 'lay' => sl_labelLayout()];
 }
 
@@ -447,14 +475,14 @@ function sl_labelBlocks(): array
 {
     return [
         'top'   => ['Logo & service', 'Swift logo with AIR / SEA and the service'],
-        'trk'   => ['Tracking number & QR', 'Big tracking number, piece count, QR code'],
+        'trk'   => ['Tracking barcode & QR', 'Our tracking number as a barcode, piece count, QR with the package details'],
         'to'    => ['Deliver to', 'Customer, locker, address'],
         'route' => ['Route', 'From → destination'],
         'facts' => ['Weight · pieces · date · payment', 'Four fact boxes'],
         'from'  => ['Sender', 'Who sent it'],
         'cont'  => ['Contents', 'Items and declared value'],
         'flags' => ['Handling flags', 'Fragile, dangerous goods, this side up'],
-        'bc'    => ['Barcode', 'Scannable tracking barcode'],
+        'bc'    => ['Courier barcode', 'Original tracking number from the courier (FedEx, UPS...)'],
         'foot'  => ['Footer', 'Hub and tracking link'],
     ];
 }

@@ -31,8 +31,8 @@ $pp = $p; $ppTeam = $user->cdp_hasPermission('view_tools'); $ppScope = 'me';
   </div>
   <?php break; case 'trk': ?>
   <div class="l-trk">
-    <div class="col"><span class="k">Tracking number</span><b class="l-no"><?= h($l['track']) ?></b><span class="l-sub"><?= h($l['pack']) ?> · piece <?= h($l['piece']) ?></span></div>
-    <?php if (!empty($o['qr'])): ?><div class="l-qr"><?= $l['qr'] ?></div><?php endif; ?>
+    <div class="l-tid"><span class="k">Tracking number</span><?= $l['bcTrack'] ?><b class="l-no"><?= h($l['track']) ?></b><span class="l-sub"><?= h($l['pack']) ?> · piece <?= h($l['piece']) ?></span></div>
+    <?php if (!empty($o['qr'])): ?><div class="l-qr"><?= $l['qr'] ?><span><?= ($o['qrData'] ?? 'details') === 'details' ? 'Scan: package details' : 'Scan to track' ?></span></div><?php endif; ?>
   </div>
   <?php break; case 'to': ?>
   <div class="l-to">
@@ -56,7 +56,7 @@ $pp = $p; $ppTeam = $user->cdp_hasPermission('view_tools'); $ppScope = 'me';
   <?php break; case 'flags': ?>
   <?php if (!empty($o['fragile']) || !empty($l['dg']) || !empty($o['care'])): ?><div class="l-flags"><?php if (!empty($o['fragile'])): ?><span>FRAGILE</span><?php endif; ?><?php if (!empty($l['dg'])): ?><span>DANGEROUS GOODS</span><?php endif; ?><?php if (!empty($o['care'])): ?><span>⬆ THIS SIDE UP</span><?php endif; ?></div><?php endif; ?>
   <?php break; case 'bc': ?>
-  <div class="l-bc<?= $bcBottom ? ' end' : '' ?>"><?= $l['bc'] ?><?php if ($l['carrierNo'] !== ''): ?><span class="l-car"><?= h(trim($l['carrier'] . ' ' . $l['carrierNo'])) ?></span><?php endif; ?></div>
+  <div class="l-bc<?= $bcBottom ? ' end' : '' ?>"><?php if ($l['bc'] !== ''): ?><span class="l-car"><?= h($l['carrier'] !== '' ? $l['carrier'] : 'Courier') ?> · original tracking number</span><?= $l['bc'] ?><?php else: ?><span class="l-nocar">Courier tracking number not added yet</span><?php endif; ?></div>
   <?php break; case 'foot': ?>
   <div class="l-foot"><span><?= h($l['hub']) ?></span><span><?= h($l['siteUrl'] !== '' ? 'Track: ' . $l['siteUrl'] . '/track.php' : '') ?></span></div>
   <?php break; endswitch; endforeach; ?>
@@ -85,9 +85,11 @@ $pp = $p; $ppTeam = $user->cdp_hasPermission('view_tools'); $ppScope = 'me';
 .l-mode{display:flex;flex-direction:column;align-items:center;background:#000;color:#fff;border-radius:6px;padding:3px 12px 4px;line-height:1}
 .l-mode b{font-size:24px;font-weight:900;letter-spacing:.02em}.l-mode span{font-size:8px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
 .l-trk{display:flex;justify-content:space-between;align-items:center;gap:8px;border:2.5px solid #000;border-radius:8px;padding:8px 10px}
-.l-no{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:34px;font-weight:800;letter-spacing:-.01em;line-height:1.05}
+.l-no{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:24px;letter-spacing:.06em;font-weight:800;line-height:1.05}
 .l-sub{font-size:10px;font-weight:600}
-.l-qr svg{width:84px;height:84px;display:block}
+.l-tid{display:flex;flex-direction:column;min-width:0;flex:1}.l-tid svg{width:100%;max-width:230px;height:56px;display:block;margin:2px 0 1px}
+.l-qr{display:flex;flex-direction:column;align-items:center;gap:1px;flex:none}.l-qr svg{width:104px;height:104px;display:block}.l-qr span{font-size:7.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.l-nocar{display:block;width:100%;text-align:center;border:1.5px dashed #000;border-radius:6px;padding:10px;font-size:11px;font-weight:700}
 .l-to{display:flex;flex-direction:column;gap:2px;border:2px solid #000;border-radius:8px;padding:7px 10px}
 .l-name{font-size:21px;font-weight:800;line-height:1.15}
 .l-addr{font-size:11.5px;line-height:1.3}
@@ -103,7 +105,7 @@ $pp = $p; $ppTeam = $user->cdp_hasPermission('view_tools'); $ppScope = 'me';
 .l-flags{display:flex;gap:5px;flex-wrap:wrap}.l-flags span{font-size:9.5px;font-weight:900;border:2px solid #000;padding:1px 6px;border-radius:4px}
 .l-bc{margin-top:0;display:flex;flex-direction:column;align-items:center;gap:1px}
 .l-bc.end{margin-top:auto}
-.l-car{font-family:"JetBrains Mono",monospace;font-size:9px}
+.l-car{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
 .l-foot{display:flex;justify-content:space-between;gap:8px;font-size:8.5px;font-weight:600;border-top:1.5px solid #000;padding-top:3px}
 .l-test{position:absolute;inset:0;pointer-events:none}
 .l-test b{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-28deg);font-size:40px;font-weight:900;color:rgba(0,0,0,.12);white-space:nowrap}

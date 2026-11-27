@@ -29,7 +29,8 @@ $printUrl = $l ? 'print_label_ship.php?id=' . (int) $l['id'] : '';
 <div class="hr"></div>
 <?= $opt('sender', 'Sender block', 'Hub name and address at the top') ?>
 <?= $opt('phone', 'Recipient phone', 'Masked, last four digits') ?>
-<?= $opt('qr', 'QR locator', 'Links to the public tracking page') ?>
+<?= $opt('qr', 'QR code', 'Next to the tracking barcode at the top') ?>
+<div class="ls-sec"><span>QR code holds</span><div class="ls-pills"><?= $pill('big', 'qrData', 'details', 'Full package details', $o['qrData'] ?? 'details') ?><?= $pill('big', 'qrData', 'link', 'Tracking link only', $o['qrData'] ?? 'details') ?></div></div>
 <?= $opt('contents', 'Contents', 'Items from the shipment') ?>
 <?= $opt('value', 'Declared value', 'With the contents line') ?>
 <?= $opt('fragile', 'Fragile flag', 'Stamp on every label') ?>

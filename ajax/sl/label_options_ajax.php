@@ -39,6 +39,8 @@ if (in_array($key, $flags, true)) {
     $opt[$key] = (int) !empty($raw);
 } elseif ($group === 'big' && $key === 'size' && in_array($raw, ['46', '44', '12'], true)) {
     $opt[$key] = $raw;
+} elseif ($group === 'big' && $key === 'qrData' && in_array($raw, ['details', 'link'], true)) {
+    $opt[$key] = $raw;
 } elseif ($group === 'big' && $key === 'copies') {
     $opt[$key] = max(1, min(10, (int) $raw));
 } elseif ($group === 'big' && $key === 'printer') {
