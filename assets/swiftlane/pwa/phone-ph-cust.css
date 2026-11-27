@@ -59,3 +59,7 @@ label.pc-btnrow:focus-within{box-shadow:0 0 0 2px var(--ink)}
 .b3-mxr button.sl-chk{position:relative}
 .b3-mxr button.sl-chk::after{content:"";position:absolute;inset:-8px}
 .b3-mini.wide button[disabled]{cursor:default}
+.pc-chip-a{flex:none;display:inline-flex;align-items:center;min-height:44px;padding:0 15px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink-2);font:500 13px var(--font);white-space:nowrap}
+.pc-chip-a.on{background:var(--ink);color:var(--inverse);border-color:var(--ink)}
+.pc-acts{display:flex;flex-wrap:wrap;gap:6px}
+.pc-acts .b3-x{min-height:44px}

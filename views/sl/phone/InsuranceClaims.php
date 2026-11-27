@@ -51,7 +51,7 @@ $live = $c && !in_array($c['status'], ['paid', 'rejected'], true);
 <?php if ($live): ?><form class="pd-sheetf" data-sl-form data-sl-reload action="ajax/sl/insurance_claim_ajax.php" method="post" style="border-radius:0;padding-top:0"><input type="hidden" name="op" value="reject"><input type="hidden" name="id" value="<?= (int) $c['id'] ?>"><label class="pd-f"><small>Or reject the claim</small><input class="pd-in" name="reason" placeholder="Reason to reject" required></label><button type="submit" class="mx-btn sec">Reject <?= h($c['no']) ?></button></form><?php endif; ?>
 </div>
 <?php endif; ?>
-<div class="sl-dialog pd-sheet" id="pd-ic-new"<?= $pf['open'] ? '' : ' hidden' ?>><form data-sl-form action="ajax/sl/insurance_claim_ajax.php" method="post" enctype="multipart/form-data" role="dialog" aria-label="New claim">
+<div class="sl-dialog pd-sheet" id="pd-ic-new"<?= $pf['open'] ? '' : ' hidden' ?>><form class="pd-sheetf" data-sl-form action="ajax/sl/insurance_claim_ajax.php" method="post" enctype="multipart/form-data" role="dialog" aria-label="New claim">
 <input type="hidden" name="op" value="create"><input type="hidden" name="exception_id" value="<?= (int) $pf['exception'] ?>"><h2>New claim</h2><p class="pd-note">Declared and insured values are taken from the shipment.</p>
 <label class="pd-f"><small>Shipment tracking</small><input class="pd-in mono" name="order_track" required value="<?= h($pf['track']) ?>" autocomplete="off"></label>
 <label class="pd-f"><small>Type</small><select class="pd-in" name="type"><option value="damaged"<?= $pf['type'] === 'damaged' ? ' selected' : '' ?>>Damaged</option><option value="lost"<?= $pf['type'] === 'lost' ? ' selected' : '' ?>>Lost</option></select></label>
