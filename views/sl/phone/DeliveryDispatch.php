@@ -19,6 +19,9 @@ $acts = (!dl_agency() && $user->cdp_hasPermission(['manage_freight', 'manage_rid
 $slPhone['nav'] = 'none';
 $breakdown = json_decode((string) $r->breakdown_json, true) ?: [];
 $items = (new DeliveryService())->sql('SELECT tracking FROM cdb_delivery_items WHERE request_id=?', [$r->id])->fetchAll(PDO::FETCH_COLUMN);
+$riderName = (string) ($r->rider_name ?? '');
+foreach ($d['riders'] as $rider) if ((int) $rider->id === (int) $r->driver_id) $riderName = (string) $rider->name;
+if ($riderName === '' && (int) $r->driver_id) foreach ($d['requests'] as $q) if ((int) $q->driver_id === (int) $r->driver_id && $q->rider_name) $riderName = (string) $q->rider_name;
 $dest = 'https://www.google.com/maps/dir/?api=1&destination=' . rawurlencode($r->lat . ',' . $r->lng) . '&destination_place_id=' . rawurlencode((string) $r->place_id) . '&travelmode=driving';
 ?>
 <?= sl_phoneTop('Delivery #' . (int) $r->id, ucfirst((string) $r->state), ['back' => 'delivery_dispatch.php?state=' . rawurlencode((string) ($d['filter'] ?? 'open'))]) ?>
@@ -33,7 +36,7 @@ $dest = 'https://www.google.com/maps/dir/?api=1&destination=' . rawurlencode($r-
   <div><span>Phone</span><b><?php if ($r->contact_phone): ?><a href="tel:<?= h(preg_replace('/[^0-9+]/', '', (string) $r->contact_phone)) ?>"><?= h($r->contact_phone) ?></a><?php else: ?>—<?php endif; ?></b></div>
   <div><span>Destination</span><b><?= h($r->address) ?></b></div>
 <?php if (!empty($breakdown['zone_name'])): ?>  <div><span>Zone</span><b><?= h($breakdown['zone_name']) ?></b></div><?php endif; ?>
-  <div><span>Rider</span><b><?= h($r->rider_name ?? '' ?: 'Needs dispatch') ?></b></div>
+  <div><span>Rider</span><b><?= h($riderName !== '' ? $riderName : ((int) $r->driver_id ? 'Rider #' . (int) $r->driver_id : 'Needs dispatch')) ?></b></div>
 <?php if ($r->instructions): ?>  <div><span>Instructions</span><b><?= h($r->instructions) ?></b></div><?php endif; ?>
 <?php if ($items): ?>  <div><span>Packages</span><b class="mono"><?= h(implode(', ', $items)) ?></b></div><?php endif; ?>
 <?php if ($r->proof_photo): ?>  <div><span>Received by</span><b><?= h($r->receiver_name) ?> · <?= h(sl_date($r->completed_at, 'M j, H:i')) ?></b></div><?php endif; ?>
