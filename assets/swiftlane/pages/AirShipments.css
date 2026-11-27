@@ -34,3 +34,5 @@
 .as-table-wrap .as-st{white-space:normal;min-width:120px;max-width:170px}
 .as-table-wrap .as-st .sl-pill{white-space:normal;height:auto;min-height:24px;padding-top:2px;padding-bottom:2px;line-height:1.25}
 @media (min-width:721px){.as-table-wrap .sl-table td.as-dots{width:56px;padding-left:8px;padding-right:8px}}
+/* Shipments list reads in Figtree throughout: tracking, postal number, time and weight */
+.as-table-wrap .sl-table,.as-table-wrap .sl-table .id,.as-table-wrap .sl-table .num,.as-table-wrap .sl-table .mono{font-family:var(--font);font-variant-numeric:tabular-nums;letter-spacing:0}
