@@ -35,4 +35,5 @@ $slBoardCss = $slPage['board'] ? 'assets/swiftlane/pages/' . $slPage['board'] . 
 </script>
 
 <?php require_once __DIR__ . '/../../../helpers/pwa.php'; sl_pwa_head(); ?>
+<link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/auth-mobile.css')) ?>">
 <link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/shortcuts.css')) ?>">
