@@ -97,7 +97,7 @@ function sl_moduleRouteMap(): array
         ['~^ajax/(consolidate_packages/|dashboard/consolidated_package/)~', ['sea', 'consolidation']],
         // Consolidations hub (air and sea in one page)
         ['~^(consolidate_list|consolidate_view|consolidate_add|consolidate_edit|consolidate_parking_list|packing_list)~', ['consolidation']],
-        ['~^ajax/sl/consolidation_ajax~', ['consolidation']],
+        ['~^ajax/sl/(consolidation_load_plan|consolidation_ajax)~', ['consolidation']],
         // Pre-alerts
         ['~^(prealert_|customer_packages_add_from_prealert)~', ['prealerts']],
         ['~^ajax/(pre_alerts/|sl/prealert_ajax|sl/shipment_prealert_ajax)~', ['prealerts']],
@@ -110,7 +110,7 @@ function sl_moduleRouteMap(): array
         ['~^ajax/(sl/warehouse_ajax|sl/package_intake_ajax|locker/|pickup_code/|pickup_client_ajax)~', ['warehouse']],
         // Delivery system
         ['~^(last_mile|delivery_(dispatch|request|job|proof|schedule|settings|tracking)|rider_(dispatch|detail|settings))\.php~', ['delivery']],
-        ['~^ajax/sl/(delivery_ajax|delivery_settings_ajax|delivery_zone_ajax|rider_ajax|rider_fees_ajax)~', ['delivery']],
+        ['~^ajax/sl/(rider_position|dispatch_ai|delivery_ajax|delivery_settings_ajax|delivery_zone_ajax|rider_ajax|rider_fees_ajax)~', ['delivery']],
         // Freight and insurance
         ['~^(freight_|waybills|waybill_print|cargo_exceptions)~', ['freight']],
         ['~^ajax/sl/(freight_|waybill_ajax|cargo_exception_ajax)~', ['freight']],

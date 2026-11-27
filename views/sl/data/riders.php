@@ -48,6 +48,7 @@ function sl_rdRiders(bool $activeOnly = false): array
 {
     $ids = implode(',', array_map('intval', sl_riderRoleIds()));
     $cols = sl_columnExists('cdb_users', 'vehicle_type') ? 'u.vehicle_type, u.zone, u.rider_status' : "u.vehiclecode AS vehicle_type, '' AS zone, '' AS rider_status";
+    $cols .= sl_columnExists('cdb_users', 'agency_id') ? ', u.agency_id' : ', 0 AS agency_id';
     $out = [];
     foreach (sl_rows("SELECT u.id, u.username, u.fname, u.lname, u.email, u.phone, u.active, u.created, u.lastlogin, u.enrollment, u.vehiclecode, u.name_off, u.userlevel, $cols FROM cdb_users u WHERE u.userlevel IN ($ids)" . ($activeOnly ? ' AND u.active = 1' : '') . ' ORDER BY u.fname, u.lname') as $r) {
         $r->name = trim($r->fname . ' ' . $r->lname) ?: $r->username;
@@ -268,6 +269,11 @@ function sl_driverAppData($user, $core): array
     $riders = sl_rdRiders();
     $me = $riders[$id] ?? null;
     $d = ['isRider' => (bool) $me, 'name' => $me->name ?? '', 'ini' => sl_initials($me->name ?? '?')];
+    // Rider layout: manual choice from assets/swiftlane/rider-device.js (cookie), else auto (device check in the browser).
+    $layout = (string) ($_COOKIE['sl_rider_layout'] ?? 'auto');
+    $d['layout'] = in_array($layout, ['phone', 'web', 'auto'], true) ? $layout : 'auto';
+    $d['tabs'] = [['k' => 'home', 'label' => 'Today', 'icon' => 'box'], ['k' => 'route', 'label' => 'Route', 'icon' => 'route'], ['k' => 'load', 'label' => 'Load', 'icon' => 'check'], ['k' => 'pay', 'label' => 'Earnings', 'icon' => 'dollar']];
+    $d['rp'] = null; $d['rv'] = null; $d['rpStats'] = null;
     if (!$me) return $d;
     $today = date('Y-m-d');
     $s = sl_rdStats($today, $today, $id)[$id];
@@ -303,6 +309,25 @@ function sl_driverAppData($user, $core): array
     if($deliveryNext&&(!$legacyNext||$legacyNext['st']!=='On route'||$deliveryNext->state==='onroute')){
         $hero=['href'=>sl_route('DeliveryJob',['id'=>(int)$deliveryNext->id]),'name'=>$deliveryNext->contact_name,'address'=>$deliveryNext->address,'phone'=>$deliveryNext->contact_phone,'status'=>$deliveryNext->state==='onroute'?'On the way':'Ready to start','label'=>$deliveryNext->state==='onroute'?'Continue delivery':'Open next delivery','navigate'=>'https://www.google.com/maps/dir/?'.http_build_query(['api'=>1,'destination'=>$deliveryNext->lat.','.$deliveryNext->lng,'destination_place_id'=>$deliveryNext->place_id,'travelmode'=>'driving']),'parcels'=>count(json_decode($deliveryNext->parcel_json,true)?:[]),'type'=>'Delivery'];
     }elseif($legacyNext){$hero=['href'=>sl_route('DriverApp',['job'=>$legacyNext['id']]),'name'=>$legacyNext['cust']==='Contact not supplied'?'Your next stop':$legacyNext['cust'],'address'=>$legacyNext['addr'],'phone'=>$legacyNext['phone'],'status'=>$legacyNext['st'],'label'=>$legacyNext['pickup']?'Open next pickup':'Continue delivery','navigate'=>sl_riderNavigation($legacyNext['addr']),'parcels'=>1,'type'=>$legacyNext['pickup']?'Pickup':'Delivery'];}
+    // Today's planned route (helpers/route_planner.php). Stops whose delivery was finished elsewhere are synced first.
+    if (sl_tableExists('cdb_rp_routes') && is_file(CDP_ROOT . '/helpers/route_planner.php')) {
+        try {
+            require_once CDP_ROOT . '/helpers/route_planner.php';
+            require_once CDP_ROOT . '/views/sl/data/rider_route.php';
+            if (function_exists('rp_riderTodayRoute')) {
+                if (function_exists('rp_syncStopFromRequest')) foreach (sl_rows("SELECT DISTINCT s.request_id FROM cdb_rp_stops s JOIN cdb_rp_routes r ON r.id = s.route_id JOIN cdb_delivery_requests q ON q.id = s.request_id WHERE r.driver_id = :u AND r.route_date = :d AND s.status IN ('pending','arrived') AND q.state IN ('delivered','failed','cancelled')", [':u' => $id, ':d' => $today]) as $st) rp_syncStopFromRequest((int) $st->request_id);
+                $d['rp'] = rp_riderTodayRoute($id);
+                if ($d['rp']) {
+                    $d['rv'] = sl_riderRouteView($d['rp']);
+                    if (function_exists('rp_riderStats')) $d['rpStats'] = rp_riderStats($id, $today, $today);
+                    $d['rpActivity'] = (string) sl_scalar('SELECT state FROM cdb_rp_activity WHERE driver_id = :u AND ended_at IS NULL ORDER BY id DESC', [':u' => $id], '');
+                }
+            }
+        } catch (Throwable $e) {
+            error_log('rider app route: ' . $e->getMessage());
+            $d['rp'] = null; $d['rv'] = null; $d['rpError'] = true;
+        }
+    }
     $d['pwaRun']=['next'=>$hero,'stops'=>count($pending)+count($openJobs),'parcels'=>array_sum(array_map(fn($r)=>count(json_decode($r->parcel_json,true)?:[]),$pending))+count($openJobs),'completed'=>$s['done']+count(array_filter($deliveries,fn($r)=>$r->state==='delivered'))];
 
     return $d;

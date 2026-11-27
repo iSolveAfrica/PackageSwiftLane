@@ -1,0 +1,72 @@
+name: Validate Swift Lane
+on:
+  push:
+    branches: [temp]
+  pull_request:
+    branches: [temp]
+permissions:
+  contents: read
+jobs:
+  application:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check application PHP syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          git ls-files -z '*.php' ':!:helpers/vendor/**' ':!:helpers/stripe/**' ':!:helpers/phpmailer/**' ':!:vendor/**' | xargs -0 -r -n1 php -l > /tmp/php-lint.log
+          tail -n 5 /tmp/php-lint.log
+      - name: Check delivery schema definitions
+        run: php scripts/check_delivery_storage.php
+      - name: Check route engine
+        run: php scripts/check_route_engine.php
+      - name: Check load plan validation
+        run: php scripts/check_consolidation_load_plan.php
+      - name: Check design routes
+        run: node scripts/check_design_routes.cjs
+      - name: Install browser test dependency
+        run: npm install --prefix /tmp/swiftlane-tests playwright
+      - name: Install browser
+        run: /tmp/swiftlane-tests/node_modules/.bin/playwright install --with-deps chromium
+      - name: Check load plan browser flow
+        env:
+          NODE_PATH: /tmp/swiftlane-tests/node_modules
+        run: node scripts/check_load_plan_ui.cjs
+      - name: Check shared app interactions
+        env:
+          NODE_PATH: /tmp/swiftlane-tests/node_modules
+        run: node -e "process.env.CHROMIUM_PATH=require('playwright').chromium.executablePath(); require('./scripts/check_interactions.cjs')"
+      - name: Check page shell
+        run: node scripts/check_page_shell.js
+  delivery-storage:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ci-scratch-password
+          MYSQL_DATABASE: swiftlane_test
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_mysql
+          coverage: none
+      - name: Check delivery storage installation and preservation
+        env:
+          SL_TEST_DSN: mysql:host=127.0.0.1;port=3306;dbname=swiftlane_test
+          SL_TEST_DB_PASSWORD: ci-scratch-password
+        run: php scripts/check_delivery_storage_db.php

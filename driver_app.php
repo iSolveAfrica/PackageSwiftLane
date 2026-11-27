@@ -12,8 +12,8 @@ if (!sl_userIs('driver') && !$user->cdp_hasPermission('view_user_list')) {
 }
 // Old tab links: the route and the earnings are screens of their own now.
 $tab = (string) ($_GET['tab'] ?? '');
-if ($tab === 'route' || $tab === 'pay') {
-    header('Location: ' . sl_route($tab === 'route' ? 'RiderMap' : 'RiderEarnings'));
+if ($tab === 'route' || $tab === 'pay' || $tab === 'load') {
+    header('Location: ' . ($tab === 'load' ? sl_route('RiderMap', ['view' => 'load']) : sl_route($tab === 'route' ? 'RiderMap' : 'RiderEarnings')));
     exit;
 }
 header('Cache-Control: private, no-store');
