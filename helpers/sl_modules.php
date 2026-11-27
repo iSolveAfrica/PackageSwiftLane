@@ -110,7 +110,7 @@ function sl_moduleRouteMap(): array
         ['~^ajax/(sl/warehouse_ajax|sl/package_intake_ajax|locker/|pickup_code/|pickup_client_ajax)~', ['warehouse']],
         // Delivery system
         ['~^(last_mile|delivery_(dispatch|request|job|proof|schedule|settings|tracking)|rider_(dispatch|detail|settings))\.php~', ['delivery']],
-        ['~^ajax/sl/(delivery_ajax|delivery_settings_ajax|delivery_zone_ajax|rider_ajax|rider_fees_ajax)~', ['delivery']],
+        ['~^ajax/sl/(dispatch_ai|delivery_ajax|delivery_settings_ajax|delivery_zone_ajax|rider_ajax|rider_fees_ajax)~', ['delivery']],
         // Freight and insurance
         ['~^(freight_|waybills|waybill_print|cargo_exceptions)~', ['freight']],
         ['~^ajax/sl/(freight_|waybill_ajax|cargo_exception_ajax)~', ['freight']],

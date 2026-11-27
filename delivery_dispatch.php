@@ -9,4 +9,4 @@ if(isset($_GET['snapshot'])){
 }
 $d=dl_dispatchData();
 $d['fleet']=$d['ready']?dl_fleetSnapshot():null;
-sl_render('DeliveryDispatch',['id'=>'deliverydispatch','title'=>'Delivery requests','board'=>'Delivery','styles'=>['assets/swiftlane/pages/DeliveryFleet.css'],'scripts'=>['dataJs/sl/delivery_fleet.js']],$d);
+sl_render('DeliveryDispatch',['id'=>'deliverydispatch','title'=>'Delivery requests','board'=>'Delivery','styles'=>['assets/swiftlane/pages/DeliveryFleet.css'],'scripts'=>['dataJs/sl/delivery_fleet.js','dataJs/sl/dispatch_ai.js']],$d);

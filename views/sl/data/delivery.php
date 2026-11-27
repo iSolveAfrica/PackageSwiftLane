@@ -25,12 +25,13 @@ function dl_dispatchData(): array
     $d['suggestions']=[];
     require_once CDP_ROOT.'/views/sl/data/riders.php';
     $riderWork=[];
-    foreach($d['requests'] as $job) if($job->driver_id && in_array($job->state,['assigned','onroute'],true)) $riderWork[(int)$job->driver_id][]=[$job->lat,$job->lng];
+    $activeJobs=$s->sql("SELECT r.driver_id,r.lat,r.lng FROM cdb_delivery_requests r WHERE r.driver_id>0 AND r.state IN ('assigned','onroute')".($agency?' AND r.agency_id='.(int)$agency:''))->fetchAll(PDO::FETCH_OBJ);
+    foreach($activeJobs as $job) $riderWork[(int)$job->driver_id][]=[$job->lat,$job->lng];
     foreach($d['requests'] as $job) {
         if($job->state!=='pending' || $job->driver_id) continue;
         $choices=[];
         foreach($d['riders'] as $rider) {
-            if(!$rider->active || in_array($rider->rider_status??'', ['offline','suspended'],true)) continue;
+            if(!$rider->active || in_array($rider->rider_status??'', ['offline','suspended','on_break','unavailable'],true)) continue;
             if($job->agency_id && (int)$rider->agency_id!==(int)$job->agency_id) continue;
             $stops=$riderWork[(int)$rider->id]??[];
             $nearest=null;
