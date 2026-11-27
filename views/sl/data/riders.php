@@ -48,6 +48,7 @@ function sl_rdRiders(bool $activeOnly = false): array
 {
     $ids = implode(',', array_map('intval', sl_riderRoleIds()));
     $cols = sl_columnExists('cdb_users', 'vehicle_type') ? 'u.vehicle_type, u.zone, u.rider_status' : "u.vehiclecode AS vehicle_type, '' AS zone, '' AS rider_status";
+    $cols .= sl_columnExists('cdb_users', 'agency_id') ? ', u.agency_id' : ', 0 AS agency_id';
     $out = [];
     foreach (sl_rows("SELECT u.id, u.username, u.fname, u.lname, u.email, u.phone, u.active, u.created, u.lastlogin, u.enrollment, u.vehiclecode, u.name_off, u.userlevel, $cols FROM cdb_users u WHERE u.userlevel IN ($ids)" . ($activeOnly ? ' AND u.active = 1' : '') . ' ORDER BY u.fname, u.lname') as $r) {
         $r->name = trim($r->fname . ' ' . $r->lname) ?: $r->username;
