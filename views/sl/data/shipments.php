@@ -190,6 +190,11 @@ function sl_airShipmentsData($user, $core): array
         'attention' => $customs + $unpaid + $noCarrier, 'customs' => $customs, 'unpaid' => $unpaid, 'noCarrier' => $noCarrier,
         'client' => $client,
     ];
+    if (!$client && !$forExport) {
+        $d['ins'] = sl_shipmentInsightsData((string) ($_GET['ins'] ?? '12m'));
+        require_once CDP_ROOT . '/helpers/ai_assistant.php';
+        $d['aiOn'] = function_exists('cdp_aiCanUse') && cdp_aiCanUse($user) && cdp_aiConfigured();
+    }
 
     // list
     $q = trim((string) ($_GET['q'] ?? ''));
@@ -836,4 +841,120 @@ function sl_newShipmentData($user, $core, bool $client): array
     $d['prealerts'] = array_map(fn($p) => ['id' => (int) $p->pre_alert_id, 'label' => $p->tracking . ' · ' . trim($p->fname . ' ' . $p->lname), 'tracking' => $p->tracking, 'customer_id' => (int) $p->customer_id, 'customer' => trim($p->fname . ' ' . $p->lname), 'locker' => $p->locker, 'courier_id' => (int) $p->courier_com, 'desc' => $p->package_description, 'price' => (float) $p->purchase_price], $pending);
     $d['prefs'] = json_decode((string) sl_slSetting('new_shipment_defaults_' . $uid, ''), true) ?: [];
     return $d;
+}
+
+/**
+ * Shipment insights for the Air Shipments page (staff): registrations this month by day, the last
+ * 12 months, status mix, top shippers and the most shipped items. Same scope as the list.
+ * $range limits status mix, shippers and items: 30d | 90d | 12m | all.
+ */
+function sl_shipmentInsightsData(string $range): array
+{
+    $range = in_array($range, ['30d', '90d', '12m', 'all'], true) ? $range : '12m';
+    $scope = sl_opsScope('a');
+    $base = "FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier <> 14 $scope";
+    $rangeSql = ['30d' => ' AND a.order_date >= CURDATE() - INTERVAL 30 DAY', '90d' => ' AND a.order_date >= CURDATE() - INTERVAL 90 DAY',
+        '12m' => ' AND a.order_date >= CURDATE() - INTERVAL 12 MONTH', 'all' => ''][$range];
+    $rangeLabel = ['30d' => 'Last 30 days', '90d' => 'Last 90 days', '12m' => 'Last 12 months', 'all' => 'All time'][$range];
+
+    // this month, day by day, against the same days of last month
+    $today = (int) date('j');
+    $daysIn = (int) date('t');
+    $byDay = array_fill(1, $daysIn, 0);
+    foreach (sl_rows("SELECT DAY(a.order_date) AS d, COUNT(*) AS n $base AND a.order_date >= DATE_FORMAT(CURDATE(), '%Y-%m-01') GROUP BY DAY(a.order_date)") as $r) {
+        $byDay[(int) $r->d] = (int) $r->n;
+    }
+    $month = array_sum($byDay);
+    $lastSame = (int) sl_scalar("SELECT COUNT(*) $base AND a.order_date >= DATE_FORMAT(CURDATE() - INTERVAL 1 MONTH, '%Y-%m-01') AND a.order_date < DATE_FORMAT(CURDATE() - INTERVAL 1 MONTH, '%Y-%m-01') + INTERVAL $today DAY");
+    $lastFull = (int) sl_scalar("SELECT COUNT(*) $base AND a.order_date >= DATE_FORMAT(CURDATE() - INTERVAL 1 MONTH, '%Y-%m-01') AND a.order_date < DATE_FORMAT(CURDATE(), '%Y-%m-01')");
+    $monthWeight = (float) sl_scalar("SELECT COALESCE(SUM(a.total_weight), 0) $base AND a.order_date >= DATE_FORMAT(CURDATE(), '%Y-%m-01')");
+    $monthValue = (float) sl_scalar("SELECT COALESCE(SUM(a.total_order), 0) $base AND a.order_date >= DATE_FORMAT(CURDATE(), '%Y-%m-01')");
+
+    // last 12 months
+    $months = [];
+    for ($i = 11; $i >= 0; $i--) {
+        $months[date('Y-m', strtotime("first day of -$i month"))] = 0;
+    }
+    foreach (sl_rows("SELECT DATE_FORMAT(a.order_date, '%Y-%m') AS m, COUNT(*) AS n $base AND a.order_date >= DATE_FORMAT(CURDATE() - INTERVAL 11 MONTH, '%Y-%m-01') GROUP BY DATE_FORMAT(a.order_date, '%Y-%m')") as $r) {
+        if (isset($months[$r->m])) $months[$r->m] = (int) $r->n;
+    }
+    $all = (int) sl_scalar("SELECT COUNT(*) $base");
+    $allWeight = (float) sl_scalar("SELECT COALESCE(SUM(a.total_weight), 0) $base");
+    $customers = (int) sl_scalar("SELECT COUNT(DISTINCT a.sender_id) $base");
+
+    // status mix in range
+    $names = [];
+    foreach (sl_rows('SELECT id, mod_style FROM cdb_styles') as $s) $names[(int) $s->id] = ucwords(strtolower(str_replace('_', ' ', (string) $s->mod_style)));
+    $status = [];
+    foreach (sl_rows("SELECT a.status_courier AS s, COUNT(*) AS n $base $rangeSql GROUP BY a.status_courier ORDER BY n DESC") as $r) {
+        $status[] = ['id' => (int) $r->s, 'label' => $names[(int) $r->s] ?? ('Status ' . (int) $r->s), 'n' => (int) $r->n];
+    }
+    if (count($status) > 7) { // keep the chart readable: the rest folds into "Other"
+        $other = array_sum(array_map(fn($x) => $x['n'], array_slice($status, 6)));
+        $status = array_slice($status, 0, 6);
+        $status[] = ['id' => 0, 'label' => 'Other statuses', 'n' => $other];
+    }
+    $rangeTotal = array_sum(array_map(fn($x) => $x['n'], $status));
+
+    // top shippers in range
+    $shippers = [];
+    $rows = sl_rows("SELECT a.sender_id, COUNT(*) AS n, COALESCE(SUM(a.total_weight), 0) AS w, COALESCE(SUM(a.total_order), 0) AS v $base $rangeSql GROUP BY a.sender_id ORDER BY n DESC, w DESC LIMIT 8");
+    $users = $rows ? sl_usersById(array_map(fn($r) => $r->sender_id, $rows)) : [];
+    foreach ($rows as $r) {
+        $u = $users[(int) $r->sender_id] ?? null;
+        $shippers[] = ['id' => (int) $r->sender_id, 'name' => $u ? ucwords(strtolower(trim($u->fname . ' ' . $u->lname))) : 'Customer #' . (int) $r->sender_id,
+            'locker' => (string) ($u->locker ?? ''), 'n' => (int) $r->n, 'w' => (float) $r->w, 'v' => (float) $r->v];
+    }
+
+    // most shipped items in range (descriptions grouped case- and space-insensitively)
+    $items = [];
+    foreach (sl_rows("SELECT LOWER(TRIM(i.order_item_description)) AS k, MAX(i.order_item_description) AS label, COALESCE(SUM(i.order_item_quantity), 0) AS q, COUNT(DISTINCT i.order_id) AS n
+        FROM cdb_add_order_item i INNER JOIN cdb_add_order a ON a.order_id = i.order_id
+        WHERE a.is_deleted = 0 AND a.status_courier <> 14 $scope $rangeSql AND TRIM(COALESCE(i.order_item_description, '')) <> ''
+        GROUP BY LOWER(TRIM(i.order_item_description)) ORDER BY q DESC, n DESC LIMIT 8") as $r) {
+        $items[] = ['label' => ucfirst(trim((string) $r->label)), 'q' => (float) $r->q, 'n' => (int) $r->n];
+    }
+
+    // daily intake grid: one square per day for the rolling year, weeks as columns (Sunday on top)
+    require_once CDP_ROOT . '/helpers/sl_charts.php';
+    $end = new DateTimeImmutable('today');
+    $start = $end->modify('-364 days');
+    $start = $start->modify('-' . (int) $start->format('w') . ' days'); // back to Sunday
+    $heatMap = [];
+    foreach (sl_rows("SELECT DATE(a.order_date) AS d, COUNT(*) AS n $base AND a.order_date >= :from GROUP BY DATE(a.order_date)", [':from' => $start->format('Y-m-d')]) as $r) {
+        $heatMap[$r->d] = (int) $r->n;
+    }
+    $heatPeak = max(1, max($heatMap ?: [0]));
+    $heat = [];
+    $heatMonths = [];
+    $weekday = array_fill(0, 7, 0);
+    $activeDays = 0;
+    $col = 0;
+    for ($day = $start; $day <= $end; $day = $day->modify('+1 day')) {
+        $n = $heatMap[$day->format('Y-m-d')] ?? 0;
+        $w = (int) $day->format('w');
+        if ($w === 0 || $day == $start) {
+            $col = intdiv((int) $start->diff($day)->days, 7);
+            if ((int) $day->format('j') <= 7 || $day == $start) $heatMonths[$col] = $day->format('M');
+        }
+        $heat[] = ['c' => sl_heatLevel($n, $heatPeak), 't' => $day->format('D, M j, Y') . ': ' . number_format($n) . ' package' . ($n === 1 ? '' : 's') . ' registered', 'today' => $day == $end];
+        $weekday[$w] += $n;
+        if ($n > 0) $activeDays++;
+    }
+    $heatTotal = array_sum($heatMap);
+    arsort($heatMap);
+    $peakDay = key($heatMap);
+    $heatWeeks = $col + 1;
+
+    return [
+        'heat' => $heat, 'heatWeeks' => $heatWeeks, 'heatMonths' => $heatMonths, 'heatTotal' => $heatTotal, 'heatPeak' => $heatMap ? (int) reset($heatMap) : 0,
+        'heatPeakDay' => $peakDay ? date('D, M j, Y', strtotime($peakDay)) : '', 'heatActive' => $activeDays,
+        'heatAvg' => $activeDays ? round($heatTotal / $activeDays, 1) : 0, 'weekday' => $weekday,
+        'range' => $range, 'rangeLabel' => $rangeLabel, 'rangeTotal' => $rangeTotal,
+        'month' => $month, 'monthName' => date('F'), 'today' => $today, 'byDay' => $byDay, 'lastSame' => $lastSame, 'lastFull' => $lastFull,
+        'change' => $lastSame > 0 ? (int) round(100 * ($month - $lastSame) / $lastSame) : null,
+        'monthWeight' => $monthWeight, 'monthValue' => $monthValue,
+        'months' => $months, 'all' => $all, 'allWeight' => $allWeight, 'customers' => $customers,
+        'status' => $status, 'shippers' => $shippers, 'items' => $items,
+    ];
 }
