@@ -34,7 +34,7 @@ $links = [
 <?php endif; ?>
 </section>
 <?php if ($d['on']): ?>
-<div class="mx-fx"><i class="ic ic-sm i-globe" aria-hidden="true"></i><span><?= h($d['fees'][0]['v'] ?? '') ?></span><small>exchange rate</small></div>
+<?php if (sl_finRate() > 0): ?><div class="mx-fx"><i class="ic ic-sm i-globe" aria-hidden="true"></i><span><?= h($d['fees'][0]['v'] ?? '') ?></span><small>exchange rate</small></div><?php endif; ?>
 <section class="mx-k c2">
   <?php if (isset($k[0])) echo $tile($k[0]); ?>
   <?php if (isset($k[1])) echo $tile($k[1], '', 'up'); ?>

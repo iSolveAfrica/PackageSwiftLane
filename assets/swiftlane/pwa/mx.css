@@ -2224,7 +2224,7 @@ body.mx-page input.mx-in,body.mx-page select.mx-in,body.mx-page textarea.mx-in{w
 body.mx-page textarea.mx-in{min-height:96px;padding:12px 14px;resize:vertical}
 body.mx-page button.mx-btn{border:0;width:100%}
 body.mx-page button.mx-btn.sec{border:1px solid var(--line-2)}
-body.mx-page form{display:contents}
+body.mx-page form:not([class]){display:contents}
 body.mx-page .sl-flash-float{position:fixed;left:12px;right:12px;top:max(12px,env(safe-area-inset-top));z-index:60}
 html.sl-kb body.mx-page .mx-tab,html.sl-kb body.mx-page .mx-pill{display:none}
 body.mx-page .sl-app-tools{display:none}

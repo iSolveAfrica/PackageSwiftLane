@@ -12,7 +12,7 @@ $personHref = function (array $r) use ($d): string {
 };
 ?>
 <link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/pwa/phone-ph-people.css')) ?>">
-<?= sl_phoneTop('Staff & roles', sl_num($d['online']) . ' online now', ['back' => 'menu.php'], $d['hasLog'] ? sl_phoneIcon('clock', 'Staff activity', sl_route('StaffActivity')) : '') ?>
+<?= sl_phoneTop('Staff & roles', sl_num($d['total']) . ' staff accounts', ['back' => 'menu.php'], $d['hasLog'] ? sl_phoneIcon('clock', 'Staff activity', sl_route('StaffActivity')) : '') ?>
 <main class="mx-body">
 <nav class="mx-seg" aria-label="Staff and roles">
   <a class="on" aria-current="true" href="<?= h(sl_url(['role' => null, 'page' => null, 'q' => null, 'branch' => null])) ?>">Staff <?= sl_num($d['total']) ?></a>
