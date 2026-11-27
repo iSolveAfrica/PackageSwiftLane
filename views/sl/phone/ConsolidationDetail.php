@@ -56,4 +56,11 @@ if ($can['label'] !== '' && count($acts) < 4) $acts[] = [$can['label'], 'tag', '
 <?php if ($can['deliver'] !== ''): ?><a class="mx-btn sec" href="<?= h($can['deliver']) ?>">Hand over</a><?php endif; ?>
 <?php if (!empty($d['other'])): ?><a class="mx-btn sec" href="<?= h(sl_route('ConsolidationDetail', ['id' => $d['other']['id'], 'type' => $d['other']['type']])) ?>">Switch to <?= $d['other']['type'] === 'sea' ? 'sea' : 'air' ?> version</a><?php endif; ?>
 </div>
+<?php
+$sea=$d['sea'];
+$self=sl_route('ConsolidationDetail',['id'=>$d['cid'],'type'=>$d['type']]);
+include CDP_ROOT.'/views/sl/pages/partials/con_load_plan.php';
+?>
 </main>
+<link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/pages/ConLoadPlan.css')) ?>">
+<script defer src="<?= h(cdp_asset('dataJs/sl/consolidation_load_plan.js')) ?>"></script>
