@@ -1,0 +1,33 @@
+/* Customer dashboard additions on top of overview-hero.css (partials/client_overview.php) */
+.co-next{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:14px;background:var(--field);border:1px solid var(--line)}
+.co-next.hot{background:color-mix(in srgb,var(--green) 10%,var(--card));border-color:color-mix(in srgb,var(--green) 30%,var(--line))}
+.co-next>div{display:flex;flex-direction:column;min-width:0}
+.co-next small{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.co-next b{font-size:15px;font-weight:600}.co-next span{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.co-bad{color:var(--red-ink)}
+.co-year{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:16px;margin:16px 0}
+.co-card{display:flex;flex-direction:column;gap:12px;min-width:0;padding:22px;border:1px solid var(--line);border-radius:22px;background:var(--card);color:var(--ink)}
+.co-ch{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.co-big{font:600 34px/1.1 var(--font);letter-spacing:-.035em;margin-top:6px;font-variant-numeric:tabular-nums}.co-big small{font:500 14px var(--font);letter-spacing:0;color:var(--muted)}
+.co-mid{font:600 17px/1.3 var(--font);margin-top:4px}
+.co-legend{display:flex;gap:16px;font-size:13px;color:var(--muted)}.co-legend span{display:inline-flex;align-items:center;gap:6px}
+.co-legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.co-legend i.air,.co-cols i.air{background:var(--ch-2)}.co-legend i.sea,.co-cols i.sea{background:var(--ch-1)}
+.co-cols{display:flex;align-items:flex-end;gap:8px;height:170px;margin-top:6px;border-bottom:1px solid var(--line-2);background:linear-gradient(to bottom,var(--line) 1px,transparent 1px) 0 0/100% 50%}
+.co-cols>span{flex:1;height:100%;display:flex;flex-direction:column-reverse;align-items:center;gap:2px;min-width:0}
+.co-cols i{display:block;width:100%;max-width:30px;border-radius:2px}
+.co-cols i.air{border-radius:4px 4px 0 0;opacity:.75}.co-cols i.air.now{opacity:1}
+.co-cols i[style*="height:0%"]{display:none}
+.co-axis{display:flex;font-size:11.5px;color:var(--muted)}.co-axis span{flex:1;text-align:center}
+.co-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:4px}
+.co-stats div{display:flex;flex-direction:column;padding:10px 12px;border-radius:12px;background:var(--field)}
+.co-stats span{font-size:12px;color:var(--muted)}.co-stats b{font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}.co-stats small{font-size:11.5px;color:var(--muted)}
+.co-rank{--co-bar:var(--ch-5);list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.co-rank li{display:grid;grid-template-columns:18px minmax(0,1fr) 66px;align-items:center;gap:8px}
+.co-rk{font:600 12px var(--mono);color:var(--muted);text-align:right}
+.co-rn{display:flex;flex-direction:column;gap:4px;min-width:0}.co-rn b{font-weight:550;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.co-track{display:block;height:8px;border-radius:4px;background:color-mix(in srgb,var(--co-bar) 12%,var(--card))}.co-track i{display:block;height:100%;border-radius:4px;background:var(--co-bar)}
+.co-rv{text-align:right;font-weight:600;font-size:14px;font-variant-numeric:tabular-nums}
+:is(html.sl-dark,.sl-app.dk) .co-legend i.air,:is(html.sl-dark,.sl-app.dk) .co-cols i.air{background:color-mix(in srgb,var(--ch-2) 70%,#fff)}
+@media (max-width:1000px){.co-year{grid-template-columns:1fr}}
+@media (max-width:640px){.co-stats{grid-template-columns:1fr 1fr}.co-axis span:nth-child(even){visibility:hidden}.co-cols{gap:4px}}
