@@ -1,7 +1,7 @@
 <?php /** Render the permission-filtered navigation groups from sl_navResolve(). */
-$groupIcons = ['Operations'=>'gauge','Delivery & Riders'=>'truck','Air Shipping'=>'plane','Sea Shipping'=>'ship','Command Centers'=>'grid','Developer'=>'terminal','Support'=>'ticket','Freight'=>'plane','People'=>'users','Finance'=>'card','Insights'=>'chart','Settings'=>'cog','My shipping'=>'box','Account'=>'user'];
+$groupIcons = ['Operations'=>'gauge','Delivery & Riders'=>'truck','Air Shipping'=>'plane','Sea Shipping'=>'ship','Warehouse'=>'warehouse','Command Centers'=>'grid','Developer'=>'terminal','Support'=>'ticket','Freight'=>'plane','People'=>'users','Finance'=>'card','Insights'=>'chart','Settings'=>'cog','My shipping'=>'box','Account'=>'user'];
 // colour key per group (assets/swiftlane/color.css reads data-group)
-$groupKeys = ['Operations'=>'ops','Delivery & Riders'=>'riders','Air Shipping'=>'ops','Sea Shipping'=>'freight','Command Centers'=>'centers','Developer'=>'dev','Support'=>'support','Freight'=>'freight','People'=>'people','Finance'=>'finance','Insights'=>'insights','Settings'=>'settings','My shipping'=>'shipping','Account'=>'account'];
+$groupKeys = ['Operations'=>'ops','Delivery & Riders'=>'riders','Air Shipping'=>'ops','Sea Shipping'=>'freight','Warehouse'=>'ops','Command Centers'=>'centers','Developer'=>'dev','Support'=>'support','Freight'=>'freight','People'=>'people','Finance'=>'finance','Insights'=>'insights','Settings'=>'settings','My shipping'=>'shipping','Account'=>'account'];
 ?>
 <?php foreach ($slNav as $g): ?>
   <details class="sl-nav-group" data-group="<?= h($groupKeys[$g['label']] ?? 'ops') ?>"<?= $g['open'] ? ' open' : '' ?>>

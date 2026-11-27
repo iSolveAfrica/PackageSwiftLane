@@ -29,9 +29,9 @@ function sl_modules(): array
 {
     return [
         // Operations
-        'air'           => ['label' => 'Air shipping', 'group' => 'ops', 'desc' => 'Air freight shipments, labels, invoices, tracking and air consolidations', 'nav' => ['air', 'shiptrack'], 'customer' => true, 'api' => ['shipments'], 'jobs' => []],
-        'sea'           => ['label' => 'Sea shipping', 'group' => 'ops', 'desc' => 'Sea packages registered to lockers and sea consolidations', 'nav' => ['sea'], 'customer' => true, 'api' => ['packages'], 'jobs' => []],
-        'consolidation' => ['label' => 'Consolidations', 'group' => 'ops', 'desc' => 'Air and sea consolidations: group shipments and packages into one load', 'nav' => ['consol'], 'customer' => false, 'api' => ['consolidations'], 'jobs' => []],
+        'air'           => ['label' => 'Air shipping', 'group' => 'ops', 'desc' => 'Air freight shipments, labels, invoices, tracking and air consolidations', 'nav' => ['air', 'shiptrack', 'airtrack'], 'customer' => true, 'api' => ['shipments'], 'jobs' => []],
+        'sea'           => ['label' => 'Sea shipping', 'group' => 'ops', 'desc' => 'Sea packages registered to lockers and sea consolidations', 'nav' => ['sea', 'seatower', 'seatrack'], 'customer' => true, 'api' => ['packages'], 'jobs' => []],
+        'consolidation' => ['label' => 'Consolidations', 'group' => 'ops', 'desc' => 'Air and sea consolidations: group shipments and packages into one load', 'nav' => ['consol', 'airloads', 'airnewcon', 'sealoads', 'seanewcon'], 'customer' => false, 'api' => ['consolidations'], 'jobs' => []],
         'prealerts'     => ['label' => 'Pre-alerts', 'group' => 'ops', 'desc' => 'Customers announce parcels before they arrive', 'nav' => ['prealert'], 'customer' => true, 'api' => ['pre-alerts'], 'jobs' => []],
         'pickups'       => ['label' => 'Pickups', 'group' => 'ops', 'desc' => 'Home pickup requests, pickup aging and pickup reports', 'nav' => ['pickup'], 'customer' => true, 'api' => ['pickups'], 'jobs' => ['cron/pickup_aging.php']],
         'warehouse'     => ['label' => 'Warehouse', 'group' => 'ops', 'desc' => 'Package intake, hand-out, warehouse delivery, pickup codes and locker search', 'nav' => ['warehouse', 'whpick', 'handout', 'locker', 'intake', 'codes'], 'customer' => false, 'api' => [], 'jobs' => []],

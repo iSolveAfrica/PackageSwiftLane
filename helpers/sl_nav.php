@@ -60,36 +60,40 @@ function sl_navStaff(): array
 {
     $w = sl_navAgencyWhere('a');
     return [
+        // Operations is the cross-mode desk only; air, sea and warehouse work live in their own groups.
         ['label' => 'Operations', 'items' => [
             ['id' => 'dash', 'label' => 'Overview', 'icon' => 'grid', 'board' => 'Main', 'perm' => null],
             ['id' => 'panels', 'label' => 'Control Panels', 'icon' => 'gauge', 'board' => 'ControlPanels', 'perm' => ['view_dashboard_ship', 'view_dashboard_pack', 'view_dashboard_pick', 'view_dashboard_shipments', 'view_dashboard']],
+            ['id' => 'locker', 'label' => 'Smart Search', 'icon' => 'search', 'board' => 'LockerSearch', 'perm' => ['view_shipment_list', 'view_package_list', 'view_client_list', 'view_consolidate_list', 'prealert_list', 'view_user_list']],
+            ['id' => 'docs', 'label' => 'Documents', 'icon' => 'file', 'board' => 'Documents', 'perm' => ['view_documents', 'view_general_reports']],
+            ['id' => 'shiptrack', 'label' => 'Shipment Tracking', 'icon' => 'track', 'board' => 'ShipmentTracking', 'perm' => 'track_shipment'],
+            ['id' => 'livetrack', 'label' => 'Live Tracking', 'icon' => 'route', 'board' => 'LiveTracking', 'perm' => ['view_shipment_list', 'view_general_shipments', 'view_package_list', 'view_general_package_records', 'view_consolidate_list', 'view_consolidate_package_list']],
+        ]],
+        ['label' => 'Air Shipping', 'items' => [
             ['id' => 'air', 'label' => 'Air Shipments', 'icon' => 'plane', 'board' => 'AirShipments', 'perm' => 'view_shipment_list',
                 'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier NOT IN (8,15,21) $w")],
-            ['id' => 'sea', 'label' => 'Sea Packages', 'icon' => 'ship', 'board' => 'SeaPackages', 'perm' => 'view_package_list',
-                'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_customers_packages a WHERE a.status_courier NOT IN (8,15,21) $w")],
             ['id' => 'prealert', 'label' => 'Pre-Alerts', 'icon' => 'inbox', 'board' => 'PreAlerts', 'perm' => 'prealert_list',
                 'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_pre_alert WHERE is_package = 0")],
-            ['id' => 'livetrack', 'label' => 'Live Tracking', 'icon' => 'route', 'board' => 'LiveTracking', 'perm' => ['view_shipment_list', 'view_general_shipments', 'view_package_list', 'view_general_package_records', 'view_consolidate_list', 'view_consolidate_package_list']],
-            ['id' => 'shiptrack', 'label' => 'Shipment Tracking', 'icon' => 'track', 'board' => 'ShipmentTracking', 'perm' => 'track_shipment'],
-            ['id' => 'consol', 'label' => 'Consolidations', 'icon' => 'layers', 'board' => 'Consolidations', 'perm' => ['view_consolidate_list', 'view_consolidate_package_list'],
-                'count' => fn() => sl_navCount("SELECT (SELECT COUNT(*) FROM cdb_consolidate WHERE status_courier NOT IN ('8','15','21')) + (SELECT COUNT(*) FROM cdb_consolidate_packages WHERE status_courier NOT IN ('8','15','21'))")],
+            ['id' => 'airloads', 'label' => 'Air Consolidations', 'icon' => 'layers', 'board' => 'Consolidations', 'href' => sl_route('Consolidations', ['mode' => 'air']), 'perm' => 'view_consolidate_list',
+                'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_consolidate WHERE status_courier NOT IN ('8','15','21')")],
+            ['id' => 'airnewcon', 'label' => 'Create Air Consolidation', 'icon' => 'plus', 'board' => 'NewConsolidation', 'href' => sl_route('NewConsolidation', ['type' => 'air']), 'perm' => 'add_consolidate_shipment'],
+            ['id' => 'airtrack', 'label' => 'Track Air Shipments', 'icon' => 'route', 'board' => 'LiveTracking', 'href' => sl_route('LiveTracking', ['f' => 'air']), 'perm' => 'view_shipment_list'],
+        ]],
+        ['label' => 'Sea Shipping', 'items' => [
+            ['id' => 'sea', 'label' => 'Sea Packages', 'icon' => 'ship', 'board' => 'SeaPackages', 'perm' => 'view_package_list',
+                'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_customers_packages a WHERE a.status_courier NOT IN (8,15,21) $w")],
+            ['id' => 'seatower', 'label' => 'Sea Control Tower', 'icon' => 'gauge', 'board' => 'SeaPackages', 'href' => sl_route('SeaPackages', ['panel' => 'tower']), 'perm' => 'view_package_list'],
+            ['id' => 'sealoads', 'label' => 'Sea Consolidations', 'icon' => 'layers', 'board' => 'Consolidations', 'href' => sl_route('Consolidations', ['mode' => 'sea']), 'perm' => 'view_consolidate_package_list',
+                'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_consolidate_packages WHERE status_courier NOT IN ('8','15','21')")],
+            ['id' => 'seanewcon', 'label' => 'Create Sea Consolidation', 'icon' => 'plus', 'board' => 'NewConsolidation', 'href' => sl_route('NewConsolidation', ['type' => 'sea']), 'perm' => 'add_consolidate_package'],
+            ['id' => 'seatrack', 'label' => 'Track Sea Shipments', 'icon' => 'route', 'board' => 'SeaPackages', 'href' => sl_route('SeaPackages', ['panel' => 'tracking']), 'perm' => 'view_package_list'],
+        ]],
+        ['label' => 'Warehouse', 'items' => [
             ['id' => 'warehouse', 'label' => 'Warehouse', 'icon' => 'warehouse', 'board' => 'Warehouse', 'perm' => ['warehouse_view', 'view_warehouse_delivery']],
+            ['id' => 'intake', 'label' => 'Package Intake', 'icon' => 'scan', 'board' => 'PackageIntake', 'perm' => ['package_intake', 'add_package']],
             ['id' => 'whpick', 'label' => 'Warehouse Pickups', 'icon' => 'check', 'board' => 'WarehousePickups', 'perm' => ['view_warehouse_pickups', 'view_warehouse_delivery']],
             ['id' => 'handout', 'label' => 'Hand Out Packages', 'icon' => 'box', 'board' => 'HandOut', 'perm' => ['view_warehouse_delivery', 'warehouse_deliver_package'],
                 'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (6,32) $w")],
-            ['id' => 'intake', 'label' => 'Package Intake', 'icon' => 'scan', 'board' => 'PackageIntake', 'perm' => ['package_intake', 'add_package']],
-            ['id' => 'docs', 'label' => 'Documents', 'icon' => 'file', 'board' => 'Documents', 'perm' => ['view_documents', 'view_general_reports']],
-            ['id' => 'locker', 'label' => 'Smart Search', 'icon' => 'search', 'board' => 'LockerSearch', 'perm' => ['view_shipment_list', 'view_package_list', 'view_client_list', 'view_consolidate_list', 'prealert_list', 'view_user_list']],
-        ]],
-        ['label' => 'Air Shipping', 'items' => [
-            ['id'=>'airregister','label'=>'Shipment Register','icon'=>'plane','board'=>'AirShipments','perm'=>'view_shipment_list'],
-            ['id'=>'airloads','label'=>'Consolidations & Load Plans','icon'=>'layers','board'=>'Consolidations','href'=>sl_route('Consolidations',['mode'=>'air']),'perm'=>'view_consolidate_list'],
-            ['id'=>'airtrack','label'=>'Track Air Shipments','icon'=>'route','board'=>'LiveTracking','href'=>sl_route('LiveTracking',['f'=>'air']),'perm'=>'view_shipment_list'],
-        ]],
-        ['label' => 'Sea Shipping', 'items' => [
-            ['id'=>'seatower','label'=>'Control Tower','icon'=>'gauge','board'=>'SeaPackages','href'=>sl_route('SeaPackages',['panel'=>'tower']),'perm'=>'view_package_list'],
-            ['id'=>'seatrack','label'=>'Track Sea Shipments','icon'=>'route','board'=>'SeaPackages','href'=>sl_route('SeaPackages',['panel'=>'tracking']),'perm'=>'view_package_list'],
-            ['id'=>'sealoads','label'=>'Consolidations & Load Plans','icon'=>'layers','board'=>'Consolidations','href'=>sl_route('Consolidations',['mode'=>'sea']),'perm'=>'view_consolidate_package_list'],
         ]],
         ['label' => 'Delivery & Riders', 'items' => [
             ['id' => 'pickup', 'label' => 'Home Pickups', 'icon' => 'truck', 'board' => 'Pickups', 'perm' => 'view_pickup_list',
@@ -335,6 +339,9 @@ function sl_navResolve(string $activeId): array
         require_once CDP_ROOT . '/helpers/sl_modules.php';
     }
     $groups = sl_userIs('client') ? sl_navCustomer() : sl_navStaff();
+    if (!sl_userIs('client')) {
+        $activeId = sl_navModeActive($activeId);
+    }
     $finance = cdp_financeEnabled();
     $out = [];
     foreach ($groups as $g) {
@@ -395,6 +402,30 @@ function sl_navResolve(string $activeId): array
     unset($o);
     if (!$seen && $out) $out[0]['open'] = true;
     return $out;
+}
+
+/**
+ * Staff pages name a shared nav id (consol, livetrack, sea); the menu is split
+ * by mode, so pick the air or sea entry from the request.
+ */
+function sl_navModeActive(string $activeId): string
+{
+    $self = sl_self();
+    $sea = ($_GET['type'] ?? '') === 'sea' || ($_GET['mode'] ?? '') === 'sea' || str_contains($self, 'package');
+    if ($activeId === 'consol') {
+        if ($self === 'consolidate_add.php') {
+            return $sea ? 'seanewcon' : 'airnewcon';
+        }
+        return $sea ? 'sealoads' : 'airloads';
+    }
+    if ($activeId === 'livetrack' && ($_GET['f'] ?? '') === 'air') {
+        return 'airtrack';
+    }
+    if ($activeId === 'sea') {
+        $panel = (string) ($_GET['panel'] ?? '');
+        return $panel === 'tower' ? 'seatower' : ($panel === 'tracking' ? 'seatrack' : 'sea');
+    }
+    return $activeId;
 }
 
 /**
