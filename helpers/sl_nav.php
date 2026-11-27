@@ -196,6 +196,7 @@ function sl_navStaff(): array
             ['id' => 'addr', 'label' => 'Shipping Addresses', 'icon' => 'pin', 'board' => 'ShippingAddresses', 'perm' => 'view_tools'],
             ['id' => 'loginpg', 'label' => 'Login Page', 'icon' => 'image', 'board' => 'LoginSettings', 'perm' => 'view_tools'],
             ['id' => 'tariffs', 'label' => 'Rates & Tariffs', 'icon' => 'dollar', 'board' => 'Tariffs', 'perm' => ['manage_taxes_and_fees', 'view_tools', 'manage_freight']],
+            ['id' => 'statuspics', 'label' => 'Status Pictures', 'icon' => 'image', 'board' => 'StatusPictures', 'perm' => 'view_tools'],
             ['id' => 'screens', 'label' => 'App Screens', 'icon' => 'phone', 'board' => 'AppScreens', 'perm' => 'view_tools'],
             ['id' => 'devmod', 'label' => 'Modules', 'icon' => 'sliders', 'board' => 'ModuleController', 'perm' => 'superadmin'],
             ['id' => 'perm', 'label' => 'Permissions', 'icon' => 'key', 'board' => 'StaffPermissions', 'perm' => 'view_role_assignment'],
