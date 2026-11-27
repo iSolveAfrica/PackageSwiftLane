@@ -38,4 +38,4 @@ These files have been committed. Delivery, zone, position and load-plan tables c
 
 ## Deployment blocker
 
-The selected cloud workspace cannot execute commands. The staging URL supplied by the user is https://phpstack-1641621-6696762.cloudwaysapps.com/. An authenticated browser, server or database connection is still unavailable. GitHub Actions can verify source and isolated fixtures, while complete authenticated site and database verification remains pending.
+The selected cloud workspace cannot execute commands. The staging URL supplied by the user is https://phpstack-1641621-6696762.cloudwaysapps.com/. Cloudways requires a manual deployment. An authenticated browser, server or database connection is still unavailable. GitHub Actions can verify source and isolated fixtures, while complete authenticated site and database verification remains pending.
