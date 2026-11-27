@@ -22,6 +22,27 @@ function dl_dispatchData(): array
     $d['requests']=$s->sql("SELECT r.*,CONCAT(u.fname,' ',u.lname) AS rider_name FROM cdb_delivery_requests r LEFT JOIN cdb_users u ON u.id=r.driver_id WHERE r.state<>'quoted' $where ORDER BY r.id DESC LIMIT 200")->fetchAll(PDO::FETCH_OBJ);
     $id=(int)($_GET['id']??0);if($id){try{$d['request']=$s->get($id,(int)$_SESSION['userid'],'manager',$agency);$d['events']=$s->sql('SELECT * FROM cdb_delivery_events WHERE request_id=? ORDER BY id DESC',[$id])->fetchAll(PDO::FETCH_OBJ);}catch(DomainException $e){$d['notFound']=true;}}
     require_once CDP_ROOT.'/views/sl/data/riders.php';foreach(sl_rdRiders(true) as $r)if(!$agency||(int)$r->agency_id===$agency)$d['riders'][]=$r;
+    $d['suggestions']=[];
+    require_once CDP_ROOT.'/views/sl/data/riders.php';
+    $riderWork=[];
+    foreach($d['requests'] as $job) if($job->driver_id && in_array($job->state,['assigned','onroute'],true)) $riderWork[(int)$job->driver_id][]=[$job->lat,$job->lng];
+    foreach($d['requests'] as $job) {
+        if($job->state!=='pending' || $job->driver_id) continue;
+        $choices=[];
+        foreach($d['riders'] as $rider) {
+            if(!$rider->active || in_array($rider->rider_status??'', ['offline','suspended'],true)) continue;
+            if($job->agency_id && (int)$rider->agency_id!==(int)$job->agency_id) continue;
+            $stops=$riderWork[(int)$rider->id]??[];
+            $nearest=null;
+            foreach($stops as [$lat,$lng]) {
+                $km=12742*asin(sqrt(min(1,sin(deg2rad($job->lat-$lat)/2)**2+cos(deg2rad($lat))*cos(deg2rad($job->lat))*sin(deg2rad($job->lng-$lng)/2)**2)));
+                $nearest=$nearest===null?$km:min($nearest,$km);
+            }
+            $choices[]=['id'=>(int)$rider->id,'name'=>$rider->name,'stops'=>count($stops),'nearby'=>$nearest===null?null:round($nearest,1),'score'=>count($stops)*3+($nearest??($job->distance_m/1000))];
+        }
+        usort($choices,fn($a,$b)=>[$a['score'],$a['id']]<=>[$b['score'],$b['id']]);
+        $d['suggestions'][(int)$job->id]=$choices;
+    }
     return $d;
 }
 function dl_settingsData(): array
