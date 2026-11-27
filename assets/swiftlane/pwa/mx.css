@@ -2170,6 +2170,7 @@ button.mx-btn.b4-b{border:0;font-family:var(--font);cursor:pointer;width:100%}bu
 .mxp{display:flex;flex-direction:column;gap:12px;font-size:14px;width:100%;max-width:560px;margin:0 auto;color:var(--ink);font-family:var(--font)}
 .mxp>*{flex-shrink:0;min-width:0}
 .mxp a{color:inherit;text-decoration:none}
+.mxp a.mx-btn:not(.sec){color:var(--inverse)}
 .mxp button{font-family:inherit;color:inherit}
 .mxp button.mx-btn{border:0;cursor:pointer;width:100%}
 .mxp button.mx-btn.sec{border:1px solid var(--line-2)}
