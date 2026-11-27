@@ -240,7 +240,9 @@
   .tc-ov.has-agent .tc-agent { grid-column: 2; grid-row: 1; justify-self: end; max-width: 170px; margin: 0; }
   .tc-ov.has-agent .tc-route-card { grid-column: 1 / -1; }
 }
+/* phones: no agent photo */
 @container tcp (max-width: 560px) {
-  .tc-ov.has-agent { grid-template-columns: 1fr 140px; }
-  .tc-ov.has-agent .tc-agent { max-width: 140px; margin: 0; }
+  .tc-ov.has-agent { grid-template-columns: 1fr; }
+  .tc-ov.has-agent .tc-agent { display: none; }
 }
+@media (max-width: 720px) { .tc-agent { display: none !important; } }
