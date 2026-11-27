@@ -26,7 +26,6 @@ require_once('helpers/querys.php');
 
 
 
-require_once(__DIR__ . '/../../helpers/pickup_code.php');
 $userData = $user->cdp_getUserData();
 $core = new Core;
 $db = new Conexion;
@@ -257,7 +256,6 @@ if ($row_order->status_invoice == 1) {
                                                         <?php echo $lang['left533020014'] ?>
                                                     </button>
                                                     <div class="dropdown-menu scrollable-menu" style="overflow-y: auto; max-height: 500px;">
-                                                        <?php echo cdp_pickupCodeMenuItem('air', $row_order->order_id, 'shipment_view', $row_order->status_courier ?? 0); ?>
                                                         <!-- VERIFICAR PAGOS DE ENVÍOS PERMISO -->
                                                         <?php if ($row_order->status_invoice == 2 && $user->cdp_hasPermission('verify_payments')) { ?>
                                                             <?php if ($userData->userlevel == 1) { ?>
@@ -356,7 +354,6 @@ if ($row_order->status_invoice == 1) {
                                                         <?php echo $lang['left533020014'] ?>
                                                     </button>
                                                     <div class="dropdown-menu">
-                                                        <?php echo cdp_pickupCodeMenuItem('air', $row_order->order_id, 'shipment_view', $row_order->status_courier ?? 0); ?>
                                                         <!-- ACEPTAR RECOGIDA (si el usuario tiene el permiso para hacerlo) -->
                                                         <?php if ($user->cdp_hasPermission('complete_client_shipment') && ($userData->userlevel == 9 || $userData->userlevel == 3 || $userData->userlevel == 2)) { ?>
                                                             <?php if ($row_order->status_courier == 14) { ?>
@@ -1006,6 +1003,32 @@ if ($row_order->status_invoice == 1) {
 
 
                 <!-- Row -->
+                <!-- Operational item details are visible to every authorized shipment viewer. -->
+                <?php if (!$user->cdp_hasPermission('view_details_courier') && (int) $userData->userlevel !== 1) { ?>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card"><div class="card-body">
+                            <h3 class="card-title">Shipment items</h3>
+                            <p><b>Package weight:</b> <?php echo number_format((float) ($row_order->total_weight ?? 0), 2) . ' ' . htmlspecialchars((string) $core->weight_p, ENT_QUOTES, 'UTF-8'); ?></p>
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead><tr><th>Quantity</th><th>Description</th><th>Weight (<?php echo htmlspecialchars((string) $core->weight_p, ENT_QUOTES, 'UTF-8'); ?>)</th></tr></thead>
+                                    <tbody>
+                                    <?php foreach (($order_items ?: []) as $item) { ?>
+                                        <tr>
+                                            <td><?php echo (int) $item->order_item_quantity; ?></td>
+                                            <td><?php echo htmlspecialchars((string) $item->order_item_description, ENT_QUOTES, 'UTF-8'); ?></td>
+                                            <td><?php echo number_format((float) $item->order_item_weight, 2); ?></td>
+                                        </tr>
+                                    <?php } ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div></div>
+                    </div>
+                </div>
+                <?php } ?>
+
                 <!-- DETAILS TAX PERMISSION  -->
                 <?php if ($user->cdp_hasPermission('view_details_courier') || (int)$userData->userlevel === 1) {
                     // Customers (userlevel 1) see the item list too, including every

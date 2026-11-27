@@ -25,7 +25,6 @@ if (!function_exists('cdp_asset')) { $d = __DIR__; while ($d !== dirname($d) && 
 require_once("../../loader.php");
 require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_once(__DIR__ . '/../../helpers/querys.php');
-require_once(__DIR__ . '/../../helpers/pickup_code.php');
 require_login();
 require_permission('view_shipment_list');
 
@@ -165,13 +164,9 @@ if ($numrows > 0) { ?>
 					<th><b><?php echo 'Tracking' ?></b></th>
 					<th><b><?php echo $lang['ddate'] ?></b></th>
 					<th><b>Time</b></th>
-					<?php
-					if ($userData->userlevel == 9 || $userData->userlevel == 2) { ?>
-						<th><b><?php echo $lang['left498'] ?></b></th>
-					<?php } ?>
-					<?php if ($userData->userlevel == 1) { // customers see their package weight ?>
-						<th><b>Weight</b></th>
-					<?php } ?>
+					<th><b>Sender</b></th>
+					<th><b>Recipient</b></th>
+					<th><b>Weight</b></th>
 					<th><b><?php echo $lang['lstatusshipment'] ?></b></th>
 					<th><b><?php echo $lang['global-3'] ?></b></th>
 					<th><b></b></th>
@@ -180,7 +175,7 @@ if ($numrows > 0) { ?>
 			<tbody id="projects-tbl">
 				<?php if (!$data) { ?>
 					<tr>
-						<td colspan="6">
+						<td colspan="<?php echo $user->cdp_hasPermission('select_multiple_courier') ? 11 : 10; ?>">
 							<?php echo "<i align='center' class='display-3 text-warning d-block'><img src='assets/images/alert/ohh_shipment.png' width='150' /></i>", false; ?>
 						</td>
 					</tr>
@@ -306,15 +301,9 @@ if ($numrows > 0) { ?>
 								echo ($entry_ts && strlen((string) $entry_ts) > 10) ? date('g:i A', strtotime($entry_ts)) : '—';
 								?>
 							</td>
-							<?php
-							if ($userData->userlevel == 9 || $userData->userlevel == 2) { ?>
-								<td>
-									<?php echo $sender_data->fname; ?> <?php echo $sender_data->lname; ?>
-								</td>
-							<?php } ?>
-							<?php if ($userData->userlevel == 1) { ?>
-								<td class="text-nowrap"><?php echo ((float) $row->total_weight > 0) ? number_format((float) $row->total_weight, 2) . ' ' . htmlspecialchars((string) $core->weight_p, ENT_QUOTES, 'UTF-8') : '—'; ?></td>
-							<?php } ?>
+							<td><?php echo htmlspecialchars(trim(($sender_data->fname ?? '') . ' ' . ($sender_data->lname ?? '')) ?: '—', ENT_QUOTES, 'UTF-8'); ?></td>
+							<td><?php echo htmlspecialchars(trim(($receiver_data->fname ?? '') . ' ' . ($receiver_data->lname ?? '')) ?: '—', ENT_QUOTES, 'UTF-8'); ?></td>
+							<td class="text-nowrap"><?php echo ((float) $row->total_weight > 0) ? number_format((float) $row->total_weight, 2) . ' ' . htmlspecialchars((string) $core->weight_p, ENT_QUOTES, 'UTF-8') : '—'; ?></td>
 
 
 
@@ -387,7 +376,6 @@ if ($numrows > 0) { ?>
 							            <i class="fas fa-ellipsis-v"></i> <!-- Utiliza el icono de puntos suspensivos -->
 							        </button>
 							        <div class="dropdown-menu" style="overflow-y: auto; max-height: 200px;">
-							            <?php echo cdp_pickupCodeMenuItem('air', $row->order_id, 'shipment_list', $row->status_courier ?? 0); ?>
 							            <!-- VER DETALLES DE ENVÍO PERMISO -->
 							            <?php if ($user->cdp_hasPermission('view_shipment_details')) { ?>
 							                <a class="dropdown-item" href="courier_view.php?id=<?php echo $row->order_id; ?>" title="<?php echo $lang['tooledit'] ?>">
