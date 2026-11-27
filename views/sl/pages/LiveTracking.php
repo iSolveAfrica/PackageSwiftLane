@@ -10,11 +10,13 @@ $tc = $d['tc'];
 $client = $d['client'];
 $t = $tc['tally'];
 $tiles = [
-    ['air', 'i-plane', $client ? 'My air shipments' : 'Air shipments', $t['air'] ?? null],
-    ['sea', 'i-ship', $client ? 'My sea packages' : 'Sea packages', $t['sea'] ?? null],
-    ['con', 'i-layers', 'Air consolidations', $t['air_con'] ?? null],
-    ['con', 'i-layers', 'Sea consolidations', $t['sea_con'] ?? null],
+    ['air', 'i-plane', $client ? 'My air shipments' : 'Air shipments', $t['air'] ?? null, 'air'],
+    ['sea', 'i-ship', $client ? 'My sea shipments' : 'Sea shipments & packages', $t['sea'] ?? null, 'sea'],
+    ['con', 'i-layers', 'Air consolidations', $t['air_con'] ?? null, 'air'],
+    ['con', 'i-layers', 'Sea consolidations', $t['sea_con'] ?? null, 'sea'],
 ];
+// Air shows air only, Sea shows sea only: no sea tiles on the Air view and the other way round.
+if (in_array($d['filter'], ['air', 'sea'], true)) $tiles = array_values(array_filter($tiles, fn($x) => $x[4] === $d['filter']));
 $labels = sl_tcFilters();
 if ($client) $labels['all'] = 'Everything moving';
 ?>

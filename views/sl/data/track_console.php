@@ -16,6 +16,7 @@
  * 1000 x 571.43 canvas. sl_tcXY() is that same projection; keep the two in step.
  */
 require_once __DIR__ . '/ops_common.php';
+require_once CDP_ROOT . '/helpers/air_journey.php';
 
 const SL_TC_W = 1000.0;
 const SL_TC_H = 571.43;
@@ -193,6 +194,22 @@ function sl_tcFreight(string $code, ?string $conCode = null): array
  * $opt: q (search, server side: code, customer, store tracking, parcels inside a consolidation),
  *       filter (sl_tcFilters key), plus the $limit argument.
  */
+/** Shipping categories that mean sea freight (Ocean / Sea / Maritime), from cdb_category. */
+function sl_tcSeaCategories(): array
+{
+    static $ids = null;
+    if ($ids !== null) return $ids;
+    $ids = [];
+    try {
+        foreach (sl_rows('SELECT id, name_item FROM cdb_category') as $c) {
+            $n = mb_strtolower((string) $c->name_item, 'UTF-8');
+            if (preg_match('/ocean|\bsea\b|mar[ií]tim|barco|vessel/u', $n)) $ids[] = (int) $c->id;
+        }
+    } catch (Throwable $e) {
+    }
+    return $ids;
+}
+
 function sl_trackConsoleData($user, $core, string $source = 'shipments', int $limit = 10, array $opt = []): array
 {
     $client = $source === 'mine';
@@ -213,19 +230,31 @@ function sl_trackConsoleData($user, $core, string $source = 'shipments', int $li
     $couriers = [];
     foreach (sl_rows('SELECT id, name_com FROM cdb_courier_com') as $c) $couriers[(int) $c->id] = $c->name_com;
     $lanes = sl_tcLanes();
+    // Some sea shipments are booked in the air shipments table (category Ocean / Sea freight): they
+    // travel by sea, so the Air filter leaves them out and the Sea filter, tiles and map show them as sea.
+    $seaCats = sl_tcSeaCategories();
+    $seaIn = $seaCats ? implode(',', $seaCats) : '';
     $rows = [];
     foreach ($kinds as [$mode, $tbl, $px, $nx, $dcol, $detail, $kind]) {
         $idc = $detail ? 'consolidate_id' : 'order_id';
         $scope = $client ? " AND a.sender_id = $uid" : sl_opsScope('a') . ($forSender ? " AND a.sender_id = $forSender" : '');
         $del = $tbl === 'cdb_add_order' ? ' AND a.is_deleted = 0' : '';
         $openW = 'a.status_courier NOT IN (8,15,21,12)';
+        $mixed = $tbl === 'cdb_add_order' && $seaIn !== '';   // air table holding some sea-freight shipments
+        $seaW = $mixed ? " AND a.order_item_category IN ($seaIn)" : '';
+        $airW = $mixed ? " AND COALESCE(a.order_item_category, 0) NOT IN ($seaIn)" : '';
         // page-wide tallies (open records of each kind, whatever the filter)
         $tk = $kind === 'consolidation' ? $mode . '_con' : $mode;
-        $out['tally'][$tk] = ($out['tally'][$tk] ?? 0) + (int) sl_scalar("SELECT COUNT(*) FROM $tbl a WHERE $openW$del$scope");
-        // does this kind take part in the filter?
-        if ($onlyMode !== '' && $mode !== $onlyMode) continue;
-        if ($f === 'air' && $mode !== 'air') continue;
-        if ($f === 'sea' && $mode !== 'sea') continue;
+        $out['tally'][$tk] = ($out['tally'][$tk] ?? 0) + (int) sl_scalar("SELECT COUNT(*) FROM $tbl a WHERE $openW$del$scope$airW");
+        if ($mixed) {
+            $nSea = (int) sl_scalar("SELECT COUNT(*) FROM $tbl a WHERE $openW$del$scope$seaW");
+            if ($nSea) $out['tally']['sea'] = ($out['tally']['sea'] ?? 0) + $nSea;
+        }
+        // does this kind take part in the filter? (travel mode: air / sea)
+        $want = $onlyMode !== '' ? $onlyMode : (in_array($f, ['air', 'sea'], true) ? $f : '');
+        $modeW = '';
+        if ($want !== '' && $mixed) $modeW = $want === 'sea' ? $seaW : $airW;
+        elseif ($want !== '' && $mode !== $want) continue;
         if ($f === 'con' && $kind !== 'consolidation') continue;
         $eta = sl_columnExists($tbl, 'estimated_eta') ? 'a.estimated_eta' : 'NULL';
         $statusW = $f === 'done' ? 'a.status_courier IN (8,15)' : ($f === 'ready' ? 'a.status_courier IN (6,32)' : ($q !== '' ? 'a.status_courier <> 21' : $openW));
@@ -243,16 +272,18 @@ function sl_trackConsoleData($user, $core, string $source = 'shipments', int $li
             elseif ($tbl === 'cdb_customers_packages') { $qW .= ' OR a.tracking_purchase LIKE :q3'; $b[':q3'] = "%$q%"; }
             $qW .= ')';
         }
-        $where = "$statusW$del$scope$qW";
+        $where = "$statusW$del$scope$modeW$qW";
         $out['total'] += (int) sl_scalar("SELECT COUNT(*) FROM $tbl a WHERE $where", $b);
         $cnt = $detail ? "(SELECT COUNT(*) FROM $detail d WHERE d.consolidate_id = a.consolidate_id)" : '0';
         $vol = $detail ? "(SELECT COALESCE(SUM(d.length * d.width * d.height), 0) FROM $detail d WHERE d.consolidate_id = a.consolidate_id)" : '0';
         $extra = $tbl === 'cdb_customers_packages' ? 'a.tracking_purchase AS store_trk, a.provider_purchase AS store, a.total_declared_value AS declared, a.is_consolidate AS in_con' : "'' AS store_trk, '' AS store, 0 AS declared, 0 AS in_con";
         $extra .= $detail ? ', a.receiver_id, a.seals_package AS seals' : ', 0 AS receiver_id, \'\' AS seals';
+        $extra .= $mixed ? ', a.order_item_category AS cat' : ', 0 AS cat';
         foreach (sl_rows("SELECT a.$idc AS id, CONCAT(a.$px, a.$nx) AS code, a.$dcol AS dt, a.status_courier AS st, a.total_weight AS w, a.total_order AS amt,
                 a.sub_total AS sub, a.total_tax AS tax, a.status_invoice AS inv, a.order_courier AS courier, a.order_service_options AS svc, a.sender_id, a.driver_id, $eta AS eta, $cnt AS n, $vol AS vol, $extra
             FROM $tbl a WHERE $where ORDER BY a.$dcol DESC, a.$idc DESC LIMIT " . (int) $limit, $b) as $r) {
             $r->mode = $mode;
+            $r->vmode = $mixed && in_array((int) ($r->cat ?? 0), $seaCats, true) ? 'sea' : $mode;
             $r->tbl = $tbl;
             $r->kind = $kind;
             $r->detail = $detail;
@@ -282,7 +313,8 @@ function sl_trackConsoleData($user, $core, string $source = 'shipments', int $li
     if (sl_tableExists('cdb_shipping_mode')) foreach (sl_rows('SELECT id, ship_mode FROM cdb_shipping_mode') as $sm) $services[(int) $sm->id] = $sm->ship_mode;
 
     foreach ($rows as $r) {
-        $lane = $lanes[$r->mode];
+        $vm = $r->vmode ?? $r->mode;   // how it travels (a sea-freight shipment in the air table is 'sea')
+        $lane = $lanes[$vm];
         $st = (int) $r->st;
         $isCon = $r->kind === 'consolidation';
         $id = (int) $r->id;
@@ -295,6 +327,10 @@ function sl_trackConsoleData($user, $core, string $source = 'shipments', int $li
         $start = $departed ?: $r->dt;
         $p = sl_tcProgress($st, $start, $eta);
         $g = sl_tcGeometry($lane, $p);
+        // An air parcel that has landed (Arrived in Accra, customs, sorting, ready for pickup) is at our
+        // office, not on a plane: the console draws the office with the company logo at the destination.
+        $atOffice = $vm === 'air' && !$isCon && function_exists('cdp_airStageIndex') && (int) cdp_airStageIndex($st, (string) sl_statusLabel($st)) >= 7;
+        if ($atOffice) { $p = 1.0; $g = sl_tcGeometry($lane, 1.0); }
         $etaTs = $eta ? strtotime($eta . ' 23:59:59') : 0;
         $arrived = sl_stageOf($st) >= 4;
         $late = !$arrived && $etaTs && $etaTs < time();
@@ -367,7 +403,7 @@ function sl_trackConsoleData($user, $core, string $source = 'shipments', int $li
         $etaDelta = $etaTs ? (int) round(($etaTs - time()) / 86400) : null;
         // priority score: late, unpaid, long dwell, held
         $score = ($late ? 3 : 0) + (in_array((int) $r->inv, [1, 19], true) ? 0 : 1) + ($daysOpen > 14 ? 1 : 0) + ($st === 28 || $st === 29 ? 2 : 0);
-        $where = $arrived ? $lane['to']['city'] : ($p < 0.1 ? $lane['from']['city'] : ($g['viaP'] !== null && abs($p - $g['viaP']) < 0.12 ? $lane['via']['city'] : ($r->mode === 'sea' ? 'Atlantic Ocean' : ($g['viaP'] !== null && $p < $g['viaP'] ? 'Over the Atlantic' : 'En route to ' . $lane['to']['city']))));
+        $where = $atOffice ? $lane['to']['city'] . ' office' : ($arrived ? $lane['to']['city'] : ($p < 0.1 ? $lane['from']['city'] : ($g['viaP'] !== null && abs($p - $g['viaP']) < 0.12 ? $lane['via']['city'] : ($vm === 'sea' ? 'Atlantic Ocean' : ($g['viaP'] !== null && $p < $g['viaP'] ? 'Over the Atlantic' : 'En route to ' . $lane['to']['city'])))));
         // contents of a consolidation (first 25 parcels)
         $contents = [];
         if ($isCon) {
@@ -385,7 +421,7 @@ function sl_trackConsoleData($user, $core, string $source = 'shipments', int $li
         }
         // the details grid, by kind
         $det = [];
-        $det[] = ['Type', $isCon ? ($r->mode === 'sea' ? 'Sea consolidation' : 'Air consolidation') : ($r->mode === 'sea' ? 'Sea package' : 'Air shipment')];
+        $det[] = ['Type', $isCon ? ($vm === 'sea' ? 'Sea consolidation' : 'Air consolidation') : ($r->kind === 'package' ? 'Sea package' : ($vm === 'sea' ? 'Sea shipment' : 'Air shipment'))];
         if (!$client || $isCon) $det[] = [$isCon ? 'Shipper' : 'Customer', sl_userName($u) . (!empty($u->locker) ? ' · ' . $u->locker : '')];
         if ($isCon && $rcv) $det[] = ['Consignee', sl_userName($rcv)];
         if (isset($services[(int) $r->svc])) $det[] = ['Service', $services[(int) $r->svc]];
@@ -405,8 +441,8 @@ function sl_trackConsoleData($user, $core, string $source = 'shipments', int $li
         if (!empty($fr['container'])) $det[] = ['Container', $fr['container']];
         $seal = trim((string) ($fr['seal'] ?? '') ?: (string) $r->seals);
         if ($seal !== '') $det[] = ['Seal', $seal];
-        if (!empty($fr['departs'])) $det[] = [$r->mode === 'sea' ? 'Sailed' : 'Departs', $fr['departs']];
-        if (!empty($fr['arrives'])) $det[] = [$r->mode === 'sea' ? 'Port arrival' : 'Lands', $fr['arrives']];
+        if (!empty($fr['departs'])) $det[] = [$vm === 'sea' ? 'Sailed' : 'Departs', $fr['departs']];
+        if (!empty($fr['arrives'])) $det[] = [$vm === 'sea' ? 'Port arrival' : 'Lands', $fr['arrives']];
         if ($r->kind === 'package') {
             if (trim((string) $r->store) !== '') $det[] = ['Store', (string) $r->store];
             if (trim((string) $r->store_trk) !== '') $det[] = ['Store tracking', (string) $r->store_trk];
@@ -415,18 +451,18 @@ function sl_trackConsoleData($user, $core, string $source = 'shipments', int $li
         if ($con) $det[] = ['In consolidation', $con['code'] . ' · ' . sl_statusLabel($con['status'])];
         $det[] = ['Registered', sl_date($r->dt)];
 
-        $mk = $isCon ? 'con' : $r->mode;
+        $mk = $isCon ? 'con' : $vm;
         $out['counts']['all']++;
-        $out['counts'][$r->mode]++;
+        $out['counts'][$vm]++;
         if ($isCon) $out['counts']['con']++;
         if ($late) $out['counts']['late']++;
         $out['items'][] = [
-            'key' => $r->kind . '-' . $r->mode . '-' . $id, 'id' => $id, 'code' => (string) $r->code, 'mode' => $r->mode, 'kind' => $r->kind,
-            'modeL' => $r->mode === 'sea' ? 'Sea' : 'Air', 'kindL' => $isCon ? 'Consolidation' : ($r->mode === 'sea' ? 'Package' : 'Shipment'), 'href' => $href,
+            'key' => $r->kind . '-' . $r->mode . '-' . $id, 'id' => $id, 'code' => (string) $r->code, 'mode' => $vm, 'kind' => $r->kind, 'office' => $atOffice,
+            'modeL' => $vm === 'sea' ? 'Sea' : 'Air', 'kindL' => $isCon ? 'Consolidation' : ($r->kind === 'package' ? 'Package' : 'Shipment'), 'href' => $href,
             'st' => sl_statusLabel($st), 'cls' => sl_statusClass($st), 'late' => $late, 'arrived' => $arrived,
             'from' => $lane['from'], 'via' => $lane['via'], 'to' => $lane['to'],
-            'carrier' => $couriers[(int) $r->courier] ?? (!empty($fr['vessel']) ? $fr['vessel'] : ($r->mode === 'sea' ? 'Ocean freight' : 'Air cargo')),
-            'vehicle' => $r->mode === 'sea' ? ($isCon ? 'Container' . (!empty($fr['container']) ? ' ' . $fr['container'] : '') : 'Container vessel') : ($isCon ? 'Air consolidation' : 'Cargo freighter'),
+            'carrier' => $couriers[(int) $r->courier] ?? (!empty($fr['vessel']) ? $fr['vessel'] : ($vm === 'sea' ? 'Ocean freight' : 'Air cargo')),
+            'vehicle' => $atOffice ? ($core->site_name ?? 'Swift Lane') . ' office, ' . $lane['to']['city'] : ($vm === 'sea' ? ($isCon ? 'Container' . (!empty($fr['container']) ? ' ' . $fr['container'] : '') : 'Container vessel') : ($isCon ? 'Air consolidation' : 'Cargo freighter')),
             'flight' => $flight, 'awb' => $awb, 'freight' => $fr,
             'customer' => $isCon ? ((int) $r->n . ' parcel' . ((int) $r->n === 1 ? '' : 's')) : ($client ? sl_weight($r->w) : sl_userName($u)),
             'search' => strtolower(implode(' ', array_filter([$r->code, sl_userName($u), $u->locker ?? '', $r->store_trk, $fr['container'] ?? '', $fr['waybill'] ?? '', $con['code'] ?? '', implode(' ', array_column($contents, 'code'))]))),
