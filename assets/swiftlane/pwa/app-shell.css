@@ -150,6 +150,31 @@ html.pwa-gated, html.pwa-gated body { overflow: hidden; }
   /* printing toolbars and wide-only furniture */
   body[data-mobile-role]:not([data-mobile-role=""]) .sl-rail { display: none; }
 }
+/* ---------- customer home on phones ---------- */
+@media (max-width: 767px), (max-height: 500px) and (max-width: 950px) and (pointer: coarse) {
+  /* King (customer care chat, views/sl/inc/king_chat.php) on the dashboard: a compact chat bar, not a hero card.
+     One line with the latest news, a small Chat button; tapping anywhere opens the full chat as before. */
+  body[data-mobile-role="customer"] .kc[data-mode="inline"] .kc-teaser { display: grid !important; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 2px 12px;
+    padding: 10px 10px 10px 12px; min-height: 0; border-radius: 18px; box-shadow: none; }
+  body[data-mobile-role="customer"] .kc[data-mode="inline"] .kc-teaser .kc-teaser-top { display: contents; }
+  body[data-mobile-role="customer"] .kc[data-mode="inline"] .kc-teaser .kc-av { grid-row: 1 / span 2; width: 40px; height: 40px; font-size: 17px; }
+  body[data-mobile-role="customer"] .kc[data-mode="inline"] .kc-teaser .kc-who { grid-column: 2; display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+  body[data-mobile-role="customer"] .kc[data-mode="inline"] .kc-teaser .kc-who b { font-size: 15px; }
+  body[data-mobile-role="customer"] .kc[data-mode="inline"] .kc-teaser .kc-who small { display: none; } /* room for King's news line */
+  body[data-mobile-role="customer"] .kc[data-mode="inline"] .kc-teaser .kc-teaser-hello { display: none; }
+  body[data-mobile-role="customer"] .kc[data-mode="inline"] .kc-teaser .kc-teaser-lead { grid-column: 2; font-size: 13.5px; line-height: 1.35; -webkit-line-clamp: 1; color: var(--muted); }
+  body[data-mobile-role="customer"] .kc[data-mode="inline"] .kc-teaser .kc-teaser-tags { display: none; }
+  body[data-mobile-role="customer"] .kc[data-mode="inline"] .kc-teaser .kc-teaser-go { grid-column: 3; grid-row: 1 / span 2; min-height: 40px; padding: 0 14px; border-radius: 12px; font-size: 14px; }
+  body[data-mobile-role="customer"] .kc[data-mode="inline"] .kc-teaser .kc-badge { grid-column: 3; grid-row: 1; justify-self: end; align-self: start; margin: -16px -6px 0 0; }
+
+  /* fingerprint sign-in offer (views/sl/inc/passkey_manage.php): a bottom sheet over a dimmed page, not a card floating on the content */
+  body[data-mobile-role]:not([data-mobile-role=""]) .pk-offer:not([hidden]) { left: 0; right: 0; bottom: 0; z-index: 80; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px;
+    padding: 22px 18px calc(18px + env(safe-area-inset-bottom)); border: 0; border-radius: 24px 24px 0 0; box-shadow: 0 0 0 100vmax rgba(14, 14, 18, .45); animation: pwa-sheet .26s cubic-bezier(.2,.7,.2,1); }
+  body[data-mobile-role]:not([data-mobile-role=""]) .pk-offer::before { content: ''; grid-column: 1 / -1; justify-self: center; width: 40px; height: 5px; margin: -10px 0 -4px; border-radius: 3px; background: var(--line-2, var(--line)); }
+  body[data-mobile-role]:not([data-mobile-role=""]) .pk-offer .grow { min-width: 0; }
+  body[data-mobile-role]:not([data-mobile-role=""]) .pk-offer .row { grid-column: 1 / -1; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  body[data-mobile-role]:not([data-mobile-role=""]) .pk-offer .row .sl-btn { min-height: 50px; border-radius: 14px; font-size: 15px; }
+}
 @media (prefers-reduced-motion: reduce) {
   .pwa-gate, .pwa-banner, .pwa-gate-arrow, body .sl-main, body .sl-dialog .sl-modal { animation: none !important; }
 }

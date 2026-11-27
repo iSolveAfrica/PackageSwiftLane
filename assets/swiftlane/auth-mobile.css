@@ -1,22 +1,23 @@
-/* Sign-in screens on phones, as an app screen (views/sl/pages/Login.php, ForgotPassword.php, LoginOtp.php,
+/* (.lg:has(> .lg-card): the login page only; "lg" alone is also a size class, e.g. the chat avatar kc-av lg)
+   Sign-in screens on phones, as an app screen (views/sl/pages/Login.php, ForgotPassword.php, LoginOtp.php,
    PasswordReset.php). Desktop keeps the floating card over the photos. On a phone: the photo becomes a
    short header band with the logo, and the form is a full-width sheet rising from it, edge to edge,
    with safe areas and thumb-sized controls. Loaded last by views/sl/inc/head.php. */
 @media (max-width: 767px), (max-height: 500px) and (max-width: 950px) and (pointer: coarse) {
-  html:has(.lg, .sl-auth.fp-full), html:has(.lg, .sl-auth.fp-full) body { background: var(--card); overflow-x: clip; }
+  html:has(.lg:has(> .lg-card), .sl-auth.fp-full), html:has(.lg:has(> .lg-card), .sl-auth.fp-full) body { background: var(--card); overflow-x: clip; }
 
   /* ---- Login ---- */
-  html body .lg { display: flex; flex-direction: column; min-height: 100dvh; height: auto; padding: 0; place-items: normal; overflow: clip; background: var(--card); }
-  html body .lg > .lg-bg { inset: -30px -30px auto -30px; height: calc(250px + env(safe-area-inset-top)); filter: blur(4px); }
-  html body .lg > .lg-dim { inset: 0 0 auto 0; height: calc(220px + env(safe-area-inset-top)); background: linear-gradient(180deg, rgba(14,14,18,.35), rgba(14,14,18,.55)); }
-  html body .lg > .lg-top { position: relative; top: auto; left: auto; right: auto; z-index: 2; flex: none; height: calc(196px + env(safe-area-inset-top));
+  html body .lg:has(> .lg-card) { display: flex; flex-direction: column; min-height: 100dvh; height: auto; padding: 0; place-items: normal; overflow: clip; background: var(--card); }
+  html body .lg:has(> .lg-card) > .lg-bg { inset: -30px -30px auto -30px; height: calc(250px + env(safe-area-inset-top)); filter: blur(4px); }
+  html body .lg:has(> .lg-card) > .lg-dim { inset: 0 0 auto 0; height: calc(220px + env(safe-area-inset-top)); background: linear-gradient(180deg, rgba(14,14,18,.35), rgba(14,14,18,.55)); }
+  html body .lg:has(> .lg-card) > .lg-top { position: relative; top: auto; left: auto; right: auto; z-index: 2; flex: none; height: calc(196px + env(safe-area-inset-top));
     padding: calc(env(safe-area-inset-top) + 18px) 20px 0; box-sizing: border-box; align-items: flex-start; }
-  html body .lg > .lg-top a { font-size: 14px; padding: 8px 12px; border-radius: 999px; background: rgba(255,255,255,.16); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
-  html body .lg > .lg-card { flex: 1; max-width: none; width: 100%; margin-top: -24px; border-radius: 28px 28px 0 0; box-shadow: 0 -12px 30px rgba(0,0,0,.18);
+  html body .lg:has(> .lg-card) > .lg-top a { font-size: 14px; padding: 8px 12px; border-radius: 999px; background: rgba(255,255,255,.16); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+  html body .lg:has(> .lg-card) > .lg-card { flex: 1; max-width: none; width: 100%; margin-top: -24px; border-radius: 28px 28px 0 0; box-shadow: 0 -12px 30px rgba(0,0,0,.18);
     padding: 26px 20px calc(28px + env(safe-area-inset-bottom)); gap: 18px; }
-  html body .lg > .lg-card::before { content: ''; align-self: center; width: 40px; height: 5px; margin: -12px 0 -4px; border-radius: 3px; background: var(--line-2, var(--line)); }
-  html body .lg > .lg-cap { display: none; }
-  html body .lg .lg-card h1 { font-size: 30px !important; font-weight: 600 !important; letter-spacing: -.025em !important; }
+  html body .lg:has(> .lg-card) > .lg-card::before { content: ''; align-self: center; width: 40px; height: 5px; margin: -12px 0 -4px; border-radius: 3px; background: var(--line-2, var(--line)); }
+  html body .lg:has(> .lg-card) > .lg-cap { display: none; }
+  html body .lg:has(> .lg-card) .lg-card h1 { font-size: 30px !important; font-weight: 600 !important; letter-spacing: -.025em !important; }
 
   /* ---- Forgot password, one-time code, password reset ---- */
   html body .sl-auth.fp-full { display: flex; flex-direction: column; justify-content: flex-start; align-items: stretch; min-height: 100dvh; height: auto; padding: 0; overflow: clip; background: var(--card); }
@@ -27,14 +28,14 @@
     padding: 26px 20px calc(28px + env(safe-area-inset-bottom)); }
 
   /* ---- shared: fields and buttons fill the width, nothing overflows ---- */
-  html body :is(.lg, .sl-auth, .su2) .sl-inwrap { display: flex; align-items: center; width: 100%; box-sizing: border-box; min-height: 54px; border-radius: 16px; }
-  html body :is(.lg, .sl-auth, .su2) .sl-inwrap > .sl-in { flex: 1; min-width: 0; width: auto; height: 52px; font-size: 16px; }
-  html body :is(.lg, .sl-auth, .su2) .sl-inwrap { position: relative; }
+  html body :is(.lg:has(> .lg-card), .sl-auth, .su2) .sl-inwrap { display: flex; align-items: center; width: 100%; box-sizing: border-box; min-height: 54px; border-radius: 16px; }
+  html body :is(.lg:has(> .lg-card), .sl-auth, .su2) .sl-inwrap > .sl-in { flex: 1; min-width: 0; width: auto; height: 52px; font-size: 16px; }
+  html body :is(.lg:has(> .lg-card), .sl-auth, .su2) .sl-inwrap { position: relative; }
   /* the show-password eye sits inside the box, so the password box is as wide as the others */
-  html body :is(.lg, .sl-auth, .su2) .sl-inwrap > :is(.sl-ib, [data-sl-peek]) { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 38px !important; height: 38px !important; margin: 0 !important; z-index: 1; }
-  html body :is(.lg, .sl-auth, .su2) .sl-inwrap:has(> :is(.sl-ib, [data-sl-peek])) > .sl-in { padding-right: 52px; }
-  html body :is(.lg, .sl-auth, .su2) :is(input, select, textarea) { font-size: 16px; } /* no iOS zoom on focus */
-  html body :is(.lg, .sl-auth) .sl-btn { min-height: 54px; height: auto !important; border-radius: 16px; font-size: 16px !important; white-space: normal; text-align: center; }
-  html body :is(.lg, .sl-auth) .sl-field .row.between { flex-wrap: wrap; gap: 4px 12px; }
-  html body :is(.lg, .sl-auth) :is(form, .col) { min-width: 0; }
+  html body :is(.lg:has(> .lg-card), .sl-auth, .su2) .sl-inwrap > :is(.sl-ib, [data-sl-peek]) { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 38px !important; height: 38px !important; margin: 0 !important; z-index: 1; }
+  html body :is(.lg:has(> .lg-card), .sl-auth, .su2) .sl-inwrap:has(> :is(.sl-ib, [data-sl-peek])) > .sl-in { padding-right: 52px; }
+  html body :is(.lg:has(> .lg-card), .sl-auth, .su2) :is(input, select, textarea) { font-size: 16px; } /* no iOS zoom on focus */
+  html body :is(.lg:has(> .lg-card), .sl-auth) .sl-btn { min-height: 54px; height: auto !important; border-radius: 16px; font-size: 16px !important; white-space: normal; text-align: center; }
+  html body :is(.lg:has(> .lg-card), .sl-auth) .sl-field .row.between { flex-wrap: wrap; gap: 4px 12px; }
+  html body :is(.lg:has(> .lg-card), .sl-auth) :is(form, .col) { min-width: 0; }
 }

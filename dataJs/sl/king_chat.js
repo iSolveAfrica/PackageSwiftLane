@@ -616,7 +616,9 @@
     // (the phone app's redirect after sign-in) does not use up the one automatic greeting.
     var first = store.get('auto') !== '1';
     setTimeout(function () { store.set('auto', '1'); }, 1500);
-    if (phone()) { load(); if (first) open('auto'); }
+    // Phones: never open full screen by itself (it covered the whole home page); the compact chat bar on the
+    // dashboard shows King's briefing line and opens the chat when tapped.
+    if (phone()) { load(); }
     else if (store.get('min') === '1') { load(); st.open = true; close(); }
     else open('auto');
   } else if (store.get('open') === '1' && !phone()) {
