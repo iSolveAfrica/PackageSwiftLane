@@ -26,3 +26,42 @@
 .mx .mx-msg .mx-ans{padding:10px 13px;border-radius:18px 18px 18px 6px;background:var(--violet-bg);font-size:14px;line-height:1.45;color:var(--ink);overflow-wrap:anywhere}
 .mx .mx-msg .mx-ans>:first-child{margin-top:0}.mx .mx-msg .mx-ans>:last-child{margin-bottom:0}
 .mx .mx-msg .mx-ans.ak-err{background:var(--red-bg)}
+.mx .mx-form{padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.mx .mx-chk{display:flex;align-items:center;gap:10px;min-height:44px;font-size:14px;color:var(--ink)}
+.mx .mx-chk input{width:20px;height:20px;accent-color:var(--orange)}
+.mx .mx-kv a{color:inherit}
+/* New shipment (views/sl/phone/NewShipment.staff.php + dataJs/sl/new_shipment.js) */
+.mx .mx-nsform{display:flex;flex-direction:column;gap:12px}
+.mx .mx-nsgrp{display:flex;flex-direction:column;gap:10px}
+.mx .mx-fldl{font-size:13px;color:var(--ink-2);font-weight:500}
+.mx .mx-nsfind{display:flex;gap:8px;align-items:center}
+.mx .mx-nsfind input{flex:1;min-width:0}
+.mx .ns-results{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card)}
+.mx .ns-person,.mx .ns-person-btn{display:grid;grid-template-columns:1.4fr 1fr .8fr;gap:8px;align-items:center;padding:10px 12px;font-size:13px;text-align:left}
+.mx .ns-person-head{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding:8px 12px;background:var(--active)}
+.mx .ns-person-btn{width:100%;min-height:48px;border:0;border-top:1px solid var(--line);background:transparent;color:var(--ink);font-family:var(--font);cursor:pointer}
+.mx .ns-person-btn:active{background:var(--active)}
+.mx .ns-person span,.mx .ns-person-btn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.mx .ns-p-name{font-weight:600}
+.mx .ns-selected{border:1px solid var(--line);border-radius:14px;background:var(--field)}
+.mx .ns-selected:empty{display:none}
+.mx .ns-p-addr{padding:0 12px 10px;font-size:12.5px;color:var(--muted)}
+.mx .mx-nschips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-height:48px;padding:6px 10px;border-radius:13px;background:var(--field);border:1px solid var(--line-2)}
+.mx .mx-nschips .ns-chip-list{display:contents}
+.mx .mx-nschips input{flex:1;min-width:140px;border:0;background:transparent;min-height:34px;font:16px var(--mono, monospace);color:var(--ink);outline:none;padding:0}
+.mx .ns-tchip{display:inline-flex;align-items:center;gap:4px;padding:4px 4px 4px 10px;border-radius:99px;background:var(--active);font-size:12.5px}
+.mx .ns-tchip-x{width:32px;height:32px;border:0;border-radius:50%;background:transparent;color:var(--muted);font-size:18px;cursor:pointer}
+.mx .mx-nsitems table,.mx .mx-nsitems tbody{display:block;width:100%}
+.mx .mx-nsitems tr{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 0;border-bottom:1px dashed var(--line-2)}
+.mx .mx-nsitems td{display:block;padding:0;border:0;min-width:0}
+.mx .mx-nsitems td.mx-nsdesc{grid-column:1/-1}
+.mx .mx-nsitems td.mx-nsrm{display:flex;align-items:flex-end;justify-content:flex-end}
+.mx .mx-nsdanger.on{border-radius:12px;background:var(--amber-bg);padding:0 10px}
+.mx .mx-fld input[type=file]{padding:10px 14px;font-size:14px}
+.mx .mx-kv .mx-nsnum{width:90px;min-height:36px;border-radius:10px;background:var(--field);border:1px solid var(--line-2);padding:0 8px;font:16px var(--font);text-align:right;color:var(--ink)}
+.mx .mx-kv .mx-nsnum[readonly]{background:transparent;border-color:transparent}
+.mx .mx-kv b{display:inline-flex;align-items:center;gap:6px}
+.mx .mx-nsdt{display:inline-flex;gap:4px}
+.mx .mx-nsdt .mx-chipbtn{min-width:36px;padding:0 8px}
+.mx .is-invalid{border-color:var(--red)!important}
+.mx .sl-err{color:var(--red-ink);font-size:12px}

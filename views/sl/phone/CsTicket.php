@@ -49,7 +49,7 @@ $more = $d['customer'] ? sl_phoneIcon('user', 'Customer profile', sl_route('CsCu
   <label class="pd-f"><small>Team</small><select class="pd-in" data-pd-field="team_id"><option value="0">No team</option><?php foreach ($d['teams'] as $tm): ?><option value="<?= (int) $tm['id'] ?>"<?= (int) $tm['id'] === $t['team_id'] ? ' selected' : '' ?>><?= h($tm['name']) ?></option><?php endforeach; ?></select></label>
 </section>
 </main>
-<div class="sl-dialog pd-sheet" id="pd-resolve" hidden><form id="pd-resolve-form" role="dialog" aria-label="Close ticket">
+<div class="sl-dialog pd-sheet" id="pd-resolve" hidden><form class="pd-sheetf" id="pd-resolve-form" role="dialog" aria-label="Close ticket">
 <h2>Close <?= h($t['ref']) ?></h2><p class="pd-note">The customer is asked for a rating later, unless the ticket reopens first.</p>
 <label class="pd-f"><small>How was it resolved?</small><select class="pd-in" name="resolution_code"><?php foreach ($d['resolutionCodes'] as $k => $l): ?><option value="<?= h($k) ?>"><?= h($l) ?></option><?php endforeach; ?></select></label>
 <label class="pd-f"><small>In a sentence</small><textarea class="pd-in" name="resolution_summary" rows="2" required><?= h($t['resolution']) ?></textarea></label>

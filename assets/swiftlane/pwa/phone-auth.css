@@ -21,3 +21,7 @@ body.mx-page .mx-body>form>button.b2-cta,body.mx-page .mx-body button.b2-cta{ali
 /* status tabs as links (M-CParcels, M-CTrack): same look as .mx-seg buttons */
 .mx-seg a{flex:none;display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink-2);font:500 13px var(--font);white-space:nowrap}
 body.mx-page .mx-body .mx-seg a.on{background:var(--ink);color:var(--inverse);border-color:var(--ink)}
+/* M-CParcel: document thumbnails are links */
+.b1-thumbs a{aspect-ratio:1;border-radius:16px;background:#E2DDD3;display:grid;place-items:center;color:#8F877A;position:relative;overflow:hidden}
+.b1-thumbs a small{position:absolute;left:6px;right:6px;bottom:5px;font-size:9.5px;color:#6E6658;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.b1-mlab{max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

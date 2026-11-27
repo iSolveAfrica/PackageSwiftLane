@@ -47,3 +47,15 @@ button.b1-amb[hidden]{display:none}
 #hp-scroll .b3-ls a{display:flex;align-items:center;justify-content:center;gap:4px}
 #hp-req-n{font-size:12px;opacity:.8}
 .b3-pl button{background:var(--card);border-color:var(--line)}
+button.pc-btnrow{width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer}
+label.pc-btnrow{cursor:pointer;position:relative}
+label.pc-btnrow:focus-within{box-shadow:0 0 0 2px var(--ink)}
+/* M-CNotifPrefs matrix: notifications.js needs .sl-chk; keep the design's box */
+.b3-mxr button.sl-chk{width:28px;height:28px;min-width:0;border-radius:9px;border:1.5px solid var(--line-2);background:var(--card);display:grid;place-items:center;color:var(--inverse);padding:0;margin:0;box-shadow:none}
+.b3-mxr button.sl-chk.on{background:var(--ink);border-color:var(--ink)}
+.b3-mxr button.sl-chk::after,.b3-mxr button.sl-chk::before{content:none}
+.b3-mxr button.sl-chk:not(.on) .ic{visibility:hidden}
+.b3-mxr button.sl-chk[disabled]{opacity:.4;cursor:default}
+.b3-mxr button.sl-chk{position:relative}
+.b3-mxr button.sl-chk::after{content:"";position:absolute;inset:-8px}
+.b3-mini.wide button[disabled]{cursor:default}

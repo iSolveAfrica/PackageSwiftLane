@@ -42,13 +42,13 @@ $live = $c && !in_array($c['status'], ['paid', 'rejected'], true);
 </main>
 <?php if ($can && !empty($d['ready'])): ?>
 <?php if ($c): ?>
-<div class="sl-dialog pd-sheet" id="pd-ic-note" hidden><form data-sl-form data-sl-reload action="ajax/sl/insurance_claim_ajax.php" method="post" enctype="multipart/form-data" role="dialog" aria-label="Note on <?= h($c['no']) ?>">
+<div class="sl-dialog pd-sheet" id="pd-ic-note" hidden><form class="pd-sheetf" data-sl-form data-sl-reload action="ajax/sl/insurance_claim_ajax.php" method="post" enctype="multipart/form-data" role="dialog" aria-label="Note on <?= h($c['no']) ?>">
 <input type="hidden" name="op" value="note"><input type="hidden" name="id" value="<?= (int) $c['id'] ?>"><h2>Note on <?= h($c['no']) ?></h2>
 <label class="pd-f"><small>Note or request to the customer</small><textarea class="pd-in" name="note" rows="3" required><?= $live ? 'Please send more photos of the damage and the packaging.' : '' ?></textarea></label>
 <label class="pd-f"><small>Attach documents</small><input class="pd-in" type="file" name="documents[]" accept="image/jpeg,image/png,image/webp,application/pdf" multiple style="padding-top:12px"></label>
 <div class="mx-btns"><button type="submit" class="mx-btn">Add note</button><button type="button" class="mx-btn sec" data-sl-close>Cancel</button></div>
 </form>
-<?php if ($live): ?><form data-sl-form data-sl-reload action="ajax/sl/insurance_claim_ajax.php" method="post" style="border-radius:0;padding-top:0"><input type="hidden" name="op" value="reject"><input type="hidden" name="id" value="<?= (int) $c['id'] ?>"><label class="pd-f"><small>Or reject the claim</small><input class="pd-in" name="reason" placeholder="Reason to reject" required></label><button type="submit" class="mx-btn sec">Reject <?= h($c['no']) ?></button></form><?php endif; ?>
+<?php if ($live): ?><form class="pd-sheetf" data-sl-form data-sl-reload action="ajax/sl/insurance_claim_ajax.php" method="post" style="border-radius:0;padding-top:0"><input type="hidden" name="op" value="reject"><input type="hidden" name="id" value="<?= (int) $c['id'] ?>"><label class="pd-f"><small>Or reject the claim</small><input class="pd-in" name="reason" placeholder="Reason to reject" required></label><button type="submit" class="mx-btn sec">Reject <?= h($c['no']) ?></button></form><?php endif; ?>
 </div>
 <?php endif; ?>
 <div class="sl-dialog pd-sheet" id="pd-ic-new"<?= $pf['open'] ? '' : ' hidden' ?>><form data-sl-form action="ajax/sl/insurance_claim_ajax.php" method="post" enctype="multipart/form-data" role="dialog" aria-label="New claim">

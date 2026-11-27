@@ -44,7 +44,7 @@ foreach ((array) ($d['mawbs'] ?? []) as $m) if ($m['open']) $open = $m;
 <?php endif; ?>
 </main>
 <?php if ($can && !empty($d['ready'])): ?>
-<div class="sl-dialog pd-sheet" id="pd-wb-new" hidden><form data-sl-form action="ajax/sl/waybill_ajax.php" method="post" role="dialog" aria-label="New master waybill">
+<div class="sl-dialog pd-sheet" id="pd-wb-new" hidden><form class="pd-sheetf" data-sl-form action="ajax/sl/waybill_ajax.php" method="post" role="dialog" aria-label="New master waybill">
 <input type="hidden" name="op" value="create"><h2>New master waybill</h2>
 <label class="pd-f"><small>MAWB / bill of lading no.</small><input class="pd-in mono" name="waybill_no" required autocomplete="off"></label>
 <label class="pd-f"><small>Departure</small><select class="pd-in" name="schedule_id"><option value="">— none —</option><?php foreach ((array) $d['schedules'] as $s): ?><option value="<?= (int) $s['id'] ?>"><?= h($s['label']) ?></option><?php endforeach; ?></select></label>

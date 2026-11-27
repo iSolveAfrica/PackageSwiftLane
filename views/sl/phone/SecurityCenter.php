@@ -9,7 +9,7 @@ $slPhone['nav'] = 'staff';
 $slPhone['tab'] = 'Menu';
 $n = count($d['chk']);
 $pct = $n ? (int) round($d['passN'] / $n * 100) : 0;
-$pill = ['' => ['OK', 'delivered'], 'w' => ['Review', 'pending'], 'e' => ['Fix', 'overdue']];
+$pill = ['' => ['OK', 'delivered'], 'w' => ['Review', 'onway'], 'e' => ['Fix', 'overdue']];
 $firstLink = function (array $c): string {
     foreach ($c['links'] as $l) if (($l[3] ?? '') === '' && ($l[1] ?? '') !== '' && $l[1][0] !== '#') return (string) $l[1];
     return '';

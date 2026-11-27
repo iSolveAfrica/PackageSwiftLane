@@ -30,7 +30,7 @@ $p = !empty($_GET['id']) ? ($d['p'] ?? null) : null;
 <?php endif; ?>
 </main>
 <?php if ($can && !empty($d['ready'])): ?>
-<div class="sl-dialog pd-sheet" id="pd-fp-new" hidden><form data-sl-form action="ajax/sl/freight_partner_ajax.php" method="post" role="dialog" aria-label="Add partner">
+<div class="sl-dialog pd-sheet" id="pd-fp-new" hidden><form class="pd-sheetf" data-sl-form action="ajax/sl/freight_partner_ajax.php" method="post" role="dialog" aria-label="Add partner">
 <input type="hidden" name="op" value="create"><input type="hidden" name="id" value=""><h2>Add a freight partner</h2>
 <label class="pd-f"><small>Name</small><input class="pd-in" name="name" required></label>
 <label class="pd-f"><small>Type</small><select class="pd-in" name="type"><?php foreach ((array) $d['typeList'] as $tk => $tl): ?><option value="<?= h($tk) ?>"><?= h($tl) ?></option><?php endforeach; ?></select></label>

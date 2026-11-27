@@ -35,7 +35,7 @@ foreach ((array) ($d['kpis'] ?? []) as $k) if ($k['l'] === 'Open exceptions') $o
 <?php endif; ?>
 </main>
 <?php if ($can && !empty($d['ready'])): ?>
-<div class="sl-dialog pd-sheet" id="pd-ce-new" hidden><form data-sl-form action="ajax/sl/cargo_exception_ajax.php" method="post" enctype="multipart/form-data" role="dialog" aria-label="Log an exception">
+<div class="sl-dialog pd-sheet" id="pd-ce-new" hidden><form class="pd-sheetf" data-sl-form action="ajax/sl/cargo_exception_ajax.php" method="post" enctype="multipart/form-data" role="dialog" aria-label="Log an exception">
 <input type="hidden" name="op" value="create"><h2>Log a cargo exception</h2>
 <div class="pd-row2"><label class="pd-f"><small>Type</small><select class="pd-in" name="type" required><?php foreach ((array) $d['types'] as $tk => $tl): ?><option value="<?= h($tk) ?>"><?= h($tl) ?></option><?php endforeach; ?></select></label>
 <label class="pd-f"><small>Severity</small><select class="pd-in" name="severity"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option><option value="urgent">Urgent</option></select></label></div>
