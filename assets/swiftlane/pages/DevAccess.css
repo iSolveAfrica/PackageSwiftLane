@@ -1,0 +1,77 @@
+/* Developer access (dev_access.php): per-section grants, access matrix, locked shutdown and the
+   lock screen. Dark DevOps tokens from assets/swiftlane/dev_theme.css (.sl-app.dvx). */
+
+/* ---------- summary tiles (same look as the Modules page) ---------- */
+.da-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.da-kpi{display:flex;flex-direction:column;gap:8px;padding:14px 16px;border-radius:14px;background:var(--card);border:1px solid var(--line);color:var(--ink);text-decoration:none;min-width:0}
+.da-kpi:hover{border-color:var(--line-2);background:var(--hover)}
+.da-kpi:focus-visible{outline:2px solid var(--sky);outline-offset:2px}
+.da-kpi .t{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+.da-kpi b{font:600 24px var(--mono);color:var(--ink)}.da-kpi b small{font:400 13px var(--font);color:var(--muted)}
+.da-kpi > small{font-size:13px;color:var(--muted)}
+
+/* ---------- matrix ---------- */
+.da-mx th[scope="row"]{position:sticky;left:0;background:var(--card);z-index:1;min-width:190px;text-transform:none;letter-spacing:0;font-size:14px;font-weight:400;color:var(--ink)}
+.da-mx thead th:first-child{position:sticky;left:0;z-index:2}
+.da-mx{width:auto;min-width:100%}
+.da-mx-h{text-align:center !important;vertical-align:bottom;padding:10px 2px 8px !important;width:38px;min-width:38px}
+.da-mx-h span{display:inline-block;writing-mode:vertical-rl;transform:rotate(180deg);font-size:11.5px;line-height:1.15;white-space:nowrap;letter-spacing:.02em;text-transform:none;color:var(--muted);max-height:88px}
+.da-mx-c{text-align:center;padding:9px 2px !important;width:38px}
+.da-mx-d{display:inline-block;width:12px;height:12px;border-radius:4px;background:var(--active);border:1px solid var(--line-2)}
+.da-mx-d.on{background:var(--green);border-color:var(--green);box-shadow:0 0 0 3px rgba(52,211,153,.14)}
+.da-who{display:flex;align-items:center;gap:10px;color:inherit;text-decoration:none;min-width:0}
+.da-who:hover b{text-decoration:underline}
+.da-who small{display:block;color:var(--faint);font-size:12px}
+.da-who b{font-weight:500}
+
+/* ---------- people ---------- */
+.da-people{display:flex;flex-direction:column;gap:14px}
+.da-user.off{border-style:dashed}
+.da-user .dvx-ct{flex-wrap:wrap}
+.da-user .dvx-seg button{font-family:var(--font)}
+.da-groups{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.da-grp{display:flex;flex-direction:column;gap:6px;min-width:0}
+.da-grp .dvx-sub-g{padding:2px 2px 2px}
+.da-sec{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:var(--panel);min-width:0}
+.da-sec.on{border-color:rgba(52,211,153,.35);background:rgba(52,211,153,.06)}
+.da-sec b{display:block;font-size:13.5px;font-weight:500;color:var(--ink)}
+.da-sec small{display:block;font-size:12px;color:var(--faint);line-height:1.35}
+.da-sec .sl-toggle{background:#2C3D58}.da-sec .sl-toggle.on{background:var(--green)}
+.da-sec .sl-toggle[data-static]{opacity:.5;cursor:not-allowed}
+.da-sec .sl-toggle:focus-visible{outline:2px solid var(--sky);outline-offset:2px}
+
+/* ---------- forms ---------- */
+.da-form{display:flex;flex-direction:column;gap:12px}
+.da-field{display:flex;flex-direction:column;gap:6px;font-size:13.5px;color:var(--ink-2)}
+.da-field small{color:var(--faint);font-weight:400;margin-left:4px}
+.da-in{height:40px;padding:0 12px;border-radius:10px;border:1px solid var(--line-2);background:var(--field);color:var(--ink);font:400 15px var(--font);outline:0;min-width:0}
+.da-in:focus{border-color:var(--sky);box-shadow:0 0 0 3px rgba(96,165,250,.2)}
+.da-in.is-invalid{border-color:var(--red)}
+.da-form .sl-err{color:var(--red-ink);font-size:13px}
+.da-check{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:var(--ink-2);line-height:1.45}
+.da-check input{margin-top:3px;accent-color:#EF4444;width:16px;height:16px;flex:none}
+.da-danger{background:rgba(248,113,113,.16);border-color:rgba(248,113,113,.5);color:var(--red-ink);align-self:flex-start}
+.da-danger:hover{background:rgba(248,113,113,.26)}
+.da-shut{border-color:rgba(248,113,113,.3)}
+.da-rec summary{cursor:pointer;color:var(--sky-ink);font-size:13.5px}
+.da-rec p{margin-top:6px}
+.da-oo{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:6px;font:500 10.5px var(--font);letter-spacing:.04em;text-transform:uppercase;color:var(--amber-ink);background:var(--amber-bg);vertical-align:1px}
+.da-sec small.da-warn{display:flex;gap:6px;align-items:flex-start;margin-top:4px;color:var(--amber-ink)}
+.dvx-card:target{outline:2px solid var(--sky);outline-offset:3px;scroll-margin-top:16px}
+.da-note{display:flex;gap:8px;align-items:flex-start;margin:0;padding:10px 12px;border-radius:10px;background:var(--amber-bg);color:var(--amber-ink);font-size:14px}
+
+/* ---------- lock screen ---------- */
+.da-lock{display:grid;place-items:center;min-height:70vh;padding:24px 0}
+.da-lock-card{width:100%;max-width:520px;gap:14px;padding:28px}
+.da-lock-ic{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;background:var(--red-bg);color:var(--red-ink);border:1px solid rgba(248,113,113,.35)}
+.da-lock-card .dvx-btn.primary{align-self:flex-start}
+.da-lock-card .dvx-btn[disabled]{opacity:.5;cursor:not-allowed}
+.da-att{display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--line);padding-top:10px}
+
+@container dvx (max-width:1100px){.da-groups{grid-template-columns:repeat(2,minmax(0,1fr))}.da-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@container dvx (max-width:560px){
+  .da-groups{grid-template-columns:minmax(0,1fr)}
+  .da-kpis{gap:10px}.da-kpi b{font-size:20px}
+  .da-lock-card{padding:20px}
+  .da-mx th[scope="row"]{min-width:150px}
+}

@@ -1,0 +1,12 @@
+@import url("DevDeployments.css");
+/* DevIntegrations (dark console): GitHub connection, Actions, commits, pull requests, releases, all integrations.
+   Shared dp- pieces come from DevDeployments.css. */
+.gi .gi-grid{gap:10px}
+.gi .sl-in.mono{font-size:14px}
+.gi .dv-tabs{display:flex;gap:6px;flex-wrap:wrap}
+.gi .dv-tabs a{display:inline-flex;align-items:center;height:30px;padding:0 11px;border-radius:999px;border:1px solid var(--line-2);color:var(--ink-2);text-decoration:none;font-size:13.5px}
+.gi .dv-tabs a.on{background:var(--sky-bg);border-color:var(--sky);color:#fff}
+.gi .sl-cell{display:flex;align-items:center;gap:10px}
+.gi .ni.sl-tile{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--field);color:var(--sky);flex:none}
+.gi #gh-settings .sl-field>.mut{line-height:1.45}
+@media (max-width:760px){.gi .gi-grid{grid-template-columns:minmax(0,1fr)}}

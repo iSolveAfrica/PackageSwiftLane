@@ -1,0 +1,51 @@
+/* DevOverview (dev_overview.php): KPI cards with 30-day sparklines, system architecture, status list.
+   Shared console styles: assets/swiftlane/dev_theme.css. */
+.dvx-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+@container dvx (max-width:700px){.dvx-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@container dvx (max-width:460px){.dvx-kpis{grid-template-columns:minmax(0,1fr)}}
+.dvx-kpi{position:relative;display:flex;flex-direction:column;gap:6px;padding:14px 16px 12px;border-radius:16px;border:1px solid var(--line);background:linear-gradient(180deg,color-mix(in srgb,var(--k) 7%,var(--card)) 0%,var(--card) 60%);color:var(--ink);text-decoration:none;min-width:0;overflow:hidden;transition:border-color .15s,transform .15s}
+.dvx-kpi::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:0 3px 3px 0;background:var(--k)}
+.dvx-kpi:hover{border-color:color-mix(in srgb,var(--k) 55%,var(--line));transform:translateY(-1px)}
+.dvx-kpi-t{display:flex;align-items:center;gap:7px;font-size:13.5px;color:var(--muted)}
+.dvx-kpi-t .ic{color:var(--k,var(--sky))}
+.dvx-kpi-v{display:flex;align-items:baseline;gap:6px}
+.dvx-kpi-v b{font:500 28px var(--mono);letter-spacing:-.02em;color:var(--ink)}
+.dvx-kpi-v small{font-size:13.5px;color:var(--muted)}
+.dvx-kpi-s{font-size:12.5px;color:var(--faint);line-height:1.4}
+.dvx-delta{font-size:12.5px;font-family:var(--mono)}
+.dvx-delta.up{color:var(--green-ink)}.dvx-delta.down{color:var(--red-ink)}.dvx-delta.flat{color:var(--faint)}
+.dvx-spark-empty{display:grid;place-items:center;height:44px;border:1px dashed var(--line-2);border-radius:8px;font-size:12px;color:var(--faint);text-align:center;padding:0 8px}
+.dvx-kpi.pop b{animation:dvxPop .9s}
+@keyframes dvxPop{from{color:var(--green-ink)}to{color:var(--ink)}}
+
+.dvx-g-arch{grid-template-columns:minmax(0,2.1fr) minmax(260px,1fr)}
+/* architecture: one row per layer (Clients > Application > Data > External), arrows between rows */
+.dvx-arch{display:flex;flex-direction:column;gap:0;padding:2px 0}
+.dvx-lane{display:grid;grid-template-columns:96px minmax(0,1fr);gap:10px;align-items:center;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.015);border:1px solid var(--line);min-width:0}
+.dvx-lane-t{font-size:11.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);align-self:center}
+.dvx-lane-n{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(188px,100%),1fr));gap:8px;min-width:0}
+.dvx-arch .dvx-flow{display:block;position:relative;height:18px;margin-left:58px}
+.dvx-arch .dvx-flow::before{content:"";position:absolute;left:0;top:0;bottom:4px;width:2px;background:repeating-linear-gradient(180deg,#3B5378 0 3px,transparent 3px 6px);animation:dvxFlow 1s linear infinite}
+.dvx-arch .dvx-flow::after{content:"";position:absolute;left:-3px;bottom:2px;width:6px;height:6px;border-right:2px solid #3B5378;border-bottom:2px solid #3B5378;transform:rotate(45deg)}
+@keyframes dvxFlow{to{background-position:0 6px}}
+.dvx-node{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:11px;border:1px solid var(--line-2);background:var(--field);color:var(--ink);text-decoration:none;min-width:0;transition:border-color .15s,box-shadow .15s}
+.dvx-node:hover{border-color:#3B5378;box-shadow:var(--dvx-glow)}
+.dvx-node.warn{border-color:rgba(251,191,36,.45)}.dvx-node.bad{border-color:rgba(248,113,113,.55);background:color-mix(in srgb,var(--red) 7%,var(--field))}
+.dvx-node.off{opacity:.8}
+.dvx-node-b{min-width:0;flex:1}
+.dvx-node-b b{font-weight:500;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dvx-node-b small{font:400 11.5px var(--mono);color:var(--faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dvx-node .dvx-node-i{width:26px;height:26px;border-radius:8px}
+@container dvx (max-width:560px){
+  .dvx-lane{grid-template-columns:minmax(0,1fr);gap:8px;padding:10px}
+  .dvx-arch .dvx-flow{margin-left:24px}
+}
+@media (prefers-reduced-motion:reduce){.dvx-arch .dvx-flow::before{animation:none}}
+.dvx-status{display:flex;flex-direction:column}
+.dvx-st-row{display:flex;align-items:center;gap:10px;padding:8px 6px;border-top:1px solid var(--line);color:var(--ink-2);font-size:14px;text-decoration:none;min-width:0}
+.dvx-st-row:first-child{border-top:0}
+.dvx-st-row:hover{background:var(--hover);border-radius:8px}
+.dvx-st-u{font-size:13px;color:var(--ink);white-space:nowrap}
+.dvx-st-u .dvx-mut{font-family:var(--font);font-size:12.5px}
+/* below 1240px the status list sits under the architecture, in columns */
+@container dvx (max-width:1240px){.dvx-g-arch{grid-template-columns:minmax(0,1fr)}.dvx-status{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(240px,100%),1fr));column-gap:20px}.dvx-st-row:nth-child(-n+3){border-top:0}}

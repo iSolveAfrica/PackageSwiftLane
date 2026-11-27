@@ -1,12 +1,99 @@
 <?php
-/** DevMetrics - from DevMetrics.dc.html (dark). Series: cdb_dev_metrics via cdp_devSeries (one sample a minute from cron/devops_collector.php); table sizes and slow-query candidates from information_schema. */
+/**
+ * DevMetrics - metrics and traces (dark DevOps theme). Request series from helpers/dev_metrics.php,
+ * host series from the collector (cdb_dev_metrics via cdp_devSeries), MySQL from SHOW GLOBAL STATUS
+ * and information_schema. Data: views/sl/data/dev_observe.php sl_dvxMetricsData.
+ * Anything this host cannot measure is listed under "Not measured on this host".
+ */
 if (!isset($d)) { $d = []; }
 $my = $d['mysql'];
+$dvxActive = 'metrics';
+include CDP_ROOT . '/views/sl/pages/partials/dev_subnav.php';
+$routeTable = function (array $rows, string $empty) {
+    if (!$rows) {
+        return '<div class="dvx-empty">' . h($empty) . '</div>';
+    }
+    $o = '<div class="dvx-tw"><table class="dvx-table dvx-rt"><thead><tr><th>Route</th><th class="num">Requests</th><th class="num">p50</th><th class="num">p95</th><th class="num">Max</th><th class="num">5xx</th><th class="num">4xx</th><th class="num">Peak memory</th></tr></thead><tbody>';
+    foreach ($rows as $r) {
+        $o .= '<tr><td><a class="dvx-route" href="' . h(sl_route('DevLogs', ['source' => 'requests', 'q' => $r['route'], 'window' => 1440])) . '" title="/' . h($r['route']) . '"><span class="dvx-kind ' . h($r['kind']) . '">' . h(strtoupper($r['kind'])) . '</span><span class="mono dvx-ell">/' . h($r['route']) . '</span></a></td>'
+            . '<td class="num mono">' . h(sl_num($r['n'])) . '</td><td class="num mono">' . h(sl_dvxMs($r['p50'])) . '</td><td class="num mono' . ($r['p95'] >= 1000 ? ' dvx-warn' : '') . '">' . h(sl_dvxMs($r['p95'])) . '</td><td class="num mono">' . h(sl_dvxMs($r['max'])) . '</td>'
+            . '<td class="num mono' . ($r['err5'] ? ' dvx-bad' : ' dvx-mut') . '">' . (int) $r['err5'] . '</td><td class="num mono' . ($r['err4'] ? ' dvx-warn' : ' dvx-mut') . '">' . (int) $r['err4'] . '</td><td class="num mono">' . h(sl_devBytes($r['mem_kb'] * 1024)) . '</td></tr>';
+    }
+    return $o . '</tbody></table></div>';
+};
+// Errors by route: only the columns that matter, so the counts stay visible in a half-width card
+$errTable = function (array $rows, string $empty) {
+    if (!$rows) {
+        return '<div class="dvx-empty">' . h($empty) . '</div>';
+    }
+    $o = '<div class="dvx-tw"><table class="dvx-table dvx-rt"><thead><tr><th>Route</th><th class="num">5xx</th><th class="num">4xx</th><th class="num">Requests</th><th class="num">Error %</th></tr></thead><tbody>';
+    foreach ($rows as $r) {
+        $o .= '<tr><td><a class="dvx-route" href="' . h(sl_route('DevLogs', ['source' => 'requests', 'q' => $r['route'], 'window' => 1440, 'level' => $r['err5'] ? 'ERROR' : 'WARN'])) . '" title="/' . h($r['route']) . '"><span class="dvx-kind ' . h($r['kind']) . '">' . h(strtoupper($r['kind'])) . '</span><span class="mono dvx-ell">/' . h($r['route']) . '</span></a></td>'
+            . '<td class="num mono' . ($r['err5'] ? ' dvx-bad' : ' dvx-mut') . '">' . (int) $r['err5'] . '</td><td class="num mono' . ($r['err4'] ? ' dvx-warn' : ' dvx-mut') . '">' . (int) $r['err4'] . '</td>'
+            . '<td class="num mono">' . h(sl_num($r['n'])) . '</td><td class="num mono">' . h(sl_dvxPct(($r['err5'] + $r['err4']) / max(1, $r['n']) * 100, 1)) . '</td></tr>';
+    }
+    return $o . '</tbody></table></div>';
+};
 ?>
-<div class="sl-head"><div><h1 class="sl-title">Metrics &amp; Traces</h1><p class="sl-lede">Measured on this server · <?= (int) $d['samples'] ?> samples in range</p></div><div class="row g8 wrap"><div class="sl-seg boxed"><?php foreach ((array) sl_get($d, 'ranges', []) as $r): ?><a class="<?= sl_v($r, 'cls') ?>" href="<?= sl_v($r, 'href') ?>"><?= sl_v($r, 'label') ?></a><?php endforeach; ?></div></div></div>
-<?php if ((int) $d['samples'] < 2): ?><div class="sl-banner" role="note"><i class="ic i-info" aria-hidden="true"></i><span>Not enough samples for charts yet. Schedule <span class="mono">* * * * * php cron/devops_collector.php</span> so a sample is taken every minute.</span></div><?php endif; ?>
-<div class="grid cols2"><?php foreach ((array) sl_get($d, 'charts', []) as $c): ?><section class="sl-card sl-viz-card sl-viz-card--violet"><div class="sl-ch"><div><h2 class="sl-ct"><?= sl_v($c, 't') ?></h2><div class="mut sm"><?= sl_v($c, 'sub') ?></div></div><div class="row g12 sm mut"><?php foreach ($c['paths'] as $p): ?><span class="lgd"><i style="background:<?= h($p['c']) ?>"></i><?= h($p['label']) ?><?= $p['last'] !== null ? ' ' . h(rtrim(rtrim(number_format((float) $p['last'], 2, '.', ''), '0'), '.')) : '' ?></span><?php endforeach; ?></div></div><svg <?= sl_chartAttrs(array_map(fn($p) => ['name' => $p['label'], 'values' => $p['values'], 'unit' => $c['unit']], $c['paths']), $c['labels'], $c['t'], 44, 634) ?> class="dv-chart" viewBox="0 0 640 190" style="height:auto" role="img" aria-label="<?= sl_v($c, 't') ?> chart"><?php foreach ($c['ticks'] as $t): ?><line x1="44" y1="<?= (int) $t['y'] ?>" x2="634" y2="<?= (int) $t['y'] ?>" stroke="var(--line)" stroke-dasharray="3 4"></line><text x="38" y="<?= (int) $t['y'] + 4 ?>" text-anchor="end"><?= h($t['l']) ?></text><?php endforeach; ?><?php foreach ($c['paths'] as $p): if ($p['d']): ?><path d="<?= h($p['d']) ?>" fill="none" stroke="<?= h($p['c']) ?>" stroke-width="2"></path><?php endif; endforeach; ?><?php foreach ($c['xl'] as $x): ?><text x="<?= (int) $x['x'] ?>" y="184" text-anchor="middle"><?= h($x['l']) ?></text><?php endforeach; ?></svg></section><?php endforeach; ?></div>
-<div class="split"><section class="a sl-card flush"><div class="row between" style="padding:14px 16px"><h2 class="sl-ct">Largest tables</h2><span class="mut sm"><?= h(sl_devBytes($d['dbSize']['bytes'])) ?> in <?= (int) $d['dbSize']['tables'] ?> tables · ~<?= h(sl_num($d['dbSize']['rows'])) ?> rows</span></div><div class="sl-tw"><table class="sl-table"><thead><tr><th>Table</th><th class="num">Rows (est.)</th><th class="num">Data</th><th class="num">Indexes</th><th>Size</th></tr></thead><tbody><?php foreach ((array) sl_get($d, 'tables', []) as $t): ?><tr><td class="mono sm"><?= sl_v($t, 't') ?></td><td class="num"><?= sl_v($t, 'n') ?></td><td class="num"><?= sl_v($t, 'data') ?></td><td class="num"><?= sl_v($t, 'idx') ?></td><td style="width:160px"><div class="sl-ticks"><i style="width:<?= (int) $t['w'] ?>%"></i></div><span class="mono sm"><?= sl_v($t, 'size') ?></span></td></tr><?php endforeach; ?></tbody></table></div></section>
-<aside class="b col g16"><section class="sl-card col g8"><h2 class="sl-ct">MySQL</h2><div class="dv-row"><span class="grow">Version</span><span class="mono"><?= h($my['version']) ?></span></div><div class="dv-row"><span class="grow">Ping</span><span class="mono"><?= h((string) $my['ms']) ?> ms</span></div><div class="dv-row"><span class="grow">Connections</span><span class="mono"><?= (int) $my['threads'] ?> / <?= (int) $my['max_conn'] ?></span></div><div class="dv-row"><span class="grow">Slow queries since start</span><span class="mono"><?= h(sl_num($my['slow'])) ?></span></div><div class="dv-row"><span class="grow">Slow log</span><span class="mono"><?= ($my['slow_log'] ?? '0') == '1' ? 'on' : 'off' ?> · <?= h((string) ($my['long_query'] ?? '')) ?> s</span></div></section>
-<section class="sl-card col g8"><h2 class="sl-ct">Slow-query candidates</h2><span class="mut sm">Tables over 500 rows with no index beyond the primary key</span><?php foreach ((array) sl_get($d, 'slow', []) as $s): ?><div class="dv-row"><span class="mono sm grow"><?= sl_v($s, 't') ?></span><span class="mut sm"><?= sl_v($s, 'n') ?> rows · <?= (int) $s['idx'] ?> index</span></div><?php endforeach; ?><?php if (!sl_get($d, 'slow')): ?><span class="mut sm">None found.</span><?php endif; ?></section>
-<section class="sl-card col g8"><h2 class="sl-ct">API requests · 24 h</h2><?php if ($d['api']): ?><div class="dv-row"><span class="grow">Requests</span><span class="mono"><?= h(sl_num($d['api']['n'])) ?></span></div><?php if ($d['api']['avg'] !== null): ?><div class="dv-row"><span class="grow">Average / max</span><span class="mono"><?= h(sl_devMs($d['api']['avg'])) ?> / <?= h(sl_devMs($d['api']['max'])) ?></span></div><?php foreach ((array) ($d['api']['slow'] ?? []) as $e): ?><div class="dv-row"><span class="mono sm grow"><?= h($e->e) ?></span><span class="mut sm"><?= h(sl_devMs($e->a)) ?> avg · <?= (int) $e->n ?></span></div><?php endforeach; endif; ?><?php else: ?><span class="mut sm">No cdb_api_request_log table: API request counts and latency are not recorded on this installation.</span><?php endif; ?></section></aside></div>
+<div class="dvx-page" data-dvx-page="metrics" data-dvx-ajax="<?= h($d['ajax']) ?>">
+<header class="dvx-head">
+  <div class="col g4"><h1 class="dvx-title">Metrics &amp; traces</h1><p class="dvx-lede">Measured on <span class="mono"><?= h($d['host']) ?></span> · <?= h(sl_num($d['reqSamples'])) ?> request samples and <?= (int) $d['colSamples'] ?> collector samples in range<?= $d['cov']['first'] ? ' · requests recorded since ' . h(sl_date($d['cov']['first'], 'M j, H:i')) : '' ?></p></div>
+  <div class="dvx-seg boxed" role="group" aria-label="Time range"><?php foreach ($d['ranges'] as $r): ?><a class="<?= h($r['cls']) ?>" href="<?= h($r['href']) ?>"<?= $r['cls'] ? ' aria-current="true"' : '' ?>><?= h($r['label']) ?></a><?php endforeach; ?></div>
+</header>
+
+<section class="dvx-tiles" aria-label="Current figures">
+<?php foreach ($d['tiles'] as $t): ?>
+  <a class="dvx-tile" href="<?= h($t['href']) ?>" data-dvx-tile="<?= h($t['k']) ?>"><span class="dvx-kpi-t"><?= h($t['t']) ?><?php if (!empty($t['ovr'])): ?><span class="dvx-ovr" title="Set by a super admin, not measured">override</span><?php endif; ?></span><span class="dvx-kpi-v"><b><?= h($t['v']) ?></b><small><?= h($t['u']) ?></small></span><?php if ($t['w']): ?><span class="dvx-meter <?= $t['w'] >= 90 ? 'bad' : ($t['w'] >= 75 ? 'warn' : '') ?>" role="img" aria-label="<?= (int) $t['w'] ?>%"><i style="width:<?= (int) $t['w'] ?>%"></i></span><?php endif; ?><span class="dvx-kpi-s"><?= h($t['sub']) ?></span></a>
+<?php endforeach; ?>
+</section>
+
+<div class="dvx-grid dvx-g2">
+<?php foreach ($d['charts'] as $ch): ?>
+<section class="dvx-card" id="<?= h($ch['id']) ?>">
+  <div class="dvx-ch"><div><h2 class="dvx-ct"><?= h($ch['t']) ?></h2><p class="dvx-cs"><?= h($ch['sub']) ?></p></div></div>
+  <div class="dvx-chart-body" data-dvx-chart="<?= h($ch['id']) ?>"><?= sl_dvxChartBody($ch) ?></div>
+  <?php if (!$ch['has'] && in_array($ch['id'], ['net', 'diskio', 'qps', 'cpu', 'mem'], true) && !$d['colSamples']): ?><p class="dvx-cs">Not measured in this range: these come from the collector. Schedule <span class="mono">* * * * * php cron/devops_collector.php</span>.</p><?php endif; ?>
+</section>
+<?php endforeach; ?>
+</div>
+
+<section class="dvx-card dvx-flush" aria-labelledby="dvx-slow-h">
+  <div class="dvx-ch pad"><div><h2 class="dvx-ct" id="dvx-slow-h">Slowest routes</h2><p class="dvx-cs">By 95th percentile · <?= h($d['routeWindow']) ?> · click a route for its requests</p></div></div>
+  <?= $routeTable($d['slow'], 'No request recorded in this range.') ?>
+</section>
+<section class="dvx-card dvx-flush" aria-labelledby="dvx-er-h">
+  <div class="dvx-ch pad"><div><h2 class="dvx-ct" id="dvx-er-h">Errors by route</h2><p class="dvx-cs">Server (5xx) and client (4xx) errors · <?= h($d['routeWindow']) ?></p></div></div>
+  <?= $errTable($d['errRoutes'], 'No error response recorded in this range.') ?>
+</section>
+<section class="dvx-card dvx-flush" aria-labelledby="dvx-busy-h">
+  <div class="dvx-ch pad"><div><h2 class="dvx-ct" id="dvx-busy-h">Top endpoints</h2><p class="dvx-cs">Most requested · <?= h($d['routeWindow']) ?></p></div></div>
+  <?php if ($d['busy']): $mx = max(1, $d['busy'][0]['n']); ?>
+  <div class="dvx-bars"><?php foreach ($d['busy'] as $r): ?><a class="dvx-bar" href="<?= h(sl_route('DevLogs', ['source' => 'requests', 'q' => $r['route'], 'window' => 1440])) ?>"><span class="mono dvx-ell">/<?= h($r['route']) ?></span><span class="dvx-bar-t"><i style="width:<?= sl_pct($r['n'], $mx) ?>%"></i></span><b class="mono"><?= h(sl_num($r['n'])) ?></b><small class="dvx-mut mono"><?= h(sl_dvxMs($r['avg'])) ?></small></a><?php endforeach; ?></div>
+  <?php else: ?><div class="dvx-empty">No request recorded in this range.</div><?php endif; ?>
+</section>
+<div class="dvx-grid dvx-g2" id="db">
+<section class="dvx-card" aria-labelledby="dvx-my-h">
+  <div class="dvx-ch"><h2 class="dvx-ct" id="dvx-my-h">Database</h2><span class="dvx-mut sm mono"><?= h($my['version']) ?></span></div>
+  <dl class="dvx-dl wide">
+    <dt>Ping</dt><dd class="mono"><?= h(sl_dvxMs($d['db']['ping_ms'] ?? $my['ms'])) ?> <small class="dvx-mut">median of 3, same check as Services</small></dd>
+    <dt>Connections</dt><dd class="mono"><?= (int) $my['threads'] ?> / <?= (int) $my['max_conn'] ?></dd>
+    <dt>Size</dt><dd class="mono"><?= h(sl_devBytes($d['dbSize']['bytes'])) ?> · <?= (int) $d['dbSize']['tables'] ?> tables · ~<?= h(sl_num($d['dbSize']['rows'])) ?> rows</dd>
+    <dt>Queries since start</dt><dd class="mono"><?= h(sl_num($my['questions'])) ?></dd>
+    <dt>Slow queries since start</dt><dd class="mono"><?= h(sl_num($my['slow'])) ?></dd>
+    <dt>Slow query log</dt><dd class="mono"><?= ($my['slow_log'] ?? '0') == '1' ? 'on' : 'off' ?> · long_query_time <?= h((string) ($my['long_query'] ?? '')) ?> s</dd>
+    <dt>Uptime</dt><dd class="mono"><?= h(cdp_devDur((int) $my['uptime'])) ?></dd>
+  </dl>
+</section>
+<section class="dvx-card" aria-labelledby="dvx-tb-h" id="disk">
+  <div class="dvx-ch"><h2 class="dvx-ct" id="dvx-tb-h">Largest tables</h2></div>
+  <div class="dvx-bars"><?php foreach ($d['tables'] as $t): ?><div class="dvx-bar"><span class="mono dvx-ell"><?= h($t['t']) ?></span><span class="dvx-bar-t"><i style="width:<?= (int) $t['w'] ?>%"></i></span><b class="mono"><?= h($t['size']) ?></b><small class="dvx-mut mono"><?= h($t['n']) ?> rows</small></div><?php endforeach; ?></div>
+</section>
+</div>
+
+<section class="dvx-card" aria-labelledby="dvx-nm-h">
+  <div class="dvx-ch"><h2 class="dvx-ct" id="dvx-nm-h">Not measured on this host</h2></div>
+  <div class="dvx-nm"><?php foreach ($d['notMeasured'] as [$what, $why, $how]): ?><div class="dvx-nm-i"><b><?= h($what) ?></b><span class="dvx-mut"><?= h($why) ?></span><span class="sm"><?= h($how) ?></span></div><?php endforeach; ?></div>
+  <p class="dvx-cs">Request recorder: sampling <?= round($d['cov']['rate'] * 100) ?>% of normal requests (every error and slow request is kept), raw rows kept <?= (int) $d['cov']['retention'] ?> days, daily rollups 400 days. Settings: <span class="mono">CDP_REQ_METRICS</span>, <span class="mono">CDP_REQ_METRICS_RATE</span>, <span class="mono">CDP_REQ_METRICS_SLOW_MS</span>, <span class="mono">CDP_REQ_METRICS_DAYS</span> in config/config.php.</p>
+</section>
+</div>
+<?= sl_dvxSubnavEnd() ?>

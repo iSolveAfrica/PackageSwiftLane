@@ -3,6 +3,7 @@
  * Consolidation page hero: package list on the left, route map on the right; a package opens a pop-up
  * with everything about it. Data: sl_consolidationDetailData() ($d['map'], $d['rows'][*]['hist']).
  * Styles: assets/swiftlane/pages/ConsolidationMap.css (loaded below).
+ * No charges or payment state on cards or pop-ups: consolidation billing is in Finance.
  */
 $mp = $d['map'];
 $g = $mp['geo'];
@@ -30,8 +31,8 @@ $chip = function (float $x, float $y, string $k, string $val, string $anchor) us
         <span class="sl-av sm"><?= h($r['ini']) ?></span>
         <span class="cdm-pk-b">
           <span class="row between g8"><b class="fw5"><?= h($r['name']) ?></b><span class="mono sm"><?= h($r['w']) ?></span></span>
-          <span class="row between g8"><span class="mono mut sm"><?= h($r['id']) ?><?= $r['lock'] !== '' ? ' · ' . h($r['lock']) : '' ?></span><span class="sl-pill <?= h($r['pc']) ?>"><?= h($r['pay']) ?></span></span>
-          <span class="cdm-what"><?= h($r['what']) ?></span>
+          <span class="mono mut sm cdm-ids"><?= h($r['id']) ?><?= $r['lock'] !== '' ? ' · ' . h($r['lock']) : '' ?></span>
+          <span class="row between g8"><span class="cdm-what"><?= h($r['what']) ?></span><span class="sl-pill <?= h($r['stC']) ?>" title="<?= h($r['stL']) ?>"><span class="cdm-stt"><?= h($r['stL']) ?></span></span></span>
         </span>
       </button>
       <?php endforeach; ?>
@@ -81,8 +82,6 @@ $chip = function (float $x, float $y, string $k, string $val, string $anchor) us
     <div><dt>Pieces</dt><dd><?= (int) $r['pcs'] ?></dd></div>
     <div><dt>Weight</dt><dd><?= h($r['w']) ?></dd></div>
     <div><dt><?= $sea ? 'Volume' : 'Volumetric weight' ?></dt><dd><?= h($r['v']) ?></dd></div>
-    <div><dt>Payment</dt><dd><span class="sl-pill <?= h($r['pc']) ?>"><?= h($r['pay']) ?></span></dd></div>
-    <?php if (!empty($d['money'])): ?><div><dt>Charges</dt><dd><?= h($r['amt']) ?></dd></div><?php endif; ?>
   </dl>
   <h4 class="cdm-h4">Latest tracking</h4>
   <?php if ($r['hist']): ?><ol class="cdm-tl"><?php foreach ($r['hist'] as $i => $ev): ?><li class="<?= $i === 0 ? 'now' : '' ?>"><b><?= h($ev['t']) ?></b><span><?= h($ev['c']) ?></span><time><?= h($ev['at']) ?></time></li><?php endforeach; ?></ol>

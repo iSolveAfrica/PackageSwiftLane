@@ -1,3 +1,4 @@
+@import url("DevDeployments.css");
 /* Page styles of DevIssues.dc.html (from the approved design) */
 .iq-tabs{display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:10px}
 .iq-tabs button{display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:var(--card);font:500 16px var(--font);color:var(--ink);cursor:pointer}
@@ -36,3 +37,28 @@
 .iq-tag.add{background:var(--green-bg);color:var(--green-ink)}.iq-tag.fix{background:var(--red-bg);color:var(--red-ink)}.iq-tag.chg{background:#3a2e14;color:#F2C46B}.iq-tag.sec{background:#1f2c3d;color:#8DB8EA}.iq-tag.rem{background:var(--active);color:var(--muted)}
 .iq-ok{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;background:var(--green-bg);color:var(--green-ink);font-size:15.5px}
 @media (max-width:760px){.iq-ver{grid-template-columns:1fr}.iq-ent{grid-template-columns:76px 1fr}}
+
+/* deploy package: tabs as links, change log generated from commits (dark console) */
+.iq-tabs a{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 14px;border-radius:11px;border:1px solid var(--line);background:var(--card);color:var(--ink-2);text-decoration:none;font-size:15px}
+.iq-tabs a:hover{border-color:var(--line-2);color:var(--ink)}
+.iq-tabs a.on{background:var(--sky-bg);border-color:var(--sky);color:#fff}
+.cl-wrap{gap:0;padding:6px 16px}
+.cl-g{border-top:1px solid var(--line)}.cl-g:first-child{border-top:0}
+.cl-gh{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 0;cursor:pointer;list-style:none}
+.cl-gh::-webkit-details-marker{display:none}
+.cl-gh>.ic{transition:transform .15s;color:var(--faint)}
+.cl-g:not([open]) .cl-gh>.ic{transform:rotate(-90deg)}
+.cl-gh b{font-size:16px;font-weight:600;color:#fff}
+.cl-gh .dp-link{margin-left:auto}
+.cl-sec{padding:0 0 10px 24px}
+.cl-st{margin:6px 0 4px;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-2)}
+.cl-st.t-feat{color:var(--green-ink)}.cl-st.t-fix{color:var(--red-ink)}.cl-st.t-security{color:var(--amber-ink)}.cl-st.t-perf{color:var(--sky-ink)}
+.cl-sec ul{list-style:none;margin:0;padding:0}
+.cl-it{display:flex;align-items:baseline;gap:12px;padding:6px 0;border-top:1px dashed var(--line);font-size:14.5px;flex-wrap:wrap}
+.cl-it:first-child{border-top:0}
+.cl-it.here{background:linear-gradient(90deg,var(--green-bg),transparent);border-radius:6px;padding-left:6px}
+.cl-scope{font-weight:600;color:var(--ink)}
+.cl-meta{display:inline-flex;gap:10px;font-size:13px;color:var(--muted);white-space:nowrap;margin-left:auto}
+.cl-foot{padding:10px 0 6px;border-top:1px solid var(--line);margin:0}
+@media (max-width:760px){.cl-sec{padding-left:4px}.cl-meta{margin-left:0;white-space:normal;flex-wrap:wrap}.iq-tabs{flex-wrap:nowrap;overflow-x:auto}}
+.cl-it>.grow{overflow-wrap:anywhere;min-width:0;flex:1 1 260px}

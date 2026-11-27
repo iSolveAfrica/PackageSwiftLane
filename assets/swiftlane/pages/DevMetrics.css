@@ -1,0 +1,23 @@
+/* DevMetrics (dev_metrics.php): resource tiles, request / host / database charts, route tables.
+   Shared console styles: assets/swiftlane/dev_theme.css. */
+.dvx-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(150px,100%),1fr));gap:12px}
+.dvx-tile{display:flex;flex-direction:column;gap:7px;padding:13px 15px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--ink);text-decoration:none;min-width:0}
+.dvx-tile:hover{border-color:#3B5378;box-shadow:var(--dvx-glow)}
+.dvx-tile .dvx-kpi-t{display:flex;align-items:center;font-size:13px;color:var(--muted)}
+.dvx-tile .dvx-kpi-v{display:flex;align-items:baseline;gap:6px}
+.dvx-tile .dvx-kpi-v b{font:500 24px var(--mono);letter-spacing:-.02em}
+.dvx-tile .dvx-kpi-v small{font-size:12.5px;color:var(--muted)}
+.dvx-tile .dvx-kpi-s{font-size:12px;color:var(--faint);line-height:1.4}
+.dvx-route{display:flex;align-items:center;gap:8px;color:var(--ink);text-decoration:none;min-width:0;max-width:420px}
+.dvx-route:hover .mono{color:var(--sky-ink)}
+.dvx-kind{display:inline-grid;place-items:center;height:18px;padding:0 5px;border-radius:4px;font:600 10.5px var(--mono);flex:none;background:var(--active);color:var(--muted)}
+.dvx-kind.ajax{background:var(--violet-bg);color:var(--violet-ink)}.dvx-kind.api{background:var(--amber-bg);color:var(--amber-ink)}.dvx-kind.page{background:var(--sky-bg);color:var(--sky-ink)}
+.dvx-nm{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(260px,100%),1fr));gap:10px}
+.dvx-nm-i{display:flex;flex-direction:column;gap:4px;padding:11px 13px;border-radius:11px;border:1px dashed var(--line-2);font-size:14px;color:var(--ink-2)}
+.dvx-nm-i b{font-weight:500;color:var(--ink)}.dvx-nm-i .sm{font-size:13px;overflow-wrap:anywhere}
+.dvx-card[id] {scroll-margin-top:16px}
+/* route tables: the route truncates with an ellipsis, every numeric column stays visible */
+.dvx-rt td:first-child{max-width:0;width:44%}
+.dvx-rt .dvx-route{max-width:100%}
+.dvx-rt td,.dvx-rt th{padding-left:10px;padding-right:10px}
+.dvx-rt td:first-child,.dvx-rt th:first-child{padding-left:14px}
