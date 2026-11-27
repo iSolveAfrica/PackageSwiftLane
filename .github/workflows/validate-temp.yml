@@ -46,3 +46,27 @@ jobs:
         run: node -e "process.env.CHROMIUM_PATH=require('playwright').chromium.executablePath(); require('./scripts/check_interactions.cjs')"
       - name: Check page shell
         run: node scripts/check_page_shell.js
+  delivery-storage:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ci-scratch-password
+          MYSQL_DATABASE: swiftlane_test
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_mysql
+          coverage: none
+      - name: Check delivery storage installation and preservation
+        env:
+          SL_TEST_DSN: mysql:host=127.0.0.1;port=3306;dbname=swiftlane_test
+          SL_TEST_DB_PASSWORD: ci-scratch-password
+        run: php scripts/check_delivery_storage_db.php
