@@ -228,3 +228,21 @@
 .tcp-list > div:first-child { border-top: 0; }
 .tcp-list span { color: var(--tc-mut); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 760px) { .tcp-cols { grid-template-columns: 1fr; } .tcp-dl { grid-template-columns: 1fr 1fr; } .tcp-route { grid-template-columns: 1fr; } .tcp-route > div.r { text-align: left; } .tcp-in { padding: 16px; } }
+/* Landed air parcels (Arrived in Accra, customs, sorting, ready for pickup): our office with the Swift logo */
+.tc-ofc { width: 16px; height: 16px; object-fit: contain; flex: none; }
+.tc-office rect { filter: drop-shadow(0 2px 6px rgba(0,0,0,.35)); }
+/* Landed air parcels (Arrived in Accra, customs, sorting, ready for pickup): the Swift agent photo,
+   large on the right of the overview (assets/swiftlane/brand/swift-agent-parcel.webp, shown as supplied) */
+.tc-ov.has-agent { grid-template-columns: minmax(170px, .8fr) minmax(230px, 1.3fr) minmax(215px, .85fr) minmax(190px, 230px); }
+.tc-agent { display: block; width: 100%; max-width: 240px; height: auto; max-height: 320px; object-fit: contain; align-self: end; justify-self: end; margin: -96px 0 -18px; filter: drop-shadow(0 14px 24px rgba(0,0,0,.45)); pointer-events: none; }
+@container tcp (max-width: 860px) {
+  .tc-ov.has-agent { grid-template-columns: 1fr 1.4fr; }
+  .tc-ov.has-agent .tc-agent { grid-column: 2; grid-row: 1; justify-self: end; max-width: 170px; margin: 0; }
+  .tc-ov.has-agent .tc-route-card { grid-column: 1 / -1; }
+}
+/* phones: no agent photo */
+@container tcp (max-width: 560px) {
+  .tc-ov.has-agent { grid-template-columns: 1fr; }
+  .tc-ov.has-agent .tc-agent { display: none; }
+}
+@media (max-width: 720px) { .tc-agent { display: none !important; } }

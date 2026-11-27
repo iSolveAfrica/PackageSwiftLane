@@ -480,6 +480,9 @@ if (!function_exists('cdp_opsCsvCell')) {
     /** Send a report in the asked format and exit. $sections as cdp_opsXlsx. */
     function cdp_opsSendExport($format, $basename, $title, array $sections, $subtitle = '')
     {
+        // Exports are for administrators and super administrators only (helpers/export_guard.php).
+        require_once CDP_ROOT . '/helpers/export_guard.php';
+        if (PHP_SAPI !== 'cli' && !cdp_canExportData()) cdp_exportDeny();
         $basename = preg_replace('/[^A-Za-z0-9_\-]+/', '-', $basename);
         if ($format === 'xlsx') {
             $data = cdp_opsXlsx($sections);

@@ -36,16 +36,31 @@
     guide.hidden = false; guide.style.left = Math.round(x) + 'px'; guide.style.top = Math.max(0, r.top) + 'px';
     guide.style.height = Math.max(0, Math.min(innerHeight, r.bottom) - Math.max(0, r.top)) + 'px';
   }
-  function saveCsv(chart) {
-    var rows = [['Category'].concat(chart.series.map(function (s) { return s.name || 'Value'; }))];
-    chart.labels.forEach(function (label, i) { rows.push([label].concat(chart.series.map(function (s) { return s.values[i] == null ? '' : s.values[i]; }))); });
-    if (chart.titles) rows = [['Point', 'Details']].concat(chart.titles.map(function (s, i) { return [i + 1, s]; }));
-    var csv = '\uFEFF' + rows.map(function (row) { return row.map(function (value) {
-      var t = String(value); if (/^[\s]*[=+@-]/.test(t)) t = "'" + t;
-      return '"' + t.replace(/"/g, '""') + '"';
-    }).join(','); }).join('\r\n');
-    var url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })), a = el('a');
-    a.href = url; a.download = 'chart-data.csv'; a.click(); setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  /* Clicked (pinned) charts show a short summary of the whole series instead of a download:
+     total, average, highest point and the change from the previous point. Data stays on screen. */
+  function fmt(v, unit) { return (typeof v === 'number' ? v.toLocaleString(undefined, { maximumFractionDigits: 2 }) : String(v)) + (unit || ''); }
+  function summary(chart, index) {
+    var box = el('div'); box.className = 'sl-chart-tip-summary';
+    chart.series.forEach(function (s) {
+      var nums = s.values.map(function (v) { return typeof v === 'number' ? v : (v != null && v !== '' && !isNaN(v) ? Number(v) : null); });
+      var have = nums.filter(function (v) { return v != null; });
+      if (!have.length) return;
+      var total = have.reduce(function (a, b) { return a + b; }, 0), max = Math.max.apply(null, have), at = nums.indexOf(max);
+      var cur = nums[index], prev = index > 0 ? nums[index - 1] : null;
+      var head = el('div', s.name || 'Value'); head.className = 'sl-chart-tip-sh'; box.appendChild(head);
+      var grid = el('dl'); grid.className = 'sl-chart-tip-grid';
+      var add = function (k, v, cls) { var d = el('div'); var dt = el('dt', k), dd = el('dd', v); if (cls) dd.className = cls; d.appendChild(dt); d.appendChild(dd); grid.appendChild(d); };
+      if (have.length > 1) add('Total', fmt(total, s.unit));
+      if (have.length > 1) add('Average', fmt(total / have.length, s.unit));
+      if (have.length > 1) add('Highest', fmt(max, s.unit) + ' · ' + chart.labels[at]);
+      if (cur != null && prev != null) {
+        var diff = cur - prev, pct = prev ? Math.round(diff / Math.abs(prev) * 100) : null;
+        add('vs ' + chart.labels[index - 1], (diff > 0 ? '+' : diff < 0 ? '−' : '') + fmt(Math.abs(diff), s.unit) + (pct != null && diff ? ' (' + (diff > 0 ? '+' : '−') + Math.abs(pct) + '%)' : ''), diff > 0 ? 'up' : diff < 0 ? 'dn' : '');
+      }
+      if (cur != null && total && have.length > 1) add('Share of total', Math.round(cur / total * 100) + '%');
+      box.appendChild(grid);
+    });
+    return box.childNodes.length ? box : null;
   }
   function show(chart, index, pin) {
     if (pinned && (!pin || (active && active.chart !== chart))) return;
@@ -77,8 +92,8 @@
     var spoken = tip.textContent;
     chart.focus.setAttribute('aria-label', chart.title + '. ' + spoken + '. Use left and right arrows for values; Space to keep details.');
     if (pinned) {
+      if (!chart.titles) { var sum = summary(chart, index); if (sum) tip.appendChild(sum); }
       var actions = el('div'); actions.className = 'sl-chart-tip-actions';
-      var download = el('button', 'Download CSV'); download.type = 'button'; download.addEventListener('click', function () { saveCsv(chart); }); actions.appendChild(download);
       var link = chart.root.closest('a[href]');
       if (link) { var open = el('a', 'Open related view'); open.href = link.href; actions.appendChild(open); }
       var close = el('button', 'Close'); close.type = 'button'; close.addEventListener('click', function () { hide(); restoreFocus(chart.focus); }); actions.appendChild(close);

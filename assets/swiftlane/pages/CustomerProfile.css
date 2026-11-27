@@ -1,2 +1,11 @@
 @import url("../user360.css?v=1");
 @import url("UserHome.css?v=20261126");
+
+/* Customer header: same "you" card as the customer's own home page (overview-hero.css) */
+.cp-hero{margin-top:2px}
+.cp-hero .me-pic{border-radius:50%;display:inline-grid;place-items:center;color:var(--inverse);font-weight:600}
+.cp-hero .ovh-name{margin:0}
+.cp-viewas{background:color-mix(in srgb,var(--violet) 8%,var(--card));border:1px solid color-mix(in srgb,var(--violet) 28%,transparent);border-radius:16px}
+.cp-viewas small{letter-spacing:.08em;text-transform:uppercase;font-size:12px}
+.cp-viewas p{margin:0}
+@media (max-width:720px){.cp-hero{padding:16px}.cp-hero .me-pic{width:56px!important;height:56px!important;font-size:20px!important}.cp-hero .ovh-me-mid{grid-template-columns:1fr;justify-items:center}.cp-hero .ovh-stats{width:100%;grid-template-columns:repeat(2,minmax(0,1fr))}.cp-hero .ovh-stats dd b{font-size:22px}.cp-viewas .sl-btn{width:100%;justify-content:center}}

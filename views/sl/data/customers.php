@@ -281,6 +281,11 @@ function sl_customersData($user, $core, bool $listOnly = false): array
     $d['hasApprove'] = $hasApprove;
     $d['canEdit'] = $user->cdp_hasPermission('edit_client');
     $d['canDelete'] = $user->cdp_hasPermission('delete_client');
+    // Row "more" menu (Customers list): the same actions as the profile page, without opening it.
+    $d['canViewAs'] = function_exists('cdp_canViewAs') && cdp_canViewAs((int) $user->userlevel, 1);
+    $d['canShip'] = $user->cdp_hasPermission('add_shipment');
+    $d['canShipList'] = $user->cdp_hasPermission(['view_shipment_list', 'view_general_shipments']);
+    $d['canPkgList'] = $user->cdp_hasPermission(['view_package_list', 'view_general_package_records']);
     $d['canApprove'] = $hasApprove && $user->cdp_hasPermission(['approve_client', 'edit_client']);
     return $d;
 }

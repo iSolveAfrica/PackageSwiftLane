@@ -102,5 +102,24 @@ function sl_customerProfileData($user, $core, int $id): ?array
         'loyalty' => $loyal ? ['pts' => (int) $loyal->points_balance, 'life' => (int) $loyal->lifetime_points, 'tier' => ucfirst((string) $loyal->tier), 'code' => (string) $loyal->referral_code] : null,
         'openTickets' => $openTickets, 'lastShip' => $lastShip ? sl_ago($lastShip) : 'Never', 'created' => sl_date($u->created, 'j M Y'),
         'canEdit' => $user->cdp_hasPermission('edit_client'), 'canApprove' => isset($u->approve) && $user->cdp_hasPermission(['approve_client', 'edit_client']), 'canDelete' => $user->cdp_hasPermission('delete_client'), 'canShip' => $user->cdp_hasPermission('add_shipment'), 'canRecip' => $user->cdp_hasPermission('recipients_add'), 'canViewAs' => function_exists('cdp_canViewAs') && cdp_canViewAs((int) $user->userlevel, 1)];
+    // Dashboard-style header and live tracking console (same look as the customer's own home page)
+    $avatar = !empty($u->avatar) && $u->avatar !== 'uploads/blank.png' ? 'assets/' . ltrim((string) $u->avatar, '/') : '';
+    $yStart = date('Y-01-01');
+    $yearN = (int) sl_scalar('SELECT (SELECT COUNT(*) FROM cdb_add_order WHERE sender_id = :u AND is_deleted = 0 AND status_courier <> 21 AND order_date >= :y) + (SELECT COUNT(*) FROM cdb_customers_packages WHERE sender_id = :u2 AND status_courier <> 21 AND order_date >= :y2)', [':u' => $id, ':y' => $yStart, ':u2' => $id, ':y2' => $yStart]);
+    $doneN = (int) sl_scalar('SELECT (SELECT COUNT(*) FROM cdb_add_order WHERE sender_id = :u AND is_deleted = 0 AND status_courier IN (8,15) AND order_date >= :y) + (SELECT COUNT(*) FROM cdb_customers_packages WHERE sender_id = :u2 AND status_courier IN (8,15) AND order_date >= :y2)', [':u' => $id, ':y' => $yStart, ':u2' => $id, ':y2' => $yStart]);
+    $readyN = (int) sl_scalar('SELECT (SELECT COUNT(*) FROM cdb_add_order WHERE sender_id = :u AND is_deleted = 0 AND status_courier IN (6,32)) + (SELECT COUNT(*) FROM cdb_customers_packages WHERE sender_id = :u2 AND status_courier IN (6,32))', [':u' => $id, ':u2' => $id]);
+    $wayN = (int) sl_scalar('SELECT (SELECT COUNT(*) FROM cdb_add_order WHERE sender_id = :u AND is_deleted = 0 AND status_courier NOT IN (6,32,8,15,21,12)) + (SELECT COUNT(*) FROM cdb_customers_packages WHERE sender_id = :u2 AND status_courier NOT IN (4,6,32,8,15,21,12))', [':u' => $id, ':u2' => $id]);
+    $act = [];
+    for ($i = 13; $i >= 0; $i--) $act[date('Y-m-d', strtotime("-$i days"))] = 0;
+    foreach (sl_rows('SELECT d, COUNT(*) AS n FROM (SELECT DATE(order_date) AS d FROM cdb_add_order WHERE sender_id = :u AND is_deleted = 0 AND order_date >= CURDATE() - INTERVAL 13 DAY UNION ALL SELECT DATE(order_date) FROM cdb_customers_packages WHERE sender_id = :u2 AND order_date >= CURDATE() - INTERVAL 13 DAY) x GROUP BY d', [':u' => $id, ':u2' => $id]) as $r) {
+        if (isset($act[$r->d])) $act[$r->d] = (int) $r->n;
+    }
+    $tracking = ['items' => []];
+    try {
+        require_once __DIR__ . '/track_console.php';
+        $tracking = sl_trackConsoleData($user, $core, 'all', 8, ['sender' => $id]);
+    } catch (Throwable $e) {
+    }
+    $return += ['avatar' => $avatar, 'first' => trim((string) $u->fname) ?: $name, 'year' => $yearN, 'deliveredYear' => $doneN, 'ready' => $readyN, 'onWay' => $wayN, 'parcelActivity' => $act, 'tracking' => $tracking];
     return $return;
 }
