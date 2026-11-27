@@ -1,0 +1,180 @@
+/* Swift Lane app shell on phones (customers, riders and staff). Loaded by helpers/pwa.php after mobile-app.css.
+   Every block of the web page stays; at phone width it is dressed like the mobile app designs
+   (docs/handover/artifact-source/ControlPanelsMobile*.dc.html): translucent app bar, large title,
+   rounded cards, swipeable rows of tiles and tabs, tables shown as cards, bottom-sheet dialogs and a
+   tab bar with a raised centre button. Also: the install screen and banner (assets/swiftlane/pwa/app.js). */
+
+/* ---------- install screen (all widths: it only opens on phones) ---------- */
+html.pwa-gated, html.pwa-gated body { overflow: hidden; }
+.pwa-gate { position: fixed; inset: 0; z-index: 10050; display: flex; flex-direction: column; overflow-y: auto; background: var(--bg, #f4f3ef);
+  padding: max(28px, env(safe-area-inset-top)) 22px max(24px, env(safe-area-inset-bottom)); animation: pwa-in .28s cubic-bezier(.2,.7,.2,1); }
+.pwa-gate::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 46%; z-index: -1;
+  background: radial-gradient(120% 80% at 50% 0%, color-mix(in srgb, var(--accent, #6d7cf0) 20%, transparent), transparent 70%); }
+.pwa-gate-body { width: 100%; max-width: 440px; margin: auto; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 14px; position: relative; }
+.pwa-gate-icon { width: 88px; height: 88px; border-radius: 24px; box-shadow: 0 14px 34px rgba(20, 20, 30, .22); }
+.pwa-gate-eb { margin-top: 6px; font: 600 12px var(--font); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.pwa-gate h2 { margin: 0; font: 600 30px/1.1 var(--font); letter-spacing: -.03em; color: var(--ink); }
+.pwa-gate-lede { margin: 0; font-size: 16px; line-height: 1.5; color: var(--muted); max-width: 34ch; }
+.pwa-gate-perks { list-style: none; margin: 4px 0 0; padding: 0; width: 100%; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 20px; background: var(--card); overflow: hidden; text-align: left; }
+.pwa-gate-perks li { display: flex; flex-direction: column; padding: 12px 16px; border-top: 1px solid var(--line); }
+.pwa-gate-perks li:first-child { border-top: 0; }
+.pwa-gate-perks b { font-size: 15px; font-weight: 600; color: var(--ink); }
+.pwa-gate-perks span { font-size: 13.5px; color: var(--muted); }
+.pwa-gate-btn { width: 100%; min-height: 56px; margin-top: 6px; border: 0; border-radius: 18px; background: var(--ink); color: var(--inverse, #fff); font: 600 17px var(--font); cursor: pointer;
+  box-shadow: 0 10px 26px rgba(20, 20, 30, .22); transition: transform .15s, opacity .15s; }
+.pwa-gate-btn:active { transform: scale(.98); }
+.pwa-gate-btn:disabled { opacity: .55; box-shadow: none; }
+.pwa-gate-note { margin: 4px 0 0; font-size: 14px; color: var(--muted); }
+.pwa-gate-help { width: 100%; display: flex; flex-direction: column; gap: 8px; }
+.pwa-gate-steps { list-style: none; margin: 4px 0 0; padding: 0; width: 100%; display: flex; flex-direction: column; gap: 8px; text-align: left; }
+.pwa-gate-steps li { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; background: var(--card); border: 1px solid var(--line); font-size: 15px; color: var(--ink); }
+.pwa-gate-st { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.pwa-gate-st svg { color: var(--accent-ink, #2a6df0); }
+.pwa-gate-n { flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--ink); color: var(--inverse, #fff); font: 600 13px var(--font); }
+.pwa-gate-arrow { width: 0; height: 0; margin-top: 8px; border: 12px solid transparent; border-top-color: var(--ink); animation: pwa-bob 1.2s ease-in-out infinite; }
+.pwa-gate-later { margin-top: 10px; min-height: 44px; border: 0; background: transparent; color: var(--muted); font: 500 14px var(--font); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.pwa-gate-done { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.pwa-gate-tick { width: 72px; height: 72px; border-radius: 50%; display: grid; place-items: center; background: #23a26d; color: #fff; font-size: 36px; }
+.pwa-banner { position: fixed; z-index: 10040; left: 10px; right: 10px; top: calc(env(safe-area-inset-top) + 8px); display: flex; align-items: center; gap: 10px; padding: 10px 10px 10px 12px;
+  border-radius: 18px; background: var(--card); border: 1px solid var(--line); box-shadow: 0 12px 30px rgba(20, 20, 30, .18); animation: pwa-drop .3s cubic-bezier(.2,.7,.2,1); }
+.pwa-banner img { border-radius: 10px; flex: none; }
+.pwa-banner .grow { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.pwa-banner b { font-size: 14.5px; }
+.pwa-banner small { font-size: 12.5px; color: var(--muted); }
+.pwa-banner-go { min-height: 38px; padding: 0 16px; border: 0; border-radius: 12px; background: var(--ink); color: var(--inverse, #fff); font: 600 14px var(--font); cursor: pointer; }
+.pwa-banner-x { width: 36px; height: 36px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); font-size: 22px; cursor: pointer; }
+@keyframes pwa-in { from { opacity: 0; transform: translateY(14px); } }
+@keyframes pwa-drop { from { opacity: 0; transform: translateY(-16px); } }
+@keyframes pwa-bob { 50% { transform: translateY(6px); } }
+@keyframes pwa-sheet { from { transform: translateY(100%); } }
+@keyframes pwa-page { from { opacity: 0; transform: translateY(6px); } }
+
+/* ---------- the app look at phone width ---------- */
+@media (max-width: 767px), (max-height: 500px) and (max-width: 950px) and (pointer: coarse) {
+  body[data-mobile-role]:not([data-mobile-role=""]) { -webkit-tap-highlight-color: transparent; overscroll-behavior-y: contain; overflow-x: clip; }
+  html:has(body[data-mobile-role]:not([data-mobile-role=""])) { overflow-x: clip; }
+  body[data-mobile-role]:not([data-mobile-role=""]) .pf-kpi-score { grid-column: 1 / -1; }
+  body[data-mobile-role]:not([data-mobile-role=""]) :is(input, select, textarea) { font-size: 16px; } /* no iOS zoom on focus */
+
+  /* app bar: sticky, translucent, safe-area aware */
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-top { position: sticky; top: 0; z-index: 40; min-height: 56px;
+    padding: calc(env(safe-area-inset-top) + 8px) 14px 8px; border-bottom: 1px solid var(--line);
+    background: color-mix(in srgb, var(--bg) 88%, transparent); -webkit-backdrop-filter: saturate(1.6) blur(16px); backdrop-filter: saturate(1.6) blur(16px); }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-top .sl-btn:not(.sl-ib) { display: none; } /* the primary action lives in the page / tab bar */
+
+  /* page */
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-main { border: 0; border-radius: 0; padding: 0; background: var(--bg); box-shadow: none; animation: pwa-page .22s ease-out; }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-main > .sl-wrap { padding: 16px 14px calc(var(--app-nav-height, 76px) + 24px); gap: 16px; }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-wrap > :is(.sl-search, form.sl-search) { flex: none; } /* a search box in the page column keeps its height */
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-head { flex-direction: column; align-items: stretch; gap: 12px; }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-title { font-size: 26px !important; font-weight: 600; letter-spacing: -.02em; line-height: 1.15; }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-lede { font-size: 14.5px; line-height: 1.5; }
+  /* header actions: one swipeable row of pills instead of wrapped buttons */
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-head > .row,
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-head > div:last-child:not(:first-child) { flex-wrap: nowrap; overflow-x: auto; margin: 0 -14px; padding: 2px 14px; scrollbar-width: none; scroll-snap-type: x proximity; }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-head > .row > *, body[data-mobile-role]:not([data-mobile-role=""]) .sl-head > div:last-child:not(:first-child) > * { flex: none; scroll-snap-align: start; }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-head .sl-btn { min-height: 44px; border-radius: 14px; }
+
+  /* cards: the design's 20px radius, quiet borders, tap feedback */
+  body[data-mobile-role]:not([data-mobile-role=""]) :is(.sl-card, .ovh-card, .ov-card, .pf-kpi, .pf-panel, .pf-card, .au-sug-card, .cb-mode, .pa-match) { border-radius: 20px; }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-card { padding: 16px; box-shadow: none; }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-card.flush { padding: 0; overflow: hidden; }
+  body[data-mobile-role]:not([data-mobile-role=""]) :is(a.ovh-card, a.ov-card, a.np-c, .pa-row, .ops-row):active { transform: scale(.985); }
+  body[data-mobile-role]:not([data-mobile-role=""]) :is(a.ovh-card, a.ov-card, a.np-c) { transition: transform .12s; }
+
+  /* tabs and segmented filters: one swipeable line */
+  body[data-mobile-role]:not([data-mobile-role=""]) :is(.sl-seg, .swl-ops-tabs, .cs-tabs, .sl-tabs, .ix-carriers) { flex-wrap: nowrap !important; overflow-x: auto; scrollbar-width: none; max-width: 100%; }
+  body[data-mobile-role]:not([data-mobile-role=""]) :is(.sl-seg, .swl-ops-tabs, .cs-tabs, .sl-tabs, .ix-carriers) > * { flex: none; white-space: nowrap; }
+  body[data-mobile-role]:not([data-mobile-role=""]) :is(.sl-seg, .swl-ops-tabs, .cs-tabs, .sl-tabs)::-webkit-scrollbar { display: none; }
+
+  /* rows of statistic tiles: two per row like the design's attention tiles */
+  body[data-mobile-role]:not([data-mobile-role=""]) :is(.grid.cols4, .grid.cols3, .pa-stats, .pf-kpis, .wd-stats) { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 10px; }
+  body[data-mobile-role]:not([data-mobile-role=""]) :is(.pa-stats, .pf-kpis) > * { padding: 14px; }
+  body[data-mobile-role]:not([data-mobile-role=""]) .ovh-big { font-size: 26px; }
+
+  /* tables become cards (labels added by assets/swiftlane/pwa/app-tables.js) */
+  body[data-mobile-role]:not([data-mobile-role=""]) table.pwa-cards { display: block; border: 0; background: transparent; }
+  body[data-mobile-role]:not([data-mobile-role=""]) table.pwa-cards thead { display: none; }
+  body[data-mobile-role]:not([data-mobile-role=""]) table.pwa-cards tbody { display: flex; flex-direction: column; gap: 10px; padding: 10px; }
+  body[data-mobile-role]:not([data-mobile-role=""]) table.pwa-cards tr { display: flex; flex-direction: column; padding: 4px 14px; border: 1px solid var(--line); border-radius: 18px; background: var(--card); }
+  body[data-mobile-role]:not([data-mobile-role=""]) table.pwa-cards tr:active { background: var(--hover); }
+  body[data-mobile-role]:not([data-mobile-role=""]) table.pwa-cards td { width: auto !important; max-width: none !important; position: static !important; box-shadow: none !important; display: block; overflow: hidden; min-height: 40px; padding: 9px 0; border: 0; border-top: 1px solid var(--line); text-align: right; white-space: normal; background: transparent !important; }
+  body[data-mobile-role]:not([data-mobile-role=""]) table.pwa-cards td:first-child { border-top: 0; text-align: left; font-size: 15px; }
+  body[data-mobile-role]:not([data-mobile-role=""]) table.pwa-cards td:first-child::before { display: none; }
+  body[data-mobile-role]:not([data-mobile-role=""]) table.pwa-cards td::before { content: attr(data-label); float: left; max-width: 42%; margin-right: 12px; text-align: left; color: var(--muted); font-size: 13px; font-weight: 500; }
+  body[data-mobile-role]:not([data-mobile-role=""]) table.pwa-cards td[data-label=""]::before { display: none; }
+  body[data-mobile-role]:not([data-mobile-role=""]) table.pwa-cards td:empty { display: none; }
+  body[data-mobile-role]:not([data-mobile-role=""]) table.pwa-cards td > * { max-width: 100%; }
+  body[data-mobile-role]:not([data-mobile-role=""]) table.pwa-cards td[colspan] { justify-content: center; text-align: center; }
+  body[data-mobile-role]:not([data-mobile-role=""]) table.pwa-cards td[colspan]::before { display: none; }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-tw:has(table.pwa-cards), body[data-mobile-role]:not([data-mobile-role=""]) .table-responsive:has(table.pwa-cards) { overflow: visible; border: 0; }
+  body[data-mobile-role]:not([data-mobile-role=""]) table.pwa-cards tr { position: relative; }
+  body[data-mobile-role]:not([data-mobile-role=""]) table.pwa-cards td.pwa-check { position: absolute !important; top: 10px; right: 12px; min-height: 0; padding: 4px; border: 0; z-index: 1; }
+  body[data-mobile-role]:not([data-mobile-role=""]) table.pwa-cards td.pwa-check::before,
+  body[data-mobile-role]:not([data-mobile-role=""]) table.pwa-cards td.pwa-title::before,
+  body[data-mobile-role]:not([data-mobile-role=""]) table.pwa-cards td.pwa-act::before { display: none; }
+  body[data-mobile-role]:not([data-mobile-role=""]) table.pwa-cards td.pwa-title { order: -1; border-top: 0; padding: 12px 36px 8px 0; text-align: left; font-size: 16px; font-weight: 600; }
+  body[data-mobile-role]:not([data-mobile-role=""]) table.pwa-cards td.pwa-title + td, body[data-mobile-role]:not([data-mobile-role=""]) table.pwa-cards td.pwa-check + td.pwa-title + td { border-top: 1px solid var(--line); }
+  body[data-mobile-role]:not([data-mobile-role=""]) table.pwa-cards td.pwa-act { order: 9; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
+  body[data-mobile-role]:not([data-mobile-role=""]) table.pwa-cards td:not(.pwa-title) :is(.row, .sl-cell, .col) { justify-content: flex-end; align-items: flex-end; text-align: right; }
+  body[data-mobile-role]:not([data-mobile-role=""]) table.pwa-cards td:not(.pwa-title) .sl-cell { display: inline-flex; }
+  body[data-mobile-role]:not([data-mobile-role=""]) table.pwa-cards td .sub { display: block; }
+  body[data-mobile-role]:not([data-mobile-role=""]) table.pwa-cards td.pwa-act { display: flex !important; justify-content: flex-end !important; }
+  body[data-mobile-role]:not([data-mobile-role=""]) table.pwa-cards td.pwa-act > * { margin: 0 !important; }
+  body[data-mobile-role]:not([data-mobile-role=""]) table.pwa-cards td:not(.pwa-title) :is(.row, .col) > * { align-self: flex-end; }
+  /* tables left as tables still scroll sideways smoothly */
+  body[data-mobile-role]:not([data-mobile-role=""]) :is(.sl-tw, .table-responsive) { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* dialogs open as bottom sheets */
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-dialog:not([hidden]) { align-items: flex-end; padding: 0; }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-dialog .sl-modal { width: 100%; max-width: none; max-height: 92dvh; overflow-y: auto; margin: 0;
+    border-radius: 24px 24px 0 0; padding: 22px 16px calc(16px + env(safe-area-inset-bottom)); animation: pwa-sheet .26s cubic-bezier(.2,.7,.2,1); }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-dialog .sl-modal::before { content: ''; display: block; width: 40px; height: 5px; margin: -10px auto 8px; border-radius: 3px; background: var(--line-2, var(--line)); flex: none; }
+
+  /* forms: thumb-sized controls */
+  body[data-mobile-role]:not([data-mobile-role=""]) :is(.sl-in, .sl-sel select, .form-control, .form-select) { min-height: 48px; border-radius: 14px; }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-btn { min-height: 46px; border-radius: 14px; }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-btn.sm { min-height: 38px; border-radius: 12px; }
+
+  /* tab bar: frosted, with the centre item raised like the design's action button */
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-mobile-nav { background: color-mix(in srgb, var(--panel, var(--card)) 90%, transparent); -webkit-backdrop-filter: saturate(1.6) blur(18px); backdrop-filter: saturate(1.6) blur(18px); }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-mobile-nav > .is-fab { position: relative; color: var(--ink); }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-mobile-nav > .is-fab::before { content: ''; position: absolute; top: -22px; left: 50%; width: 52px; height: 52px; transform: translateX(-50%);
+    border-radius: 18px; background: var(--ink); box-shadow: 0 8px 20px rgba(20, 20, 30, .28); transition: transform .15s; opacity: 1 !important; scale: 1 !important; }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-mobile-nav > .is-fab:active::before { transform: translateX(-50%) scale(.94); }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-mobile-nav > .is-fab .ic { position: relative; z-index: 1; margin-top: -26px; margin-bottom: 8px; color: var(--inverse, #fff) !important; transform: none !important; }
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-mobile-nav > .is-fab[aria-current="page"]::before { background: var(--accent-ink, var(--ink)); }
+
+  /* the full menu (Menu tab) slides up as a sheet */
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-side { border-radius: 24px 24px 0 0; }
+  /* printing toolbars and wide-only furniture */
+  body[data-mobile-role]:not([data-mobile-role=""]) .sl-rail { display: none; }
+}
+/* ---------- customer home on phones ---------- */
+@media (max-width: 767px), (max-height: 500px) and (max-width: 950px) and (pointer: coarse) {
+  /* King (customer care chat, views/sl/inc/king_chat.php) on the dashboard: a compact chat bar, not a hero card.
+     One line with the latest news, a small Chat button; tapping anywhere opens the full chat as before. */
+  body[data-mobile-role="customer"] .kc[data-mode="inline"] .kc-teaser { display: grid !important; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 2px 12px;
+    padding: 10px 10px 10px 12px; min-height: 0; border-radius: 18px; box-shadow: none; }
+  body[data-mobile-role="customer"] .kc[data-mode="inline"] .kc-teaser .kc-teaser-top { display: contents; }
+  body[data-mobile-role="customer"] .kc[data-mode="inline"] .kc-teaser .kc-av { grid-row: 1 / span 2; width: 40px; height: 40px; font-size: 17px; }
+  body[data-mobile-role="customer"] .kc[data-mode="inline"] .kc-teaser .kc-who { grid-column: 2; display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+  body[data-mobile-role="customer"] .kc[data-mode="inline"] .kc-teaser .kc-who b { font-size: 15px; }
+  body[data-mobile-role="customer"] .kc[data-mode="inline"] .kc-teaser .kc-who small { display: none; } /* room for King's news line */
+  body[data-mobile-role="customer"] .kc[data-mode="inline"] .kc-teaser .kc-teaser-hello { display: none; }
+  body[data-mobile-role="customer"] .kc[data-mode="inline"] .kc-teaser .kc-teaser-lead { grid-column: 2; font-size: 13.5px; line-height: 1.35; -webkit-line-clamp: 1; color: var(--muted); }
+  body[data-mobile-role="customer"] .kc[data-mode="inline"] .kc-teaser .kc-teaser-tags { display: none; }
+  body[data-mobile-role="customer"] .kc[data-mode="inline"] .kc-teaser .kc-teaser-go { grid-column: 3; grid-row: 1 / span 2; min-height: 40px; padding: 0 14px; border-radius: 12px; font-size: 14px; }
+  body[data-mobile-role="customer"] .kc[data-mode="inline"] .kc-teaser .kc-badge { grid-column: 3; grid-row: 1; justify-self: end; align-self: start; margin: -16px -6px 0 0; }
+
+  /* fingerprint sign-in offer (views/sl/inc/passkey_manage.php): a bottom sheet over a dimmed page, not a card floating on the content */
+  body[data-mobile-role]:not([data-mobile-role=""]) .pk-offer:not([hidden]) { left: 0; right: 0; bottom: 0; z-index: 80; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px;
+    padding: 22px 18px calc(18px + env(safe-area-inset-bottom)); border: 0; border-radius: 24px 24px 0 0; box-shadow: 0 0 0 100vmax rgba(14, 14, 18, .45); animation: pwa-sheet .26s cubic-bezier(.2,.7,.2,1); }
+  body[data-mobile-role]:not([data-mobile-role=""]) .pk-offer::before { content: ''; grid-column: 1 / -1; justify-self: center; width: 40px; height: 5px; margin: -10px 0 -4px; border-radius: 3px; background: var(--line-2, var(--line)); }
+  body[data-mobile-role]:not([data-mobile-role=""]) .pk-offer .grow { min-width: 0; }
+  body[data-mobile-role]:not([data-mobile-role=""]) .pk-offer .row { grid-column: 1 / -1; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  body[data-mobile-role]:not([data-mobile-role=""]) .pk-offer .row .sl-btn { min-height: 50px; border-radius: 14px; font-size: 15px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pwa-gate, .pwa-banner, .pwa-gate-arrow, body .sl-main, body .sl-dialog .sl-modal { animation: none !important; }
+}

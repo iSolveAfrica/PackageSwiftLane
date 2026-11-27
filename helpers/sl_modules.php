@@ -58,6 +58,7 @@ function sl_modules(): array
         // Customer portal only
         'portal_signup' => ['label' => 'Customer sign-up', 'group' => 'portal', 'desc' => 'New customers create their own account', 'nav' => [], 'customer' => true, 'api' => [], 'jobs' => []],
         'portal_track'  => ['label' => 'Public tracking', 'group' => 'portal', 'desc' => 'Track a parcel without signing in', 'nav' => ['track'], 'customer' => true, 'api' => ['tracking'], 'jobs' => []],
+        'pwa_install'   => ['label' => 'Install the phone app', 'group' => 'portal', 'desc' => 'On phones, everyone (customers, riders, staff) gets a full-screen prompt to install the Swift Lane app before using the site in the browser', 'nav' => [], 'customer' => true, 'api' => [], 'jobs' => []],
         'portal_quote'  => ['label' => 'Quote calculator', 'group' => 'portal', 'desc' => 'Price a shipment before booking', 'nav' => [], 'customer' => true, 'api' => [], 'jobs' => []],
     ];
 }

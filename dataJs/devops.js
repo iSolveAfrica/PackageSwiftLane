@@ -116,7 +116,7 @@
         });
         $('[data-pane]').prop('hidden', true);
         $('#dv_p_' + tab).prop('hidden', false);
-        if (location.hash !== '#' + tab) { history.replaceState(null, '', '#' + tab); }
+        if (location.hash !== '#' + tab) { history.replaceState(null, '', location.pathname + location.search + '#' + tab); }
         load(tab);
         schedule();
     }
