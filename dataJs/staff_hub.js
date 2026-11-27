@@ -364,6 +364,78 @@
     });
 
     // --------------------------------------------------------- performance
+    // Visual view: team tiles, output per day, score ranking, one card per person; the full table stays below.
+    function ini(n) { return String(n || '?').split(/\s+/).filter(Boolean).slice(0, 2).map(function (w) { return w[0]; }).join('').toUpperCase(); }
+    function tone(sc) { return sc === null || sc === undefined ? 'none' : (sc >= 75 ? 'ok' : (sc >= 50 ? 'warn' : 'bad')); }
+    function ring(sc, size) {
+        var v = sc === null || sc === undefined ? 0 : Math.max(0, Math.min(100, sc));
+        return '<span class="pf-ring t-' + tone(sc) + '" style="--v:' + v + ';--s:' + (size || 64) + 'px" role="img" aria-label="Score ' + (sc === null ? 'not enough data' : sc + ' of 100') + '"><b>' + (sc === null ? '—' : sc) + '</b></span>';
+    }
+    function meter(label, pct, sub) {
+        var has = pct !== null && pct !== undefined;
+        return '<div class="pf-m"><div class="pf-m-h"><span>' + esc(label) + '</span><b>' + (has ? pct + '%' : '—') + '</b></div><div class="pf-m-bar t-' + (has ? tone(pct) : 'none') + '"><i style="width:' + (has ? pct : 0) + '%"></i></div>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</div>';
+    }
+    function fmtDay(d) { var x = new Date(d + 'T12:00:00'); return x.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' }); }
+    function perfRender(r) {
+        var rows = r.rows || [], daily = r.daily || [];
+        if (!rows.length) { $('#pf_view').html('<div class="pf-empty">No staff in this selection.</div>'); return; }
+        var scored = rows.filter(function (p) { return p.score !== null; });
+        var avg = scored.length ? Math.round(scored.reduce(function (a, p) { return a + p.score; }, 0) / scored.length) : null;
+        var sum = function (k) { return rows.reduce(function (a, p) { return a + (+p[k] || 0); }, 0); };
+        var sh = sum('shipments'), pk = sum('packages'), dv = sum('deliveries'), out = sh + pk + dv;
+        var td = sum('tasks_done'), tOn = sum('tasks_on_time'), tDue = sum('tasks_with_due'), tOver = sum('tasks_overdue');
+        var shifts = sum('shifts'), att = sum('attended'), onT = sum('on_time'), hrs = sum('hours');
+        var pct = function (a, b) { return b ? Math.round(100 * a / b) : null; };
+        var seg = function (a) { return out ? (100 * a / out).toFixed(1) : 0; };
+        var html = '<div class="pf-kpis">'
+            + '<div class="pf-kpi pf-kpi-score">' + ring(avg, 84) + '<div class="pf-kpi-txt"><span class="pf-eb">Team score</span><b class="pf-word">' + (avg === null ? 'Not enough data' : (avg >= 75 ? 'Strong' : (avg >= 50 ? 'Fair' : 'Needs attention'))) + '</b><span class="pf-sub">' + scored.length + ' of ' + rows.length + ' people scored</span></div></div>'
+            + '<div class="pf-kpi"><span class="pf-eb">Output</span><b class="pf-big">' + OPS.num(out) + '</b><div class="pf-mix" role="img" aria-label="Shipments ' + sh + ', packages ' + pk + ', deliveries ' + dv + '"><i class="c-sh" style="width:' + seg(sh) + '%" title="Shipments: ' + sh + '"></i><i class="c-pk" style="width:' + seg(pk) + '%" title="Packages: ' + pk + '"></i><i class="c-dv" style="width:' + seg(dv) + '%" title="Deliveries: ' + dv + '"></i></div>'
+            + '<div class="pf-leg"><span><i class="c-sh"></i>' + OPS.num(sh) + ' shipments</span><span><i class="c-pk"></i>' + OPS.num(pk) + ' packages</span><span><i class="c-dv"></i>' + OPS.num(dv) + ' deliveries</span></div></div>'
+            + '<div class="pf-kpi"><span class="pf-eb">Tasks</span><b class="pf-big">' + OPS.num(td) + ' <small>done</small></b>' + meter('On time', pct(tOn, tDue), tOver ? tOver + ' overdue now' : 'Nothing overdue') + '</div>'
+            + '<div class="pf-kpi"><span class="pf-eb">Attendance</span><b class="pf-big">' + OPS.num(att) + '<small> / ' + OPS.num(shifts) + ' shifts</small></b>' + meter('Punctual', pct(onT, att), OPS.num(hrs, 1) + ' hours worked') + '</div>'
+            + '</div>';
+        // output per day (stacked bars) + score ranking
+        var peak = Math.max(1, Math.max.apply(null, daily.map(function (d) { return d.shipments + d.packages + d.deliveries; })));
+        var bars = daily.map(function (d, i) {
+            var t = d.shipments + d.packages + d.deliveries;
+            return '<div class="pf-col' + (i === daily.length - 1 ? ' now' : '') + '" tabindex="0" data-tip="' + esc(fmtDay(d.day) + ': ' + t + ' total · ' + d.shipments + ' shipments · ' + d.packages + ' packages · ' + d.deliveries + ' deliveries') + '">'
+                + '<div class="pf-stack" style="height:' + Math.max(t ? 4 : 2, Math.round(100 * t / peak)) + '%">'
+                + (t ? '<i class="c-dv" style="flex:' + d.deliveries + '"></i><i class="c-pk" style="flex:' + d.packages + '"></i><i class="c-sh" style="flex:' + d.shipments + '"></i>' : '') + '</div></div>';
+        }).join('');
+        var step = Math.max(1, Math.ceil(daily.length / 7));
+        var axis = daily.map(function (d, i) { return '<span>' + (i % step === 0 || i === daily.length - 1 ? esc(new Date(d.day + 'T12:00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short' })) : '') + '</span>'; }).join('');
+        var rank = rows.slice().sort(function (a, b) { return (b.score === null ? -1 : b.score) - (a.score === null ? -1 : a.score) || b.output - a.output; });
+        var topOut = Math.max(1, Math.max.apply(null, rows.map(function (p) { return +p.output || 0; })));
+        html += '<div class="pf-row2"><section class="pf-panel"><div class="pf-ph"><h3>Output per day</h3><span class="pf-leg"><span><i class="c-sh"></i>Shipments</span><span><i class="c-pk"></i>Packages</span><span><i class="c-dv"></i>Deliveries</span></span></div>'
+            + '<div class="pf-chart" role="img" aria-label="Team output per day">' + bars + '</div><div class="pf-axis">' + axis + '</div></section>'
+            + '<section class="pf-panel"><div class="pf-ph"><h3>Ranking</h3><span class="pf-sub">by score, then output</span></div><ol class="pf-rank">'
+            + rank.map(function (p, i) {
+                return '<li><span class="pf-pos' + (i < 3 ? ' top' : '') + '">' + (i + 1) + '</span>' + avatar(p.name, p.avatar).replace('class="pf-av"', 'class="pf-av sm"') + '<span class="pf-rn"><b>' + esc(p.name) + '</b><span class="pf-rbar"><i style="width:' + Math.round(100 * (+p.output || 0) / topOut) + '%"></i></span></span><span class="pf-rs t-' + tone(p.score) + '">' + (p.score === null ? '—' : p.score) + '</span></li>';
+            }).join('') + '</ol></section></div>';
+        // one card per person
+        html += '<div class="pf-cards">' + rank.map(function (p) {
+            var o = (+p.shipments || 0) + (+p.packages || 0) + (+p.deliveries || 0), s2 = function (a) { return o ? (100 * a / o).toFixed(1) : 0; };
+            return '<article class="pf-card"><div class="pf-ch">' + avatar(p.name, p.avatar) + '<div class="pf-who"><b>' + esc(p.name) + '</b><span>' + esc(roleLabel(p.job_role) + (p.branch ? ' · ' + p.branch : '')) + '</span></div>' + ring(p.score, 56) + '</div>'
+                + '<div class="pf-out"><div class="pf-out-h"><span>Output</span><b>' + OPS.num(o) + '</b></div><div class="pf-mix sm"><i class="c-sh" style="width:' + s2(p.shipments) + '%" title="Shipments: ' + p.shipments + '"></i><i class="c-pk" style="width:' + s2(p.packages) + '%" title="Packages: ' + p.packages + '"></i><i class="c-dv" style="width:' + s2(p.deliveries) + '%" title="Deliveries: ' + p.deliveries + '"></i></div>'
+                + '<div class="pf-nums"><span><b>' + OPS.num(p.shipments) + '</b> shipments</span><span><b>' + OPS.num(p.packages) + '</b> packages</span><span><b>' + OPS.num(p.deliveries) + '</b> deliveries</span></div></div>'
+                + '<div class="pf-ms">' + meter('Tasks on time', p.on_time_pct, OPS.num(p.tasks_done) + ' done' + (p.tasks_overdue ? ' · ' + p.tasks_overdue + ' overdue' : '')) + meter('Attendance', p.attendance_pct, OPS.num(p.attended) + ' / ' + OPS.num(p.shifts) + ' shifts')
+                + meter('Punctual', p.punctual_pct, OPS.num(p.hours, 1) + ' h worked') + '<div class="pf-m"><div class="pf-m-h"><span>Per hour</span><b>' + (p.per_hour === null ? '—' : p.per_hour) + '</b></div><small>output per hour on shift</small></div></div>'
+                + (p.tasks_overdue ? '<div class="pf-flag">' + OPS.chip(p.tasks_overdue + ' task' + (p.tasks_overdue > 1 ? 's' : '') + ' overdue', 'bad') + '</div>' : '')
+                + '</article>';
+        }).join('') + '</div>';
+        $('#pf_view').html(html);
+        $('#pf_rows').html(OPS.table([
+            { label: 'Name', render: function (p) { return '<strong>' + esc(p.name) + '</strong><div class="swl-ops-small swl-ops-muted">' + esc(roleLabel(p.job_role) + (p.branch ? ' · ' + p.branch : '')) + '</div>'; } },
+            { label: 'Shipments', render: function (p) { return OPS.num(p.shipments); } }, { label: 'Packages', render: function (p) { return OPS.num(p.packages); } },
+            { label: 'Deliveries', render: function (p) { return OPS.num(p.deliveries); } },
+            { label: 'Tasks', render: function (p) { return OPS.num(p.tasks_done) + (p.tasks_overdue ? ' ' + OPS.chip(p.tasks_overdue + ' overdue', 'bad') : ''); } },
+            { label: 'On time', render: function (p) { return p.on_time_pct === null ? '—' : p.on_time_pct + '%'; } },
+            { label: 'Shifts', render: function (p) { return OPS.num(p.attended) + ' / ' + OPS.num(p.shifts); } },
+            { label: 'Punctual', render: function (p) { return p.punctual_pct === null ? '—' : p.punctual_pct + '%'; } },
+            { label: 'Hours', render: function (p) { return OPS.num(p.hours, 1); } }, { label: 'Per hour', render: function (p) { return p.per_hour === null ? '—' : p.per_hour; } },
+            { label: 'Score', render: function (p) { return p.score === null ? '—' : OPS.chip(p.score, p.score >= 75 ? 'ok' : (p.score >= 50 ? 'warn' : 'bad')); } }
+        ], rows, 'No staff in this selection.'));
+    }
     function performance() {
         if (!$('#pf_rows').length) {
             var t = new Date(), f = new Date(); f.setDate(t.getDate() - 29);
@@ -371,28 +443,56 @@
                 + '<label for="pr_to" class="sr-only">To</label><input type="date" id="pr_to" class="form-control" value="' + t.toISOString().slice(0, 10) + '">'
                 + '<label for="pr_branch" class="sr-only">Branch</label>' + OPS.select('pr_branch', branchOpts(M.is_admin ? 'All branches' : 'My branches'), 0)
                 + '<button type="button" class="btn btn-sm btn-secondary pr-exp" data-f="xlsx">Excel</button><button type="button" class="btn btn-sm btn-secondary pr-exp" data-f="pdf">PDF</button><button type="button" class="btn btn-sm btn-secondary pr-exp" data-f="csv">CSV</button></div>'
-                + '<div id="pf_rows"></div><p class="swl-ops-muted mt-3">Score (0-100): tasks done on time 35%, shift attendance 25%, punctuality 15%, output compared with the busiest person in the same role 25%. Parts without data are left out.</p>');
+                + '<div id="pf_view" class="pf"><p class="swl-ops-muted">Loading…</p></div>'
+                + '<details class="pf-details"><summary>All figures</summary><div id="pf_rows"></div></details>'
+                + '<p class="swl-ops-muted mt-3">Score (0-100): tasks done on time 35%, shift attendance 25%, punctuality 15%, output compared with the busiest person in the same role 25%. Parts without data are left out.</p>');
         }
-        api('performance', { from: $('#pr_from').val(), to: $('#pr_to').val(), branch_id: $('#pr_branch').val() }).then(function (r) {
-            $('#pf_rows').html(OPS.table([
-                { label: 'Name', render: function (p) { return '<strong>' + esc(p.name) + '</strong><div class="swl-ops-small swl-ops-muted">' + esc(roleLabel(p.job_role) + (p.branch ? ' · ' + p.branch : '')) + '</div>'; } },
-                { label: 'Shipments', render: function (p) { return OPS.num(p.shipments); } }, { label: 'Packages', render: function (p) { return OPS.num(p.packages); } },
-                { label: 'Deliveries', render: function (p) { return OPS.num(p.deliveries); } },
-                { label: 'Tasks', render: function (p) { return OPS.num(p.tasks_done) + (p.tasks_overdue ? ' ' + OPS.chip(p.tasks_overdue + ' overdue', 'bad') : ''); } },
-                { label: 'On time', render: function (p) { return p.on_time_pct === null ? '—' : p.on_time_pct + '%'; } },
-                { label: 'Shifts', render: function (p) { return OPS.num(p.attended) + ' / ' + OPS.num(p.shifts); } },
-                { label: 'Punctual', render: function (p) { return p.punctual_pct === null ? '—' : p.punctual_pct + '%'; } },
-                { label: 'Hours', render: function (p) { return OPS.num(p.hours, 1); } }, { label: 'Per hour', render: function (p) { return p.per_hour === null ? '—' : p.per_hour; } },
-                { label: 'Score', render: function (p) { return p.score === null ? '—' : OPS.chip(p.score, p.score >= 75 ? 'ok' : (p.score >= 50 ? 'warn' : 'bad')); } }
-            ], r.rows, 'No staff in this selection.'));
-        });
+        api('performance', { from: $('#pr_from').val(), to: $('#pr_to').val(), branch_id: $('#pr_branch').val() }).then(perfRender);
     }
+    // hover / focus tooltip for the output chart
+    var pfTip = null;
+    $(document).on('mouseenter focus', '.pf-col', function () {
+        if (!pfTip) { pfTip = $('<div class="pf-tip" role="status"></div>').appendTo('body'); }
+        var r = this.getBoundingClientRect();
+        pfTip.text($(this).attr('data-tip')).show();
+        var w = pfTip.outerWidth(), h = pfTip.outerHeight();
+        pfTip.css({ left: Math.max(8, Math.min(window.innerWidth - w - 8, r.left + r.width / 2 - w / 2)), top: Math.max(8, r.top - h - 8) });
+    });
+    $(document).on('mouseleave blur', '.pf-col', function () { if (pfTip) { pfTip.hide(); } });
     $(document).on('change', '#pr_from, #pr_to, #pr_branch', performance);
     $(document).on('click', '.pr-exp', function () {
         OPS.download(URL + '?' + $.param({ action: 'export_performance', format: $(this).data('f'), from: $('#pr_from').val(), to: $('#pr_to').val(), branch_id: $('#pr_branch').val() }));
     });
 
     // ------------------------------------------------------------ activity
+    // Who: profile photo, or initials on a colour picked from the name. What: an icon for the kind of action.
+    var AV_TONES = ['#6d7cf0', '#2fae8a', '#e39a4a', '#b0466e', '#2a9bc4', '#8a6df0', '#c88a12', '#5b8c3a'];
+    function avatar(name, url) {
+        var n = String(name || 'System'), h = 0;
+        for (var i = 0; i < n.length; i++) { h = (h * 31 + n.charCodeAt(i)) >>> 0; }
+        if (url) { return '<span class="pf-av" role="img" aria-label="' + esc(n) + '" style="background-image:url(\'' + encodeURI(url).replace(/'/g, '%27') + '\')"></span>'; }
+        return '<span class="pf-av" aria-hidden="true" style="background:' + AV_TONES[h % AV_TONES.length] + '">' + esc(ini(n)) + '</span>';
+    }
+    function actIcon(a) {
+        var v = String(a.verb || '').toLowerCase(), m = String(a.module || '').toLowerCase(), t = (String(a.action_label || '') + ' ' + v).toLowerCase();
+        if (a.outcome && a.outcome !== 'ok' && a.outcome !== 'success') { return ['i-alert', 'delete']; }
+        if (/skip|password|passkey|permission|role/.test(t) || m === 'security') { return ['i-shield', 'security']; }
+        if (v === 'login' || /sign(ed)? in|log ?in/.test(t)) { return ['i-key', 'login']; }
+        if (v === 'logout' || /sign(ed)? out|log ?out/.test(t)) { return ['i-logout', 'login']; }
+        if (v === 'delete' || /delet|cancel|remov|void/.test(t)) { return ['i-trash', 'delete']; }
+        if (v === 'print' || /print|label|waybill/.test(t)) { return ['i-print', 'print']; }
+        if (/pay|invoice|charge|refund|commission/.test(t) || m === 'finance' || m === 'billing') { return ['i-dollar', 'money']; }
+        if (v === 'notify' || /send|sent|whatsapp|sms|e-?mail|notif/.test(t)) { return ['i-send', 'notify']; }
+        if (v === 'pickup' || /pick ?up|hand(ed)? ?over|deliver/.test(t)) { return ['i-truck', 'move']; }
+        if (/transfer|move|consolidat/.test(t) || m === 'consolidations') { return ['i-layers', 'move']; }
+        if (/export|download/.test(t)) { return ['i-download', 'print']; }
+        if (/upload|import|attach/.test(t)) { return ['i-upload', 'update']; }
+        if (v === 'create' || /creat|add|regist|raised|new /.test(t)) { return ['i-plus', 'create']; }
+        if (v === 'view' || /view|open|search/.test(t)) { return ['i-eye', 'print']; }
+        if (m === 'automations') { return ['i-bolt', 'update']; }
+        if (m === 'settings') { return ['i-cog', 'update']; }
+        return ['i-edit', 'update'];
+    }
     function activity() {
         if (!$('#ac_rows').length) {
             body('activity').html('<div class="swl-ops-toolbar"><label for="av_branch" class="sr-only">Branch</label>' + OPS.select('av_branch', branchOpts(M.is_admin ? 'All staff' : 'My branches'), 0)
@@ -401,8 +501,9 @@
                 : api('staff').then(function (r) { staffCache = r.rows; $('#av_user_box').html('<label for="av_user" class="sr-only">Person</label>' + OPS.select('av_user', [[0, 'Everyone']].concat(r.rows.map(function (u) { return [u.id, u.name]; })), 0)); }, function () {});
         }
         api('activity', { branch_id: $('#av_branch').val(), user_id: $('#av_user').val() || 0, q: $('#av_q').val() }).then(function (r) {
-            $('#ac_rows').html(OPS.table([{ key: 'created_at', label: 'When' }, { label: 'Who', render: function (a) { return esc(a.actor_name) + '<div class="swl-ops-small swl-ops-muted">' + esc(a.role_name || '') + '</div>'; } },
-                { label: 'What', render: function (a) { return '<strong>' + esc(a.action_label) + '</strong><div class="swl-ops-small">' + esc(a.summary || '') + '</div>'; } },
+            $('#ac_rows').html(OPS.table([{ key: 'created_at', label: 'When' }, { label: 'Who', render: function (a) {
+                    return '<div class="ac-who">' + avatar(a.actor_name, a.avatar) + '<div><strong>' + esc(a.actor_name || 'System') + '</strong><div class="swl-ops-small swl-ops-muted">' + esc(a.role_name || '') + '</div></div></div>'; } },
+                { label: 'What', render: function (a) { var ic = actIcon(a); return '<div class="ac-what"><span class="ac-ic t-' + ic[1] + '" title="' + esc(a.verb || '') + '"><i class="ic ic-sm ' + ic[0] + '" aria-hidden="true"></i></span><div><strong>' + esc(a.action_label) + '</strong><div class="swl-ops-small">' + esc(a.summary || '') + '</div></div></div>'; } },
                 { label: 'Record', render: function (a) { return esc(a.entity_label || ''); } },
                 { label: 'Result', render: function (a) { return a.outcome && a.outcome !== 'ok' && a.outcome !== 'success' ? OPS.chip(a.outcome, 'bad') : ''; } }, { key: 'ip', label: 'IP' }], r.rows, 'No activity found.'));
         });

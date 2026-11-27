@@ -26,22 +26,12 @@
       });
     });
     dock.querySelector('.sl-shortcuts-hint').hidden = saved.length > 0;
-    document.querySelectorAll('.sl-shortcut-pin').forEach(function (button) {
-      var on = saved.includes(button.dataset.shortcutId); button.setAttribute('aria-pressed', String(on));
-      button.setAttribute('aria-label', (on ? 'Remove' : 'Pin') + ' ' + button.dataset.shortcutLabel + ' shortcut');
-      button.title = on ? 'Remove shortcut' : 'Add shortcut'; button.textContent = on ? '−' : '+';
-    });
   }
   function add(id) { if (!byId.has(id) || saved.includes(id) || saved.length >= 8) return; saved.push(id); persist(); render(); }
   links.forEach(function (link) {
-    var id = link.dataset.shortcutId, label = link.querySelector('span')?.textContent?.trim() || id;
+    var id = link.dataset.shortcutId; // menu items are pinned by dragging them onto the rail (no + buttons)
     link.draggable = true;
     link.addEventListener('dragstart', function (event) { event.dataTransfer.setData('text/plain', id); event.dataTransfer.effectAllowed = 'copy'; });
-    var row = document.createElement('div'); row.className = 'sl-nav-shortcut-row';
-    link.parentNode.insertBefore(row, link); row.appendChild(link);
-    var pin = document.createElement('button'); pin.type = 'button'; pin.className = 'sl-shortcut-pin'; pin.dataset.shortcutId = id; pin.dataset.shortcutLabel = label;
-    pin.addEventListener('click', function () { if (saved.includes(id)) { saved = saved.filter(function (entry) { return entry !== id; }); persist(); render(); } else add(id); });
-    row.appendChild(pin);
   });
   dock.addEventListener('dragover', function (event) { event.preventDefault(); event.dataTransfer.dropEffect = 'copy'; dock.classList.add('is-dragover'); });
   dock.addEventListener('dragleave', function (event) { if (!dock.contains(event.relatedTarget)) dock.classList.remove('is-dragover'); });

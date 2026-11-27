@@ -256,10 +256,19 @@ function sl_ovCards($user, array $view): array
         $old = (int) sl_scalar("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (6,32) AND a.order_date < CURDATE() - INTERVAL 30 DAY $agency");
         $cap = sl_tableExists('cdb_sl_settings') ? (int) sl_ovScalar("SELECT setting_value FROM cdb_sl_settings WHERE setting_key = 'warehouse_bays'", [], 0) : 0;
         $daily = $agency === '' && sl_tableExists('cdb_warehouse_scans') ? sl_ovDaily('SELECT DATE(created_at) AS day, COUNT(*) AS n FROM cdb_warehouse_scans WHERE created_at >= :d0 GROUP BY DATE(created_at)', []) : [];
+        $barsL = 'Scans per day, 14 days'; $barsU = ' scans';
+        if (!array_sum($daily)) {
+            // no scan log (or agency view): parcels received at the warehouse per day, air + sea, so the card always has its graph
+            $air = sl_ovDaily("SELECT DATE(a.order_datetime) AS day, COUNT(*) AS n FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.order_datetime >= :d0 $agency GROUP BY DATE(a.order_datetime)", []);
+            $sea = sl_ovDaily("SELECT DATE(a.order_datetime) AS day, COUNT(*) AS n FROM cdb_customers_packages a WHERE a.order_datetime >= :d0 $agency GROUP BY DATE(a.order_datetime)", []);
+            $daily = [];
+            foreach ($air as $day => $n) $daily[$day] = $n + ($sea[$day] ?? 0);
+            $barsL = 'Parcels received per day, 14 days'; $barsU = ' received';
+        }
         $cards[] = ['key' => 'warehouse', 'tone' => 'mint', 'icon' => 'i-warehouse', 'eyebrow' => 'Warehouse now', 'big' => sl_num($inBay) . ($cap ? ' / ' . sl_num($cap) : '') . ' in bays',
             'lede' => sl_num($arriving) . ' arriving · ' . sl_num($ready) . ' ready for pickup' . ($cap ? ' · ' . sl_pct($inBay, $cap) . '% full' : ''),
             'sub' => [['n' => sl_num($ready), 'l' => 'Ready'], ['n' => sl_num($arriving), 'l' => 'Arriving'], ['n' => sl_num($held), 'l' => 'Held'], ['n' => sl_num($old), 'l' => 'Waiting 30 d+']],
-            'bars' => $daily ? sl_sparkBars(array_values($daily), 4, array_map(fn($d) => date('D j M', strtotime($d)), array_keys($daily))) : [], 'barsL' => 'Scans per day, 14 days', 'barsR' => $daily ? sl_num(array_sum($daily)) . ' scans' : '',
+            'bars' => sl_sparkBars(array_values($daily), 4, array_map(fn($d) => date('D j M', strtotime($d)), array_keys($daily))), 'barsL' => $barsL, 'barsR' => sl_num(array_sum($daily)) . $barsU,
             'href' => sl_route('Warehouse'), 'alert' => $held ? $held . ' parcels held' : ''];
     }
     return $cards;

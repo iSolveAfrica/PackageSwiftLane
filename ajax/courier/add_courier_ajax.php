@@ -439,6 +439,8 @@ if (empty($errors)) {
             $db_pa->cdp_query("UPDATE cdb_pre_alert SET is_package = 1 WHERE pre_alert_id = :id");
             $db_pa->bind(':id', $prealert_id);
             $db_pa->cdp_execute();
+            require_once __DIR__ . '/../../helpers/prealert.php';
+            cdp_preAlertLinkCreated((int) $prealert_id, 'air', (int) $shipment_id); // stores the shipment number on the pre-alert
         }
 
         // Original total weight: the actual package weight entered by staff.

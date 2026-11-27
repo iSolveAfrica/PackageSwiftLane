@@ -536,7 +536,27 @@ function sl_shipmentTrackingData($user, $core, int $id, string $q = ''): array
     $d['podWho'] = $pod ? ('Received by ' . ($o->person_receives ?: 'the customer') . ($o->pod_at ?? null ? ' · ' . sl_date($o->pod_at, 'M j, H:i') : '')) : 'Signature captured at hand-over';
     $d['podPhoto'] = $pod && !empty($o->photo_delivered) ? $o->photo_delivered : (!empty($o->pod_photo ?? '') ? $o->pod_photo : '');
     $pc = sl_pickupCodeInfo('air', [$id]);
-    $d['qrNote'] = !empty($pc['verified']) ? 'Pickup code verified at hand-over' : (!empty($pc['live']) ? 'Pickup code sent, not yet used' : 'Pickup code is sent when the parcel is ready');
+    // The parcel's 6-digit pickup code is shown as numbers. Every parcel has one from registration (older parcels
+    // get theirs here, for staff); the customer is only messaged it when the parcel is ready, so customers see the
+    // digits once the parcel is ready / the code was sent.
+    $d['pcDigits'] = '';
+    try {
+        require_once CDP_ROOT . '/helpers/pickup_code.php';
+        if (!$delivered && empty($pc['verified']) && sl_tableExists('cdb_pickup_codes')) {
+            $live = cdp_pickupCodeLiveFor('air', [$id]);
+            $row = $live[0] ?? null;
+            $code = $row && ctype_digit((string) $row->code) ? (string) $row->code : '';
+            if (!$row && cdp_pickupCodeCanUse($user)) {
+                $made = cdp_pickupCodeIssue('air', [$id], 'created', (int) $_SESSION['userid']);
+                $code = !empty($made['success']) ? (string) ($made['code'] ?? '') : '';
+            }
+            $readyNow = in_array((int) $o->status_courier, [6, 32], true);
+            $d['pcDigits'] = sl_userIs('client') && !$readyNow && empty($row->last_sent_at) ? '' : $code;
+        }
+    } catch (Throwable $e) {
+        error_log('[tracking pickup code] ' . $e->getMessage());
+    }
+    $d['qrNote'] = !empty($pc['verified']) ? 'Pickup code verified at hand-over' : ($d['pcDigits'] !== '' ? (in_array((int) $o->status_courier, [6, 32], true) ? 'Sent to the customer: the parcel is ready' : 'Sent to the customer only when the parcel is ready') : 'Pickup code is sent when the parcel is ready');
     // Alerts
     $alerts = [];
     if ($d['risk'] === 'High') $alerts[] = ['lvl' => 'bad', 'icon' => 'i-alert', 't' => 'Past the estimated arrival', 'd' => $d['riskWhy']];

@@ -152,7 +152,7 @@ switch ($op) {
         cdp_insertCourierShipmentTrack(['user_id' => $uid, 'order_id' => $id, 'order_track' => $track, 't_date' => date('Y-m-d H:i:s'), 'status_courier' => $status, 'comments' => 'Package registered', 'office' => (int) $_POST['origin_off']]);
         cdp_insertCourierShipmentUserHistory(['user_id' => $uid, 'order_id' => $id, 'order_track' => $track, 'action' => 'Package registered', 'date_history' => date('Y-m-d H:i:s')]);
         $pid = (int) ($_POST['prealert_id'] ?? 0);
-        if ($pid > 0) cdp_updatedPreAlertPackage($pid);
+        if ($pid > 0) { cdp_updatedPreAlertPackage($pid); require_once __DIR__ . '/../../helpers/prealert.php'; cdp_preAlertLinkCreated($pid, 'package', (int) $id); }
         $cid = (int) ($_POST['consolidate_id'] ?? 0);
         if ($cid > 0 && sl_row('SELECT consolidate_id FROM cdb_consolidate_packages WHERE consolidate_id = :c AND status_courier NOT IN (8,15,21)', [':c' => $cid])) {
             $db = new Conexion;

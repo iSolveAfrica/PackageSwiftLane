@@ -7,9 +7,9 @@
 $hv = $d['view']; $hp = $d['profile']; $hc = $d['cards']; $hf = $d['freight'];
 $canAddCon = $user->cdp_hasPermission(['add_consolidate_shipment', 'add_consolidate_package']);
 $canFin = function_exists('cdp_financeEnabled') && cdp_financeEnabled() && $user->cdp_hasPermission('financial_sheet') && cdp_canViewMoney($user);
-$bars = function (array $bars, string $cls = '') {
+$bars = function (array $bars, string $cls = '', string $label = 'Last 14 days') {
     if (!$bars) return '';
-    $o = '<div class="ovh-bars ' . h($cls) . '" role="img" aria-label="Last 14 days">';
+    $o = '<div class="ovh-bars ' . h($cls) . '" role="img" aria-label="' . h($label) . '">';
     $n = count($bars);
     foreach ($bars as $i => $b) $o .= '<i class="' . ($i === $n - 1 ? 'now' : '') . '" style="' . h($b['s']) . '" title="' . h($b['t']) . '"></i>';
     return $o . '</div>';
@@ -115,7 +115,7 @@ if (!$adminView) include __DIR__ . '/overview_work.php';
     <b class="ovh-big"><?= h($c['big']) ?></b>
     <span class="ovh-lede"><?= h($c['lede']) ?></span>
     <?php if ($c['sub']): ?><div class="ovh-sub" style="--n:<?= count($c['sub']) ?>"><?php foreach ($c['sub'] as $s): ?><span><b><?= h($s['n']) ?></b><small><?= h($s['l']) ?></small></span><?php endforeach; ?></div><?php endif; ?>
-    <?= $bars($c['bars']) ?>
+    <?= $bars($c['bars'], '', (string) ($c['barsL'] ?? 'Last 14 days')) ?>
     <div class="ovh-foot"><span><?= h($c['barsL']) ?></span><span><?= h($c['barsR']) ?></span></div>
   </a>
   <?php endforeach; ?>

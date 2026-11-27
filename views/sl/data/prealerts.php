@@ -1,6 +1,7 @@
 <?php
 /** Data for PreAlerts.dc.html (cdb_pre_alert). */
 require_once __DIR__ . '/ops_common.php';
+require_once CDP_ROOT . '/helpers/prealert.php';
 
 function sl_preAlertsData($user, $core): array
 {
@@ -31,19 +32,38 @@ function sl_preAlertsData($user, $core): array
     if ($filter === 'overdue') $where .= ' AND p.is_package = 0 AND p.estimated_date < CURDATE()';
     if ($filter === 'week') $where .= ' AND p.is_package = 0 AND p.estimated_date >= CURDATE() AND p.estimated_date < CURDATE() + INTERVAL 7 DAY';
     if ($filter === 'matched') $where .= ' AND p.is_package = 1';
+    if ($filter === 'closed') $where .= ' AND p.is_package = 2';
     $count = (int) sl_scalar("SELECT COUNT(*) FROM cdb_pre_alert p WHERE $where", $binds);
     $rows = sl_rows("SELECT p.*, c.name_com FROM cdb_pre_alert p LEFT JOIN cdb_courier_com c ON c.id = p.courier_com WHERE $where ORDER BY p.prealert_date DESC LIMIT " . (($page - 1) * $per) . ", $per", $binds);
     $users = sl_usersById(array_map(fn($r) => $r->customer_id, $rows));
     $list = [];
+    $canStaffEdit = !$isClient && $user->cdp_hasPermission('prealert_edit');
+    $cut = fn($v) => mb_strlen((string) $v) > 20 ? rtrim(mb_substr((string) $v, 0, 20)) . '…' : (string) $v;
     foreach ($rows as $r) {
         $u = $users[(int) $r->customer_id] ?? null;
-        $late = !$r->is_package && $r->estimated_date && strtotime($r->estimated_date) < strtotime('today');
+        $late = (int) $r->is_package === 0 && $r->estimated_date && strtotime($r->estimated_date) < strtotime('today');
+        [$stL, $stC] = cdp_preAlertStatus($r);
+        $open = (int) $r->is_package === 0;
+        // registered packages with the same carrier tracking number: offered as "convert" targets
+        $matches = $open && $canStaffEdit ? cdp_preAlertPackagesByTracking((string) $r->tracking) : [];
         $list[] = [
             'id' => (int) $r->pre_alert_id, 'trk' => $r->tracking, 'name' => sl_userName($u), 'ini' => sl_initials(sl_userName($u)), 'locker' => $u->locker ?? '',
             'sup' => $r->provider_shop, 'carrier' => $r->name_com ?: '—', 'what' => $r->package_description, 'price' => sl_money($r->purchase_price),
+            'supS' => $cut($r->provider_shop), 'carrierS' => $cut($r->name_com ?: '—'), 'whatS' => $cut($r->package_description),
             'eta' => sl_date($r->estimated_date), 'sent' => sl_ago($r->prealert_date), 'invoice' => $r->url_invoice,
             'lateBy' => $late ? (int) floor((strtotime('today') - strtotime($r->estimated_date)) / 86400) : 0,
-            'st' => $r->is_package ? 'Matched' : ($late ? 'Overdue' : 'Expected'), 'cls' => $r->is_package ? 'delivered' : ($late ? 'overdue' : 'pending'), 'open' => !$r->is_package,
+            'st' => $stL, 'cls' => $stC, 'open' => $open, 'matches' => $matches,
+            'canEdit' => cdp_preAlertCanEdit($user, $r),
+            'edit' => [
+                'id' => (int) $r->pre_alert_id, 'tracking' => (string) $r->tracking, 'provider' => (string) $r->provider_shop, 'courier' => (int) $r->courier_com, 'courierName' => (string) ($r->name_com ?? ''),
+                'customer_id' => (int) $r->customer_id, 'customer' => sl_userName($u) . (($u->locker ?? '') ? ' · ' . $u->locker : ''), 'price' => (float) $r->purchase_price, 'description' => (string) $r->package_description,
+                'date' => $r->estimated_date && $r->estimated_date !== '0000-00-00' ? date('Y-m-d', strtotime($r->estimated_date)) : '', 'sent' => sl_date($r->prealert_date),
+                'state' => (int) $r->is_package, 'st' => $stL, 'cls' => $stC, 'lateBy' => $late ? (int) floor((strtotime('today') - strtotime($r->estimated_date)) / 86400) : 0,
+                'ref' => (string) ($r->package_ref ?? ''), 'refHref' => !empty($r->package_id) ? (($r->package_module ?? '') === 'air' ? 'courier_view.php?id=' : 'customer_packages_view.php?id=') . (int) $r->package_id : '',
+                'closedAt' => !empty($r->closed_at) ? sl_date($r->closed_at) : '', 'closedWhy' => (string) ($r->closed_reason ?? ''), 'updated' => !empty($r->updated_at) ? sl_ago($r->updated_at) : '',
+                'invoice' => $r->url_invoice && ($isClient || $user->cdp_hasPermission('see_attached_invoice_pre-alerts')) ? (string) $r->url_invoice : '',
+                'matches' => $matches, 'canEdit' => cdp_preAlertCanEdit($user, $r),
+            ],
         ];
     }
     $base = "FROM cdb_pre_alert p WHERE 1 = 1 $scope";
@@ -51,7 +71,7 @@ function sl_preAlertsData($user, $core): array
     return [
         'stats' => $stats,
         'rows' => $list, 'count' => $count, 'page' => $page, 'per' => $per, 'q' => $q, 'filter' => $filter,
-        'filters' => [['f' => 'open', 'label' => 'Open'], ['f' => 'week', 'label' => 'Due this week'], ['f' => 'overdue', 'label' => 'Overdue'], ['f' => 'matched', 'label' => 'Arrived'], ['f' => 'all', 'label' => 'All']],
+        'filters' => [['f' => 'open', 'label' => 'Open'], ['f' => 'week', 'label' => 'Due this week'], ['f' => 'overdue', 'label' => 'Overdue'], ['f' => 'matched', 'label' => 'Arrived'], ['f' => 'closed', 'label' => 'Closed'], ['f' => 'all', 'label' => 'All']],
         'openN' => (int) sl_scalar("SELECT COUNT(*) $base AND p.is_package = 0"), 'weekN' => (int) sl_scalar("SELECT COUNT(*) $base AND p.prealert_date >= NOW() - INTERVAL 7 DAY"),
         'isClient' => $isClient,
         'canAdd' => $user->cdp_hasPermission('prealert_add'),
@@ -61,6 +81,9 @@ function sl_preAlertsData($user, $core): array
         'customers' => $isClient ? [] : sl_opsCustomers(),
         'couriers' => sl_rows('SELECT id, name_com FROM cdb_courier_com ORDER BY name_com'),
         'openForm' => !empty($_GET['new']),
+        'canStaffEdit' => $canStaffEdit,
+        'openId' => (int) ($_GET['open'] ?? 0),
+        'closeDays' => function_exists('cdp_automationParam') ? (int) cdp_automationParam('prealert_close_overdue', 'days', 30) : 30,
     ];
 }
 

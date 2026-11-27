@@ -29,3 +29,10 @@
 .au-nm:hover{text-decoration:underline}
 tr.au-cur td{background:var(--active)}
 .au-acts .sl-ib{width:36px;height:36px}
+/* suggested automations (review, approve, publish) and the built-in rules list */
+.au-sug { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+.au-sug-card { display: flex; flex-direction: column; gap: 10px; padding: 16px; border: 1px dashed color-mix(in srgb, var(--ink) 22%, var(--line)); border-radius: 16px; background: var(--panel); }
+.au-sug-card.is-approved { border-style: solid; border-color: color-mix(in srgb, var(--green) 45%, var(--line)); }
+.au-sys { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 8px; }
+.au-sys-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; }
+@media (max-width: 640px) { .au-sys { grid-template-columns: 1fr; } }

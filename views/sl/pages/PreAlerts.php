@@ -67,15 +67,16 @@ $cols = $d['isClient'] ? 6 : 7;
             <thead><tr><th>Tracking</th><?php if (!$d['isClient']): ?><th>Customer</th><?php endif; ?><th>Shop &amp; carrier</th><th>What is inside</th><th>Expected</th><th>Status</th><th></th></tr></thead>
             <tbody>
               <?php foreach ($d['rows'] as $r): ?>
-                <tr>
-                  <td><span class="mono fw5"><?= h($r['trk']) ?></span><span class="sub">sent <?= h($r['sent']) ?></span></td>
+                <tr class="pa-row" tabindex="0" data-pa-open="<?= (int) $r['id'] ?>" aria-label="Open pre-alert <?= h($r['trk']) ?>">
+                  <td><span class="mono fw5"><?= h($r['trk']) ?></span><span class="sub">sent <?= h($r['sent']) ?></span><?php if ($r['matches']): ?><span class="pa-hit"><i class="ic ic-sm i-box" aria-hidden="true"></i>In the system: <?= h($r['matches'][0]['ref']) ?></span><?php endif; ?></td>
                   <?php if (!$d['isClient']): ?><td><div class="sl-cell"><span class="sl-av sm"><?= h($r['ini']) ?></span><span><span class="fw5"><?= h($r['name']) ?></span><span class="sub mono"><?= h($r['locker']) ?></span></span></div></td><?php endif; ?>
-                  <td><?= h($r['sup'] ?: '—') ?><span class="sub"><?= h($r['carrier']) ?></span></td>
-                  <td><span class="pa-what" title="<?= h($r['what']) ?>"><?= h($r['what']) ?></span><span class="sub mono">value <?= h($r['price']) ?></span></td>
+                  <td><span class="pa-cut" title="<?= h($r['sup']) ?>"><?= h($r['supS'] ?: '—') ?></span><span class="sub pa-cut" title="<?= h($r['carrier']) ?>"><?= h($r['carrierS']) ?></span></td>
+                  <td><span class="pa-cut" title="<?= h($r['what']) ?>"><?= h($r['whatS']) ?></span><span class="sub mono">value <?= h($r['price']) ?></span></td>
                   <td><?= h($r['eta']) ?><?php if ($r['lateBy']): ?><span class="sub" style="color:var(--red-ink)"><?= (int) $r['lateBy'] ?> d late</span><?php endif; ?></td>
-                  <td><span class="sl-pill <?= h($r['cls']) ?>"><?= h($r['st']) ?></span></td>
+                  <td><span class="sl-pill <?= h($r['cls']) ?>"><?= h($r['st']) ?></span><?php if ($r['edit']['ref']): ?><span class="sub mono"><?= h($r['edit']['ref']) ?></span><?php endif; ?></td>
                   <td class="pa-act"><?php $canReg = $r['open'] && ($d['canPackage'] || $d['canShipment']); $canInv = $d['canInvoice'] && $r['invoice']; ?>
-                    <?php if ($canReg || $canInv): ?><details class="sl-menu" data-sl-pop><summary class="sl-btn ghost sm"><?= $canReg ? 'Register' : 'Invoice' ?> <i class="ic ic-sm i-down" aria-hidden="true"></i></summary><div class="pop" role="menu">
+                    <?php if ($canReg || $canInv): ?><details class="sl-menu" data-sl-pop><summary class="sl-btn ghost sm"><?= $canReg ? ($r['matches'] ? 'Convert' : 'Register') : 'Invoice' ?> <i class="ic ic-sm i-down" aria-hidden="true"></i></summary><div class="pop" role="menu">
+                      <?php if ($r['matches']): ?><button type="button" role="menuitem" data-pa-open="<?= (int) $r['id'] ?>">Link to <?= h($r['matches'][0]['ref']) ?></button><?php endif; ?>
                       <?php if ($r['open'] && $d['canPackage']): ?><a role="menuitem" href="<?= sl_route('NewPackage', ['prealert_id' => $r['id']]) ?>">Create sea package</a><?php endif; ?>
                       <?php if ($r['open'] && $d['canShipment']): ?><a role="menuitem" href="courier_add.php?prealert_id=<?= (int) $r['id'] ?>">Create air shipment</a><?php endif; ?>
                       <?php if ($canInv): ?><a role="menuitem" target="_blank" href="<?= h($r['invoice']) ?>">Open invoice</a><?php endif; ?>
@@ -107,4 +108,5 @@ $cols = $d['isClient'] ? 6 : 7;
   </form>
 </div>
 <?php endif; ?>
+<?php include __DIR__ . '/partials/prealert_edit.php'; ?>
 <?php if ($d['openForm'] && $d['canAdd']): ?><script>document.addEventListener('DOMContentLoaded',function(){var d=document.getElementById('pa-new');if(d){d.hidden=false;var f=d.querySelector('input[name=tracking]');if(f)f.focus();}});</script><?php endif; ?>

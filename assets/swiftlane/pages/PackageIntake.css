@@ -64,3 +64,8 @@
 .rc .dash{border-top:1px dashed var(--faint)}
 .rc .r{display:flex;justify-content:space-between;gap:10px}
 .rc .m{font-family:JetBrains Mono,monospace}
+/* as-you-type pre-alert matches under the tracking box */
+.ix-sug { display: flex; flex-direction: column; gap: 6px; padding: 10px; border: 1px solid color-mix(in srgb, var(--green) 40%, var(--line)); border-radius: 14px; background: color-mix(in srgb, var(--green) 6%, var(--panel)); }
+.ix-sug-h { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; padding: 0 4px; }
+.ix-sug-row { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 10px; background: var(--panel); }
+.ix-sug-row .mut.sm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

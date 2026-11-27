@@ -20,3 +20,8 @@
 <?php endforeach; ?>
 </body>
 </html>
+<?php
+// Scheduled automations without cron: at most every 15 minutes, run after the page is sent (staff pages only).
+if (empty($slIsClient) && !sl_userIs('driver')) {
+    try { require_once CDP_ROOT . '/helpers/automations.php'; if (function_exists('cdp_automationsTick')) cdp_automationsTick(); } catch (Throwable $e) { error_log('[automations] ' . $e->getMessage()); }
+}

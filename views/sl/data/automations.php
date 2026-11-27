@@ -6,6 +6,8 @@ require_once CDP_ROOT . '/helpers/automations.php';
 function sl_automationsData($user, $core): array
 {
     $d = ['ready' => cdp_automationsReady()];
+    if ($d['ready']) cdp_automationSuggestionsSync();
+    $review = cdp_automationsReviewReady();
     $trig = cdp_automationTriggers();
     $acts = cdp_automationActions();
     $conds = cdp_automationConditions();
@@ -32,7 +34,21 @@ function sl_automationsData($user, $core): array
     $rows = [];
     $total = 0;
     $onN = 0;
+    $sug = [];
+    $dismissed = [];
+    $sentence = function (array $a) use ($trig, $acts, &$condLabel) {
+        $t = $trig[$a['trigger_key']] ?? ['label' => $a['trigger_key']];
+        $c = implode(' and ', array_filter(array_map($condLabel, $a['conditions'])));
+        return 'When ' . mb_strtolower($t['label']) . ($c !== '' ? ' (' . $c . ')' : '') . ', ' . implode(', ', array_map(fn($x) => mb_strtolower($acts[$x['type'] ?? '']['label'] ?? ($x['type'] ?? '')), $a['actions'])) . '.';
+    };
     foreach ($all as $a) {
+        $rs = $review ? (string) ($a['review_status'] ?? 'published') : 'published';
+        if (in_array($rs, ['suggested', 'approved'], true)) {
+            $t = $trig[$a['trigger_key']] ?? ['label' => $a['trigger_key'], 'icon' => 'i-bolt'];
+            $sug[] = ['id' => (int) $a['id'], 'name' => $a['name'], 'desc' => (string) ($a['description'] ?? ''), 'icon' => $t['icon'], 'rs' => $rs, 'sched' => !empty($t['schedule']), 'sentence' => $sentence($a)];
+            continue;
+        }
+        if ($rs === 'dismissed') { $dismissed[] = ['id' => (int) $a['id'], 'name' => $a['name']]; continue; }
         $total += (int) $a['run_count'];
         $onN += (int) $a['enabled'];
         if ($q !== '' && stripos($a['name'], $q) === false) continue;
@@ -42,9 +58,14 @@ function sl_automationsData($user, $core): array
         $rows[] = ['id' => (int) $a['id'], 'name' => $a['name'], 'icon' => $t['icon'], 'cond' => implode(' · ', array_filter(array_map($condLabel, $a['conditions']))) ?: 'No condition',
             'when' => $t['label'], 'then' => implode(', ', array_map(fn($x) => $acts[$x['type'] ?? '']['label'] ?? ($x['type'] ?? ''), $a['actions'])),
             'by' => $byUser[(int) $a['created_by']] ?? 'System', 'created' => sl_date($a['created_at']), 'last' => $a['last_run_at'] ? sl_ago($a['last_run_at']) : 'Never',
-            'runs' => sl_num($a['run_count']), 'on' => (int) $a['enabled'] === 1, 'json' => $a];
+            'runs' => sl_num($a['run_count']), 'on' => (int) $a['enabled'] === 1, 'json' => $a,
+            'desc' => (string) ($a['description'] ?? ''), 'origin' => (string) ($a['origin'] ?? 'custom'), 'sched' => !empty($t['schedule'])];
     }
     $d['rows'] = $rows;
+    $d['suggested'] = $sug;
+    $d['dismissed'] = $dismissed;
+    $d['systemRules'] = cdp_systemRules();
+    $d['lastSched'] = $d['ready'] ? sl_scalar("SELECT MAX(r.created_at) FROM cdb_automation_runs r WHERE r.trigger_key IN ('" . implode("','", array_keys(cdp_automationScheduledTriggers())) . "')", [], null) : null;
     $d['totalRuns'] = sl_num($total);
     $d['onCount'] = $onN;
     $d['q'] = $q;
