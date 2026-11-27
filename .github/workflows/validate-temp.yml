@@ -1,0 +1,30 @@
+name: Validate Swift Lane
+on:
+  push:
+    branches: [temp]
+  pull_request:
+    branches: [temp]
+permissions:
+  contents: read
+jobs:
+  application:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check application PHP syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          git ls-files -z '*.php' ':!:helpers/vendor/**' ':!:helpers/stripe/**' ':!:helpers/phpmailer/**' ':!:vendor/**' | xargs -0 -r -n1 php -l > /tmp/php-lint.log
+          tail -n 5 /tmp/php-lint.log
+      - name: Check route engine
+        run: php scripts/check_route_engine.php
+      - name: Check design routes
+        run: node scripts/check_design_routes.cjs
