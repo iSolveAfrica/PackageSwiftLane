@@ -197,6 +197,8 @@ function sl_trackConsoleData($user, $core, string $source = 'shipments', int $li
 {
     $client = $source === 'mine';
     $uid = (int) ($_SESSION['userid'] ?? 0);
+    // staff looking at one customer (Customer profile): their parcels only, with the staff links and documents
+    $forSender = $client ? 0 : (int) ($opt['sender'] ?? 0);
     $money = $client || (function_exists('cdp_canViewMoney') && cdp_canViewMoney($user));
     $q = trim((string) ($opt['q'] ?? ''));
     $f = (string) ($opt['filter'] ?? 'all');
@@ -214,7 +216,7 @@ function sl_trackConsoleData($user, $core, string $source = 'shipments', int $li
     $rows = [];
     foreach ($kinds as [$mode, $tbl, $px, $nx, $dcol, $detail, $kind]) {
         $idc = $detail ? 'consolidate_id' : 'order_id';
-        $scope = $client ? " AND a.sender_id = $uid" : sl_opsScope('a');
+        $scope = $client ? " AND a.sender_id = $uid" : sl_opsScope('a') . ($forSender ? " AND a.sender_id = $forSender" : '');
         $del = $tbl === 'cdb_add_order' ? ' AND a.is_deleted = 0' : '';
         $openW = 'a.status_courier NOT IN (8,15,21,12)';
         // page-wide tallies (open records of each kind, whatever the filter)
