@@ -234,8 +234,12 @@ function sl_customerAddresses($userData, $core): array
             $lines = array_values(array_filter(array_map('trim', explode("\n", $text)), 'strlen'));
             $hasLocker = $suite !== '' && stripos($text, $suite) !== false;
             $iso = strtoupper(trim((string) ($r->iso2 ?? '')));
+            $own = trim((string) ($r->label ?? ''));   // the admin's own name for this warehouse
+            $mode = strtolower(trim((string) ($r->shipping_mode ?? '')));
             $out[] = [
-                'label' => $label !== '' ? $label : 'Warehouse',
+                'label' => $own !== '' ? $own : ($label !== '' ? $label : 'Warehouse'),
+                'mode' => in_array($mode, ['air', 'sea', 'express'], true) ? $mode : '',
+                'transit' => trim((string) ($r->transit_days ?? '')),
                 'cc' => $iso !== '' ? $iso : strtoupper(mb_substr($label, 0, 2)),
                 'iso' => $iso,
                 'countryName' => trim((string) ($r->country_name ?? '')),
@@ -266,7 +270,7 @@ function sl_customerAddresses($userData, $core): array
         ];
     }
     foreach ($out as &$a) {
-        $a += ['lines' => [], 'hasLocker' => false, 'default' => false, 'iso' => '', 'countryName' => ''];
+        $a += ['lines' => [], 'hasLocker' => false, 'default' => false, 'iso' => '', 'countryName' => '', 'mode' => '', 'transit' => ''];
         if (!$a['lines']) { // company address from settings
             $a['lines'] = array_values(array_filter([trim(str_replace('c/o ' . ($core->site_name ?? 'Swift Lane') . ' · ', '', $a['address1'])), trim($a['city'] . ' ' . $a['zip'])], 'strlen'));
         }

@@ -1,6 +1,6 @@
 /* Customer dashboard: warehouse addresses as a wallet card stack (views/sl/pages/partials/client_overview.php).
    The chosen country's card sits in front, the next two peek out behind it. A round flag, a click on a
-   peeking card, the arrow keys or a swipe brings a card to the front. Without this script the first card shows. */
+   peeking card, the next arrow, the arrow keys or a swipe brings a card to the front. Without this script the first card shows. */
 (function () {
   'use strict';
   function init(w) {
@@ -40,6 +40,7 @@
     // A card peeking out behind the front one comes forward when clicked.
     var stack = w.querySelector('.co-stack');
     stack.addEventListener('click', function (e) {
+      if (e.target.closest('[data-co-next]')) { pick(on + 1); var nb = cards[on].querySelector('[data-co-next]'); if (nb && e.detail === 0) nb.focus(); return; }
       var c = e.target.closest('[data-co-card]');
       if (c && c.getAttribute('data-pos') !== '0') { e.preventDefault(); pick(cards.indexOf(c)); }
     });

@@ -35,6 +35,9 @@ $coFlag = function (array $a): string {
     }
     return '<span class="co-fl-t">' . h($a['flag'] !== '' ? $a['flag'] : $a['cc']) . '</span>';
 };
+// Air or sea warehouse (cdb_virtual_mailbox_addresses.shipping_mode): icon and words for the card and the flag.
+$coMode = fn(array $a): array => ['air' => ['i-plane', 'Air freight'], 'sea' => ['i-ship', 'Sea freight'], 'express' => ['i-plane', 'Express air']][$a['mode'] ?? ''] ?? ['', ''];
+$coN = count($addrs);
 // Customer service: chat (support.php), WhatsApp / phone / email from Settings > Company.
 $coCore = $GLOBALS['core'] ?? null;
 $svcTel = preg_replace('/[^\d+]/', '', (string) ($coCore->c_phone ?? ''));
@@ -143,7 +146,7 @@ if (is_file(CDP_ROOT . '/helpers/loyalty.php')) {
     <div class="co-wallet" data-co-wallet>
       <?php if (count($addrs) > 1): ?>
       <div class="co-flags" role="tablist" aria-label="Warehouse country">
-        <?php foreach ($addrs as $i => $a): ?><button type="button" role="tab" class="co-flag" id="co-ft-<?= $i ?>" aria-controls="co-wc-<?= $i ?>" aria-selected="<?= $i === $addrOn ? 'true' : 'false' ?>" tabindex="<?= $i === $addrOn ? '0' : '-1' ?>" data-co-pick="<?= $i ?>" title="<?= h($coTitle($a)) ?>" aria-label="<?= h($coTitle($a)) ?>"><?= $coFlag($a) ?><?php if ($a['default']): ?><i class="co-main" aria-hidden="true"></i><?php endif; ?></button><?php endforeach; ?>
+        <?php foreach ($addrs as $i => $a): ?><button type="button" role="tab" class="co-flag" id="co-ft-<?= $i ?>" aria-controls="co-wc-<?= $i ?>" aria-selected="<?= $i === $addrOn ? 'true' : 'false' ?>" tabindex="<?= $i === $addrOn ? '0' : '-1' ?>" data-co-pick="<?= $i ?>" title="<?= h(trim($coTitle($a) . ' · ' . $coMode($a)[1], ' ·')) ?>" aria-label="<?= h(trim($coTitle($a) . ', ' . $coMode($a)[1], ' ,')) ?>"><?= $coFlag($a) ?><?php if ($coMode($a)[0]): ?><span class="co-flag-m <?= h($a['mode']) ?>" aria-hidden="true"><i class="ic <?= h($coMode($a)[0]) ?>"></i></span><?php endif; ?><?php if ($a['default']): ?><i class="co-main" aria-hidden="true"></i><?php endif; ?></button><?php endforeach; ?>
       </div>
       <?php endif; ?>
       <div class="co-stack" style="--back:<?= min(2, count($addrs) - 1) ?>">
@@ -152,12 +155,13 @@ if (is_file(CDP_ROOT . '/helpers/loyalty.php')) {
           if (!$a['hasLocker'] && $locker !== '') $rows[] = ['Suite', 'Suite ' . $locker];
           if ($a['phone'] !== '') $rows[] = ['Phone', $a['phone']];
           $pos = ($i - $addrOn + count($addrs)) % count($addrs); ?>
-        <article class="co-wc t<?= $i % 4 ?>" id="co-wc-<?= $i ?>" role="tabpanel" aria-labelledby="co-ft-<?= $i ?>" data-co-card="<?= $i ?>" data-pos="<?= min($pos, 3) ?>" style="--pos:<?= $pos ?>"<?= $pos ? ' aria-hidden="true"' : '' ?>>
+        <article class="co-wc" id="co-wc-<?= $i ?>" role="tabpanel" aria-labelledby="co-ft-<?= $i ?>" data-co-card="<?= $i ?>" data-pos="<?= min($pos, 3) ?>" style="--pos:<?= $pos ?>"<?= $pos ? ' aria-hidden="true"' : '' ?>>
           <header class="co-wc-h">
             <span class="co-wc-fl" aria-hidden="true"><?= $coFlag($a) ?></span>
-            <div class="co-wc-t"><b><?= h($coTitle($a)) ?></b><span><?= h(trim(implode(' · ', array_filter([$a['city'], $a['zip']], 'strlen')))) ?: 'Warehouse' ?></span></div>
-            <?php if ($a['default']): ?><span class="la-def">Main</span><?php endif; ?>
+            <div class="co-wc-t"><b><?= h($coTitle($a)) ?><?php if ($a['default']): ?> <span class="la-def">Main</span><?php endif; ?></b><span><?= h(trim(implode(' · ', array_filter([$a['city'], $a['zip']], 'strlen')))) ?: 'Warehouse' ?></span></div>
+            <?php if ($coN > 1): $nx = $addrs[($i + 1) % $coN]; ?><button type="button" class="co-next-b" data-co-next aria-label="Next warehouse: <?= h($coTitle($nx)) ?>" title="Next: <?= h($coTitle($nx)) ?>"><i class="ic ic-sm i-right" aria-hidden="true"></i></button><?php endif; ?>
           </header>
+          <?php [$mIc, $mTx] = $coMode($a); if ($mIc): ?><div class="co-wc-mode <?= h($a['mode']) ?>"><span class="co-mode-ic"><i class="ic ic-sm <?= h($mIc) ?>" aria-hidden="true"></i></span><b><?= h($mTx) ?></b><span><?= $a['mode'] === 'sea' ? 'Parcels from here sail to Ghana' : 'Parcels from here fly to Ghana' ?><?= $a['transit'] !== '' ? ' · ' . h($a['transit']) . (preg_match('/^[\d\s–-]+$/u', $a['transit']) ? ' days' : '') : '' ?></span></div><?php endif; ?>
           <ul class="la-lines">
             <?php foreach ($rows as [$k, $v]): ?><li><small><?= h($k) ?></small><span><?= $addrMark($v) ?></span><button type="button" class="la-ib" data-sl-copy="<?= h($v) ?>" aria-label="Copy <?= h(($k ?: 'line') . ': ' . $v) ?>"><i class="ic ic-sm i-copy" aria-hidden="true"></i></button></li><?php endforeach; ?>
           </ul>
