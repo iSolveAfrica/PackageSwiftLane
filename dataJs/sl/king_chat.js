@@ -74,6 +74,9 @@
     return (h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening') + (CFG.first ? ', ' + CFG.first : '');
   }
   function initial(name) { return esc(String(name || '?').trim().charAt(0).toUpperCase() || '?'); }
+  // King's drawn face (server-made SVG in SL_KC.face); the letter when it is missing
+  var FACE = typeof CFG.face === 'string' && CFG.face.indexOf('<svg') === 0 ? CFG.face : '';
+  function kingAv() { return FACE || initial(KING); }
   function icon(cls) { return /^i-[a-z0-9-]+$/.test(cls || '') ? '<i class="ic ic-sm ' + cls + '" aria-hidden="true"></i>' : ''; }
   var PILLS = { delivered: 1, transit: 1, onway: 1, sorting: 1, pending: 1, overdue: 1, paid: 1, plain: 1 };
 
@@ -109,7 +112,7 @@
   }
   function cardsHtml(list) { return list && list.length ? '<div class="kc-cards' + (list.length === 1 ? ' one' : '') + '">' + list.map(cardHtml).join('') + '</div>' : ''; }
   function kingRow(inner, id, when) {
-    return '<div class="kc-row k" data-id="' + esc(id) + '"><span class="kc-av sm" aria-hidden="true">' + initial(KING) + '</span><div class="kc-msg"><div class="kc-bub">' + inner + '</div>'
+    return '<div class="kc-row k" data-id="' + esc(id) + '"><span class="kc-av sm' + (FACE ? ' face' : '') + '" aria-hidden="true">' + kingAv() + '</span><div class="kc-msg"><div class="kc-bub">' + inner + '</div>'
       + '<small class="kc-meta">' + esc(KING) + (when ? ' · ' + esc(when) : '') + '</small></div></div>';
   }
   function bubble(m) {
@@ -182,8 +185,9 @@
     typingBox.hidden = !on;
     if (!on) return;
     var person = who && who !== KING;
-    q('[data-kc-typing-av]').textContent = String(who || KING).charAt(0).toUpperCase();
-    q('[data-kc-typing-av]').classList.toggle('p', !!person);
+    var tav = q('[data-kc-typing-av]');
+    if (person || !FACE) tav.textContent = String(who || KING).charAt(0).toUpperCase(); else tav.innerHTML = FACE;
+    tav.classList.toggle('p', !!person); tav.classList.toggle('face', !person && !!FACE);
     q('[data-kc-typing-t]').textContent = person ? who + ' is typing' : KING + ' is checking…';
     toBottom();
   }
@@ -210,11 +214,11 @@
     readState();
   }
   function header() {
-    var roomy = INLINE && !phone(), name = KING, sub = roomy ? SITE + ' customer care assistant · Automated' : 'Automated assistant', av = initial(KING), person = false;
+    var roomy = INLINE && !phone(), name = KING, sub = roomy ? SITE + ' customer care · online now' : 'Online now', av = kingAv(), person = false;
     if (st.owner === 'human_active') { name = st.ownerName || 'Customer care'; sub = roomy ? SITE + ' customer care team' : 'Customer care team'; av = initial(name); person = true; }
     var x = q('[data-kc-close] .ic'); if (x && INLINE) { x.classList.toggle('i-x', phone()); x.classList.toggle('i-minus', !phone()); }
     q('[data-kc-name]').textContent = name; q('[data-kc-sub]').textContent = sub;
-    var a = q('[data-kc-av]'); a.innerHTML = av + (person ? '<i class="kc-on"></i>' : ''); a.classList.toggle('p', person);
+    var a = q('[data-kc-av]'); a.innerHTML = av + '<i class="kc-on"></i>'; a.classList.toggle('p', person); a.classList.toggle('face', !person && !!FACE);
     q('[data-kc-human]').hidden = st.owner === 'handoff_queued' || st.owner === 'human_active';
     text.placeholder = st.owner === 'human_active' ? 'Write to ' + name + '…' : st.owner === 'handoff_queued' ? 'Add anything our team should know…' : 'Ask ' + KING + ' anything…';
     if (foot) {
@@ -275,7 +279,7 @@
     if (r.first) CFG.first = r.first;
     var lead = b.lead ? b.lead : (b.empty ? "Everything's quiet on your account right now: nothing waiting for you and nothing due. What can I help you with today?" : '');
     var extra = b.extra && b.extra.length ? b.extra : [];
-    var html = '<p><b>' + esc(hello()) + '.</b></p>' + (lead ? md(lead) : '') + cardsHtml(b.cards)
+    var html = '<p><b>' + esc(hello()) + ". I'm " + esc(KING) + '.</b></p>' + (lead ? md(lead) : '') + cardsHtml(b.cards)
       + (extra.length ? '<div class="kc-extra" data-kc-extra hidden>' + cardsHtml(extra) + '</div><p class="kc-more" data-kc-more>' + esc(b.more_text || ('There are ' + extra.length + ' more.')) + ' <button type="button" class="kc-link" data-kc-show-all aria-expanded="false">Show everything</button></p>' : '')
       + (!b.empty ? '<p>' + esc('What would you like to do first?') + '</p>' : '');
     var old = thread.querySelector('[data-id="brief"]'); if (old) old.remove();
@@ -288,7 +292,7 @@
     var plain = String(b.lead || (b.empty ? "Everything's quiet on your account. Ask me about your parcels, bills or pickup." : 'Ask me about your parcels, bills or pickup.')).replace(/\*\*([^*]+)\*\*/g, '$1').replace(/\*([^*]+)\*/g, '$1');
     var m = q('[data-kc-min-t]'); if (m) m.textContent = hello() + '. ' + plain;
     if (!teaser) return;
-    teaser.querySelector('[data-kc-hello]').textContent = hello();
+    teaser.querySelector('[data-kc-hello]').textContent = hello() + ". I'm " + KING + ', how can I help?';
     teaser.querySelector('[data-kc-teaser-lead]').textContent = plain;
     if (c.ready) tags.push(['delivered', c.ready + ' ready for pickup']);
     if (c.changed) tags.push(['transit', c.changed + ' update' + (c.changed > 1 ? 's' : '')]);
