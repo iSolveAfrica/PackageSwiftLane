@@ -9,9 +9,7 @@ if (!isset($d)) { $d = []; }
 $latest = sl_get($d, 'latest');
 $steps = sl_get($d, 'latestSteps');
 ?>
-        <?php if (($slKingChat ?? '') === 'inline'): $kcMode = 'inline'; ?>
-        <?php include CDP_ROOT . '/views/sl/inc/king_chat.php'; /* King greets the customer: the panel (desktop) or the card that opens the chat (phones) */ ?>
-        <?php endif; ?>
+        <?php /* King is the icon at the bottom right (views/sl/inc/shell_end.php), not a panel on the dashboard */ ?>
         <?php include __DIR__ . '/partials/mobile_dashboard.php'; ?>
         <div class="sl-dashboard-detail"><?php include __DIR__ . (!empty($d['cc']) ? '/partials/client_overview.php' : '/partials/client_hero.php'); ?></div>
         <?php if (!empty($d['tracking']['items'])): $tc = $d['tracking']; $tcTitle = 'On the move'; $tcNoun = 'parcels'; $tcExpand = sl_route('LiveTracking'); ?>
