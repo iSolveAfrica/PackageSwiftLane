@@ -9,6 +9,15 @@
   var panel = document.getElementById('cx-insight');
   if (!panel) return;
   var inner = panel.querySelector('.cx-ins-pad');
+  /* The statistic opens as a centred pop-up over a blurred page (not a drop-down inside the page). */
+  var modal = document.createElement('div');
+  modal.className = 'cx-modal';
+  modal.hidden = true;
+  document.body.appendChild(modal);
+  modal.appendChild(panel);
+  panel.setAttribute('role', 'dialog');
+  panel.setAttribute('aria-modal', 'true');
+  modal.addEventListener('click', function (e) { if (e.target === modal) close(true); });
   var endpoint = panel.getAttribute('data-endpoint');
   var kpis = document.getElementById('cx-kpis');
   var charts = document.getElementById('cx-charts');
@@ -83,25 +92,9 @@
   }
   function place(trigger, key) {
     document.querySelectorAll('.cx-k.is-anchor').forEach(function (k) { k.classList.remove('is-anchor'); });
-    panel.classList.remove('in-card');
     var tile = trigger && trigger.closest('.cx-k');
     if (!trigger || (!tile && !charts.contains(trigger))) tile = kpis && kpis.querySelector('.cx-k[data-cx-stat="' + key + '"]');
-    if (tile) {
-      var end = rowEnd(tile);
-      if (end.nextElementSibling !== panel) end.after(panel);
-      tile.classList.add('is-anchor');
-      return tile;
-    }
-    // Opened from a chart. Side by side (desktop) the panel spans the page under both cards; stacked
-    // (tablets, phones) it is drawn inside the card, right after the chart, legend or list tapped.
-    var a = charts.querySelector('#cx-growth'), b = charts.querySelector('#cx-side');
-    var stacked = a && b && Math.abs(a.getBoundingClientRect().top - b.getBoundingClientRect().top) > 4;
-    var after = charts;
-    if (stacked && trigger) {
-      after = trigger.closest('#cx-growth .cx-ch') || trigger.closest('.cx-st') && b.querySelector('.cx-legend') || trigger.closest('.cx-legend') || (trigger.closest('.cx-st2') && trigger.parentElement) || charts;
-      if (after !== charts) panel.classList.add('in-card');
-    }
-    if (after.nextElementSibling !== panel) after.after(panel);
+    if (tile) { tile.classList.add('is-anchor'); return tile; }
     return null;
   }
   var resizeTimer;
@@ -123,7 +116,7 @@
   function open(key, ym, trigger, opt) {
     opt = opt || {};
     if (KEYS.indexOf(key) < 0 || (key === 'month' && months().indexOf(ym) < 0)) return;
-    clearTimeout(closeTimer);
+    clearTimeout(closeTimer); modal.classList.remove('is-closing');
     var wasOpen = !panel.hidden && panel.classList.contains('is-open');
     var before = panel.previousElementSibling;
     trigger = trigger || triggers().filter(function (n) { return sameStat(n, key, ym); })[0] || null;
@@ -134,6 +127,8 @@
     setHash('#stat=' + idOf(key, cur.ym));
     if (!wasOpen || moved) {
       panel.classList.remove('is-open');
+      modal.hidden = false;
+      document.documentElement.classList.add('cx-modal-on');
       panel.hidden = false;
       skeleton(key);
       void panel.offsetHeight; // start the open transition from closed
@@ -153,7 +148,8 @@
     document.querySelectorAll('.cx-k.is-anchor').forEach(function (k) { k.classList.remove('is-anchor'); });
     setHash('');
     panel.classList.remove('is-open', 'is-loading');
-    closeTimer = setTimeout(function () { panel.hidden = true; }, reduced.matches ? 0 : 340);
+    modal.classList.add('is-closing');
+    closeTimer = setTimeout(function () { panel.hidden = true; modal.hidden = true; modal.classList.remove('is-closing'); document.documentElement.classList.remove('cx-modal-on'); }, reduced.matches ? 0 : 220);
     if (restoreFocus && back && back.isConnected) back.focus({ preventScroll: true });
   }
   /* The open statistic lives in the hash; a ?stat= link that opened it is dropped so closing is final. */
@@ -194,6 +190,8 @@
      clicked) and show as much of the panel under it as fits. From a chart: show the whole panel,
      or its top under the bar when it is taller than the window; its header names what was clicked. */
   function reveal() {
+    modal.scrollTop = 0;
+    return; // the pop-up is centred on screen; nothing to scroll into view
     var r = panel.getBoundingClientRect(), top = topOffset(), h = inner.scrollHeight + 2;
     var room = innerHeight - bottomOffset(), dy = 0;
     if (r.top < top) dy = r.top - top;

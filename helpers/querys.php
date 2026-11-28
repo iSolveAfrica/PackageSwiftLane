@@ -349,6 +349,13 @@ function cdp_sendTemplateEmail($templateId, $toEmail, array $replacements = [], 
     // stored subject — callers supply their own via $subjectOverride.
     $subject = ($subjectOverride !== null && $subjectOverride !== '') ? $subjectOverride : $tpl->subject;
 
+    // One switch for every message (helpers/comms_gate.php). The SMTP path
+    // asks again in PHPMailer::send(); the answer is the same.
+    require_once __DIR__ . '/comms_gate.php';
+    if (!cdp_commLegacyAllowed('email', ['to' => (string) $toEmail, 'subject' => (string) $subject, 'body' => trim(strip_tags((string) $body))])) {
+        return ['ok' => true, 'skipped' => true];
+    }
+
     if ($core->mailer === 'PHP') {
         $headers  = "MIME-Version: 1.0\r\n";
         $headers .= "Content-type: text/html; charset=UTF-8\r\n";
@@ -8690,7 +8697,16 @@ function cdp_getPackageTrackingLegacyAware($order_id) {
             'estimated_eta'   => null,
         );
     }
-    if (empty($row->tracking_number)) {
+    // cdb_add_order.tracking_num only exists on installations upgraded from the
+    // old system; without the guard the lookup fails on a fresh schema.
+    static $hasLegacyTrk = null;
+    if ($hasLegacyTrk === null && empty($row->tracking_number)) {
+        $db = new Conexion;
+        $db->cdp_query("SELECT COUNT(*) AS n FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_add_order' AND COLUMN_NAME = 'tracking_num'");
+        $db->cdp_execute();
+        $hasLegacyTrk = (int) ($db->cdp_registro()->n ?? 0) > 0;
+    }
+    if (empty($row->tracking_number) && $hasLegacyTrk) {
         $db = new Conexion;
         $db->cdp_query('SELECT tracking_num FROM cdb_add_order WHERE order_id = :order_id LIMIT 1');
         $db->bind(':order_id', (int) $order_id);

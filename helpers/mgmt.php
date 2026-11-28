@@ -434,9 +434,11 @@ if (!function_exists('cdp_mgmtShipmentStats')) {
             $out['csat'] = $c && (int) $c->n ? round(100 * (int) $c->good / (int) $c->n, 1) : null;
         }
         if (cdp_opsTableExists('cdb_comm_surveys')) {
-            $s = cdp_opsOne("SELECT AVG(score) a, SUM(score <= 2) bad FROM cdb_comm_surveys WHERE responded_at BETWEEN :f AND :t", [':f' => $f, ':t' => $t]);
-            $out['survey_avg'] = $s && $s->a !== null ? round((float) $s->a, 2) : null;
-            $out['unhappy'] = (int) ($s->bad ?? 0);
+            // The first rating answer of every survey form (helpers/comms_surveys.php keeps it in score).
+            require_once __DIR__ . '/comms_surveys.php';
+            $s = cdp_surveyScoreAvg($f, $t);
+            $out['survey_avg'] = $s['avg'];
+            $out['unhappy'] = $s['unhappy'];
         }
         return $out;
     }

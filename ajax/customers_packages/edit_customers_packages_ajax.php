@@ -32,6 +32,12 @@ require_once(__DIR__ . '/../../helpers/video_files.php');
 cdp_purgeDeliveredVideosLater();   // videos of delivered packages are deleted after the response
 
 require_once("../../helpers/querys.php");
+// Message source for the message log and the transport gate (helpers/comms_gate.php),
+// named here rather than read from this endpoint's file name.
+require_once(__DIR__ . '/../../helpers/comms_gate.php');
+if (function_exists('cdp_msgSetContext')) {
+    cdp_msgSetContext(['source' => 'shipment_updated', 'source_label' => 'Shipment Updated', 'entity_type' => 'package']);
+}
 require_once("../../helpers/phpmailer/class.phpmailer.php");
 require_once("../../helpers/phpmailer/class.smtp.php");
 require_once("../notify_whatsapp/api_whatsapp_service_v2.php");
@@ -582,7 +588,7 @@ if (empty($errors)) {
                 $header .= "Content-type: text/html; charset=UTF-8 \r\n";
                 $header .= "From: " . $from . " \r\n";
                 try {
-                    mail($to, $subject, $newbody, $header);
+                    require_once __DIR__ . '/../../helpers/whatsapp.php'; if (cdp_commLegacyAllowed('email', ['id' => (int) ($sender_data->id ?? 0), 'name' => trim((string) ($sender_data->fname ?? '') . ' ' . (string) ($sender_data->lname ?? '')), 'to' => (string) $to, 'subject' => (string) $subject, 'body' => cdp_statusNotifyPlain($newbody)])) { $cdpOk = @mail($to, $subject, $newbody, $header); if (function_exists('cdp_msgLogPhpMail')) { cdp_msgLogPhpMail((bool) $cdpOk, $to, $subject, $newbody); } }
                 } catch (Exception $e) {}
 
             } elseif ($check_mail == 'SMTP') {

@@ -7,14 +7,16 @@ if (!isset($d)) { $d = []; }
 $can = $d['can'];
 ?>
         <div class="sl-head">
-          <div><h1 class="sl-title"><?= $d['isClient'] ? 'My Packages' : 'Sea Packages' ?></h1><p class="sl-lede"><?= h($d['lede']) ?></p></div>
-          <div class="row g8 wrap"><a class="sl-btn ghost" href="<?= h(sl_url(['export' => 'csv'])) ?>"><i class="ic ic-sm i-download" aria-hidden="true"></i>Export</a><?php if (!$d['isClient']): ?><a class="sl-btn ghost" href="<?= sl_route('Consolidations', ['mode' => 'sea']) ?>"><i class="ic ic-sm i-layers" aria-hidden="true"></i>Containers</a><?php endif; ?><?php if ($d['canAdd']): ?><a class="sl-btn" href="<?= sl_route('NewPackage') ?>"><i class="ic ic-sm i-plus" aria-hidden="true"></i>New Package</a><?php endif; ?></div>
+          <div><h1 class="sl-title"><?= $d['isClient'] ? 'My sea shipments' : 'Sea Packages' ?></h1><p class="sl-lede"><?= h($d['lede']) ?></p></div>
+          <div class="row g8 wrap"><a class="sl-btn ghost" href="<?= h(sl_url(['export' => 'csv'])) ?>"><i class="ic ic-sm i-download" aria-hidden="true"></i>Export</a><?php if (!$d['isClient']): ?><a class="sl-btn ghost" href="<?= h(sl_route('SeaPackages',['panel'=>'tower'])) ?>">Control tower</a><a class="sl-btn ghost" href="<?= sl_route('Consolidations', ['mode' => 'sea']) ?>"><i class="ic ic-sm i-layers" aria-hidden="true"></i>Containers</a><?php endif; ?><?php if ($d['canAdd']): ?><a class="sl-btn" href="<?= sl_route('NewPackage') ?>"><i class="ic ic-sm i-plus" aria-hidden="true"></i>New Package</a><?php endif; ?></div>
         </div>
+        <?php if (!empty($d['mi'])): $mi = $d['mi']; $miOther = $d['miOther'] ?? null; include __DIR__ . '/partials/client_mode_insights.php'; else: ?>
         <div class="grid cols4">
           <?php foreach ($d['kpi'] as $k): ?>
           <a class="sl-card sl-metric" href="<?= h($k['href']) ?>" style="color:inherit"><div class="sl-ml"><span><i class="ic ic-sm <?= h($k['icon']) ?>" aria-hidden="true"></i><?= h($k['label']) ?></span></div><div class="sl-mv"><?= sl_num($k['n']) ?> <i>/ <?= sl_num($d['total']) ?></i></div><div class="sl-ticks <?= h($k['cls']) ?>"><i style="width: <?= (int) $k['pct'] ?>%"></i></div></a>
           <?php endforeach; ?>
         </div>
+        <?php endif; ?>
         <div class="sl-card flush" data-sl-scope>
           <form method="get" class="row wrap g12" style="padding: 14px 16px" id="sp-filter">
             <input type="hidden" name="filter" value="<?= h($d['filter']) ?>"><input type="hidden" name="view" value="<?= h($d['view']) ?>">

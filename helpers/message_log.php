@@ -45,6 +45,55 @@ function cdp_msgTableReady()
     return $ready;
 }
 
+/**
+ * cdb_message_log.outbox_id (migrations/2026_11_27_message_log_outbox.sql):
+ * the Communication Center outbox row an attempt delivered. The column alone
+ * is added here on first use when the migration has not been run and the table
+ * is small; the indexes the Outbox reads by come from the migration. True when
+ * the column is there.
+ * $add false only checks. Cached per request; never throws.
+ */
+function cdp_msgEnsureOutboxColumn($add = true)
+{
+    static $has = null, $tried = false;
+    if ($has === true || ($has === false && (!$add || $tried))) {
+        return $has;
+    }
+    try {
+        if (!cdp_msgTableReady()) {
+            return $has = false;
+        }
+        $db = new Conexion;
+        $db->cdp_query("SHOW COLUMNS FROM cdb_message_log LIKE 'outbox_id'");
+        $db->cdp_execute();
+        $has = $db->cdp_rowCount() > 0;
+        if ($has || !$add) {
+            return $has;
+        }
+        $tried = true;
+        // Only the column, and only on a small table: on a big log the ALTER would hold a metadata lock
+        // inside a send. The indexes come from migrations/2026_11_27_message_log_outbox.sql.
+        $db->cdp_query("SELECT COALESCE(TABLE_ROWS, 0) n FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_message_log'");
+        $db->cdp_execute();
+        $size = $db->cdp_registro();
+        if ($size && (int) $size->n > 50000) {
+            error_log('cdb_message_log.outbox_id is missing: run migrations/2026_11_27_message_log_outbox.sql (the table is too big to alter during a request).');
+            return $has = false;
+        }
+        try {
+            $db->cdp_query('ALTER TABLE cdb_message_log ADD COLUMN outbox_id BIGINT NULL, ALGORITHM=INSTANT');
+            $db->cdp_execute();
+        } catch (Throwable $e) {
+            $db->cdp_query('ALTER TABLE cdb_message_log ADD COLUMN outbox_id BIGINT NULL');
+            $db->cdp_execute();
+        }
+        return $has = true;
+    } catch (Throwable $e) {
+        error_log('cdb_message_log.outbox_id could not be added: ' . $e->getMessage());
+        return $has = false;
+    }
+}
+
 /** Timestamp in the configured timezone (shares the activity log's clock). */
 function cdp_msgNow()
 {
@@ -65,7 +114,8 @@ function cdp_msgNewBatchId($prefix = 'b')
 // Context — what the caller knows about the message being sent.
 //
 // Keys: source, source_label, template_id, entity_type, entity_id,
-//       entity_label, batch_id, recipient_user_id, recipient_name, subject
+//       entity_label, batch_id, recipient_user_id, recipient_name, subject,
+//       outbox_id (cdb_comm_outbox row; set by cdp_commDeliverContext)
 // ---------------------------------------------------------------------------
 function &cdp_msgContextStore()
 {
@@ -328,7 +378,7 @@ function cdp_msgRecipientFromEntity($entity)
  * @param array $o channel, status, status_detail, provider_response, subject,
  *                 body, template_id, recipient_user_id, recipient_name,
  *                 recipient_to, entity_type, entity_id, entity_label,
- *                 batch_id, source, source_label
+ *                 batch_id, source, source_label, outbox_id
  * @return int inserted id, or 0
  */
 function cdp_msgLog(array $o)
@@ -385,19 +435,27 @@ function cdp_msgLog(array $o)
             $resp = json_encode($resp, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         }
 
+        // The outbox row this attempt delivered (Communications > Outbox shows the
+        // attempts of one queued message together). The column is added on first need.
+        $outboxId = (int) $get('outbox_id', 0);
+        $withOutbox = $outboxId > 0 ? cdp_msgEnsureOutboxColumn(true) : cdp_msgEnsureOutboxColumn(false);
+
         $db = new Conexion;
         $db->cdp_query("INSERT INTO cdb_message_log
             (created_at, channel, source, source_label, template_id, subject, body,
              recipient_user_id, recipient_name, recipient_to,
              entity_type, entity_id, entity_label, batch_id,
              status, status_detail, provider_response,
-             sent_by, sent_by_name, sent_by_role, ip, endpoint)
+             sent_by, sent_by_name, sent_by_role, ip, endpoint" . ($withOutbox ? ', outbox_id' : '') . ")
             VALUES
             (:created_at, :channel, :source, :source_label, :template_id, :subject, :body,
              :recipient_user_id, :recipient_name, :recipient_to,
              :entity_type, :entity_id, :entity_label, :batch_id,
              :status, :status_detail, :provider_response,
-             :sent_by, :sent_by_name, :sent_by_role, :ip, :endpoint)");
+             :sent_by, :sent_by_name, :sent_by_role, :ip, :endpoint" . ($withOutbox ? ', :outbox_id' : '') . ")");
+        if ($withOutbox) {
+            $db->bind(':outbox_id', $outboxId > 0 ? $outboxId : null);
+        }
 
         $db->bind(':created_at',        cdp_msgNow());
         $db->bind(':channel',           substr(strtolower((string) $get('channel', 'whatsapp')), 0, 12));

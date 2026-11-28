@@ -232,6 +232,15 @@ if (empty($errors)) {
         // switches. With nothing saved for this status the built-in messages go out unchanged.
         // WhatsApp is handled inside cdp_sendStatusUpdateWhatsApp.
         require_once __DIR__ . '/../../helpers/notify_studio.php';
+        // Message source for the message log and the transport gate
+        // (helpers/comms_gate.php). The endpoint's name would read as "shipment
+        // registered"; this is a status update, sent by the Automation Center
+        // instead when it owns statuses.
+        require_once __DIR__ . '/../../helpers/comms_gate.php';
+        if (function_exists('cdp_msgSetContext')) {
+            cdp_msgSetContext(['source' => 'tracking_update', 'source_label' => 'Tracking Update', 'entity_type' => 'package',
+                'entity_id' => (string) $shipment_id, 'entity_label' => (string) $fullshipment, 'recipient_user_id' => (int) $shipment->sender_id]);
+        }
         $nsKey = 'status:' . (int) $status;
         $nsVars = cdp_notifyBaseVars($sender_data, $fullshipment, $app_url) + cdp_notifyPackageVars((int) $shipment_id, 'sea') + [
             'status' => (string) $add_status,
@@ -274,7 +283,13 @@ if (empty($errors)) {
             $header .= "Content-type: text/html; charset=UTF-8 \r\n";
             $header .= "From: " . $from . " \r\n";
 
-            mail($to, $subject, $message, $header);
+            // mail() bypasses PHPMailer, so the transport gate is asked here.
+            require_once __DIR__ . '/../../helpers/whatsapp.php'; if (cdp_commLegacyAllowed('email', ['id' => (int) $shipment->sender_id, 'name' => trim((string) ($sender_data->fname ?? '') . ' ' . (string) ($sender_data->lname ?? '')), 'to' => (string) $to, 'subject' => $subject, 'body' => cdp_statusNotifyPlain($message)])) {
+                $cdpOk = @mail($to, $subject, $message, $header);
+                if (function_exists('cdp_msgLogPhpMail')) {
+                    cdp_msgLogPhpMail((bool) $cdpOk, $to, $subject, $message);
+                }
+            }
         } elseif ($check_mail == 'SMTP') {
 
             //PHPMAILER PHP   

@@ -1,0 +1,19 @@
+/* Rider work-flow screens on a computer: the same components as on the phone (pwa/phone-rider-flow.css) in the
+   two-column .mxp layout. The colour roles the phone frame sets on .mx.rs-r are mapped to tokens here. */
+@import url("../pwa/phone-rider-flow.css");
+.mxp{--rs-amb:var(--amber-bg);--rs-amb-ink:var(--amber-ink);--rs-amb-soft:var(--amber-bg)}
+.mxp .ra-on{margin:0;box-shadow:none}
+.mxp .rs-ot,.mxp .rs-wk{background:var(--card);border:1px solid var(--line)}
+.mxp .rs-vs,.mxp .rs-ob{background:var(--active)}.mxp .rs-go{background:var(--card)}
+.mxp .rs-hl{margin-top:0}
+.mxp .rs-sp{background:var(--card);border:1px solid var(--line)}
+.mxp .rs-bar.now>span{background:var(--ink)}
+.mxp .ro-map{--mh:280px}
+.mxp .mx-btn.rs-amb{background:var(--amber-bg);color:var(--amber-ink)}
+.mxp .mx-foot .ra-ofoot{max-width:560px;margin:0 auto}
+.mxp .rs-st{background:var(--amber-bg);color:var(--amber-ink)}
+/* .mxp resets link and button colour to inherit; the dark components keep their light text */
+.mxp a.mx-btn,.mxp button.mx-btn,.mxp a.ra-swipe,.mxp a.rs-scan{color:var(--inverse)}
+.mxp a.mx-btn.sec,.mxp button.mx-btn.sec{color:var(--ink)}
+.mxp a.mx-btn.rs-amb{color:var(--amber-ink)}
+.mxp .mx-note a{color:var(--orange)}

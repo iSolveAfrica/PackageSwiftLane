@@ -14,4 +14,4 @@ if (($_GET['export'] ?? '') === 'csv') {
     foreach ($h['rows'] as $r) fputcsv($o, [$r['id'], $r['cust'], $r['locker'], $r['w'], $r['kind'], $r['by'], $r['when'], $r['code']]);
     exit;
 }
-sl_render('WarehousePickups', ['id' => 'warehouse', 'title' => 'Warehouse Pickups', 'board' => 'WarehousePickups', 'styles' => ['assets/swiftlane/pages/ops.css']], sl_warehousePickupsData($user, $core));
+sl_render('WarehousePickups', ['id' => 'whpick', 'title' => 'Warehouse Pickups', 'board' => 'WarehousePickups', 'styles' => ['assets/swiftlane/pages/ops.css']], sl_warehousePickupsData($user, $core));

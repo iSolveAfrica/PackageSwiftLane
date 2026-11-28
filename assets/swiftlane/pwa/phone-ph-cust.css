@@ -1,0 +1,74 @@
+/* Phone customer screens (ph-cust): real form controls inside the design's field shells. Tokens only. */
+.pc-form{display:contents}
+.pc-step[hidden]{display:none!important}
+.pc-step{display:flex;flex-direction:column;gap:inherit}
+.b1-dd>div>select,.b1-dd>div>input,.b1-dd>div>textarea,.b1-chipin>input{flex:1;min-width:0;border:0;background:transparent;color:var(--ink);font:16px var(--font);outline:none;appearance:none;-webkit-appearance:none;min-height:44px;padding:0}
+.b1-dd>div>textarea,.pc-ta{resize:vertical;padding:12px 0;line-height:1.4}
+.b1-dd>div:focus-within,.b1-chipin:focus-within{box-shadow:0 0 0 2px var(--ink)}
+.b1-chipin>input{min-width:110px;padding:0 6px}
+.b1-chipin .pc-chip{flex:none;display:inline-flex;align-items:center;gap:4px;min-height:32px;padding:0 2px 0 12px;border-radius:999px;background:var(--field);font:500 12.5px var(--mono);border:1px solid var(--line)}
+.b1-chipin .pc-chip button{width:28px;height:28px;border-radius:50%;border:0;background:transparent;color:var(--muted);display:grid;place-items:center;cursor:pointer}
+.pc-chipadd{width:44px;height:44px;border-radius:50%;background:var(--ink);color:var(--inverse);display:grid;place-items:center;flex:none;margin-left:auto;border:0;cursor:pointer}
+.pc-vh{position:absolute;opacity:0;width:1px;height:1px}
+label.b1-tick{cursor:pointer;position:relative}
+.b1-tick:focus-within{box-shadow:0 0 0 2px var(--ink)}
+.b1-tick>i>.ic{display:none}
+.b1-tick.on>i>.ic{display:block}
+button.b1-x.pc-x{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:var(--muted);justify-self:end;border:0;background:transparent;cursor:pointer}
+.b1-thumbs .pc-fill{position:absolute;inset:0;display:grid;place-items:center;cursor:pointer;border-radius:inherit}
+.b1-thumbs .pc-fill:focus-within{box-shadow:0 0 0 2px var(--ink)}
+button.b1-amb,button.b1-wht{cursor:pointer;font-family:var(--font)}
+button.b1-amb[hidden]{display:none}
+.pc-ck-row{display:flex;align-items:center;gap:12px}
+.mx-tg button.mx-sw[disabled]{opacity:.5}
+.mx-two>*{min-width:0}
+/* M-CSupport: support_help.js output (.bub, cards) drawn as the design's chat */
+.pc-panel{display:flex;flex-direction:column;gap:12px}
+.pc-panel[hidden]{display:none}
+.b3-pl button{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:999px;background:var(--bg);border:1px solid transparent;font:500 13px var(--font);color:var(--ink);white-space:nowrap;cursor:pointer}
+.b3-pl[hidden],#hp-human[hidden],#hp-solved[hidden]{display:none}
+.pc-chat .bub{max-width:82%;align-self:flex-start;display:flex;flex-direction:column;gap:4px;padding:10px 13px;border-radius:18px 18px 18px 6px;background:var(--violet-bg);color:var(--ink);font-size:14px;line-height:1.4;overflow-wrap:anywhere}
+.pc-chat .bub.me{align-self:flex-end;background:var(--ink);color:var(--inverse);border-radius:18px 18px 6px 18px}
+.pc-chat .bub p{margin:0}
+.pc-chat .bub>small{font-size:10.5px;opacity:.75}
+.pc-chat .bub a{color:inherit;text-decoration:underline}
+.pc-chat .bub img{max-width:100%}
+.pc-chat>.mut{align-self:center;font-size:12px;color:var(--muted);text-align:center}
+#hp-typing{font-size:12px;color:var(--muted);padding:0 6px}
+.pc-comp{flex:1;min-width:0;min-height:44px;max-height:160px;border-radius:22px;background:var(--field);border:1px solid var(--line);padding:11px 14px;font:16px var(--font);color:var(--ink);resize:none;outline:none}
+.pc-comp:focus{border-color:var(--ink)}
+.pc-files{display:flex;flex-wrap:wrap;gap:6px}
+.mx-foot .pc-files:not(:empty){padding:6px 12px 0;background:var(--panel)}
+.pc-list{display:flex;flex-direction:column;gap:8px}
+.pc-list>button.sl-card{background:var(--card);border:1px solid var(--line);border-radius:20px;min-height:44px}
+.pc-list>details.sl-card{background:var(--card);border:1px solid var(--line);border-radius:20px}
+.pc-pad{padding:4px 14px}
+.mx .sl-dialog .sl-modal{max-width:100%;max-height:88dvh;overflow:auto;border-radius:24px}
+#hp-scroll .b3-ls a{display:flex;align-items:center;justify-content:center;gap:4px}
+#hp-req-n{font-size:12px;opacity:.8}
+.b3-pl button{background:var(--card);border-color:var(--line)}
+button.pc-btnrow{width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer}
+label.pc-btnrow{cursor:pointer;position:relative}
+label.pc-btnrow:focus-within{box-shadow:0 0 0 2px var(--ink)}
+/* M-CNotifPrefs matrix: notifications.js needs .sl-chk; keep the design's box */
+.b3-mxr button.sl-chk{width:28px;height:28px;min-width:0;border-radius:9px;border:1.5px solid var(--line-2);background:var(--card);display:grid;place-items:center;color:var(--inverse);padding:0;margin:0;box-shadow:none}
+.b3-mxr button.sl-chk.on{background:var(--ink);border-color:var(--ink)}
+.b3-mxr button.sl-chk::after,.b3-mxr button.sl-chk::before{content:none}
+.b3-mxr button.sl-chk:not(.on) .ic{visibility:hidden}
+.b3-mxr button.sl-chk[disabled]{opacity:.4;cursor:default}
+.b3-mxr button.sl-chk{position:relative}
+.b3-mxr button.sl-chk::after{content:"";position:absolute;inset:-8px}
+.b3-mini.wide button[disabled]{cursor:default}
+.pc-chip-a{flex:none;display:inline-flex;align-items:center;min-height:44px;padding:0 15px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink-2);font:500 13px var(--font);white-space:nowrap}
+.pc-chip-a.on{background:var(--ink);color:var(--inverse);border-color:var(--ink)}
+.pc-acts{display:flex;flex-wrap:wrap;gap:6px}
+.pc-acts .b3-x{min-height:44px}
+/* M-CProfile */
+.pc-av{background-size:cover;background-position:center}
+.pc-linkbtn{border:0;background:none;padding:0;cursor:pointer;font-family:var(--font);align-self:flex-start}
+.pc-pad14{padding:14px;display:flex;flex-direction:column;gap:10px}
+.pc-adr{display:flex;flex-direction:column;gap:10px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.mx-ph .pc-phbtn{aspect-ratio:1;border-radius:14px;border:1.5px dashed var(--line-2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--muted);background:var(--card);font:inherit;cursor:pointer;padding:6px;overflow:hidden}
+.mx-ph .pc-phbtn>span{width:100%;flex:1;border-radius:10px;display:grid;place-items:center}
+.b3-rof .b3-st{margin-left:auto}
+.b3-gh[disabled]{opacity:.5;cursor:default}

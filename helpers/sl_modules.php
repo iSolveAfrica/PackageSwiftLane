@@ -29,9 +29,9 @@ function sl_modules(): array
 {
     return [
         // Operations
-        'air'           => ['label' => 'Air shipping', 'group' => 'ops', 'desc' => 'Air freight shipments, labels, invoices, tracking and air consolidations', 'nav' => ['air', 'shiptrack'], 'customer' => true, 'api' => ['shipments'], 'jobs' => []],
-        'sea'           => ['label' => 'Sea shipping', 'group' => 'ops', 'desc' => 'Sea packages registered to lockers and sea consolidations', 'nav' => ['sea'], 'customer' => true, 'api' => ['packages'], 'jobs' => []],
-        'consolidation' => ['label' => 'Consolidations', 'group' => 'ops', 'desc' => 'Air and sea consolidations: group shipments and packages into one load', 'nav' => ['consol'], 'customer' => false, 'api' => ['consolidations'], 'jobs' => []],
+        'air'           => ['label' => 'Air shipping', 'group' => 'ops', 'desc' => 'Air freight shipments, labels, invoices, tracking and air consolidations', 'nav' => ['air', 'shiptrack', 'airtrack'], 'customer' => true, 'api' => ['shipments'], 'jobs' => []],
+        'sea'           => ['label' => 'Sea shipping', 'group' => 'ops', 'desc' => 'Sea packages registered to lockers and sea consolidations', 'nav' => ['sea', 'seatower', 'seatrack'], 'customer' => true, 'api' => ['packages'], 'jobs' => []],
+        'consolidation' => ['label' => 'Consolidations', 'group' => 'ops', 'desc' => 'Air and sea consolidations: group shipments and packages into one load', 'nav' => ['consol', 'airloads', 'airnewcon', 'sealoads', 'seanewcon'], 'customer' => false, 'api' => ['consolidations'], 'jobs' => []],
         'prealerts'     => ['label' => 'Pre-alerts', 'group' => 'ops', 'desc' => 'Customers announce parcels before they arrive', 'nav' => ['prealert'], 'customer' => true, 'api' => ['pre-alerts'], 'jobs' => []],
         'pickups'       => ['label' => 'Pickups', 'group' => 'ops', 'desc' => 'Home pickup requests, pickup aging and pickup reports', 'nav' => ['pickup'], 'customer' => true, 'api' => ['pickups'], 'jobs' => ['cron/pickup_aging.php']],
         'warehouse'     => ['label' => 'Warehouse', 'group' => 'ops', 'desc' => 'Package intake, hand-out, warehouse delivery, pickup codes and locker search', 'nav' => ['warehouse', 'whpick', 'handout', 'locker', 'intake', 'codes'], 'customer' => false, 'api' => [], 'jobs' => []],
@@ -46,7 +46,7 @@ function sl_modules(): array
         'finance'       => ['label' => 'Financial', 'group' => 'finance', 'desc' => 'Billing, payments, transactions, receivables, financial overview, My bills', 'nav' => ['billhub', 'trans', 'sendp', 'ar', 'fin', 'pay', 'mybills'], 'customer' => true, 'api' => ['payments', 'invoices'], 'jobs' => []],
         'loyalty'       => ['label' => 'Loyalty and referrals', 'group' => 'finance', 'desc' => 'Points, tiers, coupons', 'nav' => ['loyalty'], 'customer' => true, 'api' => [], 'jobs' => []],
         // Messaging
-        'messaging'     => ['label' => 'Communications', 'group' => 'messaging', 'desc' => 'Messages, WhatsApp inbox, campaigns, push, templates, message logs and costs', 'nav' => ['commshub', 'commsinbox', 'commscenter', 'campaigns', 'messages', 'notifc', 'notifystudio', 'ebuild', 'msgtpl', 'bcast', 'compose', 'devbilling'], 'customer' => false, 'api' => ['notifications'], 'jobs' => ['cron/comms_worker.php']],
+        'messaging'     => ['label' => 'Communications', 'group' => 'messaging', 'desc' => 'Messages, WhatsApp inbox, campaigns, push, templates, message logs and costs', 'nav' => ['commshub', 'commsinbox', 'commswaweb', 'commscenter', 'campaigns', 'messages', 'notifc', 'notifystudio', 'ebuild', 'msgtpl', 'bcast', 'compose', 'devbilling'], 'customer' => false, 'api' => ['notifications'], 'jobs' => ['cron/comms_worker.php']],
         'automations'   => ['label' => 'Automations', 'group' => 'messaging', 'desc' => 'When this happens, do that', 'nav' => ['auto'], 'customer' => false, 'api' => [], 'jobs' => []],
         // Support and AI
         'support'       => ['label' => 'Customer care', 'group' => 'support', 'desc' => 'Support desk, tickets, rules, playbooks, channels, customer chat', 'nav' => ['supporthub', 'servicepanel', 'tickets', 'csrules', 'playbook', 'knowledge', 'csrep', 'cschan', 'cssupai'], 'customer' => true, 'api' => [], 'jobs' => ['cron/support_worker.php']],
@@ -97,7 +97,7 @@ function sl_moduleRouteMap(): array
         ['~^ajax/(consolidate_packages/|dashboard/consolidated_package/)~', ['sea', 'consolidation']],
         // Consolidations hub (air and sea in one page)
         ['~^(consolidate_list|consolidate_view|consolidate_add|consolidate_edit|consolidate_parking_list|packing_list)~', ['consolidation']],
-        ['~^ajax/sl/consolidation_ajax~', ['consolidation']],
+        ['~^ajax/sl/(consolidation_load_plan|consolidation_ajax)~', ['consolidation']],
         // Pre-alerts
         ['~^(prealert_|customer_packages_add_from_prealert)~', ['prealerts']],
         ['~^ajax/(pre_alerts/|sl/prealert_ajax|sl/shipment_prealert_ajax)~', ['prealerts']],
@@ -110,7 +110,7 @@ function sl_moduleRouteMap(): array
         ['~^ajax/(sl/warehouse_ajax|sl/package_intake_ajax|locker/|pickup_code/|pickup_client_ajax)~', ['warehouse']],
         // Delivery system
         ['~^(last_mile|delivery_(dispatch|request|job|proof|schedule|settings|tracking)|rider_(dispatch|detail|settings))\.php~', ['delivery']],
-        ['~^ajax/sl/(delivery_ajax|delivery_settings_ajax|delivery_zone_ajax|rider_ajax|rider_fees_ajax)~', ['delivery']],
+        ['~^ajax/sl/(rider_position|dispatch_ai|delivery_ajax|delivery_settings_ajax|delivery_zone_ajax|rider_ajax|rider_fees_ajax)~', ['delivery']],
         // Freight and insurance
         ['~^(freight_|waybills|waybill_print|cargo_exceptions)~', ['freight']],
         ['~^ajax/sl/(freight_|waybill_ajax|cargo_exception_ajax)~', ['freight']],

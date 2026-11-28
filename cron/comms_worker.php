@@ -3,9 +3,11 @@
 // * Communication Center worker - run every 5 minutes:                    *
 // *   */5 * * * * php /path/to/app/cron/comms_worker.php >/dev/null 2>&1   *
 // *                                                                       *
-// * One pass: detect new events (tracking history, warehouse packages),   *
-// * once a day after 09:00 the claim and payment reminders, launch        *
-// * scheduled campaigns, then deliver what is due from the outbox. Also   *
+// * One pass: one message per new status row (each status is its own     *
+// * trigger, helpers/comms_triggers.php; warehouse receipts are status    *
+// * rows too), once a day after 09:00 the claim and payment reminders,    *
+// * campaigns and due surveys (cdp_commCampaignTick / cdp_commSurveyTick  *
+// * when present), then deliver what is due from the outbox. Also         *
 // * runs the Master View scheduled reports and the staff module's         *
 // * housekeeping (missed shifts, overdue tasks) so one cron line is       *
 // * enough. A lock file stops two passes overlapping.                     *

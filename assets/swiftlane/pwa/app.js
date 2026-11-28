@@ -51,6 +51,11 @@
   const isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const iosSafari = isIOS && /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|GSA|FBAN|FBAV|Instagram|Line\//.test(ua);
   const inAppBrowser = /FBAN|FBAV|Instagram|Line\/|WhatsApp|Snapchat|TikTok/.test(ua);
+  const ipad = isIOS && (/iPad/.test(ua) || navigator.platform === 'MacIntel');
+  let plan = {}; try { plan = JSON.parse(meta.dataset.install || '{}') || {}; } catch (e) { plan = {}; }
+  const browserName = meta.dataset.browserName || '';
+  const deviceName = isIOS ? (ipad ? 'iPad' : 'iPhone') : (meta.dataset.device || 'phone');
+  function esc(t) { return String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
   let gate = null;
   function el(tag, cls, text) { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
   function shareIcon() { return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>'; }
@@ -78,27 +83,38 @@
     const body = el('div', 'pwa-gate-body');
     const icon = el('img', 'pwa-gate-icon'); icon.src = meta.dataset.icon || ''; icon.alt = ''; icon.width = 88; icon.height = 88;
     const eb = el('span', 'pwa-gate-eb', 'Get the app');
-    const h = el('h2', null, 'Install ' + name); h.id = 'pwa-gate-title';
+    const h = el('h2', null, 'Install ' + name + ' on your ' + (/^(Android|This)/.test(deviceName) ? 'phone' : deviceName)); h.id = 'pwa-gate-title';
     const p = el('p', 'pwa-gate-lede', role === 'rider' ? 'Your stops, navigation and handovers open full screen, straight from your home screen.' : (role === 'staff' ? 'Every screen of the system, full screen on your phone: shipments, warehouse, consolidations, customers and reports.' : 'Track parcels, see pickup codes, pay bills and chat with us, full screen from your home screen.'));
     const perks = el('ul', 'pwa-gate-perks');
-    [['Opens in one tap', 'like any app on your phone'], ['Full screen', 'no browser bars, more room for your work'], ['Stays signed in', 'same account as the website']].forEach(x => { const li = el('li'); li.innerHTML = '<b>' + x[0] + '</b><span>' + x[1] + '</span>'; perks.append(li); });
+    [['Opens in one tap', 'like any app on your ' + (ipad ? 'iPad' : 'phone')], ['Full screen', 'no browser bars, more room for your work'], ['Stays signed in', 'same account as the website']].forEach(x => { const li = el('li'); li.innerHTML = '<b>' + x[0] + '</b><span>' + x[1] + '</span>'; perks.append(li); });
     body.append(icon, eb, h, p, perks);
-    if (isIOS && !iosSafari) {
-      body.append(el('p', 'pwa-gate-note', inAppBrowser ? 'This page is open inside another app. Open it in Safari to install.' : 'On iPhone the app installs from Safari.'));
-      const copy = el('button', 'pwa-gate-btn'); copy.type = 'button'; copy.innerHTML = '<span>Copy link to open in Safari</span>';
-      copy.addEventListener('click', async () => { try { await navigator.clipboard.writeText(location.href); copy.querySelector('span').textContent = 'Link copied: paste it in Safari'; } catch (e) { copy.querySelector('span').textContent = location.href; } });
-      body.append(copy, steps(['Open <b>Safari</b> and paste the link', 'Tap Share ' + shareIcon(), 'Choose <b>Add to Home Screen</b> ' + plusIcon()]));
+    // Steps for this exact browser come from the server (helpers/sl_device.php); the browser corrects the one
+    // thing a User-Agent hides: an iPad that says it is a Mac.
+    const copyLink = label => {
+      const copy = el('button', 'pwa-gate-btn sec'); copy.type = 'button'; copy.innerHTML = '<span></span>'; copy.querySelector('span').textContent = label;
+      copy.addEventListener('click', async () => { try { await navigator.clipboard.writeText(location.href); copy.querySelector('span').textContent = 'Link copied. Paste it in ' + (plan.open || plan.fallback || 'your browser'); } catch (e) { copy.querySelector('span').textContent = location.href; } });
+      return copy;
+    };
+    const stepHtml = text => esc(text).replace(/\bShare\b/, 'Share ' + shareIcon()).replace(/Add to Home Screen/i, m => '<b>' + m + '</b> ' + plusIcon()).replace(/(Install app|Add to Home screen|Add to phone|Add to Dock|Open in (?:Safari|Chrome|browser)|Install)(?![^<]*>)/g, '<b>$1</b>');
+    if (plan.way === 'leave') {
+      body.append(el('p', 'pwa-gate-note', 'This page is open inside ' + (browserName && browserName !== 'your browser' ? browserName.replace(/ browser$/, '') : 'another app') + ', which cannot install apps.'));
+      body.append(steps(plan.steps.map(stepHtml)), copyLink('Copy link to open in ' + (plan.open || 'your browser')));
     } else if (isIOS) {
-      body.append(steps(['Tap Share ' + shareIcon() + ' in the bar below', 'Scroll and choose <b>Add to Home Screen</b> ' + plusIcon(), 'Tap <b>Add</b>. The app appears on your home screen']));
-      body.append(el('div', 'pwa-gate-arrow'));
+      const list = iosSafari ? ['Tap Share in the bar ' + (ipad ? 'at the top' : 'at the bottom'), 'Scroll down and choose Add to Home Screen', 'Tap Add. The app appears on your home screen'] : (plan.way === 'share' ? plan.steps : ['Tap Share, at the top right next to the address', 'Choose Add to Home Screen', 'Tap Add. If you do not see it, open this page in Safari']);
+      body.append(steps(list.map(stepHtml)));
+      if (iosSafari && !ipad) body.append(el('div', 'pwa-gate-arrow'));
+      if (!iosSafari) body.append(copyLink('Copy link to open in Safari'));
     } else {
       const b = el('button', 'pwa-gate-btn'); b.type = 'button'; b.dataset.gateInstall = '1'; b.innerHTML = '<span>' + (promptEvent ? 'Install the app' : 'Preparing install…') + '</span>'; b.disabled = !promptEvent;
       b.addEventListener('click', async () => { if (!promptEvent) return; const pending = promptEvent; promptEvent = null; await pending.prompt(); const r = await pending.userChoice; if (r && r.outcome === 'accepted') { remember('installed', '1'); gateInstalled(); } else { b.querySelector('span').textContent = 'Install the app'; } });
       const help = el('div', 'pwa-gate-help'); help.dataset.gateHelp = '1'; help.hidden = !!promptEvent;
-      help.append(el('p', 'pwa-gate-note', inAppBrowser ? 'This page is open inside another app. Open it in Chrome to install.' : 'Install it from your browser menu:'));
-      help.append(steps(['Tap the menu ' + dotsIcon() + ' at the top', 'Choose <b>Install app</b> or <b>Add to Home screen</b>', 'Confirm <b>Install</b>']));
+      const list = plan.steps && plan.steps.length ? plan.steps : ['Open the browser menu', 'Choose Install app or Add to Home screen', 'Confirm Install'];
+      help.append(el('p', 'pwa-gate-note', 'Install it from the ' + (browserName && browserName !== 'your browser' ? browserName : 'browser') + ' menu:'));
+      help.append(steps(list.map(stepHtml)));
+      if (plan.open) help.append(copyLink('Copy link to open in ' + plan.open));
       body.append(b, help);
-      setTimeout(() => { if (!promptEvent && help) { help.hidden = false; b.hidden = true; } }, 2500);
+      // Browsers that never show their own install dialog go straight to the menu steps.
+      if (plan.way !== 'prompt') { help.hidden = false; b.hidden = true; } else setTimeout(() => { if (!promptEvent && help) { help.hidden = false; b.hidden = true; } }, 2500);
     }
     const later = el('button', 'pwa-gate-later', 'Continue in the browser for now'); later.type = 'button'; later.hidden = true;
     later.addEventListener('click', () => { remember('snooze', String(Date.now() + 6 * 3600e3)); closeGate(); });
@@ -151,8 +167,8 @@
     const panel = document.createElement('section'); panel.className = 'sl-card sl-modal'; panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-modal', 'true'); panel.setAttribute('aria-labelledby', 'pwa-install-title');
     const title = document.createElement('h2'); title.id = 'pwa-install-title'; title.className = 'sl-ct'; title.textContent = 'Keep ' + name + ' on your home screen';
     const text = document.createElement('p');
-    const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    text.textContent = ios ? 'Open this page in Safari. Tap Share, choose Add to Home Screen, then tap Add. This installs the ' + (role === 'rider' ? 'rider' : (role === 'staff' ? 'staff' : 'customer')) + ' app.' : 'Open your browser menu and choose Install app or Add to Home screen. Installation requires HTTPS and a supported browser.';
+    const list = plan.steps && plan.steps.length ? plan.steps : (isIOS ? ['Tap Share', 'Choose Add to Home Screen', 'Tap Add'] : ['Open your browser menu', 'Choose Install app or Add to Home screen']);
+    text.textContent = (plan.way === 'leave' ? 'This page is open inside another app. ' : (browserName && browserName !== 'your browser' ? 'In ' + browserName + ': ' : '')) + list.join('. ') + '.';
     const close = document.createElement('button'); close.type = 'button'; close.className = 'sl-btn'; close.textContent = 'Got it'; close.dataset.slClose = 'pwa-install-dialog';
     close.addEventListener('click', () => { wrapper.hidden = true; });
     document.body.style.overflow = 'hidden';

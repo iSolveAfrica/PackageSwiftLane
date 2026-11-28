@@ -35,3 +35,4 @@ $typeLabel = ['per_km' => 'Per km', 'bonus' => 'Bonus', 'penalty' => 'Deduction'
 <section class="sl-card col g8"><h2 class="sl-ct">Recent changes</h2><?php foreach ($d['log'] as $l): ?><div class="row between g12" style="padding:6px 0;border-top:1px solid var(--line)"><span class="sm"><b class="fw5"><?= h($l['who']) ?></b> <?= h($l['what']) ?></span><span class="mut sm mono"><?= h($l['at']) ?></span></div><?php endforeach; ?><?php if (!$d['log']): ?><span class="mut sm">No changes yet.</span><?php endif; ?></section></aside></div>
 </form>
 <?php if ($d['canEdit']): ?><form id="rf-new" data-sl-form data-sl-reload action="ajax/sl/rider_fees_ajax.php" method="post" hidden><input type="hidden" name="op" value="add"></form><?php endif; ?>
+<?php if (!empty($d['ra'])): $ra = $d['ra']; $phone = false; ?><div class="col g16" style="margin-top:16px"><?php include __DIR__ . '/partials/rider_admin.php'; ?></div><?php endif; ?>

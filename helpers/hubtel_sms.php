@@ -289,6 +289,12 @@ if (!function_exists('cdp_smsProviders')) {
      */
     function cdp_sendSms($to, $content, array $who = [])
     {
+        // One switch for every message (helpers/comms_gate.php).
+        require_once __DIR__ . '/comms_gate.php';
+        if (!cdp_commLegacyAllowed('sms', ['id' => (int) ($who['id'] ?? 0), 'name' => (string) ($who['name'] ?? ''),
+                'to' => preg_replace('/\D+/', '', (string) $to), 'body' => cdp_smsPlainText($content)])) {
+            return ['success' => false, 'skipped' => true, 'message' => 'Not sent by this screen (Communications > Automations).'];
+        }
         $ready = array_values(array_filter(cdp_smsProviderOrder(), 'cdp_smsProviderReady'));
         if (!$ready) {
             if (function_exists('cdp_msgLog')) {
@@ -536,7 +542,12 @@ if (!function_exists('cdp_smsSendNotification')) {
         }
 
         if (cdp_smsReady()) {
-            return cdp_smsToRecipient($user, $sms_body); // writes its own log row
+            return cdp_smsToRecipient($user, $sms_body); // writes its own log row; cdp_sendSms asks the gate
+        }
+        require_once __DIR__ . '/comms_gate.php';
+        if (!cdp_commLegacyAllowed('sms', ['id' => (int) $who['id'], 'name' => (string) $who['name'], 'to' => (string) $who['phone'],
+                'body' => cdp_smsPlainText((string) $sms_body)])) {
+            return ['success' => false, 'skipped' => true, 'message' => 'Not sent by this screen (Communications > Automations).'];
         }
 
         // Legacy ClickSend credentials (cdb_settings.twilio_sms_sid/_token).

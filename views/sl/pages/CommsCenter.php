@@ -1,22 +1,22 @@
 <?php
 /**
- * CommsCenter - Communication Center (comms_center.php). Every pane is filled
- * by dataJs/comms.js from ajax/comms/comms_ajax.php; styles assets/swiftlane/ops.css.
+ * CommsCenter - the old Communication Center address (comms_center.php).
+ * Sends the browser to the page that replaced the section named after #
+ * (#customers -> Customer history, #settings -> Settings, ...); anything
+ * else goes to the Overview. Without JavaScript the links below do it.
  */
 if (!isset($d)) { $d = []; }
-$tabs = ['overview' => 'Overview', 'automations' => 'Automations', 'templates' => 'Templates', 'send' => 'Send message', 'campaigns' => 'Campaigns',
-    'segments' => 'Segments', 'outbox' => 'Outbox', 'customers' => 'Customer history', 'surveys' => 'Surveys', 'deliveries' => 'Delivery bookings'];
-if (!empty($d['isAdmin'])) { $tabs['settings'] = 'Settings'; }
+$labels = ['overview' => 'Overview', 'automations' => 'Automations', 'templates' => 'Status messages', 'send' => 'Send', 'outbox' => 'Outbox',
+    'customers' => 'Customer history', 'surveys' => 'Surveys', 'settings' => 'Settings'];
 ?>
-<div class="ops">
-<?php $commsTab = 'commscenter'; include __DIR__ . '/partials/comms_tabs.php'; ?>
-<div class="sl-head"><div><h1 class="sl-title" style="font-size:20px">Communication Center</h1><p class="sl-lede">WhatsApp, SMS and e-mail: automatic alerts, campaigns with consent, preferences and history</p></div></div>
-<?php if (empty($d['ready'])): ?><div class="swl-ops-banner is-danger">The communication tables could not be created. The database user needs the CREATE privilege once.</div><?php endif; ?>
-<div class="swl-ops-tabs" role="tablist" aria-label="Communication Center sections">
-<?php $first = true; foreach ($tabs as $k => $label): ?><button type="button" role="tab" id="cm_tab_<?= h($k) ?>" aria-controls="cm_pane_<?= h($k) ?>" aria-selected="<?= $first ? 'true' : 'false' ?>" data-tab="<?= h($k) ?>"><?= h($label) ?></button><?php $first = false; endforeach; ?>
-</div>
-<?php $first = true; foreach ($tabs as $k => $label): ?>
-<section class="swl-ops-pane sl-card" role="tabpanel" id="cm_pane_<?= h($k) ?>" aria-labelledby="cm_tab_<?= h($k) ?>"<?= $first ? '' : ' hidden' ?>><div data-pane-body="<?= h($k) ?>"><p class="swl-ops-muted">Loading…</p></div></section>
-<?php $first = false; endforeach; ?>
-</div>
-<script>window.CDP_COMMS = { isAdmin: <?= !empty($d['isAdmin']) ? 'true' : 'false' ?> };</script>
+<div class="sl-head"><div><h1 class="sl-title">The Communication Center has moved</h1><p class="sl-lede">Its sections are now pages of Notifications &amp; Messages. Taking you there…</p></div></div>
+<nav class="row g8 wrap" aria-label="Notifications and messages pages">
+<?php foreach ($labels as $k => $l): ?><a class="sl-btn ghost sm" href="<?= h($d['targets'][$k]) ?>"><?= h($l) ?></a><?php endforeach; ?>
+</nav>
+<script>
+(function () {
+  var t = <?= json_encode($d['targets'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES) ?>;
+  var h = (location.hash || '').replace(/^#/, '').toLowerCase();
+  location.replace(t[h] || <?= json_encode($d['home'], JSON_HEX_TAG | JSON_UNESCAPED_SLASHES) ?>);
+})();
+</script>

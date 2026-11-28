@@ -1,0 +1,51 @@
+/* Phone screens by "ph-wh" (warehouse, consolidations, tracking, documents, labels, pickups): rules mx.css does not have. */
+.mx-seg a{flex:none;min-height:40px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink-2);font:500 13px var(--font);white-space:nowrap;display:inline-flex;align-items:center;text-decoration:none}
+.mx-seg a.on{background:var(--ink);color:var(--inverse);border-color:var(--ink)}
+.mx-fseg a{flex:1;min-height:44px;border-radius:12px;border:1px solid var(--line-2);background:var(--field);font:500 13px var(--font);color:var(--ink-2);padding:0 10px;display:flex;align-items:center;justify-content:center;text-decoration:none}
+.mx-fseg a.on{background:var(--ink);color:var(--inverse);border-color:var(--ink)}
+.mx-fseg button{cursor:pointer}
+.mx a.mx-btn:not(.sec):not(.or){color:var(--inverse)}
+.mx button.mx-btn{width:100%;cursor:pointer;font-family:inherit}
+.mx button.mx-btn:not(.sec):not(.or){border:0}
+.mx button.mx-btn:disabled{opacity:.45;cursor:not-allowed}
+.mx select.mx-in,.mx input.mx-in,.mx textarea.mx-in{width:100%;font:16px var(--font);color:var(--ink);appearance:none;-webkit-appearance:none}
+.mx select.mx-in{background-image:none;padding-right:36px}
+.mx textarea.mx-in{min-height:84px;padding-top:12px;resize:vertical}
+.wh-selw{position:relative;display:block}
+.wh-selw>.ic{position:absolute;right:14px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted)}
+.mx-srch button.mx-ib{border:0;cursor:pointer}
+.mx-srch input{font-size:16px}
+.mx-row .mx-rm small.mono{font-family:var(--mono);font-size:11.5px}
+.mx-act a{text-decoration:none;color:inherit}
+.mx-act button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 4px;border-radius:16px;background:var(--card);border:1px solid var(--line);min-height:84px;text-align:center;font:inherit;color:inherit;cursor:pointer}
+/* pickup code digits (WarehouseDelivery): real inputs in the design's boxes */
+.mx-code input{flex:1;min-width:0;max-width:56px;height:64px;border-radius:14px;border:1.5px solid var(--line-2);background:var(--field);text-align:center;font:600 26px var(--mono);color:var(--ink);padding:0}
+.mx-code input:focus{outline:0;border-color:var(--orange);box-shadow:0 0 0 3px rgba(217,121,43,.18)}
+.is-verified .mx-code input{border-color:var(--green);background:var(--green-bg);color:var(--green-ink)}
+.wh-scan-in{width:100%;max-width:280px;min-height:48px;border-radius:13px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#FAF9F7;font:16px var(--mono);text-align:center;margin-top:6px}
+.wh-scan-in::placeholder{color:rgba(250,249,247,.5)}
+.wh-items label.mx-row{cursor:pointer}
+.wh-items input[type=checkbox]{width:22px;height:22px;flex:none;accent-color:var(--ink)}
+.wh-items .mx-row.ok .mx-li{background:var(--green-bg);color:var(--green-ink)}
+.wh-items .mx-row.scanned .sl-pill{background:var(--green-bg);color:var(--green-ink)}
+.wh-ver{display:none}
+.is-verified .wh-ver{display:flex}
+.is-verified .wh-unver{display:none}
+.wh-skip[hidden],.wh-panel[hidden]{display:none!important}
+.wh-skip{display:flex;flex-direction:column;gap:8px}
+/* label preview (LabelStudio): the real print page, scaled into the card */
+.wh-lblf{display:block;width:100%;border:0;background:#fff;border-radius:14px;aspect-ratio:2/3}
+.wh-lblf.sm{aspect-ratio:2/1}
+.mx-lbl .wh-bc svg{width:100%;height:52px;display:block}
+/* map of tracked records (LiveTracking): the lane drawn from the record's geometry */
+.wh-lane{position:relative;height:100%;min-height:200px;background:var(--active)}
+.wh-lane svg{width:100%;height:100%;display:block}
+.mx-map .wh-lane{position:absolute;inset:0}
+.wh-more{position:relative}
+.wh-pg{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.wh-pg a{min-height:44px;display:inline-flex;align-items:center;padding:0 14px;border-radius:12px;border:1px solid var(--line-2);color:var(--ink);text-decoration:none;font-size:13px;font-weight:500}
+.wh-pg span{font-size:12px;color:var(--muted)}
+.mx-row .mx-rm b{overflow-wrap:anywhere}
+.wh-dmeta{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.mx form.mx-srch{display:flex;flex-wrap:nowrap;align-items:center}
+.mx form.mx-srch>label{flex:1 1 auto;min-width:0}

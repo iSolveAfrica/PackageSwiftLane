@@ -127,7 +127,7 @@ function sl_controlPanelsData($user, $core): array
         foreach ($s['rows'] as [$board, $icon, $label, $sub, $perm, $count]) {
             if ($board === 'Payments' && !$finance) continue;
             if (!$ok($perm)) continue;
-            $rows[] = ['href' => sl_route($board), 'icon' => $icon, 'label' => $label, 'sub' => $sub, 'n' => $count ? (string) $count() : ''];
+            $rows[] = ['href' => sl_route($board, $board === 'SeaPackages' ? ['panel'=>'tower'] : []), 'icon' => $icon, 'label' => $label, 'sub' => $sub, 'n' => $count ? (string) $count() : ''];
         }
         if ($rows) $d['sections'][] = ['id' => $s['id'], 'icon' => $s['icon'], 't' => $s['t'], 's' => $s['s'], 'featured' => !empty($s['featured']), 'rows' => $rows];
     }
@@ -150,11 +150,10 @@ function sl_controlPanelSections(callable $c, string $w = '', bool $money = fals
         ['id' => 'command-centers', 'icon' => 'i-grid', 't' => 'Command Centers', 's' => 'Key controls and oversight in one place', 'featured' => true, 'rows' => [
             ['ExecDashboard', 'i-chart', 'Management Center', 'Business performance and decisions', ['main_dashboard_index', 'view_exec_dashboard'], null],
             ['AiCenter', 'i-ai', 'AI Automation Center', 'AI tools, rules and automation', 'ai:manage', null],
-            ['NotificationCenter', 'i-bell', 'Notification Control', 'Delivery rules and message settings', ['manage_notification_rules', 'view_tools'], null],
             ['Payments', 'i-card', 'Payment Gateways', 'Payments and gateway activity', 'view_global_payments', null],
             ['LoyaltyRewards', 'i-star', 'Loyalty & Referrals', 'Rewards, points and referrals', 'manage_loyalty', null],
             ['SupportHub', 'i-ticket', 'Customer Care', 'Service activity and customer needs', 'cs:agent', null],
-            ['CommsHub', 'i-message', 'Communications', 'Customer messages and campaigns', ['push_notifications', 'manage_newsletter', 'view_message_logs'], null],
+            ['CommsHub', 'i-message', 'Notifications & Messages', 'Automations, status messages, sending, outbox and WhatsApp', ['ops:staff', 'push_notifications', 'manage_newsletter', 'view_message_logs'], null],
             ['SecurityCenter', 'i-shield', 'Security Center', 'System access, policies and checks', 'view_system_logs', null],
             ['AccountSecurity', 'i-lock', 'My Account Security', 'Update your password and sign-in details', 'customers_profile_edit', null],
         ]],
@@ -174,7 +173,7 @@ function sl_controlPanelSections(callable $c, string $w = '', bool $money = fals
         ]],
         ['id' => 'shipments', 'icon' => 'i-plane', 't' => 'Shipping & freight', 's' => 'Everything moving between the US and Ghana', 'rows' => [
             ['AirShipments', 'i-plane', 'Air shipments', 'Not yet delivered', 'view_shipment_list', fn() => $c("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.is_pickup = 0 AND a.status_courier NOT IN (8,15,21) $w")],
-            ['SeaPackages', 'i-ship', 'Sea packages', 'Containers and LCL boxes', 'view_package_list', fn() => $c("SELECT COUNT(*) FROM cdb_customers_packages a WHERE a.status_courier NOT IN (8,15,21) $w")],
+            ['SeaPackages', 'i-ship', 'Sea packages', 'Sea control tower, containers and LCL boxes', 'view_package_list', fn() => $c("SELECT COUNT(*) FROM cdb_customers_packages a WHERE a.status_courier NOT IN (8,15,21) $w")],
             ['Consolidations', 'i-layers', 'Consolidations', 'Open air and sea consolidations', ['view_consolidate_list', 'view_consolidate_package_list'], fn() => sl_num(
                 // agency-scoped like the other counts, and only the modes the user may open
                 (sl_navAllowed('view_consolidate_list', []) ? (int) sl_scalar("SELECT COUNT(*) FROM cdb_consolidate a WHERE a.status_courier NOT IN ('8','15','21') $w") : 0)
@@ -202,8 +201,9 @@ function sl_controlPanelSections(callable $c, string $w = '', bool $money = fals
         ]],
         ['id' => 'messages', 'icon' => 'i-message', 't' => 'Messages & support', 's' => 'Every conversation with customers', 'rows' => [
             ['CsInbox', 'i-ticket', 'Support inbox', 'Open tickets', 'cs:agent', fn() => sl_tableExists('cdb_cs_tickets') ? $c("SELECT COUNT(*) FROM cdb_cs_tickets WHERE status NOT IN ('closed','resolved')") : ''],
-            ['NotificationCenter', 'i-send', 'Messaging', 'SMS, WhatsApp and e-mail', 'view_tools', null],
-            ['MessageLogs', 'i-clock', 'Message logs', 'Sent in the last 24 hours', 'view_message_logs', fn() => sl_num($sent())],
+            ['CommsAutomations', 'i-bolt', 'Automations', 'Everything that sends a message, per channel', 'ops:staff', null],
+            ['CommsSend', 'i-send', 'Send a message', 'One person, several people or a campaign', 'ops:staff', null],
+            ['CommsOutbox', 'i-clock', 'Outbox', 'Sent in the last 24 hours', ['ops:staff', 'view_message_logs'], fn() => sl_num($sent())],
             ['SendPrices', 'i-tag', 'Send prices', 'Tariff sheet to customers', ['send_prices', 'push_notifications'], null],
         ]],
         ['id' => 'insights', 'icon' => 'i-activity', 't' => 'Insights & audit', 's' => 'Reports and the record of who did what', 'rows' => [

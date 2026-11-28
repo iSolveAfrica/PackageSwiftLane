@@ -21,6 +21,7 @@ $can = $d['can']; $o = $d['owner'];
         </div>
         <section class="sl-card col g16">
           <div class="row between wrap g12"><div><div class="up">Estimated arrival</div><div class="big" style="margin-top: 4px"><?= h($d['eta']) ?></div></div><div class="col g4 tr"><span class="mut"><?= $d['con'] ? 'Container ' . h($d['con']['code']) . ' · ' . h($d['con']['st']) : 'Not in a container yet' ?></span><span class="mono sm mut">Registered <?= h($d['registered']) ?> · <?= h($d['office']) ?></span></div></div>
+          <?php $sc = $d['scene'] ?? null; $scDone = !empty($d['done']); include __DIR__ . '/partials/parcel_scene.php'; ?>
           <div class="sl-steps" aria-label="Step <?= (int) $d['stage'] ?> of 5"><?php for ($i = 1; $i <= 5; $i++): ?><i class="<?= $i <= $d['stage'] ? 'on' : '' ?>"></i><?php endfor; ?></div>
           <div class="row between wrap g8 mut sm"><?php foreach ($d['steps'] as $i => $s): ?><span class="<?= $i + 1 === $d['stage'] ? 'fw5' : '' ?>" <?= $i + 1 === $d['stage'] ? 'style="color: var(--ink)"' : '' ?>><?= h($i + 1 === 5 && $d['done'] ? $d['handLabel'] : $s) ?></span><?php endforeach; ?></div>
         </section>

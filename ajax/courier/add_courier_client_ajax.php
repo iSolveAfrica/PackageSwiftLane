@@ -40,6 +40,12 @@ require_permission('add_shipment');
 // is_client flag 0) is pinned too; cdp_roleIsClient() reads only the role's own flag.
 require_once(__DIR__ . '/../../helpers/rbac.php');
 require_once("../../helpers/querys.php");
+// Message source for the message log and the transport gate (helpers/comms_gate.php),
+// named here rather than read from this endpoint's file name.
+require_once(__DIR__ . '/../../helpers/comms_gate.php');
+if (function_exists('cdp_msgSetContext')) {
+    cdp_msgSetContext(['source' => 'shipment_registered', 'source_label' => 'Shipment Registered', 'entity_type' => 'shipment']);
+}
 $scopeLevel = (int) ($_SESSION['userlevel'] ?? 0);
 $scopeRank = cdp_roleRankById($scopeLevel);
 $scopeIsClient = $scopeRank === 0 || cdp_roleIsClient($scopeLevel);
@@ -560,7 +566,7 @@ if (empty($errors)) {
             $header .= "Content-type: text/html; charset=UTF-8 \r\n";
             $header .= "From: " . $from . " \r\n";
             try {
-                mail($to, $subject, $message, $header);
+                require_once __DIR__ . '/../../helpers/whatsapp.php'; if (cdp_commLegacyAllowed('email', ['id' => (int) ($sender_data->id ?? 0), 'name' => trim((string) ($sender_data->fname ?? '') . ' ' . (string) ($sender_data->lname ?? '')), 'to' => (string) $to, 'subject' => (string) $subject, 'body' => cdp_statusNotifyPlain($message)])) { $cdpOk = @mail($to, $subject, $message, $header); if (function_exists('cdp_msgLogPhpMail')) { cdp_msgLogPhpMail((bool) $cdpOk, $to, $subject, $message); } }
             } catch (Exception $e) {
             }
         } elseif ($check_mail == 'SMTP') {

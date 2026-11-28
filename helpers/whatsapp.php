@@ -531,12 +531,19 @@ if (!function_exists('cdp_sendStatusUpdateWhatsApp')) {
                 $body .= "\n\n" . $line;
             }
         }
-        $event  = cdp_statusSmsEvent($statusId, $statusLabel);
-        $waOpts = (array_key_exists('sms', $opts) && !$opts['sms']) || $event === ''
-            ? ['allow_sms' => false]
-            : ['sms_event' => $event];
+        $event = cdp_statusSmsEvent($statusId, $statusLabel);
+        if (array_key_exists('sms', $opts) && !$opts['sms']) {
+            $event = '';
+        }
+        // The SMS copy takes the status's own SMS text from the library (no
+        // WhatsApp * markup), and is not sent when SMS is switched off there,
+        // the same way the sea and single status screens send it.
+        $nsAll = [
+            'whatsapp' => ['on' => true, 'custom' => true, 'body' => $body],
+            'sms' => $statusId > 0 ? cdp_notifyResolve('status:' . $statusId, 'sms', $nsVars) : ['on' => true, 'custom' => false, 'body' => ''],
+        ];
         cdp_msgSetContext(['template_id' => 11, 'entity_type' => 'shipment', 'entity_label' => (string) $tracking, 'subject' => 'Status update: ' . $statusLabel]);
-        $res = sendNotificationWhatsApp_v2($sender, $body, null, $waOpts);
+        $res = cdp_statusNotifyWaSms($sender, $body, $event, $nsAll);
         cdp_msgClearContext(['template_id', 'entity_type', 'entity_label', 'subject']);
         return $res;
     }
@@ -828,31 +835,56 @@ if (!function_exists('cdp_notifyOwnerOfConsolidationUpdate')) {
         );
         $ctxKeys = array_merge(array_keys($ctx), array('template_id'));
 
+        // Status message library (helpers/notify_studio.php), as a single package
+        // gets it: the text saved or drafted for this status per channel, and a
+        // channel switched off there is not sent. The drafts speak about one
+        // package, so an owner with several keeps the plural built-in text below
+        // unless a text was saved for the status.
+        $ns = cdp_statusNotifyResolve($statusId, $owner, $trackingList, $trackUrl, $phModule === 'sea' ? 'sea' : 'air',
+            count($orderIds) === 1 ? (int) $orderIds[0] : 0, array(
+                'status' => $statusText, 'comment' => '', 'pickup_code' => (string) $codeLine, 'pickup_code_html' => (string) $codeLineHtml,
+            ));
+        if (count($orderIds) > 1) {
+            foreach (array('email', 'whatsapp', 'sms') as $ch) {
+                if (($ns[$ch]['source'] ?? '') === 'draft') {
+                    $ns[$ch]['custom'] = false;
+                }
+            }
+        }
+
         // ── WhatsApp ────────────────────────────────────────────────────────
         cdp_msgSetContext($ctx + array('template_id' => 11));
         try {
             cdp_wa_requireV2();
-            $body = cdp_renderWhatsAppTemplate(11, array(
-                '[CUSTOMER_FULLNAME]' => cdp_nameWithLocker($owner),
-                '[TRACKING_NUMBER]'   => $trackingList,
-                '[CURR_STATUS]'       => $statusText,
-                '[APP_URL]'           => $trackUrl,
-                '[COMPANY_NAME]'      => $siteName,
-            ));
-            if ($body === null) {
-                cdp_msgLog(array('channel' => 'whatsapp', 'status' => 'failed', 'status_detail' => 'WhatsApp template 11 not found.',
-                    'recipient_to' => (string) ($owner->phone ?? ''), 'body' => ''));
+            if (!empty($ns['whatsapp']['custom']) || empty($ns['whatsapp']['on'])) {
+                // The library's text, or WhatsApp switched off for this status
+                // (the SMS copy still follows its own library setting).
+                cdp_msgClearContext(array('template_id'));
+                cdp_statusNotifyWaSms($owner, '', $smsEvent, $ns);
             } else {
-                if ($waBlocks) {
-                    $body .= "\n\n" . implode("\n\n", $waBlocks);
-                }
-                if ($codeLine !== '') {
-                    $body .= "\n\n" . $codeLine;
-                }
-                // SMS copy only for the ready / handed-over automations.
-                $res = sendNotificationWhatsApp_v2($owner, $body, null, $smsEvent !== '' ? ['sms_event' => $smsEvent] : ['allow_sms' => false]);   // logs sent / failed / skipped itself
-                if (empty($res['success'])) {
-                    cdp_wa_log("fan-out skip/fail for {$trackingList}: " . ($res['message'] ?? ''));
+                $body = cdp_renderWhatsAppTemplate(11, array(
+                    '[CUSTOMER_FULLNAME]' => cdp_nameWithLocker($owner),
+                    '[TRACKING_NUMBER]'   => $trackingList,
+                    '[CURR_STATUS]'       => $statusText,
+                    '[APP_URL]'           => $trackUrl,
+                    '[COMPANY_NAME]'      => $siteName,
+                ));
+                if ($body === null) {
+                    cdp_msgLog(array('channel' => 'whatsapp', 'status' => 'failed', 'status_detail' => 'WhatsApp template 11 not found.',
+                        'recipient_to' => (string) ($owner->phone ?? ''), 'body' => ''));
+                } else {
+                    if ($waBlocks) {
+                        $body .= "\n\n" . implode("\n\n", $waBlocks);
+                    }
+                    if ($codeLine !== '') {
+                        $body .= "\n\n" . $codeLine;
+                    }
+                    // SMS copy only for the ready / handed-over automations, with the
+                    // status's SMS text from the library when it has one.
+                    $res = cdp_statusNotifyWaSms($owner, $body, $smsEvent, $ns);   // logs sent / failed / skipped itself
+                    if (is_array($res) && empty($res['success'])) {
+                        cdp_wa_log("fan-out skip/fail for {$trackingList}: " . ($res['message'] ?? ''));
+                    }
                 }
             }
         } catch (\Throwable $e) {
@@ -862,7 +894,12 @@ if (!function_exists('cdp_notifyOwnerOfConsolidationUpdate')) {
         // ── E-mail ──────────────────────────────────────────────────────────
         cdp_msgSetContext(array('template_id' => 36));
         $to = trim((string) ($owner->email ?? ''));
-        if ($to === '' || !filter_var($to, FILTER_VALIDATE_EMAIL)) {
+        if (empty($ns['email']['on'])) {
+            // E-mail switched off for this status in the status message library.
+        } elseif (!empty($ns['email']['custom']) && filter_var($to, FILTER_VALIDATE_EMAIL)) {
+            cdp_msgClearContext(array('template_id'));
+            cdp_statusNotifyEmail($owner, $ns['email'], $subject);
+        } elseif ($to === '' || !filter_var($to, FILTER_VALIDATE_EMAIL)) {
             cdp_msgLog(array('channel' => 'email', 'status' => 'skipped', 'status_detail' => 'No valid e-mail address.',
                 'recipient_to' => $to, 'body' => ''));
         } else {
@@ -882,15 +919,13 @@ if (!function_exists('cdp_notifyOwnerOfConsolidationUpdate')) {
                 ), $subject);
                 if (empty($res['ok'])) {
                     cdp_wa_log("fan-out e-mail failed for {$trackingList}: " . ($res['error'] ?? ''));
-                    if (strpos((string) ($res['error'] ?? ''), 'SMTP send error') !== 0) {
-                        // PHPMailer logs its own failures; PHP mail() and template errors do not.
+                    if ((string) ($res['error'] ?? '') !== '' && strpos((string) $res['error'], 'SMTP send error') !== 0) {
+                        // PHPMailer and PHP mail() log their own outcome; a template error does not.
                         cdp_msgLog(array('channel' => 'email', 'status' => 'failed', 'status_detail' => (string) ($res['error'] ?? 'Send failed'),
                             'recipient_to' => $to, 'body' => ''));
                     }
-                } elseif (($settings->mailer ?? '') === 'PHP') {
-                    cdp_msgLog(array('channel' => 'email', 'status' => 'sent', 'status_detail' => 'Accepted by PHP mail()',
-                        'recipient_to' => $to, 'body' => ''));
                 }
+                // A PHP mail() send and a gated skip are logged by cdp_sendTemplateEmail itself.
             } catch (\Throwable $e) {
                 cdp_wa_log('fan-out e-mail error for ' . $trackingList . ': ' . $e->getMessage());
             }
@@ -958,5 +993,238 @@ if (!function_exists('cdp_wa_resolveSendTarget')) {
 
         // true or null (unknown) -> send (fail-open)
         return array('phone' => $phone, 'skip' => false, 'reason' => '');
+    }
+}
+
+if (!function_exists('cdp_statusNotifyResolve')) {
+    /**
+     * The status message of an old status screen, per channel, from the status
+     * message library (helpers/notify_studio.php cdp_notifyResolve: a saved
+     * text, else the drafted one, else the screen's built-in text). Used by
+     * the screens that do not build their own Studio values (sea and air
+     * deliver forms, sea bulk status, the Sea packages page status actions,
+     * the warehouse hand-over), the same way the air status screen does.
+     *
+     * $extra overrides the base values: status (label), location, comment,
+     * pickup_code, pickup_code_html.
+     *
+     * @return array{vars:array,email:array,whatsapp:array,sms:array}
+     *         each channel: {on, custom, source, subject, body}
+     */
+    function cdp_statusNotifyResolve($statusId, $customer, $tracking, $trackUrl, $module = 'air', $orderId = 0, array $extra = [])
+    {
+        $none = ['on' => true, 'custom' => false, 'source' => 'builtin', 'subject' => '', 'body' => ''];
+        $out = ['vars' => [], 'email' => $none, 'whatsapp' => $none, 'sms' => $none];
+        if ((int) $statusId <= 0 || !$customer) {
+            return $out;
+        }
+        try {
+            require_once __DIR__ . '/notify_studio.php';
+            $vars = $extra + cdp_notifyBaseVars($customer, $tracking, $trackUrl)
+                + ((int) $orderId > 0 ? cdp_notifyPackageVars((int) $orderId, $module === 'sea' ? 'sea' : 'air') : [])
+                + ['status' => '', 'location' => '', 'comment' => '', 'pickup_code' => '', 'pickup_code_html' => ''];
+            $out['vars'] = $vars;
+            foreach (['email', 'whatsapp', 'sms'] as $ch) {
+                $out[$ch] = cdp_notifyResolve('status:' . (int) $statusId, $ch, $vars);
+                // A value never shown in the message log (cdp_statusNotifyPlain).
+                $out[$ch]['secret'] = (string) ($vars['pickup_code'] ?? '');
+            }
+        } catch (Throwable $e) {
+            error_log('status notify resolve: ' . $e->getMessage());
+        }
+        return $out;
+    }
+}
+
+if (!function_exists('cdp_statusNotifyWaSms')) {
+    /**
+     * Send a status WhatsApp and its SMS copy with their own library texts.
+     * $ns comes from cdp_statusNotifyResolve(). $waBody is the screen's
+     * built-in WhatsApp text, used when the library has nothing for the
+     * status. The SMS copy (only for the SMS automations: $smsEvent ready /
+     * handed_over) carries the SMS text when there is one, instead of the
+     * WhatsApp text; a channel switched off is not sent. Both still pass the
+     * transport gate (helpers/comms_gate.php) with the current message source.
+     *
+     * @return array|null the WhatsApp result, null when none was sent
+     */
+    function cdp_statusNotifyWaSms($customer, $waBody, $smsEvent, array $ns, $countryHint = null)
+    {
+        $wa = $ns['whatsapp'] ?? ['on' => true, 'custom' => false, 'body' => ''];
+        $sms = $ns['sms'] ?? ['on' => true, 'custom' => false, 'body' => ''];
+        $waBody = !empty($wa['custom']) ? (string) $wa['body'] : (string) $waBody;
+        $smsEvent = (string) $smsEvent;
+        $smsOwn = !empty($sms['custom']) || empty($sms['on']);
+        $res = null;
+        if (!empty($wa['on']) && trim($waBody) !== '' && $customer && !empty($customer->phone)) {
+            cdp_wa_requireV2();
+            $res = sendNotificationWhatsApp_v2($customer, $waBody, $countryHint,
+                ($smsEvent === '' || $smsOwn) ? ['allow_sms' => false] : ['sms_event' => $smsEvent]);
+        }
+        if ($smsEvent !== '' && !empty($sms['on']) && ($smsOwn || empty($wa['on']))) {
+            $text = !empty($sms['custom']) ? (string) $sms['body'] : str_replace('*', '', $waBody);
+            if (trim($text) !== '') {
+                if (!function_exists('cdp_smsEventNotify')) {
+                    require_once __DIR__ . '/hubtel_sms.php';
+                }
+                cdp_smsEventNotify($customer, $text, $smsEvent);
+            }
+        }
+        return $res;
+    }
+}
+
+if (!function_exists('cdp_statusNotifyPlain')) {
+    /**
+     * Plain text of an HTML message for the message log: block ends become
+     * line breaks (so "code:</p><p>877404" stays two words and the redaction
+     * still sees the code), entities are decoded, and a known secret value
+     * (the pickup code) is masked outright, whatever the spacing around it.
+     */
+    function cdp_statusNotifyPlain($html, array $secrets = [])
+    {
+        $t = preg_replace('~<(style|head|script)[^>]*>.*?</\1>~is', '', (string) $html);
+        $t = preg_replace('~</(td|th)>~i', ' ', $t);   // a table row stays on one line
+        $t = preg_replace('~<(br|/p|/div|/tr|/li|/h[1-6]|/table)\b[^>]*>~i', "\n", $t);
+        $t = html_entity_decode(strip_tags($t), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $t = preg_replace("~[ \t\x{00A0}]+~u", ' ', $t);
+        $t = trim(preg_replace("~\s*\n\s*~", "\n", $t));
+        foreach ($secrets as $sec) {
+            // A secret may be the code itself or the line that carries it
+            // ("Your pickup code: 877404 ..."): mask its digit runs.
+            if (preg_match_all('/\d{4,8}/', strip_tags((string) $sec), $m)) {
+                foreach (array_unique($m[0]) as $code) {
+                    $t = preg_replace('/(?<!\d)' . $code . '(?!\d)/', '••••', $t);
+                }
+            }
+        }
+        return $t;
+    }
+}
+
+if (!function_exists('cdp_statusNotifyMailError')) {
+    /** A pre-send mailer error in words an administrator can act on. */
+    function cdp_statusNotifyMailError($msg)
+    {
+        $msg = (string) $msg;
+        if ($msg === '' || stripos($msg, 'setFrom') !== false || stripos($msg, 'sender') !== false) {
+            return 'No sender e-mail address is configured (Settings > E-mail)';
+        }
+        return $msg;
+    }
+}
+
+if (!function_exists('cdp_statusNotifyEmail')) {
+    /**
+     * Send a status e-mail from the status message library ($nsEmail from
+     * cdp_statusNotifyResolve()['email'], custom = true) as built, through
+     * the same transport the Automation Center uses. The transport gate is
+     * asked first, so a mailer=PHP send is gated too.
+     *
+     * @return array{ok:bool,skipped?:bool,error?:string}
+     */
+    function cdp_statusNotifyEmail($customer, array $nsEmail, $fallbackSubject = '')
+    {
+        $to = trim((string) ($customer->email ?? ''));
+        if (empty($nsEmail['on']) || empty($nsEmail['custom']) || !filter_var($to, FILTER_VALIDATE_EMAIL)) {
+            return ['ok' => false, 'skipped' => true];
+        }
+        $subject = trim((string) ($nsEmail['subject'] ?? '')) !== '' ? (string) $nsEmail['subject'] : (string) $fallbackSubject;
+        $body = (string) ($nsEmail['body'] ?? '');
+        $name = trim((string) ($customer->fname ?? '') . ' ' . (string) ($customer->lname ?? ''));
+        $plain = cdp_statusNotifyPlain($body, [(string) ($nsEmail['secret'] ?? '')]);
+        require_once __DIR__ . '/comms_gate.php';
+        if (!cdp_commLegacyAllowed('email', ['id' => (int) ($customer->id ?? 0), 'to' => $to, 'subject' => $subject,
+            'name' => $name, 'body' => $plain])) {
+            return ['ok' => true, 'skipped' => true];
+        }
+        $logFail = function ($detail) use ($customer, $to, $subject, $name, $plain) {
+            if (function_exists('cdp_msgLog')) {
+                cdp_msgLog(['channel' => 'email', 'status' => 'failed', 'status_detail' => (string) $detail,
+                    'recipient_user_id' => (int) ($customer->id ?? 0), 'recipient_name' => $name,
+                    'recipient_to' => $to, 'subject' => $subject, 'body' => $plain]);
+            }
+        };
+        try {
+            require_once __DIR__ . '/comms.php';
+            // PHPMailer and PHP mail() log their own outcome once send() runs; a
+            // failure before it (no sender address, bad recipient) does not, so
+            // that one is logged here.
+            $from = trim((string) (cdp_getSettingsCourier()->email_address ?? ''));
+            if (!filter_var($from, FILTER_VALIDATE_EMAIL)) {
+                $logFail(cdp_statusNotifyMailError(''));
+                return ['ok' => false, 'error' => cdp_statusNotifyMailError('')];
+            }
+            $res = cdp_commSendEmail($customer, $subject, '<!--sl-html-->' . $body);
+            $msg = (string) ($res['message'] ?? '');
+            if (empty($res['success']) && (!empty($res['early']) || stripos($msg, 'setFrom') !== false)) {
+                $logFail(cdp_statusNotifyMailError($msg));
+            }
+            return ['ok' => !empty($res['success']), 'error' => $msg];
+        } catch (Throwable $e) {
+            error_log('status notify e-mail: ' . $e->getMessage());
+            $logFail($e->getMessage());
+            return ['ok' => false, 'error' => $e->getMessage()];
+        }
+    }
+}
+
+if (!function_exists('cdp_statusNotifyAsReceiver')) {
+    /**
+     * Run a send to a shipment's recipient (not the customer) under the
+     * message source 'receiver_notice'. The Automation Center only messages
+     * the package owner, so these opt-in receiver messages must not be held
+     * back as status announcements when it owns statuses; the admin can still
+     * switch the 'receiver_notice' old-screen message off per channel. The
+     * request's own message context is put back afterwards.
+     *
+     * @return mixed what $send returns (null when it threw)
+     */
+    function cdp_statusNotifyAsReceiver(callable $send, $receiverId = 0, $receiverName = '')
+    {
+        $had = function_exists('cdp_msgContext') ? cdp_msgContext() : null;
+        if (function_exists('cdp_msgSetContext')) {
+            cdp_msgSetContext(['source' => 'receiver_notice', 'source_label' => 'Notice to the recipient',
+                'recipient_user_id' => (int) $receiverId, 'recipient_name' => (string) $receiverName]);
+        }
+        try {
+            return $send();
+        } catch (Throwable $e) {
+            error_log('receiver notice: ' . $e->getMessage());
+            return null;
+        } finally {
+            if (is_array($had) && function_exists('cdp_msgClearContext')) {
+                cdp_msgClearContext();
+                cdp_msgSetContext($had);
+            }
+        }
+    }
+}
+
+if (!function_exists('cdp_statusNotifyDrainQueue')) {
+    /**
+     * Run the after-response tasks queued while an after-response task was
+     * already running. helpers/after_response.php works on a copy of the queue,
+     * so a task added from inside one (the transport gate's "Automation Center
+     * sends it now" run, helpers/comms_gate.php cdp_commRunStatusNow) would
+     * otherwise wait for the next 5-minute worker run. Called at the end of the
+     * status screens' own after-response sends. Does nothing during the request.
+     */
+    function cdp_statusNotifyDrainQueue()
+    {
+        if (empty($GLOBALS['cdp_after_response_running'])) {
+            return;
+        }
+        for ($guard = 0; $guard < 10 && !empty($GLOBALS['cdp_after_response_queue']); $guard++) {
+            $queue = $GLOBALS['cdp_after_response_queue'];
+            $GLOBALS['cdp_after_response_queue'] = [];
+            foreach ($queue as $task) {
+                try {
+                    $task();
+                } catch (Throwable $e) {
+                    error_log('[after_response] ' . get_class($e) . ': ' . $e->getMessage());
+                }
+            }
+        }
     }
 }

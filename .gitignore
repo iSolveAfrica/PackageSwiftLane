@@ -59,3 +59,8 @@ dev_reports/
 stageshow/node_modules/
 .agents/skills/stageshow/node_modules/
 .phpunit.result.cache
+
+# Database backups and dumps are never committed
+/backups/*.sql
+/backups/*.sql.gz
+/backups/*.zip

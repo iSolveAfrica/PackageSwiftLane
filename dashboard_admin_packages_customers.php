@@ -1,4 +1,3 @@
 <?php
-/** Retired: this dashboard now lives on Control panels (section #shipments). */
-header('Location: control_panels.php#shipments', true, 302);
+header('Location: customer_packages_list.php?panel=tower', true, 302);
 exit;

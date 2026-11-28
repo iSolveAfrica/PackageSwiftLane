@@ -20,4 +20,4 @@ if (($_GET['export'] ?? '') === 'csv') {
     require 'views/sl/export/shipments_csv.php';
     exit;
 }
-sl_render('AirShipments', ['id' => 'air', 'title' => sl_userIs('client') ? 'My Shipments' : 'Air Shipments', 'board' => 'AirShipments', 'wide' => true], sl_airShipmentsData($user, $core));
+sl_render('AirShipments', ['id' => 'air', 'title' => sl_userIs('client') ? 'My air shipments' : 'Air Shipments', 'board' => 'AirShipments', 'wide' => true], sl_airShipmentsData($user, $core));

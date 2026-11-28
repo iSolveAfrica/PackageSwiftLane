@@ -1,5 +1,7 @@
 (function(){
  'use strict';
+ // After approval the customer lands on the delivery status page: the form handler follows detail.redirect.
+ document.addEventListener('sl:done',function(e){var f=e.target,j=e.detail;if(f&&f.getAttribute&&f.getAttribute('data-dl-done')&&j&&j.success===true)j.redirect=f.getAttribute('data-dl-done');});
  var module=document.getElementById('dl-module');
  if(module){function group(){document.querySelectorAll('[data-dl-module]').forEach(function(g){var on=g.dataset.dlModule===module.value;g.hidden=!on;g.querySelectorAll('input').forEach(function(i){i.disabled=!on;if(!on)i.checked=false;});});}module.addEventListener('change',group);group();}
  var cfg=document.getElementById('dl-map-config');if(!cfg)return;

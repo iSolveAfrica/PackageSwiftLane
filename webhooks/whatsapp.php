@@ -60,6 +60,18 @@ if (!$trusted) {
 
 $j = json_decode($raw, true);
 $messages = is_array($j) ? cdp_commParseInbound($j) : [];
+// A WhatsApp group message (UltraMsg: from / chatId …@g.us) is not a customer conversation:
+// it only goes to the WhatsApp screen's copy below, never to the Inbox or King.
+if (is_array($j) && isset($j['event_type']) && is_array($j['data'] ?? null)) {
+    foreach (['from', 'chatId', 'to'] as $gk) {
+        $gv = $j['data'][$gk] ?? '';
+        $gv = is_array($gv) ? (string) ($gv['_serialized'] ?? '') : (string) $gv;
+        if (substr($gv, -5) === '@g.us' && ($gk !== 'to' || !empty($j['data']['fromMe']))) {
+            $messages = [];
+            break;
+        }
+    }
+}
 
 http_response_code(200);
 header('Content-Type: application/json');
@@ -73,6 +85,20 @@ if ($messages) {
             } catch (Throwable $e) {
                 error_log('[comms webhook] ' . $e->getMessage());
             }
+        }
+    });
+}
+
+// The WhatsApp screen (whatsapp_web.php) keeps its own copy of every chat:
+// UltraMsg events (received, sent from the phone, ticks) are stored there too,
+// and a STOP / START also applies to contacts saved from WhatsApp (helpers/ultramsg.php).
+if (is_array($j) && isset($j['event_type'], $j['data']) && is_file(dirname(__DIR__) . '/helpers/ultramsg.php')) {
+    cdp_afterResponse(function () use ($j) {
+        try {
+            require_once dirname(__DIR__) . '/helpers/ultramsg.php';
+            cdp_umWebhookIngest($j);
+        } catch (Throwable $e) {
+            error_log('[whatsapp screen webhook] ' . $e->getMessage());
         }
     });
 }

@@ -16,14 +16,30 @@ if (CDP_APP_MODE_DEMO === true) {
 if (!sl_tableExists('cdb_sl_settings')) {
     sl_json(['success' => false, 'message' => 'Run the database upgrade first (cdb_sl_settings is missing)'], 409);
 }
-$group = ($_POST['group'] ?? '') === 'small' ? 'small' : 'big';
 $key = (string) ($_POST['key'] ?? '');
 $raw = (string) ($_POST['value'] ?? '');
+if (($_POST['group'] ?? '') === 'layout') {
+    // 4 x 6 label layout from Label Studio: value = JSON {order: [...], hide: {...}} (label_layout)
+    $lay = sl_labelLayoutClean(json_decode($raw, true));
+    $db = new Conexion();
+    $db->cdp_query('INSERT INTO cdb_sl_settings (setting_key, setting_value, updated_by, updated_at) VALUES (:k, :v, :u, NOW()) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value), updated_by = VALUES(updated_by), updated_at = NOW()');
+    $db->bind(':k', 'label_layout');
+    $db->bind(':v', json_encode($lay));
+    $db->bind(':u', (int) $_SESSION['userid']);
+    $ok = $db->cdp_execute();
+    if ($ok) {
+        cdp_activityLog(['module' => 'settings', 'verb' => 'update', 'action' => 'labels.layout', 'action_label' => 'Changed label layout', 'entity_type' => 'setting', 'entity_id' => 'label_layout', 'summary' => 'Label order: ' . implode(', ', $lay['order']) . ($lay['hide'] ? ' · hidden: ' . implode(', ', array_keys($lay['hide'])) : '')]);
+    }
+    sl_json(['success' => (bool) $ok, 'message' => $ok ? 'Label layout saved' : 'Not saved']);
+}
+$group = ($_POST['group'] ?? '') === 'small' ? 'small' : 'big';
 $opt = sl_labelOptions()[$group];
 $flags = $group === 'big' ? ['sender', 'fragile', 'phone', 'qr', 'contents', 'value', 'customs', 'code', 'postage', 'care', 'ret'] : ['tag', 'barcode', 'code'];
 if (in_array($key, $flags, true)) {
     $opt[$key] = (int) !empty($raw);
 } elseif ($group === 'big' && $key === 'size' && in_array($raw, ['46', '44', '12'], true)) {
+    $opt[$key] = $raw;
+} elseif ($group === 'big' && $key === 'qrData' && in_array($raw, ['details', 'link'], true)) {
     $opt[$key] = $raw;
 } elseif ($group === 'big' && $key === 'copies') {
     $opt[$key] = max(1, min(10, (int) $raw));

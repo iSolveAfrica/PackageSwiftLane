@@ -8,6 +8,8 @@
  * COD to collect = cash-payment orders out for delivery whose invoice is still pending (23).
  */
 require_once CDP_ROOT . '/helpers/sl_view.php';
+require_once CDP_ROOT . '/helpers/delivery_storage.php';
+dl_ensureStorage();
 
 /** Zone matching a city (first zone whose city list contains it). */
 function sl_lmZoneFor(string $city, array $zones): ?array
@@ -126,7 +128,7 @@ function sl_lastMileData($user, $core): array
         }
     }
     // feature map (design section "All 25 features"): link to where each lives; only real pages.
-    $cov = [['Delivery zones and fees by city', 'Zones panel on this page', ''], ['Zone assignment by recipient city', 'Assign riders by zone below', ''], ['Today\'s stops per rider', 'Rider panel below', ''], ['Cash on delivery to collect', 'COD panel below', ''], ['Failed delivery attempts', 'Failed attempts below', ''], ['Driver assignment', 'Dispatch board', 'RiderDispatch'], ['Live driver tracking', 'Delivery tracking', 'DeliveryTracking'], ['Driver mobile app', 'Rider app', 'DriverApp'], ['OTP pickup codes', 'Warehouse delivery', 'WarehouseDelivery'], ['Photo and signature proof', 'Shipment tracking', 'ShipmentTracking'], ['Driver performance', 'Rider detail', 'RiderDetail'], ['Rider fees', 'Rider fees settings', 'RiderSettings'], ['Pickup verification', 'Hand out packages', 'HandOut'], ['Hand-over chain of custody', 'Cargo exceptions', 'CargoExceptions'], ['GhanaPost GPS lookup', 'Not built: needs a GhanaPost API key', '-'], ['Route optimisation', 'Not built', '-'], ['Customer time-slot choice', 'Not built', '-']];
+    $cov = [['Delivery zones and fees by city', 'Zones panel on this page', ''], ['Zone assignment by recipient city', 'Assign riders by zone below', ''], ['Today\'s stops per rider', 'Rider panel below', ''], ['Cash on delivery to collect', 'COD panel below', ''], ['Failed delivery attempts', 'Failed attempts below', ''], ['Driver assignment', 'Dispatch board', 'RiderDispatch'], ['Live driver tracking', 'Delivery tracking', 'DeliveryTracking'], ['Driver mobile app', 'Rider app', 'DriverApp'], ['OTP pickup codes', 'Warehouse delivery', 'WarehouseDelivery'], ['Photo and signature proof', 'Shipment tracking', 'ShipmentTracking'], ['Driver performance', 'Rider detail', 'RiderDetail'], ['Rider fees', 'Rider fees settings', 'RiderSettings'], ['Pickup verification', 'Hand out packages', 'HandOut'], ['Hand-over chain of custody', 'Cargo exceptions', 'CargoExceptions'], ['GhanaPost GPS lookup', 'Not built: needs a GhanaPost API key', '-'], ['Route optimisation', 'Route planner: stop order, ETAs and live map', 'RoutePlanner'], ['Parcel allocation', 'Route planner: auto-allocate by capacity and zone', 'RoutePlanner'], ['Customer time-slot choice', 'Not built', '-']];
     $cf = (string) ($_GET['cf'] ?? 'all');
     $d['cf'] = array_map(fn($f) => ['label' => $f[1], 'cls' => $cf === $f[0] ? 'on' : '', 'href' => sl_url(['cf' => $f[0]])], [['all', 'All ' . count($cov)], ['here', 'On this page ' . count(array_filter($cov, fn($c) => $c[2] === ''))], ['other', 'Other pages ' . count(array_filter($cov, fn($c) => $c[2] !== '' && $c[2] !== '-'))]]);
     $d['cov'] = [];
