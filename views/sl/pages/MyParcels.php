@@ -1,4 +1,11 @@
-<div class="sl-head"><div><h1 class="sl-title">Your parcels</h1><p class="sl-lede">Air or sea. Every update, in one place.</p></div><a class="sl-btn ghost" href="<?= h(sl_route('DeliveryRequest')) ?>">Request delivery</a></div>
+<?php
+/** Customer "My parcels" hub: sea packages, then air shipments (each card opens its list with insights),
+ * then every parcel of both modes. Data: my_parcels.php (sl_portalShipments, sl_clientModeInsights). */
+?>
+<link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/client-modes.css')) ?>">
+<div class="sl-head"><div><h1 class="sl-title">My parcels</h1><p class="sl-lede">Sea packages and air shipments. Open one to see every parcel and how your shipping is going.</p></div><a class="sl-btn ghost" href="<?= h(sl_route('DeliveryRequest')) ?>"><i class="ic ic-sm i-truck" aria-hidden="true"></i>Request delivery</a></div>
+<?php if (!empty($d['modes'])): ?><div class="cm-modes"><?php foreach ($d['modes'] as $mi) include __DIR__ . '/partials/client_mode_card.php'; ?></div><?php endif; ?>
+<div class="cm-all-h"><h2>Every parcel</h2><span class="mut sm">Sea and air together</span></div>
 <form class="sl-search pwa-parcel-search" method="get" action="my_parcels.php"><input type="hidden" name="filter" value="<?= h($d['filter']) ?>"><i class="ic i-search" aria-hidden="true"></i><input name="q" aria-label="Search your parcels" placeholder="Tracking number or store" value="<?= h($d['q']) ?>"><button class="sl-ib" type="submit" aria-label="Search"><i class="ic i-right" aria-hidden="true"></i></button></form>
 <nav class="pwa-filter-strip" aria-label="Parcel status"><?php foreach(['active'=>'On the way','ready'=>'Ready','delivered'=>'Delivered','all'=>'All parcels'] as $key=>$label): ?><a href="<?= h(sl_url(['filter'=>$key,'page'=>null])) ?>" <?= $d['filter']===$key?'aria-current="page"':'' ?>><?= h($label) ?></a><?php endforeach; ?></nav>
 <div class="pwa-parcel-grid"><?php foreach($d['rows'] as $parcel): ?>

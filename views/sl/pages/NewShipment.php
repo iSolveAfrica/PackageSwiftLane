@@ -34,7 +34,7 @@ $unit = h($d['rates']['weight']);
 
   <div class="sl-head ns-head">
     <div>
-      <a href="<?= sl_route('AirShipments') ?>" class="row g6 mut sm"><i class="ic ic-sm i-left" aria-hidden="true"></i><?= $client ? 'My Shipments' : 'Air Shipments' ?></a>
+      <a href="<?= sl_route('AirShipments') ?>" class="row g6 mut sm"><i class="ic ic-sm i-left" aria-hidden="true"></i><?= $client ? 'My air shipments' : 'Air Shipments' ?></a>
       <h1 class="sl-title" style="margin-top: 4px">New Shipment</h1>
     </div>
     <div class="row g8 wrap ns-actions">
