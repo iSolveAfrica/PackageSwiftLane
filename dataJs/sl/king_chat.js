@@ -507,11 +507,13 @@
     if (!INLINE || phone()) store.set('open', '1');
     if (INLINE && !phone()) store.set('min', '0');
     st.unread = 0; badge();
+    if (!INLINE) root.classList.add('kc-dim');
     var ready = st.loaded ? Promise.resolve() : load();
     ready.then(function () { if (st.conv) pollNow(false); });
     if (sheet()) setTimeout(function () { (how !== 'auto' && !phone() ? text : q('[data-kc-close]')).focus({ preventScroll: true }); }, 60);
     else if (how !== 'auto') setTimeout(function () { text.focus(); }, 60);
     toBottom();
+    return ready;
   }
   function close() {
     stop(); store.set('auto', '1'); // closed by the customer: no automatic greeting again this session
@@ -520,14 +522,41 @@
       st.open = false; root.setAttribute('data-min', '1'); q('[data-kc-min]').hidden = false; store.set('min', '1');
       schedule(); return;
     }
-    st.open = false; root.setAttribute('data-open', '0'); document.documentElement.classList.remove('kc-lock');
+    st.open = false; root.setAttribute('data-open', '0'); document.documentElement.classList.remove('kc-lock'); root.classList.remove('kc-dim');
     if (!INLINE) panel.hidden = true;
     [launch, teaser].forEach(function (b) { if (b) b.setAttribute('aria-expanded', 'false'); });
     store.set('open', '0');
     typing(false); schedule();
     if (opener && opener.focus && document.contains(opener) && opener !== document.body) opener.focus(); else if (launch) launch.focus(); else if (teaser) teaser.focus();
   }
-  if (launch) launch.addEventListener('click', function () { if (st.open) close(); else open(); });
+  /* The icon first pops up the questions customers ask most over a blurred page; a question opens the chat and asks it. */
+  var pop = q('[data-kc-pop]'), scrim = q('[data-kc-scrim]');
+  function popOpen() { return !!pop && !pop.hidden; }
+  function popShow(on) {
+    if (!pop) return;
+    pop.hidden = !on; root.classList.toggle('kc-dim', on || st.open);
+    if (launch) launch.setAttribute('aria-expanded', on || st.open ? 'true' : 'false');
+    if (on) setTimeout(function () { var b = pop.querySelector('button'); if (b) b.focus(); }, 40);
+  }
+  if (launch) launch.addEventListener('click', function () {
+    if (st.open) return close();
+    if (popOpen()) return popShow(false);
+    // a person on the chat, or messages waiting: straight to the chat
+    if (!pop || st.unread || st.owner === 'handoff_queued' || st.owner === 'human_active') return open();
+    popShow(true);
+  });
+  if (pop) pop.addEventListener('click', function (e) {
+    var a = e.target.closest('[data-kc-ask]'), m = e.target.closest('[data-kc-other]');
+    if (!a && !m) return;
+    popShow(false);
+    var ready = open();
+    if (a) {
+      var intent = a.getAttribute('data-kc-ask'), label = a.textContent.trim();
+      Promise.resolve(ready).then(function () { setTimeout(function () { if (st.busy) return; if (intent === 'human') human(label); else quick(intent, label); }, 150); });
+    }
+  });
+  if (scrim) scrim.addEventListener('click', function () { if (popOpen()) popShow(false); else if (st.open) close(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && popOpen()) { e.stopPropagation(); popShow(false); if (launch) launch.focus(); } }, true);
   if (teaser) teaser.addEventListener('click', function () { open(); });
   q('[data-kc-close]').addEventListener('click', close);
   q('[data-kc-expand]').addEventListener('click', function () { open(); });

@@ -61,15 +61,26 @@ $kcFace = '<i class="kc-face kc-headset" aria-hidden="true"></i>';
 $kcCfg['face'] = $kcFace;
 $kcHi = 'Hi, I\'m ' . $kcKing;
 $kcAsk = 'How can I help' . ($kcFirst !== '' ? ', ' . $kcFirst : '') . '?';
+// The four questions customers ask most (answered from their own account, helpers/support_king.php cdp_csKingIntents)
+$kcIntents = function_exists('cdp_csKingIntents') ? cdp_csKingIntents() : [];
+$kcAsks = [];
+foreach (['where' => 'Where is my package?', 'eta' => 'When will it arrive?', 'pickup' => 'Pickup hours and address', 'owe' => 'How much do I owe?'] as $ik => $il) $kcAsks[$ik] = $kcIntents[$ik] ?? $il;
 ?>
 <?php if (!in_array('assets/swiftlane/king_chat.css', (array) ($slPage['styles'] ?? []), true)): ?><link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/king_chat.css')) ?>"><?php endif; ?>
 <div class="kc" id="kc" role="region" data-mode="<?= h($kcMode) ?>" data-open="0" data-owner="ai_active" aria-label="Chat with <?= h($kcKing) ?>, <?= h($kcSite) ?> customer care"><?php /* a div, not a section: the page reveal animation (transform) must not become the containing block of the full-screen chat */ ?>
 <?php if ($kcMode === 'dock'): ?>
-  <button type="button" class="kc-launch" data-kc-launch aria-controls="kc-panel" aria-expanded="false">
+  <div class="kc-scrim" data-kc-scrim aria-hidden="true"></div>
+  <div class="kc-pop" id="kc-pop" data-kc-pop role="dialog" aria-modal="true" aria-labelledby="kc-pop-h" hidden>
+    <div class="kc-pop-h"><span class="kc-av face" aria-hidden="true"><?= $kcFace ?><i class="kc-on"></i></span><div><b id="kc-pop-h"><?= h($kcHi) ?> 👋</b><small><?= h($kcAsk) ?></small></div></div>
+    <div class="kc-pop-q" role="group" aria-label="Questions customers often ask">
+      <?php foreach ($kcAsks as $ik => $il): ?><button type="button" data-kc-ask="<?= h($ik) ?>"><span><?= h($il) ?></span><i class="ic ic-sm i-right" aria-hidden="true"></i></button><?php endforeach; ?>
+    </div>
+    <div class="kc-pop-f"><button type="button" class="kc-pop-more" data-kc-other><i class="ic ic-sm i-message" aria-hidden="true"></i>Ask something else</button><button type="button" class="kc-pop-person" data-kc-ask="human"><i class="ic ic-sm i-user" aria-hidden="true"></i>Talk to a person</button></div>
+  </div>
+  <button type="button" class="kc-launch kc-icon" data-kc-launch aria-controls="kc-pop" aria-expanded="false" title="<?= h($kcHi . '. ' . $kcAsk) ?>">
     <span class="kc-av face" aria-hidden="true"><?= $kcFace ?><i class="kc-on"></i></span>
-    <span class="kc-launch-t"><b><?= h($kcHi) ?> <span class="kc-wave" aria-hidden="true">👋</span></b><small><?= h($kcAsk) ?></small></span>
     <span class="kc-badge" data-kc-badge hidden></span>
-    <span class="kc-sr">Open the chat with <?= h($kcKing) ?> from <?= h($kcSite) ?> customer care</span>
+    <span class="kc-sr">Chat with <?= h($kcKing) ?> from <?= h($kcSite) ?> customer care</span>
   </button>
 <?php else: ?>
   <button type="button" class="kc-teaser" data-kc-teaser aria-controls="kc-panel" aria-expanded="false">

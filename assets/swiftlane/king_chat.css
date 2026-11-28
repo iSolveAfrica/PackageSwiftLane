@@ -239,3 +239,30 @@ html.kc-lock,html.kc-lock body{overflow:hidden!important}
 .kc-wave{display:inline-block;transform-origin:70% 80%;animation:kc-wave 2.4s ease-in-out 1s 2}
 @keyframes kc-wave{0%,60%,100%{transform:rotate(0)}10%,30%{transform:rotate(16deg)}20%,40%{transform:rotate(-8deg)}}
 @media (prefers-reduced-motion:reduce){.kc-wave{animation:none}}
+
+/* Icon only: the round bubble (every page, the dashboard included), the common questions popping up over a
+   blurred page, and the same blur behind the open chat. */
+.kc[data-mode="dock"] .kc-launch.kc-icon{padding:0;width:60px;height:60px;min-height:0;justify-content:center;border-radius:50%;z-index:93}
+.kc[data-mode="dock"] .kc-launch.kc-icon .kc-av{width:50px;height:50px}
+.kc-launch.kc-icon .kc-badge{top:-3px;left:auto;right:-3px}
+.kc-scrim{display:none;position:fixed;inset:0;z-index:88;background:color-mix(in srgb,var(--ink) 18%,transparent);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);animation:kc-fade .18s ease-out}
+.kc.kc-dim .kc-scrim{display:block}
+@keyframes kc-fade{from{opacity:0}to{opacity:1}}
+.kc-pop{position:fixed;right:20px;bottom:calc(var(--kc-bottom) + 72px);z-index:92;width:min(360px,calc(100vw - 32px));display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:22px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);box-shadow:var(--sh-3);transform-origin:100% 100%;animation:kc-pop .2s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes kc-pop{from{opacity:0;transform:translateY(10px) scale(.94)}to{opacity:1;transform:none}}
+.kc-pop-h{display:flex;align-items:center;gap:12px}
+.kc-pop-h .kc-av{width:44px;height:44px}
+.kc-pop-h>div{display:flex;flex-direction:column;line-height:1.25}.kc-pop-h b{font-size:16.5px;font-weight:650}.kc-pop-h small{font-size:13.5px;color:var(--muted)}
+.kc-pop-q{display:flex;flex-direction:column;gap:8px}
+.kc-pop-q button{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:var(--field);color:var(--ink);font:500 14.5px var(--font);text-align:left;cursor:pointer;opacity:0;animation:kc-q .25s ease-out forwards;transition:background .15s,border-color .15s}
+.kc-pop-q button:nth-child(2){animation-delay:.05s}.kc-pop-q button:nth-child(3){animation-delay:.1s}.kc-pop-q button:nth-child(4){animation-delay:.15s}
+@keyframes kc-q{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.kc-pop-q button:hover,.kc-pop-q button:focus-visible{background:color-mix(in srgb,var(--accent) 14%,var(--card));border-color:color-mix(in srgb,var(--accent) 55%,var(--line));outline:none}
+.kc-pop-q button .ic{background:var(--muted)}
+.kc-pop-f{display:flex;gap:8px;flex-wrap:wrap}
+.kc-pop-f button{flex:1;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:7px;height:40px;padding:0 12px;border-radius:12px;font:500 13.5px var(--font);cursor:pointer}
+.kc-pop-more{border:0;background:var(--ink);color:var(--inverse)}.kc-pop-more .ic{background:var(--inverse)}
+.kc-pop-person{border:1px solid var(--line-2);background:var(--card);color:var(--ink)}.kc-pop-person .ic{background:var(--ink)}
+.kc[data-mode="dock"] .kc-panel{z-index:91}
+@media (max-width:640px){.kc-pop{right:12px;left:12px;width:auto;bottom:calc(var(--kc-bottom) + 70px)}}
+@media (prefers-reduced-motion:reduce){.kc-pop,.kc-pop-q button,.kc-scrim{animation:none!important;opacity:1}}
