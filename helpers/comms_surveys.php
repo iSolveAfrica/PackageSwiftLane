@@ -548,6 +548,47 @@ if (!function_exists('cdp_surveyEnsure')) {
         return null;
     }
 
+    /**
+     * When an active survey shares a trigger status with another active one,
+     * only one of them is sent (cdp_surveyFormForStatus takes the first): a
+     * sentence naming the other survey(s) and who wins, or '' when none overlap.
+     */
+    function cdp_surveyOverlapWarning($id)
+    {
+        $f = cdp_surveyForm((int) $id);
+        if (!$f || empty($f['active'])) {
+            return '';
+        }
+        $defaults = cdp_surveyDefaultStatuses();
+        $mine = $f['statuses'] ?: $defaults;
+        $names = cdp_commStatusNames();
+        $parts = [];
+        $lost = [];
+        foreach (cdp_surveyForms(true) as $o) {
+            if ((int) $o['id'] === (int) $f['id']) {
+                continue;
+            }
+            $both = array_values(array_intersect($mine, $o['statuses'] ?: $defaults));
+            if (!$both) {
+                continue;
+            }
+            $labels = array_map(function ($s) use ($names) { return isset($names[$s]) ? cdp_commStatusLabel($names[$s]) : '#' . $s; }, $both);
+            $parts[] = '“' . $o['name'] . '” (' . implode(', ', $labels) . ')';
+            foreach ($both as $s) {
+                $w = cdp_surveyFormForStatus($s);
+                if ($w && (int) $w['id'] !== (int) $f['id']) {
+                    $lost[(string) $w['name']] = true;
+                }
+            }
+        }
+        if (!$parts) {
+            return '';
+        }
+        return 'Another active survey asks after the same status: ' . implode('; ', $parts) . '. Customers get only one survey per status'
+            . ($lost ? ', so “' . implode('”, “', array_keys($lost)) . '” is sent there instead of this one' : ', and this one is sent there')
+            . '. Change the statuses or switch one off.';
+    }
+
     // -------------------------------------------------------------- sending
 
     /**

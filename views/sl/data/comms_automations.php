@@ -416,6 +416,30 @@ function sl_caLegacyText(string $body): string
     return trim(preg_replace("/ *\n */", "\n", $t));
 }
 
+/**
+ * A drafted text for an old-screen message whose template row is missing,
+ * written with that trigger's own [TAGS]: ['subject' => ..., 'body' => ...] or null.
+ */
+function sl_caLegacyDraft(string $src, string $ch): ?array
+{
+    $d = [
+        'tracking_update' => ['Update on your shipment [TRACKING]', "Hello [NAME],\n\nThere is a new update on your shipment [TRACKING]. Track it here: [URL_SHIP]\n\n[SITE_NAME]"],
+        'bulk_status_update' => ['Update on your shipment [TRACKING]', "Hello [NAME],\n\nThere is a new update on your shipment [TRACKING]. Track it here: [URL_SHIP]\n\n[SITE_NAME]"],
+        'delivery' => ['Your shipment [TRACKING] was delivered', "Hello [NAME],\n\nYour shipment [TRACKING] has been delivered. Thank you for shipping with us!\n\n[SITE_NAME]"],
+        'consolidation_update' => ['Update on your consolidation [TRACKING]', "Hello [NAME],\n\nYour consolidation [TRACKING] was updated.\n[CHANGED_FIELDS]\n\nDetails: [URL_SHIP]"],
+        'shipment_updated' => ['Your shipment [TRACKING] was updated', "Hello [NAME],\n\nYour shipment [TRACKING] was updated.\n[CHANGED_FIELDS]\n\nTrack it here: [URL_SHIP]\n\n[SITE_NAME]"],
+        'shipment_registered' => ['We registered your shipment [TRACKING_NUMBER]', "Hello [CUSTOMER_FULLNAME],\n\nWe have registered your shipment [TRACKING_NUMBER] ([SERVICE_TYPE], [COURIER_NAME]) at [ORIGIN_OFFICE]. Estimated delivery: [DELIVERY_TIME].\n\nTrack it here: [TRACK_URL]\n\n[COMPANY_NAME]"],
+        'pickup_code' => ['Your pickup code', "Hello [USERNAME],\n\n[MESSAGE]\n\n[SITE_NAME]"],
+        'prealert' => ['Your pre-alert [TRACKING]', "Hello [NAME],\n\nThank you for your pre-alert [TRACKING]. We will let you know as soon as your package is with us. Track it here: [URL_SHIP]\n\n[SITE_NAME]"],
+        'push_notification_invoice' => ['[SUBJECT]', "Hello [USERNAME],\n\n[MESSAGE]\n\nView it here: [URL]\n\n[SITE_NAME]"],
+    ][$src] ?? null;
+    if (!$d) {
+        return null;
+    }
+    // SMS and WhatsApp keep it short: one blank line at most.
+    return ['subject' => $ch === 'email' ? $d[0] : '', 'body' => $ch === 'email' ? $d[1] : preg_replace("/\n{2,}/", "\n", $d[1])];
+}
+
 /** The rows a legacy trigger's text lives in, per channel, for the "Other triggers" editor. */
 function sl_caLegacyTemplates(string $src): array
 {
@@ -429,7 +453,16 @@ function sl_caLegacyTemplates(string $src): array
         foreach ((array) $loc['ids'] as $id) {
             $r = sl_caLegacyRow((string) $loc['table'], (int) $id);
             $row = ['table' => (string) $loc['table'], 'id' => (int) $id, 'missing' => $r === null, 'name' => $r['name'] ?? '', 'subject' => $r['subject'] ?? '',
-                'body' => $r ? ($ch === 'email' ? $r['body'] : sl_caLegacyText($r['body'])) : '', 'design' => null];
+                'body' => $r ? ($ch === 'email' ? $r['body'] : sl_caLegacyText($r['body'])) : '', 'design' => null, 'draft' => false];
+            if (!$r && ($d = sl_caLegacyDraft($src, $ch))) {
+                // A missing row opens with a drafted text (not saved until someone saves it).
+                $row['draft'] = true;
+                $row['subject'] = $d['subject'] ?? '';
+                $row['body'] = $d['body'];
+                if ($ch === 'email') {
+                    $row['design'] = cdp_commBlocksToCanvas([['type' => 'text', 'text' => $d['body']]]);
+                }
+            }
             if ($r && $ch === 'email') {
                 // The canvas design saved with this e-mail, while the text is still the one saved from the canvas.
                 $saved = json_decode((string) cdp_opsSetting('comms_legacy', 'design_email_' . (int) $id, ''), true);

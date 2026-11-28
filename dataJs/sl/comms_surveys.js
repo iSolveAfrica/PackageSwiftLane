@@ -25,10 +25,13 @@
         var FLASH = 'sv-flash';
 
         // A message carried across the reload that follows a save, copy, delete or archive.
-        function flashLater(m) { try { sessionStorage.setItem(FLASH, m); } catch (e) {} }
+        function flashLater(m, warn) { try { sessionStorage.setItem(FLASH, m); if (warn) sessionStorage.setItem(FLASH + '-w', warn); } catch (e) {} }
         (function () {
-            var m = null; try { m = sessionStorage.getItem(FLASH); sessionStorage.removeItem(FLASH); } catch (e) {}
+            var m = null, w = null; try { m = sessionStorage.getItem(FLASH); w = sessionStorage.getItem(FLASH + '-w'); sessionStorage.removeItem(FLASH); sessionStorage.removeItem(FLASH + '-w'); } catch (e) {}
             if (m) setTimeout(function () { SL.toast(m); }, 150);
+            // Two active surveys on the same status: saved, but say which one customers get.
+            var pf = w && document.getElementById('sv-p-forms');
+            if (pf) { var b = document.createElement('div'); b.className = 'sl-banner'; b.setAttribute('role', 'alert'); b.setAttribute('data-sv-overlap', ''); b.innerHTML = '<i class="ic ic-sm i-alert" aria-hidden="true"></i><span></span>'; b.lastChild.textContent = w; pf.insertBefore(b, pf.firstChild); }
         })();
 
         function $(s, r) { return (r || document).querySelector(s); }
@@ -277,7 +280,7 @@
             post({ action: 'form_save', form: JSON.stringify(data) }).then(function (j) {
                 if (!j || !j.success) { msg((j && j.message) || 'Not saved. Please try again.', true); return; }
                 start0 = JSON.stringify(st);
-                flashLater(j.message || 'Survey saved');
+                flashLater(j.message || 'Survey saved', j.warning || '');
                 close(true);
                 location.href = location.pathname + '?tab=forms';
             }).catch(function (e) { msg(e.message || 'Network error. Please try again.', true); })

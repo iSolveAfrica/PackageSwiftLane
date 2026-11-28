@@ -46,6 +46,9 @@
                 payload: function () { return { name: S.mode === 'campaign' ? ($('snd-name') || {}).value || '' : '', goal: $('snd-goal').value, mode: S.mode, audience_label: audienceLabel() }; } },
             extra: { whatsapp: waExtra, email: mailExtra }
         });
+        /* The e-mail builder (palette, 600px canvas, inspector) needs the whole width: the "Who will get it" card moves below. */
+        function wideMail() { var f = $('snd-form'); if (f) f.classList.toggle('snd-wide', editor.channel() === 'email'); }
+        editor.on('tab', wideMail); wideMail();
         editor.on('change', function (d) {
             if (d.value && d.value.enabled != null && !!d.value.enabled !== !!S.channels[d.channel]) { setChannel(d.channel, !!d.value.enabled, true); }
             if (d.channel === 'sms') costLater();

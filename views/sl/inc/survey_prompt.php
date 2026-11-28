@@ -52,6 +52,8 @@ $spThanks = cdp_surveyFillText($spForm['thanks'] !== '' ? $spForm['thanks'] : cd
 .sp-done{text-align:center;padding:12px 4px}
 .sp-done .sp-ic{margin:0 auto 10px;background:var(--green-bg,var(--field));color:var(--green-ink,var(--ink))}
 .sp-done h2{margin:0 0 6px;font:600 19px var(--font)}
+/* King's floating button and its bubble sit above dialogs: keep them out of the survey's way while it is open. */
+html.sp-open .kc-launch,html.sp-open .kc-pop{display:none!important}
 @media (max-width:560px){.sp-qs{max-height:58vh}.sp-ft .sl-btn{flex:1}.sp-never{width:100%;text-align:center}}
 </style>
 <div class="sl-dialog" id="sl-survey" hidden data-sp="<?= (int) $spSurvey->id ?>">
@@ -95,7 +97,7 @@ document.addEventListener('DOMContentLoaded', function () {
     SL.post(url, { action: kind || 'later', id: id }).then(function (j) { if (j && j.message && kind === 'never') SL.toast(j.message); }).catch(function () {});
   }
   // Escape and a click outside close the dialog (swiftlane.js): that is "ask me later".
-  new MutationObserver(function () { if (dlg.hidden) later('later'); }).observe(dlg, { attributes: true, attributeFilter: ['hidden'] });
+  new MutationObserver(function () { document.documentElement.classList.toggle('sp-open', !dlg.hidden); if (dlg.hidden) later('later'); }).observe(dlg, { attributes: true, attributeFilter: ['hidden'] });
   q('[data-sp-later]').forEach(function (b) { b.addEventListener('click', function () { later('later'); close(); }); });
   q('[data-sp-never]').forEach(function (b) { b.addEventListener('click', function () { later('never'); close(); }); });
   q('[data-sp-close]').forEach(function (b) { b.addEventListener('click', close); });

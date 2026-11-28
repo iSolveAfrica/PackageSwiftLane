@@ -148,6 +148,7 @@ $what = [
     'commssend' => 'One person, several people or a campaign, with the phone and e-mail editors.',
     'commsoutbox' => 'Every message: automatic, campaigns, individual and inbox replies.',
     'commsinbox' => 'WhatsApp conversations with customers, ' . cdp_kingName() . ' and your team.',
+    'commswaweb' => 'The company WhatsApp number inside the app: every chat and group, with replies.',
     'commscustomers' => 'Everything said to and heard from one customer.',
     'commssurveys' => 'Questions, when they are sent, and the answers.',
     'commssettings' => 'Providers, sending rules, consent, ' . cdp_kingName() . ', costs and test sends.',

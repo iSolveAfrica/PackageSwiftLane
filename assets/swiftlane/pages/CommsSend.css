@@ -12,6 +12,8 @@
 .snd-main{min-width:0}
 .snd-side{position:sticky;top:16px;min-width:0}
 @media (max-width:1180px){.snd-grid{grid-template-columns:minmax(0,1fr)}.snd-side{position:static}}
+/* E-mail builder open (comms_send.js wideMail): one column, the summary card under the steps. */
+.snd-grid.snd-wide{grid-template-columns:minmax(0,1fr)}.snd-grid.snd-wide .snd-side{position:static}
 .snd-step{display:flex;flex-direction:column;gap:14px;min-width:0}
 .snd-sh{display:flex;align-items:flex-start;gap:12px}
 .snd-sh .sl-ct{margin:0}

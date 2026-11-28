@@ -1,7 +1,7 @@
 <?php
 /**
  * Notifications & Messages sub-navigation, shared by every page of the area
- * (Overview, Automations, Status messages, Send, Outbox, WhatsApp, Customer
+ * (Overview, Automations, Status messages, Send, Outbox, WhatsApp, WhatsApp Web, Customer
  * history, Surveys, Settings). The list is the sidebar's sub-menu
  * (helpers/sl_nav.php: sl_navCommsChildren), filtered with the same rules, so
  * the tabs and the menu can never disagree. Set $commsTab to the current

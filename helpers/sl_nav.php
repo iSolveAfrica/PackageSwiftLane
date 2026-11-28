@@ -224,6 +224,8 @@ function sl_navCommsChildren(): array
         ['id' => 'commsoutbox', 'label' => 'Outbox', 'icon' => 'archive', 'board' => 'CommsOutbox', 'perm' => ['ops:staff', 'view_message_logs']],
         ['id' => 'commsinbox', 'label' => 'WhatsApp', 'icon' => 'message', 'board' => 'CommsInbox', 'perm' => 'ops:staff',
             'count' => fn() => sl_navCommsWaiting()],
+        // The company's WhatsApp number inside the app (whatsapp_web.php gates on rank 2+, as ops:staff).
+        ['id' => 'commswaweb', 'label' => 'WhatsApp Web', 'icon' => 'message', 'board' => 'WhatsAppWeb', 'perm' => 'ops:staff'],
         ['id' => 'commscustomers', 'label' => 'Customer history', 'icon' => 'user', 'board' => 'CommsCustomers', 'perm' => 'ops:staff'],
         ['id' => 'commssurveys', 'label' => 'Surveys', 'icon' => 'star', 'board' => 'CommsSurveys', 'perm' => 'ops:staff'],
         ['id' => 'commssettings', 'label' => 'Settings', 'icon' => 'cog', 'board' => 'CommsSettings', 'perm' => 'ops:admin'],

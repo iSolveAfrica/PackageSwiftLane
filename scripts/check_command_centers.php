@@ -33,7 +33,7 @@ foreach ($groups as $group) {
 }
 // Notifications & Messages: one Command Centers item whose sub-menu lists every messaging page, in this order.
 $comms = array_column(sl_navCommsChildren(), 'label');
-$expectedComms = ['Overview', 'Automations', 'Status messages', 'Send', 'Outbox', 'WhatsApp', 'Customer history', 'Surveys', 'Settings'];
+$expectedComms = ['Overview', 'Automations', 'Status messages', 'Send', 'Outbox', 'WhatsApp', 'WhatsApp Web', 'Customer history', 'Surveys', 'Settings'];
 if ($comms !== $expectedComms) throw new RuntimeException('The Notifications & Messages sub-menu is not ' . implode(', ', $expectedComms));
 foreach ($groups as $group) {
     foreach ($group['items'] as $item) {

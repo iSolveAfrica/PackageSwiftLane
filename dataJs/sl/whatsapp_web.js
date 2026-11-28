@@ -78,9 +78,9 @@
   TICK.played = TICK.read;
   function tick(a) { return TICK[a] || ''; }
   function isNarrow() { return window.matchMedia('(max-width: 899px)').matches; }
-  /* Below 1240 px of room for the screen (side menu open, smaller laptops) the details float over the conversation
+  /* Below 960 px of room for the screen (narrow windows, side menu open on small laptops) the details float over the conversation
      (assets/swiftlane/pages/WhatsAppWeb.css, the same container width). */
-  var OVERLAY_W = 1240;
+  var OVERLAY_W = 960;
   function isOverlay() { return isNarrow() || root.getBoundingClientRect().width < OVERLAY_W; }
   /* Connection states in plain words. */
   var STATE = { connected: 'Connected', qr: 'Not linked: scan the QR code', loading: 'Starting', standby: 'Open on another computer', disconnected: 'Not linked',

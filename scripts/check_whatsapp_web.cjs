@@ -141,11 +141,17 @@ const chat = id => ({ ok: true, sync: { ok: true, code: '', error: '' }, connect
     // Filters wrap instead of hiding chips behind a scroll.
     const f = await page.evaluate(() => { const b = document.querySelector('.ww-filters'); return [b.scrollWidth, b.clientWidth]; });
     assert.ok(f[0] <= f[1] + 1, 'filter chips fit: ' + f.join('/'));
-    // Less room: the details float over the conversation instead of squeezing it.
+    // Less room (about what 1440 leaves with the side menu open): the details stay a column beside the conversation.
     await page.setViewportSize({ width: 1100, height: 900 });
     await page.waitForTimeout(200);
+    const mid = await page.evaluate(() => ({ pos: getComputedStyle(document.getElementById('ww_panel')).position, main: document.querySelector('.ww-main').getBoundingClientRect(), panel: document.getElementById('ww_panel').getBoundingClientRect() }));
+    assert.equal(mid.pos, 'static'); assert.ok(mid.main.width >= 360, 'conversation width at 1100: ' + mid.main.width);
+    assert.ok(mid.main.right <= mid.panel.left + 1, 'details do not cover the conversation at 1100');
+    // Too little room for three panes: the details float over the conversation instead of squeezing it.
+    await page.setViewportSize({ width: 920, height: 900 });
+    await page.waitForTimeout(200);
     const narrow = await page.evaluate(() => ({ pos: getComputedStyle(document.getElementById('ww_panel')).position, main: document.querySelector('.ww-main').getBoundingClientRect().width }));
-    assert.equal(narrow.pos, 'absolute'); assert.ok(narrow.main >= 480, 'conversation width at 1100: ' + narrow.main);
+    assert.equal(narrow.pos, 'absolute'); assert.ok(narrow.main >= 480, 'conversation width at 920: ' + narrow.main);
     // Phones: one pane, the filters wrap, no sideways scroll.
     await page.setViewportSize({ width: 390, height: 844 });
     await page.keyboard.press('Escape'); // the details float over the chat on a phone: Escape closes them

@@ -21,7 +21,7 @@ $cfg = [
 ];
 ?>
 <div class="ops ww-page">
-<?php $commsTab = 'commsinbox'; include __DIR__ . '/partials/comms_tabs.php'; ?>
+<?php $commsTab = 'commswaweb'; include __DIR__ . '/partials/comms_tabs.php'; ?>
 <nav class="ww-crumb" aria-label="Breadcrumb"><span class="ww-crumb-home"><a href="<?= h($u['home'] ?? '') ?>">Communications</a><i class="ic ic-sm i-right" aria-hidden="true"></i></span><a href="<?= h($u['inbox'] ?? '') ?>">WhatsApp Inbox</a><i class="ic ic-sm i-right" aria-hidden="true"></i><span aria-current="page">WhatsApp screen</span></nav>
 <div class="sl-head ww-head"><div><h1 class="sl-title" style="font-size:22px">WhatsApp screen</h1>
 <p class="sl-lede">Your company WhatsApp number inside Swift Lane: every chat and group with its history, replies with pictures and documents, ticks, and the customer beside each chat.</p></div>

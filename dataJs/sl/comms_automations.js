@@ -182,15 +182,13 @@
         /* An SMS carries the short, unformatted pickup code line: its phone and count use those values. */
         function smsSample(ed, sample, sms) {
             if (!sms) return;
-            function pick(c) {
-                ed.setSample(c === 'sms' ? sms : sample);
-                var ta = $('.ce-p-sms textarea', ed.el); if (c === 'sms' && ta) ta.dispatchEvent(new Event('input', { bubbles: true }));
-            }
+            /* setSample re-renders the preview and character count without marking the message changed. */
+            function pick(c) { ed.setSample(c === 'sms' ? sms : sample); }
             ed.on('tab', function (ev) { pick((ev && ev.channel) || ed.channel()); });
             pick(ed.channel());
         }
         function waFields(ed) { var o = {}; $$('[data-wa]', ed.el).forEach(function (i) { o[i.getAttribute('data-wa')] = i.value.trim(); }); return o; }
-        function sourceNote(src) { return { saved: 'Custom', saved_en: 'Custom (English)', draft: 'Drafted for this status', 'default': 'Built-in', none: 'No text' }[src] || ''; }
+        function sourceNote(src) { return { saved: 'Custom', saved_en: 'Custom (English)', draft: 'Drafted for this status', drafted: 'Drafted', 'default': 'Built-in', none: 'No text' }[src] || ''; }
 
         function openTrigger(key, label, ch) {
             if (!CE) { toast('The editor could not load. Reload the page.', true); return; }
@@ -313,9 +311,10 @@
                             box.innerHTML = '<div class="ca-leg">' +
                                 (rows.length > 1 ? '<label class="sl-field"><span class="sl-lab">Template row</span><select class="sl-in" data-leg-pick>' + rows.map(function (x) { return '<option value="' + x.id + '"' + (x.id === pick[c] ? ' selected' : '') + '>#' + x.id + ' ' + esc(x.missing ? '(missing)' : x.name) + '</option>'; }).join('') + '</select></label>' : '') +
                                 '<p class="mut sm">Saved in the old ' + CH[c] + ' template #' + pick[c] + (r && r.name ? ' “' + esc(r.name) + '”' : '') + '. The screen fills the [TAGS]; keep them as they are.' + (c === 'whatsapp' ? '' : '') + '</p>' +
-                                (r && r.missing ? '<div class="sl-banner"><i class="ic ic-sm i-alert" aria-hidden="true"></i><span>This template row is missing, so this ' + CH[c] + ' message is not sent. ' + (cfg.canEdit ? 'Write it here and save to create it' + (AI.ok ? ', or let ' + esc(KING) + ' draft it' : '') + '.' : 'An administrator can write it here.') + '</span></div>' : '') +
+                                (r && r.missing ? '<div class="sl-banner"><i class="ic ic-sm i-alert" aria-hidden="true"></i><span>This template row is missing, so this ' + CH[c] + ' message is not sent. ' + (cfg.canEdit ? (r.draft ? 'A drafted message is filled in: check it and save to create it' : 'Write it here and save to create it') + (AI.ok ? ', or let ' + esc(KING) + ' draft it' : '') + '.' : 'An administrator can write it here.') + '</span></div>' : '') +
                                 (c === chans[0] && builtIn.length ? '<p class="mut sm">' + builtIn.map(function (b) { return CH[b]; }).join(' and ') + ' wording is built into this screen: only its switch is here, on the Automations list.</p>' : '') +
                                 '</div>';
+                            var src = {}; src[c] = r && r.missing && r.draft ? 'drafted' : ''; showSources(ed, src);
                             var sel = $('[data-leg-pick]', box);
                             if (sel) sel.addEventListener('change', function () {
                                 var id = +sel.value;
@@ -352,6 +351,7 @@
                     onReset: cfg.canEdit ? function (c) { return { success: true, message: 'Back to the saved text.', value: valueOf(c, rowOf(c, pick[c])) }; } : null
                 });
                 ed.el.classList.add('ca-ed');
+                var drafted = {}; chans.forEach(function (c) { var r = rowOf(c, pick[c]); drafted[c] = r && r.missing && r.draft ? 'drafted' : ''; }); showSources(ed, drafted);
                 lockInputs(ed);
                 if (j.unassigned) ed.status('No trigger on this page uses these rows; a screen may still send one. Choose the row, edit and save.');
                 else if (j.locked) ed.status('Security messages are always sent; only their wording can change.');

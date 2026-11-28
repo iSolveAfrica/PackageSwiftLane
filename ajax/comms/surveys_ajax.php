@@ -5,7 +5,7 @@
  * POST only (CSRF checked by require_login). action =
  *   form_get       id                          one survey form (builder)
  *   form_save      form (JSON: id, name, active, intro, thanks, questions[], statuses[], delay_hours,
- *                  channels[], frequency_days)
+ *                  channels[], frequency_days); warning names any other active survey on the same statuses
  *   form_toggle    id, value (1/0)             switch a survey on or off (sl-toggle data-sl-save)
  *   form_duplicate id
  *   form_delete    id                          a survey already sent is switched off instead
@@ -69,7 +69,8 @@ switch ($action) {
             sl_json(['success' => false, 'message' => $r['error']], 422);
         }
         $log(((int) ($in['id'] ?? 0) > 0 ? 'Survey changed: ' : 'Survey created: ') . $r['form']['name'], $r['form']['name'], (int) ($in['id'] ?? 0) > 0 ? 'update' : 'create');
-        sl_json(['success' => true, 'message' => 'Survey saved', 'id' => $r['id'], 'form' => $r['form']]);
+        // Saved either way; an overlap with another active survey only warns.
+        sl_json(['success' => true, 'message' => 'Survey saved', 'id' => $r['id'], 'form' => $r['form'], 'warning' => cdp_surveyOverlapWarning((int) $r['id'])]);
 
     case 'form_toggle':
         $id = (int) ($P('id') !== '' ? $P('id') : $P('key'));
@@ -80,7 +81,8 @@ switch ($action) {
         }
         $f = cdp_surveyForm($id);
         $log('Survey ' . ($on ? 'switched on' : 'switched off') . ': ' . ($f['name'] ?? ''), $f['name'] ?? '');
-        sl_json(['success' => true, 'message' => $on ? 'Survey on' : 'Survey off']);
+        $warn = $on ? cdp_surveyOverlapWarning($id) : '';
+        sl_json(['success' => true, 'message' => ($on ? 'Survey on' : 'Survey off') . ($warn !== '' ? '. ' . $warn : ''), 'warning' => $warn]);
 
     case 'form_duplicate':
         $f = cdp_surveyForm((int) $P('id'));
