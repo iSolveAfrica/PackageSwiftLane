@@ -229,11 +229,12 @@ html.kc-lock,html.kc-lock body{overflow:hidden!important}
 
 @media print{.kc{display:none!important}}
 
-/* King's avatar (views/sl/inc/king_chat.php $kcFace): the AI icon on the brand amber, online dot */
+/* King's avatar (views/sl/inc/king_chat.php $kcFace): the owner's headset icon on the brand amber, online dot */
 .kc-av.face{background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 75%,#fff),var(--accent));color:var(--accent-ink,#1F1A17)}
 .kc-av.face .kc-face{width:56%;height:56%;background:currentColor}
 .kc-av.face .kc-on{right:-1px;bottom:-1px}
 .kc-av.sm.face .kc-on{display:none}
+.kc-headset{display:block;-webkit-mask:url("king-headset.png") center/contain no-repeat;mask:url("king-headset.png") center/contain no-repeat}
 .kc-launch-t b{display:inline-flex;align-items:center;gap:4px}
 .kc-wave{display:inline-block;transform-origin:70% 80%;animation:kc-wave 2.4s ease-in-out 1s 2}
 @keyframes kc-wave{0%,60%,100%{transform:rotate(0)}10%,30%{transform:rotate(16deg)}20%,40%{transform:rotate(-8deg)}}

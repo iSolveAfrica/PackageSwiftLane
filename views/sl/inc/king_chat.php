@@ -14,7 +14,7 @@
  * Endpoint: ajax/support/customer_ajax.php (brief, start via=king, send, quick, human, poll, rate).
  * Behaviour: dataJs/sl/king_chat.js. Styles: assets/swiftlane/king_chat.css.
  *
- * King is presented warmly and personally (the AI icon, "Hi, I'm King", the customer's first name); the footer
+ * King is presented warmly and personally (a headset icon, "Hi, I'm King", the customer's first name); the footer
  * under the chat still says plainly that King is automated and a person is one tap away.
  */
 require_once CDP_ROOT . '/helpers/support.php';
@@ -54,9 +54,10 @@ $kcCfg = [
 ];
 $kcSite = $kcCfg['site'];
 $kcIni = mb_strtoupper(mb_substr($kcKing, 0, 1));
-// King's avatar: the AI icon on the brand amber. Used on the bubble, the dashboard card, the chat header, the
-// typing dots and every message King sends (dataJs/sl/king_chat.js reads SL_KC.face).
-$kcFace = '<i class="ic i-ai kc-face" aria-hidden="true"></i>';
+// King's avatar: the owner's headset icon (assets/swiftlane/king-headset.png, stored unaltered) on the brand amber.
+// Used on the bubble, the dashboard card, the chat header, the typing dots and every message King sends
+// (dataJs/sl/king_chat.js reads SL_KC.face).
+$kcFace = '<i class="kc-face kc-headset" aria-hidden="true"></i>';
 $kcCfg['face'] = $kcFace;
 $kcHi = 'Hi, I\'m ' . $kcKing;
 $kcAsk = 'How can I help' . ($kcFirst !== '' ? ', ' . $kcFirst : '') . '?';
