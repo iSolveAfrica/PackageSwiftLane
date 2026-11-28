@@ -72,3 +72,13 @@
 .cs-st .sl-pill{grid-column:2;justify-self:start}
 .cs-st .cs-sti{grid-row:span 2}
 @media (max-width:600px){.cs-st{grid-template-columns:minmax(0,1fr);padding:10px 12px}.cs-st .cs-sti{display:none}.cs-st .sl-pill{grid-column:1}}
+/* errors of a switch sit under its row (comms_settings.js placeSwitchErrors) */
+.cs-swerr{display:block;margin:-6px 0 0 46px;color:var(--red-ink);font-size:14px}
+.sl-toggle.is-invalid{box-shadow:0 0 0 2px var(--red,#D64545)}
+label.cs-sw{cursor:pointer}label.cs-sw .sl-toggle[data-static]{cursor:not-allowed}
+/* "Remove saved" under a saved secret */
+.cs-clr{align-self:flex-start;margin-top:2px}
+.cs-clr[aria-pressed="true"]{color:var(--red-ink)}
+/* three fields / four cost cards on one row at desktop width */
+.cs-sec .grid.cols3.cs-g{grid-template-columns:repeat(auto-fit,minmax(min(170px,100%),1fr))}
+.cs-sec .cs-kpis{grid-template-columns:repeat(auto-fit,minmax(min(160px,100%),1fr))}

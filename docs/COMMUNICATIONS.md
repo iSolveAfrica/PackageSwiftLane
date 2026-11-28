@@ -50,7 +50,19 @@ One page, one form per section, saved by `ajax/comms/settings_ajax.php` (POST + 
 - **Costs:** price per message per channel and this month's spend, read from Message costs (`message_costs.php`, where prices are set).
 - **Test send:** one WhatsApp, SMS (choose the provider) or e-mail with the saved settings; it shows in the Outbox.
 
-Secrets are never put in the page: a saved secret shows as "saved - leave blank to keep". People without the secrets permission see provider settings read-only.
+Secrets are never put in the page: a saved secret shows as "saved - leave blank to keep", and "Remove saved" next to it clears it on the next save (`clear_secrets`). People without the secrets permission see provider keys read-only, but can still switch WhatsApp and SMS on or off (the `set_channel` action saves at once: an emergency stop needs no key). The WhatsApp switch stops both providers (Meta Cloud included, in `cdp_commSendWhatsApp`).
+
+Rules the endpoint enforces:
+
+- Only fields present in the POST change; a missing field keeps its saved value. Only the chosen WhatsApp provider's fields are checked and saved.
+- Provider addresses must be public: the UltraMsg instance address must be `https://` with no port or user, and neither it nor the SMTP host may point at loopback, private (RFC 1918), link-local (cloud metadata) or reserved addresses (`sl_commsHostCheck` in `views/sl/data/comms_settings.php`; the connection check pins the checked address). For a local mock provider set `define('CDP_ALLOW_LOCAL_PROVIDERS', true);` in `config/config.php` (never in production).
+- When the instance address or SMTP host changes, the token or password must be typed again: a saved secret only goes to the server it was typed for.
+- "Check the server" tests what is on screen (the saved password only for the saved host).
+- Rotate key: with UltraMsg set up, the new webhook address is sent to the instance at once (`cdp_umWebhookSetup`); otherwise paste it in the provider dashboard.
+- Test sends: at most 10 per person per hour (429 after that); a test refused before it reaches a provider is still written to the Outbox as skipped (source `comms_test`).
+- STOP / UNSUBSCRIBE / OPT OUT by WhatsApp switches off WhatsApp and every offer (WhatsApp, SMS, e-mail); status SMS and e-mails keep going unless the customer switches them off in their preferences.
+
+The old SMTP form (`settings_form.php?f=smtp`) redirects here. The Overview (`comms_hub.php`) keeps its Outbox figures for 60 seconds in `cdb_ops_settings` (`comms/overview_cache_<days>`; `?fresh=1` skips it). On phones the Overview has its own screen (`views/sl/phone/CommsHub.php`, same data); `comms_center.php` has no phone screen, so its hash router runs on every device.
 
 ## Setup
 

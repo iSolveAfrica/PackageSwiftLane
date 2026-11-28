@@ -28,8 +28,15 @@ $from = date('Y-m-d', strtotime('-' . ($days - 1) . ' days'));
 $to = date('Y-m-d');
 $base = ['from' => $from, 'to' => $to];
 $f = cdp_commOutboxFilters($base);
-$stats = $ready ? cdp_commOutboxStats($f) : ['total' => 0, 'sent' => 0, 'failed' => 0, 'skipped' => 0, 'waiting' => 0, 'received' => 0, 'cost' => 0, 'currency' => ''];
 $outbox = sl_route('CommsOutbox');
+// The figures below take a dozen Outbox counts (each over the log, queue and threads): they are shared by
+// everyone and kept for 60 seconds (comms/overview_cache_<days>), so reloading the Overview stays cheap.
+$cacheKey = 'overview_cache_' . $days;
+$cache = $ready && !isset($_GET['fresh']) ? json_decode((string) cdp_opsSetting('comms', $cacheKey, ''), true) : null;
+$cache = is_array($cache) && (int) ($cache['t'] ?? 0) >= time() - 60 && ($cache['to'] ?? '') === $to ? $cache : null;
+$fresh = ['t' => time(), 'to' => $to];
+$stats = $cache['stats'] ?? ($ready ? cdp_commOutboxStats($f) : ['total' => 0, 'sent' => 0, 'failed' => 0, 'skipped' => 0, 'waiting' => 0, 'received' => 0, 'cost' => 0, 'currency' => '']);
+$fresh['stats'] = $stats;
 $olink = fn(array $q) => $outbox . '?' . http_build_query(array_merge($base, $q));
 
 // Per channel: sent / failed and a 14-day spark from the message log.
@@ -49,17 +56,20 @@ $spark = function (string $ch) use ($hasLog) {
 };
 $channels = [];
 foreach (['whatsapp' => ['WhatsApp', 'i-wa'], 'sms' => ['SMS', 'i-message'], 'email' => ['E-mail', 'i-mail']] as $ch => [$label, $icon]) {
-    $s = $ready ? cdp_commOutboxStats(cdp_commOutboxFilters($base + ['channel' => $ch])) : ['sent' => 0, 'failed' => 0, 'skipped' => 0, 'waiting' => 0, 'received' => 0, 'cost' => 0];
+    $s = $cache['chan'][$ch] ?? ($ready ? cdp_commOutboxStats(cdp_commOutboxFilters($base + ['channel' => $ch])) : ['sent' => 0, 'failed' => 0, 'skipped' => 0, 'waiting' => 0, 'received' => 0, 'cost' => 0]);
+    $fresh['chan'][$ch] = $s;
+    $fresh['spark'][$ch] = $cache['spark'][$ch] ?? $spark($ch);
     $done = $s['sent'] + $s['failed'];
     $channels[] = ['ch' => $ch, 'label' => $label, 'icon' => $icon, 'sent' => $s['sent'], 'failed' => $s['failed'], 'skipped' => $s['skipped'], 'waiting' => $s['waiting'],
-        'received' => $s['received'], 'cost' => $s['cost'], 'rate' => $done > 0 ? round(100 * $s['sent'] / $done) : null, 'spark' => $spark($ch), 'href' => $olink(['channel' => $ch])];
+        'received' => $s['received'], 'cost' => $s['cost'], 'rate' => $done > 0 ? round(100 * $s['sent'] / $done) : null, 'spark' => $fresh['spark'][$ch], 'href' => $olink(['channel' => $ch])];
 }
 
 // Where messages came from (origin) in the period.
 $origins = [];
 if ($ready) {
     foreach (cdp_commOutboxOrigins() as $k => $l) {
-        $s = cdp_commOutboxStats(cdp_commOutboxFilters($base + ['origin' => $k]));
+        $s = $cache['orig'][$k] ?? cdp_commOutboxStats(cdp_commOutboxFilters($base + ['origin' => $k]));
+        $fresh['orig'][$k] = ['total' => (int) $s['total'], 'failed' => (int) $s['failed']];
         if ($s['total'] > 0) {
             $origins[] = ['k' => $k, 'label' => $l, 'n' => $s['total'], 'failed' => $s['failed'], 'href' => $olink(['origin' => $k])];
         }
@@ -68,7 +78,14 @@ if ($ready) {
 }
 
 // Recent failures.
-$fails = $ready ? cdp_commOutboxFeed(cdp_commOutboxFilters($base + ['status' => 'failed']), 1, 6)['rows'] : [];
+$fails = $cache['fails'] ?? ($ready ? cdp_commOutboxFeed(cdp_commOutboxFilters($base + ['status' => 'failed']), 1, 6)['rows'] : []);
+$fresh['fails'] = $fails;
+if ($ready && !$cache) {
+    $json = json_encode($fresh, JSON_PARTIAL_OUTPUT_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE);
+    if (is_string($json) && strlen($json) < 60000) {
+        cdp_opsSettingSet('comms', $cacheKey, $json);
+    }
+}
 
 // Things that need attention.
 $status = sl_commsChannelStatus();

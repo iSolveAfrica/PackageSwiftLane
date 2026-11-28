@@ -211,7 +211,7 @@ if (!function_exists('cdp_commLegacyAllowed')) {
         }
         $registered = true;
         require_once __DIR__ . '/after_response.php';
-        cdp_afterResponse(function () {
+        $run = function () {
             try {
                 require_once __DIR__ . '/comms.php';
                 if (cdp_commSetting('enabled') === '1' && cdp_commEnsureTables()) {
@@ -221,7 +221,17 @@ if (!function_exists('cdp_commLegacyAllowed')) {
             } catch (Throwable $e) {
                 error_log('comms run now: ' . $e->getMessage());
             }
-        });
+        };
+        // The gate is called from inside a send: never run the scan there (its own sends
+        // would change the message context under the old code's remaining sends). After
+        // the response, or from an already-running after-response task (the consolidation
+        // fan-out runs as one; tasks queued while the queue runs are not picked up) or the
+        // CLI, run it at shutdown, which PHP still executes when registered this late.
+        if (PHP_SAPI === 'cli' || !empty($GLOBALS['cdp_after_response_running'])) {
+            register_shutdown_function($run);
+        } else {
+            cdp_afterResponse($run);
+        }
         return true;
     }
 }

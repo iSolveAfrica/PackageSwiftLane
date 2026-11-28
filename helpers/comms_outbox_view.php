@@ -265,7 +265,10 @@ if (!function_exists('cdp_commOutboxFeed')) {
             $w = ['1=1'];
             $b = [];
             if (cdp_commOutboxLinked()) {
-                $w[] = '(l.outbox_id IS NULL OR l.outbox_id = 0)';
+                // Attempts show inside their queue row; an attempt whose queue row was deleted stays visible here.
+                $w[] = (cdp_opsTableExists('cdb_comm_outbox')
+                    ? '(l.outbox_id IS NULL OR l.outbox_id = 0 OR NOT EXISTS (SELECT 1 FROM cdb_comm_outbox ox WHERE ox.id = l.outbox_id))'
+                    : '1=1');
             }
             if ($f['channel'] !== '') { $w[] = 'l.channel = :l_ch'; $b[':l_ch'] = $f['channel']; }
             if ($f['status'] !== '') { $w[] = 'l.status = :l_st'; $b[':l_st'] = $f['status']; }
@@ -668,7 +671,7 @@ if (!function_exists('cdp_commOutboxFeed')) {
             return 'Inbox reply' . ((string) $r->by_name !== '' ? ' by ' . $r->by_name : '');
         }
         if ($r->origin === 'individual' && (string) $r->by_name !== '' && stripos((string) $r->by_name, 'system') !== 0) {
-            return ($label !== '' ? $label : 'Message') . ' · ' . $r->by_name;
+            return $label !== '' && stripos($label, (string) $r->by_name) !== false ? $label : ($label !== '' ? $label : 'Message') . ' · ' . $r->by_name;
         }
         if ($label === '' && (string) $r->source !== '') {
             $label = function_exists('cdp_msgSourceLabel') ? cdp_msgSourceLabel((string) $r->source) : (string) $r->source;
@@ -1048,7 +1051,8 @@ if (!function_exists('cdp_commOutboxFeed')) {
             $d['can_resend'] = in_array($l->status, ['failed', 'skipped'], true) && in_array($l->channel, ['whatsapp', 'sms', 'email'], true) && (string) $l->recipient_to !== ''
                 && !in_array((string) $l->source, ['otp', 'signup', 'pickup_code'], true)
                 && $origin !== 'campaign';   // campaigns are sent from the campaign (consent, unsubscribe)
-            if (!empty($l->outbox_id)) {
+            if (!empty($l->outbox_id) && cdp_opsTableExists('cdb_comm_outbox')
+                && cdp_opsOne('SELECT id FROM cdb_comm_outbox WHERE id = :o', [':o' => (int) $l->outbox_id])) {
                 // An attempt of a queued message: Retry belongs to that message.
                 $d['outbox_id'] = (int) $l->outbox_id;
                 $d['parent_ref'] = 'queue-' . (int) $l->outbox_id;
@@ -1101,7 +1105,7 @@ if (!function_exists('cdp_commOutboxFeed')) {
             }
             $d['sent_by'] = $d['by'];
             // The provider may already have this message (an attempt reported "sent"): retrying would send it twice.
-            $d['sent_attempt'] = false;
+            $d['sent_attempt'] = strpos((string) $o->last_error, 'Interrupted while sending') === 0;
             foreach ($logs as $l) {
                 if ($l->status === 'sent') {
                     $d['sent_attempt'] = true;
@@ -1301,7 +1305,7 @@ if (!function_exists('cdp_commOutboxFeed')) {
     {
         $id = (int) $id;
         if ($kind === 'queue') {
-            $o = cdp_opsOne('SELECT id, status FROM cdb_comm_outbox WHERE id = :id', [':id' => $id]);
+            $o = cdp_opsOne('SELECT id, status, last_error FROM cdb_comm_outbox WHERE id = :id', [':id' => $id]);
             if (!$o) {
                 return ['ok' => false, 'error' => 'That message is no longer there.', 'code' => 'not_found'];
             }
@@ -1313,6 +1317,10 @@ if (!function_exists('cdp_commOutboxFeed')) {
                 return ['ok' => false, 'code' => 'needs_confirm',
                     'error' => 'One attempt of this message was accepted by the provider, so the customer may already have it. Retrying sends it again.'];
             }
+            if (!$confirmed && strpos((string) $o->last_error, 'Interrupted while sending') === 0) {
+                return ['ok' => false, 'code' => 'needs_confirm',
+                    'error' => 'Sending this message was interrupted, so the provider may already have accepted it. Retrying can send it twice.'];
+            }
             $r = cdp_opsX("UPDATE cdb_comm_outbox SET status = 'queued', attempts = 0, send_after = :n, last_error = NULL WHERE id = :id AND status IN ('failed','cancelled')",
                 [':n' => cdp_opsNow(), ':id' => $id]);
             return ['ok' => $r['rows'] === 1, 'error' => $r['rows'] === 1 ? '' : 'This message is no longer failed or cancelled.'];
@@ -1321,6 +1329,10 @@ if (!function_exists('cdp_commOutboxFeed')) {
             return ['ok' => false, 'error' => 'Received messages cannot be retried.'];
         }
         if ($kind === 'cs' || $kind === 'dlv') {
+            $t = $kind === 'cs' ? 'cdb_cs_outbox' : 'cdb_delivery_outbox';
+            if (!cdp_opsTableExists($t) || !cdp_opsOne('SELECT id FROM ' . $t . ' WHERE id = :id', [':id' => $id])) {
+                return ['ok' => false, 'error' => 'That message is no longer there.', 'code' => 'not_found'];
+            }
             return ['ok' => false, 'error' => 'The Support desk and delivery-request workers retry their own notices.'];
         }
         if ($kind === 'log') {
@@ -1384,7 +1396,8 @@ if (!function_exists('cdp_commOutboxFeed')) {
         if (!in_array($l->status, ['failed', 'skipped'], true)) {
             return ['ok' => false, 'error' => 'Only a failed or skipped message can be sent again.'];
         }
-        if (!empty($l->outbox_id)) {
+        if (!empty($l->outbox_id) && cdp_opsTableExists('cdb_comm_outbox')
+            && cdp_opsOne('SELECT id FROM cdb_comm_outbox WHERE id = :o', [':o' => (int) $l->outbox_id])) {
             return ['ok' => false, 'error' => 'This is one attempt of queued message queue-' . (int) $l->outbox_id . '. Retry that message instead.'];
         }
         if ((string) $l->origin === 'campaign') {

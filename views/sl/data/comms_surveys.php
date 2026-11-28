@@ -34,14 +34,30 @@ function sl_csvAi(): array
         'name' => (string) $a['assistant'], 'tones' => $tones];
 }
 
-/** The statuses a form can be sent after, with the delivered / picked-up ones marked as the default. */
-function sl_csvStatuses(): array
+/**
+ * The statuses a form can be sent after (only those where the customer has
+ * the package: delivered, picked up, arrived), with the delivered / picked-up
+ * ones marked as the default. A status a form already lists that may not ask
+ * ("No Picked up", "Cancelled", ...) is kept, marked blocked, so the builder
+ * can say why it has to go.
+ */
+function sl_csvStatuses(array $forms = []): array
 {
     $def = cdp_surveyDefaultStatuses();
+    $used = [];
+    foreach ($forms as $f) {
+        foreach ($f['statuses'] as $sid) {
+            $used[(int) $sid] = 1;
+        }
+    }
     $out = [];
     foreach (cdp_commStatusNames() as $id => $name) {
+        $ok = cdp_surveyStatusAllowed((int) $id, $name);
+        if (!$ok && !isset($used[(int) $id])) {
+            continue;
+        }
         $kind = cdp_commStatusKind($id, $name);
-        $out[] = ['id' => (int) $id, 'label' => cdp_commStatusLabel($name), 'kind' => $kind, 'default' => in_array((int) $id, $def, true)];
+        $out[] = ['id' => (int) $id, 'label' => cdp_commStatusLabel($name), 'kind' => $kind, 'default' => in_array((int) $id, $def, true), 'blocked' => !$ok];
     }
     return $out;
 }
@@ -80,8 +96,12 @@ function sl_commsSurveysData($user): array
     if (!isset($presets[$preset])) {
         $preset = '30';
     }
+    $badDates = false;
     if ($preset === 'custom') {
-        [$from, $to] = cdp_surveyRange($_GET['from'] ?? '', $_GET['to'] ?? '', 30);
+        [$from, $to, $badDates] = cdp_surveyRange($_GET['from'] ?? '', $_GET['to'] ?? '', 30);
+        if ($badDates) {
+            $preset = '30';
+        }
     } else {
         [$from, $to] = cdp_surveyRange('', '', (int) $preset);
     }
@@ -90,7 +110,7 @@ function sl_commsSurveysData($user): array
     if ($formId && !array_filter($forms, function ($f) use ($formId) { return $f['id'] === $formId; })) {
         $formId = 0;
     }
-    $statuses = $ready ? sl_csvStatuses() : [];
+    $statuses = $ready ? sl_csvStatuses($forms) : [];
     $labels = [];
     foreach ($statuses as $s) {
         $labels[$s['id']] = $s['label'];
@@ -107,6 +127,7 @@ function sl_commsSurveysData($user): array
             foreach ($results[$k] as &$r) {
                 $r['record_link'] = cdp_surveyRecordLink($r['entity_type'], $r['order_id']);
                 $r['customer_link'] = sl_route('CustomerProfile', ['id' => $r['user_id']]);
+                $r['ticket_link'] = $r['ticket_id'] > 0 ? sl_route('CsTicket', ['id' => $r['ticket_id']]) : '';
             }
             unset($r);
         }
@@ -116,7 +137,7 @@ function sl_commsSurveysData($user): array
     return [
         'ready' => $ready, 'canEdit' => sl_csvCanEdit($user), 'ai' => sl_csvAi(),
         'tab' => in_array($tab, ['results', 'forms', 'settings'], true) ? $tab : 'results',
-        'preset' => $preset, 'presets' => $presets, 'from' => $from, 'to' => $to, 'formId' => $formId,
+        'preset' => $preset, 'presets' => $presets, 'badDates' => $badDates, 'here' => sl_route('CommsSurveys'), 'from' => $from, 'to' => $to, 'formId' => $formId,
         'forms' => $forms, 'statuses' => $statuses, 'types' => cdp_surveyTypes(), 'channels' => cdp_surveyChannels(),
         'settings' => cdp_surveySettings(), 'results' => $results,
         'inviteRules' => ['whatsapp' => !isset($rules['survey']['whatsapp']) || (int) $rules['survey']['whatsapp'] === 1,

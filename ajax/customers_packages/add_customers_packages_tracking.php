@@ -284,7 +284,7 @@ if (empty($errors)) {
             $header .= "From: " . $from . " \r\n";
 
             // mail() bypasses PHPMailer, so the transport gate is asked here.
-            if (cdp_commLegacyAllowed('email', ['id' => (int) $shipment->sender_id, 'to' => (string) $to, 'subject' => $subject])) {
+            require_once __DIR__ . '/../../helpers/whatsapp.php'; if (cdp_commLegacyAllowed('email', ['id' => (int) $shipment->sender_id, 'name' => trim((string) ($sender_data->fname ?? '') . ' ' . (string) ($sender_data->lname ?? '')), 'to' => (string) $to, 'subject' => $subject, 'body' => cdp_statusNotifyPlain($message)])) {
                 $cdpOk = @mail($to, $subject, $message, $header);
                 if (function_exists('cdp_msgLogPhpMail')) {
                     cdp_msgLogPhpMail((bool) $cdpOk, $to, $subject, $message);

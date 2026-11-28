@@ -22,4 +22,5 @@ if (count($commsTabOut) > 1): ?>
 <a class="<?= $on ? 'on' : '' ?>" href="<?= h($it['href']) ?>"<?= $on ? ' aria-current="page"' : '' ?>><?= h($it['label']) ?><?php if ($it['c1'] !== ''): ?><em data-cm-waiting title="Waiting for a person"><?= (int) $it['c1'] ?></em><?php endif; ?></a>
 <?php endforeach; ?>
 </nav>
+<script>(function () { var a = document.querySelector('.cm-tabs a.on'), n = a && a.parentNode; if (n && n.scrollWidth > n.clientWidth) { n.scrollLeft = Math.max(0, a.offsetLeft - n.offsetLeft - 16); } })();</script>
 <?php endif;

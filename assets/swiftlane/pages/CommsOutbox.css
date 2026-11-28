@@ -182,9 +182,9 @@ a.ob-tile:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 .hs-tlh{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px 16px;border-bottom:1px solid var(--line)}
 .hs-tlh .sl-ct{margin:0}
 .hs-tlh .sl-seg{overflow-x:auto;max-width:100%;scrollbar-width:none}
-@media (max-width:640px){.hs-tlh #hs-filter{overflow:visible;flex-wrap:wrap;height:auto;width:100%}.hs-tlh #hs-filter>button{flex:1 1 auto;padding:0 10px}}
+@media (max-width:640px){.hs-tlh #hs-filter{overflow:visible;flex-wrap:wrap!important;height:auto;width:100%}.hs-tlh #hs-filter>button{flex:1 1 auto;padding:0 10px}}
 /* phones: the history comes right after the customer card; the preferences follow it */
-@media (max-width:1000px){.hs-grid{display:flex;flex-direction:column}.hs-side{display:contents}.hs-who{order:1}.hs-tl{order:2}.hs-prefs{order:3}}
+@media (max-width:1000px){.hs-grid{display:flex;flex-direction:column;align-items:stretch;width:100%}.hs-grid>*,.hs-side>*{min-width:0;max-width:100%}.hs-side{display:contents}.hs-who{order:1}.hs-tl{order:2}.hs-prefs{order:3}}
 .hs-items{list-style:none;margin:0;padding:0}
 .hs-it{display:flex;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line)}
 .hs-it:last-child{border-bottom:0}

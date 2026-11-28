@@ -22,6 +22,14 @@
         var TYPES = cfg.types || {}, CHS = cfg.channels || {}, INV = cfg.invite || {};
         var CHI = { inapp: 'i-bell', whatsapp: 'i-wa', sms: 'i-message', email: 'i-mail' };
         window.SL_KING_NAME = KING;
+        var FLASH = 'sv-flash';
+
+        // A message carried across the reload that follows a save, copy, delete or archive.
+        function flashLater(m) { try { sessionStorage.setItem(FLASH, m); } catch (e) {} }
+        (function () {
+            var m = null; try { m = sessionStorage.getItem(FLASH); sessionStorage.removeItem(FLASH); } catch (e) {}
+            if (m) setTimeout(function () { SL.toast(m); }, 150);
+        })();
 
         function $(s, r) { return (r || document).querySelector(s); }
         function $$(s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); }
@@ -61,7 +69,7 @@
             var chosen = st.statuses.length > 0;
             box.innerHTML =
                 '<div class="sv-bh"><div class="col grow"><h2 id="sv-b-title">' + (st.id ? (CAN ? 'Edit survey' : 'Survey') : 'New survey') + '</h2>' +
-                '<span class="mut sm">' + (CAN ? 'Questions on the left, when and how it is sent on the right. The preview shows what customers see.' : 'Only an administrator changes surveys.') + '</span></div>' +
+                '<span class="mut sm">' + (CAN ? 'Write the questions, then choose when and how it is sent. The preview shows what customers see.' : 'Only an administrator changes surveys.') + '</span></div>' +
                 '<button type="button" class="sl-btn ghost sm sv-bx" data-b-close aria-label="Close">&times;</button></div>' +
                 '<div class="sv-bgrid"><div class="sv-bmain">' +
                 '<label class="sl-field"><span class="sl-lab">Name</span><input class="sl-in" data-b="name" maxlength="120" value="' + esc(st.name) + '" placeholder="How did we do?"' + ro + '></label>' +
@@ -79,16 +87,19 @@
                 '<label><input type="radio" name="sv-bst" value="default"' + (chosen ? '' : ' checked') + ro + '><span>After delivered or picked up <span class="mut sm">(' + esc(defaults.map(function (s) { return s.label; }).join(', ') || 'none found') + ')</span></span></label>' +
                 '<label><input type="radio" name="sv-bst" value="pick"' + (chosen ? ' checked' : '') + ro + '><span>After the statuses I choose</span></label></div>' +
                 '<div class="sv-stlist" data-b-stlist' + (chosen ? '' : ' hidden') + '>' + (cfg.statuses || []).map(function (s) {
-                    return '<label><input type="checkbox" value="' + s.id + '"' + (st.statuses.indexOf(s.id) >= 0 ? ' checked' : '') + ro + '><span>' + esc(s.label) + (s.default ? ' <span class="mut">·&nbsp;default</span>' : '') + '</span></label>';
+                    return '<label' + (s.blocked ? ' class="sv-stblk"' : '') + '><input type="checkbox" value="' + s.id + '"' + (st.statuses.indexOf(s.id) >= 0 ? ' checked' : '') + ro + '><span>' + esc(s.label) + (s.default ? ' <span class="mut">·&nbsp;default</span>' : '') +
+                        (s.blocked ? ' <em class="sv-boff">never asks for a rating: untick it</em>' : '') + '</span></label>';
                 }).join('') + '</div>' +
-                '<div class="sv-g2"><label class="sl-field"><span class="sl-lab">Wait before asking</span><span class="sv-unit"><input class="sl-in" type="number" min="0" max="336" data-b="delay_hours" value="' + (+st.delay_hours || 0) + '"' + ro + '><span>hours</span></span></label>' +
-                '<label class="sl-field"><span class="sl-lab">Ask a customer at most</span><span class="sv-unit"><span class="mut sm">every</span><input class="sl-in" type="number" min="0" max="365" data-b="frequency_days" value="' + (+st.frequency_days || 0) + '"' + ro + '><span>days</span></span></label></div>' +
+                '<div class="sv-g2"><label class="sl-field"><span class="sl-lab">Wait before asking</span><span class="sv-unit"><input class="sl-in" type="number" min="0" max="336" step="1" inputmode="numeric" data-b="delay_hours" value="' + (+st.delay_hours || 0) + '"' + ro + '><span>hours</span></span></label>' +
+                '<label class="sl-field"><span class="sl-lab">Ask a customer at most</span><span class="sv-unit"><span class="mut sm">every</span><input class="sl-in" type="number" min="0" max="365" step="1" inputmode="numeric" data-b="frequency_days" value="' + (+st.frequency_days || 0) + '"' + ro + '><span>days</span></span></label></div>' +
                 '<p class="mut sm" data-b-when></p></section>' +
                 '<section class="sv-bsec"><h3>How it is asked</h3><div class="sv-bchs">' + Object.keys(CHS).map(function (c) {
                     return '<label class="sv-bch"><input type="checkbox" value="' + c + '"' + (st.channels.indexOf(c) >= 0 ? ' checked' : '') + ro + '><span><i class="ic ic-sm ' + (CHI[c] || '') + '" aria-hidden="true"></i>' + esc(CHS[c]) +
-                        (c !== 'inapp' && INV[c] === false ? ' <em class="sv-boff">off on Automations</em>' : '') + '</span></label>';
+                        (c !== 'inapp' && INV[c] === false ? ' <em class="sv-boff">off on Automations</em>' : '') +
+                        (c === 'inapp' && !cfg.popupOn ? ' <em class="sv-boff">pop-up switched off</em>' : '') + '</span></label>';
                 }).join('') + '</div><p class="mut sm">WhatsApp, SMS and e-mail send the invitation message with the survey link. The pop-up asks when the customer next opens the portal.' +
-                (CAN && (INV.whatsapp === false || INV.sms === false || INV.email === false) ? ' Saving switches a channel you tick back on for the survey invitation on Automations.' : '') + '</p></section>' +
+                (INV.whatsapp === false || INV.sms === false || INV.email === false ? ' A channel marked “off on Automations” sends nothing until it is switched on there: <a href="' + esc(cfg.automationsUrl || 'comms_automations.php') + '">Automations</a>.' : '') +
+                (!cfg.popupOn ? ' The pop-up is switched off for every survey under Pop-up &amp; invitation.' : '') + '</p></section>' +
                 '<section class="sv-bsec sv-bact"><button type="button" class="sl-toggle' + (st.active ? ' on' : '') + '" role="switch" aria-checked="' + (st.active ? 'true' : 'false') + '" data-b-active tabindex="0" aria-labelledby="sv-b-al"' + (CAN ? '' : ' data-static') + '></button><span id="sv-b-al">Send this survey</span></section>' +
                 '<section class="sv-bsec sv-bpv"><h3>Preview</h3><div class="sv-pv" data-b-pv aria-live="off"></div></section>' +
                 '</aside></div>' +
@@ -237,8 +248,22 @@
             for (var i = 0; i < st.questions.length; i++) {
                 var q = st.questions[i];
                 if (!q.label.trim()) return ['Question ' + (i + 1) + ' needs its question text.', '[data-qi="' + i + '"] [data-q="label"]'];
-                if ((q.type === 'choice' || q.type === 'multi') && q.options.filter(function (o) { return o.trim(); }).length < 2) return ['Question ' + (i + 1) + ' needs at least two answers to choose from.', '[data-qi="' + i + '"] [data-o]'];
+                if (q.type === 'choice' || q.type === 'multi') {
+                    var seen = {}, filled = 0;
+                    for (var j = 0; j < q.options.length; j++) {
+                        var o = (q.options[j] || '').trim().replace(/\s+/g, ' ');
+                        if (!o) continue;
+                        if (seen[o.toLowerCase()]) return ['Question ' + (i + 1) + ' has the same answer twice (“' + o + '”). Change or remove one.', '[data-qi="' + i + '"] [data-o="' + j + '"]'];
+                        seen[o.toLowerCase()] = 1; filled++;
+                    }
+                    if (filled < 2) return ['Question ' + (i + 1) + ' needs at least two answers to choose from.', '[data-qi="' + i + '"] [data-o]'];
+                }
             }
+            var dh = Number(st.delay_hours), fd = Number(st.frequency_days);
+            if (!isFinite(dh) || dh < 0 || dh > 336 || Math.floor(dh) !== dh) return ['Wait a whole number of hours, from 0 to 336 (14 days).', '[data-b="delay_hours"]'];
+            if (!isFinite(fd) || fd < 0 || fd > 365 || Math.floor(fd) !== fd) return ['Ask at most once every 0 to 365 whole days.', '[data-b="frequency_days"]'];
+            var blk = (cfg.statuses || []).filter(function (s) { return s.blocked && st.statuses.indexOf(s.id) >= 0; })[0];
+            if (blk) return ['“' + blk.label + '” never asks for a rating. Untick it.', '[data-b-stlist] input[value="' + blk.id + '"]'];
             if (st.active && !st.channels.length) return ['Choose at least one way to ask: the pop-up, WhatsApp, SMS or e-mail.', '.sv-bchs input'];
             if ($('input[name="sv-bst"][value="pick"]', box).checked && !st.statuses.length) return ['Choose at least one status, or send after delivered or picked up.', '[data-b-stlist] input'];
             return null;
@@ -252,7 +277,7 @@
             post({ action: 'form_save', form: JSON.stringify(data) }).then(function (j) {
                 if (!j || !j.success) { msg((j && j.message) || 'Not saved. Please try again.', true); return; }
                 start0 = JSON.stringify(st);
-                toast(j.message || 'Survey saved');
+                flashLater(j.message || 'Survey saved');
                 close(true);
                 location.href = location.pathname + '?tab=forms';
             }).catch(function (e) { msg(e.message || 'Network error. Please try again.', true); })
@@ -305,6 +330,18 @@
         });
         if (cfg.edit) { var f0 = (cfg.forms || []).filter(function (x) { return x.id === cfg.edit; })[0]; if (f0) open(f0); }
 
+        /* ================================================================ copy, delete, archive */
+        root.addEventListener('click', function (e) {
+            var b = e.target.closest('[data-sv-act]'); if (!b || b.disabled) return;
+            var cm = b.getAttribute('data-sv-confirm'); if (cm && !confirm(cm)) return;
+            b.disabled = true; b.classList.add('loading');
+            post({ action: b.getAttribute('data-sv-act'), id: b.getAttribute('data-sv-id') }).then(function (j) {
+                if (!j || !j.success) { toast((j && j.message) || 'Not done. Please try again.', true); b.disabled = false; b.classList.remove('loading'); return; }
+                flashLater(j.message || 'Done');
+                location.href = location.pathname + '?tab=forms';
+            }).catch(function (er) { toast(er.message || 'Network error', true); b.disabled = false; b.classList.remove('loading'); });
+        });
+
         /* ================================================================ one survey's answers */
         var rd = document.getElementById('sv-resp');
         root.addEventListener('click', function (e) {
@@ -316,7 +353,8 @@
                 var s = j.survey;
                 body.innerHTML = '<p class="mut sm"><a href="' + esc(s.customer_link) + '">' + esc(s.customer || 'Customer') + '</a>' +
                     (s.ref ? ' · ' + (s.record_link ? '<a href="' + esc(s.record_link) + '">' + esc(s.ref) + '</a>' : esc(s.ref)) : '') + (s.form ? ' · ' + esc(s.form) : '') +
-                    ' · answered ' + esc(s.responded_at || '—') + '</p><dl class="sv-ans">' + j.answers.map(function (a) {
+                    '</p><p class="mut sm">Sent ' + esc(s.sent_label || '—') + (s.channel_label ? ' by ' + esc(s.channel_label) : '') + ' · answered ' + esc(s.responded_label || '—') +
+                    (s.ticket_link ? ' · <a href="' + esc(s.ticket_link) + '">Follow-up ticket</a>' : '') + '</p><dl class="sv-ans">' + j.answers.map(function (a) {
                         var v = a.type === 'rating' ? '<span class="sv-stars">' + '★'.repeat(+a.values[0] || 0) + '<i>' + '★'.repeat(5 - (+a.values[0] || 0)) + '</i></span> ' + esc(a.values[0]) + ' / 5'
                             : a.type === 'nps' ? esc(a.values[0]) + ' / 10' : a.values.map(function (x) { return esc(x); }).join('<br>');
                         return '<dt>' + esc(a.label) + '</dt><dd>' + v + '</dd>';
@@ -332,9 +370,13 @@
                 SL.post(cfg.tplAjax, { action: 'template_get', key: 'survey', language: 'en' }).then(function (j) {
                     if (!j || !j.success) { toast((j && j.message) || 'Could not open the message.', true); return; }
                     var tpl = function (d) { return SL.post(cfg.tplAjax, d); };
+                    // The preview shows a real-length survey link (signed: id.expiry.hmac), not the tracking link.
+                    var sample = j.sample || {};
+                    var site = String(sample.track_url || '').replace(/[?#].*$/, '').replace(/[^/]*$/, '') || (location.origin + '/');
+                    sample.survey_url = site + 'survey.php?t=123.1798410854.' + new Array(33).join('a');
                     var ed = CE.open({
                         title: 'Survey invitation', subtitle: 'Sent with the survey link on the channels each survey uses', key: 'survey',
-                        channels: ['whatsapp', 'sms', 'email'], channel: 'whatsapp', values: j.values, enabled: j.enabled, tags: j.tags, tagSyntax: 'brace', sample: j.sample,
+                        channels: ['whatsapp', 'sms', 'email'], channel: 'whatsapp', values: j.values, enabled: j.enabled, tags: j.tags, tagSyntax: 'brace', sample: sample,
                         contact: { name: (j.sample && (j.sample.first_name || j.sample.name)) || 'Customer', phone: 'online' }, sender: { sms: 'SWIFTLANE' },
                         canvas: { tagSyntax: 'brace', saved: false, ajax: null, uploadUrl: null, cfg: { siteUrl: location.origin + location.pathname.replace(/[^/]*$/, '') } },
                         king: { url: cfg.tplAjax, params: { action: 'ai' }, name: KING, tones: AI.tones && AI.tones.length ? AI.tones : undefined, enabled: !!AI.ok && CAN,
@@ -349,7 +391,10 @@
                             } else data.body = v.body || '';
                             return tpl(data);
                         } : null,
-                        onReset: CAN ? function (c) { return tpl({ action: 'template_reset', key: 'survey', channel: c, language: 'en' }); } : null
+                        onReset: CAN ? function (c) {
+                            // E-mail goes back to its own designed invitation (button to the survey), not the WhatsApp text.
+                            return c === 'email' ? post({ action: 'invite_email_reset' }) : tpl({ action: 'template_reset', key: 'survey', channel: c, language: 'en' });
+                        } : null
                     });
                     if (!CAN) ed.status('You can read this message; an administrator changes it.');
                 }).catch(function (e) { toast(e.message || 'Network error', true); });

@@ -15,7 +15,7 @@ $boot = $d;
 unset($boot['canvas']);
 ?>
 <div class="sl-head"><div><h1 class="sl-title">Send a message</h1><p class="sl-lede">One person, several people or a whole campaign, by WhatsApp, SMS, e-mail or in the app.</p></div>
-<div class="row g8 wrap"><?php if ($d['canCampaign']): ?><a class="sl-btn ghost" href="#campaigns" data-snd-jump="campaigns"><i class="ic ic-sm i-send" aria-hidden="true"></i>Campaigns</a><a class="sl-btn ghost" href="<?= h($d['reportUrl']) ?>?all=1"><i class="ic ic-sm i-chart" aria-hidden="true"></i>All bulk sends</a><?php endif; ?><a class="sl-btn ghost" href="<?= h($d['outboxUrl']) ?>"><i class="ic ic-sm i-file" aria-hidden="true"></i>Outbox</a></div></div>
+<div class="row g8 wrap snd-hrow"><?php if ($d['canCampaign']): ?><a class="sl-btn ghost" href="#campaigns" data-snd-jump="campaigns"><i class="ic ic-sm i-send" aria-hidden="true"></i>Campaigns</a><a class="sl-btn ghost" href="<?= h($d['reportUrl']) ?>?all=1"><i class="ic ic-sm i-chart" aria-hidden="true"></i>All bulk sends</a><?php endif; ?><a class="sl-btn ghost" href="<?= h($d['outboxUrl']) ?>"><i class="ic ic-sm i-file" aria-hidden="true"></i>Outbox</a></div></div>
 <?php if (!$d['ready']): ?>
 <div class="sl-banner bad"><i class="ic ic-sm i-alert" aria-hidden="true"></i><span>The communication tables could not be created. The database user needs the CREATE privilege once.</span></div>
 <?php else: ?>

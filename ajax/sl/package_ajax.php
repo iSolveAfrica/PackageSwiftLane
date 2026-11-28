@@ -248,7 +248,7 @@ switch ($op) {
         $label = sl_statusLabel($status);
         $comment = mb_substr(cdp_sanitize($_POST['comment'] ?? ''), 0, 250) ?: $label;
         $city = mb_substr(cdp_sanitize($_POST['city'] ?? ''), 0, 250);
-        $n = 0;
+        $n = 0; $notified = [];
         require_once CDP_ROOT . '/helpers/after_response.php';
         foreach ($ids as $id) {
             $p = slp_pkg($id);
@@ -266,7 +266,7 @@ switch ($op) {
                 $codeLine = cdp_pickupCodeReadyLine('sea', [$id], $status, $label);
                 $smsEvent = cdp_statusSmsEvent($status, $label);
                 $codeHtml = cdp_pickupCodeReadyLine('sea', [$id], $status, $label, true);
-                $msgSource = $op === 'status' ? ['tracking_update', 'Tracking Update'] : ['bulk_status_update', 'Bulk Status Update'];
+                $msgSource = $op === 'status' ? ['tracking_update', 'Sea package status'] : ['bulk_status_update', 'Sea packages bulk status'];
                 $city0 = $city;
                 cdp_afterResponse(function () use ($sender, $track, $id, $status, $label, $comment, $city0, $codeLine, $codeHtml, $smsEvent, $core, $msgSource) {
                     // The message source tells the transport gate (helpers/comms_gate.php) this is a
@@ -274,7 +274,8 @@ switch ($op) {
                     // Automation Center sends it instead and these sends are logged as skipped.
                     if (function_exists('cdp_msgSetContext')) {
                         cdp_msgSetContext(['source' => $msgSource[0], 'source_label' => $msgSource[1], 'entity_type' => 'package', 'entity_id' => (string) $id,
-                            'entity_label' => $track, 'recipient_user_id' => (int) ($sender->id ?? 0)]);
+                            'entity_label' => $track, 'recipient_user_id' => (int) ($sender->id ?? 0),
+                            'recipient_name' => trim((string) ($sender->fname ?? '') . ' ' . (string) ($sender->lname ?? ''))]);
                     }
                     // Status message library (helpers/notify_studio.php): the text saved or drafted
                     // for this status, per channel; the built-in text below only when there is none.
@@ -289,20 +290,29 @@ switch ($op) {
                     try {
                         if ($ns['email']['on'] && !empty($sender->email) && filter_var($sender->email, FILTER_VALIDATE_EMAIL)) {
                             require_once CDP_ROOT . '/helpers/phpmailer/class.phpmailer.php'; require_once CDP_ROOT . '/helpers/phpmailer/class.smtp.php';
-                            if ($ns['email']['custom']) {
-                                cdp_statusNotifyEmail($sender, $ns['email'], 'Package ' . $track . ' · ' . $label . ' — ' . $core->site_name);
-                            } else {
-                                cdp_sendTemplateEmail(29, $sender->email, ['[USERNAME]' => htmlspecialchars(cdp_nameWithLocker($sender)), '[SUBJECT]' => 'Package ' . $track . ' · ' . $label, '[MESSAGE]' => '<p>Your package <b>' . htmlspecialchars($track) . '</b> is now <b>' . htmlspecialchars($label) . '</b>.</p>' . $codeHtml], 'Package ' . $track . ' · ' . $label . ' — ' . $core->site_name);
+                            $subj = 'Package ' . $track . ' · ' . $label . ' — ' . $core->site_name;
+                            if (!$ns['email']['custom']) {
+                                // No library text: the built-in one, sent the same way so a
+                                // failure before the send still shows in the Outbox.
+                                $ns['email'] = ['on' => true, 'custom' => true, 'source' => 'builtin', 'subject' => $subj, 'secret' => (string) $codeLine,
+                                    'body' => '<p>Hello ' . htmlspecialchars(cdp_nameWithLocker($sender)) . ',</p><p>Your package <b>' . htmlspecialchars($track) . '</b> is now <b>' . htmlspecialchars($label) . '</b>.</p>' . $codeHtml];
                             }
+                            cdp_statusNotifyEmail($sender, $ns['email'], $subj);
                         }
                     } catch (Throwable $e) { error_log('sl status mail: ' . $e->getMessage()); }
                     if (function_exists('cdp_msgClearContext')) {
-                        cdp_msgClearContext(['source', 'source_label', 'entity_type', 'entity_id', 'entity_label', 'recipient_user_id']);
+                        cdp_msgClearContext(['source', 'source_label', 'entity_type', 'entity_id', 'entity_label', 'recipient_user_id', 'recipient_name']);
                     }
+                    // A run the gate queued from here (Automation Center owns statuses) goes now.
+                    if (function_exists('cdp_statusNotifyDrainQueue')) cdp_statusNotifyDrainQueue();
                 });
+                $notified[] = $track;
             }
         }
-        sl_json(['success' => true, 'message' => $n . ' package(s) set to ' . $label]);
+        // The customer messages go out after the response (or from the Automation
+        // Center): say they are queued, with the Outbox to check, not that they arrived.
+        sl_json(['success' => true, 'message' => $n . ' package(s) set to ' . $label . (!empty($notified) ? '. Customer message queued: see Outbox' : ''),
+            'outbox' => empty($notified) ? '' : 'comms_outbox.php' . (count($notified) === 1 ? '?q=' . rawurlencode($notified[0]) : '')]);
         break;
 
     case 'confirm_payment':

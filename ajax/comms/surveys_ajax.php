@@ -12,6 +12,7 @@
  *   settings_save  popup, max_prompts, gap_hours, window_days   the in-app pop-up
  *   ai             name, purpose, count, instruction   Write questions with King; never saves
  *   response       id                          every answer of one survey (Results row detail)
+ *   invite_email_reset                         the e-mail invitation back to its built-in design
  *
  * Reading needs staff (rank 2+); changing needs an administrator (rank 3+).
  */
@@ -103,7 +104,7 @@ switch ($action) {
             sl_json(['success' => false, 'message' => $r['error']], 422);
         }
         $log(!empty($r['archived']) ? 'Survey switched off (it has answers): ' . ($f['name'] ?? '') : 'Survey deleted: ' . ($f['name'] ?? ''), $f['name'] ?? '', !empty($r['archived']) ? 'update' : 'delete');
-        sl_json(['success' => true, 'reload' => true,
+        sl_json(['success' => true, 'reload' => true, 'archived' => !empty($r['archived']),
             'message' => !empty($r['archived']) ? 'This survey was already sent, so it was switched off and its answers kept.' : 'Survey deleted']);
 
     case 'settings_save':
@@ -132,7 +133,12 @@ switch ($action) {
         if (!$clean['ok']) {
             sl_json(['success' => false, 'message' => $clean['error'], 'code' => 'invalid']);
         }
-        sl_json(['success' => true, 'questions' => $clean['questions'], 'intro' => (string) ($res['intro'] ?? ''), 'thanks' => (string) ($res['thanks'] ?? ''),
+        // The pop-up and survey.php fill {company} / {first_name}; anything else King left in braces is dropped.
+        $plain = function ($t) {
+            $t = preg_replace('/\{(?!company\}|first_name\})[a-z_]*\}/', '', (string) $t);
+            return trim(preg_replace('/\s+([,.!?])/u', '$1', preg_replace('/[ \t]{2,}/', ' ', $t)));
+        };
+        sl_json(['success' => true, 'questions' => $clean['questions'], 'intro' => $plain($res['intro'] ?? ''), 'thanks' => $plain($res['thanks'] ?? ''),
             'warnings' => array_values((array) ($res['warnings'] ?? [])), 'assistant' => $res['assistant'] ?? cdp_kingName()]);
 
     case 'response':
@@ -155,8 +161,21 @@ switch ($action) {
         }
         sl_json(['success' => true, 'survey' => ['id' => (int) $s->id, 'customer' => trim((string) $s->customer), 'ref' => (string) $s->entity_ref,
             'form' => (string) ($s->form_name ?? ''), 'sent_at' => (string) $s->sent_at, 'responded_at' => (string) $s->responded_at, 'channel' => (string) $s->channel,
+            'sent_label' => $s->sent_at ? date('M j, Y H:i', strtotime((string) $s->sent_at)) : '', 'responded_label' => $s->responded_at ? date('M j, Y H:i', strtotime((string) $s->responded_at)) : '',
+            'channel_label' => cdp_surveyChannels()[(string) $s->channel] ?? ucfirst((string) $s->channel),
+            'ticket_link' => !empty($s->followup_ticket_id) ? sl_route('CsTicket', ['id' => (int) $s->followup_ticket_id]) : '',
             'customer_link' => sl_route('CustomerProfile', ['id' => (int) $s->user_id]), 'record_link' => cdp_surveyRecordLink((string) $s->entity_type, (int) $s->order_id)],
             'answers' => array_values($answers)]);
+
+    case 'invite_email_reset':
+        // "Reset to built-in" for the e-mail invitation: the designed e-mail (heading, button), not the WhatsApp text.
+        if (!cdp_surveyInviteEmailSeed(true)) {
+            sl_json(['success' => false, 'message' => 'The e-mail could not be reset. Please try again.'], 500);
+        }
+        require_once __DIR__ . '/../../views/sl/data/comms_automations.php';
+        $state = function_exists('sl_caTemplateValues') ? sl_caTemplateValues('survey', 'en') : null;
+        $log('Survey invitation e-mail set back to the built-in design', 'Invitation');
+        sl_json(['success' => true, 'message' => 'Back to the built-in e-mail.', 'value' => $state['values']['email'] ?? null, 'sources' => $state['sources'] ?? null]);
 
     default:
         sl_json(['success' => false, 'message' => 'Unknown action.'], 400);

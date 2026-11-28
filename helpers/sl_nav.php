@@ -185,7 +185,7 @@ function sl_navStaff(): array
         ['label' => 'Insights', 'items' => [
             ['id' => 'reports', 'label' => 'Reports', 'icon' => 'chart', 'board' => 'Reports', 'perm' => 'view_general_reports'],
             ['id' => 'activity', 'label' => 'Activity Logs', 'icon' => 'clock', 'board' => 'ActivityLogs', 'perm' => 'view_activity_logs'],
-            ['id' => 'messages', 'label' => 'Message Logs', 'icon' => 'archive', 'board' => 'CommsOutbox', 'perm' => 'view_message_logs'],
+            // Message logs live in Notifications & Messages > Outbox (one messaging area, no second entry here).
         ]],
         ['label' => 'Settings', 'items' => [
             ['id' => 'general', 'label' => 'General', 'icon' => 'cog', 'board' => 'SettingsHub', 'perm' => 'view_tools'],
@@ -202,7 +202,8 @@ function sl_navStaff(): array
             ['id' => 'perm', 'label' => 'Permissions', 'icon' => 'key', 'board' => 'StaffPermissions', 'perm' => 'view_role_assignment'],
             ['id' => 'lblstudio', 'label' => 'Label Printing', 'icon' => 'print', 'board' => 'LabelStudio', 'perm' => ['view_tools', 'print_label']],
             ['id' => 'rcptstudio', 'label' => 'Receipt Layout', 'icon' => 'receipt', 'board' => 'ReceiptStudio', 'perm' => 'view_tools'],
-            ['id' => 'auto', 'label' => 'Automations', 'icon' => 'bolt', 'board' => 'Automations', 'perm' => 'manage_automations'],
+            // Rule-based workflows (automations.php); message triggers are in Notifications & Messages > Automations.
+            ['id' => 'auto', 'label' => 'Workflow rules', 'icon' => 'bolt', 'board' => 'Automations', 'perm' => 'manage_automations'],
         ]],
     ];
 }

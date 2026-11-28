@@ -165,8 +165,21 @@ switch ($action) {
             $src = 'phone';
         }
         $ok = cdp_commSavePrefs($uid, $in, 'staff:' . $src);
+        $stopped = 0;
+        if ($ok && !empty($in['opted_out_all'])) {
+            // cdp_commSavePrefs cancels the Communication Center queue; the Support desk and
+            // delivery-request queues do not read the preference, so stop their waiting notices here too.
+            if (cdp_opsTableExists('cdb_cs_outbox')) {
+                $r = cdp_opsX("UPDATE cdb_cs_outbox SET status = 'suppressed', last_error = 'Customer opted out of all messages' WHERE user_id = :u AND status IN ('queued','retry')", [':u' => $uid]);
+                $stopped += (int) ($r['rows'] ?? 0);
+            }
+            if (cdp_opsTableExists('cdb_delivery_outbox')) {
+                $r = cdp_opsX("UPDATE cdb_delivery_outbox SET state = 'cancelled' WHERE recipient_id = :u AND state = 'pending'", [':u' => $uid]);
+                $stopped += (int) ($r['rows'] ?? 0);
+            }
+        }
         if ($ok) {
-            $log('updated', 'Changed the message preferences of customer #' . $uid, 'prefs', $uid);
+            $log('updated', 'Changed the message preferences of customer #' . $uid . ($stopped ? ' (' . $stopped . ' waiting Support desk / delivery notices stopped)' : ''), 'prefs', $uid);
         }
         $out(['ok' => $ok, 'message' => $ok ? 'Preferences saved' : 'Not saved. Please try again.', 'prefs' => cdp_commPrefs($uid)]);
 

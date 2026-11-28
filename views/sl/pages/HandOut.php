@@ -9,6 +9,7 @@
  */
 if (!isset($d)) { $d = []; }
 $c = $d['c'];
+$st = !$c ? 1 : 2;
 ?>
 <div class="sl-head"><div><h1 class="sl-title" style="font-size:22px">Hand out packages</h1><p class="sl-lede">Counter at <?= h($d['office']) ?> · enter the pickup code, fetch from the bay, scan each package to confirm, hand over.</p></div><div class="row g8 wrap"><span class="sl-badge row g6"><span class="pr-dot" style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span><?= (int) $d['doneToday'] ?> handed out today</span><a class="sl-btn ghost" href="<?= sl_route('WarehousePickups') ?>"><i class="ic ic-sm i-clock" aria-hidden="true"></i>Today's hand-outs</a></div></div>
 <div class="ho-steps"><?php foreach (['Customer', 'Pickup code', 'Scan packages', 'Hand over'] as $i => $t): ?><span class="<?= $i + 1 < $st ? 'done' : ($i + 1 === $st ? 'on' : '') ?>"><b><?= $i + 1 ?></b><?= h($t) ?></span><?php endforeach; ?></div>

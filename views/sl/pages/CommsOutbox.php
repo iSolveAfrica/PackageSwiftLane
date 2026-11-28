@@ -95,7 +95,7 @@ if ($d['defaultRange']) { $chips[] = ['Last 30 days', ['range' => 'any', 'from' 
 </tr>
 <?php endforeach; ?>
 <?php if (!$d['rows']): ?><tr><td colspan="7"><div class="sl-empty"><span class="sl-tile"><i class="ic i-inbox" aria-hidden="true"></i></span>
-<?php if ($d['total'] > 0): ?><?= $d['page'] >= $d['maxPage'] ? 'The list stops at ' . sl_num($d['maxPage'] * $d['per']) . ' messages. Narrow the dates to see older ones.' : 'This page is past the end of the list (' . sl_num($d['total']) . ' messages).' ?> <a href="<?= h(sl_url(['page' => null, 'open' => null])) ?>">Go to the first page</a>
+<?php if ($d['total'] > 0): ?><?= $d['page'] >= $d['maxPage'] && $d['total'] > $d['maxPage'] * $d['per'] ? 'The list stops at ' . sl_num($d['maxPage'] * $d['per']) . ' messages. Narrow the dates to see older ones.' : 'This page is past the end of the list (' . sl_num($d['total']) . ' messages).' ?> <a href="<?= h(sl_url(['page' => null, 'open' => null])) ?>">Go to the first page</a>
 <?php elseif ($d['filtered']): ?>No messages match these filters. <a href="<?= h(sl_route('CommsOutbox')) ?>">Clear the filters</a>
 <?php elseif ($d['defaultRange']): ?>Nothing in the last 30 days. <a href="<?= h(sl_url(['range' => 'any', 'page' => null, 'open' => null])) ?>">Show every date</a>
 <?php else: ?>Nothing has been sent yet. Messages appear here the moment they are queued, sent, blocked or received.<?php endif; ?></div></td></tr><?php endif; ?>

@@ -49,12 +49,12 @@ $tiles = [
 <div class="sl-ch" style="margin:0"><h2 class="sl-ct" id="hb-ch-h">By channel</h2><span class="mut sm">Sent in the last 14 days, per day</span></div>
 <div class="hb-cl">
 <?php foreach ($d['channels'] as $c): ?>
-<a class="hb-cr" href="<?= h($c['href']) ?>">
+<a class="hb-cr" href="<?= h($c['href']) ?>" aria-label="<?= h($c['label'] . ': ' . sl_num($c['sent']) . ' sent' . ($c['failed'] ? ', ' . sl_num($c['failed']) . ' failed' : '') . ($c['rate'] === null ? '' : ', ' . (int) $c['rate'] . '% delivered') . '. Open in the Outbox') ?>">
 <span class="hb-ci"><i class="ic ic-sm <?= h($c['icon']) ?>" aria-hidden="true"></i></span>
 <span class="col grow hb-cm"><b class="fw5"><?= h($c['label']) ?></b><span class="mut sm"><?= sl_num($c['sent']) ?> sent<?= $c['failed'] ? ' · <span class="hb-bad">' . sl_num($c['failed']) . ' failed</span>' : '' ?><?= $c['skipped'] ? ' · ' . sl_num($c['skipped']) . ' not sent' : '' ?><?= $c['received'] ? ' · ' . sl_num($c['received']) . ' received' : '' ?></span></span>
 <span class="col hb-cs"><b class="mono"><?= $c['rate'] === null ? '-' : (int) $c['rate'] . '%' ?></b><span class="mut sm">delivered</span></span>
 <span class="col hb-cs"><b class="mono"><?= h($money($c['cost'])) ?></b><span class="mut sm">cost</span></span>
-<span class="hb-sp" aria-hidden="true"><?php foreach ($c['spark'] as $b): ?><i title="<?= h($b['t']) ?>" style="<?= h($b['s']) ?>"></i><?php endforeach; ?></span>
+<span class="hb-spk" aria-hidden="true"><?php foreach ($c['spark'] as $b): ?><i data-t="<?= h($b['t']) ?>" style="<?= h($b['s']) ?>"></i><?php endforeach; ?></span>
 </a>
 <?php endforeach; ?>
 </div>
@@ -88,7 +88,7 @@ $tiles = [
 <?php if (!$d['fails']): ?><p class="mut">No failed messages in this period.</p><?php else: ?>
 <div class="sl-tw"><table class="sl-table hb-ft"><thead><tr><th>When</th><th>Channel</th><th>To</th><th>What</th><th>Why</th></tr></thead><tbody>
 <?php foreach ($d['fails'] as $r): ?>
-<tr><td class="mono nowrap"><a href="<?= h(sl_route('CommsOutbox', ['open' => $r['ref'], 'status' => 'failed'])) ?>"><?= h($r['when']) ?></a></td><td><?= h($r['channel_label']) ?></td><td><?= h($r['name'] !== '' ? $r['name'] : $r['to']) ?></td><td class="hb-what"><?= h($r['what']) ?></td><td class="hb-why"><span class="sl-pill overdue" title="<?= h($r['detail']) ?>"><?= h($r['short'] !== '' ? $r['short'] : 'Failed') ?></span></td></tr>
+<tr><td class="mono nowrap"><a href="<?= h(sl_route('CommsOutbox', ['open' => $r['ref'], 'status' => 'failed'])) ?>"><?= h($r['when']) ?></a></td><td><?= h($r['channel_label']) ?></td><td><?= h($r['name'] !== '' ? $r['name'] : $r['to']) ?></td><td class="hb-what"><?= h($r['what']) ?></td><td class="hb-why"><?php $why = trim((string) $r['detail']) !== '' ? (string) $r['detail'] : ($r['short'] !== '' ? $r['short'] : 'Failed'); ?><span class="sl-pill overdue" title="<?= h($why) ?>"><?= h(mb_strlen($why) > 220 ? mb_substr($why, 0, 219) . '…' : $why) ?></span></td></tr>
 <?php endforeach; ?>
 </tbody></table></div>
 <?php endif; ?>

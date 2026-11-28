@@ -160,7 +160,8 @@
 .sv-bqh{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .sv-bqh .grow{flex:1}
 .sv-bqn{width:24px;height:24px;border-radius:7px;background:var(--active);display:grid;place-items:center;font-size:13px;font-weight:600;color:var(--ink-2);flex:none}
-.sv-bqt{width:190px}
+.sv-bqt{width:auto;min-width:210px}
+.sv-bqt select{min-width:210px;padding-right:34px}
 .sv-ib{min-width:34px;padding:0 8px}
 .sv-bopts{display:flex;flex-direction:column;gap:6px;padding-left:32px}
 .sv-bopt{display:flex;gap:8px;align-items:center}
@@ -215,7 +216,7 @@
   .sv-filter .grow{display:none}
   .sv-legend{margin-left:0}
   .sv-stlist{grid-template-columns:1fr}
-  .sv-bqt{width:auto;flex:1 1 150px}
+  .sv-bqt{width:auto;flex:1 1 calc(100% - 40px);min-width:0}.sv-bqt select{min-width:0;width:100%}
   .sv-bopts{padding-left:0}
   .sv-cbtn{margin-left:0}
   .sv-dr{grid-template-columns:minmax(36px,max-content) 1fr 60px}
@@ -225,3 +226,9 @@
   .sv-bsec{padding:12px 14px}
 }
 .sv-boff{font-style:normal;font-size:12px;color:var(--amber-ink);margin-left:2px}
+
+/* Archived surveys (switched off, answers kept) and statuses that never ask */
+.sv-form.archived{opacity:.82}
+.sv-form.archived h3 .sl-badge{vertical-align:middle;margin-left:6px}
+.sv-stblk span{color:var(--muted)}
+.sv-bsec p a{text-decoration:underline;color:inherit}

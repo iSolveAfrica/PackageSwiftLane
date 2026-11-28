@@ -58,7 +58,8 @@ CREATE TABLE IF NOT EXISTS cdb_wa_messages (
   updated_at DATETIME NOT NULL,
   PRIMARY KEY (id),
   UNIQUE KEY uq_msg (msg_id),
-  KEY idx_chat (chat_id, ts)
+  KEY idx_chat (chat_id, ts),
+  KEY idx_author (author)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- The phone's address book (from UltraMsg contacts).
@@ -88,6 +89,8 @@ CREATE TABLE IF NOT EXISTS cdb_wa_groups (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Every export and every "save as contacts" (who, what, how many).
+-- saved_count: numbers campaigns can reach (saved or updated, minus opted out);
+-- opted_out_count: numbers saved as opted out (STOP).
 CREATE TABLE IF NOT EXISTS cdb_wa_exports (
   id INT NOT NULL AUTO_INCREMENT,
   kind VARCHAR(20) NOT NULL,
@@ -95,6 +98,7 @@ CREATE TABLE IF NOT EXISTS cdb_wa_exports (
   format VARCHAR(10) NOT NULL,
   row_count INT NOT NULL DEFAULT 0,
   saved_count INT NOT NULL DEFAULT 0,
+  opted_out_count INT NOT NULL DEFAULT 0,
   user_id INT NULL,
   ip VARCHAR(45) NULL,
   created_at DATETIME NOT NULL,
@@ -128,3 +132,8 @@ CREATE TABLE IF NOT EXISTS cdb_comm_contacts (
   KEY idx_source (source),
   KEY idx_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Schema 2 (installations that ran the first version of this file):
+-- ALTER TABLE cdb_wa_messages ADD KEY idx_author (author);
+-- ALTER TABLE cdb_wa_exports ADD COLUMN opted_out_count INT NOT NULL DEFAULT 0 AFTER saved_count;
+-- cdp_umEnsureTables() applies both when they are missing.

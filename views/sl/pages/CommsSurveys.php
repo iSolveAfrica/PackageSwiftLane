@@ -18,12 +18,15 @@ $tab = $d['tab'] ?? 'results';
 $chIcons = ['inapp' => 'i-bell', 'whatsapp' => 'i-wa', 'sms' => 'i-message', 'email' => 'i-mail'];
 $fmt = function ($v, $suffix = '') { return $v === null ? '—' : rtrim(rtrim(number_format((float) $v, 2), '0'), '.') . $suffix; };
 $when = function ($s) { return $s ? date('M j, Y H:i', strtotime($s)) : ''; };
+// Every link names the page: in the phone staff app (<base href="apps/staff/app.php/">) a bare "?..." would open Overview.
+$here = $d['here'] ?? 'comms_surveys.php';
 $q = ['range' => $d['preset'] ?? '30', 'form' => $d['formId'] ?: null];
 if (($d['preset'] ?? '') === 'custom') { $q['from'] = $d['from']; $q['to'] = $d['to']; }
 $exportUrl = function ($fmtx) use ($q, $d) { return ($d['exportBase'] ?? 'comms_surveys.php') . '?' . http_build_query(array_filter($q + ['export' => $fmtx], function ($v) { return $v !== null && $v !== ''; })); };
 $cfg = ['ajax' => 'ajax/comms/surveys_ajax.php', 'tplAjax' => 'ajax/comms/automation_ajax.php', 'canEdit' => $canEdit, 'ai' => $ai,
     'forms' => array_values(array_map(function ($f) { unset($f['counts']); return $f; }, $d['forms'] ?? [])),
-    'statuses' => $d['statuses'] ?? [], 'types' => $d['types'] ?? [], 'channels' => $d['channels'] ?? [], 'invite' => $d['inviteRules'] ?? [], 'edit' => (int) ($_GET['edit'] ?? 0)];
+    'statuses' => $d['statuses'] ?? [], 'types' => $d['types'] ?? [], 'channels' => $d['channels'] ?? [], 'invite' => $d['inviteRules'] ?? [], 'edit' => (int) ($_GET['edit'] ?? 0),
+    'here' => $here, 'automationsUrl' => $d['automationsUrl'] ?? 'comms_automations.php', 'popupOn' => !empty($d['settings']['popup'])];
 $stars = function ($n) { $n = (int) $n; return '<span class="sv-stars" aria-label="' . $n . ' of 5">' . str_repeat('★', max(0, $n)) . '<i>' . str_repeat('★', max(0, 5 - $n)) . '</i></span>'; };
 ?>
 <div class="ops sv-page" id="sv-root">
@@ -51,17 +54,18 @@ $stars = function ($n) { $n = (int) $n; return '<span class="sv-stars" aria-labe
 <div class="sv-tabs" data-sl-tabs>
   <div class="sl-seg boxed" role="tablist" aria-label="Surveys">
     <?php foreach (['results' => 'Results', 'forms' => 'Surveys', 'settings' => 'Pop-up & invitation'] as $t => $tl): ?>
-    <button type="button" role="tab" id="sv-tab-<?= $t ?>" data-sl-tab="<?= $t ?>" data-sl-tab-url="?<?= h(http_build_query(array_filter($q + ['tab' => $t]))) ?>" class="<?= $tab === $t ? 'on' : '' ?>" aria-selected="<?= $tab === $t ? 'true' : 'false' ?>" aria-controls="sv-p-<?= $t ?>"><?= h($tl) ?><?php if ($t === 'forms'): ?> <span class="mut">(<?= count($d['forms']) ?>)</span><?php endif; ?></button>
+    <button type="button" role="tab" id="sv-tab-<?= $t ?>" data-sl-tab="<?= $t ?>" data-sl-tab-url="<?= h($here . '?' . http_build_query(array_filter($q + ['tab' => $t]))) ?>" class="<?= $tab === $t ? 'on' : '' ?>" aria-selected="<?= $tab === $t ? 'true' : 'false' ?>" aria-controls="sv-p-<?= $t ?>"><?= h($tl) ?><?php if ($t === 'forms'): ?> <span class="mut">(<?= count($d['forms']) ?>)</span><?php endif; ?></button>
     <?php endforeach; ?>
   </div>
 
   <!-- ================================================================ Results -->
   <section class="sv-panel" id="sv-p-results" role="tabpanel" aria-labelledby="sv-tab-results" data-sl-tabpanel="results" <?= $tab === 'results' ? '' : 'hidden' ?>>
-    <form method="get" class="sl-card sv-filter" aria-label="Period and survey">
+    <?php if (!empty($d['badDates'])): ?><div class="sl-banner" role="status"><i class="ic ic-sm i-alert" aria-hidden="true"></i><span>The dates could not be read; showing the last 30 days.</span></div><?php endif; ?>
+    <form method="get" action="<?= h($here) ?>" class="sl-card sv-filter" aria-label="Period and survey">
       <input type="hidden" name="tab" value="results">
       <div class="sl-seg boxed" role="group" aria-label="Period">
         <?php foreach ($d['presets'] as $pk => $pl): if ($pk === 'custom') continue; ?>
-        <a class="<?= $d['preset'] === (string) $pk ? 'on' : '' ?>" href="?<?= h(http_build_query(array_filter(['tab' => 'results', 'range' => $pk, 'form' => $d['formId'] ?: null]))) ?>"<?= $d['preset'] === (string) $pk ? ' aria-current="true"' : '' ?>><?= h(str_replace('Last ', '', $pl)) ?></a>
+        <a class="<?= $d['preset'] === (string) $pk ? 'on' : '' ?>" href="<?= h($here . '?' . http_build_query(array_filter(['tab' => 'results', 'range' => $pk, 'form' => $d['formId'] ?: null]))) ?>"<?= $d['preset'] === (string) $pk ? ' aria-current="true"' : '' ?>><?= h(str_replace('Last ', '', $pl)) ?></a>
         <?php endforeach; ?>
       </div>
       <input type="hidden" name="range" value="custom">
@@ -177,6 +181,7 @@ $stars = function ($n) { $n = (int) $n; return '<span class="sv-stars" aria-labe
               <a href="<?= h($r['customer_link']) ?>"><?= h($r['customer']) ?></a><?= $r['locker'] !== '' ? ' · ' . h($r['locker']) : '' ?>
               <?php if ($r['ref'] !== ''): ?> · <?php if ($r['record_link'] !== ''): ?><a href="<?= h($r['record_link']) ?>"><?= h($r['ref']) ?></a><?php else: ?><?= h($r['ref']) ?><?php endif; ?><?php endif; ?>
               <?= $r['rider'] !== '' ? ' · Rider ' . h($r['rider']) : '' ?> · <?= h($when($r['responded_at'])) ?>
+              <?php if (!empty($r['ticket_link'])): ?><a class="sl-btn ghost sm sv-cbtn" href="<?= h($r['ticket_link']) ?>"><i class="ic ic-sm i-alert" aria-hidden="true"></i>Follow-up ticket</a><?php endif; ?>
               <button type="button" class="sl-btn ghost sm sv-cbtn" data-sv-resp="<?= (int) $r['id'] ?>">All answers</button>
             </div>
           </li>
@@ -195,13 +200,13 @@ $stars = function ($n) { $n = (int) $n; return '<span class="sv-stars" aria-labe
     <div class="sl-card sl-empty sv-empty">No survey yet.<?php if ($canEdit): ?> <button type="button" class="sl-btn sm" data-sv-new>New survey</button><?php endif; ?></div>
     <?php endif; ?>
     <div class="sv-forms">
-      <?php foreach ($d['forms'] as $f): $c = $f['counts']; ?>
-      <article class="sl-card sv-form" data-sv-form="<?= (int) $f['id'] ?>">
+      <?php foreach ($d['forms'] as $f): $c = $f['counts']; $arch = !empty($f['archived']) && !$f['active']; ?>
+      <article class="sl-card sv-form<?= $arch ? ' archived' : '' ?>" data-sv-form="<?= (int) $f['id'] ?>">
         <div class="sv-fh">
           <button type="button" class="sl-toggle <?= $f['active'] ? 'on' : '' ?>" role="switch" aria-checked="<?= $f['active'] ? 'true' : 'false' ?>" aria-label="<?= h('Send ' . $f['name']) ?>"
             <?= $canEdit ? 'data-sl-save="ajax/comms/surveys_ajax.php" data-p-action="form_toggle" data-p-id="' . (int) $f['id'] . '"' : 'data-static' ?>></button>
           <div class="col grow sv-fn">
-            <h3><?= h($f['name']) ?></h3>
+            <h3><?= h($f['name']) ?><?php if ($arch): ?> <span class="sl-badge" title="Switched off; its answers are kept. Switch it on to send it again.">Archived</span><?php endif; ?></h3>
             <span class="mut sm"><?= h($f['when']) ?> · <?= $f['frequency_days'] > 0 ? 'once per customer every ' . (int) $f['frequency_days'] . ' day' . ($f['frequency_days'] === 1 ? '' : 's') : 'after every matching status' ?></span>
           </div>
         </div>
@@ -222,11 +227,13 @@ $stars = function ($n) { $n = (int) $n; return '<span class="sv-stars" aria-labe
         <div class="sv-fact">
           <button type="button" class="sl-btn ghost sm" data-sv-edit="<?= (int) $f['id'] ?>"><i class="ic ic-sm i-edit" aria-hidden="true"></i><?= $canEdit ? 'Edit' : 'View' ?></button>
           <a class="sl-btn ghost sm" href="survey.php?preview=<?= (int) $f['id'] ?>" target="_blank" rel="noopener"><i class="ic ic-sm i-eye" aria-hidden="true"></i>Preview<span class="ca-vh"> (opens in a new tab)</span></a>
-          <a class="sl-btn ghost sm" href="?<?= h(http_build_query(['tab' => 'results', 'form' => (int) $f['id'], 'range' => '90'])) ?>"><i class="ic ic-sm i-chart" aria-hidden="true"></i>Results</a>
+          <a class="sl-btn ghost sm" href="<?= h($here . '?' . http_build_query(['tab' => 'results', 'form' => (int) $f['id'], 'range' => '90'])) ?>"><i class="ic ic-sm i-chart" aria-hidden="true"></i>Results</a>
           <?php if ($canEdit): ?>
-          <button type="button" class="sl-btn ghost sm" data-sl-action="ajax/comms/surveys_ajax.php" data-p-action="form_duplicate" data-p-id="<?= (int) $f['id'] ?>"><i class="ic ic-sm i-copy" aria-hidden="true"></i>Duplicate</button>
-          <button type="button" class="sl-btn ghost sm sv-del" data-sl-action="ajax/comms/surveys_ajax.php" data-p-action="form_delete" data-p-id="<?= (int) $f['id'] ?>"
-            data-sl-confirm="<?= h($c['sent'] ? 'This survey was already sent. It will be switched off and its answers kept. Continue?' : 'Delete this survey?') ?>"><i class="ic ic-sm i-trash" aria-hidden="true"></i><?= $c['sent'] ? 'Archive' : 'Delete' ?></button>
+          <button type="button" class="sl-btn ghost sm" data-sv-act="form_duplicate" data-sv-id="<?= (int) $f['id'] ?>"><i class="ic ic-sm i-copy" aria-hidden="true"></i>Duplicate</button>
+          <?php if (!$arch): ?>
+          <button type="button" class="sl-btn ghost sm sv-del" data-sv-act="form_delete" data-sv-id="<?= (int) $f['id'] ?>"
+            data-sv-confirm="<?= h($c['sent'] ? 'This survey was already sent. It will be switched off and archived; its answers are kept. Continue?' : 'Delete this survey?') ?>"><i class="ic ic-sm i-trash" aria-hidden="true"></i><?= $c['sent'] ? 'Archive' : 'Delete' ?></button>
+          <?php endif; ?>
           <?php endif; ?>
         </div>
       </article>
@@ -266,7 +273,7 @@ $stars = function ($n) { $n = (int) $n; return '<span class="sv-stars" aria-labe
           <button type="button" class="sl-btn" data-sv-invite><i class="ic ic-sm i-edit" aria-hidden="true"></i><?= $canEdit ? 'Edit invitation message' : 'View invitation message' ?></button>
           <a class="sl-btn ghost" href="<?= h(($d['automationsUrl'] ?? 'comms_automations.php')) ?>">Channel switches</a>
         </div>
-        <p class="mut sm">Sent invitations appear in the <a href="<?= h($d['outboxUrl'] ?? 'comms_outbox.php') ?>">Outbox</a>. The survey link opens a page with the survey's questions and stays open for the days set on the left. Customers can also answer a WhatsApp invitation by replying with a number from 1 to 5.</p>
+        <p class="mut sm">Sent invitations appear in the <a href="<?= h($d['outboxUrl'] ?? 'comms_outbox.php') ?>">Outbox</a>. The survey link opens a page with the survey's questions and stays open for the days set on the left. Customers can also answer a WhatsApp invitation by replying with a number from 1 to 5 (on surveys with a rating question). A low score opens a follow-up ticket in Customer Care.</p>
       </section>
     </div>
   </section>

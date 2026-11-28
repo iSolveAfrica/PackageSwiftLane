@@ -18,6 +18,10 @@
     function esc(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
     function toast(m, bad) { if (window.SL && SL.toast) SL.toast(m, bad); }
     var CH_ICON = { whatsapp: 'i-wa', sms: 'i-message', email: 'i-mail' };
+    function pad(n) { return (n < 10 ? '0' : '') + n; }
+    /* local calendar date, never toISOString (UTC) */
+    function ymd(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+    function safeUrl(u) { return /^https?:\/\//i.test(String(u || '')) ? String(u) : ''; }
 
     /* ---------------- filters ---------------- */
     var form = $('ob-filters');
@@ -35,9 +39,13 @@
             var v = b.getAttribute('data-ob-range'), from = form.elements.from, to = form.elements.to;
             if (v === '') { from.value = ''; to.value = ''; }
             else {
-                var d = new Date(), t = d.toISOString().slice(0, 10);
+                // The server's today (the inputs' max), not the browser's UTC date.
+                var pop = b.closest('[data-today]'), today = pop ? pop.getAttribute('data-today') : '';
+                var p = /^(\d{4})-(\d{2})-(\d{2})$/.exec(today || ''), d = p ? new Date(+p[1], +p[2] - 1, +p[3]) : new Date();
+                to.value = ymd(d);
                 d.setDate(d.getDate() - Number(v));
-                from.value = d.toISOString().slice(0, 10); to.value = t;
+                from.value = ymd(d);
+                if (form.elements.range) form.elements.range.value = '';
             }
             form.requestSubmit ? form.requestSubmit() : form.submit();
         });
@@ -88,7 +96,9 @@
         facts += fact('Origin', esc(r.origin_label));
         facts += fact('Trigger', (r.trigger || r.source) ? '<span class="mono sm">' + esc(r.trigger || r.source) + '</span>' : '');
         if (r.campaign) facts += fact('Campaign', esc(r.campaign) + (r.campaign_link ? ' · <a href="' + esc(r.campaign_link) + '">Report</a>' : '') + (r.batch_link ? ' · <a href="' + esc(r.batch_link) + '">All its messages</a>' : ''));
-        else if (r.batch) facts += fact('Batch', r.batch_link ? link(r.batch_link, r.batch) : esc(r.batch));
+        else if (r.batch) facts += fact(r.kind === 'dlv' ? 'Notice' : 'Batch', esc(r.batch_label || r.batch) + (r.batch_link ? ' · <a href="' + esc(r.batch_link) + '">All its messages</a>' : ''));
+        if (r.parent_ref) facts += fact('Part of', '<a href="#" class="mono" data-ob-open="' + esc(r.parent_ref) + '">' + esc(r.parent_ref) + '</a> <span class="mut sm">(this is one attempt of a queued message)</span>');
+        if (r.resent_ref) facts += fact('Sent again', '<a href="#" class="mono" data-ob-open="' + esc(r.resent_ref) + '">' + esc(r.resent_ref) + '</a>');
         if (r.record) facts += fact('About', r.record_link ? '<a class="mono" href="' + esc(r.record_link) + '">' + esc(r.record) + '</a>' : '<span class="mono">' + esc(r.record) + '</span>');
         if (r.kind_label) facts += fact('Type', esc(r.kind_label));
         facts += fact('Sent by', esc(r.sent_by || r.by || ''));
@@ -101,13 +111,14 @@
         if (r.opens != null) facts += fact('Opens / clicks', esc(r.opens + ' / ' + r.clicks));
         if (r.template_id) facts += fact('Template', '#' + esc(r.template_id));
         if (r.wa_template) facts += fact('WhatsApp template', '<span class="mono">' + esc(r.wa_template) + '</span>');
+        if (r.sent_attempt && r.can_retry) h += '<div class="sl-banner warn"><i class="ic ic-sm i-alert" aria-hidden="true"></i><span>The provider may already have accepted this message (an attempt was reported sent, or sending was interrupted). Check the attempts below: Retry can send it twice.</span></div>';
         h += '<dl class="ob-facts">' + facts + '</dl>';
 
         h += '<section class="ob-sec"><h3 class="ob-h3">Message</h3>';
-        if (r.subject) h += '<p class="ob-subj"><span class="mut">Subject</span> ' + esc(r.subject) + '</p>';
+        if (r.subject && (r.channel === 'email' || !r.channel)) h += '<p class="ob-subj"><span class="mut">Subject</span> ' + esc(r.subject) + '</p>';
         if (r.is_html) h += '<iframe class="ob-mail" title="The e-mail as sent" sandbox="" referrerpolicy="no-referrer" loading="lazy"></iframe>';
         else h += '<div class="ob-bubble ' + esc(r.kind === 'in' ? 'in' : (r.channel || 'all')) + '">' + (esc(r.body || '(no text)')) + '</div>';
-        if (r.media_url) h += '<p class="sm"><a href="' + esc(r.media_url) + '" target="_blank" rel="noopener">Open the attachment</a></p>';
+        if (safeUrl(r.media_url)) h += '<p class="sm"><a href="' + esc(safeUrl(r.media_url)) + '" target="_blank" rel="noopener">Open the attachment</a></p>';
         h += '</section>';
 
         if (r.events && r.events.length) {
@@ -170,6 +181,10 @@
         if (!cur || typeof cur !== 'object') return;
         if (what === 'cancel' && !confirm('Stop this message? It will not be sent.')) return;
         if (what === 'resend' && !confirm('Send the same text to ' + (cur.to || 'this address') + ' again?')) return;
+        if (what === 'retry' && !(extra && extra.confirm) && !confirm(cur.sent_attempt
+            ? 'The provider may already have accepted this message, so the customer may get it twice. Retry anyway?'
+            : 'Put this message back in the queue? It goes out within a minute.')) return;
+        if (what === 'retry' && cur.sent_attempt) extra = Object.assign({ confirm: '1' }, extra || {});
         var data = Object.assign({ action: what, ref: cur.ref }, extra || {});
         btn.disabled = true; btn.classList.add('loading');
         var kout = body.querySelector('[data-ob-kout]');
@@ -186,6 +201,11 @@
                 }
                 return;
             }
+            if (what === 'retry' && !ok && j.code === 'needs_confirm') {
+                if (confirm(j.message + ' Send it again anyway?')) { btn.disabled = false; btn.classList.remove('loading'); act('retry', btn, { confirm: '1' }); }
+                return;
+            }
+            if (what === 'resend' && !ok && j.code === 'already' && j.id) { toast(j.message, true); setTimeout(function () { open('queue-' + j.id); }, 300); return; }
             toast(j.message || (ok ? 'Done' : 'Failed'), !ok);
             if (ok) setTimeout(function () {
                 if (j.ref) { location.href = (B.outboxUrl || 'comms_outbox.php') + '?open=' + encodeURIComponent(j.ref); return; }
