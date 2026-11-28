@@ -18,13 +18,12 @@ if (!sl_tableExists('cdb_sl_settings')) sl_json(['success' => false, 'message' =
 $op = (string) ($_POST['op'] ?? '');
 $map = ['air' => [], 'sea' => []];
 if ($op === 'save') {
-    $art = sl_cargoArt();
     $names = [];
     foreach (sl_rows('SELECT id, mod_style, detail FROM cdb_styles') as $st) $names[(int) $st->id] = str_replace('_', ' ', $st->mod_style) . ' ' . $st->detail;
     foreach (['air' => false, 'sea' => true] as $mode => $sea) {
         foreach ((array) ($_POST[$mode] ?? []) as $id => $key) {
             $id = (int) $id; $key = (string) $key;
-            if (!isset($names[$id]) || !isset($art[$key])) continue;
+            if (!isset($names[$id]) || !isset(sl_cargoArtOf($sea)[$key])) continue; // air only air pictures, sea only sea
             if ($key !== sl_cargoArtDefault($id, $names[$id], $sea)) $map[$mode][(string) $id] = $key;
         }
     }
