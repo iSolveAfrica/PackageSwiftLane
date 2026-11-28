@@ -13,6 +13,7 @@ $deliveryLink = function_exists('dl_parcelLink') ? dl_parcelLink('sea', (int) $d
 <?= sl_phoneTop($d['trk'], $d['owner']['name'], ['back' => sl_route('SeaPackages')], '<a class="mx-ib" href="#more" aria-label="More actions"><i class="ic i-more" aria-hidden="true"></i></a>') ?>
 <main class="mx-body">
 <section class="mx-hero"><div class="mx-hk">Sea · <?= h($d['office']) ?><span class="mx-tag"><?= h($d['pay']) ?></span></div><b class="mx-hv"><?= h($d['done'] ? $d['handLabel'] : ucfirst(strtolower($d['st']))) ?></b><small><?= h(($d['steps'][$d['stage'] - 1] ?? '') . ' · ETA ' . $d['eta'] . ($d['con'] ? ' · container ' . $d['con']['code'] : '')) ?></small><div class="mx-prog" role="img" aria-label="Step <?= (int) $d['stage'] ?> of 5"><i style="width:<?= max(4, $pct) ?>%"></i></div></section>
+<?php if (!empty($d['scene'])): $sc = $d['scene']; $scDone = !empty($d['done']); ?><div class="b1-scene"><?php include CDP_ROOT . '/views/sl/pages/partials/parcel_scene.php'; ?></div><?php endif; ?>
 <div class="mx-sec"><h2>Details</h2></div>
 <section class="mx-card mx-kv">
 <div><span>Customer</span><b><a href="<?= h(sl_route('CustomerProfile', ['id' => $d['owner']['id']])) ?>"><?= h($d['owner']['name'] . ($d['owner']['locker'] !== '' ? ' · ' . $d['owner']['locker'] : '')) ?></a></b></div>

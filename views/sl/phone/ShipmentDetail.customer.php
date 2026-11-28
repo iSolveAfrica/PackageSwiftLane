@@ -26,6 +26,7 @@ $s = $d['sender'] ?? [];
 $r = $d['recip'] ?? [];
 $pc = $d['pickupCode'] ?? [];
 $p = [
+    'scene' => $d['scene'] ?? null,
     'back' => sl_route('MyParcels'), 'trk' => (string) $d['track'], 'st' => $status, 'stCls' => $stCls, 'mode' => $air ? 'Air' : 'Sea',
     'from' => (string) ($d['from'] ?? '—'), 'to' => (string) ($d['to'] ?? '—'),
     'pct' => $done ? 100 : (int) round(($step - 1) / 4 * 100), 'eta' => (string) ($d['eta'] ?? ''),

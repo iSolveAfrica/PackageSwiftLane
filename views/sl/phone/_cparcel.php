@@ -3,7 +3,7 @@
  * M-CParcel body, shared by PackageDetail.customer.php (sea package) and ShipmentDetail.customer.php (air
  * shipment). Each sets $p (normalised from its own $d) and includes this file. Only data the web page shows
  * the customer is printed.
- * $p: back, trk, st, stCls, mode, from, to, pct, steps[], step (0-based), events[{t,s}] newest first, tags[[label,cls]],
+ * $p: scene (sl_parcelScene(), the status picture), back, trk, st, stCls, mode, from, to, pct, steps[], step (0-based), events[{t,s}] newest first, tags[[label,cls]],
  *     acts[[label,icon,href,cls]], items[{qty,desc,w,val}], kv[[label,value]], files[{name,url,img}],
  *     pay[[label,value]], payLink, code ('ready'|'verified'|'done'|''), driver{name,ini,phone}|null, publicUrl, deliver(bool)
  */
@@ -31,6 +31,7 @@ $sum = ['qty' => 0];
 </ol></section>
 </div>
 <div class="b1-pad">
+<?php if (!empty($p['scene'])): $sc = $p['scene']; $scDone = $p['code'] === 'done'; ?><div class="b1-scene"><?php include CDP_ROOT . '/views/sl/pages/partials/parcel_scene.php'; ?></div><?php endif; ?>
 <div class="b1-tags"><?php foreach ((array) $p['tags'] as $tg): ?><span class="b1-tag <?= h($tg[1]) ?>"><?= h($tg[0]) ?></span><?php endforeach; ?></div>
 <section class="b1-acts"><?php foreach ((array) $p['acts'] as $a): ?><a class="<?= h($a[3]) ?>" href="<?= h($a[2]) ?>"<?= !empty($a[4]) ? ' target="_blank" rel="noopener"' : '' ?>><span><i class="ic <?= h($a[1]) ?>" aria-hidden="true"></i></span><?= h($a[0]) ?></a><?php endforeach; ?></section>
 <?php if ($p['items']): ?>

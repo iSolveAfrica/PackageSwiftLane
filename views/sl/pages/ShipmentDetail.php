@@ -33,12 +33,7 @@ $mPeak = max(1, max($ch['months']));
         <section class="sdx-hero" aria-label="Journey">
           <div class="sdx-hero-main">
             <div class="sdx-route"><div><small>From</small><b><?= h($d['from']) ?></b></div><span class="sdx-arrow" aria-hidden="true"><i class="ic <?= $d['mode'] === 'Air' ? 'i-plane' : 'i-ship' ?>"></i></span><div class="tr"><small>To</small><b><?= h($d['to']) ?></b></div></div>
-            <?php if (!empty($d['scene'])): $sc = $d['scene']; ?>
-            <figure class="sdx-scene<?= $sc['agent'] ? ' agent' : '' ?>">
-              <img src="<?= h(cdp_asset($sc['img'])) ?>" alt="<?= h($sc['title'] . ': ' . $sc['text']) ?>" loading="lazy" decoding="async">
-              <figcaption><span class="sdx-live"><i></i><?= ($ch['done'] ?? false) ? 'Done' : 'Now' ?></span><b><?= h($sc['title']) ?></b><span><?= h($sc['text']) ?></span></figcaption>
-            </figure>
-            <?php endif; ?>
+            <?php $sc = $d['scene'] ?? null; $scDone = $ch['done'] ?? false; include __DIR__ . '/partials/parcel_scene.php'; ?>
             <ol class="sdx-steps" aria-label="Step <?= (int) $d['step'] ?> of 5: <?= h($stageNames[$d['step'] - 1] ?? '') ?>" style="--p:<?= $ch['done'] ? 1 : round(($d['step'] - 1) / 4, 3) ?>">
               <?php foreach ($stageNames as $i => $sn): $n = $i + 1; $cls = $n < $d['step'] || ($n === 5 && $ch['done']) ? 'done' : ($n === $d['step'] ? 'now' : ''); ?>
               <li class="<?= $cls ?>"><span class="sdx-dot"><?php if ($cls === 'done'): ?><i class="ic ic-sm i-check" aria-hidden="true"></i><?php else: ?><?= $n ?><?php endif; ?></span><b><?= h($sn) ?></b><small><?= h($ch['reached'][$n] ?? ($cls === 'now' ? 'now' : '—')) ?></small></li>

@@ -22,6 +22,7 @@ foreach ((array) ($d['charges'] ?? []) as $c) {
 $pay[] = ['Method', (string) ($d['method'] ?? '—')];
 $pay[] = ['Paid on', (string) ($d['paidOn'] ?? '—')];
 $p = [
+    'scene' => $d['scene'] ?? null,
     'back' => sl_route('MyParcels'), 'trk' => (string) $d['trk'], 'st' => (string) $d['st'], 'stCls' => $stCls, 'mode' => 'Sea',
     'from' => (string) (($d['office'] ?? '—') !== '—' ? $d['office'] : 'Warehouse'), 'to' => (string) (($d['deliverTo'] ?? '—') !== '—' ? $d['deliverTo'] : 'Pickup hub'),
     'pct' => $done ? 100 : (int) round(($stage - 1) / 4 * 100), 'eta' => (string) ($d['eta'] ?? ''),

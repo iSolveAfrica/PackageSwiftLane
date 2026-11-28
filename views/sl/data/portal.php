@@ -123,6 +123,8 @@ function sl_trackData(string $code, $core): array
     $d += [
         'number' => (string) $t->order_prefix . (string) $t->order_no,
         'st' => $st['label'], 'cls' => $st['cls'],
+        // status picture: air parcels show the air drawings, sea parcels the sea ones (helpers/parcel_scene.php)
+        'scene' => (function () use ($air, $statusId, $eff, $t) { require_once CDP_ROOT . '/helpers/parcel_scene.php'; return sl_parcelScene($air ? 'air' : 'sea', $statusId, (string) ($eff->mod_style ?: $t->mod_style)); })(),
         'air' => $air, 'mode' => $air ? 'Air freight' : 'Sea freight',
         'from' => $from ?: '—', 'to' => $to ?: '—',
         'eta' => $etaText,

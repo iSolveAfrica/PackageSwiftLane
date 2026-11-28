@@ -31,6 +31,7 @@ $sel = function (string $name, string $options, string $label) { return '<label 
 <?php else: ?><?= sl_mxEmpty('box', 'No open shipments') ?><?php endif; ?>
 <?php else: ?>
 <?php if ($d['pkgs']): ?><div class="mx-chips"><?php foreach ($d['pkgs'] as $p): ?><a href="<?= h(sl_url(['id' => $p['id'], 'q' => null])) ?>" style="padding:6px 11px;border-radius:99px;font-size:12px;font-weight:500;min-height:32px;display:inline-flex;align-items:center;background:<?= $p['cls'] === 'on' ? 'var(--ink);color:var(--inverse)' : 'var(--active);color:var(--ink-2)' ?>"<?= $p['cls'] === 'on' ? ' aria-current="true"' : '' ?>><?= h($p['track']) ?></a><?php endforeach; ?></div><?php endif; ?>
+<?php if (!empty($d['scene'])): $sc = $d['scene']; $scDone = !empty($d['sceneDone']); ?><div class="b1-scene"><?php include CDP_ROOT . '/views/sl/pages/partials/parcel_scene.php'; ?></div><?php endif; ?>
 <?php if (!empty($d['canTrack'])): ?>
 <?= sl_mxSec('Update ' . $d['track']) ?>
 <form data-sl-form action="ajax/courier/add_courier_tracking.php" method="post" id="tk-form" class="sp-panel" style="display:flex;flex-direction:column;gap:12px">

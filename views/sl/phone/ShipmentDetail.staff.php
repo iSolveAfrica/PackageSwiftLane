@@ -20,6 +20,7 @@ $deliveryLink = function_exists('dl_parcelLink') ? dl_parcelLink('air', (int) $d
 <?= sl_phoneTop($d['track'], $d['carrierNo'] !== '' ? $d['carrier'] . ' ' . $d['carrierNo'] : '', ['back' => sl_route('AirShipments')], '<a class="mx-ib" href="#more" aria-label="More actions"><i class="ic i-more" aria-hidden="true"></i></a>') ?>
 <main class="mx-body">
 <section class="mx-hero"><div class="mx-hk"><?= h($d['mode'] . ' · ' . $d['from'] . ' → ' . $d['to']) ?><span class="mx-tag"><?= h($d['pay']) ?></span></div><b class="mx-hv"><?= h(ucfirst(strtolower($d['status']))) ?></b><small><?= h($d['steps'][$d['step'] - 1] . ' · ETA ' . $d['eta'] . ($d['consol'] ? ' · in ' . $d['consol']['code'] : '')) ?></small><div class="mx-prog" role="img" aria-label="Step <?= (int) $d['step'] ?> of 5"><i style="width:<?= max(4, $pct) ?>%"></i></div></section>
+<?php if (!empty($d['scene'])): $sc = $d['scene']; $scDone = !empty($d['ch']['done']); ?><div class="b1-scene"><?php include CDP_ROOT . '/views/sl/pages/partials/parcel_scene.php'; ?></div><?php endif; ?>
 <?php if ($d['dangerous']): ?><div class="mx-ban warn"><i class="ic ic-sm i-alert" aria-hidden="true"></i><span>Dangerous goods: handle and declare accordingly.</span></div><?php endif; ?>
 <section class="mx-act c4">
 <a href="#pickup-code"><span><i class="ic i-key" aria-hidden="true"></i></span><small>Pickup code</small></a>
