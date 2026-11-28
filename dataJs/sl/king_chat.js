@@ -74,8 +74,8 @@
     return (h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening') + (CFG.first ? ', ' + CFG.first : '');
   }
   function initial(name) { return esc(String(name || '?').trim().charAt(0).toUpperCase() || '?'); }
-  // King's drawn face (server-made SVG in SL_KC.face); the letter when it is missing
-  var FACE = typeof CFG.face === 'string' && CFG.face.indexOf('<svg') === 0 ? CFG.face : '';
+  // King's avatar markup from the server (the AI icon, SL_KC.face); the letter when it is missing
+  var FACE = typeof CFG.face === 'string' && /^<(i|svg) /.test(CFG.face) ? CFG.face : '';
   function kingAv() { return FACE || initial(KING); }
   function icon(cls) { return /^i-[a-z0-9-]+$/.test(cls || '') ? '<i class="ic ic-sm ' + cls + '" aria-hidden="true"></i>' : ''; }
   var PILLS = { delivered: 1, transit: 1, onway: 1, sorting: 1, pending: 1, overdue: 1, paid: 1, plain: 1 };

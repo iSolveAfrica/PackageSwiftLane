@@ -14,7 +14,7 @@
  * Endpoint: ajax/support/customer_ajax.php (brief, start via=king, send, quick, human, poll, rate).
  * Behaviour: dataJs/sl/king_chat.js. Styles: assets/swiftlane/king_chat.css.
  *
- * King is presented warmly and personally (a face, "Hi, I'm King", the customer's first name); the footer
+ * King is presented warmly and personally (the AI icon, "Hi, I'm King", the customer's first name); the footer
  * under the chat still says plainly that King is automated and a person is one tap away.
  */
 require_once CDP_ROOT . '/helpers/support.php';
@@ -54,19 +54,9 @@ $kcCfg = [
 ];
 $kcSite = $kcCfg['site'];
 $kcIni = mb_strtoupper(mb_substr($kcKing, 0, 1));
-// King's face (a friendly drawn portrait instead of a letter): used on the bubble, the dashboard card, the chat
-// header, the typing dots and every message King sends (dataJs/sl/king_chat.js reads SL_KC.face).
-$kcFace = '<svg class="kc-face" viewBox="0 0 40 40" aria-hidden="true" focusable="false">'
-    . '<path d="M6 40c1.4-8 7.2-12 14-12s12.6 4 14 12z" fill="#0E5A40"/>'
-    . '<path d="M16.6 26.4h6.8v3.4c0 1.9-1.5 3.2-3.4 3.2s-3.4-1.3-3.4-3.2z" fill="#7A4A2E"/>'
-    . '<path d="M14 33.5l6 3.6 6-3.6" fill="none" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/>'
-    . '<ellipse cx="20" cy="18.5" rx="8.4" ry="9.2" fill="#8D5A3B"/>'
-    . '<ellipse cx="11.7" cy="19.2" rx="1.6" ry="2.2" fill="#7A4A2E"/><ellipse cx="28.3" cy="19.2" rx="1.6" ry="2.2" fill="#7A4A2E"/>'
-    . '<path d="M11.6 16.6c-.4-5.6 3.4-8.4 8.4-8.4s8.8 2.8 8.4 8.4c-1.4-2.3-3.6-3.4-8.4-3.4s-7 1.1-8.4 3.4z" fill="#1F1A17"/>'
-    . '<circle cx="16.8" cy="18.6" r="1.15" fill="#1F1A17"/><circle cx="23.2" cy="18.6" r="1.15" fill="#1F1A17"/>'
-    . '<path d="M15.8 16.4q1-.7 2 0M22.2 16.4q1-.7 2 0" fill="none" stroke="#1F1A17" stroke-width=".9" stroke-linecap="round"/>'
-    . '<path d="M16.6 22.6q3.4 3 6.8 0" fill="none" stroke="#3A1F12" stroke-width="1.3" stroke-linecap="round"/>'
-    . '</svg>';
+// King's avatar: the AI icon on the brand amber. Used on the bubble, the dashboard card, the chat header, the
+// typing dots and every message King sends (dataJs/sl/king_chat.js reads SL_KC.face).
+$kcFace = '<i class="ic i-ai kc-face" aria-hidden="true"></i>';
 $kcCfg['face'] = $kcFace;
 $kcHi = 'Hi, I\'m ' . $kcKing;
 $kcAsk = 'How can I help' . ($kcFirst !== '' ? ', ' . $kcFirst : '') . '?';

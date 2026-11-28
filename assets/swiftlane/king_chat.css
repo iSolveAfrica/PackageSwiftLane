@@ -229,9 +229,9 @@ html.kc-lock,html.kc-lock body{overflow:hidden!important}
 
 @media print{.kc{display:none!important}}
 
-/* King's face (views/sl/inc/king_chat.php $kcFace): a drawn portrait on the brand amber, online dot */
-.kc-av.face{background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 80%,#fff),var(--accent));padding:0;overflow:visible}
-.kc-av.face .kc-face{width:100%;height:100%;border-radius:50%;display:block;overflow:hidden}
+/* King's avatar (views/sl/inc/king_chat.php $kcFace): the AI icon on the brand amber, online dot */
+.kc-av.face{background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 75%,#fff),var(--accent));color:var(--accent-ink,#1F1A17)}
+.kc-av.face .kc-face{width:56%;height:56%;background:currentColor}
 .kc-av.face .kc-on{right:-1px;bottom:-1px}
 .kc-av.sm.face .kc-on{display:none}
 .kc-launch-t b{display:inline-flex;align-items:center;gap:4px}
