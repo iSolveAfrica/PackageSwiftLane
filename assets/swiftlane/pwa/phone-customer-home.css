@@ -1,0 +1,56 @@
+/* Customer phone home (views/sl/phone/ClientDashboard.php): chat icon, tile icons, "Need a hand?" cards,
+   and the 3-minute "Need any help?" pop-up (dataJs/sl/phone/help_prompt.js). */
+.b3-hg b{display:flex;align-items:center;gap:6px;text-transform:none}
+.b3-wave{font-size:22px;display:inline-block;transform-origin:70% 70%;animation:b3wave 1.8s ease-in-out 1}
+@keyframes b3wave{0%,60%,100%{transform:rotate(0)}10%,30%{transform:rotate(16deg)}20%,40%{transform:rotate(-8deg)}}
+
+.b3-chat.ch-ic{width:52px;padding:0;position:relative;border-radius:50%}
+.b3-chat.ch-ic .ic{width:22px;height:22px}
+.ch-dot{position:absolute;top:11px;right:11px;width:10px;height:10px;border-radius:50%;background:var(--green,#16A34A);box-shadow:0 0 0 2px var(--card)}
+
+/* the four count tiles get a small round icon */
+.b3-kp a{gap:2px}
+.kp-ic{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;margin-bottom:6px;background:var(--active);color:var(--ink-2)}
+.kp-ic .ic{width:13px;height:13px}
+.kp-way .kp-ic{background:#E3EEFF;color:#2563C9}
+.kp-wh .kp-ic{background:#F1ECFF;color:#6D4FD8}
+.kp-rd .kp-ic{background:#DDF3E8;color:#0F7A4A}
+.kp-bl .kp-ic{background:#FDEBD8;color:#B45309}
+.kp-yr .kp-ic{background:#E8EEF3;color:#3F5468}
+
+/* Need a hand? */
+.hh-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:none}
+.hh{display:flex;flex-direction:column;gap:2px;padding:14px;border-radius:18px;background:var(--card);border:1px solid var(--line);color:inherit;text-decoration:none;min-width:0}
+.hh:active{transform:scale(.98)}
+.hh b{font-size:14px;font-weight:600;line-height:1.25}
+.hh small{font-size:11.5px;color:var(--muted);line-height:1.3}
+.hh-ic{width:40px;height:40px;border-radius:14px;display:grid;place-items:center;margin-bottom:8px}
+.hh-ic .ic{width:19px;height:19px}
+.hh.t-trk .hh-ic{background:#E3EEFF;color:#2563C9}
+.hh.t-key .hh-ic{background:#DDF3E8;color:#0F7A4A}
+.hh.t-ban .hh-ic{background:#FDE4E4;color:#C2362F}
+.hh.t-quo .hh-ic{background:#FDEBD8;color:#B45309}
+
+:is(html.sl-dark,.sl-app.dk,body.dk) .kp-way .kp-ic,:is(html.sl-dark,.sl-app.dk,body.dk) .hh.t-trk .hh-ic{background:#1E3354;color:#8DB6FF}
+:is(html.sl-dark,.sl-app.dk,body.dk) .kp-wh .kp-ic{background:#2E2552;color:#B9A6FF}
+:is(html.sl-dark,.sl-app.dk,body.dk) .kp-rd .kp-ic,:is(html.sl-dark,.sl-app.dk,body.dk) .hh.t-key .hh-ic{background:#143B2A;color:#6FD3A2}
+:is(html.sl-dark,.sl-app.dk,body.dk) .kp-bl .kp-ic,:is(html.sl-dark,.sl-app.dk,body.dk) .hh.t-quo .hh-ic{background:#3D2A14;color:#F5B66B}
+:is(html.sl-dark,.sl-app.dk,body.dk) .hh.t-ban .hh-ic{background:#3F1A1A;color:#F59A94}
+
+/* "Need any help?" pop-up over a blurred screen */
+.hp-ov{position:fixed;inset:0;z-index:2000;display:flex;align-items:flex-end;justify-content:center;padding:16px 16px max(24px,env(safe-area-inset-bottom));
+  background:rgba(20,20,18,.28);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);opacity:0;transition:opacity .2s}
+.hp-ov.on{opacity:1}
+.hp-card{position:relative;width:100%;max-width:420px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:26px 20px 18px;border-radius:26px;
+  background:var(--card);color:var(--ink);box-shadow:0 24px 60px -20px rgba(0,0,0,.45);transform:translateY(24px);transition:transform .28s cubic-bezier(.2,.8,.2,1)}
+.hp-ov.on .hp-card{transform:none}
+.hp-ic{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;background:#DDF3E8;color:#0F7A4A;margin-bottom:4px}
+.hp-ic .ic{width:26px;height:26px}
+.hp-card h2{margin:0;font-size:21px;font-weight:600;letter-spacing:-.01em}
+.hp-card p{margin:0 0 8px;font-size:14px;color:var(--muted);line-height:1.45}
+.hp-yes,.hp-no{width:100%;min-height:50px;border-radius:16px;display:flex;align-items:center;justify-content:center;gap:8px;font:600 15px var(--font);text-decoration:none;cursor:pointer}
+.hp-yes{background:var(--ink);color:var(--inverse);border:0}
+.hp-yes .ic{background:var(--inverse)}
+.hp-no{background:transparent;color:var(--ink-2);border:1px solid var(--line-2)}
+.hp-x{position:absolute;top:10px;right:10px;width:36px;height:36px;border-radius:50%;border:0;background:var(--field);display:grid;place-items:center;cursor:pointer;color:var(--ink-2)}
+@media (prefers-reduced-motion:reduce){.hp-ov,.hp-card{transition:none}.b3-wave{animation:none}}

@@ -31,14 +31,9 @@ function sl_mobileLinks($user): array
     ];
     if (sl_mobileRole() !== 'customer') {
         if (sl_bodyRole() !== 'staff') return [];
-        // Staff on a phone (design: M-Home tab bar): Home, Shipments, Scan raised in the middle, Inbox, then the full menu.
-        $links = [['Home', 'grid', sl_route('Main')]];
-        if ($user->cdp_hasPermission('view_shipment_list')) $links[] = ['Shipments', 'plane', sl_route('AirShipments')];
-        if ($user->cdp_hasPermission(['package_intake', 'add_package'])) $links[] = ['Scan', 'scan', sl_route('PackageIntake')];
-        elseif ($user->cdp_hasPermission(['warehouse_view', 'view_warehouse_delivery'])) $links[] = ['Scan', 'scan', sl_route('Warehouse')];
-        $inbox = function_exists('sl_navAllowed') && sl_navAllowed('ops:staff', []);
-        $links[] = $inbox ? ['Inbox', 'message', sl_route('CommsInbox')] : ['Alerts', 'bell', sl_route('Notifications')];
-        $links[] = ['Menu', 'more', '#menu'];
+        // Staff on a phone: the artifact's tab bar (Home, Shipments, Inbox, Assistant, Panels), same as helpers/sl_phone.php.
+        require_once __DIR__ . '/sl_phone.php';
+        $links = array_map(fn($t) => [$t[0], $t[1], $t[2]], sl_phoneTabs('staff'));
         return $links;
     }
     // Customer app (design: M-CHome tab bar): Home, Parcels, Track raised in the middle, Bills (or Support when
@@ -67,5 +62,7 @@ function sl_mobileTabFamily(): array
     ];
     return [
         'Shipments' => ['courier_list.php', 'courier_view.php', 'courier_edit.php', 'courier_add.php', 'courier_shipment_tracking.php'],
+        'Inbox' => ['support_inbox.php', 'support_ticket.php', 'comms_inbox.php'],
+        'Panels' => ['control_panels.php', 'menu.php'],
     ];
 }
