@@ -273,13 +273,14 @@ function rp_parcelDetailsMany(array $refs): array
     foreach ($refs as $r) { $m = $r[0] === 'sea' ? 'sea' : 'air'; $by[$m][(int) $r[1]] = true; }
     $out = [];
     [$cmPer, $kgPer] = rp__unitFactors();
+    $readyCfg = dl_config();
     foreach ($by as $module => $ids) {
         $ids = array_keys($ids);
         if (!$ids) continue;
         $head = $module === 'air' ? 'cdb_add_order' : 'cdb_customers_packages';
         $detail = $module === 'air' ? 'cdb_add_order_item' : 'cdb_customers_packages_detail';
         $orders = [];
-        foreach (rp_all("SELECT o.order_id, o.order_prefix, o.order_no, o.total_weight, o.declared_value, o.total_declared_value, o.notes, o.status_courier, o.sender_id, s.mod_style AS status_name FROM $head o LEFT JOIN cdb_styles s ON s.id = o.status_courier WHERE o.order_id IN (" . rp_in($ids) . ')', $ids) as $o) $orders[(int) $o['order_id']] = $o;
+        foreach (rp_all("SELECT o.order_id, o.order_prefix, o.order_no, o.total_weight, o.declared_value, o.total_declared_value, o.notes, o.status_courier, o.sender_id" . ($module === 'air' ? ', o.is_pickup, o.is_deleted' : '') . ", s.mod_style AS status_name FROM $head o LEFT JOIN cdb_styles s ON s.id = o.status_courier WHERE o.order_id IN (" . rp_in($ids) . ')', $ids) as $o) $orders[(int) $o['order_id']] = $o;
         $items = [];
         $groupCol = $module === 'air' && rp__hasColumn($detail, 'order_item_weight_group') ? ', order_item_weight_group' : '';
         foreach (rp_all("SELECT order_id, order_item_description, order_item_quantity, order_item_weight, order_item_length, order_item_width, order_item_height, order_item_declared_value$groupCol FROM $detail WHERE order_id IN (" . rp_in($ids) . ') ORDER BY order_item_id', $ids) as $it) $items[(int) $it['order_id']][] = $it;
@@ -336,6 +337,8 @@ function rp_parcelDetailsMany(array $refs): array
                 'priority' => (int) ($mt['priority'] ?? 0),
                 'status' => (string) ($o['status_name'] ?? ''), 'status_id' => (int) ($o['status_courier'] ?? 0),
                 'items' => count($its), 'exists' => (bool) $o,
+                // Same rule DeliveryService applies when a request is assigned or started.
+                'ready' => $o && empty($o['is_deleted']) && dl_ready((object) ['status_courier' => $o['status_courier'], 'is_pickup' => $o['is_pickup'] ?? 0, 'status_name' => $o['status_name'] ?? ''], $readyCfg),
             ];
         }
     }
@@ -400,11 +403,15 @@ function rp_cargoHold(int $agency = 0): array
     if (!sl_tableExists('cdb_delivery_requests')) return ['units' => [], 'unplaceable' => []];
     rp_reconcileStops();
     $reqs = rp_all("SELECT r.*, z.name AS zone_name FROM cdb_delivery_requests r LEFT JOIN cdb_delivery_zones z ON z.id = r.zone_id WHERE r.state = 'pending' AND r.approved_at IS NOT NULL" . ($agency ? ' AND r.agency_id = ?' : '') . ' ORDER BY r.id', $agency ? [$agency] : []);
-    return rp__unitsFor($reqs);
+    return rp__unitsFor($reqs, true);
 }
 
-/** Units (with parcels[]) for request rows; split into placeable units and unplaceable ones. */
-function rp__unitsFor(array $reqs): array
+/**
+ * Units (with parcels[]) for request rows; split into placeable units and unplaceable ones.
+ * $holdCheck (the cargo hold): a request whose parcel was collected, deleted or is otherwise no
+ * longer ready cannot be assigned by DeliveryService, so it is unplaceable with the reason.
+ */
+function rp__unitsFor(array $reqs, bool $holdCheck = false): array
 {
     if (!$reqs) return ['units' => [], 'unplaceable' => []];
     $ids = array_map(fn($r) => (int) $r['id'], $reqs);
@@ -426,6 +433,11 @@ function rp__unitsFor(array $reqs): array
         $u += ['request_id' => (int) $r['id'], 'module' => (string) $r['module'], 'address' => (string) $r['address'], 'contact_name' => (string) $r['contact_name'], 'contact_phone' => (string) $r['contact_phone'],
             'instructions' => (string) $r['instructions'], 'zone_name' => (string) ($r['zone_name'] ?? ''), 'area' => (string) ($r['zone_name'] ?? '') ?: rp__area((string) $r['address']), 'customer_id' => (int) $r['customer_id'],
             'state' => (string) $r['state'], 'driver_id' => (int) $r['driver_id'], 'approved_at' => $r['approved_at'], 'amount_cents' => (int) $r['amount_cents'], 'currency' => (string) $r['currency']];
+        if ($holdCheck) {
+            $notReady = array_values(array_filter($parcels, fn($pc) => empty($pc['ready'])));
+            if (!$parcels || count($parcels) < count($list)) { $u['reason'] = 'Parcel not ready: parcel record missing'; $u['not_ready'] = true; $bad[] = $u; continue; }
+            if ($notReady) { $u['reason'] = 'Parcel not ready: ' . $notReady[0]['tracking'] . ' is ' . ($notReady[0]['exists'] ? '"' . (str_replace('_', ' ', $notReady[0]['status']) ?: 'status ' . $notReady[0]['status_id']) . '"' : 'missing'); $u['not_ready'] = true; $bad[] = $u; continue; }
+        }
         if ($u['lat'] === null) { $u['reason'] = 'No map location'; $bad[] = $u; continue; }
         if (!$r['zone_id']) $u['out_of_zone'] = true;
         $units[] = $u;
@@ -490,6 +502,12 @@ function rp_ridersForPlanning(string $date, int $agency = 0): array
     $busy = [];
     if (sl_tableExists('cdb_delivery_requests')) {
         $reqs = rp_all("SELECT * FROM cdb_delivery_requests WHERE state IN ('assigned','onroute') AND driver_id IN (" . rp_in($ids) . ')', $ids);
+        // Work on a route of another day is not in the vehicle on $date: a later day's route has not
+        // been loaded yet, and when planning a later day today's routes are finished by then.
+        // (A route left over from a past day still counts against today.)
+        $today = date('Y-m-d');
+        $other = rp_all("SELECT s.request_id FROM cdb_rp_stops s JOIN cdb_rp_routes r ON r.id = s.route_id WHERE r.driver_id IN (" . rp_in($ids) . ") AND r.status <> 'done' AND s.status IN ('pending','arrived') AND (r.route_date > ?" . ($date > $today ? ' OR r.route_date < ?' : '') . ')', array_merge($ids, [$date], $date > $today ? [$date] : []));
+        if ($other) { $skip = array_flip(array_map(fn($o) => (int) $o['request_id'], $other)); $reqs = array_values(array_filter($reqs, fn($r) => !isset($skip[(int) $r['id']]))); }
         $res = rp__unitsFor($reqs);
         // Requests without a map pin still ride in the vehicle: they count toward its load.
         foreach (array_merge($res['units'], $res['unplaceable']) as $u) {
@@ -584,14 +602,18 @@ function rp_geocodeText(string $address): ?array
 
 /**
  * Run the allocation and save it as the draft plan of the day (older drafts are discarded).
- * $opts: date, start_id, mode fill|balance, lock[] rider ids (keep their current draft units),
- * keep[riderId] = request ids pinned to that rider.
+ * $opts: date 'YYYY-MM-DD' (today when omitted; a later day plans that day's routes: riders are
+ * free of today's load and stops are timed from that day's departure time; a past day is refused),
+ * start_id, mode fill|balance, lock[] rider ids (keep their current draft units),
+ * keep[riderId] = request ids pinned to that rider, agency.
  */
 function rp_proposal(int $actor, array $opts = []): array
 {
     rp_ensureSchema();
     $settings = rp_settings();
     $date = preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) ($opts['date'] ?? '')) ? $opts['date'] : date('Y-m-d');
+    if ($date < date('Y-m-d')) throw new DomainException('Choose today or a later day to plan');
+    if (!checkdate((int) substr($date, 5, 2), (int) substr($date, 8, 2), (int) substr($date, 0, 4))) throw new DomainException('Choose a valid date');
     $agency = (int) ($opts['agency'] ?? (function_exists('dl_agency') ? dl_agency() : 0));
     $start = rp_startPlace($opts['start_id'] ?? null);
     $mode = ($opts['mode'] ?? $settings['fill_mode']) === 'balance' ? 'balance' : 'fill';
@@ -624,7 +646,7 @@ function rp_proposal(int $actor, array $opts = []): array
     $res = rp_allocate($sortedUnits, $riders, [(float) $start['lat'], (float) $start['lng']], ['mode' => $mode, 'settings' => $settings, 'matrix' => $matrix, 'depart' => $depart]);
     foreach ($hold['unplaceable'] as $u) $res['unallocated'][] = ['id' => $u['id'], 'reason' => $u['reason']];
 
-    $proposal = $res + ['units' => [], 'vehicles' => [], 'base' => [], 'depart' => $depart, 'undo' => null];
+    $proposal = $res + ['units' => [], 'vehicles' => [], 'base' => [], 'depart' => $depart, 'date' => $date, 'undo' => null];
     foreach ($units as $u) $proposal['units'][$u['id']] = rp__unitLite($u);
     foreach ($planners as $id => $p) { $proposal['vehicles'][$id] = array_diff_key($p['vehicle'], ['files' => 1, 'docs' => 1, 'docs_json' => 1]); $proposal['base'][$id] = $p['used']; $proposal['zones'][$id] = $p['zone']; $proposal['status'][$id] = $p['status']; }
     $params = ['date' => $date, 'mode' => $mode, 'start_id' => $start['id'], 'lock' => $lock];
@@ -656,7 +678,7 @@ function rp__planView(int $planId, array $proposal, array $planners, array $star
     $allocated = array_sum(array_map(fn($r) => count($r['units']) - count($r['fixed'] ?? []), $proposal['riders']));
     $usedR = array_filter($proposal['riders'], fn($r) => $r['units']);
     $kpis = [
-        'units' => count($proposal['units'] ?? []) + count(array_filter($proposal['unallocated'], fn($u) => ($u['reason'] ?? '') === 'No map location')),
+        'units' => count($proposal['units'] ?? []) + count(array_filter($proposal['unallocated'], fn($u) => !isset($proposal['units'][$u['id']]))),
         'allocated' => array_sum(array_map(fn($r) => count($r['units']), $proposal['riders'])),
         'new_allocated' => $allocated,
         'unallocated' => count($proposal['unallocated']),
@@ -665,7 +687,7 @@ function rp__planView(int $planId, array $proposal, array $planners, array $star
         'avg_fill' => $usedR ? round(array_sum(array_map(fn($r) => (float) $r['fill']['max'], $usedR)) / count($usedR), 1) : 0,
         'provider' => $proposal['score']['provider'] ?? 'estimate',
     ];
-    return ['plan_id' => $planId, 'riders' => $riders, 'unallocated' => array_values($proposal['unallocated']), 'kpis' => $kpis, 'start' => $start, 'score' => $proposal['score'] ?? [], 'depart' => $proposal['depart'] ?? null];
+    return ['plan_id' => $planId, 'riders' => $riders, 'unallocated' => array_values($proposal['unallocated']), 'kpis' => $kpis, 'start' => $start, 'score' => $proposal['score'] ?? [], 'depart' => $proposal['depart'] ?? null, 'date' => $proposal['date'] ?? null];
 }
 
 function rp__loadDraft(int $planId, bool $lock = false): array
@@ -845,6 +867,8 @@ function rp_rebaseDraft(array $plan): array
     $hold = rp_cargoHold((int) $plan['agency_id']);
     $pending = [];
     foreach ($hold['units'] as $u) $pending[(int) $u['id']] = $u;
+    $bad = [];
+    foreach ($hold['unplaceable'] as $u) $bad[(int) $u['id']] = $u['reason'];
     $planners = rp_ridersForPlanning((string) $plan['plan_date'], (int) $plan['agency_id']);
     $issues = ['stale' => [], 'over' => [], 'ineligible' => []];
     foreach ($p['riders'] ?? [] as $rid => $r) {
@@ -852,7 +876,7 @@ function rp_rebaseDraft(array $plan): array
         $keep = [];
         foreach (array_map('intval', $r['units']) as $uid) {
             if (isset($pending[$uid])) { $keep[] = $uid; $p['units'][$uid] = rp__unitLite($pending[$uid]); }
-            else $issues['stale'][] = $uid;
+            else { $issues['stale'][] = $uid; if (isset($bad[$uid])) $p['unallocated'][] = ['id' => $uid, 'reason' => $bad[$uid]]; unset($p['units'][$uid]); }
         }
         if (isset($planners[$rid])) {
             $p['base'][$rid] = $planners[$rid]['used'];
@@ -869,7 +893,7 @@ function rp_rebaseDraft(array $plan): array
             if ($why && !preg_match('/^too (heavy|bulky|many)/', $why)) $issues['ineligible'][] = ['driver_id' => $rid, 'request_id' => $uid, 'reason' => $why];
         }
     }
-    $p['unallocated'] = array_values(array_filter($p['unallocated'] ?? [], fn($u) => isset($pending[(int) $u['id']]) || ($u['reason'] ?? '') === 'No map location'));
+    $p['unallocated'] = array_values(array_filter($p['unallocated'] ?? [], fn($u) => isset($pending[(int) $u['id']]) || isset($bad[(int) $u['id']])));
     $issues['stale'] = array_values(array_unique($issues['stale']));
     $issues['out_of_date'] = (bool) ($issues['stale'] || $issues['over'] || $issues['ineligible']);
     return ['proposal' => $p, 'issues' => $issues, 'planners' => $planners, 'hold' => $hold];
@@ -888,13 +912,14 @@ function rp_discardPlan(int $planId, int $actor): void
 function rp_confirmPlan(int $planId, int $actor, int $agency = 0, bool $ackOver = false): array
 {
     $plan = rp__loadDraft($planId);
+    if ((string) $plan['plan_date'] < date('Y-m-d')) throw new DomainException('This plan was made for ' . $plan['plan_date'] . '. Run Auto-allocate again for today or a later day.');
     // Re-check against what changed since the proposal (assignments elsewhere, vehicle edits).
     $rb = rp_rebaseDraft($plan);
     $iss = $rb['issues'];
     if ($iss['stale']) {
         // Deliveries assigned elsewhere meanwhile leave the plan; the planner sees the new loads first.
         rp__saveDraft($planId, $rb['proposal'], $plan['params']);
-        throw new DomainException(count($iss['stale']) . ' deliver' . (count($iss['stale']) === 1 ? 'y was' : 'ies were') . ' assigned elsewhere since this plan was made. The plan was updated: check it and confirm again.');
+        throw new DomainException(count($iss['stale']) . ' deliver' . (count($iss['stale']) === 1 ? 'y was' : 'ies were') . ' assigned elsewhere, cancelled or no longer ready since this plan was made. The plan was updated: check it and confirm again.');
     }
     if ($iss['ineligible']) {
         $f = $iss['ineligible'][0];
@@ -1270,6 +1295,7 @@ function rp__riderRoute(int $routeId, int $driverId, array $allowed): array
 {
     $route = rp__routeFor($routeId, $driverId, 'rider');
     if (!in_array($route['status'], $allowed, true)) throw new DomainException($route['status'] === 'done' ? 'This route is finished' : 'Not possible while the route is ' . $route['status']);
+    if ((string) $route['route_date'] > date('Y-m-d')) throw new DomainException('This route is planned for ' . date('D j M', strtotime((string) $route['route_date'])) . '. You can load and start it on that day.');
     return $route;
 }
 
