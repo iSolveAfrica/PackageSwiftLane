@@ -30,11 +30,11 @@ function sl_whReady(string $where = '', array $binds = [], int $limit = 200, int
     $scope = sl_opsScope('a');
     $bayA = sl_columnExists('cdb_add_order', 'warehouse_bay') ? 'a.warehouse_bay' : 'NULL';
     $bayS = sl_columnExists('cdb_customers_packages', 'warehouse_bay') ? 'a.warehouse_bay' : 'NULL';
-    $air = "SELECT 'air' AS module, a.order_id, CONCAT(a.order_prefix, a.order_no) AS trk, a.sender_id, a.status_courier, a.total_weight, $bayA AS bay, a.fs_cleared_for_delivery AS cleared,
+    $air = "SELECT 'air' AS module, a.order_id, CONCAT(a.order_prefix, a.order_no) AS trk, a.sender_id, a.status_courier, a.total_weight, a.status_invoice, a.total_order, a.tracking_purchase AS post, $bayA AS bay, a.fs_cleared_for_delivery AS cleared,
               (SELECT MAX(t.t_date) FROM cdb_courier_track t WHERE t.order_track = CONCAT(a.order_prefix, a.order_no) AND t.status_courier IN (4,6,32)) AS ready_at, a.order_date,
               (SELECT GROUP_CONCAT(i.order_item_description SEPARATOR ', ') FROM cdb_add_order_item i WHERE i.order_id = a.order_id) AS what
             FROM cdb_add_order a WHERE " . sl_whReadyAirSql() . " $scope $where";
-    $sea = "SELECT 'sea' AS module, a.order_id, CONCAT(a.order_prefix, a.order_no) AS trk, a.sender_id, a.status_courier, a.total_weight, $bayS AS bay, 1 AS cleared,
+    $sea = "SELECT 'sea' AS module, a.order_id, CONCAT(a.order_prefix, a.order_no) AS trk, a.sender_id, a.status_courier, a.total_weight, a.status_invoice, a.total_order, a.tracking_purchase AS post, $bayS AS bay, 1 AS cleared,
               (SELECT MAX(t.t_date) FROM cdb_courier_track t WHERE t.order_track = CONCAT(a.order_prefix, a.order_no) AND t.status_courier IN (4,6,32)) AS ready_at, a.order_date,
               (SELECT GROUP_CONCAT(i.order_item_description SEPARATOR ', ') FROM cdb_customers_packages_detail i WHERE i.order_id = a.order_id) AS what
             FROM cdb_customers_packages a WHERE " . sl_whReadySeaSql() . " $scope $where";
@@ -50,7 +50,7 @@ function sl_whReady(string $where = '', array $binds = [], int $limit = 200, int
 /** Customer search condition for alias a (name, locker, phone, tracking). */
 function sl_whSearchSql(): string
 {
-    return " AND (CONCAT(a.order_prefix, a.order_no) LIKE :q OR a.sender_id IN (SELECT id FROM cdb_users WHERE CONCAT(fname,' ',lname) LIKE :q OR locker LIKE :q OR phone LIKE :q))";
+    return " AND (CONCAT(a.order_prefix, a.order_no) LIKE :q OR a.tracking_purchase LIKE :q OR a.sender_id IN (SELECT id FROM cdb_users WHERE CONCAT(fname,' ',lname) LIKE :q OR locker LIKE :q OR phone LIKE :q))";
 }
 
 /** Pickup-code state label for a package: Verified / Code sent / No code. */
@@ -87,6 +87,7 @@ function sl_whRowsOut(array $rows): array
             'cust' => sl_userName($u), 'ini' => sl_initials(sl_userName($u)), 'locker' => $u->locker ?? '', 'phone' => $u->phone ?? '', 'sender' => (int) $r->sender_id,
             'bay' => $r->bay ?: '—', 'what' => $r->what ?: ($r->module === 'sea' ? 'Sea package' : 'Shipment'), 'w' => sl_weight($r->total_weight), 'ready' => sl_date($since),
             'days' => $days . ' day' . ($days === 1 ? '' : 's'), 'dn' => $days, 'wc' => $days > 14 ? 'bad' : ($days >= 3 ? 'warn' : ''),
+            'post' => (string) ($r->post ?? ''), 'pay' => sl_payPill($r->status_invoice ?? 0), 'paid' => in_array((int) ($r->status_invoice ?? 0), [1, 19], true), 'amt' => sl_money($r->total_order ?? 0),
             'code' => $c['l'], 'cs' => $c['sent'], 'verified' => $c['verified'], 'cleared' => cdp_fsIsCleared($r->cleared), 'st' => sl_statusLabel($r->status_courier), 'pc' => sl_statusClass($r->status_courier),
         ];
     }
@@ -239,7 +240,7 @@ function sl_whCustomer(int $id): ?array
     $u = sl_row('SELECT id, fname, lname, locker, phone, email, avatar FROM cdb_users WHERE id = :id AND userlevel = 1', [':id' => $id]);
     if (!$u) return null;
     $rows = sl_whRowsOut(sl_whReady(' AND a.sender_id = ' . (int) $id, [], 50));
-    $unpaid = (int) sl_scalar('SELECT COUNT(*) FROM cdb_add_order WHERE sender_id = :u AND is_deleted = 0 AND status_invoice IN (2,23) AND status_courier NOT IN (8,15,21)', [':u' => $id]);
+    $unpaid = count(array_filter($rows, fn($r) => !$r['paid']));
     $byMod = ['air' => [], 'sea' => []];
     foreach ($rows as $r) $byMod[$r['module']][] = $r['oid'];
     $state = ['verified' => false, 'live' => null];
@@ -329,31 +330,25 @@ function sl_warehousePickupsData($user, $core): array
     ];
 }
 
-/** HandOut.dc.html: counter queue (customers with ready parcels) + the selected customer. */
+/** Permission flags of the Hand Out counter (page and panel fragment). */
+function sl_handOutFlags($user): array
+{
+    require_once CDP_ROOT . '/helpers/handover_log.php';
+    return ['canCode' => cdp_pickupCodeCanUse($user), 'canPkg' => $user->cdp_hasPermission('warehouse_deliver_package'),
+        'canUser' => $user->cdp_hasPermission('warehouse_deliver_user'), 'canSkip' => cdp_handoverCanSkipCode($user)];
+}
+
+/** HandOut.dc.html: live-search queue (customers with ready parcels) + the selected customer. */
 function sl_handOutData($user, $core): array
 {
+    require_once CDP_ROOT . '/helpers/handover_log.php';
     $q = trim((string) ($_GET['q'] ?? ''));
-    $w = $q !== '' ? sl_whSearchSql() : '';
-    $b = $q !== '' ? [':q' => '%' . $q . '%'] : [];
-    $rows = sl_whReady($w, $b, 300);
-    $by = [];
-    foreach ($rows as $r) {
-        $k = (int) $r->sender_id;
-        $by[$k] = $by[$k] ?? ['n' => 0, 'since' => $r->ready_at ?: $r->order_date];
-        $by[$k]['n']++;
-    }
-    $users = sl_usersById(array_keys($by));
-    $sel = (int) ($_GET['customer'] ?? 0);
-    $queue = [];
-    foreach (array_slice($by, 0, 12, true) as $id => $x) {
-        $u = $users[$id] ?? null;
-        $queue[] = ['id' => $id, 'cls' => $id === $sel ? 'on' : '', 'name' => sl_userName($u), 'ini' => sl_initials(sl_userName($u)), 'lock' => $u->locker ?? '', 'n' => $x['n'] . ' parcel' . ($x['n'] === 1 ? '' : 's'), 'wait' => sl_ago($x['since']), 'st' => 'Ready', 'pc' => 'delivered', 'href' => sl_url(['customer' => $id])];
-    }
-    $c = sl_whCustomer($sel);
-    $doneToday = sl_whHandoverStats(1)['tot'];
-    return ['q' => $q, 'queue' => $queue, 'qN' => count($by), 'c' => $c, 'doneToday' => $doneToday, 'office' => ($core->c_city ?? '') ?: 'the hub',
-        'canCode' => cdp_pickupCodeCanUse($user), 'canPkg' => $user->cdp_hasPermission('warehouse_deliver_package'), 'canUser' => $user->cdp_hasPermission('warehouse_deliver_user'),
-        'track' => trim((string) ($_GET['tracking'] ?? ''))];
+    $s = sl_hoSearch($q);
+    $sel = (int) ($_GET['customer'] ?? 0) ?: (int) $s['open'];
+    $uid = (int) ($_SESSION['userid'] ?? 0);
+    $mine = cdp_handoverLogEnsure() ? (int) sl_scalar('SELECT COUNT(*) FROM cdb_warehouse_handovers WHERE handed_by = :u AND created_at >= CURDATE()', [':u' => $uid]) : 0;
+    return sl_handOutFlags($user) + ['q' => $q, 'queue' => $s['rows'], 'qN' => $s['total'], 'sel' => $sel, 'c' => sl_whCustomer($sel),
+        'doneToday' => sl_whHandoverStats(1)['tot'], 'mine' => $mine, 'office' => ($core->c_city ?? '') ?: 'the hub', 'track' => trim((string) ($_GET['tracking'] ?? ''))];
 }
 
 /** LockerSearch.dc.html */
@@ -422,5 +417,71 @@ function sl_pickupAgingData($user, $core): array
         'u3p' => sl_pct($u3, $n), 'm14p' => sl_pct($m14, $n), 'o14p' => sl_pct($o14, $n), 'hist' => $hist, 'hmx' => $hmx, 'avg' => $avgAll,
         'line' => implode(' ', $pts), 'lab' => $lab, 'series' => $series, 'amx' => $amx, 'first' => $series[0], 'last' => end($series), 'firstL' => $lab[0],
         'pending' => $pending, 'paNotify' => sl_pickupAgingNotifyState($user), 'canCode' => cdp_pickupCodeCanUse($user), 'canNotify' => $user->cdp_hasPermission('view_pickup_aging'),
+    ];
+}
+
+
+/**
+ * Hand Out live search (ajax/sl/handout_ajax.php op=search): customers with ready parcels whose
+ * name, locker, phone, Swift Lane tracking or carrier tracking matches. 'open' is the customer to open
+ * straight away: an exact tracking hit, or the only customer left.
+ */
+function sl_hoSearch(string $q, int $limit = 30): array
+{
+    $q = trim($q);
+    $w = $q !== '' ? sl_whSearchSql() : '';
+    $b = $q !== '' ? [':q' => '%' . $q . '%'] : [];
+    $rows = sl_whReady($w, $b, 400);
+    $exactTrk = [];
+    foreach ($rows as $r) if ($q !== '' && (strcasecmp($r->trk, $q) === 0 || strcasecmp((string) ($r->post ?? ''), $q) === 0)) $exactTrk[(int) $r->sender_id] = $r->trk;
+    // count every ready parcel of the matching customers, not only the parcel that matched
+    $sids = array_values(array_unique(array_map(fn($r) => (int) $r->sender_id, $rows)));
+    if ($q !== '' && $sids) $rows = sl_whReady(' AND a.sender_id IN (' . implode(',', array_slice($sids, 0, 200)) . ')', [], 800);
+    $by = []; $exact = 0;
+    foreach ($rows as $r) {
+        $k = (int) $r->sender_id;
+        $by[$k] = $by[$k] ?? ['n' => 0, 'since' => $r->ready_at ?: $r->order_date, 'hit' => ''];
+        $by[$k]['n']++;
+        if (isset($exactTrk[$k])) { $exact = $k; $by[$k]['hit'] = $exactTrk[$k]; }
+    }
+    $users = sl_usersById(array_keys($by));
+    $out = [];
+    foreach (array_slice($by, 0, $limit, true) as $id => $x) {
+        $u = $users[$id] ?? null;
+        $out[] = ['id' => $id, 'name' => sl_userName($u), 'ini' => sl_initials(sl_userName($u)), 'lock' => $u->locker ?? '', 'phone' => isset($u->phone) && $u->phone !== '' ? cdp_pickupCodeMask($u->phone) : '',
+            'n' => $x['n'], 'nL' => $x['n'] . ' parcel' . ($x['n'] === 1 ? '' : 's'), 'wait' => sl_ago($x['since']), 'hit' => $x['hit']];
+    }
+    $open = $exact ?: ($q !== '' && count($by) === 1 ? (int) array_key_first($by) : 0);
+    return ['q' => $q, 'total' => count($by), 'rows' => $out, 'open' => $open];
+}
+
+/** One package for the Hand Out pop-up: contents, money, status, history. Null when out of scope. */
+function sl_hoPackage(string $module, int $id): ?array
+{
+    $sea = $module === 'sea';
+    $t = $sea ? 'cdb_customers_packages' : 'cdb_add_order';
+    $r = sl_row("SELECT a.* FROM $t a WHERE a.order_id = :id" . ($sea ? '' : ' AND a.is_deleted = 0'), [':id' => $id]);
+    if (!$r || !sl_opsInScope($r)) return null;
+    $items = [];
+    foreach (sl_rows('SELECT order_item_description AS d, order_item_quantity AS q, order_item_weight AS w, order_item_length AS l, order_item_width AS wd, order_item_height AS h, order_item_declared_value AS v FROM ' . ($sea ? 'cdb_customers_packages_detail' : 'cdb_add_order_item') . ' WHERE order_id = :id ORDER BY order_item_id', [':id' => $id]) as $i) {
+        $dims = ((float) $i->l > 0 && (float) $i->wd > 0 && (float) $i->h > 0) ? (float) $i->l . '×' . (float) $i->wd . '×' . (float) $i->h : '';
+        $items[] = ['d' => $i->d ?: 'Item', 'q' => (int) $i->q ?: 1, 'w' => (float) $i->w > 0 ? sl_weight($i->w) : '', 'dims' => $dims, 'v' => (float) $i->v > 0 ? sl_money($i->v) : ''];
+    }
+    $u = sl_usersById([(int) $r->sender_id])[(int) $r->sender_id] ?? null;
+    $trk = $r->order_prefix . $r->order_no;
+    [$payL, $payC] = sl_payPill($r->status_invoice);
+    $paidAmt = !$sea && sl_tableExists('cdb_charges_order') ? (float) sl_scalar('SELECT COALESCE(SUM(total), 0) FROM cdb_charges_order WHERE order_id = :id', [':id' => $id], 0) : 0;
+    $hist = [];
+    foreach (array_slice(sl_trackHistory($trk), 0, 6) as $h) $hist[] = ['t' => sl_statusLabel($h->status_courier), 'd' => sl_date($h->t_date, 'M j, H:i'), 'c' => (string) ($h->comments ?? '')];
+    $bay = sl_columnExists($t, 'warehouse_bay') ? (string) ($r->warehouse_bay ?? '') : '';
+    return [
+        'module' => $sea ? 'sea' : 'air', 'oid' => $id, 'id' => $trk, 'modeL' => $sea ? 'Sea package' : 'Air shipment',
+        'cust' => sl_userName($u), 'lock' => $u->locker ?? '', 'post' => (string) ($r->tracking_purchase ?? ''), 'shop' => (string) ($r->provider_purchase ?? ''),
+        'st' => sl_statusLabel($r->status_courier), 'stc' => sl_statusClass($r->status_courier), 'bay' => $bay ?: '—',
+        'w' => sl_weight($r->total_weight), 'items' => $items, 'pieces' => array_sum(array_map(fn($i) => $i['q'], $items)),
+        'payL' => $payL, 'payC' => $payC, 'paid' => in_array((int) $r->status_invoice, [1, 19], true), 'total' => sl_money($r->total_order), 'paidAmt' => $paidAmt > 0 ? sl_money($paidAmt) : '',
+        'cleared' => $sea ? true : cdp_fsIsCleared($r->fs_cleared_for_delivery ?? 0),
+        'hist' => $hist,
+        'links' => ['view' => $sea ? sl_route('PackageDetail', ['id' => $id]) : sl_route('ShipmentDetail', ['id' => $id]), 'receipt' => $sea ? 'print_invoice_package.php?id=' . $id : 'print_inv_ship.php?id=' . $id],
     ];
 }

@@ -14,7 +14,8 @@
  * Endpoint: ajax/support/customer_ajax.php (brief, start via=king, send, quick, human, poll, rate).
  * Behaviour: dataJs/sl/king_chat.js. Styles: assets/swiftlane/king_chat.css.
  *
- * King is presented as Swift Lane's automated customer care assistant: warm and personal, never as a person.
+ * King is presented warmly and personally (a headset icon, "Hi, I'm King", the customer's first name); the footer
+ * under the chat still says plainly that King is automated and a person is one tap away.
  */
 require_once CDP_ROOT . '/helpers/support.php';
 $kcMode = ($kcMode ?? 'dock') === 'inline' ? 'inline' : 'dock';
@@ -53,20 +54,38 @@ $kcCfg = [
 ];
 $kcSite = $kcCfg['site'];
 $kcIni = mb_strtoupper(mb_substr($kcKing, 0, 1));
+// King's avatar: the owner's headset icon (assets/swiftlane/king-headset.png, stored unaltered) on the brand amber.
+// Used on the bubble, the dashboard card, the chat header, the typing dots and every message King sends
+// (dataJs/sl/king_chat.js reads SL_KC.face).
+$kcFace = '<i class="kc-face kc-headset" aria-hidden="true"></i>';
+$kcCfg['face'] = $kcFace;
+$kcHi = 'Hi, I\'m ' . $kcKing;
+$kcAsk = 'How can I help' . ($kcFirst !== '' ? ', ' . $kcFirst : '') . '?';
+// The four questions customers ask most (answered from their own account, helpers/support_king.php cdp_csKingIntents)
+$kcIntents = function_exists('cdp_csKingIntents') ? cdp_csKingIntents() : [];
+$kcAsks = [];
+foreach (['where' => 'Where is my package?', 'eta' => 'When will it arrive?', 'pickup' => 'Pickup hours and address', 'owe' => 'How much do I owe?'] as $ik => $il) $kcAsks[$ik] = $kcIntents[$ik] ?? $il;
 ?>
 <?php if (!in_array('assets/swiftlane/king_chat.css', (array) ($slPage['styles'] ?? []), true)): ?><link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/king_chat.css')) ?>"><?php endif; ?>
 <div class="kc" id="kc" role="region" data-mode="<?= h($kcMode) ?>" data-open="0" data-owner="ai_active" aria-label="Chat with <?= h($kcKing) ?>, <?= h($kcSite) ?> customer care"><?php /* a div, not a section: the page reveal animation (transform) must not become the containing block of the full-screen chat */ ?>
 <?php if ($kcMode === 'dock'): ?>
-  <button type="button" class="kc-launch" data-kc-launch aria-controls="kc-panel" aria-expanded="false">
-    <span class="kc-av" aria-hidden="true"><?= h($kcIni) ?></span>
-    <span class="kc-launch-t"><b><?= h($kcKing) ?></b><small>Customer care assistant</small></span>
+  <div class="kc-scrim" data-kc-scrim aria-hidden="true"></div>
+  <div class="kc-pop" id="kc-pop" data-kc-pop role="dialog" aria-modal="true" aria-labelledby="kc-pop-h" hidden>
+    <div class="kc-pop-h"><span class="kc-av face" aria-hidden="true"><?= $kcFace ?><i class="kc-on"></i></span><div><b id="kc-pop-h"><?= h($kcHi) ?> 👋</b><small><?= h($kcAsk) ?></small></div></div>
+    <div class="kc-pop-q" role="group" aria-label="Questions customers often ask">
+      <?php foreach ($kcAsks as $ik => $il): ?><button type="button" data-kc-ask="<?= h($ik) ?>"><span><?= h($il) ?></span><i class="ic ic-sm i-right" aria-hidden="true"></i></button><?php endforeach; ?>
+    </div>
+    <div class="kc-pop-f"><button type="button" class="kc-pop-more" data-kc-other><i class="ic ic-sm i-message" aria-hidden="true"></i>Ask something else</button><button type="button" class="kc-pop-person" data-kc-ask="human"><i class="ic ic-sm i-user" aria-hidden="true"></i>Talk to a person</button></div>
+  </div>
+  <button type="button" class="kc-launch kc-icon" data-kc-launch aria-controls="kc-pop" aria-expanded="false" title="<?= h($kcHi . '. ' . $kcAsk) ?>">
+    <span class="kc-av face" aria-hidden="true"><?= $kcFace ?><i class="kc-on"></i></span>
     <span class="kc-badge" data-kc-badge hidden></span>
-    <span class="kc-sr">Open the chat with <?= h($kcKing) ?>, <?= h($kcSite) ?>'s customer care assistant</span>
+    <span class="kc-sr">Chat with <?= h($kcKing) ?> from <?= h($kcSite) ?> customer care</span>
   </button>
 <?php else: ?>
   <button type="button" class="kc-teaser" data-kc-teaser aria-controls="kc-panel" aria-expanded="false">
-    <span class="kc-teaser-top"><span class="kc-av lg" aria-hidden="true"><?= h($kcIni) ?></span><span class="kc-who"><b><?= h($kcKing) ?></b><small><?= h($kcSite) ?> customer care assistant</small></span><span class="kc-badge" data-kc-badge hidden></span></span>
-    <span class="kc-teaser-hello" data-kc-hello>Hi<?= $kcFirst !== '' ? ' ' . h($kcFirst) : '' ?>, how can I help?</span>
+    <span class="kc-teaser-top"><span class="kc-av lg face" aria-hidden="true"><?= $kcFace ?><i class="kc-on"></i></span><span class="kc-who"><b><?= h($kcKing) ?></b><small><?= h($kcSite) ?> customer care · online now</small></span><span class="kc-badge" data-kc-badge hidden></span></span>
+    <span class="kc-teaser-hello" data-kc-hello><?= h($kcHi) ?>. <?= h($kcAsk) ?></span>
     <span class="kc-teaser-lead" data-kc-teaser-lead>Checking your parcels…</span>
     <span class="kc-teaser-tags" data-kc-teaser-tags></span>
     <span class="kc-teaser-go"><i class="ic ic-sm i-message" aria-hidden="true"></i>Chat with <?= h($kcKing) ?><i class="ic ic-sm i-right" aria-hidden="true"></i></span>
@@ -74,8 +93,8 @@ $kcIni = mb_strtoupper(mb_substr($kcKing, 0, 1));
 <?php endif; ?>
   <div class="kc-panel" id="kc-panel" role="<?= $kcMode === 'dock' ? 'dialog' : 'region' ?>" aria-labelledby="kc-name"<?= $kcMode === 'dock' ? ' hidden' : '' ?>>
     <header class="kc-head">
-      <span class="kc-av lg" data-kc-av aria-hidden="true"><?= h($kcIni) ?></span>
-      <div class="kc-who"><b id="kc-name" data-kc-name><?= h($kcKing) ?></b><small data-kc-sub><?= h($kcSite) ?> customer care assistant · Automated</small></div>
+      <span class="kc-av lg face" data-kc-av aria-hidden="true"><?= $kcFace ?><i class="kc-on"></i></span>
+      <div class="kc-who"><b id="kc-name" data-kc-name><?= h($kcKing) ?></b><small data-kc-sub><?= h($kcSite) ?> customer care · online now</small></div>
       <button type="button" class="kc-person" data-kc-human><i class="ic ic-sm i-user" aria-hidden="true"></i><span>Talk to a person</span></button>
       <button type="button" class="kc-ib" data-kc-close aria-label="<?= $kcMode === 'dock' ? 'Close the chat' : 'Minimise the chat' ?>" title="<?= $kcMode === 'dock' ? 'Close' : 'Minimise' ?>"><i class="ic ic-sm <?= $kcMode === 'dock' ? 'i-x' : 'i-minus' ?>" aria-hidden="true"></i></button>
     </header>
@@ -83,7 +102,7 @@ $kcIni = mb_strtoupper(mb_substr($kcKing, 0, 1));
     <div class="kc-min" data-kc-min hidden><span class="kc-min-t" data-kc-min-t></span><button type="button" class="sl-btn sm" data-kc-expand><i class="ic ic-sm i-message" aria-hidden="true"></i>Open chat</button></div>
     <div class="kc-log" data-kc-scroll>
       <div class="kc-thread" role="log" aria-live="polite" aria-relevant="additions" data-kc-thread></div>
-      <div class="kc-typing" data-kc-typing hidden><span class="kc-av sm" aria-hidden="true" data-kc-typing-av><?= h($kcIni) ?></span><span class="kc-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="kc-typing-t" data-kc-typing-t></span></div>
+      <div class="kc-typing" data-kc-typing hidden><span class="kc-av sm face" aria-hidden="true" data-kc-typing-av><?= $kcFace ?></span><span class="kc-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="kc-typing-t" data-kc-typing-t></span></div>
     </div>
     <div class="kc-chips" data-kc-chips role="group" aria-label="Quick questions"></div>
     <div class="kc-files" data-kc-files hidden></div>

@@ -56,6 +56,13 @@ if (in_array($action, $campaignActions, true) && !$canCampaign) {
 if (in_array($action, ['campaign_approve', 'campaign_cancel'], true) && $rank < 3) {
     $out(['ok' => false, 'message' => 'Only an administrator can do that.'], 403);
 }
+// Agency-restricted staff only reach their agency's campaigns.
+if (in_array($action, ['campaign_get', 'campaign_approve', 'campaign_unschedule', 'campaign_cancel', 'campaign_duplicate', 'campaign_delete'], true)
+    || (in_array($action, ['campaign_save', 'campaign_submit'], true) && (int) ($_POST['id'] ?? 0) > 0)) {
+    if (!cdp_cmpInScope((int) ($_POST['id'] ?? 0))) {
+        $out(['ok' => false, 'message' => 'Campaign not found.'], 404);
+    }
+}
 
 /** The message posted by the page: channels plus per-channel texts (and the Cloud template). */
 $message = function () use ($J, $P, $channelsIn) {
@@ -78,11 +85,22 @@ switch ($action) {
         }
         $roles = implode(',', array_map('intval', cdp_commClientRoles()));
         $ag = cdp_cmpAgencyScope();
+        // The phone condition only when the query has digits enough to mean a number:
+        // '%%' would match every customer with a phone.
+        $digits = preg_replace('/\D+/', '', $q);
+        if (strlen($digits) >= 4 && $digits[0] === '0') {
+            $digits = substr($digits, 1);   // a local number (0541...) is stored with the country code
+        }
+        $bind = [':q' => '%' . $q . '%', ':q2' => '%' . $q . '%', ':q4' => '%' . $q . '%'];
+        $phoneOr = '';
+        if (strlen($digits) >= 3) {
+            $phoneOr = " OR REPLACE(REPLACE(REPLACE(u.phone,'+',''),' ',''),'-','') LIKE :q3";
+            $bind[':q3'] = '%' . $digits . '%';
+        }
         $rows = cdp_opsQ("SELECT u.id, u.fname, u.lname, u.locker, u.phone, u.email, u.city FROM cdb_users u
-                          LEFT JOIN cdb_comm_prefs p ON p.user_id = u.id
                           WHERE u.userlevel IN ($roles) AND u.active = 1" . ($ag ? ' AND u.agency_id = ' . $ag : '') . "
-                          AND (CONCAT(u.fname,' ',u.lname) LIKE :q OR u.locker LIKE :q2 OR u.phone LIKE :q3 OR u.email LIKE :q4)
-                          ORDER BY u.fname, u.lname LIMIT 12", [':q' => '%' . $q . '%', ':q2' => '%' . $q . '%', ':q3' => '%' . preg_replace('/\D+/', '', $q) . '%', ':q4' => '%' . $q . '%']);
+                          AND (CONCAT(u.fname,' ',u.lname) LIKE :q OR u.locker LIKE :q2 OR u.email LIKE :q4$phoneOr)
+                          ORDER BY (CONCAT(u.fname,' ',u.lname) LIKE :q5) DESC, u.fname, u.lname LIMIT 12", $bind + [':q5' => $q . '%']);
         $out(['ok' => true, 'rows' => array_map(function ($r) {
             return ['id' => (int) $r->id, 'name' => trim($r->fname . ' ' . $r->lname) ?: 'Customer', 'locker' => (string) $r->locker, 'phone' => (string) $r->phone,
                 'email' => (string) $r->email, 'city' => (string) $r->city];
@@ -96,8 +114,8 @@ switch ($action) {
                 $out(['ok' => false, 'message' => 'Campaigns need the Push notifications or Newsletter permission.'], 403);
             }
             $a = cdp_cmpAudience($J('audience'));
-            if (!isset($a['agency_id']) && ($ag = cdp_cmpAgencyScope())) {
-                $a['agency_id'] = $ag;
+            if ($ag = cdp_cmpAgencyScope()) {
+                $a['agency_id'] = $ag;   // the server's scope wins over anything posted
             }
             $reach = cdp_cmpReach($a, $channels);
             $out(['ok' => true, 'kind' => 'marketing', 'reach' => $reach, 'sample' => cdp_cmpPeople($a, $channels, 0, 5), 'label' => cdp_cmpAudienceLabel($a)]);
@@ -120,13 +138,31 @@ switch ($action) {
                 $out(['ok' => false, 'message' => 'Campaigns need the Push notifications or Newsletter permission.'], 403);
             }
             $a = cdp_cmpAudience($J('audience'));
-            if (!isset($a['agency_id']) && ($ag = cdp_cmpAgencyScope())) {
+            if ($ag = cdp_cmpAgencyScope()) {
                 $a['agency_id'] = $ag;
             }
             $rows = cdp_cmpPeople($a, $channels, $off, 51, $q);
         } else {
+            // Chosen customers, then the typed addresses; "Find someone" filters both.
             $r = cdp_cmpDirectRecipients($idsIn(), (string) $P('list'));
-            $rows = cdp_cmpPeopleByIds(array_slice($r['ids'], $off, 51), $channels);
+            $all = cdp_cmpPeopleByIds(array_slice($r['ids'], 0, CDP_CMP_DIRECT_MAX + 50), $channels);
+            foreach ($r['raw'] as $x) {
+                $all[] = ['id' => 0, 'kind' => 'address', 'name' => $x['to'], 'locker' => '', 'phone' => $x['type'] === 'phone' ? $x['to'] : '', 'email' => $x['type'] === 'email' ? $x['to'] : '',
+                    'city' => '', 'state' => array_combine($channels, array_map(function ($ch) use ($x) { return $ch !== 'inapp' && (($ch === 'email') === ($x['type'] === 'email')) ? 'ok' : 'no_address'; }, $channels)) ?: []];
+            }
+            if ($q !== '') {
+                $ql = mb_strtolower($q);
+                $qd = preg_replace('/\D+/', '', $q);
+                $all = array_values(array_filter($all, function ($p) use ($ql, $qd) {
+                    foreach (['name', 'locker', 'email'] as $k) {
+                        if ($p[$k] !== '' && mb_strpos(mb_strtolower($p[$k]), $ql) !== false) {
+                            return true;
+                        }
+                    }
+                    return strlen($qd) >= 3 && strpos(preg_replace('/\D+/', '', $p['phone']), $qd) !== false;
+                }));
+            }
+            $rows = array_slice($all, $off, 51);
         }
         $out(['ok' => true, 'rows' => array_slice($rows, 0, 50), 'more' => count($rows) > 50, 'offset' => $off]);
 
@@ -158,9 +194,17 @@ switch ($action) {
             });
         }
         $skipped = array_sum($res['skipped']);
+        if (!$res['queued'] && !$res['inapp']) {
+            $why = [];
+            foreach ($res['skipped'] as $k => $n) {
+                $why[] = $n . ' · ' . $k;
+            }
+            $out(['ok' => false, 'message' => 'Nothing was sent: ' . ($why ? implode('; ', $why) : 'nobody could receive it') . '.', 'skipped' => $res['skipped']], 422);
+        }
         $log('send', 'Message to ' . $res['recipients'] . ' ' . ($res['recipients'] === 1 ? 'person' : 'people') . ' by ' . implode(', ', $channels) . ': ' . $res['queued'] . ' queued, ' . $skipped . ' skipped');
         $msg = ($at ? 'Scheduled ' : 'Sending ') . ($res['queued'] + $res['inapp']) . ' message' . (($res['queued'] + $res['inapp']) === 1 ? '' : 's') . ($skipped ? ' · ' . $skipped . ' skipped' : '');
-        $out(['ok' => true, 'message' => $msg, 'queued' => $res['queued'], 'inapp' => $res['inapp'], 'skipped' => $res['skipped'], 'scheduled' => $at ? date('Y-m-d H:i', $at) : '',
+        $out(['ok' => true, 'message' => $msg, 'queued' => $res['queued'], 'inapp' => $res['inapp'], 'skipped' => $res['skipped'], 'not_configured' => $res['not_configured'] ?? [],
+            'scheduled' => $at ? date('Y-m-d H:i', $at) : '',
             'outbox_ids' => array_slice($res['ids'], 0, 400)]);
 
     case 'status':
@@ -169,13 +213,15 @@ switch ($action) {
         if (!$ids) {
             $out(['ok' => true, 'counts' => []]);
         }
+        // Only the caller's own messages (administrators: any).
+        $own = $rank >= 3 ? '' : ' AND created_by = ' . (int) $uid;
         $c = [];
-        foreach (cdp_opsQ("SELECT status, COUNT(*) n FROM cdb_comm_outbox WHERE id IN (" . implode(',', $ids) . ") GROUP BY status") as $r) {
+        foreach (cdp_opsQ("SELECT status, COUNT(*) n FROM cdb_comm_outbox WHERE id IN (" . implode(',', $ids) . ")$own GROUP BY status") as $r) {
             $c[(string) $r->status] = (int) $r->n;
         }
         $errs = [];
-        foreach (cdp_opsQ("SELECT channel, last_error FROM cdb_comm_outbox WHERE id IN (" . implode(',', $ids) . ") AND last_error IS NOT NULL AND last_error <> '' LIMIT 3") as $r) {
-            $errs[] = (cdp_cmpChannels()[$r->channel] ?? $r->channel) . ': ' . $r->last_error;
+        foreach (cdp_opsQ("SELECT channel, MAX(last_error) last_error FROM cdb_comm_outbox WHERE id IN (" . implode(',', $ids) . ")$own AND last_error IS NOT NULL AND last_error <> '' GROUP BY channel LIMIT 3") as $r) {
+            $errs[] = (cdp_cmpChannels()[$r->channel] ?? $r->channel) . ': ' . cdp_cmpErrorText($r->last_error);
         }
         $out(['ok' => true, 'counts' => $c, 'errors' => $errs]);
 
@@ -193,6 +239,9 @@ switch ($action) {
         if ($ch === 'inapp') {
             $ok = cdp_cmpInApp($uid, (string) ($bodies['inapp']['body'] ?? ''));
             $out(['ok' => $ok, 'message' => $ok ? 'Test posted to your own notification bell.' : 'Not posted.']);
+        }
+        if (($why = cdp_cmpChannelProblem($ch)) !== '') {
+            $out(['ok' => false, 'message' => 'Test not sent: ' . $why . '.'], 422);
         }
         $to = $ch === 'email' ? trim((string) ($me->email ?? '')) : trim((string) ($me->phone ?? ''));
         if ($to === '') {
@@ -215,9 +264,10 @@ switch ($action) {
             $out(['ok' => true, 'message' => 'Test sent to ' . $to . '.']);
         }
         if ($after && $after->status === 'queued') {
-            cdp_opsX("UPDATE cdb_comm_outbox SET status = 'cancelled' WHERE id = :id", [':id' => (int) $q['ids'][0]]);   // a test is not retried
+            // A test is not retried: it is recorded as failed, so the Outbox shows it.
+            cdp_opsX("UPDATE cdb_comm_outbox SET status = 'failed' WHERE id = :id", [':id' => (int) $q['ids'][0]]);
         }
-        $out(['ok' => false, 'message' => 'Test not sent to ' . $to . ': ' . rtrim($after && $after->last_error ? (string) $after->last_error : 'the provider did not accept it', '. ') . '.']);
+        $out(['ok' => false, 'message' => 'Test not sent to ' . $to . ': ' . rtrim($after && $after->last_error ? cdp_cmpErrorText($after->last_error) : 'the provider did not accept it', '. ') . '.']);
 
     // ---- campaigns ------------------------------------------------------
 
@@ -253,6 +303,25 @@ switch ($action) {
             $cur = cdp_opsOne("SELECT created_by FROM cdb_comm_campaigns WHERE id = :id", [':id' => $d['id']]);
             if ($cur && (int) $cur->created_by !== $uid && $rank < 3) {
                 $out(['ok' => false, 'message' => 'Only the person who wrote it, or an administrator, can change this campaign.'], 403);
+            }
+        }
+        if ($action === 'campaign_submit') {
+            // The same campaign sent twice by the same person within a few minutes (a double click,
+            // a second press after it started) is refused: the dedupe keys are per campaign.
+            $na = cdp_cmpAudience($d['audience']);
+            unset($na['agency_id']);
+            $sig = cdp_opsJson([$na, cdp_cmpBodies($d['bodies']), $d['channels']]);
+            foreach (cdp_opsQ("SELECT id, audience, bodies, channels FROM cdb_comm_campaigns WHERE created_by = :u AND id <> :id AND name = :n
+                               AND status IN ('pending','scheduled','sending','launching','sent') AND updated_at >= :t", [':u' => $uid, ':id' => $d['id'], ':n' => mb_substr(trim($d['name']), 0, 160), ':t' => cdp_opsNow(-600)]) as $prev) {
+                $pa = cdp_opsDecode($prev->audience, []);
+                unset($pa['agency_id']);
+                $pb = cdp_opsDecode($prev->bodies, []);
+                unset($pb['_wa_template'], $pb['_wa_lang'], $pb['_wa_params']);
+                $pa = cdp_cmpAudience($pa);
+                unset($pa['agency_id']);
+                if (cdp_opsJson([$pa, cdp_cmpBodies($pb), array_values(array_filter(explode(',', (string) $prev->channels)))]) === $sig) {
+                    $out(['ok' => false, 'message' => 'You already sent this campaign a few minutes ago (#' . (int) $prev->id . '). Duplicate it from the list if you really want to send it again.'], 409);
+                }
             }
         }
         $s = cdp_cmpSave($d, $uid);

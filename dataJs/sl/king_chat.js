@@ -74,6 +74,9 @@
     return (h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening') + (CFG.first ? ', ' + CFG.first : '');
   }
   function initial(name) { return esc(String(name || '?').trim().charAt(0).toUpperCase() || '?'); }
+  // King's avatar markup from the server (the AI icon, SL_KC.face); the letter when it is missing
+  var FACE = typeof CFG.face === 'string' && /^<(i|svg) /.test(CFG.face) ? CFG.face : '';
+  function kingAv() { return FACE || initial(KING); }
   function icon(cls) { return /^i-[a-z0-9-]+$/.test(cls || '') ? '<i class="ic ic-sm ' + cls + '" aria-hidden="true"></i>' : ''; }
   var PILLS = { delivered: 1, transit: 1, onway: 1, sorting: 1, pending: 1, overdue: 1, paid: 1, plain: 1 };
 
@@ -109,7 +112,7 @@
   }
   function cardsHtml(list) { return list && list.length ? '<div class="kc-cards' + (list.length === 1 ? ' one' : '') + '">' + list.map(cardHtml).join('') + '</div>' : ''; }
   function kingRow(inner, id, when) {
-    return '<div class="kc-row k" data-id="' + esc(id) + '"><span class="kc-av sm" aria-hidden="true">' + initial(KING) + '</span><div class="kc-msg"><div class="kc-bub">' + inner + '</div>'
+    return '<div class="kc-row k" data-id="' + esc(id) + '"><span class="kc-av sm' + (FACE ? ' face' : '') + '" aria-hidden="true">' + kingAv() + '</span><div class="kc-msg"><div class="kc-bub">' + inner + '</div>'
       + '<small class="kc-meta">' + esc(KING) + (when ? ' · ' + esc(when) : '') + '</small></div></div>';
   }
   function bubble(m) {
@@ -182,8 +185,9 @@
     typingBox.hidden = !on;
     if (!on) return;
     var person = who && who !== KING;
-    q('[data-kc-typing-av]').textContent = String(who || KING).charAt(0).toUpperCase();
-    q('[data-kc-typing-av]').classList.toggle('p', !!person);
+    var tav = q('[data-kc-typing-av]');
+    if (person || !FACE) tav.textContent = String(who || KING).charAt(0).toUpperCase(); else tav.innerHTML = FACE;
+    tav.classList.toggle('p', !!person); tav.classList.toggle('face', !person && !!FACE);
     q('[data-kc-typing-t]').textContent = person ? who + ' is typing' : KING + ' is checking…';
     toBottom();
   }
@@ -210,11 +214,11 @@
     readState();
   }
   function header() {
-    var roomy = INLINE && !phone(), name = KING, sub = roomy ? SITE + ' customer care assistant · Automated' : 'Automated assistant', av = initial(KING), person = false;
+    var roomy = INLINE && !phone(), name = KING, sub = roomy ? SITE + ' customer care · online now' : 'Online now', av = kingAv(), person = false;
     if (st.owner === 'human_active') { name = st.ownerName || 'Customer care'; sub = roomy ? SITE + ' customer care team' : 'Customer care team'; av = initial(name); person = true; }
     var x = q('[data-kc-close] .ic'); if (x && INLINE) { x.classList.toggle('i-x', phone()); x.classList.toggle('i-minus', !phone()); }
     q('[data-kc-name]').textContent = name; q('[data-kc-sub]').textContent = sub;
-    var a = q('[data-kc-av]'); a.innerHTML = av + (person ? '<i class="kc-on"></i>' : ''); a.classList.toggle('p', person);
+    var a = q('[data-kc-av]'); a.innerHTML = av + '<i class="kc-on"></i>'; a.classList.toggle('p', person); a.classList.toggle('face', !person && !!FACE);
     q('[data-kc-human]').hidden = st.owner === 'handoff_queued' || st.owner === 'human_active';
     text.placeholder = st.owner === 'human_active' ? 'Write to ' + name + '…' : st.owner === 'handoff_queued' ? 'Add anything our team should know…' : 'Ask ' + KING + ' anything…';
     if (foot) {
@@ -275,7 +279,7 @@
     if (r.first) CFG.first = r.first;
     var lead = b.lead ? b.lead : (b.empty ? "Everything's quiet on your account right now: nothing waiting for you and nothing due. What can I help you with today?" : '');
     var extra = b.extra && b.extra.length ? b.extra : [];
-    var html = '<p><b>' + esc(hello()) + '.</b></p>' + (lead ? md(lead) : '') + cardsHtml(b.cards)
+    var html = '<p><b>' + esc(hello()) + ". I'm " + esc(KING) + '.</b></p>' + (lead ? md(lead) : '') + cardsHtml(b.cards)
       + (extra.length ? '<div class="kc-extra" data-kc-extra hidden>' + cardsHtml(extra) + '</div><p class="kc-more" data-kc-more>' + esc(b.more_text || ('There are ' + extra.length + ' more.')) + ' <button type="button" class="kc-link" data-kc-show-all aria-expanded="false">Show everything</button></p>' : '')
       + (!b.empty ? '<p>' + esc('What would you like to do first?') + '</p>' : '');
     var old = thread.querySelector('[data-id="brief"]'); if (old) old.remove();
@@ -288,7 +292,7 @@
     var plain = String(b.lead || (b.empty ? "Everything's quiet on your account. Ask me about your parcels, bills or pickup." : 'Ask me about your parcels, bills or pickup.')).replace(/\*\*([^*]+)\*\*/g, '$1').replace(/\*([^*]+)\*/g, '$1');
     var m = q('[data-kc-min-t]'); if (m) m.textContent = hello() + '. ' + plain;
     if (!teaser) return;
-    teaser.querySelector('[data-kc-hello]').textContent = hello();
+    teaser.querySelector('[data-kc-hello]').textContent = hello() + ". I'm " + KING + ', how can I help?';
     teaser.querySelector('[data-kc-teaser-lead]').textContent = plain;
     if (c.ready) tags.push(['delivered', c.ready + ' ready for pickup']);
     if (c.changed) tags.push(['transit', c.changed + ' update' + (c.changed > 1 ? 's' : '')]);
@@ -503,11 +507,13 @@
     if (!INLINE || phone()) store.set('open', '1');
     if (INLINE && !phone()) store.set('min', '0');
     st.unread = 0; badge();
+    if (!INLINE) root.classList.add('kc-dim');
     var ready = st.loaded ? Promise.resolve() : load();
     ready.then(function () { if (st.conv) pollNow(false); });
     if (sheet()) setTimeout(function () { (how !== 'auto' && !phone() ? text : q('[data-kc-close]')).focus({ preventScroll: true }); }, 60);
     else if (how !== 'auto') setTimeout(function () { text.focus(); }, 60);
     toBottom();
+    return ready;
   }
   function close() {
     stop(); store.set('auto', '1'); // closed by the customer: no automatic greeting again this session
@@ -516,14 +522,41 @@
       st.open = false; root.setAttribute('data-min', '1'); q('[data-kc-min]').hidden = false; store.set('min', '1');
       schedule(); return;
     }
-    st.open = false; root.setAttribute('data-open', '0'); document.documentElement.classList.remove('kc-lock');
+    st.open = false; root.setAttribute('data-open', '0'); document.documentElement.classList.remove('kc-lock'); root.classList.remove('kc-dim');
     if (!INLINE) panel.hidden = true;
     [launch, teaser].forEach(function (b) { if (b) b.setAttribute('aria-expanded', 'false'); });
     store.set('open', '0');
     typing(false); schedule();
     if (opener && opener.focus && document.contains(opener) && opener !== document.body) opener.focus(); else if (launch) launch.focus(); else if (teaser) teaser.focus();
   }
-  if (launch) launch.addEventListener('click', function () { if (st.open) close(); else open(); });
+  /* The icon first pops up the questions customers ask most over a blurred page; a question opens the chat and asks it. */
+  var pop = q('[data-kc-pop]'), scrim = q('[data-kc-scrim]');
+  function popOpen() { return !!pop && !pop.hidden; }
+  function popShow(on) {
+    if (!pop) return;
+    pop.hidden = !on; root.classList.toggle('kc-dim', on || st.open);
+    if (launch) launch.setAttribute('aria-expanded', on || st.open ? 'true' : 'false');
+    if (on) setTimeout(function () { var b = pop.querySelector('button'); if (b) b.focus(); }, 40);
+  }
+  if (launch) launch.addEventListener('click', function () {
+    if (st.open) return close();
+    if (popOpen()) return popShow(false);
+    // a person on the chat, or messages waiting: straight to the chat
+    if (!pop || st.unread || st.owner === 'handoff_queued' || st.owner === 'human_active') return open();
+    popShow(true);
+  });
+  if (pop) pop.addEventListener('click', function (e) {
+    var a = e.target.closest('[data-kc-ask]'), m = e.target.closest('[data-kc-other]');
+    if (!a && !m) return;
+    popShow(false);
+    var ready = open();
+    if (a) {
+      var intent = a.getAttribute('data-kc-ask'), label = a.textContent.trim();
+      Promise.resolve(ready).then(function () { setTimeout(function () { if (st.busy) return; if (intent === 'human') human(label); else quick(intent, label); }, 150); });
+    }
+  });
+  if (scrim) scrim.addEventListener('click', function () { if (popOpen()) popShow(false); else if (st.open) close(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && popOpen()) { e.stopPropagation(); popShow(false); if (launch) launch.focus(); } }, true);
   if (teaser) teaser.addEventListener('click', function () { open(); });
   q('[data-kc-close]').addEventListener('click', close);
   q('[data-kc-expand]').addEventListener('click', function () { open(); });

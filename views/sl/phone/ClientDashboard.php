@@ -30,19 +30,24 @@ $weekSum = array_sum($week);
 $prevSum = array_sum(array_slice($act, 0, 7));
 $rate = (float) ($core->exchange_rate ?? 0);
 $addr = $d['addresses'][0] ?? null;
+// The greeting uses one word: the first part of the first name, in normal case (HENRY NTIAKO AYI -> Henry).
+$cuteFirst = (string) (preg_split('/\s+/u', trim((string) ($d['first'] ?? '')))[0] ?? '');
+$cuteFirst = $cuteFirst !== '' ? mb_convert_case(mb_strtolower($cuteFirst), MB_CASE_TITLE, 'UTF-8') : 'there';
+$slPhone['scripts'][] = 'dataJs/sl/phone/help_prompt.js';
 $rows = (array) ($d['mobileRows'] ?? []);
 if (!$rows) $rows = array_slice((array) ($d['rows'] ?? []), 0, 3);
 ?>
 <header class="mx-top"><a class="mx-av" href="<?= h(sl_route('MyAccount')) ?>" aria-label="My account"><?= h($d['ini'] ?? '?') ?><i aria-hidden="true"></i></a><div class="mx-ttl"><h1>Home</h1></div><?= sl_phoneIcon('search', 'Track a parcel', sl_route('LiveTracking')) . sl_phoneIcon('bell', 'Notifications', sl_route('MyNotifications'), $unread) ?></header>
+<link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/pwa/phone-customer-home.css')) ?>">
 <main class="mx-body">
-<header class="b3-hh"><a class="b3-av" href="<?= h(sl_route('MyAccount')) ?>" aria-label="My account"><?= h($d['ini'] ?? '?') ?></a><span class="b3-hg"><small><i class="ic ic-sm i-sun" aria-hidden="true"></i><?= h($greet) ?></small><b><?= h($d['first'] ?? '') ?></b></span><a class="b3-chat" href="support.php">Chat</a><a class="b3-bell" href="<?= h(sl_route('MyNotifications')) ?>" aria-label="Notifications<?= $unread ? ', ' . $unread . ' unread' : '' ?>"><i class="ic i-bell" aria-hidden="true"></i><?php if ($unread): ?><i><?= $unread > 99 ? '99+' : $unread ?></i><?php endif; ?></a></header>
+<header class="b3-hh"><a class="b3-av" href="<?= h(sl_route('MyAccount')) ?>" aria-label="My account"><?= h($d['ini'] ?? '?') ?></a><span class="b3-hg"><small><i class="ic ic-sm i-sun" aria-hidden="true"></i><?= h($greet) ?></small><b><?= h($cuteFirst) ?> <span class="b3-wave" aria-hidden="true">👋</span></b></span><a class="b3-chat ch-ic" href="support.php" aria-label="Chat with us" title="Chat with us"><i class="ic i-message" aria-hidden="true"></i><i class="ch-dot" aria-hidden="true"></i></a><a class="b3-bell" href="<?= h(sl_route('MyNotifications')) ?>" aria-label="Notifications<?= $unread ? ', ' . $unread . ' unread' : '' ?>"><i class="ic i-bell" aria-hidden="true"></i><?php if ($unread): ?><i><?= $unread > 99 ? '99+' : $unread ?></i><?php endif; ?></a></header>
 <h2 class="b3-hl">Your parcels<span><?= (int) ($d['active'] ?? 0) > 0 ? (int) $d['active'] . ' on the move.' : 'Nothing on the move.' ?></span></h2>
 <div class="b3-sr"><a class="b3-sp" href="<?= h(sl_route('PublicTracking')) ?>"><i class="ic i-search" aria-hidden="true"></i><span>Where’s your parcel?</span></a><a class="b3-scan" href="<?= h(sl_route('LiveTracking')) ?>" aria-label="Track my parcels"><i class="ic i-route" aria-hidden="true"></i></a></div>
 <section class="b3-kp">
-<a href="<?= h(sl_route('LiveTracking')) ?>"><b><?= (int) ($d['onWay'] ?? 0) ?></b><small>On the way</small><em><?= (int) ($d['active'] ?? 0) ?> active</em></a>
-<a href="<?= h(sl_route('MyParcels')) ?>"><b><?= (int) ($d['atWh'] ?? 0) ?></b><small>At warehouse</small><em>Being processed</em></a>
-<a class="<?= (int) ($d['ready'] ?? 0) > 0 ? 'ok' : '' ?>" href="<?= h(sl_route('PickupCodes')) ?>"><b><?= (int) ($d['ready'] ?? 0) ?></b><small>Ready</small><em><?= (int) ($d['ready'] ?? 0) > 0 ? 'Bring ID' : 'Nothing yet' ?></em></a>
-<?php if (!empty($d['canBills'])): ?><a class="<?= (int) $d['dueN'] > 0 ? 'warn' : '' ?>" href="<?= h(sl_route('MyBills')) ?>"><b><?= h($d['dueMoney'] ?? '') ?></b><small>Balance due</small><em><?= (int) $d['dueN'] ?> bill<?= (int) $d['dueN'] === 1 ? '' : 's' ?><?= ($d['dueDate'] ?? '') !== '' ? ' · ' . h($d['dueDate']) : '' ?></em></a><?php else: ?><a href="<?= h(sl_route('MyParcels')) ?>"><b><?= (int) ($d['year'] ?? 0) ?></b><small>This year</small><em>Parcels</em></a><?php endif; ?>
+<a class="kp-way" href="<?= h(sl_route('LiveTracking')) ?>"><span class="kp-ic"><i class="ic ic-sm i-plane" aria-hidden="true"></i></span><b><?= (int) ($d['onWay'] ?? 0) ?></b><small>On the way</small><em><?= (int) ($d['active'] ?? 0) ?> active</em></a>
+<a class="kp-wh" href="<?= h(sl_route('MyParcels')) ?>"><span class="kp-ic"><i class="ic ic-sm i-warehouse" aria-hidden="true"></i></span><b><?= (int) ($d['atWh'] ?? 0) ?></b><small>At warehouse</small><em>Being processed</em></a>
+<a class="kp-rd <?= (int) ($d['ready'] ?? 0) > 0 ? 'ok' : '' ?>" href="<?= h(sl_route('PickupCodes')) ?>"><span class="kp-ic"><i class="ic ic-sm i-key" aria-hidden="true"></i></span><b><?= (int) ($d['ready'] ?? 0) ?></b><small>Ready</small><em><?= (int) ($d['ready'] ?? 0) > 0 ? 'Bring ID' : 'Nothing yet' ?></em></a>
+<?php if (!empty($d['canBills'])): ?><a class="kp-bl <?= (int) $d['dueN'] > 0 ? 'warn' : '' ?>" href="<?= h(sl_route('MyBills')) ?>"><span class="kp-ic"><i class="ic ic-sm i-receipt" aria-hidden="true"></i></span><b><?= h($d['dueMoney'] ?? '') ?></b><small>Balance due</small><em><?= (int) $d['dueN'] ?> bill<?= (int) $d['dueN'] === 1 ? '' : 's' ?><?= ($d['dueDate'] ?? '') !== '' ? ' · ' . h($d['dueDate']) : '' ?></em></a><?php else: ?><a class="kp-yr" href="<?= h(sl_route('MyParcels')) ?>"><span class="kp-ic"><i class="ic ic-sm i-box" aria-hidden="true"></i></span><b><?= (int) ($d['year'] ?? 0) ?></b><small>This year</small><em>Parcels</em></a><?php endif; ?>
 </section>
 <?php if ($readyRow): ?>
 <section class="b3-cx"><div class="b3-cxh"><span class="b3-oi dk"><i class="ic i-key" aria-hidden="true"></i></span><span class="mx-rm"><b><?= (int) $d['ready'] ?> parcel<?= (int) $d['ready'] === 1 ? '' : 's' ?> ready for pickup</b><small><?= h($readyRow->trk) ?><?= ($readyRow->provider_purchase ?? '') !== '' ? ' · ' . h($readyRow->provider_purchase) : '' ?> · bring your ID and pickup code</small></span><span class="b3-st ok">Ready</span></div><div class="b3-row2"><a class="b3-cta" href="<?= h(sl_route('PickupCodes')) ?>"><i class="ic ic-sm i-key" aria-hidden="true"></i>Pickup codes</a><a class="b3-gh" href="delivery_request.php"><i class="ic ic-sm i-truck" aria-hidden="true"></i>Deliver to me</a></div></section>
@@ -72,14 +77,18 @@ if (!$rows) $rows = array_slice((array) ($d['rows'] ?? []), 0, 3);
 <?php else: ?>
 <?= sl_mxEmpty('box', 'No parcels yet', 'Shop with your shipping address below and your parcels show up here.', !empty($d['canPrealert']) ? 'Pre-alert a parcel' : '', 'prealert_add.php') ?>
 <?php endif; ?>
-<?php if ($addr): ?>
-<?= sl_mxSec('Shipping address', 'All addresses', sl_route('MyAccount')) ?>
-<section class="b3-cd b3-ad"><div class="b3-ch"><span class="mx-rm"><b>Your <?= h($addr['label']) ?> address</b><small>Use it at checkout</small></span><span class="b3-flag"><?= h($addr['cc']) ?></span></div>
-<?php foreach ([['Name', trim($addr['recipient'] . ' ' . ($d['locker'] ?? ''))], ['Address', trim(rtrim($addr['address1'], ' ·') . ', ' . $addr['address2'], ', ')], ['City, ZIP', trim($addr['city'] . ' ' . $addr['zip'])], ['Phone', $addr['phone']]] as $f): if (trim($f[1]) === '') continue; ?>
-<div class="b3-cr"><span><small><?= h($f[0]) ?></small><b><?= h($f[1]) ?></b></span><button type="button" class="b3-cp" data-sl-copy="<?= h($f[1]) ?>" aria-label="Copy <?= h($f[0]) ?>"><i class="ic ic-sm i-copy" aria-hidden="true"></i></button></div>
-<?php endforeach; ?>
-<div class="b3-row2"><button type="button" class="b3-gh" data-sl-copy="<?= h($addr['full']) ?>"><i class="ic ic-sm i-copy" aria-hidden="true"></i>Copy full address</button><?php if (count((array) $d['addresses']) > 1): ?><a class="b3-gh" href="<?= h(sl_route('MyAccount')) ?>"><i class="ic ic-sm i-globe" aria-hidden="true"></i><?= count((array) $d['addresses']) - 1 ?> more</a><?php endif; ?></div></section>
+<?php if (!empty($d['addresses'])): $addrs = (array) $d['addresses']; ?>
+<?= sl_mxSec(count($addrs) > 1 ? 'Your ' . count($addrs) . ' shipping addresses' : 'Your shipping address', 'How it works', sl_route('MyAccount')) ?>
+<section class="b3-wl" aria-label="Shipping addresses">
+<div class="b3-wl-lk"><span><small>Locker ID</small><b class="mono"><?= h(($d['locker'] ?? '') !== '' ? $d['locker'] : '—') ?></b></span><?php if (($d['locker'] ?? '') !== ''): ?><button type="button" class="b3-cp" data-sl-copy="<?= h($d['locker']) ?>" aria-label="Copy locker ID"><i class="ic ic-sm i-copy" aria-hidden="true"></i></button><?php endif; ?><small class="b3-wl-hint"><?= count($addrs) > 1 ? 'Swipe the cards or tap a flag' : 'Use it at checkout' ?></small></div>
+<?php $locker = (string) ($d['locker'] ?? ''); $awName = (string) ($d['name'] ?? ''); $awAssets = true; include CDP_ROOT . '/views/sl/pages/partials/address_wallet.php'; ?>
+</section>
 <?php endif; ?>
 <?= sl_mxSec('Need a hand?', 'Help centre', 'support.php') ?>
-<div class="b3-pl"><a href="support.php"><i class="ic ic-sm i-route" aria-hidden="true"></i>Where is my parcel?</a><a href="<?= h(sl_route('PickupCodes')) ?>"><i class="ic ic-sm i-key" aria-hidden="true"></i>Pickup codes</a><a href="terms.php"><i class="ic ic-sm i-ban" aria-hidden="true"></i>What can I ship?</a><a href="<?= h(sl_route('QuoteCalculator')) ?>"><i class="ic ic-sm i-dollar" aria-hidden="true"></i>Get a quote</a></div>
+<div class="hh-grid">
+<a class="hh t-trk" href="support.php"><span class="hh-ic"><i class="ic i-route" aria-hidden="true"></i></span><b>Where is my parcel?</b><small>Ask us, we check it for you</small></a>
+<a class="hh t-key" href="<?= h(sl_route('PickupCodes')) ?>"><span class="hh-ic"><i class="ic i-key" aria-hidden="true"></i></span><b>Pickup codes</b><small>Your codes for collection</small></a>
+<a class="hh t-ban" href="terms.php"><span class="hh-ic"><i class="ic i-ban" aria-hidden="true"></i></span><b>What can I ship?</b><small>Items we can and cannot carry</small></a>
+<a class="hh t-quo" href="<?= h(sl_route('QuoteCalculator')) ?>"><span class="hh-ic"><i class="ic i-dollar" aria-hidden="true"></i></span><b>Get a quote</b><small>Price by weight, air or sea</small></a>
+</div>
 </main>

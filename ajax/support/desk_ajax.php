@@ -8,6 +8,7 @@
 // * GET  action=customers q                      customer search           *
 // * GET  action=records  customer_id             a customer's records      *
 // * GET  action=kb       q                       articles (all audiences)  *
+// * GET  action=alerts   after                   chats waiting / new msgs  *
 // * GET  action=tools                            canned, rules, AI modes   *
 // * POST action=update   id version fields…      ticket fields             *
 // * POST action=send     id body mode …          reply / internal note     *
@@ -106,6 +107,31 @@ if ($method !== 'POST') {
                 'viewers' => cdp_csPresence($t->id, $uid), 'version' => (int) $t->version, 'status' => (string) $t->status,
                 'owner' => $conv ? (string) $conv->owner_state : '', 'owner_user' => $conv ? cdp_csUserName($conv->owner_user_id) : '']);
 
+        case 'alerts': // every staff page (dataJs/sl/cs_alerts.js): chats waiting for a person, new messages on my chats
+            $name = function ($r) {
+                $n = trim(($r->fname ?? '') . ' ' . ($r->lname ?? ''));
+                return $n !== '' ? mb_convert_case(mb_strtolower($n), MB_CASE_TITLE) : ((string) ($r->contact_name ?? '') ?: 'A customer');
+            };
+            $cut = function ($b) { $b = trim(preg_replace('/\s+/', ' ', strip_tags((string) $b))); return mb_strlen($b) > 140 ? mb_substr($b, 0, 137) . '…' : $b; };
+            $queue = [];
+            foreach (cdp_csQ("SELECT c.id, c.ticket_id, c.handover_at, c.handover_reason, t.public_ref, t.subject, t.contact_name, u.fname, u.lname,
+                    (SELECT m.body FROM cdb_cs_messages m WHERE m.conversation_id = c.id AND m.author_type = 'customer' AND m.visibility = 'public' ORDER BY m.id DESC LIMIT 1) AS last_body
+                FROM cdb_cs_conversations c LEFT JOIN cdb_cs_tickets t ON t.id = c.ticket_id LEFT JOIN cdb_users u ON u.id = c.customer_id
+                WHERE c.owner_state = 'handoff_queued' AND c.ticket_id IS NOT NULL ORDER BY c.handover_at, c.id LIMIT 10") as $r) {
+                $queue[] = ['key' => 'q' . (int) $r->id . '-' . (string) $r->handover_at, 'ticket' => (int) $r->ticket_id, 'ref' => (string) $r->public_ref, 'name' => $name($r),
+                    'text' => $cut($r->last_body ?: ($r->subject ?: $r->handover_reason)), 'since' => (string) $r->handover_at];
+            }
+            $lastId = (int) (cdp_csOne("SELECT MAX(id) AS n FROM cdb_cs_messages")->n ?? 0);
+            $mine = [];
+            if (isset($_GET['after']) && $_GET['after'] !== '') { // without "after" (first call): only the starting point
+                foreach (cdp_csQ("SELECT m.id, m.body, c.ticket_id, t.public_ref, t.contact_name, u.fname, u.lname FROM cdb_cs_messages m
+                        INNER JOIN cdb_cs_conversations c ON c.id = m.conversation_id LEFT JOIN cdb_cs_tickets t ON t.id = c.ticket_id LEFT JOIN cdb_users u ON u.id = c.customer_id
+                        WHERE c.owner_state = 'human_active' AND c.owner_user_id = :u AND m.author_type = 'customer' AND m.visibility = 'public' AND m.id > :a
+                        ORDER BY m.id LIMIT 10", [':u' => $uid, ':a' => (int) $_GET['after']]) as $r) {
+                    $mine[] = ['key' => 'm' . (int) $r->id, 'ticket' => (int) $r->ticket_id, 'ref' => (string) $r->public_ref, 'name' => $name($r), 'text' => $cut($r->body)];
+                }
+            }
+            $reply(['ok' => true, 'queue' => $queue, 'mine' => $mine, 'last_id' => $lastId]);
         case 'customers':
             $q = trim((string) ($_GET['q'] ?? ''));
             if (mb_strlen($q) < 2) {

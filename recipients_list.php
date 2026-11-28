@@ -5,6 +5,15 @@ $user = new User();
 $core = new Core();
 require_once 'helpers/sl_view.php';
 sl_gate('view_recipients');
+// ?edit=<id> opens the form next to the list on the web page; the phone layout has no such form, so it goes to
+// the phone's own edit screen (a link made on the web page can be opened on a phone, e.g. in the installed app).
+if (!empty($_GET['edit']) && is_file(__DIR__ . '/helpers/sl_device.php')) {
+    require_once __DIR__ . '/helpers/sl_device.php';
+    if (function_exists('sl_isPhone') && sl_isPhone()) {
+        header('Location: recipients_edit.php?recipient=' . (int) $_GET['edit']);
+        exit;
+    }
+}
 require_once 'views/sl/data/recipients.php';
 $d = sl_recipientsData($user, $core);
 if (($_GET['export'] ?? '') === 'csv') {

@@ -5,7 +5,10 @@
  * Pickup codes (helpers/pickup_code.php, rules in docs/HANDOVER_PICKUP_CODES_SMS.md):
  *   op=code_state | code_send | code_verify   module=air|sea  ids=1,2,3
  * Handover (helpers/handover.php: 15 Picked up / 8 Delivered, Picked up is the default):
- *   op=handover  items=air:12,sea:7  handover_type=picked_up|delivered
+ *   op=handover  items=air:12,sea:7  handover_type=picked_up|delivered  [skip_code=1 skip_reason=]
+ *     skip_code: managers (cdp_handoverCanSkipCode: admin, super admin or warehouse_skip_pickup_code) hand over without
+ *     the customer's code; the skip and its reason are written to the hand-out log and the activity log.
+ *     Every package handed over is written to cdb_warehouse_handovers (helpers/handover_log.php).
  *     every package needs a verified pickup code (cdp_pickupCodeGate) and, for air, Accounts clearance (cdp_fsIsCleared);
  *     the code items are spent (cdp_pickupCodeConsume), a track row and history line are written, the consolidation of an
  *     air package closes as Picked up when every package in it was picked up, otherwise Delivered (same rule as
@@ -21,6 +24,7 @@ require_once __DIR__ . '/../../helpers/sl_view.php';
 require_once __DIR__ . '/../../helpers/activity_log.php';
 require_once __DIR__ . '/../../helpers/querys.php';
 require_once __DIR__ . '/../../helpers/pickup_code.php';
+require_once __DIR__ . '/../../helpers/handover_log.php';
 require_once CDP_ROOT . '/views/sl/data/warehouse.php';
 $user = new User; $core = new Core;
 require_login();
@@ -78,6 +82,25 @@ function slw_syncConsolidation(int $orderId, bool $sea): void
  *
  * @param array $items [[module, order_id], ...] of the packages handed over (same order as $trackings)
  */
+/** Outbox link for these tracking numbers (Communications > Outbox search). */
+function slw_outboxUrl(array $trackings): string
+{
+    $q = trim((string) ($trackings[0] ?? ''));
+    return 'comms_outbox.php' . ($q !== '' ? '?q=' . rawurlencode($q) : '');
+}
+
+/**
+ * A pickup-code send's result in honest words: the messages go out after the
+ * response, so a success means queued, not received.
+ */
+function slw_queuedNote(array $res): string
+{
+    if (empty($res['success'])) return (string) ($res['message'] ?? 'The code could not be sent.');
+    $ch = array_values(array_filter(array_map('strval', (array) ($res['channels'] ?? []))));
+    $base = !empty($res['message']) && stripos((string) $res['message'], 'again') !== false ? 'Pickup code queued again' : 'Pickup code queued';
+    return $base . ($ch ? ' (' . implode(', ', $ch) . ')' : '') . ': see Outbox.';
+}
+
 function slw_notify(int $senderId, array $trackings, int $status, $core, array $items = []): void
 {
     $sender = cdp_getSenderCourier($senderId);
@@ -91,17 +114,24 @@ function slw_notify(int $senderId, array $trackings, int $status, $core, array $
             : 'Hello ' . cdp_nameWithLocker($sender) . ",\n\nYour package" . ($plural ? 's ' : ' ') . '*' . $list . '* ' . cdp_handoverPhrase($status, $plural) . '. Thank you for shipping with ' . ($site ?: 'us') . '!';
         $module = (string) ($items[0][0] ?? 'air');
         $orderId = count($items) === 1 ? (int) ($items[0][1] ?? 0) : 0;
+        // Air and sea packages handed over together: one message, but the log
+        // names both kinds (air:5918,sea:7220) so the Outbox never opens the
+        // wrong record.
+        $mods = array_values(array_unique(array_map(function ($it) { return (string) ($it[0] ?? 'air'); }, $items)));
+        $mixed = count($mods) > 1;
         if (function_exists('cdp_msgSetContext')) {
-            cdp_msgSetContext(['source' => 'delivery', 'source_label' => 'Delivery', 'entity_type' => $module === 'sea' ? 'package' : 'shipment',
-                'entity_id' => implode(',', array_map(function ($it) { return (string) (int) ($it[1] ?? 0); }, $items)), 'entity_label' => $list,
-                'recipient_user_id' => $senderId]);
+            cdp_msgSetContext(['source' => 'delivery', 'source_label' => 'Warehouse hand-over',
+                'entity_type' => $mixed ? 'mixed' : ($module === 'sea' ? 'package' : 'shipment'),
+                'entity_id' => implode(',', array_map(function ($it) use ($mixed) { return ($mixed ? (string) ($it[0] ?? 'air') . ':' : '') . (int) ($it[1] ?? 0); }, $items)),
+                'entity_label' => $list, 'recipient_user_id' => $senderId,
+                'recipient_name' => trim((string) ($sender->fname ?? '') . ' ' . (string) ($sender->lname ?? ''))]);
         }
         $ns = ['email' => ['on' => true, 'custom' => false], 'whatsapp' => ['on' => true, 'custom' => false], 'sms' => ['on' => true, 'custom' => false]];
         try {
             require_once CDP_ROOT . '/helpers/whatsapp.php';
             $trackUrl = rtrim((string) ($core->site_url ?? ''), '/') . '/track.php?order_track=' . rawurlencode((string) $trackings[0]);
             $ns = cdp_statusNotifyResolve($status, $sender, $list, $trackUrl, $module, $orderId, [
-                'status' => cdp_handoverLabel($status), 'comment' => cdp_handoverTrackComment($status), 'location' => 'Warehouse',
+                'status' => cdp_handoverLabel($status), 'comment' => '', 'location' => 'Warehouse',
             ]);
             // The drafted texts speak about one package; several packages keep the
             // plural built-in text unless a text was saved for the status.
@@ -127,16 +157,21 @@ function slw_notify(int $senderId, array $trackings, int $status, $core, array $
                 require_once CDP_ROOT . '/helpers/phpmailer/class.phpmailer.php';
                 require_once CDP_ROOT . '/helpers/phpmailer/class.smtp.php';
                 $subject = cdp_handoverSubject($status, $list);
-                if (!empty($ns['email']['custom']) && function_exists('cdp_statusNotifyEmail')) {
-                    cdp_statusNotifyEmail($sender, $ns['email'], $subject . ($site ? ' — ' . $site : ''));
-                } else {
-                    cdp_sendTemplateEmail(29, $email, ['[USERNAME]' => htmlspecialchars(cdp_nameWithLocker($sender)), '[SUBJECT]' => $subject, '[MESSAGE]' => '<p>' . nl2br(htmlspecialchars(str_replace('*', '', $text))) . '</p>'], $subject . ($site ? ' — ' . $site : ''));
+                $fullSubject = $subject . ($site ? ' — ' . $site : '');
+                if (empty($ns['email']['custom'])) {
+                    // No library text (or several packages): the built-in text, sent
+                    // the same way so a failure before the send is in the Outbox too.
+                    $ns['email'] = ['on' => true, 'custom' => true, 'source' => 'builtin', 'subject' => $fullSubject,
+                        'body' => '<p>' . nl2br(htmlspecialchars(str_replace('*', '', $text), ENT_QUOTES, 'UTF-8')) . '</p>'];
                 }
+                cdp_statusNotifyEmail($sender, $ns['email'], $fullSubject);
             }
         } catch (Throwable $e) { error_log('sl handover mail: ' . $e->getMessage()); }
         if (function_exists('cdp_msgClearContext')) {
-            cdp_msgClearContext(['source', 'source_label', 'entity_type', 'entity_id', 'entity_label', 'recipient_user_id']);
+            cdp_msgClearContext(['source', 'source_label', 'entity_type', 'entity_id', 'entity_label', 'recipient_user_id', 'recipient_name']);
         }
+        // A run the gate queued from here (Automation Center owns statuses) goes now.
+        if (function_exists('cdp_statusNotifyDrainQueue')) cdp_statusNotifyDrainQueue();
     });
 }
 
@@ -159,7 +194,8 @@ switch ($op) {
             $res = cdp_pickupCodeGenerate($module, $ids, (string) ($_POST['context'] ?? 'sl_warehouse'), $uid);
             if (!empty($res['success'])) cdp_activityLog(['module' => 'pickup_codes', 'action' => 'send', 'action_label' => 'Sent pickup code', 'verb' => 'update', 'outcome' => 'ok', 'summary' => 'Pickup code sent for ' . implode(', ', $res['trackings'] ?? []), 'entity_type' => 'pickup_code', 'entity_id' => (int) ($res['code_id'] ?? 0)]);
             unset($res['owner']);
-            sl_json(['success' => !empty($res['success']), 'message' => $res['message'] ?? '', 'channels' => $res['channels'] ?? []]);
+            sl_json(['success' => !empty($res['success']), 'message' => slw_queuedNote($res), 'channels' => $res['channels'] ?? [],
+                'outbox' => slw_outboxUrl($res['trackings'] ?? [])]);
         }
         $res = cdp_pickupCodeVerify($module, $ids, (string) ($_POST['code'] ?? ''), $uid);
         cdp_activityLog(['module' => 'pickup_codes', 'action' => 'verify', 'action_label' => 'Verified pickup code', 'verb' => 'update', 'outcome' => !empty($res['success']) ? 'ok' : 'fail', 'summary' => ($res['success'] ? 'Code verified for ' : 'Wrong code for ') . $module . ' #' . implode(',', $ids), 'entity_type' => 'package', 'entity_id' => $ids[0]]);
@@ -219,13 +255,14 @@ switch ($op) {
         if (!cdp_pickupCodeCanUse($user)) sl_json(['success' => false, 'message' => 'You do not have permission to use pickup codes.'], 403);
         $c = sl_whCustomer((int) ($_POST['customer'] ?? 0));
         if (!$c || !$c['pkgs']) sl_json(['success' => false, 'message' => 'This customer has no parcel ready.'], 404);
-        $msgs = []; $ok = false;
+        $msgs = []; $ok = false; $trks = [];
         foreach ($c['byMod'] as $m => $ids) {
             if (!$ids) continue;
             $r = cdp_pickupCodeGenerate($m, $ids, 'sl_handout', $uid);
-            $ok = $ok || !empty($r['success']); $msgs[] = $r['message'];
+            $ok = $ok || !empty($r['success']); $msgs[] = slw_queuedNote($r);
+            $trks = array_merge($trks, $r['trackings'] ?? []);
         }
-        sl_json(['success' => $ok, 'message' => implode(' ', array_unique($msgs))]);
+        sl_json(['success' => $ok, 'message' => implode(' ', array_unique($msgs)), 'outbox' => slw_outboxUrl($trks)]);
         break;
 
     case 'handover':
@@ -239,6 +276,9 @@ switch ($op) {
         if ($total > 1 && !$user->cdp_hasPermission('warehouse_deliver_user')) sl_json(['success' => false, 'message' => 'You may hand over one package at a time.'], 403);
         $status = cdp_handoverStatusFromInput($_POST['handover_type'] ?? '');
         $label = cdp_handoverLabel($status);
+        $skip = !empty($_POST['skip_code']);
+        $skipReason = mb_substr(trim(cdp_sanitize((string) ($_POST['skip_reason'] ?? ''))), 0, 200);
+        if ($skip && !cdp_handoverCanSkipCode($user)) sl_json(['success' => false, 'message' => 'Only a warehouse manager or administrator can hand over without the pickup code.'], 403);
         $rows = [];
         foreach ($items as $m => $ids) {
             foreach ($ids as $id) {
@@ -249,7 +289,7 @@ switch ($op) {
                 if ($m === 'air' && !cdp_fsIsCleared($r->fs_cleared_for_delivery ?? 0)) sl_json(['success' => false, 'message' => $r->order_prefix . $r->order_no . ' is not cleared by Accounts yet.'], 409);
                 $rows[] = [$m, $r];
             }
-            $gate = cdp_pickupCodeGate($m, $ids, $status);
+            $gate = $skip ? ['ok' => true] : cdp_pickupCodeGate($m, $ids, $status);
             if (!$gate['ok']) sl_json(['success' => false, 'message' => $gate['message'], 'pickup_code' => ['module' => $m, 'order_ids' => $gate['missing']]], 409);
         }
         if (!$rows) sl_json(['success' => false, 'message' => 'These packages were already handed over.'], 409);
@@ -263,11 +303,17 @@ switch ($op) {
             cdp_insertCourierShipmentUserHistory(['user_id' => $uid, 'order_id' => (int) $r->order_id, 'order_track' => $trk, 'action' => 'Warehouse — package ' . strtolower($label), 'date_history' => date('Y-m-d H:i:s')]);
             slw_syncConsolidation((int) $r->order_id, $m === 'sea');
             cdp_activityLogStatus($m === 'sea' ? 'packages' : 'shipments', $m === 'sea' ? 'package' : 'shipment', (int) $r->order_id, $trk, $status, $label, sl_statusLabel($r->status_courier));
+            cdp_handoverLogAdd($m, $r, $status, $uid, $skip ? 'skipped' : 'code', $skipReason);
+            if ($skip) cdp_activityLog(['module' => 'warehouse', 'action' => 'skip_pickup_code', 'action_label' => 'Handed over without pickup code', 'verb' => 'update', 'outcome' => 'ok', 'summary' => $trk . ' handed over without the pickup code' . ($skipReason !== '' ? ' · ' . $skipReason : ''), 'entity_type' => $m === 'sea' ? 'package' : 'shipment', 'entity_id' => (int) $r->order_id, 'entity_label' => $trk]);
             $bySender[(int) $r->sender_id][] = $trk;
             $itemsBySender[(int) $r->sender_id][] = [$m, (int) $r->order_id];
         }
         foreach ($bySender as $sid => $trks) slw_notify($sid, $trks, $status, $core, $itemsBySender[$sid] ?? []);
-        sl_json(['success' => true, 'message' => count($rows) . ' package' . (count($rows) === 1 ? '' : 's') . ' ' . strtolower($label), 'label' => $label, 'n' => count($rows)]);
+        $allTrks = array_merge(...array_values($bySender));
+        // The customer messages go out after the response (or from the Automation
+        // Center): say so, and point at the Outbox rather than claim they arrived.
+        sl_json(['success' => true, 'message' => count($rows) . ' package' . (count($rows) === 1 ? '' : 's') . ' ' . strtolower($label), 'label' => $label, 'n' => count($rows),
+            'notice' => 'Customer message queued: see Outbox', 'outbox' => slw_outboxUrl($allTrks)]);
         break;
 
     case 'undo':

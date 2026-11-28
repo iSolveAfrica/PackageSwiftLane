@@ -393,6 +393,13 @@ if (!function_exists('cdp_commSettings')) {
             if (in_array($k, ['enabled', 'bot_enabled', 'campaign_needs_approval'], true)) {
                 $v = $v === '1' ? '1' : '0';
             }
+            if ($k === 'enabled' && $v === '1' && cdp_commSetting('enabled') !== '1') {
+                // Switching automations on: start from now. While they were off the
+                // worker did not scan, so the watermark is stale; without this every
+                // status changed in the meantime (already announced by the old screens)
+                // would be sent again.
+                cdp_opsSettingSet('comms', 'wm_track', (string) (int) cdp_opsVal("SELECT COALESCE(MAX(id),0) FROM cdb_courier_track"), 0);
+            }
             cdp_opsSettingSet('comms', $k, mb_substr($v, 0, 4000));
         }
         if (cdp_commSetting('webhook_key') === '') {
@@ -1121,6 +1128,11 @@ if (!function_exists('cdp_commSendNow')) {
     {
         cdp_commLoadSenders();
         if (cdp_commSetting('wa_provider') === 'cloud') {
+            // The Settings master switch stops Cloud sends too (UltraMsg checks it in sendNotificationWhatsApp_v2).
+            $csw = function_exists('cdp_getSettingsCourier') ? cdp_getSettingsCourier() : null;
+            if (!$csw || (int) ($csw->active_whatsapp ?? 0) !== 1) {
+                return ['success' => false, 'message' => 'WhatsApp is switched off'];
+            }
             $to = function_exists('cdp_normalizePhone') ? cdp_normalizePhone((string) $u->phone, $u->country ?? null) : (string) $u->phone;
             // Outside the 24-hour customer-service window Meta only accepts an approved template.
             $open = cdp_commWaWindowOpen($to);
@@ -1151,6 +1163,10 @@ if (!function_exists('cdp_commSendNow')) {
         $to = trim((string) $u->email);
         if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
             return ['success' => false, 'message' => 'No valid e-mail address.', 'early' => true];
+        }
+        if (!filter_var(trim((string) ($settings->email_address ?? '')), FILTER_VALIDATE_EMAIL)) {
+            // Same wording as the old screens, instead of PHPMailer's "Invalid address: (setFrom)".
+            return ['success' => false, 'message' => 'No sender e-mail address is configured (Settings > E-mail)'];
         }
         $isHtml = strpos((string) $text, '<!--sl-html-->') === 0;
         if ($isHtml) {
@@ -2132,7 +2148,17 @@ if (!function_exists('cdp_commFindUserByPhone')) {
             cdp_commReply($t, 'Welcome back! You will receive shipment updates on WhatsApp again.', 'system');
             return;
         }
-        if ($kw === 'score' && $uid) {
+        if ($kw === 'score' && $uid && function_exists('cdp_surveyReplyScore')) {
+            // Surveys: the open window, sent invitations only, saved on the form's rating question.
+            $sr = cdp_surveyReplyScore($uid, (int) $m['body']);
+            if ($sr) {
+                cdp_commReply($t, $sr['score'] >= 4 ? 'Thank you for your rating!' : 'Thank you. We are sorry it was not better - a member of our team will look into it.', 'system');
+                if ($sr['score'] <= 2) {
+                    cdp_commHandoff($t, 'Low satisfaction score');
+                }
+                return;
+            }
+        } elseif ($kw === 'score' && $uid) {
             $s = cdp_opsOne("SELECT id FROM cdb_comm_surveys WHERE user_id = :u AND responded_at IS NULL AND sent_at >= :c ORDER BY id DESC LIMIT 1",
                 [':u' => $uid, ':c' => cdp_opsNow(-3 * 86400)]);
             if ($s) {
@@ -2654,4 +2680,9 @@ if (!function_exists('cdp_commMigrateV2')) {
 // worker and the status scan find them (helpers/comms_surveys.php requires this file back).
 if (is_file(__DIR__ . '/comms_surveys.php')) {
     require_once __DIR__ . '/comms_surveys.php';
+}
+// Campaign sending (cdp_commCampaignTick) loads with the engine too, so every worker entry point
+// runs it instead of the legacy cdp_commLaunchDueCampaigns (helpers/comms_campaigns.php requires this file back).
+if (is_file(__DIR__ . '/comms_campaigns.php')) {
+    require_once __DIR__ . '/comms_campaigns.php';
 }

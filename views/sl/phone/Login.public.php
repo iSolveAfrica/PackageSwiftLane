@@ -50,11 +50,12 @@ $fp = '<svg class="ic ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColo
 <?php if (!empty($d['passkeys'])): ?><button type="button" class="mx-btn sec b4-b" data-pk-login hidden aria-label="Sign in with fingerprint or face"><?= $fp ?>Sign in with fingerprint or face</button><?php endif; ?>
 </div>
 </form>
-<div class="b4-auth-links">
-<a class="mx-lnk" href="<?= h(sl_route('ForgotPassword')) ?>"><i class="ic ic-sm i-key" aria-hidden="true"></i>Reset my password with a one-time code</a>
-<?php if (!$rider): ?><a class="mx-lnk" href="<?= h(sl_route('PublicTracking')) ?>"><i class="ic ic-sm i-search" aria-hidden="true"></i>Track a package</a>
-<a class="mx-lnk" href="<?= h(sl_route('SignUp')) ?>"><i class="ic ic-sm i-user" aria-hidden="true"></i>Create an account</a><?php endif; ?>
-</div>
-<p class="mx-note"><?= $rider ? 'Need rider access? Ask your dispatch team for an account.' : 'After signing in, customers land on their dashboard; staff accounts open the workspace.' ?></p>
+<p class="b4-auth-or"><span>More options</span></p>
+<nav class="mx-card mx-list b4-auth-links" aria-label="More options">
+<a class="mx-row" href="<?= h(sl_route('ForgotPassword')) ?>"><span class="mx-li t-key"><i class="ic i-key" aria-hidden="true"></i></span><span class="mx-rm"><b>Forgot your password?</b><small>Reset it with a one-time code</small></span><i class="ic ic-sm i-right b4-go" aria-hidden="true"></i></a>
+<?php if (!$rider): ?><a class="mx-row" href="<?= h(sl_route('PublicTracking')) ?>"><span class="mx-li t-trk"><i class="ic i-search" aria-hidden="true"></i></span><span class="mx-rm"><b>Track a package</b><small>No sign-in needed, just the tracking number</small></span><i class="ic ic-sm i-right b4-go" aria-hidden="true"></i></a>
+<a class="mx-row" href="<?= h(sl_route('SignUp')) ?>"><span class="mx-li t-new"><i class="ic i-user" aria-hidden="true"></i></span><span class="mx-rm"><b>New here? Create an account</b><small>Free, with your own US, UK and China address</small></span><i class="ic ic-sm i-right b4-go" aria-hidden="true"></i></a><?php endif; ?>
+</nav>
+<p class="mx-note b4-auth-note"><?= $rider ? 'Need rider access? Ask your dispatch team for an account.' : 'After signing in, customers land on their dashboard; staff accounts open the workspace.' ?></p>
 </main>
 <?php endif; ?>

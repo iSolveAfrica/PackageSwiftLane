@@ -17,10 +17,11 @@ $isAdmin = !empty($d['isAdmin']);
 $ai = $d['ai'] ?? ['ok' => false, 'name' => 'King', 'message' => '', 'setup_url' => '', 'tones' => [], 'code' => ''];
 $king = (string) $ai['name'];
 $chs = ['whatsapp' => ['WhatsApp', 'i-wa'], 'sms' => ['SMS', 'i-message'], 'email' => ['E-mail', 'i-mail'], 'inapp' => ['In-app', 'i-bell']];
-$stateLabel = ['drafted' => 'Drafted', 'custom' => 'Custom', 'off' => 'Off'];
+$stateLabel = ['drafted' => 'Drafted', 'shared' => 'Shared', 'custom' => 'Custom', 'off' => 'Off'];
 $ajax = 'ajax/comms/automation_ajax.php';
 $rows = (array) ($d['rows'] ?? []);
 $cfg = ['page' => 'statuses', 'ajax' => $ajax, 'canEdit' => $canEdit, 'ai' => $ai, 'langs' => $d['langs'] ?? [], 'open' => (int) ($d['open'] ?? 0),
+    'openAsked' => (int) ($d['openAsked'] ?? 0),
     'owner' => $d['owner'] ?? 'legacy',
     'statuses' => array_map(function ($r) { return ['id' => $r['id'], 'key' => $r['key'], 'label' => $r['label'], 'kind' => $r['kind_label']]; }, $rows)];
 $legacyOwner = ($d['owner'] ?? 'legacy') !== 'comms';
@@ -65,7 +66,8 @@ $legacyOwner = ($d['owner'] ?? 'legacy') !== 'comms';
     </div>
   </div>
   <div class="cs-counts">
-    <span class="cs-chip drafted"><b data-cs-count="drafted"><?= (int) $d['counts']['drafted'] ?></b> drafted</span>
+    <?php if (!empty($d['draftsOn']) || (int) $d['counts']['drafted'] > 0): ?><span class="cs-chip drafted"><b data-cs-count="drafted"><?= (int) $d['counts']['drafted'] ?></b> drafted</span><?php endif; ?>
+    <?php if (empty($d['draftsOn'])): ?><span class="cs-chip shared" title="Predefined messages are off: these send the one shared message"><b data-cs-count="shared"><?= (int) ($d['counts']['shared'] ?? 0) ?></b> shared</span><?php endif; ?>
     <span class="cs-chip custom"><b data-cs-count="custom"><?= (int) $d['counts']['custom'] ?></b> custom</span>
     <span class="cs-chip off"><b data-cs-count="off"><?= (int) $d['counts']['off'] ?></b> off</span>
   </div>
@@ -79,23 +81,25 @@ $legacyOwner = ($d['owner'] ?? 'legacy') !== 'comms';
     <button type="button" data-ca-f="off" aria-pressed="false">Has a channel off</button>
     <button type="button" data-ca-f="urgent" aria-pressed="false">Urgent</button>
   </div>
-  <span class="cs-key sm" aria-hidden="true"><span class="cs-st drafted">Drafted</span><span class="cs-st custom">Custom</span><span class="cs-st off">Off</span></span>
+  <span class="cs-key sm" aria-hidden="true"><?php if (empty($d['draftsOn'])): ?><span class="cs-st shared">Shared</span><?php else: ?><span class="cs-st drafted">Drafted</span><?php endif; ?><span class="cs-st custom">Custom</span><span class="cs-st off">Off</span></span>
 </div>
 
 <section class="sl-card flush ca-group cs-grid" aria-label="Statuses and channels">
   <div class="ca-tw">
-  <table class="ca-table">
+  <table class="ca-table pwa-keep">
     <colgroup><col><col class="ca-c-cs"><col class="ca-c-cs"><col class="ca-c-cs"><col class="ca-c-cs"><col class="ca-c-n"><col class="ca-c-a2"></colgroup>
     <thead><tr><th scope="col">Status</th><?php foreach ($chs as $c => $cl): ?><th scope="col" class="ca-chh"><i class="ic ic-sm <?= $cl[1] ?>" aria-hidden="true"></i><?= h($cl[0]) ?></th><?php endforeach; ?><th scope="col" class="ca-num">This month</th><th scope="col"><span class="ca-vh">Actions</span></th></tr></thead>
     <tbody>
     <?php foreach ($rows as $r):
+        // Only a plain colour from cdb_styles goes into the style attribute.
+        $color = preg_match('/^#[0-9a-f]{3,8}$|^[a-z]{3,20}$/i', (string) $r['color']) ? (string) $r['color'] : '';
         $f = [];
         foreach ($r['cells'] as $cell) { $f[$cell['state']] = 1; }
         if ($r['urgent']) { $f['urgent'] = 1; }
     ?>
       <tr data-ca-row data-key="<?= h($r['key']) ?>" data-status="<?= (int) $r['id'] ?>" data-f="<?= h(implode(' ', array_keys($f))) ?>">
         <th scope="row" class="ca-name">
-          <span class="ca-nt"><?php if ($r['color'] !== ''): ?><i class="cs-sw" style="background:<?= h($r['color']) ?>" aria-hidden="true"></i><?php endif; ?><?= h($r['label']) ?></span>
+          <span class="ca-nt"><?php if ($color !== ''): ?><i class="cs-sw" style="background:<?= h($color) ?>" aria-hidden="true"></i><?php endif; ?><?= h($r['label']) ?></span>
           <span class="ca-tags"><span class="mut sm"><?= h($r['kind_label']) ?></span><?php if ($r['urgent']): ?><span class="sl-badge warn" title="Sent even during quiet hours">Urgent</span><?php endif; ?><?php if ($r['label'] !== str_replace('_', ' ', $r['name'])): ?><span class="mut sm">· <?= h($r['name']) ?></span><?php endif; ?></span>
         </th>
         <?php foreach ($chs as $c => $cl): $cell = $r['cells'][$c]; ?>
@@ -117,7 +121,7 @@ $legacyOwner = ($d['owner'] ?? 'legacy') !== 'comms';
   </div>
   <div class="sl-empty ca-none" data-ca-empty hidden>No status matches. <button type="button" class="sl-btn ghost sm" data-ca-clear>Show all</button></div>
 </section>
-<p class="mut sm ca-foot">* on via "Any other status". The in-app line shows in the notification bell, which staff also see, so it never carries the pickup code. Statuses are matched by name; the predefined text comes from the status message library.</p>
+<p class="mut sm ca-foot">* on via "Any other status".<?= empty($d['draftsOn']) ? ' Shared: predefined messages are off, so the status sends the one shared message.' : '' ?> The in-app line shows in the notification bell, which staff also see, so it never carries the pickup code. Statuses are matched by name; the predefined text comes from the status message library.</p>
 <?php endif; ?>
 </div>
 

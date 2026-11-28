@@ -407,7 +407,7 @@
         var channels = (o.channels || ['whatsapp', 'sms', 'email']).filter(function (c) { return CH.hasOwnProperty(c); });
         if (!channels.length) throw new Error('SLCommsEditor: no channels');
         var id = 'ce' + (++uidN), kingName = KING(o.king || {}), L = Object.assign({ save: 'Save', saveAll: 'Save all channels', test: 'Send test', reset: 'Reset to predefined', close: 'Close' }, o.labels || {});
-        var values = {}, saved = {}, enabled = {}, dirty = {}, listeners = {}, phones = {}, fields = {}, kings = {}, lastField = {}, canvas = null, cur = null, viaAi = {};
+        var values = {}, saved = {}, enabled = {}, dirty = {}, listeners = {}, phones = {}, fields = {}, kings = {}, counters = {}, lastField = {}, canvas = null, cur = null, viaAi = {};
         var syntax = o.tagSyntax === 'bracket' ? 'bracket' : 'brace';
         channels.forEach(function (c) { values[c] = Object.assign({}, (o.values || {})[c] || {}); enabled[c] = o.enabled && c in o.enabled ? !!o.enabled[c] : null; dirty[c] = false; });
 
@@ -504,7 +504,7 @@
                 });
                 showM();
             }
-            renderPhone(c); count();
+            counters[c] = count; renderPhone(c); count();
             if (o.extra && typeof o.extra[c] === 'function') o.extra[c](p.querySelector('[data-extra]'), api);
             kingBox(c, p);
         }
@@ -686,7 +686,7 @@
             getValues: function () { var r = {}; channels.forEach(function (c) { r[c] = getValue(c); }); return r; },
             setValue: setValue,
             setEnabled: function (c, v) { enabled[c] = !!v; stateBadge(c); var s = built[c] && panel(c).querySelector('[data-enabled]'); if (s) s.checked = !!v; return api; },
-            setSample: function (s) { o.sample = s; channels.forEach(function (c) { if (phones[c]) phones[c].setSample(s); if (kings[c]) kings[c].setSample(s); }); return api; },
+            setSample: function (s) { o.sample = s; channels.forEach(function (c) { if (phones[c]) phones[c].setSample(s); if (kings[c]) kings[c].setSample(s); if (counters[c]) counters[c](); }); return api; },
             isDirty: isDirty,
             markClean: function (c) { (c ? [c] : channels).forEach(function (x) { setDirty(x, false); }); return api; },
             status: status,

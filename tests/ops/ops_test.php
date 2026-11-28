@@ -266,6 +266,11 @@ try {
     cdp_commSaveRule('status:3', 'sms', false);
     check(cdp_commTriggerChannels('status:11') === ['email'] && cdp_commTriggerChannels('status:3') === ['whatsapp'], 'a status without its own switch uses "any other status"');
     cdp_opsSettingSet('comms', 'enabled', '1', 0);
+    // Surveys are configured forms (helpers/comms_surveys.php); the seeded one is
+    // in-app only with a delay. This scenario asks on WhatsApp and e-mail at once.
+    if (function_exists('cdp_surveyEnsure') && cdp_surveyEnsure()) {
+        x("UPDATE cdb_comm_survey_forms SET channels = 'whatsapp,email', delay_hours = 0, active = 1");
+    }
     cdp_commSavePrefs($cust3, ['opted_out_all' => 1], 'test');
     check(cdp_commPrefs($cust3)['opted_out_all'] === 1 && (int) val("SELECT COUNT(*) FROM cdb_comm_consent_log WHERE user_id = :u", [':u' => $cust3]) === 1, 'opt-out stored with a consent-log entry');
 

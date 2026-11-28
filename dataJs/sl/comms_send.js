@@ -46,6 +46,9 @@
                 payload: function () { return { name: S.mode === 'campaign' ? ($('snd-name') || {}).value || '' : '', goal: $('snd-goal').value, mode: S.mode, audience_label: audienceLabel() }; } },
             extra: { whatsapp: waExtra, email: mailExtra }
         });
+        /* The e-mail builder (palette, 600px canvas, inspector) needs the whole width: the "Who will get it" card moves below. */
+        function wideMail() { var f = $('snd-form'); if (f) f.classList.toggle('snd-wide', editor.channel() === 'email'); }
+        editor.on('tab', wideMail); wideMail();
         editor.on('change', function (d) {
             if (d.value && d.value.enabled != null && !!d.value.enabled !== !!S.channels[d.channel]) { setChannel(d.channel, !!d.value.enabled, true); }
             if (d.channel === 'sms') costLater();
@@ -92,7 +95,7 @@
 
         /* in-app text */
         var inT = $('snd-inapp-t');
-        function inPv() { $('snd-inapp-pv').innerHTML = SLCommsEditor.smsHtml(inT.value || 'Your message', B.sample); }
+        function inPv() { $('snd-inapp-pv').innerHTML = SLCommsEditor.smsHtml(inT.value || 'Your message', B.sampleNow || B.sample); }
         inT.addEventListener('input', inPv); inPv();
         SLCommsEditor.tagChips($('snd-inapp-tags'), tags, { syntax: 'brace', target: function () { return inT; } });
 
@@ -103,7 +106,8 @@
             $$('.snd-mode [data-mode]').forEach(function (b) { var on = b.getAttribute('data-mode') === m; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); });
             $$('.snd-pane').forEach(function (p) { p.hidden = p.getAttribute('data-pane') !== m; });
             var camp = m === 'campaign';
-            if ($('snd-draft')) { $('snd-draft').hidden = !camp; $('snd-new').hidden = !camp || !S.campaignId; }
+            if ($('snd-draft')) { $('snd-draft').hidden = !camp; $('snd-new').hidden = !camp || (!S.campaignId && !S.locked); }
+            $('snd-go').disabled = camp && !!S.locked;   // a started campaign stays locked until New campaign
             $('snd-test').hidden = false;
             sampleFromPick();
             refreshReach(); notes(); goLabel();
@@ -154,7 +158,11 @@
             });
         }
         $('snd-chips').addEventListener('click', function (e) { var b = e.target.closest('[data-rm]'); if (b) { S.picked.splice(+b.getAttribute('data-rm'), 1); drawChips(); refreshReach(); } else if (e.target === this) $('snd-q2').focus(); });
-        $('snd-list').addEventListener('input', debounce(function () { refreshReach(); }, 400));
+        // A pasted list is resolved on the server: count it when typing pauses, and on leaving the box.
+        var listSeen = $('snd-list').value;
+        function listChanged() { if ($('snd-list').value !== listSeen) { listSeen = $('snd-list').value; refreshReach(); } }
+        $('snd-list').addEventListener('input', debounce(listChanged, 1200));
+        $('snd-list').addEventListener('blur', listChanged);
         function sampleFromPick() {
             var p = S.mode === 'one' ? S.one : null, s = Object.assign({}, B.sample || {});
             if (p) { s.name = p.name; s.first_name = String(p.name).split(/\s+/)[0]; s.locker = p.locker || s.locker; }
@@ -262,7 +270,7 @@
                 if (!j.success) { $('snd-dlist').innerHTML = '<span class="snd-err sm">' + esc(j.message || 'Not loaded') + '</span>'; return; }
                 $('snd-dlist').insertAdjacentHTML('beforeend', (j.rows || []).map(personRow).join('') || (dl.off ? '' : '<span class="mut sm">Nobody matches.</span>'));
                 dl.off += (j.rows || []).length; $('snd-dmore').hidden = !j.more;
-                $('snd-dcount').textContent = 'Showing ' + num(dl.off) + (S.reach ? ' of ' + num(S.reach.customers || S.reach.total) : '') + (S.mode !== 'campaign' && S.reach && S.reach.contacts ? ' customers (typed addresses are not listed)' : '');
+                $('snd-dcount').textContent = 'Showing ' + num(dl.off) + (S.reach && !dl.q ? ' of ' + num(S.reach.total) : '') + (dl.q ? ' matching “' + dl.q + '”' : '');
             });
         }
         $('snd-all').addEventListener('click', function () { $('snd-dlg').hidden = false; $('snd-dq').value = ''; dl.q = ''; loadPeople(true); });
@@ -347,8 +355,9 @@
             if (S.mode === 'campaign') {
                 if (!$('snd-name').value.trim()) { toast('Give the campaign a name.', true); $('snd-name').focus(); return; }
                 d.action = 'campaign_submit'; d.id = S.campaignId || ''; d.name = $('snd-name').value; d.audience = JSON.stringify(S.audience);
-                var ppl = S.reach ? S.reach.total : 0;
-                if (!confirm((B.needsApproval && !B.selfApprove ? 'Send this campaign for approval?' : (S.when === 'later' ? 'Schedule' : 'Start') + ' this campaign to ' + num(ppl) + ' people in the audience?') + ' People who did not agree to offers are skipped.')) return;
+                var ppl = S.reach ? (S.reach.people || 0) : 0;
+                if (S.reach && !ppl) { var why = 'Nobody in this audience can receive it on the chosen channels. See the reasons under Who will get it.'; result(esc(why), 'bad'); toast(why, true); return; }
+                if (!confirm((B.needsApproval && !B.selfApprove ? 'Send this campaign for approval? About ' + num(ppl) + ' people can receive it.' : (S.when === 'later' ? 'Schedule' : 'Start') + ' this campaign? About ' + num(ppl) + ' people can receive it' + (S.reach && S.reach.total > ppl ? ' (' + num(S.reach.total - ppl) + ' in the audience are skipped)' : '') + '.') + ' People who did not agree to offers are not sent anything.')) return;
             } else {
                 var n = S.reach ? S.reach.total : 0;
                 if (!n) { toast(S.mode === 'one' ? 'Choose a customer first.' : 'Add at least one person.', true); return; }
@@ -359,25 +368,33 @@
             }
             busy(btn, true); result('');
             post(d).then(function (j) {
-                if (!j.success) { result(esc(j.message || 'Not sent.'), 'bad'); toast(j.message || 'Not sent.', true); if (j.id) { S.campaignId = j.id; loadCampaigns(); } return; }
+                if (!j.success) { result(esc(j.message || 'Not sent.'), 'bad'); toast(j.message || 'Not sent.', true); if (j.id) { S.campaignId = j.id; if ($('snd-new')) $('snd-new').hidden = false; loadCampaigns(); } return; }
                 toast(j.message || 'Done');
                 if (S.mode === 'campaign') {
-                    result('<b>' + esc(j.message) + '</b> <a href="#campaigns" data-snd-jump="campaigns">See it in the campaign list</a>', 'ok');
-                    S.campaignId = 0; S.campaignStatus = ''; editor.markClean(); $('snd-new').hidden = true; loadCampaigns();
+                    // Locked until "New campaign": a second press must not start the same campaign again.
+                    result('<b>' + esc(j.message) + '</b> <a href="#campaigns" data-snd-jump="campaigns">See it in the campaign list</a><span class="sm">To send another, choose New campaign.</span>', 'ok');
+                    S.campaignId = 0; S.campaignStatus = ''; editor.markClean(); lockForm(true); loadCampaigns();
                 } else {
-                    var skipped = Object.keys(j.skipped || {}).map(function (k) { return j.skipped[k] + ' ' + k.toLowerCase(); });
-                    result('<b>' + esc(j.message) + '</b>' + (skipped.length ? '<span class="mut sm">Skipped: ' + esc(skipped.join(', ')) + '</span>' : '') + '<span class="sm" data-st></span><a class="sm" href="' + esc(B.outboxUrl) + '">Open the Outbox</a>', 'ok');
+                    var skipped = Object.keys(j.skipped || {}).map(function (k) { return j.skipped[k] + ' · ' + k; });
+                    result('<b>' + esc(j.message) + '</b>' + (skipped.length ? '<span class="sm">Not sent: ' + esc(skipped.join('; ')) + '</span>' : '') + '<span class="sm" data-st></span><a class="sm" href="' + esc(B.outboxUrl) + '">Open the Outbox</a>', 'ok');
                     S.outbox = j.outbox_ids || []; editor.markClean();
                     if (S.outbox.length && !j.scheduled) poll(0);
                 }
-            }).catch(function (err) { result(esc(err.message || 'Network error'), 'bad'); }).finally(function () { busy(btn, false); });
+            }).catch(function (err) { result(esc(err.message || 'Network error'), 'bad'); }).finally(function () { busy(btn, false); if (S.locked && S.mode === 'campaign') btn.disabled = true; });
         });
+        function lockForm(on) {
+            S.locked = on;
+            $('snd-go').disabled = on && S.mode === 'campaign'; if ($('snd-draft')) $('snd-draft').disabled = on;
+            if ($('snd-new')) $('snd-new').hidden = !on && !S.campaignId;
+            $('snd-form').classList.toggle('snd-locked', on);
+        }
         function poll(i) {
             setTimeout(function () {
                 post({ action: 'status', outbox_ids: S.outbox.join(',') }).then(function (j) {
                     var c = j.counts || {}, el = document.querySelector('#snd-result [data-st]'); if (!el) return;
-                    el.textContent = [c.sent ? c.sent + ' sent' : '', c.failed ? c.failed + ' failed' : '', (c.queued || 0) + (c.sending || 0) ? ((c.queued || 0) + (c.sending || 0)) + ' on the way' : '', c.cancelled ? c.cancelled + ' cancelled' : ''].filter(Boolean).join(' · ') + (j.errors && j.errors.length ? ' — ' + j.errors[0] : '');
-                    if (((c.queued || 0) + (c.sending || 0)) && i < 5) poll(i + 1);
+                    var wait = (c.queued || 0) + (c.sending || 0), errs = j.errors || [];
+                    el.textContent = [c.sent ? c.sent + ' sent' : '', c.failed ? c.failed + ' failed' : '', wait ? wait + (errs.length ? ' not delivered yet (retrying)' : ' on the way') : '', c.cancelled ? c.cancelled + ' cancelled' : ''].filter(Boolean).join(' · ') + (errs.length ? ' — ' + errs.join('; ') : '');
+                    if (wait && i < 5) poll(i + 1);
                 });
             }, i ? 3000 : 1500);
         }
@@ -416,7 +433,7 @@
                 var acts = [], started = ['sending', 'sent', 'cancelled'].indexOf(c.status) >= 0 || c.queued > 0;
                 if (started || c.status === 'sent') acts.push('<a class="sl-btn ghost sm" href="' + esc(B.reportUrl) + '?batch=' + encodeURIComponent(c.batch) + '">Report</a>');
                 if (['draft', 'pending', 'scheduled'].indexOf(c.status) >= 0 && !c.queued) acts.push('<button type="button" class="sl-btn ghost sm" data-cact="edit" data-id="' + c.id + '">' + (c.status === 'draft' ? 'Edit' : 'Open') + '</button>');
-                if (c.status === 'pending' && B.isAdmin) acts.push('<button type="button" class="sl-btn sm" data-cact="campaign_approve" data-id="' + c.id + '">Approve</button>');
+                if (c.status === 'pending' && B.isAdmin && (c.created_by !== B.uid || B.rank >= 4)) acts.push('<button type="button" class="sl-btn sm" data-cact="campaign_approve" data-id="' + c.id + '">Approve</button>');
                 if ((c.status === 'pending' || c.status === 'scheduled') && !c.queued) acts.push('<button type="button" class="sl-btn ghost sm" data-cact="campaign_unschedule" data-id="' + c.id + '">Back to draft</button>');
                 acts.push('<button type="button" class="sl-btn ghost sm" data-cact="campaign_duplicate" data-id="' + c.id + '">Duplicate</button>');
                 if (B.isAdmin && c.status !== 'draft' && c.status !== 'cancelled' && (c.status !== 'sent' || c.waiting > 0)) acts.push('<button type="button" class="sl-btn ghost sm snd-danger" data-cact="campaign_cancel" data-id="' + c.id + '">Cancel</button>');
@@ -439,7 +456,13 @@
                 var ask = { campaign_cancel: 'Cancel this campaign? Messages not yet sent will not go out.', campaign_delete: 'Delete this draft?', campaign_approve: 'Approve this campaign? It goes out at its time (now when none is set).' }[act];
                 if (ask && !confirm(ask)) return;
                 busy(b, true);
-                post({ action: act, id: id }).then(function (j) { toast(j.message || (j.success ? 'Done' : 'Failed'), !j.success); if (j.success) { if (act === 'campaign_duplicate' && j.id) openCampaign(j.id); loadCampaigns(); } })
+                post({ action: act, id: id }).then(function (j) {
+                    toast(j.message || (j.success ? 'Done' : 'Failed'), !j.success);
+                    if (!j.success) return;
+                    if (act === 'campaign_delete' && +id === S.campaignId) { editor.markClean(); history.replaceState(null, '', location.pathname + '?mode=campaign#campaigns'); location.reload(); return; }
+                    if (act === 'campaign_duplicate' && j.id) openCampaign(j.id);
+                    loadCampaigns();
+                })
                     .catch(function (err) { toast(err.message || 'Network error', true); }).finally(function () { busy(b, false); });
             });
             setInterval(function () { if (document.visibilityState === 'visible' && $$('#snd-clist .sl-pill.sorting, #snd-clist .sl-pill.transit').length) loadCampaigns(); }, 15000);
@@ -463,11 +486,23 @@
                 $('snd-inapp').hidden = !S.channels.inapp;
                 if (b.whatsapp) editor.setValue('whatsapp', { body: b.whatsapp.body || '', media: b.whatsapp.media || null });
                 if (b.sms) editor.setValue('sms', { body: b.sms.body || '' });
-                if (b.email) editor.setValue('email', { subject: b.email.subject || '', preheader: b.email.preheader || '', design_json: b.email.design_json || undefined });
+                if (b.email) {
+                    var ev = { subject: b.email.subject || '', preheader: b.email.preheader || '' };
+                    if (b.email.design_json) ev.design_json = b.email.design_json;
+                    else if (b.email.html) {
+                        // Written before the builder: its text comes in as a text block so nothing is lost.
+                        var tmp = new DOMParser().parseFromString(String(b.email.html).replace(/<(br|\/p|\/div|\/h[1-6]|\/tr)[^>]*>/gi, '$&\n'), 'text/html').body;
+                        ev.blocks = [{ type: 'text', text: (tmp.textContent || '').replace(/\n{3,}/g, '\n\n').trim() }];
+                        toast('This e-mail was written before the builder: its text was loaded as a text block. Check the layout before sending.');
+                    }
+                    editor.setValue('email', ev);
+                }
                 inT.value = (b.inapp && b.inapp.body) || ''; inPv();
                 S.wa = { template: c.wa_template || '', lang: c.wa_lang || 'en', params: c.wa_params || '' };
                 $$('[data-wa]').forEach(function (i) { i.value = S.wa[i.getAttribute('data-wa')] || ''; });
                 if (c.scheduled_at) { $$('#snd-whenseg button')[1].click(); $('snd-at').value = c.scheduled_at.replace(' ', 'T'); }
+                else if (S.when !== 'now') $$('#snd-whenseg button')[0].click();
+                lockForm(false);
                 var first = c.channels.filter(function (x) { return x !== 'inapp'; })[0]; if (first) editor.show(first);
                 editor.markClean(); $('snd-new').hidden = false;
                 result(c.status === 'draft' ? 'Editing draft “' + esc(c.name) + '”.' : 'Editing “' + esc(c.name) + '”: saving or sending puts it back through ' + (B.needsApproval ? 'approval' : 'the send step') + '.', '');

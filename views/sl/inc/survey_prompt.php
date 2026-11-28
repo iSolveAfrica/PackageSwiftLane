@@ -29,6 +29,10 @@ try {
     return;
 }
 $spRef = trim((string) ($spSurvey->entity_ref ?? ''));
+// Intro and thank-you may carry {company} / {first_name} (written with King): filled, never shown raw.
+$spUid = (int) ($_SESSION['userid'] ?? 0);
+$spIntro = cdp_surveyFillText($spForm['intro'] !== '' ? $spForm['intro'] : 'Tell us in a few seconds how it went.', $spUid);
+$spThanks = cdp_surveyFillText($spForm['thanks'] !== '' ? $spForm['thanks'] : cdp_surveyDefaultThanks(), $spUid);
 ?>
 <style><?= cdp_surveyQuestionsCss() ?>
 .sp-modal{gap:14px}
@@ -40,12 +44,16 @@ $spRef = trim((string) ($spSurvey->entity_ref ?? ''));
 .sp-x{margin-left:auto;flex:none;width:36px;height:36px;border-radius:10px;border:0;background:transparent;color:var(--muted);font-size:22px;cursor:pointer}
 .sp-x:hover{background:var(--hover,var(--field))}
 .sp-qs{max-height:52vh;overflow:auto;padding-right:2px}
+#sl-survey fieldset.sq-q{border:0;padding:0;margin:0 0 18px;background:none;box-shadow:none;border-radius:0}
+#sl-survey fieldset.sq-q legend{padding:0;float:none;width:auto}
 .sp-ft{display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:12px}
 .sp-ft .grow{flex:1}
 .sp-never{background:none;border:0;padding:6px 0;color:var(--muted);font:400 14px var(--font);text-decoration:underline;cursor:pointer}
 .sp-done{text-align:center;padding:12px 4px}
 .sp-done .sp-ic{margin:0 auto 10px;background:var(--green-bg,var(--field));color:var(--green-ink,var(--ink))}
 .sp-done h2{margin:0 0 6px;font:600 19px var(--font)}
+/* King's floating button and its bubble sit above dialogs: keep them out of the survey's way while it is open. */
+html.sp-open .kc-launch,html.sp-open .kc-pop{display:none!important}
 @media (max-width:560px){.sp-qs{max-height:58vh}.sp-ft .sl-btn{flex:1}.sp-never{width:100%;text-align:center}}
 </style>
 <div class="sl-dialog" id="sl-survey" hidden data-sp="<?= (int) $spSurvey->id ?>">
@@ -55,7 +63,7 @@ $spRef = trim((string) ($spSurvey->entity_ref ?? ''));
         <span class="sp-ic" aria-hidden="true">&#9733;</span>
         <div>
           <h2 id="sp-t" tabindex="-1"><?= h($spForm['name'] ?: 'How did we do?') ?></h2>
-          <p><?= h($spForm['intro'] !== '' ? $spForm['intro'] : 'Tell us in a few seconds how it went.') ?><?php if ($spRef !== ''): ?> <span class="mut sm">(<?= h($spRef) ?>)</span><?php endif; ?></p>
+          <p><?= h($spIntro) ?><?php if ($spRef !== ''): ?> <span class="mut sm">(<?= h($spRef) ?>)</span><?php endif; ?></p>
         </div>
         <button type="button" class="sp-x" data-sp-later aria-label="Ask me later">&times;</button>
       </div>
@@ -70,8 +78,8 @@ $spRef = trim((string) ($spSurvey->entity_ref ?? ''));
     </div>
     <div class="sp-done" data-sp-done hidden>
       <span class="sp-ic" aria-hidden="true">&#10003;</span>
-      <h2 tabindex="-1" data-sp-thanks-h>Thank you!</h2>
-      <p class="mut" data-sp-thanks><?= h($spForm['thanks'] !== '' ? $spForm['thanks'] : 'Your feedback helps us serve you better.') ?></p>
+      <h2 tabindex="-1" data-sp-thanks-h>All done</h2>
+      <p class="mut" data-sp-thanks><?= h($spThanks) ?></p>
       <button type="button" class="sl-btn" data-sp-close>Close</button>
     </div>
   </form>
@@ -89,7 +97,7 @@ document.addEventListener('DOMContentLoaded', function () {
     SL.post(url, { action: kind || 'later', id: id }).then(function (j) { if (j && j.message && kind === 'never') SL.toast(j.message); }).catch(function () {});
   }
   // Escape and a click outside close the dialog (swiftlane.js): that is "ask me later".
-  new MutationObserver(function () { if (dlg.hidden) later('later'); }).observe(dlg, { attributes: true, attributeFilter: ['hidden'] });
+  new MutationObserver(function () { document.documentElement.classList.toggle('sp-open', !dlg.hidden); if (dlg.hidden) later('later'); }).observe(dlg, { attributes: true, attributeFilter: ['hidden'] });
   q('[data-sp-later]').forEach(function (b) { b.addEventListener('click', function () { later('later'); close(); }); });
   q('[data-sp-never]').forEach(function (b) { b.addEventListener('click', function () { later('never'); close(); }); });
   q('[data-sp-close]').forEach(function (b) { b.addEventListener('click', close); });
@@ -131,7 +139,11 @@ document.addEventListener('DOMContentLoaded', function () {
     if (busyElsewhere() && tries++ < 200) { setTimeout(show, 1500); return; }
     dlg.hidden = false;
     SL.post(url, { action: 'shown', id: id }).catch(function () {});
-    var t = document.getElementById('sp-t'); if (t) { try { t.focus({ preventScroll: true }); } catch (e) {} }
+    // swiftlane.js moves focus to the first button (the "x") from its own observer,
+    // which runs after this: put it on the title once that has happened, so an
+    // accidental Enter does not dismiss the survey.
+    function toTitle() { var t = document.getElementById('sp-t'); if (t && !dlg.hidden) { try { t.focus({ preventScroll: true }); } catch (e) { t.focus(); } } }
+    setTimeout(function () { requestAnimationFrame(toTitle); }, 0);
   }
   setTimeout(show, 1200);
 });

@@ -25,7 +25,8 @@ function sl_commsSendData($user, $core): array
     $ids = array_filter(array_map('intval', explode(',', (string) ($_GET['ids'] ?? $_GET['id'] ?? $_GET['user_id'] ?? ''))));
     if ($ids) {
         $roles = implode(',', array_map('intval', cdp_commClientRoles()));
-        foreach (cdp_opsQ("SELECT id, fname, lname, locker, phone, email, city FROM cdb_users WHERE active = 1 AND userlevel IN ($roles) AND id IN (" . implode(',', array_slice($ids, 0, 300)) . ")") as $u) {
+        $ag = cdp_cmpAgencyScope();   // agency-restricted staff: only their agency's customers
+        foreach (cdp_opsQ("SELECT id, fname, lname, locker, phone, email, city FROM cdb_users WHERE active = 1 AND userlevel IN ($roles) AND id IN (" . implode(',', array_slice($ids, 0, 300)) . ")" . ($ag ? ' AND agency_id = ' . (int) $ag : '')) as $u) {
             $pre[] = ['id' => (int) $u->id, 'name' => trim($u->fname . ' ' . $u->lname) ?: 'Customer', 'locker' => (string) $u->locker, 'phone' => (string) $u->phone,
                 'email' => (string) $u->email, 'city' => (string) $u->city];
         }
@@ -59,6 +60,7 @@ function sl_commsSendData($user, $core): array
     return [
         'ready' => $ready,
         'rank' => $rank,
+        'uid' => cdp_opsUid(),
         'canCampaign' => $canCampaign,
         'isAdmin' => $rank >= 3,
         'needsApproval' => cdp_cmpNeedsApproval(),

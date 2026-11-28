@@ -2,12 +2,12 @@
 .i-wa{--i:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><path d='M3.5 20.5l1.3-4.3A8.5 8.5 0 1 1 8 19.4z'/><path d='M9 8.5c0 3 2.5 6.5 6.5 6.5l1-1.5-2-1-1 .8c-1-.4-2.3-1.7-2.8-2.8l.8-1-1-2z'/></svg>")}
 .fr-ok{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;background:var(--green-bg);color:var(--green-ink);font-size:15.5px}
 .fr-bar{height:8px;border-radius:9px;background:var(--active);overflow:hidden}.fr-bar i{display:block;height:100%;background:var(--muted)}.fr-bar i.hi{background:#E2632A}
-.hb-sp{display:flex;align-items:flex-end;gap:2px;height:28px;width:72px;flex:none}
-.hb-sp i{flex:1;border-radius:2px 2px 0 0;background:var(--line-2);transition:height .6s}
-.hb-sp i:last-child{background:#E2632A}
-@media (prefers-reduced-motion:reduce){.hb-sp i{transition:none}.hb-kv.bump{animation:none}}
+.hb-spk{display:flex;align-items:flex-end;gap:2px;height:28px;width:72px;flex:none}
+.hb-spk i{flex:1;border-radius:2px 2px 0 0;background:var(--line-2);transition:height .6s}
+.hb-spk i:last-child{background:#E2632A}
+@media (prefers-reduced-motion:reduce){.hb-spk i{transition:none}.hb-kv.bump{animation:none}}
 .hb-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none;background:var(--green)}.hb-dot.w{background:var(--yellow)}.hb-dot.e{background:var(--red)}
-.hb-sp i:last-child{background:var(--accent,#E2632A)}
+.hb-spk i:last-child{background:var(--accent,#E2632A)}
 .hb-bar{margin:4px 0 14px;align-items:center}
 .hb-chans{min-width:0}
 .hb-ch{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--ink);font-size:14.5px;text-decoration:none;white-space:nowrap}
@@ -54,7 +54,7 @@ a.hb-q:hover{background:var(--hover)}
 @media (max-width:640px){
   .hb-tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.hb-t{padding:12px}.hb-tn{font-size:22px}.hb-t.cost{grid-column:1/-1}
   .hb-p{padding:14px}
-  .hb-cr{flex-wrap:wrap;gap:10px}.hb-cm{flex:1 1 calc(100% - 50px)}.hb-cs{text-align:left}.hb-cr .hb-sp{margin-left:auto}
+  .hb-cr{flex-wrap:wrap;gap:10px}.hb-cm{flex:1 1 calc(100% - 50px)}.hb-cs{text-align:left}.hb-cr .hb-spk{margin-left:auto}
   .hb-ol{width:130px}
   .hb-bar{flex-direction:column;align-items:stretch}
   .hb-chans{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.hb-chans::-webkit-scrollbar{display:none}
@@ -67,3 +67,6 @@ a.hb-q:hover{background:var(--hover)}
 .cm-tabs a:hover{color:var(--ink)}
 .cm-tabs a.on{color:var(--ink);border-bottom-color:var(--accent,var(--ink))}
 .cm-tabs em{font-style:normal;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--amber-bg);color:var(--amber-ink);font:600 13px var(--font);display:inline-grid;place-items:center}
+
+/* the whole provider answer in Latest failures: the pill wraps instead of cutting it off */
+.hb-why .sl-pill{white-space:normal;height:auto;min-height:24px;line-height:1.35;padding:3px 9px;overflow-wrap:anywhere;text-align:left;max-width:340px}

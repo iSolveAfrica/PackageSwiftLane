@@ -31,7 +31,7 @@ require_once __DIR__ . '/comms.php';
 
 if (!function_exists('cdp_surveyEnsure')) {
 
-    define('CDP_SURVEY_SCHEMA', 1);
+    define('CDP_SURVEY_SCHEMA', 2);
 
     /** Question types: key => [label, short hint]. */
     function cdp_surveyTypes()
@@ -72,6 +72,106 @@ if (!function_exists('cdp_surveyEnsure')) {
         return $out;
     }
 
+    /** Status kinds a survey may follow: a rating only makes sense once the package reached the customer. */
+    function cdp_surveyStatusAllowed($id, $name = null)
+    {
+        $name = $name ?? (cdp_commStatusNames()[(int) $id] ?? '');
+        if ($name === '') {
+            return false;
+        }
+        if (in_array(cdp_commStatusKind((int) $id, $name), ['delivered', 'picked_up'], true)) {
+            return true;
+        }
+        if (is_file(__DIR__ . '/notify_drafts.php')) {
+            require_once __DIR__ . '/notify_drafts.php';
+            if (function_exists('cdp_notifyDraftKind')) {
+                return in_array(cdp_notifyDraftKind((string) $name), ['delivered', 'picked_up', 'arrived'], true);
+            }
+        }
+        return false;
+    }
+
+    /** The thank-you line when a form has none (the screen's heading already says "All done"). */
+    function cdp_surveyDefaultThanks()
+    {
+        return 'Thank you! Your feedback helps us serve you better.';
+    }
+
+    /**
+     * Fill the few placeholders an intro or thank-you line may carry
+     * ({company}, {first_name}, {name}); any other {placeholder} is removed.
+     * Plain text: the caller escapes it.
+     */
+    function cdp_surveyFillText($text, $userId = 0)
+    {
+        $text = (string) $text;
+        if (strpos($text, '{') === false) {
+            return $text;
+        }
+        $vars = ['company' => '', 'first_name' => '', 'name' => ''];
+        try {
+            $u = (int) $userId > 0 ? cdp_commUser((int) $userId) : null;
+            $base = cdp_commBaseVars($u ?: (object) ['fname' => '', 'lname' => '']);
+            foreach (array_keys($vars) as $k) {
+                $vars[$k] = trim((string) ($base[$k] ?? ''));
+            }
+        } catch (Throwable $e) {
+            error_log('survey text: ' . $e->getMessage());
+        }
+        if ($vars['company'] === '') {
+            $vars['company'] = 'us';
+        }
+        $out = preg_replace_callback('/\{([a-z_]+)\}/', function ($m) use ($vars) { return $vars[$m[1]] ?? ''; }, $text);
+        // "Hello {first_name}," with no name left: "Hello,".
+        $out = preg_replace('/\s+([,.!?])/u', '$1', $out);
+        return trim(preg_replace('/[ \t]{2,}/', ' ', $out));
+    }
+
+    /** The designed e-mail invitation: heading, a short line, an "Answer the survey" button. */
+    function cdp_surveyInviteEmailBlocks()
+    {
+        require_once __DIR__ . '/notify_drafts.php';
+        return [
+            ['type' => 'header', 'text' => '{company}'],
+            ['type' => 'heading', 'text' => 'How did we do?'],
+            ['type' => 'text', 'text' => "Hello {first_name},\n\nThank you for shipping {tracking} with {company}. How did it go? Answering takes less than a minute and helps us serve you better."],
+            ['type' => 'button', 'text' => 'Answer the survey', 'url' => '{survey_url}'],
+            ['type' => 'text', 'text' => 'The link stays open for a few weeks. Thank you for your time!'],
+            ['type' => 'footer', 'text' => function_exists('cdp_notifyDraftFooter') ? cdp_notifyDraftFooter() : 'Thank you for shipping with {company}.'],
+        ];
+    }
+
+    /**
+     * Store the designed e-mail invitation (cdb_comm_templates survey/email/en).
+     * Without $force only when nothing was written yet: no row, or the old
+     * built-in plain text ("Reply with a number ...") that an e-mail cannot answer.
+     */
+    function cdp_surveyInviteEmailSeed($force = false)
+    {
+        try {
+            if (!cdp_opsTableExists('cdb_comm_templates') || !function_exists('cdp_commSaveTemplate')) {
+                return false;
+            }
+            if (!$force) {
+                $row = cdp_opsOne("SELECT body, active FROM cdb_comm_templates WHERE event_key = 'survey' AND channel = 'email' AND language = 'en'");
+                $defs = cdp_commDefaultTemplates();
+                $old = str_replace('*', '', (string) ($defs['survey']['text'] ?? ''));
+                if ($row && ((int) $row->active !== 1 || trim((string) $row->body) !== trim($old))) {
+                    return false;   // switched off, or someone's own text: keep it
+                }
+            }
+            require_once __DIR__ . '/notify_studio.php';
+            require_once __DIR__ . '/comms_triggers.php';
+            $blocks = cdp_surveyInviteEmailBlocks();
+            $r = cdp_commSaveTemplate(['event_key' => 'survey', 'channel' => 'email', 'language' => 'en', 'subject' => 'How did we do with {tracking}?',
+                'html' => cdp_notifyCompileBlocks($blocks), 'design_json' => json_encode(cdp_commBlocksToCanvas($blocks), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), 'active' => 1]);
+            return !empty($r['ok']);
+        } catch (Throwable $e) {
+            error_log('survey invite e-mail: ' . $e->getMessage());
+            return false;
+        }
+    }
+
     /**
      * Create the tables and columns once (schema version in comms.survey_schema).
      * Seeds the default form with the channels the old "Satisfaction survey"
@@ -107,21 +207,45 @@ if (!function_exists('cdp_surveyEnsure')) {
         if (!cdp_opsDdl($ddl)) {
             return $ok = false;
         }
+        // Every column and index must be there before the version is recorded: a
+        // failed ALTER (no privilege, a lock, duplicate rows for uq_track) is
+        // retried on the next request instead of breaking every later query.
+        $all = true;
         $cols = [
-            'form_id' => 'INT NULL', 'status_id' => 'INT NULL', 'track_id' => 'INT NULL', 'entity_type' => 'VARCHAR(20) NULL',
-            'order_id' => 'INT NULL', 'rider_id' => 'INT NULL', 'nps' => 'TINYINT NULL',
-            'prompted_count' => 'INT NOT NULL DEFAULT 0', 'last_prompted_at' => 'DATETIME NULL', 'dismissed_at' => 'DATETIME NULL',
+            'cdb_comm_surveys' => ['form_id' => 'INT NULL', 'status_id' => 'INT NULL', 'track_id' => 'INT NULL', 'entity_type' => 'VARCHAR(20) NULL',
+                'order_id' => 'INT NULL', 'rider_id' => 'INT NULL', 'nps' => 'TINYINT NULL',
+                'prompted_count' => 'INT NOT NULL DEFAULT 0', 'last_prompted_at' => 'DATETIME NULL', 'dismissed_at' => 'DATETIME NULL',
+                'never_ask' => 'TINYINT(1) NOT NULL DEFAULT 0', 'followup_ticket_id' => 'INT NULL'],
+            'cdb_comm_survey_forms' => ['archived_at' => 'DATETIME NULL'],
         ];
-        foreach ($cols as $c => $def) {
-            if (!cdp_opsColumnExists('cdb_comm_surveys', $c)) {
-                cdp_opsX("ALTER TABLE cdb_comm_surveys ADD COLUMN $c $def");
+        foreach ($cols as $table => $list) {
+            foreach ($list as $c => $def) {
+                if (!cdp_opsColumnExists($table, $c)) {
+                    cdp_opsX("ALTER TABLE $table ADD COLUMN $c $def");
+                    // Re-check uncached: cdp_opsColumnExists remembers the "missing" answer for the request.
+                    if ((int) cdp_opsVal("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :t AND COLUMN_NAME = :c",
+                            [':t' => $table, ':c' => $c]) === 0) {
+                        error_log('survey schema: column ' . $table . '.' . $c . ' could not be added');
+                        $all = false;
+                    }
+                }
             }
         }
-        $keys = ['uq_track' => 'ADD UNIQUE KEY uq_track (track_id, user_id)', 'idx_form' => 'ADD KEY idx_form (form_id, sent_at)'];
+        $keys = ['uq_track' => 'ADD UNIQUE KEY uq_track (track_id, user_id)', 'idx_form' => 'ADD KEY idx_form (form_id, sent_at)', 'idx_sent' => 'ADD KEY idx_sent (sent_at)'];
+        $hasKey = function ($name) {
+            return (int) cdp_opsVal("SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_comm_surveys' AND INDEX_NAME = :n", [':n' => $name]) > 0;
+        };
         foreach ($keys as $name => $sql) {
-            if (!cdp_opsVal("SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_comm_surveys' AND INDEX_NAME = :n", [':n' => $name])) {
+            if (!$hasKey($name)) {
                 cdp_opsX("ALTER TABLE cdb_comm_surveys $sql");
+                if (!$hasKey($name)) {
+                    error_log('survey schema: index ' . $name . ' could not be added');
+                    $all = false;
+                }
             }
+        }
+        if (!$all) {
+            return $ok = false;
         }
         if (!cdp_opsVal("SELECT COUNT(*) FROM cdb_comm_survey_forms")) {
             $rules = cdp_commRules();
@@ -134,9 +258,11 @@ if (!function_exists('cdp_surveyEnsure')) {
             cdp_opsX("INSERT INTO cdb_comm_survey_forms (name, active, questions, intro, thanks, trigger_statuses, delay_hours, channels, frequency_days, sort_order, created_by, created_at, updated_at)
                       VALUES (:n, 1, :q, :i, :t, :s, 2, :c, 7, 0, 0, :now, :now)",
                 [':n' => 'How did we do?', ':q' => cdp_opsJson(cdp_surveyDefaultQuestions()),
-                    ':i' => 'Your package has arrived. Tell us in a few seconds how it went.', ':t' => 'Thank you! Your feedback helps us serve you better.',
+                    ':i' => 'Your package has arrived. Tell us in a few seconds how it went.', ':t' => cdp_surveyDefaultThanks(),
                     ':s' => '[]', ':c' => implode(',', $chs), ':now' => cdp_surveyNow()]);
         }
+        // The e-mail invitation gets its own designed e-mail (heading, button) unless someone wrote their own.
+        cdp_surveyInviteEmailSeed(false);
         cdp_opsSettingSet('comms', 'survey_schema', (string) CDP_SURVEY_SCHEMA, 0);
         return $ok = true;
     }
@@ -259,7 +385,7 @@ if (!function_exists('cdp_surveyEnsure')) {
             'intro' => (string) ($r->intro ?? ''), 'thanks' => (string) ($r->thanks ?? ''),
             'statuses' => $st, 'statuses_default' => !$st, 'delay_hours' => (int) $r->delay_hours, 'channels' => $chs,
             'frequency_days' => (int) $r->frequency_days, 'sort_order' => (int) ($r->sort_order ?? 0),
-            'updated_at' => (string) ($r->updated_at ?? ''),
+            'updated_at' => (string) ($r->updated_at ?? ''), 'archived' => !empty($r->archived_at),
         ];
     }
 
@@ -281,14 +407,14 @@ if (!function_exists('cdp_surveyEnsure')) {
         return cdp_surveyDecodeForm(cdp_opsOne("SELECT * FROM cdb_comm_survey_forms WHERE id = :id", [':id' => (int) $id]));
     }
 
-    /** The form a survey row answers: its own, else the first form, else the built-in questions. */
+    /**
+     * The form a survey row answers: its own, else the built-in questions
+     * (rating + comment). Surveys sent before the builder (form_id NULL) keep
+     * the questions they were sent with, whatever forms exist now.
+     */
     function cdp_surveyFormFor($survey)
     {
         $f = !empty($survey->form_id) ? cdp_surveyForm((int) $survey->form_id) : null;
-        if (!$f) {
-            $all = cdp_surveyForms();
-            $f = $all[0] ?? null;
-        }
         if (!$f) {
             $f = ['id' => 0, 'name' => 'How did we do?', 'active' => true, 'questions' => cdp_surveyDefaultQuestions(), 'intro' => '', 'thanks' => '',
                 'statuses' => [], 'statuses_default' => true, 'delay_hours' => 0, 'channels' => ['inapp'], 'frequency_days' => 7, 'sort_order' => 0, 'updated_at' => ''];
@@ -297,9 +423,9 @@ if (!function_exists('cdp_surveyEnsure')) {
     }
 
     /**
-     * Save a form (new when id is 0). The invitation channels it uses are also
-     * switched on for the "survey" automation trigger so the Automations page
-     * and this form agree.
+     * Save a form (new when id is 0). Whether WhatsApp / SMS / e-mail
+     * invitations may go out at all is the "survey" trigger on Automations;
+     * the form only chooses among them.
      *
      * @return array{ok:bool,error:string,id?:int,form?:array}
      */
@@ -329,6 +455,9 @@ if (!function_exists('cdp_surveyEnsure')) {
         foreach ((array) ($d['statuses'] ?? []) as $s) {
             $s = (int) $s;
             if ($s > 0 && isset($statusNames[$s]) && !in_array($s, $st, true)) {
+                if (!cdp_surveyStatusAllowed($s, $statusNames[$s])) {
+                    return ['ok' => false, 'error' => '"' . cdp_commStatusLabel($statusNames[$s]) . '" cannot send a survey: only statuses where the customer has the package (delivered, picked up, arrived) ask for a rating.'];
+                }
                 $st[] = $s;
             }
         }
@@ -361,15 +490,8 @@ if (!function_exists('cdp_surveyEnsure')) {
         if (empty($r['ok']) || $id <= 0) {
             return ['ok' => false, 'error' => 'The survey was not saved. Please try again.'];
         }
-        if ($active) {
-            $rules = [];
-            foreach (array_intersect($chs, ['whatsapp', 'sms', 'email']) as $c) {
-                $rules[$c] = 1;
-            }
-            if ($rules) {
-                cdp_commSaveRules(['survey' => $rules]);
-            }
-        }
+        // The channel switches stay on Automations (the one per-trigger control): a
+        // form never switches a survey channel back on there.
         return ['ok' => true, 'error' => '', 'id' => $id, 'form' => cdp_surveyForm($id)];
     }
 
@@ -383,7 +505,7 @@ if (!function_exists('cdp_surveyEnsure')) {
         if ($on && !$f['channels']) {
             return ['ok' => false, 'error' => 'Choose how this survey is sent (Edit) before switching it on.'];
         }
-        $r = cdp_opsX("UPDATE cdb_comm_survey_forms SET active = :a, updated_by = :u, updated_at = :n WHERE id = :id",
+        $r = cdp_opsX("UPDATE cdb_comm_survey_forms SET active = :a, updated_by = :u, updated_at = :n" . ($on ? ', archived_at = NULL' : '') . " WHERE id = :id",
             [':a' => $on ? 1 : 0, ':u' => $userId === null ? cdp_opsUid() : (int) $userId, ':n' => cdp_surveyNow(), ':id' => (int) $id]);
         return ['ok' => (bool) $r['ok'], 'error' => $r['ok'] ? '' : 'Not saved.'];
     }
@@ -399,7 +521,7 @@ if (!function_exists('cdp_surveyEnsure')) {
             return ['ok' => false, 'error' => 'This survey no longer exists.'];
         }
         if ((int) cdp_opsVal("SELECT COUNT(*) FROM cdb_comm_surveys WHERE form_id = :f", [':f' => (int) $id]) > 0) {
-            cdp_opsX("UPDATE cdb_comm_survey_forms SET active = 0, updated_at = :n WHERE id = :id", [':n' => cdp_surveyNow(), ':id' => (int) $id]);
+            cdp_opsX("UPDATE cdb_comm_survey_forms SET active = 0, archived_at = COALESCE(archived_at, :a), updated_at = :n WHERE id = :id", [':a' => cdp_surveyNow(), ':n' => cdp_surveyNow(), ':id' => (int) $id]);
             return ['ok' => true, 'error' => '', 'archived' => true];
         }
         $r = cdp_opsX("DELETE FROM cdb_comm_survey_forms WHERE id = :id", [':id' => (int) $id]);
@@ -424,6 +546,47 @@ if (!function_exists('cdp_surveyEnsure')) {
             }
         }
         return null;
+    }
+
+    /**
+     * When an active survey shares a trigger status with another active one,
+     * only one of them is sent (cdp_surveyFormForStatus takes the first): a
+     * sentence naming the other survey(s) and who wins, or '' when none overlap.
+     */
+    function cdp_surveyOverlapWarning($id)
+    {
+        $f = cdp_surveyForm((int) $id);
+        if (!$f || empty($f['active'])) {
+            return '';
+        }
+        $defaults = cdp_surveyDefaultStatuses();
+        $mine = $f['statuses'] ?: $defaults;
+        $names = cdp_commStatusNames();
+        $parts = [];
+        $lost = [];
+        foreach (cdp_surveyForms(true) as $o) {
+            if ((int) $o['id'] === (int) $f['id']) {
+                continue;
+            }
+            $both = array_values(array_intersect($mine, $o['statuses'] ?: $defaults));
+            if (!$both) {
+                continue;
+            }
+            $labels = array_map(function ($s) use ($names) { return isset($names[$s]) ? cdp_commStatusLabel($names[$s]) : '#' . $s; }, $both);
+            $parts[] = '“' . $o['name'] . '” (' . implode(', ', $labels) . ')';
+            foreach ($both as $s) {
+                $w = cdp_surveyFormForStatus($s);
+                if ($w && (int) $w['id'] !== (int) $f['id']) {
+                    $lost[(string) $w['name']] = true;
+                }
+            }
+        }
+        if (!$parts) {
+            return '';
+        }
+        return 'Another active survey asks after the same status: ' . implode('; ', $parts) . '. Customers get only one survey per status'
+            . ($lost ? ', so “' . implode('”, “', array_keys($lost)) . '” is sent there instead of this one' : ', and this one is sent there')
+            . '. Change the statuses or switch one off.';
     }
 
     // -------------------------------------------------------------- sending
@@ -466,7 +629,8 @@ if (!function_exists('cdp_surveyEnsure')) {
                 $send[] = $c;
             }
         }
-        $inapp = in_array('inapp', $form['channels'], true);
+        // The pop-up only counts when it can actually ask: switched on in Pop-up settings.
+        $inapp = in_array('inapp', $form['channels'], true) && cdp_surveySettings()['popup'];
         if (!$send && !$inapp) {
             return 0;
         }
@@ -485,9 +649,10 @@ if (!function_exists('cdp_surveyEnsure')) {
         $queued = 0;
         $done = [];
         if ($send) {
-            $vars = ['tracking' => $ref, 'track_url' => cdp_commTrackUrl($ref), 'survey_url' => cdp_surveyLink($sid)];
+            // Signed for the open window counted from when it arrives (after the delay), not from now.
+            $vars = ['tracking' => $ref, 'track_url' => cdp_commTrackUrl($ref), 'survey_url' => cdp_surveyLink($sid, (int) ceil(max(0, $due - time()) / 86400))];
             $q = cdp_commQueueEvent('survey', $owner, $vars, ['entity_type' => ($info['type'] ?? '') ?: 'shipment', 'entity_ref' => $ref,
-                'dedupe' => 'trk' . $trackId . ':' . $owner . ':survey', 'channels' => $send, 'send_after' => $due]);
+                'dedupe' => $trackId > 0 ? 'trk' . $trackId . ':' . $owner . ':survey' : 'survey' . $sid, 'channels' => $send, 'send_after' => $due]);
             $queued = (int) $q['queued'];
             foreach ($send as $c) {
                 if (!isset($q['skipped'][$c])) {
@@ -547,10 +712,10 @@ if (!function_exists('cdp_surveyEnsure')) {
             [':f' => cdp_surveyNow(-86400 * $s['window_days']), ':n' => cdp_surveyNow()])];
     }
 
-    /** The public link of a survey (survey.php, signed for the open window). */
-    function cdp_surveyLink($surveyId)
+    /** The public link of a survey (survey.php, signed for the open window plus $extraDays, e.g. the delay before it is sent). */
+    function cdp_surveyLink($surveyId, $extraDays = 0)
     {
-        $days = cdp_surveySettings()['window_days'];
+        $days = cdp_surveySettings()['window_days'] + max(0, (int) $extraDays);
         return cdp_opsSiteUrl() . '/survey.php?t=' . rawurlencode(cdp_opsSign('survey', (int) $surveyId, max(1, $days)));
     }
 
@@ -573,7 +738,7 @@ if (!function_exists('cdp_surveyEnsure')) {
                 return null;
             }
             $r = cdp_opsOne("SELECT s.* FROM cdb_comm_surveys s LEFT JOIN cdb_comm_survey_forms f ON f.id = s.form_id
-                             WHERE s.user_id = :u AND s.responded_at IS NULL AND s.sent_at <= :n AND s.sent_at >= :w
+                             WHERE s.user_id = :u AND s.responded_at IS NULL AND s.never_ask = 0 AND s.sent_at <= :n AND s.sent_at >= :w
                                AND s.prompted_count < :m AND (s.last_prompted_at IS NULL OR s.last_prompted_at <= :g)
                                AND (s.form_id IS NULL OR f.id IS NULL OR f.channels LIKE '%inapp%')
                              ORDER BY s.sent_at DESC LIMIT 1",
@@ -595,9 +760,9 @@ if (!function_exists('cdp_surveyEnsure')) {
     /** "Ask me later" (or, with $never, "Don't ask again"). */
     function cdp_surveyDismiss($surveyId, $never = false)
     {
-        $max = cdp_surveySettings()['max_prompts'];
-        $r = cdp_opsX("UPDATE cdb_comm_surveys SET dismissed_at = :n, last_prompted_at = :n" . ($never ? ', prompted_count = GREATEST(prompted_count, :m)' : '')
-            . " WHERE id = :id AND responded_at IS NULL", $never ? [':n' => cdp_surveyNow(), ':m' => $max, ':id' => (int) $surveyId] : [':n' => cdp_surveyNow(), ':id' => (int) $surveyId]);
+        // "Don't ask again" is its own flag, so raising "Ask at most" later does not bring it back.
+        $r = cdp_opsX("UPDATE cdb_comm_surveys SET dismissed_at = :n, last_prompted_at = :n" . ($never ? ', never_ask = 1' : '')
+            . " WHERE id = :id AND responded_at IS NULL", [':n' => cdp_surveyNow(), ':id' => (int) $surveyId]);
         return (bool) $r['ok'];
     }
 
@@ -609,10 +774,15 @@ if (!function_exists('cdp_surveyEnsure')) {
      * choice, a list of options for multi, text for text. Answering again
      * within the window replaces the earlier answers.
      *
+     * $opts: partial (bool) answers only the questions given, keeps the other
+     * answers and skips the required check (a WhatsApp "reply with a number");
+     * source ('popup' | 'link' | 'whatsapp') says where it came from.
+     *
      * @return array{ok:bool,error:string,errors:array<string,string>,thanks?:string}
      */
-    function cdp_surveySubmit($surveyId, array $answers)
+    function cdp_surveySubmit($surveyId, array $answers, array $opts = [])
     {
+        $partial = !empty($opts['partial']);
         if (!cdp_surveyEnsure()) {
             return ['ok' => false, 'error' => 'Surveys are not available right now.', 'errors' => []];
         }
@@ -631,7 +801,7 @@ if (!function_exists('cdp_surveyEnsure')) {
             $v = $answers[$k] ?? null;
             $empty = $v === null || $v === '' || (is_array($v) && !array_filter($v, 'strlen'));
             if ($empty) {
-                if ($q['required']) {
+                if ($q['required'] && !$partial) {
                     $errors[$k] = $q['type'] === 'text' ? 'Please write a short answer.' : 'Please choose an answer.';
                 }
                 continue;
@@ -692,37 +862,137 @@ if (!function_exists('cdp_surveyEnsure')) {
         if (!$rows) {
             return ['ok' => false, 'error' => 'Please answer at least one question.', 'errors' => []];
         }
-        cdp_opsX("DELETE FROM cdb_comm_survey_answers WHERE survey_id = :s", [':s' => (int) $s->id]);
+        if ($partial) {
+            foreach (array_unique(array_map(function ($row) { return $row[0]['key']; }, $rows)) as $k) {
+                cdp_opsX("DELETE FROM cdb_comm_survey_answers WHERE survey_id = :s AND question_key = :k", [':s' => (int) $s->id, ':k' => $k]);
+            }
+        } else {
+            cdp_opsX("DELETE FROM cdb_comm_survey_answers WHERE survey_id = :s", [':s' => (int) $s->id]);
+        }
         $now = cdp_surveyNow();
         foreach ($rows as [$q, $num, $text]) {
             cdp_opsX("INSERT INTO cdb_comm_survey_answers (survey_id, form_id, question_key, question_type, question_label, value_num, value_text, created_at)
                       VALUES (:s, :f, :k, :t, :l, :n, :v, :c)",
                 [':s' => (int) $s->id, ':f' => $form['id'] ?: null, ':k' => $q['key'], ':t' => $q['type'], ':l' => mb_substr($q['label'], 0, 200), ':n' => $num, ':v' => $text, ':c' => $now]);
         }
+        if ($partial) {
+            // Keep what was answered before; the new values win.
+            $score = $score ?? ($s->score !== null ? (int) $s->score : null);
+            $nps = $nps ?? ($s->nps !== null ? (int) $s->nps : null);
+            $comment = $comment ?? ($s->comment !== null && $s->comment !== '' ? (string) $s->comment : null);
+        }
         cdp_opsX("UPDATE cdb_comm_surveys SET score = :sc, nps = :np, comment = :cm, responded_at = :n, form_id = COALESCE(form_id, :f) WHERE id = :id",
             [':sc' => $score, ':np' => $nps, ':cm' => $comment, ':n' => $now, ':f' => $form['id'] ?: null, ':id' => (int) $s->id]);
         if (($score !== null && $score <= 2) || ($nps !== null && $nps <= 4)) {
-            cdp_surveyFlagUnhappy($s, $score, $nps, $comment);
+            cdp_surveyFlagUnhappy($s, $score, $nps, $comment, (string) ($opts['source'] ?? ''));
+        } elseif (!empty($s->followup_ticket_id)) {
+            cdp_surveyFollowupNote((int) $s->followup_ticket_id, 'The customer changed their survey answer' . ($score !== null ? ' to ' . $score . '/5' : '')
+                . ($nps !== null ? ' (recommend ' . $nps . '/10)' : '') . '. It is no longer a low score.');
         }
-        return ['ok' => true, 'error' => '', 'errors' => [], 'thanks' => $form['thanks'] !== '' ? $form['thanks'] : 'Thank you! Your feedback helps us serve you better.'];
+        return ['ok' => true, 'error' => '', 'errors' => [], 'thanks' => cdp_surveyFillText($form['thanks'] !== '' ? $form['thanks'] : cdp_surveyDefaultThanks(), (int) $s->user_id)];
     }
 
-    /** A low score: tell the staff through the activity log (Customer Care picks it up there). */
-    function cdp_surveyFlagUnhappy($s, $score, $nps, $comment)
+    /**
+     * A low score: the activity log, plus a follow-up the staff actually see.
+     * A WhatsApp reply hands its own thread to a person (helpers/comms.php);
+     * from the pop-up or the public link an internal Customer Care ticket is
+     * opened for the customer (once per survey; a later change of answer adds
+     * a note to it instead). The ticket id is kept on the survey so the
+     * Results "Low scores" list links to it.
+     */
+    function cdp_surveyFlagUnhappy($s, $score, $nps, $comment, $source = '')
     {
+        $what = 'Low survey score' . ($score !== null ? ' ' . $score . '/5' : '') . ($nps !== null ? ' (recommend ' . $nps . '/10)' : '');
         try {
             if (is_file(__DIR__ . '/activity_log.php')) {
                 require_once __DIR__ . '/activity_log.php';
                 if (function_exists('cdp_activityLog')) {
                     cdp_activityLog(['module' => 'notifications', 'verb' => 'update', 'action' => 'surveys.low_score', 'outcome' => 'warn',
                         'entity_type' => 'survey', 'entity_id' => (int) $s->id, 'entity_label' => (string) ($s->entity_ref ?? ''),
-                        'summary' => 'Low survey score' . ($score !== null ? ' ' . $score . '/5' : '') . ($nps !== null ? ' (recommend ' . $nps . '/10)' : '')
-                            . ($comment ? ': ' . mb_substr($comment, 0, 120) : '')]);
+                        'summary' => $what . ($comment ? ': ' . mb_substr($comment, 0, 120) : '')]);
                 }
             }
         } catch (Throwable $e) {
             error_log('survey low score: ' . $e->getMessage());
         }
+        if ($source === 'whatsapp') {
+            return 0;
+        }
+        $ticket = (int) ($s->followup_ticket_id ?? 0);
+        if ($ticket > 0) {
+            cdp_surveyFollowupNote($ticket, 'The customer answered the survey again: ' . $what . ($comment ? '. Comment: ' . mb_substr($comment, 0, 500) : '.'));
+            return $ticket;
+        }
+        try {
+            if (!is_file(__DIR__ . '/support.php')) {
+                return 0;
+            }
+            require_once __DIR__ . '/support.php';
+            if (!function_exists('cdp_csTicketCreate') || !cdp_opsTableExists('cdb_cs_tickets')) {
+                return 0;
+            }
+            $ref = trim((string) ($s->entity_ref ?? ''));
+            $desc = $what . ($ref !== '' ? ' for ' . $ref : '') . ".\n\n" . ($comment ? 'What they wrote: "' . mb_substr($comment, 0, 1500) . '"' : 'No comment was written.')
+                . "\n\nPlease contact the customer, find out what went wrong and put it right. The answers are under Communications > Surveys > Results.";
+            $links = [];
+            if ($ref !== '' && !empty($s->order_id) && in_array((string) ($s->entity_type ?? ''), ['shipment', 'package', 'consolidation'], true)) {
+                $links[] = [(string) $s->entity_type, (int) $s->order_id, $ref];
+            }
+            $id = (int) cdp_csTicketCreate(['customer_id' => (int) $s->user_id, 'subject' => mb_substr($what . ($ref !== '' ? ' · ' . $ref : ''), 0, 190),
+                'description' => $desc, 'category' => 'complaint', 'priority' => 'high', 'channel' => 'staff', 'is_internal' => 1,
+                'tags' => ['survey'], 'links' => $links], 'system', null, ['skip_ack' => true]);
+            if ($id > 0) {
+                cdp_opsX("UPDATE cdb_comm_surveys SET followup_ticket_id = :t WHERE id = :id", [':t' => $id, ':id' => (int) $s->id]);
+            }
+            return $id;
+        } catch (Throwable $e) {
+            error_log('survey follow-up: ' . $e->getMessage());
+            return 0;
+        }
+    }
+
+    /** An internal note on the follow-up ticket of a survey. */
+    function cdp_surveyFollowupNote($ticketId, $text)
+    {
+        try {
+            require_once __DIR__ . '/support.php';
+            if (function_exists('cdp_csMessageAdd')) {
+                cdp_csMessageAdd(null, (int) $ticketId, 'system', null, (string) $text, 'internal', ['channel' => 'staff']);
+            }
+        } catch (Throwable $e) {
+            error_log('survey follow-up note: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * A WhatsApp reply of a single number 1-5 (helpers/comms.php inbound).
+     * Answers the customer's newest open survey (sent, inside the open window)
+     * on its form's first rating question. Returns null when there is no such
+     * survey or its form has no rating question (the message is then handled
+     * as an ordinary message).
+     *
+     * @return array{survey_id:int,score:int}|null
+     */
+    function cdp_surveyReplyScore($userId, $n)
+    {
+        $n = (int) $n;
+        if ((int) $userId <= 0 || $n < 1 || $n > 5 || !cdp_surveyEnsure()) {
+            return null;
+        }
+        $w = cdp_surveySettings()['window_days'];
+        $s = cdp_opsOne("SELECT * FROM cdb_comm_surveys WHERE user_id = :u AND responded_at IS NULL AND sent_at <= :n AND sent_at >= :w ORDER BY sent_at DESC, id DESC LIMIT 1",
+            [':u' => (int) $userId, ':n' => cdp_surveyNow(), ':w' => cdp_surveyNow(-86400 * $w)]);
+        if (!$s) {
+            return null;
+        }
+        $form = cdp_surveyFormFor($s);
+        foreach ($form['questions'] as $q) {
+            if ($q['type'] === 'rating') {
+                $r = cdp_surveySubmit((int) $s->id, [$q['key'] => (string) $n], ['partial' => true, 'source' => 'whatsapp']);
+                return $r['ok'] ? ['survey_id' => (int) $s->id, 'score' => $n] : null;
+            }
+        }
+        return null;
     }
 
     /**
@@ -783,7 +1053,11 @@ if (!function_exists('cdp_surveyEnsure')) {
             . '.sq-opt span{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-width:44px;height:44px;padding:0 10px;border-radius:var(--r-sm,10px);border:1px solid var(--line-2);background:var(--field,var(--card));color:var(--ink);font:500 15px var(--font);cursor:pointer;transition:background .12s,border-color .12s}'
             . '.sq-opt span i{font-style:normal;color:var(--amber-ink,#b7791f)}.sq-opt input:checked+span{background:var(--ink);border-color:var(--ink);color:var(--inverse)}.sq-opt input:checked+span i{color:inherit}'
             . '.sq-opt input:focus-visible+span,.sq-li input:focus-visible+span{outline:2px solid var(--violet,#6d5bd0);outline-offset:2px}.sq-opt span:hover,.sq-li span:hover{border-color:var(--ink-3,var(--muted))}'
-            . '.sq-nps .sq-opt span{min-width:38px;padding:0 6px}.sq-ends{display:flex;justify-content:space-between;color:var(--muted);font-size:13px;margin-top:6px;max-width:560px}'
+            . '.sq-ends{display:flex;justify-content:space-between;color:var(--muted);font-size:13px;margin-top:6px}'
+            // The scale fills the width, so "Poor" / "Excellent" sit under the first and last button.
+            . '.sq-rating .sq-scale{display:grid;grid-template-columns:repeat(5,minmax(0,1fr))}.sq-nps .sq-scale{display:grid;grid-template-columns:repeat(11,minmax(0,1fr));gap:4px}'
+            . '.sq-rating .sq-opt,.sq-nps .sq-opt{display:flex;min-width:0}.sq-rating .sq-opt span,.sq-nps .sq-opt span{flex:1;min-width:0;padding:0 2px}.sq-nps .sq-opt span{font-size:14px}'
+            . '.sq-rating,.sq-nps{max-width:600px}'
             . '.sq-list{display:flex;flex-direction:column;gap:6px}.sq-li{position:relative;margin:0!important;display:block;font-weight:400!important}'
             . '.sq-li span{display:flex;align-items:center;gap:10px;min-height:44px;padding:8px 12px;border-radius:var(--r-sm,10px);border:1px solid var(--line-2);background:var(--field,var(--card));color:var(--ink);font:400 15px var(--font);cursor:pointer}'
             . '.sq-li span:before{content:"";flex:none;width:18px;height:18px;border:1.5px solid var(--line-2);border-radius:50%;background:var(--card)}.sq-multi .sq-li span:before{border-radius:5px}'
@@ -794,15 +1068,38 @@ if (!function_exists('cdp_surveyEnsure')) {
 
     // -------------------------------------------------------------- results
 
-    /** Date range filter from the request (defaults: last 30 days). */
+    /** A real Y-m-d date (2026-13-45 is not), else ''. */
+    function cdp_surveyValidDate($v)
+    {
+        $v = trim((string) $v);
+        if (!preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $v, $m) || !checkdate((int) $m[2], (int) $m[3], (int) $m[1]) || (int) $m[1] < 2000) {
+            return '';
+        }
+        return $v;
+    }
+
+    /**
+     * Date range filter from the request (defaults: the last $days days).
+     * @return array{0:string,1:string,2:bool} from, to, and whether a date given could not be read
+     *         (both then fall back to the default period)
+     */
     function cdp_surveyRange($from, $to, $days = 30)
     {
-        $t = cdp_opsDate($to, date('Y-m-d'));
-        $f = cdp_opsDate($from, date('Y-m-d', strtotime($t . ' -' . max(0, (int) $days - 1) . ' days')));
+        $today = date('Y-m-d');
+        $def = function () use ($today, $days) { return [date('Y-m-d', strtotime($today . ' -' . max(0, (int) $days - 1) . ' days')), $today]; };
+        $fv = cdp_surveyValidDate($from);
+        $tv = cdp_surveyValidDate($to);
+        $bad = (trim((string) $from) !== '' && $fv === '') || (trim((string) $to) !== '' && $tv === '');
+        if ($bad) {
+            [$f, $t] = $def();
+            return [$f, $t, true];
+        }
+        $t = $tv !== '' ? $tv : $today;
+        $f = $fv !== '' ? $fv : date('Y-m-d', strtotime($t . ' -' . max(0, (int) $days - 1) . ' days'));
         if ($f > $t) {
             [$f, $t] = [$t, $f];
         }
-        return [$f, $t];
+        return [$f, $t, false];
     }
 
     /**
@@ -991,7 +1288,7 @@ if (!function_exists('cdp_surveyEnsure')) {
             $w .= ' AND s.form_id = :fm';
             $b[':fm'] = (int) $formId;
         }
-        $rows = cdp_opsQ("SELECT s.id, s.user_id, s.entity_ref, s.entity_type, s.order_id, s.channel, s.score, s.nps, s.comment, s.sent_at, s.responded_at, s.form_id, s.rider_id, s.branch_id,
+        $rows = cdp_opsQ("SELECT s.id, s.user_id, s.entity_ref, s.entity_type, s.order_id, s.channel, s.score, s.nps, s.comment, s.sent_at, s.responded_at, s.form_id, s.rider_id, s.branch_id, s.followup_ticket_id,
                                  TRIM(CONCAT(COALESCE(u.fname,''),' ',COALESCE(u.lname,''))) customer, u.locker, f.name form_name, o.name_off branch,
                                  TRIM(CONCAT(COALESCE(r.fname,''),' ',COALESCE(r.lname,''))) rider
                           FROM cdb_comm_surveys s LEFT JOIN cdb_users u ON u.id = s.user_id LEFT JOIN cdb_comm_survey_forms f ON f.id = s.form_id
@@ -1002,7 +1299,7 @@ if (!function_exists('cdp_surveyEnsure')) {
                 'ref' => (string) ($r->entity_ref ?? ''), 'entity_type' => (string) ($r->entity_type ?? ''), 'order_id' => (int) ($r->order_id ?? 0), 'channel' => (string) ($r->channel ?? ''),
                 'score' => $r->score !== null ? (int) $r->score : null, 'nps' => $r->nps !== null ? (int) $r->nps : null, 'comment' => (string) ($r->comment ?? ''),
                 'sent_at' => (string) $r->sent_at, 'responded_at' => (string) $r->responded_at, 'form' => (string) ($r->form_name ?? ''), 'rider' => trim((string) $r->rider),
-                'branch' => (string) ($r->branch ?? '')];
+                'branch' => (string) ($r->branch ?? ''), 'ticket_id' => (int) ($r->followup_ticket_id ?? 0)];
         }, $rows);
     }
 

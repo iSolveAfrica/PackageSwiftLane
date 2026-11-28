@@ -128,6 +128,29 @@ if (!function_exists('cdp_cmpPresets')) {
     }
 
     /**
+     * Campaigns an agency-restricted staff member may see: written by someone of
+     * their agency, or aimed at their agency's customers. Everyone else sees all.
+     *
+     * @return array{0:string,1:array}
+     */
+    function cdp_cmpScopeSql($alias = 'c')
+    {
+        $ag = cdp_cmpAgencyScope();
+        if (!$ag) {
+            return ['1=1', []];
+        }
+        return ["($alias.created_by IN (SELECT su.id FROM cdb_users su WHERE su.agency_id = :cmp_sag) OR JSON_VALUE($alias.audience, '$.agency_id') = :cmp_sag2)",
+            [':cmp_sag' => $ag, ':cmp_sag2' => $ag]];
+    }
+
+    /** May the signed-in person see this campaign (agency scope)? */
+    function cdp_cmpInScope($id)
+    {
+        list($w, $b) = cdp_cmpScopeSql();
+        return (bool) cdp_opsOne("SELECT c.id FROM cdb_comm_campaigns c WHERE c.id = :cmp_id AND $w", $b + [':cmp_id' => (int) $id]);
+    }
+
+    /**
      * WHERE over cdb_users u for the customers of an audience (values bound).
      *
      * @return array{0:string,1:array}
@@ -193,7 +216,13 @@ if (!function_exists('cdp_cmpPresets')) {
         if (strpos($src, 'whatsapp_group:') === 0) {
             return 'group "' . substr($src, 15) . '"';
         }
-        return $src === 'whatsapp_chat' || $src === 'whatsapp' ? 'WhatsApp chats' : $src;
+        if ($src === 'whatsapp_chat' || $src === 'whatsapp') {
+            return 'WhatsApp chats';
+        }
+        if ($src === 'whatsapp_contacts' || strpos($src, 'whatsapp_') === 0) {
+            return $src === 'whatsapp_contacts' ? 'WhatsApp contacts' : 'WhatsApp ' . str_replace('_', ' ', substr($src, 9));
+        }
+        return $src;
     }
 
     /** Consolidations owners can be picked from (newest first). */
@@ -263,25 +292,35 @@ if (!function_exists('cdp_cmpPresets')) {
                 continue;
             }
             $info = ['table' => $t, 'id' => $id, 'phone' => $phone, 'name' => $pick(['name', 'contact_name', 'display_name', 'pushname']),
-                'source' => $pick(['source', 'origin']), 'optout' => $pick(['opted_out', 'opt_out', 'unsubscribed', 'stopped']),
-                'user' => $pick(['user_id']), 'email' => $pick(['email'])];
+                'source' => $pick(['source', 'origin']), 'sources' => $pick(['sources']), 'optout' => $pick(['opted_out', 'opt_out', 'unsubscribed', 'stopped']),
+                'consent' => $pick(['consent', 'marketing_consent']), 'user' => $pick(['user_id']), 'email' => $pick(['email'])];
             break;
         }
         return $info;
     }
 
-    /** Sources contacts were saved from (e.g. whatsapp_group:<name>), with counts. */
+    /**
+     * Sources contacts were saved from (e.g. whatsapp_group:<name>), with counts.
+     * A contact saved from several groups lists every one of them in `sources`
+     * (one per line, helpers/ultramsg.php); `source` keeps only the first.
+     */
     function cdp_cmpContactSources()
     {
         $c = cdp_cmpContactsInfo();
         if (!$c || !$c['source']) {
             return [];
         }
-        $out = [];
-        foreach (cdp_opsQ("SELECT `{$c['source']}` s, COUNT(*) n FROM `{$c['table']}` GROUP BY `{$c['source']}` ORDER BY n DESC LIMIT 100") as $r) {
-            if ((string) $r->s !== '') {
-                $out[] = ['k' => (string) $r->s, 'label' => cdp_cmpSourceLabel((string) $r->s), 'n' => (int) $r->n];
+        $n = [];
+        $col = $c['sources'] ? "COALESCE(NULLIF(`{$c['sources']}`, ''), `{$c['source']}`)" : "`{$c['source']}`";
+        foreach (cdp_opsQ("SELECT $col s, COUNT(*) n FROM `{$c['table']}` GROUP BY s") as $r) {
+            foreach (array_unique(array_filter(array_map('trim', preg_split('/\r?\n/', (string) $r->s)))) as $k) {
+                $n[$k] = ($n[$k] ?? 0) + (int) $r->n;
             }
+        }
+        arsort($n);
+        $out = [];
+        foreach (array_slice($n, 0, 100, true) as $k => $cnt) {
+            $out[] = ['k' => (string) $k, 'label' => cdp_cmpSourceLabel((string) $k), 'n' => $cnt];
         }
         return $out;
     }
@@ -297,15 +336,160 @@ if (!function_exists('cdp_cmpPresets')) {
         $b = [];
         $src = (string) ($a['contacts']['source'] ?? '');
         if ($src !== '' && $c['source']) {
-            if (substr($src, -1) === '*') {
-                $w .= " AND c.`{$c['source']}` LIKE :cmp_src";
-                $b[':cmp_src'] = str_replace(['%', '_'], ['\\%', '\\_'], substr($src, 0, -1)) . '%';
-            } else {
-                $w .= " AND c.`{$c['source']}` = :cmp_src";
-                $b[':cmp_src'] = $src;
-            }
+            $col = $c['sources'] ? "CONCAT('\n', COALESCE(NULLIF(c.`{$c['sources']}`, ''), c.`{$c['source']}`), '\n')" : "CONCAT('\n', c.`{$c['source']}`, '\n')";
+            $like = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], substr($src, -1) === '*' ? substr($src, 0, -1) : $src);
+            $w .= " AND REPLACE($col, '\r', '') LIKE :cmp_src";
+            $b[':cmp_src'] = '%' . "\n" . $like . (substr($src, -1) === '*' ? '%' : "\n%");
         }
         return [$w, $b];
+    }
+
+    /** Last 9 digits of a phone (how cdp_commFindUserByPhone matches a customer). */
+    function cdp_cmpPhoneTail($phone)
+    {
+        $d = preg_replace('/\D+/', '', (string) $phone);
+        return strlen($d) >= 7 ? substr($d, -9) : '';
+    }
+
+    /**
+     * Customers owning these phones, matched like cdp_commFindUserByPhone (the
+     * last 9 digits, only when exactly one account has them), in one query.
+     *
+     * @return array<string,int> tail => user id
+     */
+    function cdp_cmpPhoneOwners(array $phones)
+    {
+        $tails = array_values(array_unique(array_filter(array_map('cdp_cmpPhoneTail', $phones))));
+        if (!$tails) {
+            return [];
+        }
+        $norm = "REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone,'+',''),' ',''),'-',''),'(',''),')','')";
+        $seen = [];
+        foreach (array_chunk($tails, 500) as $chunk) {
+            $b = [];
+            foreach ($chunk as $i => $t) {
+                $b[':t' . $i] = $t;
+            }
+            foreach (cdp_opsQ("SELECT id, RIGHT($norm, 9) t FROM cdb_users WHERE phone IS NOT NULL AND phone <> '' AND RIGHT($norm, 9) IN (" . implode(',', array_keys($b)) . ")", $b) as $r) {
+                $seen[(string) $r->t][] = (int) $r->id;
+            }
+        }
+        $out = [];
+        foreach ($seen as $t => $ids) {
+            if (count($ids) === 1) {
+                $out[(string) $t] = $ids[0];
+            }
+        }
+        return $out;
+    }
+
+    /**
+     * One page of the contacts of an audience, each with its state on every
+     * channel - the same rules the campaign engine applies when it queues them
+     * (cdp_cmpRunBatch -> cdp_commQueueRaw):
+     *   no_address         no phone (or no e-mail; contacts get no campaign e-mail
+     *                      unless the address belongs to a customer, who has the opt-out link)
+     *   contact_opted_out  the contact replied STOP
+     *   contact_no_consent the contact's consent was withdrawn
+     *   customer_contact   the phone belongs to a customer who is in the customer audience
+     *   opted_out          the customer the phone belongs to opted out of everything
+     *   owner_no_consent   the customer the phone belongs to has not agreed to offers here
+     *   unsubscribed       e-mail on the unsubscribe list
+     *
+     * $after: contacts with an id above it; $q: search (name, phone).
+     *
+     * @return array<int,array{cid:int,name:string,phone:string,email:string,source:string,owner:int,state:array<string,string>}>
+     */
+    function cdp_cmpContactRows(array $a, array $channels, $after = 0, $limit = 500, $q = '', $offset = 0)
+    {
+        $ci = cdp_cmpContactsInfo();
+        if (!$ci || empty($a['contacts']['on'])) {
+            return [];
+        }
+        list($w, $b) = cdp_cmpContactsWhere($a, $ci);
+        if ($q !== '') {
+            $w .= " AND (c.`{$ci['phone']}` LIKE :cmp_cq" . ($ci['name'] ? " OR c.`{$ci['name']}` LIKE :cmp_cq2" : '') . ')';
+            $b[':cmp_cq'] = '%' . (preg_replace('/\D+/', '', $q) !== '' && strlen(preg_replace('/\D+/', '', $q)) >= 3 ? preg_replace('/\D+/', '', $q) : $q) . '%';
+            if ($ci['name']) {
+                $b[':cmp_cq2'] = '%' . $q . '%';
+            }
+        }
+        $cols = "c.`{$ci['id']}` cid, c.`{$ci['phone']}` phone" . ($ci['name'] ? ", c.`{$ci['name']}` name" : '') . ($ci['optout'] ? ", c.`{$ci['optout']}` stop" : '')
+            . ($ci['consent'] ? ", c.`{$ci['consent']}` consent" : '') . ($ci['user'] ? ", c.`{$ci['user']}` uid" : '') . ($ci['email'] ? ", c.`{$ci['email']}` email" : '')
+            . ($ci['source'] ? ", c.`{$ci['source']}` src" : '');
+        $rows = cdp_opsQ("SELECT $cols FROM `{$ci['table']}` c WHERE $w AND c.`{$ci['id']}` > :cmp_last ORDER BY c.`{$ci['id']}` LIMIT " . (int) $offset . ', ' . (int) $limit,
+            $b + [':cmp_last' => (int) $after]);
+        if (!$rows) {
+            return [];
+        }
+        // Who each phone belongs to (as cdp_commQueueRaw finds it), else the linked account.
+        $owners = cdp_cmpPhoneOwners(array_map(function ($r) { return (string) $r->phone; }, $rows));
+        $own = [];
+        foreach ($rows as $r) {
+            $t = cdp_cmpPhoneTail($r->phone);
+            $own[(int) $r->cid] = $owners[$t] ?? (int) ($r->uid ?? 0);
+        }
+        $uids = array_values(array_unique(array_filter($own)));
+        $prefs = [];
+        $inAud = [];
+        $emails = [];
+        if ($uids) {
+            foreach ($uids as $u) {
+                $prefs[$u] = cdp_commPrefs($u);
+            }
+            if (!empty($a['customers'])) {
+                list($aw, $ab) = cdp_cmpAudienceSql($a);
+                foreach (cdp_opsQ("SELECT u.id FROM cdb_users u WHERE $aw AND u.id IN (" . implode(',', $uids) . ")", $ab) as $r) {
+                    $inAud[(int) $r->id] = true;
+                }
+            }
+            foreach (cdp_opsQ("SELECT id, email FROM cdb_users WHERE id IN (" . implode(',', $uids) . ")") as $r) {
+                $emails[(int) $r->id] = (string) $r->email;
+            }
+        }
+        $unsub = [];
+        if (in_array('email', $channels, true) && $emails && cdp_opsTableExists('cdb_newsletter_unsubscribes')) {
+            $eb = [];
+            foreach (array_values(array_unique(array_filter(array_map('strtolower', $emails)))) as $i => $e) {
+                $eb[':e' . $i] = $e;
+            }
+            if ($eb) {
+                foreach (cdp_opsQ("SELECT email FROM cdb_newsletter_unsubscribes WHERE email IN (" . implode(',', array_keys($eb)) . ")", $eb) as $r) {
+                    $unsub[strtolower((string) $r->email)] = true;
+                }
+            }
+        }
+        $out = [];
+        foreach ($rows as $r) {
+            $cid = (int) $r->cid;
+            $owner = $own[$cid];
+            $st = [];
+            foreach ($channels as $ch) {
+                if ($ch === 'inapp') {
+                    $s = 'no_address';
+                } elseif ($ch === 'email' && !($owner && filter_var($emails[$owner] ?? '', FILTER_VALIDATE_EMAIL))) {
+                    $s = 'no_address';
+                } elseif (!empty($r->stop)) {
+                    $s = 'contact_opted_out';
+                } elseif (isset($r->consent) && $r->consent !== null && (int) $r->consent === 0) {
+                    $s = 'contact_no_consent';
+                } elseif ($owner && isset($inAud[$owner])) {
+                    $s = 'customer_contact';
+                } elseif ($owner && !empty($prefs[$owner]['opted_out_all'])) {
+                    $s = 'opted_out';
+                } elseif ($owner && !cdp_commAllowed($prefs[$owner], $ch, 'marketing', 'campaign')) {
+                    $s = 'owner_no_consent';
+                } elseif ($ch === 'email' && isset($unsub[strtolower($emails[$owner] ?? '')])) {
+                    $s = 'unsubscribed';
+                } else {
+                    $s = 'ok';
+                }
+                $st[$ch] = $s;
+            }
+            $out[] = ['cid' => $cid, 'name' => trim((string) ($r->name ?? '')), 'phone' => (string) $r->phone, 'email' => $owner ? (string) ($emails[$owner] ?? '') : '',
+                'source' => (string) ($r->src ?? ''), 'owner' => (int) $owner, 'state' => $st];
+        }
+        return $out;
     }
 
     // -----------------------------------------------------------------------
@@ -333,7 +517,9 @@ if (!function_exists('cdp_cmpPresets')) {
     {
         return ['no_address' => 'No address for this channel', 'opted_out' => 'Opted out of all messages', 'no_consent' => 'Has not agreed to offers on this channel',
             'channel_off' => 'Switched this channel off', 'unsubscribed' => 'Unsubscribed from e-mails', 'contact_opted_out' => 'Contact replied STOP',
-            'customer_contact' => 'Also a customer: reached as a customer', 'not_found' => 'Not a customer and not a valid phone or e-mail'];
+            'customer_contact' => 'Also a customer in this audience: reached as that customer', 'contact_no_consent' => 'Contact\'s consent was withdrawn',
+            'owner_no_consent' => 'Customer has not agreed to offers', 'not_configured' => 'Channel is not set up (Settings)',
+            'not_found' => 'Not a customer and not a valid phone or e-mail'];
     }
 
     /**
@@ -360,33 +546,31 @@ if (!function_exists('cdp_cmpPresets')) {
     }
 
     /**
-     * Reach of the WhatsApp contacts of an audience (WhatsApp and SMS; e-mail
-     * when the table has an e-mail column). Contacts whose phone belongs to a
-     * customer are reached as customers when customers are targeted too.
+     * Reach of the WhatsApp contacts of an audience, classified exactly as the
+     * engine will treat them (cdp_cmpContactRows).
      */
     function cdp_cmpReachContacts(array $a, array $channels)
     {
-        $c = cdp_cmpContactsInfo();
         $out = ['total' => 0, 'channels' => []];
-        if (!$c || empty($a['contacts']['on'])) {
+        foreach ($channels as $ch) {
+            $out['channels'][$ch] = ['ok' => 0];
+        }
+        if (!cdp_cmpContactsInfo() || empty($a['contacts']['on'])) {
             return $out;
         }
-        list($w, $b) = cdp_cmpContactsWhere($a, $c);
-        $out['total'] = (int) cdp_opsVal("SELECT COUNT(*) FROM `{$c['table']}` c WHERE $w", $b);
-        $stop = $c['optout'] ? "COALESCE(c.`{$c['optout']}`, 0) = 1" : '0';
-        $cust = !empty($a['customers']) && $c['user'] ? "COALESCE(c.`{$c['user']}`, 0) > 0" : '0';
-        foreach ($channels as $ch) {
-            if ($ch === 'inapp' || ($ch === 'email' && !$c['email'])) {
-                $out['channels'][$ch] = ['ok' => 0, 'no_address' => $out['total']];
-                continue;
+        $after = 0;
+        for ($guard = 0; $guard < 400; $guard++) {
+            $rows = cdp_cmpContactRows($a, $channels, $after, 1000);
+            foreach ($rows as $r) {
+                $out['total']++;
+                foreach ($r['state'] as $ch => $s) {
+                    $out['channels'][$ch][$s] = ($out['channels'][$ch][$s] ?? 0) + 1;
+                }
+                $after = $r['cid'];
             }
-            $addr = $ch === 'email' ? "c.`{$c['email']}` LIKE '%_@_%'" : '1';
-            $row = ['ok' => 0];
-            foreach (cdp_opsQ("SELECT CASE WHEN NOT ($addr) THEN 'no_address' WHEN $stop THEN 'contact_opted_out' WHEN $cust THEN 'customer_contact' ELSE 'ok' END r, COUNT(*) n
-                               FROM `{$c['table']}` c WHERE $w GROUP BY r", $b) as $r) {
-                $row[(string) $r->r] = (int) $r->n;
+            if (count($rows) < 1000) {
+                break;
             }
-            $out['channels'][$ch] = $row;
         }
         return $out;
     }
@@ -439,6 +623,7 @@ if (!function_exists('cdp_cmpPresets')) {
                 $w .= " AND (CONCAT(u.fname, ' ', u.lname) LIKE :cmp_q OR u.locker LIKE :cmp_q2 OR u.phone LIKE :cmp_q3 OR u.email LIKE :cmp_q4)";
                 $b += [':cmp_q' => '%' . $q . '%', ':cmp_q2' => '%' . $q . '%', ':cmp_q3' => '%' . $q . '%', ':cmp_q4' => '%' . $q . '%'];
             }
+            $w0 = $w;
             $sel = [];
             foreach ($channels as $ch) {
                 $sel[] = ($ch === 'inapp' ? "CASE WHEN COALESCE(p.opted_out_all, 0) = 1 THEN 'opted_out' ELSE 'ok' END" : cdp_cmpReachCase($ch, 'marketing')) . " r_$ch";
@@ -451,6 +636,18 @@ if (!function_exists('cdp_cmpPresets')) {
                 }
                 $rows[] = ['id' => (int) $r->id, 'kind' => 'customer', 'name' => trim($r->fname . ' ' . $r->lname) ?: 'Customer', 'locker' => (string) $r->locker,
                     'phone' => (string) $r->phone, 'email' => (string) $r->email, 'city' => (string) $r->city, 'state' => $st];
+            }
+        }
+        // Then the WhatsApp contacts, paged after the customers.
+        if (count($rows) < $limit && !empty($a['contacts']['on'])) {
+            $custN = 0;
+            if (!empty($a['customers'])) {
+                $custN = $rows ? (int) $offset + count($rows) : (int) cdp_opsVal("SELECT COUNT(*) FROM cdb_users u WHERE $w0", $b);
+            }
+            $cOff = max(0, (int) $offset - $custN);
+            foreach (cdp_cmpContactRows($a, $channels, 0, $limit - count($rows), $q, $cOff) as $c) {
+                $rows[] = ['id' => 0, 'cid' => $c['cid'], 'kind' => 'contact', 'name' => $c['name'] !== '' ? $c['name'] : '+' . ltrim($c['phone'], '+'), 'locker' => '',
+                    'phone' => $c['phone'], 'email' => $c['email'], 'city' => $c['source'] !== '' ? cdp_cmpSourceLabel($c['source']) : 'WhatsApp contact', 'state' => $c['state']];
             }
         }
         return $rows;
@@ -484,7 +681,10 @@ if (!function_exists('cdp_cmpPresets')) {
     /**
      * Resolve a direct send: customer ids plus a pasted list of e-mails and
      * phones. Tokens that match a customer become that customer; the rest
-     * stay typed addresses (sent with cdp_commQueueRaw).
+     * stay typed addresses (sent with cdp_commQueueRaw). Every token is
+     * normalised first, then resolved in one query for the e-mails and one for
+     * the phones (a phone matches a customer the way cdp_commFindUserByPhone
+     * does: the last 9 digits, only when exactly one account has them).
      *
      * @return array{ids:int[],raw:array<int,array{to:string,type:string}>,bad:string[]}
      */
@@ -509,7 +709,9 @@ if (!function_exists('cdp_cmpPresets')) {
                 $toks[] = $t;
             }
         }
-        foreach ($toks as $tok) {
+        $emails = [];
+        $phones = [];
+        foreach (array_slice($toks, 0, 2000) as $tok) {
             $tok = trim($tok, " \t\n\r\0\x0B<>\"'");
             if ($tok === '' || isset($seen[strtolower($tok)])) {
                 continue;
@@ -518,13 +720,8 @@ if (!function_exists('cdp_cmpPresets')) {
             if (strpos($tok, '@') !== false) {
                 if (!filter_var($tok, FILTER_VALIDATE_EMAIL)) {
                     $out['bad'][] = $tok;
-                    continue;
-                }
-                $u = cdp_opsOne("SELECT u.id FROM cdb_users u WHERE u.active = 1 AND u.userlevel IN ($roles) AND u.email = :e$sc LIMIT 1", [':e' => $tok]);
-                if ($u) {
-                    $out['ids'][] = (int) $u->id;
                 } else {
-                    $out['raw'][] = ['to' => strtolower($tok), 'type' => 'email'];
+                    $emails[strtolower($tok)] = true;
                 }
                 continue;
             }
@@ -533,16 +730,100 @@ if (!function_exists('cdp_cmpPresets')) {
                 $out['bad'][] = $tok;
                 continue;
             }
-            $u = cdp_opsOne("SELECT u.id FROM cdb_users u WHERE u.active = 1 AND u.userlevel IN ($roles)
-                             AND REPLACE(REPLACE(REPLACE(REPLACE(u.phone,'+',''),' ',''),'-',''),'(','') LIKE :p$sc LIMIT 1", [':p' => '%' . substr($digits, -9)]);
-            if ($u) {
-                $out['ids'][] = (int) $u->id;
+            $phones[(strpos($tok, '+') === 0 ? '+' : '') . $digits] = true;
+        }
+        $emails = array_keys($emails);
+        $phones = array_keys($phones);
+        $byEmail = [];
+        foreach (array_chunk($emails, 500) as $chunk) {
+            $b = [];
+            foreach ($chunk as $i => $e) {
+                $b[':e' . $i] = $e;
+            }
+            foreach (cdp_opsQ("SELECT u.id, LOWER(u.email) e FROM cdb_users u WHERE u.active = 1 AND u.userlevel IN ($roles) AND LOWER(u.email) IN (" . implode(',', array_keys($b)) . ")$sc ORDER BY u.id", $b) as $r) {
+                $byEmail[(string) $r->e] = $byEmail[(string) $r->e] ?? (int) $r->id;
+            }
+        }
+        foreach ($emails as $e) {
+            if (isset($byEmail[$e])) {
+                $out['ids'][] = $byEmail[$e];
             } else {
-                $out['raw'][] = ['to' => (strpos($tok, '+') === 0 ? '+' : '') . $digits, 'type' => 'phone'];
+                $out['raw'][] = ['to' => $e, 'type' => 'email'];
+            }
+        }
+        $owners = cdp_cmpPhoneOwners($phones);
+        $allowed = [];
+        if ($owners) {
+            foreach (cdp_opsQ("SELECT u.id FROM cdb_users u WHERE u.active = 1 AND u.userlevel IN ($roles) AND u.id IN (" . implode(',', array_map('intval', array_values($owners))) . ")$sc") as $r) {
+                $allowed[(int) $r->id] = true;
+            }
+        }
+        foreach ($phones as $p) {
+            $uid = $owners[cdp_cmpPhoneTail($p)] ?? 0;
+            if ($uid && isset($allowed[$uid])) {
+                $out['ids'][] = $uid;
+            } else {
+                $out['raw'][] = ['to' => $p, 'type' => 'phone'];
             }
         }
         $out['ids'] = array_values(array_unique($out['ids']));
         return $out;
+    }
+
+    /**
+     * Why a channel cannot deliver right now ('' = it can): switched off or no
+     * provider set up. Messages on such a channel are not queued (they would
+     * only wait and fail).
+     */
+    function cdp_cmpChannelProblem($ch)
+    {
+        $s = function_exists('cdp_getSettingsCourier') ? cdp_getSettingsCourier() : null;
+        if (!$s) {
+            return '';
+        }
+        if ($ch === 'email') {
+            if (trim((string) ($s->email_address ?? '')) === '') {
+                return 'E-mail sender address is not set (Settings)';
+            }
+            if (($s->mailer ?? '') !== 'PHP' && trim((string) ($s->smtp_host ?? '')) === '') {
+                return 'E-mail is not set up: no SMTP server (Settings)';
+            }
+            return '';
+        }
+        if ($ch === 'sms') {
+            if ((int) ($s->active_sms ?? 0) !== 1) {
+                return 'SMS is switched off (Settings)';
+            }
+            @include_once __DIR__ . '/hubtel_sms.php';
+            return function_exists('cdp_smsReady') && cdp_smsReady() ? '' : 'SMS is not set up: no provider (Settings)';
+        }
+        if ($ch === 'whatsapp') {
+            if (cdp_commSetting('wa_provider') === 'cloud') {
+                $cs = cdp_commSettings();
+                return trim((string) ($cs['wa_cloud_phone_id'] ?? '')) !== '' && trim((string) ($cs['wa_cloud_token'] ?? '')) !== '' ? '' : 'WhatsApp Cloud API is not set up (Settings)';
+            }
+            if ((int) ($s->active_whatsapp ?? 0) !== 1) {
+                return 'WhatsApp is switched off (Settings)';
+            }
+            return trim((string) ($s->api_ws_url ?? '')) !== '' && trim((string) ($s->api_ws_token ?? '')) !== '' ? '' : 'WhatsApp is not set up (Settings)';
+        }
+        return '';
+    }
+
+    /** A provider error in words people can act on. */
+    function cdp_cmpErrorText($e)
+    {
+        $e = trim((string) $e);
+        if (stripos($e, 'setFrom') !== false || stripos($e, 'Invalid address:  (From)') !== false || preg_match('/Invalid address:\s*\(?(setFrom|From)/i', $e)) {
+            return 'E-mail sender address is not set (Settings)';
+        }
+        if (stripos($e, 'SMTP connect() failed') !== false || stripos($e, 'Could not connect to SMTP') !== false) {
+            return 'Could not connect to the e-mail server (check SMTP in Settings)';
+        }
+        if (stripos($e, 'SMTP Error: Could not authenticate') !== false) {
+            return 'The e-mail server refused the user name or password (Settings)';
+        }
+        return $e;
     }
 
     /** Reach of a direct send (service message: marketing consent not needed). */
@@ -560,6 +841,11 @@ if (!function_exists('cdp_cmpPresets')) {
                 $fits = $ch !== 'inapp' && (($ch === 'email') === ($x['type'] === 'email'));
                 $k = $fits ? 'ok' : 'no_address';
                 $row[$k] = ($row[$k] ?? 0) + 1;
+            }
+            if ($ch !== 'inapp' && $row['ok'] > 0 && cdp_cmpChannelProblem($ch) !== '') {
+                // Not queued at all on a channel that cannot deliver (cdp_cmpSendDirect).
+                $row['not_configured'] = ($row['not_configured'] ?? 0) + $row['ok'];
+                $row['ok'] = 0;
             }
             $out['channels'][$ch] = $row;
         }
@@ -608,6 +894,17 @@ if (!function_exists('cdp_cmpPresets')) {
         return $out;
     }
 
+    /**
+     * Does a text say anything beyond a greeting and placeholders? "Hi {first_name},"
+     * (what the editors start with) does not.
+     */
+    function cdp_cmpHasText($body)
+    {
+        $t = preg_replace('/\{[a-z0-9_]+\}|\[[A-Z0-9_]+\]/i', ' ', (string) $body);
+        $t = preg_replace('/^\s*(hi|hello|hey|dear|good (morning|afternoon|evening)|greetings)\b/i', '', $t);
+        return trim(preg_replace('/[\s\p{P}\p{S}]+/u', '', $t)) !== '';
+    }
+
     /** Problems that stop a message going out on these channels ([] = fine). */
     function cdp_cmpValidateMessage(array $bodies, array $channels, $campaign)
     {
@@ -625,7 +922,7 @@ if (!function_exists('cdp_cmpPresets')) {
                 if ($text === '' && stripos((string) ($bodies['email']['html'] ?? ''), '<img') === false) {
                     $err[] = 'E-mail: add some content to the e-mail.';
                 }
-            } elseif (trim($bodies[$ch]['body'] ?? '') === '' && !($ch === 'whatsapp' && !empty($bodies['whatsapp']['media']))) {
+            } elseif (!cdp_cmpHasText((string) ($bodies[$ch]['body'] ?? '')) && !($ch === 'whatsapp' && !empty($bodies['whatsapp']['media']))) {
                 $err[] = $label . ': write the message.';
             }
         }
@@ -670,12 +967,12 @@ if (!function_exists('cdp_cmpPresets')) {
         if (!$u) {
             return false;
         }
-        $t = trim(cdp_commRender((string) $text, array_merge(cdp_commBaseVars($u), $vars)));
+        $t = trim(strip_tags(cdp_commRender((string) $text, array_merge(cdp_commBaseVars($u), $vars))));
         if ($t === '') {
             return false;
         }
         $r = cdp_opsX("INSERT INTO cdb_notifications (user_id, order_id, notification_description, shipping_type, notification_date) VALUES (:u, 0, :d, 0, :n)",
-            [':u' => (int) $userId, ':d' => mb_substr(htmlspecialchars($t, ENT_QUOTES, 'UTF-8'), 0, 350), ':n' => cdp_opsNow()]);
+            [':u' => (int) $userId, ':d' => mb_substr(trim(strip_tags($t)), 0, 350), ':n' => cdp_opsNow()]);   // plain text: the views escape it
         if ($r['ok'] && $r['id']) {
             cdp_opsX("INSERT INTO cdb_notifications_users (user_id, notification_id) VALUES (:u, :n)", [':u' => (int) $userId, ':n' => (int) $r['id']]);
             return true;
@@ -702,11 +999,30 @@ if (!function_exists('cdp_cmpPresets')) {
         if ($out['recipients'] > CDP_CMP_DIRECT_MAX) {
             return ['ok' => false, 'error' => 'That is more than ' . CDP_CMP_DIRECT_MAX . ' people. Send it as a campaign instead.'] + $out;
         }
+        if ($sendAt && $sendAt > time() + 60 && in_array('inapp', $channels, true)) {
+            // The bell has no queue: it would show at once. Say so instead of posting early.
+            return ['ok' => false, 'error' => 'In-app notifications go out at once and cannot wait for a later time. Switch In-app off for a scheduled send, or send it now.'] + $out;
+        }
         $o = cdp_cmpQueueOptions($bodies, $channels) + ['kind' => 'transactional', 'entity_type' => 'manual', 'send_after' => $sendAt ?: time()];
         unset($o['wa_template']);
         $skip = function ($why) use (&$out) {
             $out['skipped'][$why] = ($out['skipped'][$why] ?? 0) + 1;
         };
+        // A channel that cannot deliver (switched off, not set up) is not queued: the message would only wait and fail.
+        $out['not_configured'] = [];
+        foreach ($o['channels'] as $ch) {
+            $why = cdp_cmpChannelProblem($ch);
+            if ($why !== '') {
+                $out['not_configured'][$ch] = $why;
+            }
+        }
+        if ($out['not_configured']) {
+            $o['channels'] = array_values(array_diff($o['channels'], array_keys($out['not_configured'])));
+            foreach ($out['not_configured'] as $ch => $why) {
+                $n = count($r['ids']) + count(array_filter($r['raw'], function ($x) use ($ch) { return ($ch === 'email') === ($x['type'] === 'email'); }));
+                $out['skipped'][$why] = ($out['skipped'][$why] ?? 0) + $n;
+            }
+        }
         foreach ($r['ids'] as $uid) {
             if ($o['channels']) {
                 $q = cdp_commQueueEvent('manual', $uid, [], $o);
@@ -799,8 +1115,8 @@ if (!function_exists('cdp_cmpPresets')) {
         }
         $channels = array_values(array_intersect(array_keys(cdp_cmpChannels()), (array) ($d['channels'] ?? [])));
         $aud = cdp_cmpAudience($d['audience'] ?? []);
-        if (!isset($aud['agency_id']) && ($ag = cdp_cmpAgencyScope())) {
-            $aud['agency_id'] = $ag;
+        if ($ag = cdp_cmpAgencyScope()) {
+            $aud['agency_id'] = $ag;   // the server's scope wins over anything posted
         }
         $bodies = cdp_cmpBodies($d['bodies'] ?? []);
         $wa = preg_replace('/[^a-z0-9_]/', '', strtolower(trim((string) ($d['wa_template'] ?? ''))));
@@ -810,7 +1126,15 @@ if (!function_exists('cdp_cmpPresets')) {
             $bodies['_wa_params'] = mb_substr(preg_replace('/[^a-z0-9_,]/', '', strtolower((string) ($d['wa_params'] ?? ''))), 0, 255);
         }
         $at = trim((string) ($d['scheduled_at'] ?? ''));
-        $at = preg_match('/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}$/', $at) ? str_replace('T', ' ', $at) . ':00' : null;
+        if ($at !== '') {
+            $ts = strtotime(str_replace('T', ' ', $at));
+            if (!$ts) {
+                return ['ok' => false, 'error' => 'The date and time to send could not be read. Choose it again.'];
+            }
+            $at = date('Y-m-d H:i:00', $ts);
+        } else {
+            $at = null;
+        }
         $summary = '';
         foreach (['whatsapp', 'sms', 'inapp'] as $ch) {
             if ($summary === '' && in_array($ch, $channels, true)) {
@@ -832,10 +1156,16 @@ if (!function_exists('cdp_cmpPresets')) {
                 return ['ok' => false, 'error' => 'This campaign has started or was cancelled: duplicate it to change it.'];
             }
             $bind[':id'] = $id;
+            // Only while it has not started: the worker may have picked it up since the check above.
             $r = cdp_opsX("UPDATE cdb_comm_campaigns SET name = :n, segment_id = NULL, channels = :c, subject = :sub, body = :b, scheduled_at = :at, status = 'draft', approved_by = NULL,
-                             mode = 'campaign', audience = :aud, bodies = :bo, design_json = :dj, wa_template_name = :wa, updated_at = :t WHERE id = :id", $bind);
+                             mode = 'campaign', audience = :aud, bodies = :bo, design_json = :dj, wa_template_name = :wa, updated_at = :t
+                           WHERE id = :id AND status IN ('draft','pending','scheduled') AND launch_cursor = 0", $bind);
             if (!$r['ok']) {
                 return ['ok' => false, 'error' => 'Not saved.'];
+            }
+            if ($r['rows'] !== 1 && !cdp_opsOne("SELECT id FROM cdb_comm_campaigns WHERE id = :id AND status = 'draft' AND launch_cursor = 0", [':id' => $id])) {
+                // 0 rows also means "nothing changed" (saved twice in the same second): only a moved status is an error.
+                return ['ok' => false, 'error' => 'This campaign has started or was cancelled: duplicate it to change it.'];
             }
         } else {
             $bind[':u'] = (int) $uid;
@@ -949,7 +1279,7 @@ if (!function_exists('cdp_cmpPresets')) {
             return $out;
         }
         $due = cdp_opsQ("SELECT id FROM cdb_comm_campaigns WHERE (status = 'scheduled' AND (scheduled_at IS NULL OR scheduled_at <= :n)) OR status IN ('sending', 'launching')
-                         ORDER BY id LIMIT 5", [':n' => cdp_opsNow()]);
+                         ORDER BY updated_at, id LIMIT 5", [':n' => cdp_opsNow()]);
         foreach ($due as $d) {
             $r = cdp_cmpRunBatch((int) $d->id, $limit);
             $out['campaigns']++;
@@ -985,25 +1315,37 @@ if (!function_exists('cdp_cmpPresets')) {
 
         if ($cursor >= 0 && !empty($a['customers'])) {
             list($w, $b) = cdp_cmpAudienceSql($a);
-            $ids = array_map(function ($r) { return (int) $r->id; },
-                cdp_opsQ("SELECT u.id FROM cdb_users u WHERE $w AND u.id > :cmp_cur ORDER BY u.id LIMIT " . (int) $limit, $b + [':cmp_cur' => $cursor]));
+            $batch = cdp_opsQ("SELECT u.id, u.email FROM cdb_users u WHERE $w AND u.id > :cmp_cur ORDER BY u.id LIMIT " . (int) $limit, $b + [':cmp_cur' => $cursor]);
+            $ids = array_map(function ($r) { return (int) $r->id; }, $batch);
             $next = $ids ? end($ids) : $cursor;
             $done = count($ids) < $limit;
             $newCursor = $done ? -1 : $next;
-            // Claim the batch before queueing it: a second worker sees the cursor moved.
-            $cl = cdp_opsX("UPDATE cdb_comm_campaigns SET launch_cursor = :nc WHERE id = :id AND launch_cursor = :oc AND status = 'sending'",
-                [':nc' => $newCursor, ':id' => (int) $id, ':oc' => $cursor]);
+            // Claim the batch before queueing it: a second worker sees the cursor moved
+            // (updated_at changes too, so the row always counts as changed).
+            $cl = cdp_opsX("UPDATE cdb_comm_campaigns SET launch_cursor = :nc, updated_at = :n WHERE id = :id AND launch_cursor = :oc AND status = 'sending'",
+                [':nc' => $newCursor, ':n' => cdp_opsNow(), ':id' => (int) $id, ':oc' => $cursor]);
             if ($cl['rows'] !== 1) {
                 return $res;
             }
-            foreach ($ids as $uid) {
-                $oo = $o + ['dedupe' => 'cmp' . (int) $id . ':' . $uid];
-                if (in_array('email', $oo['channels'], true) && $unsubOk) {
-                    $em = (string) cdp_opsVal("SELECT email FROM cdb_users WHERE id = :id", [':id' => $uid], '');
-                    if ($em !== '' && cdp_opsOne("SELECT 1 x FROM cdb_newsletter_unsubscribes WHERE email = :e LIMIT 1", [':e' => strtolower($em)])) {
-                        $oo['channels'] = array_values(array_diff($oo['channels'], ['email']));
-                        $res['excluded']++;
+            // E-mail addresses on the unsubscribe list, in one query.
+            $unsub = [];
+            if (in_array('email', $o['channels'], true) && $unsubOk && $batch) {
+                $eb = [];
+                foreach (array_values(array_unique(array_filter(array_map(function ($r) { return strtolower(trim((string) $r->email)); }, $batch)))) as $i => $e) {
+                    $eb[':e' . $i] = $e;
+                }
+                if ($eb) {
+                    foreach (cdp_opsQ("SELECT email FROM cdb_newsletter_unsubscribes WHERE email IN (" . implode(',', array_keys($eb)) . ")", $eb) as $r) {
+                        $unsub[strtolower((string) $r->email)] = true;
                     }
+                }
+            }
+            foreach ($batch as $br) {
+                $uid = (int) $br->id;
+                $oo = $o + ['dedupe' => 'cmp' . (int) $id . ':' . $uid];
+                if (in_array('email', $oo['channels'], true) && isset($unsub[strtolower(trim((string) $br->email))])) {
+                    $oo['channels'] = array_values(array_diff($oo['channels'], ['email']));
+                    $res['excluded']++;
                 }
                 if ($oo['channels']) {
                     $q = cdp_commQueueEvent('campaign', $uid, [], $oo);
@@ -1025,40 +1367,38 @@ if (!function_exists('cdp_cmpPresets')) {
             }
             $cursor = -1;
         } elseif ($cursor >= 0) {
-            cdp_opsX("UPDATE cdb_comm_campaigns SET launch_cursor = -1 WHERE id = :id AND launch_cursor = :oc", [':id' => (int) $id, ':oc' => $cursor]);
+            cdp_opsX("UPDATE cdb_comm_campaigns SET launch_cursor = -1, updated_at = :n WHERE id = :id AND launch_cursor = :oc", [':n' => cdp_opsNow(), ':id' => (int) $id, ':oc' => $cursor]);
             $cursor = -1;
         }
 
-        // Contacts phase.
-        $ci = cdp_cmpContactsInfo();
-        if ($ci && !empty($a['contacts']['on'])) {
+        // Contacts phase: the same states as the reach preview (cdp_cmpContactRows).
+        if (cdp_cmpContactsInfo() && !empty($a['contacts']['on'])) {
             $last = -$cursor - 1;
-            list($w, $b) = cdp_cmpContactsWhere($a, $ci);
-            $cols = "c.`{$ci['id']}` cid, c.`{$ci['phone']}` phone" . ($ci['name'] ? ", c.`{$ci['name']}` name" : '') . ($ci['optout'] ? ", c.`{$ci['optout']}` stop" : '')
-                . ($ci['user'] ? ", c.`{$ci['user']}` uid" : '') . ($ci['email'] ? ", c.`{$ci['email']}` email" : '');
-            $rows = cdp_opsQ("SELECT $cols FROM `{$ci['table']}` c WHERE $w AND c.`{$ci['id']}` > :cmp_last ORDER BY c.`{$ci['id']}` LIMIT " . (int) $limit, $b + [':cmp_last' => $last]);
+            $rows = cdp_cmpContactRows($a, $channels, $last, $limit);
             $done = count($rows) < $limit;
-            $lastId = $rows ? (int) end($rows)->cid : $last;
-            $cl = cdp_opsX("UPDATE cdb_comm_campaigns SET launch_cursor = :nc WHERE id = :id AND launch_cursor = :oc AND status = 'sending'",
-                [':nc' => -1 - $lastId, ':id' => (int) $id, ':oc' => $cursor]);
-            if ($cl['rows'] !== 1) {
-                return $res;
+            if ($rows) {
+                // Claim only when the cursor moves (an UPDATE that changes nothing reports 0 rows).
+                $lastId = (int) end($rows)['cid'];
+                $cl = cdp_opsX("UPDATE cdb_comm_campaigns SET launch_cursor = :nc, updated_at = :n WHERE id = :id AND launch_cursor = :oc AND status = 'sending'",
+                    [':nc' => -1 - $lastId, ':n' => cdp_opsNow(), ':id' => (int) $id, ':oc' => $cursor]);
+                if ($cl['rows'] !== 1) {
+                    return $res;
+                }
             }
             $part = ['queued' => 0, 'excluded' => 0];
             foreach ($rows as $r) {
-                if (!empty($r->stop) || (!empty($a['customers']) && !empty($r->uid))) {
-                    $part['excluded']++;
-                    continue;
-                }
                 foreach ($o['channels'] as $ch) {
-                    $to = $ch === 'email' ? (string) ($r->email ?? '') : (string) $r->phone;
-                    if ($to === '') {
+                    if (($r['state'][$ch] ?? '') !== 'ok') {
+                        if (($r['state'][$ch] ?? '') !== 'customer_contact') {
+                            $part['excluded']++;
+                        }
                         continue;
                     }
+                    $to = $ch === 'email' ? $r['email'] : $r['phone'];
                     // The owner chose that saved WhatsApp contacts may receive campaigns (consent);
                     // a matching customer account's own choices still apply inside cdp_commQueueRaw.
-                    $q = cdp_commQueueRaw($to, $ch, [], $o + ['event' => 'campaign', 'consent' => true, 'name' => (string) ($r->name ?? ''),
-                        'dedupe' => 'cmp' . (int) $id . ':c' . (int) $r->cid]);
+                    $q = cdp_commQueueRaw($to, $ch, [], $o + ['event' => 'campaign', 'consent' => true, 'name' => $r['name'],
+                        'dedupe' => 'cmp' . (int) $id . ':c' . (int) $r['cid']]);
                     $part['queued'] += $q['queued'];
                     $part['excluded'] += count($q['skipped']);
                 }
@@ -1096,10 +1436,9 @@ if (!function_exists('cdp_cmpPresets')) {
      */
     function cdp_cmpList($status = '', $limit = 60)
     {
-        $w = '1=1';
-        $b = [];
+        list($w, $b) = cdp_cmpScopeSql();
         if ($status !== '' && isset(cdp_cmpStatuses()[$status])) {
-            $w = 'c.status = :s';
+            $w .= ' AND c.status = :s';
             $b[':s'] = $status;
         }
         $rows = cdp_opsQ("SELECT c.id, c.name, c.channels, c.subject, c.status, c.scheduled_at, c.queued_count, c.excluded_count, c.recipients_total, c.created_by, c.approved_by,
@@ -1122,20 +1461,29 @@ if (!function_exists('cdp_cmpPresets')) {
                 $ev[(string) $e->batch_id] = $e;
             }
         }
+        // Writers and approvers in one query.
         $names = [];
+        $pids = array_values(array_unique(array_filter(array_merge(array_map(function ($r) { return (int) $r->created_by; }, $rows), array_map(function ($r) { return (int) $r->approved_by; }, $rows)))));
+        if ($pids) {
+            foreach (cdp_opsQ("SELECT id, fname, lname, username FROM cdb_users WHERE id IN (" . implode(',', $pids) . ")") as $u) {
+                $names[(int) $u->id] = trim($u->fname . ' ' . $u->lname) ?: (string) $u->username;
+            }
+        }
         $out = [];
         $st = cdp_cmpStatuses();
         foreach ($rows as $r) {
             $s = $stats[(int) $r->id] ?? null;
             $e = $ev['campaign-' . (int) $r->id] ?? null;
-            foreach ([(int) $r->created_by, (int) $r->approved_by] as $p) {
-                if ($p > 0 && !isset($names[$p])) {
-                    $names[$p] = cdp_opsUserName($p);
-                }
-            }
             $aud = cdp_opsDecode($r->audience ?? '', []);
+            $label = $st[$r->status][0] ?? ucfirst((string) $r->status);
+            $pill = $st[$r->status][1] ?? '';
+            if ($r->status === 'sent' && $s && (int) $s->waiting > 0) {
+                // Everyone is queued but messages still wait (quiet hours, retries): not "Sent" yet.
+                $label = (int) $s->sent > 0 ? 'Sending' : 'Waiting to go out';
+                $pill = 'sorting';
+            }
             $out[] = ['id' => (int) $r->id, 'name' => (string) $r->name, 'channels' => array_values(array_filter(explode(',', (string) $r->channels))),
-                'status' => (string) $r->status, 'status_label' => $st[$r->status][0] ?? ucfirst((string) $r->status), 'pill' => $st[$r->status][1] ?? '',
+                'status' => (string) $r->status, 'status_label' => $label, 'pill' => $pill,
                 'subject' => (string) $r->subject, 'audience' => $aud ? cdp_cmpAudienceLabel(cdp_cmpAudience($aud)) : ($r->segment_id ? 'Saved segment #' . (int) $r->segment_id : ''),
                 'scheduled_at' => (string) $r->scheduled_at, 'created_at' => (string) $r->created_at, 'launched_at' => (string) $r->launched_at,
                 'created_by' => (int) $r->created_by, 'created_by_name' => $names[(int) $r->created_by] ?? '', 'approved_by_name' => $names[(int) $r->approved_by] ?? '',

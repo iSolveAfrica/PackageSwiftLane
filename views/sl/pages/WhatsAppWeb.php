@@ -21,8 +21,8 @@ $cfg = [
 ];
 ?>
 <div class="ops ww-page">
-<?php $commsTab = 'commsinbox'; include __DIR__ . '/partials/comms_tabs.php'; ?>
-<nav class="ww-crumb" aria-label="Breadcrumb"><a href="<?= h($u['home'] ?? '') ?>">Communications</a><i class="ic ic-sm i-right" aria-hidden="true"></i><a href="<?= h($u['inbox'] ?? '') ?>">WhatsApp Inbox</a><i class="ic ic-sm i-right" aria-hidden="true"></i><span aria-current="page">WhatsApp screen</span></nav>
+<?php $commsTab = 'commswaweb'; include __DIR__ . '/partials/comms_tabs.php'; ?>
+<nav class="ww-crumb" aria-label="Breadcrumb"><span class="ww-crumb-home"><a href="<?= h($u['home'] ?? '') ?>">Communications</a><i class="ic ic-sm i-right" aria-hidden="true"></i></span><a href="<?= h($u['inbox'] ?? '') ?>">WhatsApp Inbox</a><i class="ic ic-sm i-right" aria-hidden="true"></i><span aria-current="page">WhatsApp screen</span></nav>
 <div class="sl-head ww-head"><div><h1 class="sl-title" style="font-size:22px">WhatsApp screen</h1>
 <p class="sl-lede">Your company WhatsApp number inside Swift Lane: every chat and group with its history, replies with pictures and documents, ticks, and the customer beside each chat.</p></div>
 <div class="row g8 wrap"><a class="sl-btn ghost sm" href="<?= h($u['inbox'] ?? '') ?>"><i class="ic ic-sm i-inbox" aria-hidden="true"></i>WhatsApp Inbox</a></div>
@@ -83,9 +83,9 @@ $cfg = [
 
 <div class="sl-dialog" id="ww_dlg_qr" hidden><div class="sl-modal ww-modal" aria-labelledby="ww_dlg_qr_t">
   <div class="sl-ch"><h2 class="sl-ct" id="ww_dlg_qr_t">Quick replies</h2><button type="button" class="sl-ib" data-sl-close aria-label="Close"><i class="ic ic-sm i-x" aria-hidden="true"></i></button></div>
-  <p class="mut sm">Short answers your team sends often. <code>{first_name}</code>, <code>{name}</code>, <code>{locker}</code>, <code>{balance}</code> and <code>{tracking}</code> are filled from the customer of the chat.</p>
+  <p class="mut sm">Short answers your team sends often. <code>{first_name}</code>, <code>{name}</code>, <code>{locker}</code>, <code>{balance}</code> and <code>{tracking}</code> are filled from the customer of the chat; <code>{hours}</code> from the business hours saved in the Support desk settings.</p>
   <div id="ww_qr_rows" class="col g8"></div>
-  <div class="row g8 wrap ww-dlg-actions"><button type="button" class="sl-btn ghost" data-ww="qr-add"><i class="ic ic-sm i-plus" aria-hidden="true"></i>Add a reply</button><span class="grow"></span><button type="button" class="sl-btn ghost" data-sl-close>Cancel</button><button type="button" class="sl-btn" data-ww="qr-save">Save</button></div>
+  <div class="row g8 wrap ww-dlg-actions"><button type="button" class="sl-btn ghost" data-ww="qr-add"><i class="ic ic-sm i-plus" aria-hidden="true"></i>Add a reply</button><button type="button" class="sl-btn ghost" data-ww="qr-reset"><i class="ic ic-sm i-refresh" aria-hidden="true"></i>Restore defaults</button><span class="grow"></span><button type="button" class="sl-btn ghost" data-sl-close>Cancel</button><button type="button" class="sl-btn" data-ww="qr-save">Save</button></div>
 </div></div>
 
 <?php if ($isAdmin): ?>

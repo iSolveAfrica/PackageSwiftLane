@@ -119,6 +119,12 @@ if (!function_exists('cdp_commOutboxFeed')) {
         if (!isset(cdp_commChannels()[$f['channel']])) {
             $f['channel'] = '';
         }
+        // Old Message Logs and queue status names
+        $oldStatus = ['queued' => 'waiting', 'pending' => 'waiting', 'scheduled' => 'waiting', 'retrying' => 'waiting', 'retry' => 'waiting', 'sending' => 'waiting',
+            'delivered' => 'sent', 'error' => 'failed', 'blocked' => 'skipped', 'suppressed' => 'cancelled', 'inbound' => 'received'];
+        if (isset($oldStatus[$f['status']])) {
+            $f['status'] = $oldStatus[$f['status']];
+        }
         if (!isset(cdp_commOutboxStatusFilters()[$f['status']])) {
             $f['status'] = '';
         }
@@ -126,6 +132,22 @@ if (!function_exists('cdp_commOutboxFeed')) {
             $f['origin'] = '';
         }
         return $f;
+    }
+
+    /**
+     * The Outbox list opens on the last 30 days (the log has no other bound
+     * and grows forever). ?range=any, any date, a customer or a campaign
+     * lifts it. Returns [filters, true when the default was applied].
+     */
+    function cdp_commOutboxDefaultRange(array $f, array $in = null)
+    {
+        $in = $in ?? $_GET;
+        $any = isset($in['range']) && $in['range'] === 'any';
+        if ($any || $f['from'] !== '' || $f['to'] !== '' || $f['customer'] || $f['campaign'] !== '') {
+            return [$f, false];
+        }
+        $f['from'] = date('Y-m-d', strtotime('-30 days'));
+        return [$f, true];
     }
 
     /** True when any filter narrows the list. */
@@ -147,7 +169,7 @@ if (!function_exists('cdp_commOutboxFeed')) {
                  OR l.source IN ('newsletter','push_notification','push_notification_consolidation','push_notification_invoice') THEN 'campaign'
             WHEN l.source = 'comms_whatsapp_inbox' AND COALESCE(l.sent_by,0) = 0 THEN 'king'
             WHEN l.source = 'comms_whatsapp_inbox' THEN 'inbox'
-            WHEN l.source IN ('comms_manual','comms_test','manual','sms_test','send_prices','general_notice','comms_custom') OR l.source LIKE 'compose%' THEN 'individual'
+            WHEN l.source IN ('comms_manual','comms_test','manual','sms_test','send_prices','general_notice','comms_custom','comms_whatsapp_web') OR l.source LIKE 'compose%' THEN 'individual'
             WHEN l.source = 'customer_service' OR l.entity_type = 'cs_ticket' THEN 'support'
             WHEN l.source = 'delivery_request' OR COALESCE(l.batch_id,'') LIKE 'delivery-outbox-%' THEN 'delivery'
             WHEN l.source IN ('otp','signup','user_account') THEN 'account'
@@ -170,9 +192,56 @@ if (!function_exists('cdp_commOutboxFeed')) {
     {
         static $ok = null;
         if ($ok === null) {
-            $ok = function_exists('cdp_msgEnsureOutboxColumn') ? (bool) cdp_msgEnsureOutboxColumn(true) : false;
+            // Check only: the page never alters the log table (the migration adds the column and its indexes).
+            $ok = function_exists('cdp_msgEnsureOutboxColumn') ? (bool) cdp_msgEnsureOutboxColumn(false) : false;
         }
         return $ok;
+    }
+
+    /**
+     * A search term as stored: a phone number typed with spaces or dashes loses
+     * them, and a local Ghana number (0541234567) loses its trunk 0, so it also
+     * finds +233541234567 and 233541234567.
+     */
+    function cdp_commOutboxSearchTerm($q)
+    {
+        $q = trim((string) $q);
+        if (preg_match('/^\+?[\d\s().\-]{7,}$/', $q)) {
+            $digits = preg_replace('/\D+/', '', $q);
+            if (preg_match('/^0\d{8,10}$/', $digits)) {
+                return substr($digits, 1);
+            }
+            return $digits;
+        }
+        return $q;
+    }
+
+    /** The Support desk queue's clock (it writes cdb_cs_outbox.send_after with cdp_csNow). */
+    function cdp_commOutboxCsNow()
+    {
+        if (!function_exists('cdp_csNow') && is_file(__DIR__ . '/support.php')) {
+            require_once __DIR__ . '/support.php';
+        }
+        return function_exists('cdp_csNow') ? (string) cdp_csNow() : (string) cdp_opsNow();
+    }
+
+    /** The database clock (the delivery-request worker writes available_at with NOW()). */
+    function cdp_commOutboxDbNow()
+    {
+        static $now = null;
+        if ($now === null) {
+            $now = (string) cdp_opsVal('SELECT NOW()', [], '');
+            if ($now === '') {
+                $now = (string) cdp_opsNow();
+            }
+        }
+        return $now;
+    }
+
+    /** "Now" as the queue that owns a row writes its send time. */
+    function cdp_commOutboxQueueNow($k)
+    {
+        return $k === 'cs' ? cdp_commOutboxCsNow() : ($k === 'dlv' ? cdp_commOutboxDbNow() : (string) cdp_opsNow());
     }
 
     /**
@@ -183,7 +252,7 @@ if (!function_exists('cdp_commOutboxFeed')) {
     function cdp_commOutboxParts(array $f)
     {
         $parts = [];
-        $q = $f['q'] !== '' ? '%' . $f['q'] . '%' : '';
+        $q = $f['q'] !== '' ? '%' . cdp_commOutboxSearchTerm($f['q']) . '%' : '';
         $statusIn = function ($want, array $map) {
             // $map: unified filter value => SQL condition for this part ('' = never)
             return $map[$want] ?? '0=1';
@@ -196,7 +265,10 @@ if (!function_exists('cdp_commOutboxFeed')) {
             $w = ['1=1'];
             $b = [];
             if (cdp_commOutboxLinked()) {
-                $w[] = '(l.outbox_id IS NULL OR l.outbox_id = 0)';
+                // Attempts show inside their queue row; an attempt whose queue row was deleted stays visible here.
+                $w[] = (cdp_opsTableExists('cdb_comm_outbox')
+                    ? '(l.outbox_id IS NULL OR l.outbox_id = 0 OR NOT EXISTS (SELECT 1 FROM cdb_comm_outbox ox WHERE ox.id = l.outbox_id))'
+                    : '1=1');
             }
             if ($f['channel'] !== '') { $w[] = 'l.channel = :l_ch'; $b[':l_ch'] = $f['channel']; }
             if ($f['status'] !== '') { $w[] = 'l.status = :l_st'; $b[':l_st'] = $f['status']; }
@@ -299,8 +371,10 @@ if (!function_exists('cdp_commOutboxFeed')) {
                 $w[] = "(c.subject LIKE :c_q1 OR c.body LIKE :c_q2 OR CONCAT(COALESCE(u.fname,''),' ',COALESCE(u.lname,'')) LIKE :c_q3 OR u.email LIKE :c_q4 OR u.phone LIKE :c_q5)";
                 for ($i = 1; $i <= 5; $i++) { $b[':c_q' . $i] = $q; }
             }
+            // The Support desk writes send_after with its own clock (cdp_csNow), so compare with that.
+            $csNow = preg_replace('/[^0-9: \-]/', '', cdp_commOutboxCsNow());
             $parts['cs'] = ["SELECT 'cs' AS k, c.id AS id, c.created_at AS at, c.channel AS channel,
-                    CASE c.status WHEN 'retry' THEN 'retrying' WHEN 'suppressed' THEN 'cancelled' WHEN 'queued' THEN CASE WHEN c.send_after > NOW() THEN 'scheduled' ELSE 'queued' END ELSE c.status END AS st,
+                    CASE c.status WHEN 'retry' THEN 'retrying' WHEN 'suppressed' THEN 'cancelled' WHEN 'queued' THEN CASE WHEN c.send_after > '" . $csNow . "' THEN 'scheduled' ELSE 'queued' END ELSE c.status END AS st,
                     'support' AS origin, 'customer_service' AS source, CONCAT('Support desk: ', c.kind) AS label, c.user_id AS uid,
                     TRIM(CONCAT(COALESCE(u.fname,''),' ',COALESCE(u.lname,''))) AS name, CASE WHEN c.channel = 'email' THEN u.email ELSE u.phone END AS rto,
                     c.subject AS subject, LEFT(c.body, 3000) AS body, c.attempts AS attempts, c.last_error AS detail, NULL AS campaign_id, '' AS batch,
@@ -311,9 +385,14 @@ if (!function_exists('cdp_commOutboxFeed')) {
         // ---- Delivery-request notices (waiting rows only; all of the customer's channels) ----
         if (cdp_opsTableExists('cdb_delivery_outbox') && in_array($f['status'], ['', 'waiting', 'cancelled'], true)
             && in_array($f['origin'], ['', 'delivery'], true) && ($f['source'] === '' || $f['source'] === 'delivery_request')
-            && $f['channel'] === '' && $f['campaign'] === '' && $f['sent_by'] <= 0 && !$f['template']) {
+            && $f['channel'] === '' && ($f['campaign'] === '' || preg_match('/^delivery-outbox-\d+$/', $f['campaign'])) && $f['sent_by'] <= 0 && !$f['template']) {
             $w = ["d.state IN ('pending','sending','cancelled')"];
             $b = [];
+            if ($f['campaign'] !== '') {
+                // "All its messages" of a delivery notice: the notice itself and its logged attempts.
+                $w[] = 'd.id = :d_id';
+                $b[':d_id'] = (int) substr($f['campaign'], 16);
+            }
             if ($f['status'] === 'waiting') { $w[] = "d.state IN ('pending','sending')"; }
             if ($f['status'] === 'cancelled') { $w[] = "d.state = 'cancelled'"; }
             if ($f['customer']) { $w[] = 'd.recipient_id = :d_u'; $b[':d_u'] = $f['customer']; }
@@ -476,7 +555,7 @@ if (!function_exists('cdp_commOutboxFeed')) {
             return 'Consolidation update';
         }
         if (strpos($batch, 'delivery-outbox-') === 0) {
-            return 'Delivery notice #' . substr($batch, 16);
+            return 'Delivery notice ' . substr($batch, 16);
         }
         return $batch;
     }
@@ -535,6 +614,9 @@ if (!function_exists('cdp_commOutboxFeed')) {
         if ($type === 'campaign') {
             return (int) $id > 0 ? sl_route('Campaigns', ['batch' => 'campaign-' . (int) $id]) : '';
         }
+        if ($type === 'delivery_request') {
+            return (int) $id > 0 ? sl_route('DeliveryDispatch', ['state' => 'all', 'id' => (int) $id]) : '';
+        }
         $boards = ['shipment' => 'ShipmentDetail', 'order' => 'ShipmentDetail', 'package' => 'PackageDetail', 'consolidation' => 'ConsolidationDetail'];
         if (isset($boards[$type]) && (int) $id > 0) {
             return sl_route($boards[$type], ['id' => (int) $id]);
@@ -550,7 +632,11 @@ if (!function_exists('cdp_commOutboxFeed')) {
                     return sl_route('PackageDetail', ['id' => (int) $info['order_id']]);
                 }
                 if ($info['type'] === 'consolidation') {
-                    return sl_route($info['module'] === 'consolidate_packages' ? 'ConsolidationDetail' : 'ConsolidationDetail', ['id' => (int) $info['order_id']]);
+                    // consolidate_packages consolidations have their own view (consolidate_package_view.php).
+                    if (($info['module'] ?? '') === 'consolidate_packages') {
+                        return 'consolidate_package_view.php?' . http_build_query(['id' => (int) $info['order_id']]);
+                    }
+                    return sl_route('ConsolidationDetail', ['id' => (int) $info['order_id']]);
                 }
             }
         }
@@ -585,7 +671,7 @@ if (!function_exists('cdp_commOutboxFeed')) {
             return 'Inbox reply' . ((string) $r->by_name !== '' ? ' by ' . $r->by_name : '');
         }
         if ($r->origin === 'individual' && (string) $r->by_name !== '' && stripos((string) $r->by_name, 'system') !== 0) {
-            return ($label !== '' ? $label : 'Message') . ' · ' . $r->by_name;
+            return $label !== '' && stripos($label, (string) $r->by_name) !== false ? $label : ($label !== '' ? $label : 'Message') . ' · ' . $r->by_name;
         }
         if ($label === '' && (string) $r->source !== '') {
             $label = function_exists('cdp_msgSourceLabel') ? cdp_msgSourceLabel((string) $r->source) : (string) $r->source;
@@ -599,6 +685,96 @@ if (!function_exists('cdp_commOutboxFeed')) {
     function cdp_commAiNameSafe()
     {
         return function_exists('cdp_kingName') ? cdp_kingName() : 'King';
+    }
+
+    /** Lookup key of an address: lower-case e-mail, or the last 9 digits of a phone number. */
+    function cdp_commOutboxAddrKey($to)
+    {
+        $to = trim((string) $to);
+        if ($to === '') {
+            return '';
+        }
+        if (strpos($to, '@') !== false) {
+            return 'e:' . strtolower($to);
+        }
+        $digits = preg_replace('/\D+/', '', $to);
+        return strlen($digits) >= 7 ? 'p:' . substr($digits, -9) : '';
+    }
+
+    /**
+     * Customers behind rows that carry only an address (campaign sends to a
+     * number): one query per page. Returns addrKey => [id, name]; an address
+     * shared by two accounts stays unknown.
+     */
+    function cdp_commOutboxRecipients(array $rows)
+    {
+        $mails = [];
+        $tails = [];
+        foreach ($rows as $r) {
+            if ((int) $r->uid > 0 || trim((string) $r->name) !== '' || !in_array($r->k, ['log', 'queue'], true)) {
+                continue;
+            }
+            $k = cdp_commOutboxAddrKey((string) $r->rto);
+            if (strpos($k, 'e:') === 0) {
+                $mails[substr($k, 2)] = true;
+            } elseif (strpos($k, 'p:') === 0) {
+                $tails[substr($k, 2)] = true;
+            }
+        }
+        if (!$mails && !$tails) {
+            return [];
+        }
+        $w = [];
+        $b = [];
+        $i = 0;
+        if ($mails) {
+            $in = [];
+            foreach (array_slice(array_keys($mails), 0, 60) as $m) { $in[] = ':re' . $i; $b[':re' . $i++] = $m; }
+            $w[] = 'LOWER(email) IN (' . implode(',', $in) . ')';
+        }
+        if ($tails) {
+            $in = [];
+            foreach (array_slice(array_keys($tails), 0, 60) as $t) { $in[] = ':rp' . $i; $b[':rp' . $i++] = (string) $t; }
+            $w[] = "RIGHT(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(COALESCE(phone,''),'+',''),' ',''),'-',''),'(',''),')',''), 9) IN (" . implode(',', $in) . ')';
+        }
+        $out = [];
+        $seen = [];
+        foreach (cdp_opsQ('SELECT id, fname, lname, email, phone FROM cdb_users WHERE ' . implode(' OR ', $w) . ' LIMIT 300', $b) as $u) {
+            $name = trim($u->fname . ' ' . $u->lname);
+            foreach ([cdp_commOutboxAddrKey((string) $u->email), cdp_commOutboxAddrKey((string) $u->phone)] as $k) {
+                if ($k === '') {
+                    continue;
+                }
+                $seen[$k] = ($seen[$k] ?? 0) + 1;
+                $out[$k] = [(int) $u->id, $name];
+            }
+        }
+        foreach ($seen as $k => $n) {
+            if ($n > 1) {
+                unset($out[$k]);
+            }
+        }
+        return $out;
+    }
+
+    /** Channels each delivery-request notice was tried on (result_json keys): id => [channels]. */
+    function cdp_commOutboxDeliveryChannels(array $rows)
+    {
+        $ids = [];
+        foreach ($rows as $r) {
+            if ($r->k === 'dlv') {
+                $ids[] = (int) $r->id;
+            }
+        }
+        if (!$ids || !cdp_opsTableExists('cdb_delivery_outbox')) {
+            return [];
+        }
+        $out = [];
+        foreach (cdp_opsQ('SELECT id, result_json FROM cdb_delivery_outbox WHERE id IN (' . implode(',', array_map('intval', array_slice($ids, 0, 500))) . ')') as $x) {
+            $j = json_decode((string) $x->result_json, true);
+            $out[(int) $x->id] = is_array($j) ? array_values(array_intersect(['whatsapp', 'sms', 'email'], array_keys($j))) : [];
+        }
+        return $out;
     }
 
     /** Rows from the union -> arrays for the page and the endpoint. */
@@ -619,6 +795,8 @@ if (!function_exists('cdp_commOutboxFeed')) {
         }
         $names = cdp_commOutboxCampaignNames($cids);
         $eng = cdp_commOutboxEngagement($pairs);
+        $who = cdp_commOutboxRecipients($rows);
+        $dlvChannels = cdp_commOutboxDeliveryChannels($rows);
         $st = cdp_commOutboxStatuses();
         $origins = cdp_commOutboxOrigins();
         $out = [];
@@ -627,61 +805,115 @@ if (!function_exists('cdp_commOutboxFeed')) {
             $e = $eng[(string) $r->batch . '|' . strtolower((string) $r->rto)] ?? null;
             $cost = cdp_commOutboxCost((string) $r->channel, $status, (string) $r->body);
             $name = trim((string) $r->name);
+            $uid = (int) $r->uid;
+            if ($uid <= 0 && $name === '' && in_array($r->k, ['log', 'queue'], true)) {
+                $hit = $who[cdp_commOutboxAddrKey((string) $r->rto)] ?? null;
+                if ($hit) {
+                    [$uid, $name] = $hit;
+                }
+            }
+            // Delivery-request notices: the request they are about, the channels actually tried.
+            if ($r->k === 'dlv') {
+                $r = clone $r;
+                $ek = (string) $r->elabel;
+                if (preg_match('/^(\d+):/', $ek, $m)) {
+                    $r->elabel = 'Delivery request #' . (int) $m[1];
+                    $r->eid = (string) (int) $m[1];
+                } elseif (strpos($ek, 'ready:') === 0) {
+                    $r->elabel = 'Ready for pickup';
+                    $r->eid = '';
+                }
+            }
+            $batch = (string) $r->batch;
+            $isCampaign = (int) $r->campaign_id > 0 || preg_match('/^(campaign-\d+|nl-.+|push-.+)$/', $batch);
+            $chLabel = $r->channel === '' ? 'All channels' : cdp_mlChannelLabel($r->channel);
+            if ($r->k === 'dlv') {
+                $tried = $dlvChannels[(int) $r->id] ?? [];
+                $chLabel = $tried ? implode(', ', array_map('cdp_mlChannelLabel', $tried)) : 'Customer\'s channels';
+            }
+            // Waiting well past its send time: the worker that sends it may not be running.
+            $overdue = false;
+            if (in_array($r->k, ['queue', 'cs', 'dlv'], true) && in_array($status, ['queued', 'retrying'], true) && (string) $r->send_after !== '') {
+                $overdue = strtotime((string) $r->send_after) < strtotime(cdp_commOutboxQueueNow((string) $r->k)) - 15 * 60;
+            }
             $out[] = [
                 'k' => (string) $r->k, 'id' => (int) $r->id, 'ref' => $r->k . '-' . (int) $r->id,
                 'at' => (string) $r->at, 'when' => sl_date($r->at, 'M j, H:i'), 'ago' => sl_ago($r->at),
-                'channel' => (string) $r->channel, 'channel_label' => $r->channel === '' ? 'All channels' : cdp_mlChannelLabel($r->channel),
-                'status' => $status, 'status_label' => $st[$status][0] ?? ucfirst($status), 'cls' => $st[$status][1] ?? 'plain',
+                'channel' => (string) $r->channel, 'channel_label' => $chLabel,
+                'status' => $status, 'status_label' => $overdue ? 'Overdue' : ($st[$status][0] ?? ucfirst($status)), 'cls' => $overdue ? 'overdue' : ($st[$status][1] ?? 'plain'),
+                'overdue' => $overdue,
                 'origin' => (string) $r->origin, 'origin_label' => $origins[$r->origin] ?? ucfirst((string) $r->origin),
                 'what' => cdp_commOutboxOriginLine($r, $names),
-                'uid' => (int) $r->uid, 'name' => $name !== '' ? $name : '', 'to' => (string) $r->rto,
+                'uid' => $uid, 'name' => $name !== '' ? $name : '', 'to' => (string) $r->rto,
                 'subject' => (string) $r->subject, 'excerpt' => cdp_commOutboxExcerpt($r->body),
-                'attempts' => (int) $r->attempts, 'detail' => (string) $r->detail, 'short' => function_exists('sl_msgShortDetail') ? sl_msgShortDetail((string) $r->detail) : cdp_opsClip($r->detail, 42),
+                'attempts' => (int) $r->attempts,
+                'detail' => $overdue && (string) $r->detail === '' ? 'Should have gone out ' . sl_date($r->send_after, 'M j, H:i') . '. The worker that sends these may not be running.' : (string) $r->detail,
+                'short' => $overdue ? 'Due ' . sl_ago($r->send_after) . ' - is the worker running?' : (function_exists('sl_msgShortDetail') ? sl_msgShortDetail((string) $r->detail) : cdp_opsClip($r->detail, 42)),
                 'provider' => cdp_commOutboxProvider((string) $r->detail, (string) $r->channel),
-                'campaign' => (int) $r->campaign_id > 0 ? ($names[(int) $r->campaign_id] ?? '') : ((string) $r->batch !== '' ? cdp_commOutboxBatchName((string) $r->batch, $names) : ''),
+                'campaign' => (int) $r->campaign_id > 0 ? ($names[(int) $r->campaign_id] ?? '') : ($isCampaign ? cdp_commOutboxBatchName($batch, $names) : ''),
+                'batch_label' => !$isCampaign && $batch !== '' ? cdp_commOutboxBatchName($batch, $names) : '',
                 'batch' => (string) $r->batch, 'record' => (string) $r->elabel, 'etype' => (string) $r->etype, 'eid' => (string) $r->eid,
                 'by' => $r->k === 'queue' ? ((int) $r->by_name > 0 ? cdp_opsUserName((int) $r->by_name) : 'System') : (string) ($r->by_name ?: ($r->k === 'in' ? '' : 'System')),
                 'cost' => $cost, 'opens' => $e ? $e[0] : null, 'clicks' => $e ? $e[1] : null,
                 'send_after' => (string) ($r->send_after ?? ''),
                 'can_retry' => $r->k === 'queue' && in_array($status, ['failed', 'cancelled'], true),
                 'can_cancel' => in_array($r->k, ['queue', 'cs', 'dlv'], true) && in_array($status, ['queued', 'scheduled', 'retrying'], true),
-                'can_explain' => in_array($status, ['failed', 'skipped', 'cancelled', 'retrying'], true),
+                // Cancellations are deliberate (staff, opt-out, a reopened ticket): nothing to explain.
+                'can_explain' => in_array($status, ['failed', 'skipped', 'retrying'], true) || $overdue,
             ];
         }
         return $out;
     }
 
-    /** Tiles above the list: the same filters except status, counted by outcome. */
+    /** Which tile a unified status counts in. */
+    function cdp_commOutboxTileOf($status)
+    {
+        $map = ['sent' => 'sent', 'failed' => 'failed', 'skipped' => 'skipped', 'cancelled' => 'cancelled', 'received' => 'received',
+            'queued' => 'waiting', 'scheduled' => 'waiting', 'retrying' => 'waiting', 'sending' => 'waiting'];
+        return $map[(string) $status] ?? 'skipped';
+    }
+
+    /**
+     * Tiles above the list: the same filters except status (the tiles are the
+     * status filter), counted by outcome with one grouped query per part. The
+     * cost of what was sent comes from the same grouped counts (rate x units).
+     * "total" is every row, so it equals the list's total when no status is chosen.
+     */
     function cdp_commOutboxStats(array $f)
     {
-        $s = ['total' => 0, 'sent' => 0, 'failed' => 0, 'skipped' => 0, 'waiting' => 0, 'received' => 0, 'cost' => 0.0, 'currency' => ''];
-        foreach (['sent', 'failed', 'skipped', 'waiting', 'received'] as $k) {
-            // Every tile counts with the other filters, whatever status is chosen (the tiles are the status filter).
-            $g = $f;
-            $g['status'] = $k;
-            $n = 0;
-            foreach (cdp_commOutboxParts($g) as $p) {
-                $n += (int) cdp_opsVal('SELECT COUNT(*) ' . $p[1], $p[2]);
-            }
-            $s[$k] = $n;
-        }
-        $s['total'] = $s['sent'] + $s['failed'] + $s['skipped'] + $s['waiting'] + $s['received'];
-        // Cost of what was sent with these filters (rate x units; the log is the record of sends).
-        if (function_exists('cdp_notifyCostPerMessage') || is_file(__DIR__ . '/message_cost.php')) {
+        $s = ['total' => 0, 'sent' => 0, 'failed' => 0, 'skipped' => 0, 'waiting' => 0, 'cancelled' => 0, 'received' => 0, 'cost' => 0.0, 'currency' => ''];
+        $g = $f;
+        $g['status'] = '';
+        $costs = is_file(__DIR__ . '/message_cost.php');
+        if ($costs) {
             require_once __DIR__ . '/message_cost.php';
-            $g = $f;
-            $g['status'] = 'sent';
-            $parts = cdp_commOutboxParts($g);
-            $units = (int) (cdp_mcSettings()['sms_parts'] ?? 0) === 1 ? "CASE WHEN x.channel = 'sms' AND CHAR_LENGTH(x.body) > 160 THEN CEIL(CHAR_LENGTH(x.body) / 153) ELSE 1 END" : '1';
-            foreach (['log', 'queue'] as $pn) {
-                if (empty($parts[$pn])) {
-                    continue;
-                }
-                $p = $parts[$pn];
-                foreach (cdp_opsQ("SELECT x.channel, SUM($units) n FROM (" . $p[0] . ' ' . $p[1] . ') x GROUP BY x.channel', $p[2]) as $r) {
-                    $s['cost'] += (float) cdp_notifyCostPerMessage((string) $r->channel) * (int) $r->n;
+            $costs = function_exists('cdp_notifyCostPerMessage');
+        }
+        $perPart = $costs && function_exists('cdp_mcSettings') && (int) (cdp_mcSettings()['sms_parts'] ?? 0) === 1;
+        $units = $perPart ? "CASE WHEN x.channel = 'sms' AND CHAR_LENGTH(x.body) > 160 THEN CEIL(CHAR_LENGTH(x.body) / 153) ELSE 1 END" : '1';
+        $rates = [];
+        foreach (cdp_commOutboxParts($g) as $name => $p) {
+            $sql = in_array($name, ['log', 'queue'], true)
+                ? 'SELECT x.st, x.channel, COUNT(*) n, SUM(' . $units . ') u FROM (' . $p[0] . ' ' . $p[1] . ') x GROUP BY x.st, x.channel'
+                : 'SELECT x.st, x.channel, COUNT(*) n, 0 u FROM (' . $p[0] . ' ' . $p[1] . ') x GROUP BY x.st, x.channel';
+            foreach (cdp_opsQ($sql, $p[2]) as $r) {
+                $n = (int) $r->n;
+                $s[cdp_commOutboxTileOf($r->st)] += $n;
+                $s['total'] += $n;
+                if ($costs && $r->st === 'sent' && in_array((string) $r->channel, ['whatsapp', 'sms', 'email'], true)) {
+                    $ch = (string) $r->channel;
+                    if (!isset($rates[$ch])) {
+                        try {
+                            $rates[$ch] = (float) cdp_notifyCostPerMessage($ch);
+                        } catch (Throwable $e) {
+                            $rates[$ch] = 0.0;
+                        }
+                    }
+                    $s['cost'] += $rates[$ch] * (int) $r->u;
                 }
             }
+        }
+        if ($costs && function_exists('cdp_notifyCostCurrency')) {
             $s['currency'] = cdp_notifyCostCurrency();
         }
         $s['cost'] = round($s['cost'], 2);
@@ -760,6 +992,32 @@ if (!function_exists('cdp_commOutboxFeed')) {
             'response' => (string) ($l->provider_response ?? ''), 'to' => (string) $l->recipient_to, 'endpoint' => (string) ($l->endpoint ?? ''), 'ip' => (string) ($l->ip ?? '')];
     }
 
+    /**
+     * An e-mail as staff may look at it: no open pixel and no tracked or
+     * unsubscribe links, so opening the drawer never records an open or a
+     * click for the customer (msg_track.php) or unsubscribes them; a CSP meta
+     * keeps scripts, frames and forms out of the preview.
+     */
+    function cdp_commOutboxSafeHtml($html)
+    {
+        $html = (string) $html;
+        $html = preg_replace('~<img\b[^>]*msg_track\.php[^>]*>~i', '', $html);
+        $html = preg_replace_callback('~href\s*=\s*(["\'])([^"\']*)\1~i', function ($m) {
+            $url = html_entity_decode($m[2], ENT_QUOTES, 'UTF-8');
+            if (stripos($url, 'msg_track.php') !== false) {
+                $q = [];
+                parse_str((string) parse_url($url, PHP_URL_QUERY), $q);
+                $orig = isset($q['u']) && is_string($q['u']) ? (string) base64_decode(strtr($q['u'], '-_', '+/')) : '';
+                $url = preg_match('~^https?://~i', $orig) ? $orig : '#';
+            } elseif (stripos($url, 'unsubscribe') !== false) {
+                $url = '#';
+            }
+            return 'href="' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '"';
+        }, $html);
+        $csp = '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; img-src data: https:; style-src \'unsafe-inline\' https:; font-src data: https:">';
+        return $csp . $html;
+    }
+
     /** Is this body an HTML e-mail? */
     function cdp_commOutboxIsHtml($channel, $body)
     {
@@ -791,9 +1049,21 @@ if (!function_exists('cdp_commOutboxFeed')) {
             $d['source'] = (string) $l->source;
             $d['template_id'] = $l->template_id ? (int) $l->template_id : null;
             $d['can_resend'] = in_array($l->status, ['failed', 'skipped'], true) && in_array($l->channel, ['whatsapp', 'sms', 'email'], true) && (string) $l->recipient_to !== ''
-                && !in_array((string) $l->source, ['otp', 'signup', 'pickup_code'], true);
-            if (!empty($l->outbox_id)) {
+                && !in_array((string) $l->source, ['otp', 'signup', 'pickup_code'], true)
+                && $origin !== 'campaign';   // campaigns are sent from the campaign (consent, unsubscribe)
+            if (!empty($l->outbox_id) && cdp_opsTableExists('cdb_comm_outbox')
+                && cdp_opsOne('SELECT id FROM cdb_comm_outbox WHERE id = :o', [':o' => (int) $l->outbox_id])) {
+                // An attempt of a queued message: Retry belongs to that message.
                 $d['outbox_id'] = (int) $l->outbox_id;
+                $d['parent_ref'] = 'queue-' . (int) $l->outbox_id;
+                $d['can_resend'] = false;
+            }
+            if ($d['can_resend'] && cdp_opsTableExists('cdb_comm_outbox')) {
+                $again = cdp_commOutboxResent((int) $l->id, (string) $l->channel);
+                if ($again) {
+                    $d['can_resend'] = false;
+                    $d['resent_ref'] = 'queue-' . (int) $again->id;
+                }
             }
         } elseif ($kind === 'queue' && cdp_opsTableExists('cdb_comm_outbox')) {
             $o = cdp_opsOne('SELECT o.*, TRIM(CONCAT(COALESCE(u.fname,\'\'),\' \',COALESCE(u.lname,\'\'))) uname, u.email uemail, u.phone uphone,
@@ -834,12 +1104,19 @@ if (!function_exists('cdp_commOutboxFeed')) {
                 }
             }
             $d['sent_by'] = $d['by'];
+            // The provider may already have this message (an attempt reported "sent"): retrying would send it twice.
+            $d['sent_attempt'] = strpos((string) $o->last_error, 'Interrupted while sending') === 0;
+            foreach ($logs as $l) {
+                if ($l->status === 'sent') {
+                    $d['sent_attempt'] = true;
+                }
+            }
         } elseif ($kind === 'cs' && cdp_opsTableExists('cdb_cs_outbox')) {
             $c = cdp_opsOne('SELECT c.*, TRIM(CONCAT(COALESCE(u.fname,\'\'),\' \',COALESCE(u.lname,\'\'))) uname, u.email uemail, u.phone uphone FROM cdb_cs_outbox c LEFT JOIN cdb_users u ON u.id = c.user_id WHERE c.id = :id', [':id' => $id]);
             if (!$c) {
                 return null;
             }
-            $st = ['retry' => 'retrying', 'suppressed' => 'cancelled', 'queued' => strtotime((string) $c->send_after) > time() ? 'scheduled' : 'queued'][$c->status] ?? (string) $c->status;
+            $st = ['retry' => 'retrying', 'suppressed' => 'cancelled', 'queued' => (string) $c->send_after > cdp_commOutboxCsNow() ? 'scheduled' : 'queued'][$c->status] ?? (string) $c->status;
             $row = (object) ['k' => 'cs', 'id' => $c->id, 'at' => $c->created_at, 'channel' => $c->channel, 'st' => $st, 'origin' => 'support', 'source' => 'customer_service',
                 'label' => 'Support desk: ' . $c->kind, 'uid' => (int) $c->user_id, 'name' => $c->uname, 'rto' => $c->channel === 'email' ? $c->uemail : $c->uphone,
                 'subject' => $c->subject, 'body' => $c->body, 'attempts' => $c->attempts, 'detail' => $c->last_error, 'campaign_id' => null, 'batch' => '',
@@ -855,7 +1132,7 @@ if (!function_exists('cdp_commOutboxFeed')) {
             if (!$x) {
                 return null;
             }
-            $st = $x->state === 'sending' ? 'sending' : ($x->state === 'pending' ? ((int) $x->attempts > 0 ? 'retrying' : (strtotime((string) $x->available_at) > time() ? 'scheduled' : 'queued')) : (string) $x->state);
+            $st = $x->state === 'sending' ? 'sending' : ($x->state === 'pending' ? ((int) $x->attempts > 0 ? 'retrying' : ((string) $x->available_at > cdp_commOutboxDbNow() ? 'scheduled' : 'queued')) : (string) $x->state);
             $row = (object) ['k' => 'dlv', 'id' => $x->id, 'at' => $x->created_at, 'channel' => '', 'st' => $st, 'origin' => 'delivery', 'source' => 'delivery_request',
                 'label' => 'Delivery request notice', 'uid' => (int) $x->recipient_id, 'name' => $x->uname, 'rto' => $x->uphone ?: $x->uemail, 'subject' => $x->subject,
                 'body' => $x->message, 'attempts' => $x->attempts, 'detail' => '', 'campaign_id' => null, 'batch' => 'delivery-outbox-' . (int) $x->id,
@@ -884,7 +1161,8 @@ if (!function_exists('cdp_commOutboxFeed')) {
                 'eid' => (string) (int) $m->tid, 'elabel' => '+' . $m->phone, 'by_name' => '', 'tpl' => null, 'send_after' => null];
             $d = cdp_commOutboxDecorate([$row])[0];
             $d['body'] = (string) $m->body;
-            $d['media_url'] = (string) ($m->media_url ?? '');
+            $media = trim((string) ($m->media_url ?? ''));
+            $d['media_url'] = preg_match('~^https?://~i', $media) ? $media : '';
             $d['source'] = 'comms_whatsapp_inbox';
             $d['attempt_list'] = [];
         }
@@ -894,7 +1172,7 @@ if (!function_exists('cdp_commOutboxFeed')) {
         $d['kind'] = $kind;
         $d['is_html'] = cdp_commOutboxIsHtml($d['channel'], $d['body']);
         if ($d['is_html']) {
-            $d['body'] = str_replace('<!--sl-html-->', '', $d['body']);
+            $d['body'] = cdp_commOutboxSafeHtml(str_replace('<!--sl-html-->', '', $d['body']));
         }
         $d['record_link'] = cdp_commOutboxRecordLink($d['etype'], $d['eid'], $d['record']);
         $d['customer_link'] = $d['uid'] > 0 ? sl_route('CommsCustomers', ['user' => $d['uid']]) : '';
@@ -903,7 +1181,7 @@ if (!function_exists('cdp_commOutboxFeed')) {
         if (preg_match('/^(campaign-\d+|nl-.+|push-.+)$/', (string) $d['batch'])) {
             $d['campaign_link'] = sl_route('Campaigns', ['batch' => $d['batch']]);
         }
-        $d['batch_link'] = (string) $d['batch'] !== '' ? sl_route('CommsOutbox', ['campaign' => $d['batch']]) : '';
+        $d['batch_link'] = (string) $d['batch'] !== '' && $kind !== 'dlv' ? sl_route('CommsOutbox', ['campaign' => $d['batch']]) : '';
         $d['currency'] = function_exists('cdp_notifyCostCurrency') ? cdp_notifyCostCurrency() : '';
         $d['events'] = [];
         if ($d['channel'] === 'email' && (string) $d['batch'] !== '' && cdp_opsTableExists('cdb_message_events')) {
@@ -1005,7 +1283,7 @@ if (!function_exists('cdp_commOutboxFeed')) {
             return [];
         }
         $roles = implode(',', array_map('intval', cdp_commClientRoles())) ?: '0';
-        $like = '%' . $q . '%';
+        $like = '%' . cdp_commOutboxSearchTerm($q) . '%';
         $rows = cdp_opsQ("SELECT id, fname, lname, locker, phone, email FROM cdb_users WHERE userlevel IN ($roles)
                           AND (CONCAT(fname,' ',lname) LIKE :q1 OR locker LIKE :q2 OR phone LIKE :q3 OR email LIKE :q4) ORDER BY fname LIMIT " . (int) $limit,
             [':q1' => $like, ':q2' => $like, ':q3' => $like, ':q4' => $like]);
@@ -1018,15 +1296,56 @@ if (!function_exists('cdp_commOutboxFeed')) {
     // Actions
     // -------------------------------------------------------------------------
 
-    /** Put a failed or cancelled Communication Center message back in the queue. */
-    function cdp_commOutboxRetry($kind, $id)
+    /**
+     * Put a failed or cancelled Communication Center message back in the queue.
+     * When one of its attempts was reported sent (e.g. "Interrupted while
+     * sending"), the provider may already have it: $confirmed must be true.
+     */
+    function cdp_commOutboxRetry($kind, $id, $confirmed = false)
     {
+        $id = (int) $id;
         if ($kind === 'queue') {
+            $o = cdp_opsOne('SELECT id, status, last_error FROM cdb_comm_outbox WHERE id = :id', [':id' => $id]);
+            if (!$o) {
+                return ['ok' => false, 'error' => 'That message is no longer there.', 'code' => 'not_found'];
+            }
+            if (!in_array($o->status, ['failed', 'cancelled'], true)) {
+                return ['ok' => false, 'error' => 'This message is no longer failed or cancelled.'];
+            }
+            if (!$confirmed && cdp_commOutboxLinked()
+                && cdp_opsOne("SELECT 1 x FROM cdb_message_log WHERE outbox_id = :id AND status = 'sent' LIMIT 1", [':id' => $id])) {
+                return ['ok' => false, 'code' => 'needs_confirm',
+                    'error' => 'One attempt of this message was accepted by the provider, so the customer may already have it. Retrying sends it again.'];
+            }
+            if (!$confirmed && strpos((string) $o->last_error, 'Interrupted while sending') === 0) {
+                return ['ok' => false, 'code' => 'needs_confirm',
+                    'error' => 'Sending this message was interrupted, so the provider may already have accepted it. Retrying can send it twice.'];
+            }
             $r = cdp_opsX("UPDATE cdb_comm_outbox SET status = 'queued', attempts = 0, send_after = :n, last_error = NULL WHERE id = :id AND status IN ('failed','cancelled')",
-                [':n' => cdp_opsNow(), ':id' => (int) $id]);
+                [':n' => cdp_opsNow(), ':id' => $id]);
             return ['ok' => $r['rows'] === 1, 'error' => $r['rows'] === 1 ? '' : 'This message is no longer failed or cancelled.'];
         }
-        return ['ok' => false, 'error' => 'Only Communication Center messages can be put back in the queue. Use "Send again" for this one.'];
+        if ($kind === 'in') {
+            return ['ok' => false, 'error' => 'Received messages cannot be retried.'];
+        }
+        if ($kind === 'cs' || $kind === 'dlv') {
+            $t = $kind === 'cs' ? 'cdb_cs_outbox' : 'cdb_delivery_outbox';
+            if (!cdp_opsTableExists($t) || !cdp_opsOne('SELECT id FROM ' . $t . ' WHERE id = :id', [':id' => $id])) {
+                return ['ok' => false, 'error' => 'That message is no longer there.', 'code' => 'not_found'];
+            }
+            return ['ok' => false, 'error' => 'The Support desk and delivery-request workers retry their own notices.'];
+        }
+        if ($kind === 'log') {
+            $l = cdp_msgTableReady() ? cdp_opsOne('SELECT id, outbox_id FROM cdb_message_log WHERE id = :id', [':id' => $id]) : null;
+            if (!$l) {
+                return ['ok' => false, 'error' => 'That message is no longer there.', 'code' => 'not_found'];
+            }
+            if (!empty($l->outbox_id)) {
+                return ['ok' => false, 'error' => 'This is one attempt of queued message queue-' . (int) $l->outbox_id . '. Retry that message instead.'];
+            }
+            return ['ok' => false, 'error' => 'Logged messages are not queued. Use "Send again" for this one.'];
+        }
+        return ['ok' => false, 'error' => 'Unknown message.'];
     }
 
     /** Stop a message that has not gone yet. */
@@ -1045,19 +1364,44 @@ if (!function_exists('cdp_commOutboxFeed')) {
         return ['ok' => $r['rows'] === 1, 'error' => $r['rows'] === 1 ? '' : 'This message is already on its way or finished.'];
     }
 
+    /** The stable dedupe key of "Send again" for one log row: a second click finds the first copy. */
+    function cdp_commOutboxResendKey($logId)
+    {
+        return 'resend-' . (int) $logId;
+    }
+
+    /** The queue row an earlier "Send again" of this log row made (cdp_commInsertOutbox adds ":<channel>"), or null. */
+    function cdp_commOutboxResent($logId, $channel)
+    {
+        if (!cdp_opsTableExists('cdb_comm_outbox')) {
+            return null;
+        }
+        return cdp_opsOne('SELECT id FROM cdb_comm_outbox WHERE dedupe_key = :k LIMIT 1', [':k' => cdp_commOutboxResendKey($logId) . ':' . $channel]);
+    }
+
     /**
      * Send a logged message that failed or was skipped again, same text to the
      * same address, through the Communication Center queue (which honours the
-     * customer's preferences and logs the new attempt).
+     * customer's preferences and logs the new attempt). Once per log row; the
+     * delivery runs after the response.
+     * Campaign, newsletter and broadcast rows are refused: they go out from the
+     * campaign, which applies marketing consent and the unsubscribe header.
      */
     function cdp_commOutboxResend($logId)
     {
-        $l = cdp_msgTableReady() ? cdp_opsOne('SELECT * FROM cdb_message_log WHERE id = :id', [':id' => (int) $logId]) : null;
+        $l = cdp_msgTableReady() ? cdp_opsOne('SELECT l.*, (' . cdp_commOutboxLogOriginSql() . ') AS origin FROM cdb_message_log l WHERE l.id = :id', [':id' => (int) $logId]) : null;
         if (!$l) {
             return ['ok' => false, 'error' => 'That message is no longer in the log.'];
         }
         if (!in_array($l->status, ['failed', 'skipped'], true)) {
             return ['ok' => false, 'error' => 'Only a failed or skipped message can be sent again.'];
+        }
+        if (!empty($l->outbox_id) && cdp_opsTableExists('cdb_comm_outbox')
+            && cdp_opsOne('SELECT id FROM cdb_comm_outbox WHERE id = :o', [':o' => (int) $l->outbox_id])) {
+            return ['ok' => false, 'error' => 'This is one attempt of queued message queue-' . (int) $l->outbox_id . '. Retry that message instead.'];
+        }
+        if ((string) $l->origin === 'campaign') {
+            return ['ok' => false, 'error' => 'Campaign and broadcast messages are sent again from the campaign, so consent and unsubscribe rules apply.'];
         }
         if (in_array((string) $l->source, ['otp', 'signup', 'pickup_code'], true)) {
             return ['ok' => false, 'error' => 'Codes are never sent again from the Outbox. Ask the customer to request a new one.'];
@@ -1066,20 +1410,53 @@ if (!function_exists('cdp_commOutboxFeed')) {
         if (trim($body) === '' || strpos($body, '••••') !== false) {
             return ['ok' => false, 'error' => 'The logged text is empty or hides a code, so it cannot be sent again.'];
         }
+        $key = cdp_commOutboxResendKey((int) $l->id);
+        $prev = cdp_commOutboxResent((int) $l->id, (string) $l->channel);
+        if ($prev) {
+            return ['ok' => false, 'code' => 'already', 'id' => (int) $prev->id, 'error' => 'Already sent again: see queue-' . (int) $prev->id . '.'];
+        }
         if ($l->channel === 'email' && preg_match('/<[a-z][\s\S]*>/i', $body) && strpos($body, '<!--sl-html-->') !== 0) {
             $body = '<!--sl-html-->' . cdp_commSanitizeEmailHtml($body);
         }
         // Braces in the logged text are not placeholders any more.
         $vars = [];
-        $o = ['event' => 'manual', 'body' => $body, 'subject' => (string) ($l->subject ?: 'Message from us'), 'entity_type' => (string) $l->entity_type ?: 'manual',
-            'entity_ref' => mb_substr((string) $l->entity_label, 0, 80), 'name' => (string) $l->recipient_name, 'send_after' => time(),
-            'dedupe' => 'resend-' . (int) $l->id . '-' . date('YmdHis')];
+        $o = ['event' => 'manual', 'body' => $body, 'subject' => $l->channel === 'email' ? (string) ($l->subject ?: 'Message from us') : '',
+            'entity_type' => (string) $l->entity_type ?: 'manual', 'entity_ref' => mb_substr((string) $l->entity_label, 0, 80), 'name' => (string) $l->recipient_name,
+            'send_after' => time(), 'dedupe' => $key];
         $q = cdp_commQueueRaw((string) $l->recipient_to, (string) $l->channel, $vars, $o);
         if (empty($q['queued'])) {
+            if (in_array('Already queued', $q['skipped'], true)) {
+                $prev = cdp_commOutboxResent((int) $l->id, (string) $l->channel);
+                return ['ok' => false, 'code' => 'already', 'id' => $prev ? (int) $prev->id : 0, 'error' => 'Already sent again.'];
+            }
             return ['ok' => false, 'error' => 'Not queued: ' . implode('; ', array_map(function ($k, $v) { return $k . ' - ' . $v; }, array_keys($q['skipped']), $q['skipped']))];
         }
-        $res = cdp_commDeliverDue(20);
-        return ['ok' => true, 'id' => (int) ($q['ids'][0] ?? 0), 'delivered' => $res];
+        return ['ok' => true, 'id' => (int) ($q['ids'][0] ?? 0)];
+    }
+
+    /** An address with most of it hidden, for text that leaves the server (King). */
+    function cdp_commOutboxMaskTo($to)
+    {
+        $to = trim((string) $to);
+        if ($to === '') {
+            return '';
+        }
+        if (strpos($to, '@') !== false) {
+            return '(an address at ' . substr(strrchr($to, '@'), 1) . ')';
+        }
+        $digits = preg_replace('/\D+/', '', $to);
+        return strlen($digits) >= 4 ? '(a number ending ' . substr($digits, -3) . ', ' . strlen($digits) . ' digits' . (strpos($to, '+') === 0 ? ', with +' : '') . ')' : '(a short number)';
+    }
+
+    /** Personal data and secrets out of a provider response before King sees it. */
+    function cdp_commOutboxRedact($s)
+    {
+        $s = (string) $s;
+        $s = preg_replace('/((?:pass(?:word)?|pwd|secret|token|api[_-]?key|auth(?:orization)?)["\']?\s*(?:=>|=|:)\s*)(["\']?)[^"\'\s,}&]{3,}\2/i', '$1$2[hidden]$2', $s);
+        $s = preg_replace('/\b[\w.+-]+@[\w-]+\.[\w.]+\b/', '[e-mail]', $s);
+        $s = preg_replace('/\+?\d[\d\s().-]{6,}\d/', '[number]', $s);
+        $s = preg_replace('/\b[A-Za-z0-9_\-]{32,}\b/', '[token]', $s);
+        return $s;
     }
 
     /** Facts for King's "Explain this failure". */
@@ -1088,7 +1465,8 @@ if (!function_exists('cdp_commOutboxFeed')) {
         $att = $d['attempt_list'] ?? [];
         $last = $att ? end($att) : null;
         return ['channel' => $d['channel'], 'provider' => $d['provider'] ?: ($last['provider'] ?? ''), 'status' => $d['status_label'],
-            'error' => $d['detail'] !== '' ? $d['detail'] : ($last['detail'] ?? ''), 'detail' => $last ? mb_substr((string) $last['response'], 0, 500) : '',
-            'to' => $d['to'], 'attempts' => (string) $d['attempts']];
+            'error' => cdp_commOutboxRedact($d['detail'] !== '' ? $d['detail'] : ($last['detail'] ?? '')),
+            'detail' => $last ? mb_substr(cdp_commOutboxRedact((string) $last['response']), 0, 500) : '',
+            'to' => cdp_commOutboxMaskTo($d['to']), 'attempts' => (string) $d['attempts']];
     }
 }

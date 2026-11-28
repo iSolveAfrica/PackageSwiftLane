@@ -2,8 +2,9 @@
 /**
  * Customer dashboard top (desktop and tablet; phones use partials/mobile_dashboard.php), in the same
  * card style as the staff control panel (partials/overview_hero.php, assets/swiftlane/overview-hero.css):
- * the customer's card on the left, parcel / pickup / bills / pre-alert cards on the right, then the
- * last 12 months, what they ship most and where their parcels are now.
+ * the customer's card on the left, parcel and bills cards in the middle, the locker ID and warehouse
+ * addresses on the right (one country at a time, tabs scroll when there are many), then the last 12 months
+ * and what they ship most.
  * Data: sl_clientDashboardData() + sl_clientCardsData() in views/sl/data/portal.php.
  */
 $cc = $d['cc'];
@@ -19,10 +20,36 @@ $bars = function (array $bars, string $cls = '', string $label = 'Last 14 days')
 $yearN = max(1, (int) $d['year']);
 $wherePeak = max(1, max(array_map(fn($w) => $w['n'], $cc['where']) ?: [0]));
 $delivery = $d['mobileDelivery'] ?? null;
+$addrs = array_values((array) ($d['addresses'] ?? []));
+$locker = (string) ($d['locker'] ?? '');
+$addrMore = $GLOBALS['user']->cdp_hasPermission('client_virtual_mail_box_addresses') ? 'client_virtual_mail_box_addresses.php' : '';
+// Customer service: chat (support.php), WhatsApp / phone / email from Settings > Company.
+$coCore = $GLOBALS['core'] ?? null;
+$svcTel = preg_replace('/[^\d+]/', '', (string) ($coCore->c_phone ?? ''));
+$svcWa = preg_replace('/\D+/', '', (string) ($coCore->cell_phone ?? ''));
+$svcMail = filter_var(trim((string) ($coCore->site_email ?? '')), FILTER_VALIDATE_EMAIL) ?: '';
+$coUid = (int) ($_SESSION['userid'] ?? 0);
+$svcOpen = sl_tableExists('cdb_cs_tickets') ? (int) sl_scalar("SELECT COUNT(*) FROM cdb_cs_tickets WHERE customer_id = :u AND is_internal = 0 AND status NOT IN ('resolved','closed')", [':u' => $coUid]) : 0;
+// Referrals: only when loyalty and referrals are switched on (Loyalty settings).
+$ref = null;
+if (is_file(CDP_ROOT . '/helpers/loyalty.php')) {
+    require_once CDP_ROOT . '/helpers/loyalty.php';
+    if (sl_loyaltyReferralOn()) {
+        $coL = sl_loyaltyForCustomer($coUid);
+        if (!empty($coL['enabled']) && !empty($coL['code'])) {
+            $coS = sl_loyaltySettings();
+            $coLink = sl_loyaltySignupLink((string) $coL['code']);
+            $ref = ['code' => (string) $coL['code'], 'n' => (int) $coL['referrals'], 'pts' => (int) $coS['referral_referrer_points'], 'friend' => trim((string) $coS['referral_friend_reward']),
+                'share' => 'Ship with ' . ($coCore->site_name ?? 'Swift Lane') . '. Register with my code ' . $coL['code'] . ': ' . $coLink];
+        }
+    }
+}
 ?>
 <link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/overview-hero.css')) ?>">
+<link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/locker-addresses.css')) ?>">
 <link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/client-overview.css')) ?>">
-<div class="ovh-wrap"><div class="ovh-grid co-grid" style="--rows:<?= max(1, (int) ceil(count($cc['cards']) / 2)) ?>">
+<script src="<?= h(cdp_asset('dataJs/sl/client_wallet.js')) ?>" defer></script>
+<div class="ovh-wrap"><div class="ovh-grid co-grid<?= count($cc['cards']) < 2 ? ' co-one' : '' ?>" style="--rows:2">
   <section class="ovh-me" aria-label="Your account">
     <div class="ovh-me-top">
       <?= $slPic(64, false) ?>
@@ -91,6 +118,38 @@ $delivery = $d['mobileDelivery'] ?? null;
     <div class="ovh-foot"><span><?= h($c['barsL']) ?></span><span><?= h($c['barsR']) ?></span></div>
   </a>
   <?php endforeach; ?>
+
+  <section class="co-addr" id="addresses" aria-labelledby="co-addr-h">
+    <div class="co-addr-hero">
+      <div class="row between"><span class="la-eyebrow" id="co-addr-h"><i class="ic ic-sm i-key" aria-hidden="true"></i>Your locker ID</span><?php if ($addrMore): ?><a class="la-link" href="<?= h($addrMore) ?>">How it works <i class="ic ic-sm i-right" aria-hidden="true"></i></a><?php endif; ?></div>
+      <div class="la-id"><b class="mono"><?= h($locker !== '' ? $locker : '—') ?></b><?php if ($locker !== ''): ?><button type="button" class="la-copy" data-sl-copy="<?= h($locker) ?>" aria-label="Copy locker ID"><i class="ic ic-sm i-copy" aria-hidden="true"></i>Copy</button><?php endif; ?></div>
+      <p>Works at <?= count($addrs) === 1 ? 'our warehouse' : 'all ' . count($addrs) . ' warehouses' ?>. Put it on every order so we know the parcel is yours.</p>
+    </div>
+    <?php if (!$addrs): ?>
+    <p class="mut sm co-addr-empty">No warehouse address is set up yet. New addresses appear here as soon as we add them.</p>
+    <?php else: ?>
+    <?php $awName = (string) ($d['name'] ?? ''); include __DIR__ . '/address_wallet.php'; ?>
+    <?php endif; ?>
+
+    <div class="co-help">
+      <div class="co-svc">
+        <div class="co-blk-h"><span class="co-blk-ic"><i class="ic ic-sm i-message" aria-hidden="true"></i></span><div><b>Customer service</b><small><?= $svcOpen ? $svcOpen . ' open request' . ($svcOpen === 1 ? '' : 's') . ' · we reply in the chat' : 'Questions about a parcel, a bill or an address' ?></small></div></div>
+        <div class="co-svc-a">
+          <a class="co-svc-b" href="support.php"><i class="ic ic-sm i-message" aria-hidden="true"></i><span>Chat with us</span></a>
+          <?php if ($svcWa !== ''): ?><a class="co-svc-b" href="https://wa.me/<?= h($svcWa) ?>" target="_blank" rel="noopener"><i class="ic ic-sm i-phone" aria-hidden="true"></i><span>WhatsApp</span></a><?php endif; ?>
+          <?php if ($svcTel !== ''): ?><a class="co-svc-b" href="tel:<?= h($svcTel) ?>"><i class="ic ic-sm i-phone" aria-hidden="true"></i><span>Call</span></a><?php endif; ?>
+          <?php if ($svcMail !== ''): ?><a class="co-svc-b" href="mailto:<?= h($svcMail) ?>"><i class="ic ic-sm i-send" aria-hidden="true"></i><span>Email</span></a><?php endif; ?>
+        </div>
+      </div>
+      <?php if ($ref): ?>
+      <div class="co-ref">
+        <div class="co-blk-h"><span class="co-blk-ic"><i class="ic ic-sm i-star" aria-hidden="true"></i></span><div><b>Invite a friend<?= $ref['pts'] ? ', earn ' . sl_num($ref['pts']) . ' points' : '' ?></b><small><?= $ref['friend'] !== '' ? 'They get ' . h($ref['friend']) . '. ' : '' ?>You earn when their first parcel is delivered.</small></div></div>
+        <div class="co-ref-code"><span class="mono"><?= h($ref['code']) ?></span><button type="button" class="co-ref-b ico" data-sl-copy="<?= h($ref['code']) ?>" aria-label="Copy referral code" title="Copy code"><i class="ic ic-sm i-copy" aria-hidden="true"></i></button><button type="button" class="co-ref-b pri" data-sl-copy="<?= h($ref['share']) ?>" data-co-share="<?= h($ref['share']) ?>"><i class="ic ic-sm i-send" aria-hidden="true"></i>Share link</button></div>
+        <div class="co-ref-f"><span><?= sl_num($ref['n']) ?> friend<?= $ref['n'] === 1 ? '' : 's' ?> joined</span><a href="<?= h(sl_route('MyRewards')) ?>">My rewards <i class="ic ic-sm i-right" aria-hidden="true"></i></a></div>
+      </div>
+      <?php endif; ?>
+    </div>
+  </section>
 </div></div>
 
 <?php

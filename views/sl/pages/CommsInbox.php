@@ -36,7 +36,7 @@ $waiting = function_exists('cdp_commWaitingCount') && !empty($d['ready']) ? cdp_
     <span class="ib-st"><span class="mut">Sending</span> <?= $c['outbound'] ? sl_pill('On', 'delivered') : sl_pill('Off', 'pending') ?></span>
     <span class="ib-st"><span class="mut"><?= h($king) ?></span> <?= $c['bot_on'] ? ($c['bot_ai_ok'] === false ? sl_pill('On, AI not set up', 'onway') : sl_pill('Answers first', 'delivered')) : sl_pill('Off: people answer', 'plain') ?></span>
   </span>
-  <span class="ib-sa"><?php if (!$c['connected']): ?><button type="button" class="sl-btn ghost sm" data-sl-open="ib-setup"><?= $isAdmin ? 'How to connect' : 'What does this mean?' ?></button><?php endif; ?><?php if ($isAdmin): ?><a class="sl-btn ghost sm" href="<?= h($settingsUrl) ?>" aria-label="Communication Center settings" title="Communication Center settings"><i class="ic ic-sm i-cog" aria-hidden="true"></i></a><?php endif; ?></span>
+  <span class="ib-sa"><?php if (!$c['connected']): ?><button type="button" class="sl-btn ghost sm" data-sl-open="ib-setup"><?= $isAdmin ? 'How to connect' : 'What does this mean?' ?></button><?php endif; ?><?php if ($isAdmin): ?><a class="sl-btn ghost sm" href="<?= h($settingsUrl) ?>" aria-label="Message settings" title="Message settings"><i class="ic ic-sm i-cog" aria-hidden="true"></i></a><?php endif; ?></span>
 </section>
 <?php if (!$c['connected'] && $c['threads'] === 0): ?>
 <section class="sl-card ib-empty-setup">

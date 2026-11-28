@@ -33,16 +33,74 @@ function sl_commsSettingsAccess($user): array
     ];
 }
 
-/** Where the "Link your phone (QR)" button goes: the in-app WhatsApp screen. */
+/** Where the "Link your phone (QR)" button goes: the in-app WhatsApp screen (whatsapp_web.php), '' when it is not installed. */
 function sl_commsWhatsAppConnectUrl(): string
 {
     $routes = sl_routes();
-    foreach (['CommsWhatsApp', 'CommsWhatsAppConnect'] as $b) {
+    foreach (['WhatsAppWeb', 'CommsWhatsApp', 'CommsWhatsAppConnect'] as $b) {
         if (isset($routes[$b]) && is_file(CDP_ROOT . '/' . strtok($routes[$b], '?#'))) {
-            return sl_route($b, ['connect' => 1]);
+            return sl_route($b);
         }
     }
-    return sl_route('CommsInbox', ['connect' => 1]);
+    return '';
+}
+
+/**
+ * May a provider address (WhatsApp instance, SMTP host) point at this host?
+ * Public addresses only: loopback, private (RFC 1918), link-local (cloud
+ * metadata) and reserved ranges are refused, so a provider "check" cannot be
+ * aimed at the server's own network or used to send a saved secret there.
+ * CDP_ALLOW_LOCAL_PROVIDERS (config) lifts this for a local test provider.
+ *
+ * @return array{ok:bool,error:string,ips:string[]} ips: the checked IPv4 addresses (pin them for the request)
+ */
+function sl_commsHostCheck(string $host): array
+{
+    $host = strtolower(trim($host, " \t\n\r\0\x0B[]"));
+    if ($host === '') {
+        return ['ok' => false, 'error' => 'No server address.', 'ips' => []];
+    }
+    if (defined('CDP_ALLOW_LOCAL_PROVIDERS') && CDP_ALLOW_LOCAL_PROVIDERS === true) {
+        return ['ok' => true, 'error' => '', 'ips' => []];
+    }
+    $public = fn($ip) => filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false;
+    if (filter_var($host, FILTER_VALIDATE_IP) !== false) {
+        return $public($host) ? ['ok' => true, 'error' => '', 'ips' => filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) ? [$host] : []]
+            : ['ok' => false, 'error' => 'This address is on a private or local network. Use the provider\'s public address.', 'ips' => []];
+    }
+    if ($host === 'localhost' || substr($host, -6) === '.local' || substr($host, -10) === '.localhost' || substr($host, -9) === '.internal' || strpos($host, '.') === false) {
+        return ['ok' => false, 'error' => 'This address is on a private or local network. Use the provider\'s public address.', 'ips' => []];
+    }
+    $ips = @gethostbynamel($host) ?: [];
+    $v6 = [];
+    if (function_exists('dns_get_record')) {
+        foreach ((@dns_get_record($host, DNS_AAAA) ?: []) as $r) {
+            if (!empty($r['ipv6'])) {
+                $v6[] = $r['ipv6'];
+            }
+        }
+    }
+    foreach (array_merge($ips, $v6) as $ip) {
+        if (!$public($ip)) {
+            return ['ok' => false, 'error' => 'This address leads to a private or local network. Use the provider\'s public address.', 'ips' => []];
+        }
+    }
+    return ['ok' => true, 'error' => '', 'ips' => $ips];
+}
+
+/** Is a provider base URL acceptable (https, public host)? '' when it is, else the reason. */
+function sl_commsProviderUrlError(string $url): string
+{
+    $local = defined('CDP_ALLOW_LOCAL_PROVIDERS') && CDP_ALLOW_LOCAL_PROVIDERS === true;
+    if (!filter_var($url, FILTER_VALIDATE_URL) || !preg_match($local ? '~^https?://~i' : '~^https://~i', $url)) {
+        return 'Enter the full https address, e.g. https://api.ultramsg.com/instance12345.';
+    }
+    $p = parse_url($url);
+    if (!empty($p['user']) || !empty($p['pass']) || (isset($p['port']) && !$local && (int) $p['port'] !== 443)) {
+        return 'Enter the address without a user name or port, e.g. https://api.ultramsg.com/instance12345.';
+    }
+    $h = sl_commsHostCheck((string) ($p['host'] ?? ''));
+    return $h['ok'] ? '' : $h['error'];
 }
 
 /** One line per channel for the status strip (also used by the Overview). */
@@ -56,7 +114,7 @@ function sl_commsChannelStatus(): array
     $waKeys = $cloud ? ($s['wa_cloud_phone_id'] !== '' && $s['wa_cloud_token'] !== '') : (trim((string) ($cs->api_ws_url ?? '')) !== '' && trim((string) ($cs->api_ws_token ?? '')) !== '');
     $waOn = (int) ($cs->active_whatsapp ?? 0) === 1;
     $out['whatsapp'] = ['label' => 'WhatsApp', 'icon' => 'i-wa', 'provider' => $cloud ? 'Meta Cloud API' : 'UltraMsg',
-        'state' => !$waKeys ? 'Not set up' : ($waOn || $cloud ? 'On' : 'Switched off'), 'ok' => $waKeys && ($waOn || $cloud), 'warn' => $waKeys && !$waOn && !$cloud];
+        'state' => !$waKeys ? 'Not set up' : ($waOn ? 'On' : 'Switched off'), 'ok' => $waKeys && $waOn, 'warn' => $waKeys && !$waOn];
     // SMS
     $smsOn = (int) ($cs->active_sms ?? 0) === 1;
     $smsReady = function_exists('cdp_smsReady') && cdp_smsReady();
@@ -124,7 +182,7 @@ function sl_commsSettingsData($user, $core): array
     $workerFresh = $last !== '' && strtotime($last) >= time() - 900;
 
     // Consent
-    $consent = ['optout' => 0, 'wa_off' => 0, 'sms_off' => 0, 'email_off' => 0, 'mkt' => ['whatsapp' => 0, 'sms' => 0, 'email' => 0], 'customers' => 0, 'stops30' => 0, 'unsub' => 0];
+    $consent = ['optout' => 0, 'wa_off' => 0, 'sms_off' => 0, 'email_off' => 0, 'mkt' => ['whatsapp' => 0, 'sms' => 0, 'email' => 0], 'unsub' => 0];
     if ($ready) {
         $r = cdp_opsOne("SELECT SUM(opted_out_all = 1) o, SUM(whatsapp = 0) w, SUM(sms = 0) s, SUM(email = 0) e,
                                 SUM(opted_out_all = 0 AND mkt_whatsapp = 1) mw, SUM(opted_out_all = 0 AND mkt_sms = 1) ms, SUM(opted_out_all = 0 AND mkt_email = 1) me FROM cdb_comm_prefs");
@@ -135,9 +193,7 @@ function sl_commsSettingsData($user, $core): array
             $consent['email_off'] = (int) $r->e;
             $consent['mkt'] = ['whatsapp' => (int) $r->mw, 'sms' => (int) $r->ms, 'email' => (int) $r->me];
         }
-        $consent['stops30'] = (int) cdp_opsVal("SELECT COUNT(*) FROM cdb_comm_consent_log WHERE created_at >= :f AND value = 0 AND source LIKE :s", [':f' => cdp_opsNow(-30 * 86400), ':s' => '%whatsapp%'], 0);
     }
-    $consent['customers'] = (int) sl_scalar("SELECT COUNT(*) FROM cdb_users WHERE userlevel = 1", [], 0);
     if (sl_tableExists('cdb_newsletter_unsubscribes')) {
         $consent['unsub'] = (int) sl_scalar("SELECT COUNT(*) FROM cdb_newsletter_unsubscribes", [], 0);
     }

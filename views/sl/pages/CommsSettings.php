@@ -21,12 +21,15 @@ $kg = $d['king'];
 $cost = $d['costs'];
 $ajax = $d['ajax'];
 $ro = $sec ? '' : ' disabled';
-/** A switch posting 1/0 under $name. */
-$tg = function (string $name, bool $on, string $label, bool $locked = false): string {
+/** A switch posting 1/0 under $name. $instant: saves on its own (set_channel), for administrators who may not change keys. */
+$tg = function (string $name, bool $on, string $label, bool $locked = false, bool $instant = false) use (&$ajax): string {
     return '<span class="sl-toggle' . ($on ? ' on' : '') . '" role="switch" aria-checked="' . ($on ? 'true' : 'false') . '" aria-label="' . h($label) . '"'
-        . ($locked ? ' data-static' : '') . ' data-cs-switch="' . h($name) . '"><input type="hidden" name="' . h($name) . '" value="' . ($on ? '1' : '0') . '"></span>';
+        . ($locked ? ' data-static' : '') . ($instant ? ' data-sl-save="' . h($ajax) . '" data-key="' . h($name) . '" data-p-action="set_channel"' : '')
+        . ' data-cs-switch="' . h($name) . '">' . ($instant ? '' : '<input type="hidden" name="' . h($name) . '" value="' . ($on ? '1' : '0') . '">') . '</span>';
 };
 $secretPh = fn(bool $set) => $set ? '•••••••• saved - leave blank to keep' : 'Not set';
+/** "Remove" next to a saved secret: clears it on the next save (clear_secrets). */
+$clearBtn = fn(string $name, bool $set) => $sec && $set ? '<button type="button" class="sl-btn ghost sm cs-clr" data-cs-clear="' . h($name) . '" aria-pressed="false">Remove saved</button>' : '';
 $sections = [
     'cs-whatsapp' => ['WhatsApp', 'i-wa'], 'cs-sms' => ['SMS', 'i-message'], 'cs-email' => ['E-mail', 'i-mail'], 'cs-rules' => ['Sending rules', 'i-bolt'],
     'cs-consent' => ['Consent and opt-out', 'i-shield'], 'cs-king' => [$kg['name'] . ' (WhatsApp bot)', 'i-ai'], 'cs-costs' => ['Costs', 'i-dollar'], 'cs-test' => ['Test send', 'i-send'],
@@ -39,7 +42,7 @@ $money = fn($v) => trim($cur . ' ' . number_format((float) $v, (float) $v > 0 &&
 
 <?php if (!$d['ready']): ?><div class="sl-banner bad"><i class="ic ic-sm i-alert" aria-hidden="true"></i><span>The message tables could not be created. The database user needs the CREATE privilege once.</span></div><?php endif; ?>
 <?php if ($d['demo']): ?><div class="sl-banner warn"><i class="ic ic-sm i-alert" aria-hidden="true"></i><span>Demo mode: provider settings cannot be changed.</span></div><?php endif; ?>
-<?php if (!$sec): ?><div class="sl-banner info"><i class="ic ic-sm i-lock" aria-hidden="true"></i><span>Provider keys are read-only for you. A super admin (or someone with the API settings permission) changes them. Sending rules, consent and <?= h($kg['name']) ?> you can change.</span></div><?php endif; ?>
+<?php if (!$sec): ?><div class="sl-banner info"><i class="ic ic-sm i-lock" aria-hidden="true"></i><span>Provider keys are read-only for you. A super admin (or someone with the API settings permission) changes them. You can switch WhatsApp and SMS on or off, and change sending rules and <?= h($kg['name']) ?>.</span></div><?php endif; ?>
 
 <section class="cs-strip" aria-label="Channel status" data-cs-strip>
 <?php foreach ($d['status'] as $k => $st): ?>
@@ -55,23 +58,23 @@ $money = fn($v) => trim($cur . ' ' . number_format((float) $v, (float) $v > 0 &&
 
 <!-- WhatsApp -->
 <form class="sl-card col g16 cs-sec" id="cs-whatsapp" data-sl-form action="<?= h($ajax) ?>" method="post" autocomplete="off">
-<input type="hidden" name="action" value="save_whatsapp">
+<input type="hidden" name="action" value="save_whatsapp"><input type="hidden" name="clear_secrets" value="">
 <div class="sl-ch" style="margin:0"><div><h2 class="sl-ct">WhatsApp</h2><span class="mut sm">Every WhatsApp message goes through the provider chosen here.</span></div><?php if ($sec): ?><button class="sl-btn sm" type="submit">Save WhatsApp</button><?php else: ?><span class="sl-badge">Read-only</span><?php endif; ?></div>
-<label class="row g10 cs-sw"><?= $tg('active_whatsapp', $wa['active'], 'WhatsApp switched on', !$sec) ?><span class="col"><span>WhatsApp switched on</span><span class="mut sm">Off stops every WhatsApp message (automatic and manual). The inbox still receives.</span></span></label>
+<label class="row g10 cs-sw"><?= $tg('active_whatsapp', $wa['active'], 'WhatsApp switched on', false, !$sec) ?><span class="col"><span>WhatsApp switched on</span><span class="mut sm">Off stops every WhatsApp message (automatic, manual and tests) with either provider. The inbox still receives.<?= $sec ? '' : ' This switch saves at once.' ?></span></span></label>
 <div class="sl-field"><span class="sl-lab" id="cs-wa-prov-l">Provider</span><div class="sl-seg boxed" role="radiogroup" aria-labelledby="cs-wa-prov-l" data-cs-seg="wa_provider">
 <?php foreach (['ultramsg' => 'UltraMsg (your phone, by QR)', 'cloud' => 'Meta WhatsApp Cloud API'] as $k => $l): ?><button type="button" role="radio" aria-checked="<?= $wa['provider'] === $k ? 'true' : 'false' ?>" class="<?= $wa['provider'] === $k ? 'on' : '' ?>" data-v="<?= h($k) ?>"<?= $ro ?>><?= h($l) ?></button><?php endforeach; ?>
 </div><input type="hidden" name="wa_provider" value="<?= h($wa['provider']) ?>"></div>
 
 <div class="col g12" data-cs-when="wa_provider=ultramsg"<?= $wa['provider'] === 'ultramsg' ? '' : ' hidden' ?>>
 <div class="grid cols2 cs-g"><label class="sl-field"><span class="sl-lab">Instance address</span><input class="sl-in mono" name="api_ws_url" value="<?= h($wa['url']) ?>" placeholder="https://api.ultramsg.com/instance12345" inputmode="url"<?= $ro ?>><span class="sl-hint">From your UltraMsg dashboard, ends with your instance id.</span></label>
-<label class="sl-field"><span class="sl-lab">Token</span><input class="sl-in mono" name="api_ws_token" type="password" autocomplete="new-password" placeholder="<?= h($secretPh($wa['token_set'])) ?>"<?= $ro ?>></label></div>
-<div class="row g8 wrap cs-acts"><a class="sl-btn ghost sm" href="<?= h($wa['connect_url']) ?>"><i class="ic ic-sm i-phone" aria-hidden="true"></i>Link your phone (scan the QR)</a><?php if ($sec): ?><button class="sl-btn ghost sm" type="button" data-cs-do="check_whatsapp"><i class="ic ic-sm i-activity" aria-hidden="true"></i>Check connection</button><?php endif; ?><span class="mut sm" data-cs-out="check_whatsapp" role="status" aria-live="polite"></span></div>
+<label class="sl-field"><span class="sl-lab">Token</span><input class="sl-in mono" name="api_ws_token" type="password" autocomplete="new-password" placeholder="<?= h($secretPh($wa['token_set'])) ?>"<?= $ro ?>><?= $clearBtn('api_ws_token', $wa['token_set']) ?></label></div>
+<div class="row g8 wrap cs-acts"><?php if ($wa['connect_url'] !== ''): ?><a class="sl-btn ghost sm" href="<?= h($wa['connect_url']) ?>"><i class="ic ic-sm i-phone" aria-hidden="true"></i>Link your phone (scan the QR)</a><?php endif; ?><?php if ($sec): ?><button class="sl-btn ghost sm" type="button" data-cs-do="check_whatsapp"><i class="ic ic-sm i-activity" aria-hidden="true"></i>Check connection</button><?php endif; ?><span class="mut sm" data-cs-out="check_whatsapp" role="status" aria-live="polite"></span></div>
 </div>
 
 <div class="col g12" data-cs-when="wa_provider=cloud"<?= $wa['provider'] === 'cloud' ? '' : ' hidden' ?>>
 <div class="grid cols2 cs-g"><label class="sl-field"><span class="sl-lab">Phone number ID</span><input class="sl-in mono" name="wa_cloud_phone_id" value="<?= h($wa['cloud_phone_id']) ?>" inputmode="numeric"<?= $ro ?>></label>
-<label class="sl-field"><span class="sl-lab">Access token</span><input class="sl-in mono" name="wa_cloud_token" type="password" autocomplete="new-password" placeholder="<?= h($secretPh($wa['cloud_token_set'])) ?>"<?= $ro ?>></label>
-<label class="sl-field"><span class="sl-lab">App secret (checks Meta's signature)</span><input class="sl-in mono" name="wa_cloud_app_secret" type="password" autocomplete="new-password" placeholder="<?= h($secretPh($wa['cloud_secret_set'])) ?>"<?= $ro ?>></label>
+<label class="sl-field"><span class="sl-lab">Access token</span><input class="sl-in mono" name="wa_cloud_token" type="password" autocomplete="new-password" placeholder="<?= h($secretPh($wa['cloud_token_set'])) ?>"<?= $ro ?>><?= $clearBtn('wa_cloud_token', $wa['cloud_token_set']) ?></label>
+<label class="sl-field"><span class="sl-lab">App secret (checks Meta's signature)</span><input class="sl-in mono" name="wa_cloud_app_secret" type="password" autocomplete="new-password" placeholder="<?= h($secretPh($wa['cloud_secret_set'])) ?>"<?= $ro ?>><?= $clearBtn('wa_cloud_app_secret', $wa['cloud_secret_set']) ?></label>
 <label class="sl-field"><span class="sl-lab">Verify token (you choose it)</span><input class="sl-in mono" name="wa_cloud_verify" value="<?= $sec ? h($wa['cloud_verify']) : ($wa['cloud_verify'] !== '' ? '••••••' : '') ?>"<?= $ro ?>></label>
 <label class="sl-field"><span class="sl-lab">Graph API version</span><input class="sl-in mono" name="wa_cloud_version" value="<?= h($wa['cloud_version']) ?>" placeholder="v20.0"<?= $ro ?>></label></div>
 <span class="mut sm">Outside the 24-hour window Meta only delivers approved templates: give each automatic message its template name in Automations.</span>
@@ -84,18 +87,18 @@ $money = fn($v) => trim($cur . ' ' . number_format((float) $v, (float) $v > 0 &&
 
 <!-- SMS -->
 <form class="sl-card col g16 cs-sec" id="cs-sms" data-sl-form action="<?= h($ajax) ?>" method="post" autocomplete="off">
-<input type="hidden" name="action" value="save_sms">
+<input type="hidden" name="action" value="save_sms"><input type="hidden" name="clear_secrets" value="">
 <div class="sl-ch" style="margin:0"><div><h2 class="sl-ct">SMS</h2><span class="mut sm">Hubtel and mNotify (Ghana). The default provider sends; the other one can take over when it fails.</span></div><?php if ($sec): ?><button class="sl-btn sm" type="submit">Save SMS</button><?php else: ?><span class="sl-badge">Read-only</span><?php endif; ?></div>
-<label class="row g10 cs-sw"><?= $tg('active_sms', $sms['active'], 'SMS switched on', !$sec) ?><span class="col"><span>SMS switched on</span><span class="mut sm">Needs at least one provider switched on.</span></span></label>
+<label class="row g10 cs-sw"><?= $tg('active_sms', $sms['active'], 'SMS switched on', false, !$sec) ?><span class="col"><span>SMS switched on</span><span class="mut sm">Needs at least one provider switched on.<?= $sec ? '' : ' This switch saves at once.' ?></span></span></label>
 <div class="cs-prov">
 <fieldset class="cs-pc"><legend class="row g8"><b class="fw5">Hubtel</b><span class="sl-pill <?= $sms['hub_ready'] ? 'ok' : 'plain' ?>"><?= $sms['hub_ready'] ? 'Keys saved' : 'No keys' ?></span></legend>
-<label class="row g10 sm"><?= $tg('hubtel_enabled', $sms['hub_on'], 'Hubtel on', !$sec) ?>Hubtel on</label>
+<label class="row g10 sm cs-sw"><?= $tg('hubtel_enabled', $sms['hub_on'], 'Hubtel on', !$sec) ?><span>Hubtel on</span></label>
 <label class="sl-field"><span class="sl-lab">Client ID</span><input class="sl-in mono" name="hubtel_client_id" value="<?= h($sms['hub_id']) ?>"<?= $ro ?>></label>
-<label class="sl-field"><span class="sl-lab">Client secret</span><input class="sl-in mono" name="hubtel_client_secret" type="password" autocomplete="new-password" placeholder="<?= h($secretPh($sms['hub_secret_set'])) ?>"<?= $ro ?>></label>
+<label class="sl-field"><span class="sl-lab">Client secret</span><input class="sl-in mono" name="hubtel_client_secret" type="password" autocomplete="new-password" placeholder="<?= h($secretPh($sms['hub_secret_set'])) ?>"<?= $ro ?>><?= $clearBtn('hubtel_client_secret', $sms['hub_secret_set']) ?></label>
 <label class="sl-field"><span class="sl-lab">Sender ID (max 11)</span><input class="sl-in" name="hubtel_sender_id" maxlength="11" value="<?= h($sms['hub_sender']) ?>"<?= $ro ?>></label></fieldset>
 <fieldset class="cs-pc"><legend class="row g8"><b class="fw5">mNotify</b><span class="sl-pill <?= $sms['mn_ready'] ? 'ok' : 'plain' ?>"><?= $sms['mn_ready'] ? 'Keys saved' : 'No keys' ?></span></legend>
-<label class="row g10 sm"><?= $tg('mnotify_enabled', $sms['mn_on'], 'mNotify on', !$sec) ?>mNotify on</label>
-<label class="sl-field"><span class="sl-lab">API key</span><input class="sl-in mono" name="mnotify_api_key" type="password" autocomplete="new-password" placeholder="<?= h($secretPh($sms['mn_key_set'])) ?>"<?= $ro ?>></label>
+<label class="row g10 sm cs-sw"><?= $tg('mnotify_enabled', $sms['mn_on'], 'mNotify on', !$sec) ?><span>mNotify on</span></label>
+<label class="sl-field"><span class="sl-lab">API key</span><input class="sl-in mono" name="mnotify_api_key" type="password" autocomplete="new-password" placeholder="<?= h($secretPh($sms['mn_key_set'])) ?>"<?= $ro ?>><?= $clearBtn('mnotify_api_key', $sms['mn_key_set']) ?></label>
 <label class="sl-field"><span class="sl-lab">Sender ID (max 11)</span><input class="sl-in" name="mnotify_sender_id" maxlength="11" value="<?= h($sms['mn_sender']) ?>"<?= $ro ?>></label>
 <?php if ($sec): ?><div class="row g8 wrap"><button class="sl-btn ghost sm" type="button" data-cs-do="mnotify_balance"><i class="ic ic-sm i-dollar" aria-hidden="true"></i>Check balance</button><span class="mut sm" data-cs-out="mnotify_balance" role="status" aria-live="polite"></span></div><?php endif; ?></fieldset>
 </div>
@@ -105,7 +108,7 @@ $money = fn($v) => trim($cur . ' ' . number_format((float) $v, (float) $v > 0 &&
 
 <!-- E-mail -->
 <form class="sl-card col g16 cs-sec" id="cs-email" data-sl-form action="<?= h($ajax) ?>" method="post" autocomplete="off">
-<input type="hidden" name="action" value="save_email">
+<input type="hidden" name="action" value="save_email"><input type="hidden" name="clear_secrets" value="">
 <div class="sl-ch" style="margin:0"><div><h2 class="sl-ct">E-mail</h2><span class="mut sm">The mail server and the one address every e-mail comes from.</span></div><?php if ($sec): ?><button class="sl-btn sm" type="submit">Save e-mail</button><?php else: ?><span class="sl-badge">Read-only</span><?php endif; ?></div>
 <div class="sl-field"><span class="sl-lab" id="cs-mailer-l">Send with</span><div class="sl-seg boxed" role="radiogroup" aria-labelledby="cs-mailer-l" data-cs-seg="mailer">
 <?php foreach (['SMTP' => 'SMTP server (recommended)', 'PHP' => 'PHP mail() on this server'] as $k => $l): ?><button type="button" role="radio" aria-checked="<?= $em['mailer'] === $k ? 'true' : 'false' ?>" class="<?= $em['mailer'] === $k ? 'on' : '' ?>" data-v="<?= h($k) ?>"<?= $ro ?>><?= h($l) ?></button><?php endforeach; ?>
@@ -116,7 +119,7 @@ $money = fn($v) => trim($cur . ' ' . number_format((float) $v, (float) $v > 0 &&
 <div class="col g12" data-cs-when="mailer=SMTP"<?= $em['mailer'] === 'SMTP' ? '' : ' hidden' ?>>
 <div class="grid cols2 cs-g"><label class="sl-field"><span class="sl-lab">SMTP host</span><input class="sl-in mono" name="smtp_host" value="<?= h($em['host']) ?>" placeholder="smtp.yourmail.com"<?= $ro ?>></label>
 <label class="sl-field"><span class="sl-lab">User name</span><input class="sl-in mono" name="smtp_user" value="<?= h($em['user']) ?>" autocomplete="off"<?= $ro ?>></label>
-<label class="sl-field"><span class="sl-lab">Password</span><input class="sl-in mono" name="smtp_password" type="password" autocomplete="new-password" placeholder="<?= h($secretPh($em['pass_set'])) ?>"<?= $ro ?>></label>
+<label class="sl-field"><span class="sl-lab">Password</span><input class="sl-in mono" name="smtp_password" type="password" autocomplete="new-password" placeholder="<?= h($secretPh($em['pass_set'])) ?>"<?= $ro ?>><?= $clearBtn('smtp_password', $em['pass_set']) ?></label>
 <div class="grid cols2 cs-g"><label class="sl-field"><span class="sl-lab">Port</span><input class="sl-in mono" name="smtp_port" type="number" min="1" max="65535" value="<?= (int) $em['port'] ?>"<?= $ro ?>></label>
 <label class="sl-field"><span class="sl-lab">Security</span><span class="sl-sel native"><select name="smtp_secure"<?= $ro ?>><?php foreach (['tls' => 'TLS (587)', 'ssl' => 'SSL (465)', 'none' => 'None (25)'] as $k => $l): ?><option value="<?= $k ?>"<?= $em['secure'] === $k ? ' selected' : '' ?>><?= $l ?></option><?php endforeach; ?></select><i class="ic ic-sm i-down" aria-hidden="true"></i></span></label></div></div>
 <?php if ($sec): ?><div class="row g8 wrap"><button class="sl-btn ghost sm" type="button" data-cs-do="check_smtp"><i class="ic ic-sm i-activity" aria-hidden="true"></i>Check the server</button><span class="mut sm" data-cs-out="check_smtp" role="status" aria-live="polite"></span></div><?php endif; ?>
@@ -164,11 +167,11 @@ $money = fn($v) => trim($cur . ' ' . number_format((float) $v, (float) $v > 0 &&
 <div class="cs-k"><span class="mut sm">Newsletter unsubscribes</span><b><?= sl_num($co['unsub']) ?></b></div>
 </div>
 <div class="cs-kw"><div class="col g6"><b class="fw5 sm">Keywords customers can send by WhatsApp</b>
-<ul class="cs-kwl"><li><span class="cs-kwt">STOP</span><span class="cs-kwt">UNSUBSCRIBE</span><span class="cs-kwt">OPT OUT</span><span class="mut sm">stops every message except one-time codes</span></li>
+<ul class="cs-kwl"><li><span class="cs-kwt">STOP</span><span class="cs-kwt">UNSUBSCRIBE</span><span class="cs-kwt">OPT OUT</span><span class="mut sm">stops WhatsApp messages and every offer (WhatsApp, SMS and e-mail); status SMS and e-mails still go</span></li>
 <li><span class="cs-kwt">START</span><span class="cs-kwt">SUBSCRIBE</span><span class="mut sm">turns messages back on</span></li>
 <li><span class="cs-kwt">AGENT</span><span class="cs-kwt">HUMAN</span><span class="mut sm">hands the chat from <?= h($kg['name']) ?> to a person in WhatsApp</span></li></ul></div>
 <ul class="cs-rl mut sm">
-<li>Transactional messages (statuses, codes, reminders) go unless the customer switched that channel off.</li>
+<li>Transactional messages (statuses, codes, reminders) go unless the customer switched that channel off. A customer who wants nothing at all switches everything off in their preferences.</li>
 <li>Campaigns only reach customers who said yes to offers on that channel. Contacts saved from WhatsApp groups are reachable by campaigns; a STOP from them is honoured the same way.</li>
 <li>Every e-mail carries an unsubscribe link and every SMS campaign says "Reply STOP to opt out".</li>
 <li>Customers change their choices on <a href="<?= h($d['links']['prefs']) ?>">Notification preferences</a> (the only preferences the senders read).</li></ul></div>

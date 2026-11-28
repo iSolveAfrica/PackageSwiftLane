@@ -27,4 +27,4 @@ if (in_array($_GET['panel'] ?? '', ['tower','tracking'], true) && !$d['isClient'
     ], $d);
     return;
 }
-sl_render('SeaPackages', ['id' => 'sea', 'title' => 'Sea Packages', 'board' => 'SeaPackages', 'styles' => ['assets/swiftlane/pages/ops.css']], $d);
+sl_render('SeaPackages', ['id' => 'sea', 'title' => sl_userIs('client') ? 'My sea shipments' : 'Sea Packages', 'board' => 'SeaPackages', 'styles' => ['assets/swiftlane/pages/ops.css']], $d);
