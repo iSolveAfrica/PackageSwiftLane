@@ -8,7 +8,19 @@
  */
 require_once __DIR__ . '/sl_view.php';
 
-/** The pictures: key => [file, description]. */
+/** Which pictures belong to air and which to sea: air shipments only ever show air pictures, sea only sea. */
+function sl_cargoArtModes(): array
+{
+    return ['air' => ['plane'], 'sea' => ['packing', 'loading', 'ship', 'yard', 'opened']];
+}
+
+/** The pictures of one mode, key => [file, description, short name]. */
+function sl_cargoArtOf(bool $sea): array
+{
+    return array_intersect_key(sl_cargoArt(), array_flip(sl_cargoArtModes()[$sea ? 'sea' : 'air']));
+}
+
+/** The pictures: key => [file, description, short name]. */
 function sl_cargoArt(): array
 {
     return [
@@ -24,6 +36,9 @@ function sl_cargoArt(): array
 /** Default picture for a status (by id for the built-in statuses, by its words for any other). */
 function sl_cargoArtDefault(int $statusId, string $name, bool $sea): string
 {
+    if (!$sea) {
+        return 'plane'; // the only air picture; more air pictures go in sl_cargoArtModes()['air']
+    }
     $byId = [
         // booked, approved, waiting, being received or packed
         1 => 'packing', 2 => 'packing', 10 => 'packing', 11 => 'packing', 12 => 'packing', 14 => 'packing', 17 => 'packing', 18 => 'packing', 19 => 'packing', 21 => 'packing', 23 => 'packing',
@@ -60,7 +75,7 @@ function sl_cargoArtMap(): array
 /** The picture for a status: ['key', 'file' (asset path), 'alt', 'custom' => bool]. */
 function sl_cargoArtFor(int $statusId, string $name, bool $sea): array
 {
-    $art = sl_cargoArt();
+    $art = sl_cargoArtOf($sea);
     $saved = sl_cargoArtMap()[$sea ? 'sea' : 'air'][(string) $statusId] ?? '';
     $key = isset($art[$saved]) ? $saved : sl_cargoArtDefault($statusId, $name, $sea);
     return ['key' => $key, 'file' => 'assets/swiftlane/cargo/' . $art[$key][0], 'alt' => $art[$key][1], 'custom' => isset($art[$saved])];

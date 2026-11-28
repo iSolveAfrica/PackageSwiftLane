@@ -3,7 +3,7 @@
 $img = fn($k) => cdp_asset('assets/swiftlane/cargo/' . $d['art'][$k][0]);
 $sel = function (string $mode, array $r) use ($d) {
     $o = '<select class="sl-in" name="' . $mode . '[' . $r['id'] . ']" aria-label="' . h(ucfirst($mode) . ' picture for ' . $r['name']) . '" data-sp-pick>';
-    foreach ($d['art'] as $k => [$f, $alt, $short]) $o .= '<option value="' . h($k) . '"' . ($r[$mode]['key'] === $k ? ' selected' : '') . ' data-src="' . h(cdp_asset('assets/swiftlane/cargo/' . $f)) . '">' . h($short) . '</option>';
+    foreach (sl_cargoArtOf($mode === 'sea') as $k => [$f, $alt, $short]) $o .= '<option value="' . h($k) . '"' . ($r[$mode]['key'] === $k ? ' selected' : '') . ' data-src="' . h(cdp_asset('assets/swiftlane/cargo/' . $f)) . '">' . h($short) . '</option>';
     return $o . '</select>';
 };
 ?>
