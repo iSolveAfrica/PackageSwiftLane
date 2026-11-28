@@ -130,5 +130,8 @@ function sl_phoneMe(): array
     global $userData;
     $name = trim((string) (($userData->fname ?? '') . ' ' . ($userData->lname ?? ''))) ?: (string) ($userData->username ?? '');
     $first = trim((string) ($userData->fname ?? '')) ?: $name;
+    // One friendly word for greetings: the first part of the first name, in normal case (HENRY NTIAKO -> Henry).
+    $first = (string) (preg_split('/\s+/u', $first)[0] ?? '');
+    if ($first !== '') $first = mb_convert_case(mb_strtolower($first), MB_CASE_TITLE, 'UTF-8');
     return ['name' => $name, 'first' => $first, 'ini' => function_exists('sl_initials') ? sl_initials($name ?: '?') : '?'];
 }
