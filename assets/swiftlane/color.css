@@ -172,8 +172,7 @@ html.sl-dark .sl-top .sl-switch small{color:#161615}
 .dk-q:nth-child(6n+6) .sl-tile{background:var(--active);color:var(--ink-2)}
 /* timeline and steps */
 .sl-tl .now .dot{border-color:var(--green);box-shadow:0 0 0 4px var(--green-bg)}
-/* banners get a left bar of their hue */
-.sl-banner{box-shadow:inset 3px 0 0 currentColor}
+/* banners stay the design's rounded tinted card: no left bar */
 /* table header and row accents */
 .sl-table thead th{color:var(--muted)}
 .sl-table tbody tr:hover td{background:color-mix(in srgb,var(--accent) 6%,var(--card))}
