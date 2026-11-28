@@ -22,6 +22,13 @@
  body[data-mobile-role]:not([data-mobile-role=""]) .sl-mobile-nav a[aria-current] .ic{color:var(--pwa-accent)}
  .sl-app-tools{padding-bottom:24px;font-size:13px}.sl-installed .sl-app-tools:has([data-pwa-update][hidden]){display:none}
  body[data-mobile-role="customer"] .sl-dashboard-detail,body[data-mobile-role="customer"] .sl-desktop-delivery-cta{display:none}
+ /* the customer phone home is the compact app home (design M-CHome): the desktop live-tracking console stays off it */
+ body[data-mobile-role="customer"] [data-page="dash"] .tc-wrap{display:none}
+ /* a 2-across stat grid with an odd count: the last tile spans the row instead of sitting orphaned */
+ body[data-mobile-role]:not([data-mobile-role=""]) :is(.grid.cols3,.grid.cols4)>:last-child:nth-child(odd){grid-column:1/-1}
+ /* customer help chat: no desktop-sized empty well on a phone */
+ body[data-mobile-role] #hp-chat{min-height:0!important}
+ body[data-mobile-role] #hp-scroll{min-height:140px!important;max-height:48vh!important}
  body[data-mobile-role="customer"] [data-page="dash"] .sl-wrap{gap:22px}
  .pwa-customer-home{gap:24px}
  .pwa-home-search{display:flex;align-items:center;gap:12px;min-height:56px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:0 8px 0 16px}
