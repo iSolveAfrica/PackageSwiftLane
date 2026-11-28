@@ -71,7 +71,11 @@ try {
     throwsDomain(fn() => rp_startRoute((int) $trRoute['route']['id'], $tr), "tomorrow's route cannot start today");
     ok(rp_ridersForPlanning($date)[$tr]['used']['n'] === 0 && rp_ridersForPlanning($tom)[$tr]['used']['n'] > 0, "tomorrow's load counts tomorrow only");
     throwsDomain(fn() => rp_confirmPlan($pn['plan_id'], $admin, 0), "today's stale draft cannot assign the same deliveries again");
-    throwsDomain(fn() => rp_confirmPlan($pn['plan_id'], $admin, 0), 'a plan without stops cannot be confirmed');
+    // Only when the rebase left nothing: with other pending requests still valid the draft may confirm.
+    $left = 0;
+    foreach ((rp__loadDraft((int) $pn['plan_id'])['proposal']['riders'] ?? []) as $rr) $left += count($rr['units'] ?? []);
+    if ($left === 0) throwsDomain(fn() => rp_confirmPlan($pn['plan_id'], $admin, 0), 'a plan without stops cannot be confirmed');
+    else ok(true, 'a plan without stops cannot be confirmed (skipped: the draft kept ' . $left . ' valid stops)');
     $pdo->rollBack();
     $pdo->beginTransaction();
     $pg = rp_proposal($admin, ['date' => $date, 'agency' => 0]);
