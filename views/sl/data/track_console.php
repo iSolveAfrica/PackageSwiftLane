@@ -151,14 +151,16 @@ function sl_tcFilters(): array
 function sl_tcKinds($user, string $source): array
 {
     $client = $source === 'mine';
+    // Riders see what is assigned to them (sl_opsScope limits rows to driver_id), no list permission needed.
+    $rider = function_exists('sl_userIs') && sl_userIs('driver');
     $k = [];
     if ($source !== 'consolidations') {
-        if ($client || $user->cdp_hasPermission(['view_shipment_list', 'view_general_shipments'])) $k[] = ['air', 'cdb_add_order', 'order_prefix', 'order_no', 'order_date', null, 'shipment'];
-        if ($client || $user->cdp_hasPermission(['view_package_list', 'view_general_package_records'])) $k[] = ['sea', 'cdb_customers_packages', 'order_prefix', 'order_no', 'order_date', null, 'package'];
+        if ($client || $rider || $user->cdp_hasPermission(['view_shipment_list', 'view_general_shipments'])) $k[] = ['air', 'cdb_add_order', 'order_prefix', 'order_no', 'order_date', null, 'shipment'];
+        if ($client || $rider || $user->cdp_hasPermission(['view_package_list', 'view_general_package_records'])) $k[] = ['sea', 'cdb_customers_packages', 'order_prefix', 'order_no', 'order_date', null, 'package'];
     }
     if ($source !== 'shipments') {
-        if ($client || $user->cdp_hasPermission('view_consolidate_list')) $k[] = ['air', 'cdb_consolidate', 'c_prefix', 'c_no', 'c_date', 'cdb_consolidate_detail', 'consolidation'];
-        if ($client || $user->cdp_hasPermission('view_consolidate_package_list')) $k[] = ['sea', 'cdb_consolidate_packages', 'c_prefix', 'c_no', 'c_date', 'cdb_consolidate_packages_detail', 'consolidation'];
+        if ($client || $rider || $user->cdp_hasPermission('view_consolidate_list')) $k[] = ['air', 'cdb_consolidate', 'c_prefix', 'c_no', 'c_date', 'cdb_consolidate_detail', 'consolidation'];
+        if ($client || $rider || $user->cdp_hasPermission('view_consolidate_package_list')) $k[] = ['sea', 'cdb_consolidate_packages', 'c_prefix', 'c_no', 'c_date', 'cdb_consolidate_packages_detail', 'consolidation'];
     }
     return $k;
 }
@@ -293,7 +295,7 @@ function sl_trackConsoleData($user, $core, string $source = 'shipments', int $li
     }
     usort($rows, fn($a, $b) => strcmp((string) $b->dt, (string) $a->dt));
     $rows = array_slice($rows, 0, $limit);
-    $senders = sl_usersById(array_merge(array_map(fn($r) => $r->sender_id, $rows), array_map(fn($r) => $r->receiver_id, $rows)));
+    $senders = sl_usersById(array_merge(array_map(fn($r) => $r->sender_id, $rows), array_map(fn($r) => $r->receiver_id, $rows), array_map(fn($r) => $r->driver_id, $rows)));
     $hasFlight = sl_columnExists('cdb_courier_track', 'flight_no');
     // parcels that sit inside a consolidation
     $inCon = ['air' => sl_consolidationsFor(array_map(fn($r) => $r->id, array_filter($rows, fn($r) => $r->kind === 'shipment')), false),
@@ -399,6 +401,7 @@ function sl_trackConsoleData($user, $core, string $source = 'shipments', int $li
         if (!$client) $acts[] = ['Customer tracking page', sl_route('PublicTracking', ['order_track' => $r->code]), 'i-route', false];
         [$payL, $payC] = sl_payPill($r->inv);
         $u = $senders[(int) $r->sender_id] ?? null;
+        $drv = $senders[(int) $r->driver_id] ?? null;
         $rcv = $senders[(int) $r->receiver_id] ?? null;
         $daysOpen = $r->dt ? (int) floor((time() - strtotime($r->dt)) / 86400) : 0;
         $etaDelta = $etaTs ? (int) round(($etaTs - time()) / 86400) : null;
@@ -477,6 +480,8 @@ function sl_trackConsoleData($user, $core, string $source = 'shipments', int $li
             'money' => $money && !$isCon, 'total' => $isCon ? '' : sl_money($r->amt), 'sub' => $isCon ? '' : sl_money($r->sub), 'tax' => $isCon ? '' : sl_money($r->tax), 'pay' => $isCon ? '' : $payL, 'payCls' => $payC === 'paid' ? 'ok' : ($payC === 'overdue' ? 'bad' : 'warn'),
             'pct' => (int) round($p * 100), 'where' => $where,
             'geo' => $g, 'docs' => $docs, 'actions' => $acts, 'details' => $det, 'contents' => $contents, 'con' => $con, 'fk' => $mk,
+            'driver' => $drv ? ['id' => (int) $r->driver_id, 'name' => sl_userName($drv), 'phone' => trim((string) ($drv->phone ?? ''))] : null,
+            'sender' => $u ? ['id' => (int) $r->sender_id, 'name' => sl_userName($u), 'phone' => trim((string) ($u->phone ?? ''))] : null,
             'hist' => array_map(fn($h) => ['t' => str_replace('_', ' ', (string) ($h->mod_style ?: 'Update')), 'c' => (string) $h->comments, 'at' => sl_date($h->t_date, 'M j, H:i'), 'loc' => trim((string) $h->t_city)], array_slice($hist, 0, 12)),
             'prio' => ['score' => $score, 'label' => $score >= 3 ? 'High' : ($score >= 1 ? 'Normal' : 'Low'), 'cls' => $score >= 3 ? 'bad' : ($score >= 1 ? 'warn' : 'ok'), 'days' => $daysOpen, 'etaDelta' => $etaDelta],
         ];

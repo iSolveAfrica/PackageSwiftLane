@@ -13,6 +13,7 @@ require_once 'helpers/sl_view.php';
 sl_gate();
 require_once 'views/sl/data/track_console.php';
 $client = sl_userIs('client');
+$rider = sl_userIs('driver');
 $source = $client ? 'mine' : 'all';
 if (!$client && !sl_tcKinds($user, $source)) {
     header('Location: error403.php');
@@ -21,5 +22,5 @@ if (!$client && !sl_tcKinds($user, $source)) {
 $q = mb_substr(trim((string) ($_GET['q'] ?? '')), 0, 100);
 $filter = (string) ($_GET['f'] ?? 'all');
 $tc = sl_trackConsoleData($user, $core, $source, 60, ['q' => $q, 'filter' => $filter]);
-$d = ['tc' => $tc, 'client' => $client, 'q' => $q, 'filter' => $tc['filter']];
-sl_render('LiveTracking', ['id' => 'livetrack', 'title' => $client ? 'Track my parcels' : 'Live tracking', 'board' => 'LiveTracking', 'wide' => true], $d);
+$d = ['tc' => $tc, 'client' => $client, 'rider' => $rider, 'q' => $q, 'filter' => $tc['filter']];
+sl_render('LiveTracking', ['id' => 'livetrack', 'title' => $rider ? 'My route' : ($client ? 'Track my parcels' : 'Live tracking'), 'board' => 'LiveTracking', 'wide' => true], $d);
