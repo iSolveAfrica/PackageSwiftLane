@@ -124,7 +124,7 @@ function sl_consolidationDetailData($user, $core, int $id, string $type): ?array
         ? [['Shipping line', $courier], ['Container', $code], ['Bill of lading', $c->awb_no ?: 'Not set'], ['Seal', $c->seals_package ?: '—'], ['Route', $route], ['Sailed · ETA', sl_date($c->c_date) . ' · ' . ($c->estimated_eta ? sl_date($c->estimated_eta) : '—')], ['Driver to port', $driver], ['Agency', $agency]]
         : [['Carrier', $courier], ['Master air waybill', $c->awb_no ?: 'Not set'], ['Seals / ULD', $c->seals_package ?: '—'], ['Route', $route], ['Departs', sl_date($c->c_date)], ['ETA ' . $dest, $c->estimated_eta ? sl_date($c->estimated_eta) : '—'], ['Driver', $driver], ['Agency', $agency]];
     $d = [
-        'cid' => $id, 'type' => $M['mode'], 'code' => $code, 'st' => sl_statusLabel($s), 'stCls' => sl_statusClass($s), 'sea' => $M['sea'],
+        'cid' => $id, 'type' => $M['mode'], 'code' => $code, 'st' => sl_statusLabel($s), 'stCls' => sl_statusClass($s), 'stId' => $s, 'sea' => $M['sea'],
         'lede' => $n . ' package' . ($n === 1 ? '' : 's') . ' from ' . count($cust) . ' customer' . (count($cust) === 1 ? '' : 's') . ' · ' . $route . ' · created ' . sl_date($c->c_date),
         'capV' => sl_weight($c->total_weight ?: $w, 0) . ' / ' . sl_weight($M['cap'], 0), 'capW' => 'width:' . $pct . '%', 'capCls' => sl_conCapClass($pct), 'capS' => $pct . '% of capacity',
         'capacityKg' => (float) $M['cap'], 'weightKg' => (float) $w, 'pkN' => $n, 'custN' => count($cust), 'pcsN' => $pcs, 'wt' => sl_weight($w), 'wt2' => number_format($v, 1) . ' vol. weight', 'vTot' => number_format($v, 1),
@@ -147,7 +147,8 @@ function sl_consolidationDetailData($user, $core, int $id, string $type): ?array
         'files' => array_map(fn($f) => ['url' => $f->url, 'name' => $f->name], sl_rows('SELECT url, name FROM cdb_order_files WHERE order_id = :id AND ' . ($M['sea'] ? '(is_consolidate = 2 OR (is_consolidate = 1 AND NOT EXISTS (SELECT 1 FROM cdb_consolidate x WHERE x.consolidate_id = cdb_order_files.order_id)))' : 'is_consolidate = 1') . ' ORDER BY id DESC', [':id' => $id])),
         'other' => [],
     ];
-    $d['avail'] = $d['adding'] ? sl_conAvailable($M, $d['q'], 1000, $M['sea'] ? -1 : (int) ($c->is_dangerous_good ?? 0)) : [];
+    // the "Add packages" panel is on the page whenever the consolidation is open (a search widens it to 1000)
+    $d['avail'] = $canEdit ? sl_conAvailable($M, $d['q'], $d['adding'] ? 1000 : 300, $M['sea'] ? -1 : (int) ($c->is_dangerous_good ?? 0)) : [];
     $d['noAvail'] = $d['adding'] && !$d['avail'];
     // the "other mode" chip: the latest consolidation of the other mode the user may see
     $om = sl_conMode($M['sea'] ? 'air' : 'sea');

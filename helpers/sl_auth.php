@@ -221,19 +221,37 @@ function sl_customerAddresses($userData, $core): array
     $suite = (string) ($userData->locker ?? '');
     $out = [];
     if (sl_tableExists('cdb_virtual_mailbox_addresses')) {
-        foreach (sl_rows('SELECT * FROM cdb_virtual_mailbox_addresses ORDER BY default_address DESC, id ASC') as $r) {
+        require_once CDP_ROOT . '/helpers/virtual_mailbox.php';
+        $active = sl_columnExists('cdb_virtual_mailbox_addresses', 'is_active') ? ' WHERE v.is_active = 1' : '';
+        foreach (sl_rows("SELECT v.*, k.iso2, k.name AS country_name FROM cdb_virtual_mailbox_addresses v LEFT JOIN cdb_countries k ON k.id = v.cdb_countries_id$active ORDER BY v.default_address DESC, v.id ASC") as $r) {
             $label = trim((string) $r->country);
+            // The address as the admin typed it, with "Locker ID" swapped for this customer's locker.
+            $text = (string) $r->address;
+            if (strip_tags($text) !== $text) {
+                $text = html_entity_decode(strip_tags(preg_replace('~<\s*br\s*/?\s*>|<\s*/\s*(p|div|li)\s*>~i', "\n", $text)), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            }
+            $text = html_entity_decode(strip_tags(str_replace('<br>', "\n", cdp_mailboxAddressHtml($text, $suite))), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $lines = array_values(array_filter(array_map('trim', explode("\n", $text)), 'strlen'));
+            $hasLocker = $suite !== '' && stripos($text, $suite) !== false;
+            $iso = strtoupper(trim((string) ($r->iso2 ?? '')));
+            $own = trim((string) ($r->label ?? ''));   // the admin's own name for this warehouse
+            $mode = strtolower(trim((string) ($r->shipping_mode ?? '')));
             $out[] = [
-                'label' => $label !== '' ? $label : 'Warehouse',
-                'cc' => strtoupper(mb_substr($label, 0, 2)),
+                'label' => $own !== '' ? $own : ($label !== '' ? $label : 'Warehouse'),
+                'mode' => in_array($mode, ['air', 'sea', 'express'], true) ? $mode : '',
+                'transit' => trim((string) ($r->transit_days ?? '')),
+                'cc' => $iso !== '' ? $iso : strtoupper(mb_substr($label, 0, 2)),
+                'iso' => $iso,
+                'countryName' => trim((string) ($r->country_name ?? '')),
                 'icon' => 'i-plane',
                 'recipient' => $name,
-                'address1' => trim('c/o ' . ($core->site_name ?? 'Swift Lane') . ' · ' . (string) $r->address),
-                'address2' => 'Suite ' . $suite,
+                'address1' => trim('c/o ' . ($core->site_name ?? 'Swift Lane') . ' · ' . implode(', ', $lines)),
+                'address2' => $hasLocker ? '' : 'Suite ' . $suite,
                 'city' => (string) $r->city,
                 'zip' => (string) $r->postcode,
                 'phone' => (string) ($core->c_phone ?? ''),
                 'note' => (string) $r->country,
+                'lines' => $lines, 'hasLocker' => $hasLocker, 'default' => (int) ($r->default_address ?? 0) === 1, 'id' => (int) $r->id,
             ];
         }
     }
@@ -252,8 +270,16 @@ function sl_customerAddresses($userData, $core): array
         ];
     }
     foreach ($out as &$a) {
-        $a['full'] = implode("\n", array_filter([$a['recipient'], $a['address1'], $a['address2'], trim($a['city'] . ' ' . $a['zip']), $a['phone']]));
+        $a += ['lines' => [], 'hasLocker' => false, 'default' => false, 'iso' => '', 'countryName' => '', 'mode' => '', 'transit' => ''];
+        if (!$a['lines']) { // company address from settings
+            $a['lines'] = array_values(array_filter([trim(str_replace('c/o ' . ($core->site_name ?? 'Swift Lane') . ' · ', '', $a['address1'])), trim($a['city'] . ' ' . $a['zip'])], 'strlen'));
+        }
+        // What the customer pastes at checkout: name, then the address with the locker in it.
+        $a['full'] = implode("\n", array_filter(array_merge([$a['recipient'] . ($a['hasLocker'] || $suite === '' ? '' : ' (' . $suite . ')')], $a['lines'],
+            [$a['hasLocker'] ? '' : 'Suite ' . $suite, $a['lines'] && stripos(implode(' ', $a['lines']), $a['city']) !== false ? '' : trim($a['city'] . ' ' . $a['zip']), $a['phone']])));
+        $a['flag'] = strlen($a['iso']) === 2 ? mb_chr(0x1F1E6 + ord($a['iso'][0]) - 65) . mb_chr(0x1F1E6 + ord($a['iso'][1]) - 65) : '';
     }
+    unset($a);
     return $out;
 }
 

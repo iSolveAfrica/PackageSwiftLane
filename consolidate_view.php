@@ -11,7 +11,7 @@ require_once 'views/sl/data/consolidations.php';
 require_once 'helpers/delivery_storage.php';
 dl_ensureStorage();
 $d = sl_consolidationDetailData($user, $core, (int) ($_GET['id'] ?? 0), $type);
-if (!$d) { header('Location: ' . sl_route('Consolidations', ['mode' => $type])); exit; }
+if (!$d) { header('Location: ' . sl_route($type === 'sea' ? 'ConsolidationsSea' : 'ConsolidationsAir')); exit; }
 $board = $type === 'sea' ? 'ConsolidationDetail' : 'ConsolidationAir';
 // Phones: the app screen (views/sl/phone/ConsolidationDetail.php) for air and sea alike.
 require_once 'helpers/sl_phone.php';

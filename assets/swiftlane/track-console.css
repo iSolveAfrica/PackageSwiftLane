@@ -246,3 +246,8 @@
   .tc-ov.has-agent .tc-agent { display: none; }
 }
 @media (max-width: 720px) { .tc-agent { display: none !important; } }
+/* the owner's status pictures (helpers/cargo_art.php), shown as supplied */
+.tc-art-img { margin: -4px 0 8px; width: 100%; max-width: 360px; }
+.tc-art-img img { display: block; width: 100%; height: auto; max-height: 170px; object-fit: contain; object-position: left center; }
+/* the ship-at-sea drawing has a white background: give it a light plate on the dark console instead of editing it */
+.tc-art-img.light { background: #fff; border-radius: 14px; padding: 6px; }

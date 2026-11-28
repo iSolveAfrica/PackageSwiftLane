@@ -59,14 +59,47 @@
   }catch(error){status.textContent=error.message;}finally{button.disabled=false;}
  });
 })();
-/* Cargo view: tap a cargo position in the drawing to list its packages */
+/* Packages on board: live search; "Add packages" panel (pick, select all, live filter, Enter = server search) */
 (() => {
- const box=document.querySelector('.ccv-craftbox');if(!box)return;
- function pick(i){
-  box.querySelectorAll('[data-ccv-pos]').forEach(g=>g.classList.toggle('sel',g.dataset.ccvPos===i));
-  box.querySelectorAll('[data-ccv-of]').forEach(p=>p.hidden=p.dataset.ccvOf!==i);
+ const root=document.querySelector('[data-load-plan]');if(!root)return;
+ const norm=s=>(s||'').toLowerCase().trim();
+ const q=root.querySelector('[data-cpk-q]');
+ if(q)q.addEventListener('input',()=>{
+  const v=norm(q.value);let shown=0;
+  root.querySelectorAll('[data-cpk-group]').forEach(g=>{
+   let n=0;g.querySelectorAll('.cpk-row').forEach(r=>{const hit=!v||r.dataset.text.includes(v);r.hidden=!hit;if(hit)n++;});
+   g.hidden=!n;shown+=n;
+  });
+  const none=root.querySelector('[data-cpk-none]');if(none)none.hidden=shown>0;
+ });
+ const form=root.querySelector('#cpk-add'),toggle=root.querySelector('[data-cpk-add]');
+ if(!form)return;
+ const boxes=[...form.querySelectorAll('.cpk-av:not(.cpk-all) input')],all=form.querySelector('[data-cpk-all]');
+ const ids=form.querySelector('[data-cpk-ids]'),sel=form.querySelector('[data-cpk-sel]'),submit=form.querySelector('[type="submit"]');
+ const unit=root.dataset.weightUnit||'';
+ function open(on){form.hidden=!on;if(toggle)toggle.setAttribute('aria-expanded',String(on));if(on){const f=form.querySelector('[data-cpk-aq]');if(f)f.focus();}}
+ if(toggle)toggle.addEventListener('click',()=>open(form.hidden));
+ document.querySelectorAll('[data-cpk-open]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();open(true);root.querySelector('#packages').scrollIntoView({behavior:'smooth'});}));
+ form.querySelector('[data-cpk-close]').addEventListener('click',()=>open(false));
+ function sync(){
+  const on=boxes.filter(b=>b.checked);
+  ids.value=on.map(b=>b.value).join(',');
+  const w=on.reduce((s,b)=>s+Number(b.dataset.w||0),0);
+  sel.textContent=on.length?on.length+' selected · '+w.toLocaleString(undefined,{maximumFractionDigits:1})+' '+unit:'Nothing selected';
+  submit.disabled=!on.length;
+  boxes.forEach(b=>b.closest('.cpk-av').classList.toggle('on',b.checked));
+  const vis=boxes.filter(b=>!b.closest('.cpk-av').hidden);
+  if(all){all.checked=vis.length>0&&vis.every(b=>b.checked);all.indeterminate=!all.checked&&vis.some(b=>b.checked);}
  }
- box.addEventListener('click',e=>{const g=e.target.closest('[data-ccv-pos]');if(g)pick(g.dataset.ccvPos);});
- box.addEventListener('keydown',e=>{const g=e.target.closest('[data-ccv-pos]');if(g&&(e.key==='Enter'||e.key===' ')){e.preventDefault();pick(g.dataset.ccvPos);}});
- const first=box.querySelector('[data-ccv-pos].on');if(first)pick(first.dataset.ccvPos);
+ boxes.forEach(b=>b.addEventListener('change',sync));
+ if(all)all.addEventListener('change',()=>{boxes.forEach(b=>{if(!b.closest('.cpk-av').hidden)b.checked=all.checked;});sync();});
+ const aq=form.querySelector('[data-cpk-aq]');
+ if(aq){
+  aq.addEventListener('input',()=>{const v=norm(aq.value);boxes.forEach(b=>{const l=b.closest('.cpk-av');l.hidden=!!v&&!l.dataset.text.includes(v);});sync();});
+  aq.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();location.href=root.dataset.self+'&add=1&q='+encodeURIComponent(aq.value)+'#packages';}});
+ }
+ form.addEventListener('sl:done',e=>{if(!e.detail||!e.detail.success)return;
+  setTimeout(()=>{if(/[?&]add=1/.test(location.search))location.href=root.dataset.self+'#packages';else location.reload();},300);});
+ sync();
+ if(!form.hidden&&location.hash!=='#packages')root.querySelector('#packages').scrollIntoView();
 })();

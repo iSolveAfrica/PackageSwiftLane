@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../../helpers/cargo_art.php';
 /**
  * Live tracking console (the dark map + tracking list + overview panel).
  * Rendered by views/sl/pages/partials/track_console.php on the Overview, Client dashboard,
@@ -463,6 +464,8 @@ function sl_trackConsoleData($user, $core, string $source = 'shipments', int $li
             'from' => $lane['from'], 'via' => $lane['via'], 'to' => $lane['to'],
             'carrier' => $couriers[(int) $r->courier] ?? (!empty($fr['vessel']) ? $fr['vessel'] : ($vm === 'sea' ? 'Ocean freight' : 'Air cargo')),
             'vehicle' => $atOffice ? ($core->site_name ?? 'Swift Lane') . ' office, ' . $lane['to']['city'] : ($vm === 'sea' ? ($isCon ? 'Container' . (!empty($fr['container']) ? ' ' . $fr['container'] : '') : 'Container vessel') : ($isCon ? 'Air consolidation' : 'Cargo freighter')),
+            // the owner's picture for this status (helpers/cargo_art.php, Settings > Status pictures)
+            'art' => sl_cargoArtFor($st, sl_statusLabel($st), $vm === 'sea'),
             'flight' => $flight, 'awb' => $awb, 'freight' => $fr,
             'customer' => $isCon ? ((int) $r->n . ' parcel' . ((int) $r->n === 1 ? '' : 's')) : ($client ? sl_weight($r->w) : sl_userName($u)),
             'search' => strtolower(implode(' ', array_filter([$r->code, sl_userName($u), $u->locker ?? '', $r->store_trk, $fr['container'] ?? '', $fr['waybill'] ?? '', $con['code'] ?? '', implode(' ', array_column($contents, 'code'))]))),

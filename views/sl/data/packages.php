@@ -112,6 +112,11 @@ function sl_seaPackagesData($user, $core): array
     $d['can'] = $can;
     $d['canAdd'] = $user->cdp_hasPermission('add_package') && !$isClient;
     $d['isClient'] = $isClient;
+    if ($isClient && ($_GET['export'] ?? '') !== 'csv') { // the customer's own insights + the sea | air switch
+        require_once __DIR__ . '/portal.php';
+        $d['mi'] = sl_clientModeInsights((int) $_SESSION['userid'], 'sea');
+        $d['miOther'] = $user->cdp_hasPermission('view_shipment_list') ? sl_clientModeInsights((int) $_SESSION['userid'], 'air') : null;
+    }
     return $d;
 }
 

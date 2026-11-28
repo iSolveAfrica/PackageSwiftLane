@@ -196,6 +196,7 @@ function sl_navStaff(): array
             ['id' => 'addr', 'label' => 'Shipping Addresses', 'icon' => 'pin', 'board' => 'ShippingAddresses', 'perm' => 'view_tools'],
             ['id' => 'loginpg', 'label' => 'Login Page', 'icon' => 'image', 'board' => 'LoginSettings', 'perm' => 'view_tools'],
             ['id' => 'tariffs', 'label' => 'Rates & Tariffs', 'icon' => 'dollar', 'board' => 'Tariffs', 'perm' => ['manage_taxes_and_fees', 'view_tools', 'manage_freight']],
+            ['id' => 'statuspics', 'label' => 'Status Pictures', 'icon' => 'image', 'board' => 'StatusPictures', 'perm' => 'view_tools'],
             ['id' => 'screens', 'label' => 'App Screens', 'icon' => 'phone', 'board' => 'AppScreens', 'perm' => 'view_tools'],
             ['id' => 'devmod', 'label' => 'Modules', 'icon' => 'sliders', 'board' => 'ModuleController', 'perm' => 'superadmin'],
             ['id' => 'perm', 'label' => 'Permissions', 'icon' => 'key', 'board' => 'StaffPermissions', 'perm' => 'view_role_assignment'],
@@ -244,12 +245,12 @@ function sl_navCustomer(): array
     return [
         ['label' => 'My shipping', 'items' => [
             ['id' => 'dash', 'label' => 'Dashboard', 'icon' => 'grid', 'board' => 'Main', 'perm' => null],
-            ['id' => 'parcels', 'label' => 'All my parcels', 'icon' => 'box', 'board' => 'MyParcels', 'perm' => null],
-            ['id' => 'account', 'label' => 'My account', 'icon' => 'user', 'board' => 'MyAccount', 'perm' => null],
-            ['id' => 'air', 'label' => 'My Shipments', 'icon' => 'plane', 'board' => 'AirShipments', 'perm' => 'view_shipment_list',
+            // Air shipments, then sea shipments: each opens the customer's own list with its insights on top.
+            ['id' => 'air', 'label' => 'Air shipments', 'icon' => 'plane', 'board' => 'AirShipments', 'perm' => 'view_shipment_list',
                 'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_add_order WHERE sender_id = :u AND is_deleted = 0 AND status_courier NOT IN (8,15,21)", [':u' => $uid])],
-            ['id' => 'sea', 'label' => 'My Packages', 'icon' => 'box', 'board' => 'SeaPackages', 'perm' => 'view_package_list',
+            ['id' => 'sea', 'label' => 'Sea shipments', 'icon' => 'ship', 'board' => 'SeaPackages', 'perm' => 'view_package_list',
                 'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_customers_packages WHERE sender_id = :u AND status_courier NOT IN (8,15,21)", [':u' => $uid])],
+            ['id' => 'account', 'label' => 'My account', 'icon' => 'user', 'board' => 'MyAccount', 'perm' => null],
             ['id' => 'prealert', 'label' => 'Pre-Alerts', 'icon' => 'inbox', 'board' => 'PreAlerts', 'perm' => 'prealert_list',
                 'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_pre_alert WHERE customer_id = :u AND is_package = 0", [':u' => $uid])],
             ['id' => 'deliveries', 'label' => 'Request delivery', 'icon' => 'truck', 'board' => 'DeliveryRequest', 'perm' => null],
@@ -367,8 +368,12 @@ function sl_navResolve(string $activeId): array
             $kids = [];
             if (!empty($it['children'])) {
                 $kids = sl_navResolveChildren($it['children'], $activeId);
-                if (!$kids) {
+                if (!$kids && empty($it['hub'])) {
                     continue;
+                }
+                if (!empty($it['hub'])) { // the hub page itself is the first entry of its sub-menu
+                    array_unshift($kids, ['id' => $it['id'], 'href' => sl_route($it['board']), 'label' => 'Overview', 'icon' => 'i-grid',
+                        'cls' => $it['id'] === $activeId ? 'is-active' : '', 'ok' => '', 'c1' => '', 'c2' => '']);
                 }
             }
             $c1 = isset($it['count']) ? (string) $it['count']() : '';
@@ -380,10 +385,11 @@ function sl_navResolve(string $activeId): array
             $kidActive = $kids && in_array('is-active', array_column($kids, 'cls'), true);
             $items[] = [
                 'id' => $it['id'],
-                'href' => $kids ? $kids[0]['href'] : ($it['href'] ?? sl_route($it['board'])),
+                // a hub parent ('hub' => true) opens its own page; otherwise a parent opens its first child
+                'href' => $kids && empty($it['hub']) ? $kids[0]['href'] : ($it['href'] ?? sl_route($it['board'])),
                 'label' => $it['label'],
                 'icon' => 'i-' . $it['icon'],
-                'cls' => !$kids && $it['id'] === $activeId ? 'is-active' : '',
+                'cls' => (!$kids || !empty($it['hub'])) && $it['id'] === $activeId ? 'is-active' : '',
                 'ok' => !empty($it['ok']) ? 'ok' : '',
                 'c1' => $c1,
                 'c2' => $c2,

@@ -7,4 +7,4 @@ $core = new Core();
 require_once 'helpers/sl_view.php';
 sl_gate(['package_intake', 'add_package']);
 require_once 'views/sl/data/intake.php';
-sl_render('PackageIntake', ['id' => 'sea', 'title' => 'Package Intake', 'board' => 'PackageIntake', 'scripts' => ['dataJs/sl/package_intake.js']], sl_intakeData($user, $core));
+sl_render('PackageIntake', ['id' => 'intake', 'title' => 'Package Intake', 'board' => 'PackageIntake', 'scripts' => ['dataJs/sl/package_intake.js']], sl_intakeData($user, $core));

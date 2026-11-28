@@ -9,6 +9,7 @@ require_once __DIR__ . '/../../loader.php';
 require_once __DIR__ . '/../../helpers/ajax_guard.php';
 require_once __DIR__ . '/../../helpers/sl_view.php';
 require_once __DIR__ . '/../../views/sl/data/intake.php';
+require_once __DIR__ . '/../../helpers/prealert_receive.php';
 require_login();
 $user = $user ?? new User();
 require_permission(['package_intake', 'add_package']);
@@ -48,13 +49,14 @@ if ($op === 'lookup') {
     if ($t === '' || strlen($t) > 60 || !preg_match('/^[A-Z0-9\-]+$/', $t)) {
         sl_json(['success' => false, 'message' => 'Enter a carrier tracking number', 'errors' => ['tracking' => 'Letters and digits only']], 422);
     }
-    $dup = sl_row('SELECT order_id, order_prefix, order_no FROM cdb_customers_packages WHERE tracking_purchase = :t ORDER BY order_id DESC', [':t' => $t]);
+    $dup = sl_row("SELECT 'sea' AS m, order_id, order_prefix, order_no FROM cdb_customers_packages WHERE tracking_purchase = :t UNION ALL SELECT 'air', order_id, order_prefix, order_no FROM cdb_add_order WHERE is_deleted = 0 AND tracking_purchase = :t2 LIMIT 1", [':t' => $t, ':t2' => $t]);
+    cdp_preAlertEnsureColumns();
     $pa = sl_row('SELECT p.*, c.name_com FROM cdb_pre_alert p LEFT JOIN cdb_courier_com c ON c.id = p.courier_com WHERE p.tracking = :t ORDER BY p.is_package ASC, p.pre_alert_id DESC', [':t' => $t]);
     if (!$pa) {
         // carriers print the same number with or without spaces / leading zeros
         $pa = sl_row('SELECT p.*, c.name_com FROM cdb_pre_alert p LEFT JOIN cdb_courier_com c ON c.id = p.courier_com WHERE REPLACE(UPPER(p.tracking), " ", "") = :t ORDER BY p.is_package ASC, p.pre_alert_id DESC', [':t' => $t]);
     }
-    $out = ['success' => true, 'tracking' => $t, 'carrierGuess' => sl_intakeCarrierGuess($t), 'duplicate' => $dup ? ['id' => (int) $dup->order_id, 'track' => $dup->order_prefix . $dup->order_no] : null, 'prealert' => null, 'customer' => null, 'items' => [], 'source' => 'none', 'conf' => ''];
+    $out = ['success' => true, 'tracking' => $t, 'carrierGuess' => sl_intakeCarrierGuess($t), 'duplicate' => $dup ? ['id' => (int) $dup->order_id, 'track' => $dup->order_prefix . $dup->order_no, 'module' => $dup->m, 'href' => $dup->m === 'sea' ? 'customer_packages_view.php?id=' . (int) $dup->order_id : sl_route('ShipmentDetail', ['id' => (int) $dup->order_id])] : null, 'prealert' => null, 'customer' => null, 'items' => [], 'source' => 'none', 'conf' => ''];
     if ($pa) {
         $cust = $customer((int) $pa->customer_id);
         $out['canLink'] = $dup && (int) $pa->is_package === 0 && $user->cdp_hasPermission('prealert_edit');
