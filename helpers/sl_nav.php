@@ -107,6 +107,7 @@ function sl_navStaff(): array
             ['id' => 'dtrack', 'label' => 'Delivery Tracking', 'icon' => 'route', 'board' => 'DeliveryTracking', 'perm' => 'view_shipment_list',
                 'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier = 7 $w")],
             ['id' => 'lastmile', 'label' => 'Last-Mile Delivery', 'icon' => 'truck', 'board' => 'LastMile', 'perm' => ['view_freight', 'view_pickup_list']],
+            ['id' => 'smartrouting', 'label' => 'Smart Routing', 'icon' => 'route', 'board' => 'SmartRouting', 'perm' => ['dispatch_riders', 'assign_drivers']],
             ['id' => 'routeplanner', 'label' => 'Route Planner', 'icon' => 'route', 'board' => 'RoutePlanner', 'perm' => ['dispatch_riders', 'assign_drivers']],
             ['id' => 'drvapp', 'label' => 'Rider App', 'icon' => 'phone', 'board' => 'DriverApp', 'perm' => ['view_user_list', 'driver:self']],
             ['id' => 'rfees', 'label' => 'Rider Fees', 'icon' => 'truck', 'board' => 'RiderSettings', 'perm' => ['manage_rider_fees', 'view_tools']],
