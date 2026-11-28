@@ -1,0 +1,132 @@
+/* Live tracking (Bridges-style console): map + card rail + tally bar.
+   Markup: views/sl/pages/LiveTracking.php · behaviour: live-tracking.js */
+
+.lv { display: grid; grid-template-columns: minmax(0, 1fr) 348px; gap: 14px; align-items: stretch; }
+
+/* ---- map ---- */
+.lv-map { position: relative; border-radius: var(--r-lg, 16px); overflow: hidden; border: 1px solid var(--line); background: #E7EDF1; min-height: 560px; }
+.lv-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+.lv-svg.dragging { cursor: grabbing; }
+.lv-bg { fill: #E7EDF1; }
+.lv-water { fill: #D3E0E9; }
+.lv-park { fill: #DCE6DC; }
+.lv-block { fill: #DFE7EC; }
+.lv-road { stroke: #F6F9FB; fill: none; }
+.lv-road.lg { stroke-width: 11; }
+.lv-road.sm { stroke-width: 4; opacity: .9; }
+.lv-road.dg { stroke: #FFFFFF; stroke-width: 15; opacity: .95; }
+
+/* routes */
+.lv-geo { display: none; }
+.lv-geo.on { display: block; }
+.lv-rt { fill: none; stroke: #94A7B8; stroke-width: 2.5; stroke-dasharray: 2 7; stroke-linecap: round; stroke-linejoin: round; }
+.lv-dn { fill: none; stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
+.lv-dn.onroute, .lv-dn.done { stroke: #1F2A5A; }
+.lv-dn.late { stroke: #D4453B; }
+.lv-dn.loading { stroke: #8A93B8; }
+
+/* hubs */
+.lv-hub .halo { fill: #1F2A5A; opacity: .14; }
+.lv-hub .bx { fill: #1F2A5A; }
+.lv-hub .gl { fill: #fff; }
+.lv-hublab rect { fill: #fff; stroke: #D8E0E7; }
+.lv-hublab text { font: 600 11px/1 ui-monospace, "SF Mono", Menlo, monospace; fill: #1F2A5A; text-anchor: middle; dominant-baseline: central; transform: translateY(-4px); }
+
+/* vehicles */
+.lv-veh { cursor: pointer; outline: none; }
+.lv-veh .pulse { fill: #2B5CE6; opacity: 0; }
+.lv-veh .ring { fill: #fff; stroke: #2B5CE6; stroke-width: 2.5; }
+.lv-veh .core { fill: #fff; }
+.lv-veh .veh { fill: #2B5CE6; stroke: none; }
+.lv-veh.late .ring, .lv-veh.late .pulse { stroke: #D4453B; fill-opacity: 1; }
+.lv-veh.late .pulse { fill: #D4453B; }
+.lv-veh.late .veh { fill: #D4453B; }
+.lv-veh.loading .ring { stroke: #8A93B8; }
+.lv-veh.loading .veh { fill: #8A93B8; }
+.lv-veh.done .ring { stroke: #1E8E5A; }
+.lv-veh.done .veh { fill: #1E8E5A; }
+.lv-veh.on .pulse { opacity: .2; animation: lv-pulse 2s ease-out infinite; }
+.lv-veh:focus-visible .ring { stroke-width: 4; }
+@keyframes lv-pulse { 0% { r: 12; opacity: .3; } 70% { r: 22; opacity: 0; } 100% { r: 22; opacity: 0; } }
+
+/* zoom */
+.lv-zoom { position: absolute; top: 14px; left: 14px; display: flex; flex-direction: column; gap: 8px; }
+.lv-zoom button { width: 40px; height: 40px; border-radius: 12px; border: 1px solid #D8E0E7; background: #fff; display: grid; place-items: center; color: #1F2A5A; cursor: pointer; box-shadow: 0 2px 8px rgba(16, 36, 64, .08); }
+.lv-zoom button:hover { background: #F4F7FA; }
+
+/* tally bar */
+.lv-tally { position: absolute; left: 14px; bottom: 14px; right: auto; display: flex; gap: 4px; padding: 5px; border-radius: 12px; background: #fff; border: 1px solid #D8E0E7; box-shadow: 0 2px 10px rgba(16, 36, 64, .08); max-width: calc(100% - 28px); overflow-x: auto; scrollbar-width: none; }
+.lv-tally a { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 9px; font-size: 13px; color: #334; white-space: nowrap; border-right: 1px solid #EDF1F5; }
+.lv-tally a:last-child { border-right: 0; }
+.lv-tally a b { font-weight: 600; color: #1F2A5A; }
+.lv-tally a.on, .lv-tally a:hover { background: #F2F5F9; }
+.lv-tally .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.dot.loading { background: #8A93B8; }
+.dot.onroute { background: #2B5CE6; }
+.dot.late { background: #D4453B; }
+.dot.done { background: #1E8E5A; }
+
+/* ---- side rail ---- */
+.lv-side { display: flex; flex-direction: column; gap: 10px; min-width: 0; max-height: 860px; }
+.lv-q { position: relative; display: flex; align-items: center; gap: 8px; padding: 0 12px; height: 42px; border-radius: 12px; border: 1px solid var(--line-2); background: var(--field); }
+.lv-q .ic { color: var(--muted); flex: none; }
+.lv-q input { border: 0; background: none; outline: none; width: 100%; font: inherit; color: inherit; }
+.lv-x { display: inline-grid; place-items: center; color: var(--muted); }
+.lv-chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.lv-chips a { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line-2); font-size: 13px; color: var(--ink-2); background: var(--field); white-space: nowrap; }
+.lv-chips a.on { background: var(--ink); color: var(--inverse); border-color: var(--ink); }
+.lv-found { margin: 0; }
+
+.lv-cards { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; min-height: 0; padding-right: 2px; }
+.lv-card { display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: var(--r-lg, 14px); border: 1px solid var(--line); background: var(--card); cursor: pointer; }
+.lv-card:hover { border-color: var(--line-2); }
+.lv-card.on { border-color: #2B5CE6; box-shadow: 0 0 0 1px #2B5CE6; }
+.lv-card .col { display: flex; flex-direction: column; min-width: 0; }
+.lv-card .col.r { align-items: flex-end; text-align: right; }
+.lv-card small { font-size: 12px; color: var(--muted); }
+
+.lv-r1 { display: flex; align-items: center; gap: 10px; }
+.lv-r1 .col { flex: 1; }
+.lv-r1 b { font-size: 14px; }
+.lv-tile { width: 36px; height: 36px; flex: none; border-radius: 10px; background: var(--field); border: 1px solid var(--line); display: grid; place-items: center; color: var(--ink-2); }
+.lv-st { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.lv-st i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.lv-st.onroute { color: #2B5CE6; background: rgba(43, 92, 230, .1); border: 1px solid rgba(43, 92, 230, .35); }
+.lv-st.late { color: #D4453B; background: rgba(212, 69, 59, .08); border: 1px solid rgba(212, 69, 59, .3); }
+.lv-st.loading { color: #5A6482; background: rgba(138, 147, 184, .14); border: 1px solid rgba(138, 147, 184, .4); }
+.lv-st.done { color: #1E8E5A; background: rgba(30, 142, 90, .1); border: 1px solid rgba(30, 142, 90, .3); }
+
+.lv-route { display: flex; align-items: center; gap: 8px; }
+.lv-pt { display: inline-flex; align-items: center; gap: 4px; font-size: 14px; }
+.lv-pt .ic { color: var(--muted); }
+.lv-dash { flex: 1; display: flex; align-items: center; gap: 4px; min-width: 24px; }
+.lv-dash .ln { flex: 1; border-top: 2px dashed var(--line-2); }
+.lv-dash .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+
+.lv-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px; color: var(--ink-2); border-top: 1px solid var(--line); padding-top: 10px; }
+.lv-meta span { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.lv-meta .ic { color: var(--muted); }
+.lv-prog { height: 4px; border-radius: 4px; background: var(--field); overflow: hidden; }
+.lv-prog i { display: block; height: 100%; border-radius: 4px; background: #2B5CE6; }
+.lv-prog i.late { background: #D4453B; }
+.lv-prog i.loading { background: #8A93B8; }
+.lv-prog i.done { background: #1E8E5A; }
+
+.lv-who { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; border: 1px solid var(--line); background: var(--field); }
+.lv-who small { font-size: 11.5px; }
+.lv-ib { width: 34px; height: 34px; flex: none; border-radius: 10px; border: 1px solid var(--line-2); background: var(--card); display: grid; place-items: center; color: var(--ink-2); }
+.lv-ib:hover { border-color: var(--ink); color: var(--ink); }
+.lv-open { display: none; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: var(--ink); }
+.lv-card.on .lv-open { display: inline-flex; }
+
+/* ---- mobile: map on top, jobs below (rider app view) ---- */
+@media (max-width: 920px) {
+  .lv { display: flex; flex-direction: column; }
+  .lv-map { min-height: 46vh; }
+  .lv-side { max-height: none; }
+  .lv-cards { overflow: visible; }
+  .lv-zoom { flex-direction: row; }
+  .lv-zoom button, .lv-ib { width: 44px; height: 44px; }
+  .lv-tally a { padding: 10px 12px; }
+  .lv-open { display: inline-flex; }
+}
