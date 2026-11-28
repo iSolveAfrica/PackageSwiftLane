@@ -26,10 +26,41 @@ $addrOn = 0;
 foreach ($addrs as $i => $a) if (!empty($a['default'])) { $addrOn = $i; break; }
 $addrMark = fn(string $t) => $locker !== '' ? str_replace(h($locker), '<mark class="la-lk">' . h($locker) . '</mark>', h($t)) : h($t);
 $addrMore = $GLOBALS['user']->cdp_hasPermission('client_virtual_mail_box_addresses') ? 'client_virtual_mail_box_addresses.php' : '';
+$coTitle = fn(array $a): string => ($a['label'] !== '' && $a['label'] !== 'Warehouse') ? $a['label'] : (($a['countryName'] ?? '') !== '' ? $a['countryName'] : 'Warehouse');
+// Round flags from the bundled square SVGs (assets/vendor/fonts/flags/1x1); the emoji or letters when there is no file.
+$coFlag = function (array $a): string {
+    $iso = strtolower((string) ($a['iso'] ?? ''));
+    if ($iso !== '' && preg_match('/^[a-z]{2}$/', $iso) && is_file(CDP_ROOT . '/assets/vendor/fonts/flags/1x1/' . $iso . '.svg')) {
+        return '<img src="' . h(cdp_asset('assets/vendor/fonts/flags/1x1/' . $iso . '.svg')) . '" alt="" width="40" height="40" loading="lazy">';
+    }
+    return '<span class="co-fl-t">' . h($a['flag'] !== '' ? $a['flag'] : $a['cc']) . '</span>';
+};
+// Customer service: chat (support.php), WhatsApp / phone / email from Settings > Company.
+$coCore = $GLOBALS['core'] ?? null;
+$svcTel = preg_replace('/[^\d+]/', '', (string) ($coCore->c_phone ?? ''));
+$svcWa = preg_replace('/\D+/', '', (string) ($coCore->cell_phone ?? ''));
+$svcMail = filter_var(trim((string) ($coCore->site_email ?? '')), FILTER_VALIDATE_EMAIL) ?: '';
+$coUid = (int) ($_SESSION['userid'] ?? 0);
+$svcOpen = sl_tableExists('cdb_cs_tickets') ? (int) sl_scalar("SELECT COUNT(*) FROM cdb_cs_tickets WHERE customer_id = :u AND is_internal = 0 AND status NOT IN ('resolved','closed')", [':u' => $coUid]) : 0;
+// Referrals: only when loyalty and referrals are switched on (Loyalty settings).
+$ref = null;
+if (is_file(CDP_ROOT . '/helpers/loyalty.php')) {
+    require_once CDP_ROOT . '/helpers/loyalty.php';
+    if (sl_loyaltyReferralOn()) {
+        $coL = sl_loyaltyForCustomer($coUid);
+        if (!empty($coL['enabled']) && !empty($coL['code'])) {
+            $coS = sl_loyaltySettings();
+            $coLink = sl_loyaltySignupLink((string) $coL['code']);
+            $ref = ['code' => (string) $coL['code'], 'n' => (int) $coL['referrals'], 'pts' => (int) $coS['referral_referrer_points'], 'friend' => trim((string) $coS['referral_friend_reward']),
+                'share' => 'Ship with ' . ($coCore->site_name ?? 'Swift Lane') . '. Register with my code ' . $coL['code'] . ': ' . $coLink];
+        }
+    }
+}
 ?>
 <link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/overview-hero.css')) ?>">
 <link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/locker-addresses.css')) ?>">
 <link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/client-overview.css')) ?>">
+<script src="<?= h(cdp_asset('dataJs/sl/client_wallet.js')) ?>" defer></script>
 <div class="ovh-wrap"><div class="ovh-grid co-grid<?= count($cc['cards']) < 2 ? ' co-one' : '' ?>" style="--rows:2">
   <section class="ovh-me" aria-label="Your account">
     <div class="ovh-me-top">
@@ -104,33 +135,57 @@ $addrMore = $GLOBALS['user']->cdp_hasPermission('client_virtual_mail_box_address
     <div class="co-addr-hero">
       <div class="row between"><span class="la-eyebrow" id="co-addr-h"><i class="ic ic-sm i-key" aria-hidden="true"></i>Your locker ID</span><?php if ($addrMore): ?><a class="la-link" href="<?= h($addrMore) ?>">How it works <i class="ic ic-sm i-right" aria-hidden="true"></i></a><?php endif; ?></div>
       <div class="la-id"><b class="mono"><?= h($locker !== '' ? $locker : '—') ?></b><?php if ($locker !== ''): ?><button type="button" class="la-copy" data-sl-copy="<?= h($locker) ?>" aria-label="Copy locker ID"><i class="ic ic-sm i-copy" aria-hidden="true"></i>Copy</button><?php endif; ?></div>
-      <p>Works at <?= count($addrs) === 1 ? 'our warehouse' : 'all ' . count($addrs) . ' warehouses (pick a country below)' ?>. Put it on every order so we know the parcel is yours.</p>
+      <p>Works at <?= count($addrs) === 1 ? 'our warehouse' : 'all ' . count($addrs) . ' warehouses' ?>. Put it on every order so we know the parcel is yours.</p>
     </div>
     <?php if (!$addrs): ?>
     <p class="mut sm co-addr-empty">No warehouse address is set up yet. New addresses appear here as soon as we add them.</p>
     <?php else: ?>
-    <style><?php foreach ($addrs as $i => $a): ?>#co-at-<?= $i ?>:checked~.co-addr-panes .co-p<?= $i ?>{display:flex}#co-at-<?= $i ?>:checked~.co-addr-tabs [for=co-at-<?= $i ?>]{background:var(--card);color:var(--ink);border-color:var(--line-2);box-shadow:0 1px 2px rgba(0,0,0,.06)}#co-at-<?= $i ?>:focus-visible~.co-addr-tabs [for=co-at-<?= $i ?>]{outline:2px solid var(--focus,var(--green));outline-offset:1px}<?php endforeach; ?></style>
-    <?php foreach ($addrs as $i => $a): ?><input class="co-at" type="radio" name="co-at" id="co-at-<?= $i ?>" <?= $i === $addrOn ? 'checked' : '' ?> aria-label="<?= h($a['label']) ?> address"><?php endforeach; ?>
-    <?php if (count($addrs) > 1): ?>
-    <div class="co-addr-tabs" aria-hidden="true">
-      <?php foreach ($addrs as $i => $a): ?><label for="co-at-<?= $i ?>"><span class="co-fl"><?= h($a['flag'] !== '' ? $a['flag'] : $a['cc']) ?></span><?= h($a['label']) ?><?= $a['default'] ? '<i class="co-main" title="Main address"></i>' : '' ?></label><?php endforeach; ?>
-    </div>
-    <?php endif; ?>
-    <div class="co-addr-panes">
-      <?php foreach ($addrs as $i => $a):
-        $rows = array_merge([['Name', trim((($d['name'] ?? '') ?: $a['recipient']) . ($a['hasLocker'] || $locker === '' ? '' : ' (' . $locker . ')'))]], array_map(fn($l, $j) => [$j ? '' : 'Address', $l], $a['lines'], array_keys($a['lines'])));
-        if (!$a['hasLocker'] && $locker !== '') $rows[] = ['Suite', 'Suite ' . $locker];
-        if ($a['phone'] !== '') $rows[] = ['Phone', $a['phone']]; ?>
-      <div class="co-addr-p co-p<?= $i ?>">
-        <div class="la-ch"><span class="la-flag" aria-hidden="true"><?= h($a['flag'] !== '' ? $a['flag'] : $a['cc']) ?></span><div class="la-ct"><b><?= h($a['label']) ?></b><span><?= h(trim($a['city'] . ($a['zip'] !== '' ? ' · ' . $a['zip'] : ''), ' ·')) ?: 'Warehouse' ?></span></div><?php if ($a['default']): ?><span class="la-def">Main</span><?php endif; ?></div>
-        <ul class="la-lines">
-          <?php foreach ($rows as [$k, $v]): ?><li><small><?= h($k) ?></small><span><?= $addrMark($v) ?></span><button type="button" class="la-ib" data-sl-copy="<?= h($v) ?>" aria-label="Copy <?= h(($k ?: 'line') . ': ' . $v) ?>"><i class="ic ic-sm i-copy" aria-hidden="true"></i></button></li><?php endforeach; ?>
-        </ul>
-        <div class="la-cf"><button type="button" class="sl-btn sm" data-sl-copy="<?= h($a['full']) ?>"><i class="ic ic-sm i-copy" aria-hidden="true"></i>Copy full address</button><?php if ($locker !== ''): ?><span class="la-check"><i class="ic ic-sm i-check" aria-hidden="true"></i>Locker included</span><?php endif; ?></div>
+    <div class="co-wallet" data-co-wallet>
+      <?php if (count($addrs) > 1): ?>
+      <div class="co-flags" role="tablist" aria-label="Warehouse country">
+        <?php foreach ($addrs as $i => $a): ?><button type="button" role="tab" class="co-flag" id="co-ft-<?= $i ?>" aria-controls="co-wc-<?= $i ?>" aria-selected="<?= $i === $addrOn ? 'true' : 'false' ?>" tabindex="<?= $i === $addrOn ? '0' : '-1' ?>" data-co-pick="<?= $i ?>" title="<?= h($coTitle($a)) ?>" aria-label="<?= h($coTitle($a)) ?>"><?= $coFlag($a) ?><?php if ($a['default']): ?><i class="co-main" aria-hidden="true"></i><?php endif; ?></button><?php endforeach; ?>
       </div>
-      <?php endforeach; ?>
+      <?php endif; ?>
+      <div class="co-stack" style="--back:<?= min(2, count($addrs) - 1) ?>">
+        <?php foreach ($addrs as $i => $a):
+          $rows = array_merge([['Name', trim((($d['name'] ?? '') ?: $a['recipient']) . ($a['hasLocker'] || $locker === '' ? '' : ' (' . $locker . ')'))]], array_map(fn($l, $j) => [$j ? '' : 'Address', $l], $a['lines'], array_keys($a['lines'])));
+          if (!$a['hasLocker'] && $locker !== '') $rows[] = ['Suite', 'Suite ' . $locker];
+          if ($a['phone'] !== '') $rows[] = ['Phone', $a['phone']];
+          $pos = ($i - $addrOn + count($addrs)) % count($addrs); ?>
+        <article class="co-wc t<?= $i % 4 ?>" id="co-wc-<?= $i ?>" role="tabpanel" aria-labelledby="co-ft-<?= $i ?>" data-co-card="<?= $i ?>" data-pos="<?= min($pos, 3) ?>" style="--pos:<?= $pos ?>"<?= $pos ? ' aria-hidden="true"' : '' ?>>
+          <header class="co-wc-h">
+            <span class="co-wc-fl" aria-hidden="true"><?= $coFlag($a) ?></span>
+            <div class="co-wc-t"><b><?= h($coTitle($a)) ?></b><span><?= h(trim(implode(' · ', array_filter([$a['city'], $a['zip']], 'strlen')))) ?: 'Warehouse' ?></span></div>
+            <?php if ($a['default']): ?><span class="la-def">Main</span><?php endif; ?>
+          </header>
+          <ul class="la-lines">
+            <?php foreach ($rows as [$k, $v]): ?><li><small><?= h($k) ?></small><span><?= $addrMark($v) ?></span><button type="button" class="la-ib" data-sl-copy="<?= h($v) ?>" aria-label="Copy <?= h(($k ?: 'line') . ': ' . $v) ?>"><i class="ic ic-sm i-copy" aria-hidden="true"></i></button></li><?php endforeach; ?>
+          </ul>
+          <footer class="co-wc-f"><button type="button" class="sl-btn sm" data-sl-copy="<?= h($a['full']) ?>"><i class="ic ic-sm i-copy" aria-hidden="true"></i>Copy full address</button><?php if ($locker !== ''): ?><span class="la-check"><i class="ic ic-sm i-check" aria-hidden="true"></i>Locker included</span><?php endif; ?></footer>
+        </article>
+        <?php endforeach; ?>
+      </div>
     </div>
     <?php endif; ?>
+
+    <div class="co-help">
+      <div class="co-svc">
+        <div class="co-blk-h"><span class="co-blk-ic"><i class="ic ic-sm i-message" aria-hidden="true"></i></span><div><b>Customer service</b><small><?= $svcOpen ? $svcOpen . ' open request' . ($svcOpen === 1 ? '' : 's') . ' · we reply in the chat' : 'Questions about a parcel, a bill or an address' ?></small></div></div>
+        <div class="co-svc-a">
+          <a class="co-svc-b" href="support.php"><i class="ic ic-sm i-message" aria-hidden="true"></i><span>Chat with us</span></a>
+          <?php if ($svcWa !== ''): ?><a class="co-svc-b" href="https://wa.me/<?= h($svcWa) ?>" target="_blank" rel="noopener"><i class="ic ic-sm i-phone" aria-hidden="true"></i><span>WhatsApp</span></a><?php endif; ?>
+          <?php if ($svcTel !== ''): ?><a class="co-svc-b" href="tel:<?= h($svcTel) ?>"><i class="ic ic-sm i-phone" aria-hidden="true"></i><span>Call</span></a><?php endif; ?>
+          <?php if ($svcMail !== ''): ?><a class="co-svc-b" href="mailto:<?= h($svcMail) ?>"><i class="ic ic-sm i-send" aria-hidden="true"></i><span>Email</span></a><?php endif; ?>
+        </div>
+      </div>
+      <?php if ($ref): ?>
+      <div class="co-ref">
+        <div class="co-blk-h"><span class="co-blk-ic"><i class="ic ic-sm i-star" aria-hidden="true"></i></span><div><b>Invite a friend<?= $ref['pts'] ? ', earn ' . sl_num($ref['pts']) . ' points' : '' ?></b><small><?= $ref['friend'] !== '' ? 'They get ' . h($ref['friend']) . '. ' : '' ?>You earn when their first parcel is delivered.</small></div></div>
+        <div class="co-ref-code"><span class="mono"><?= h($ref['code']) ?></span><button type="button" class="co-ref-b ico" data-sl-copy="<?= h($ref['code']) ?>" aria-label="Copy referral code" title="Copy code"><i class="ic ic-sm i-copy" aria-hidden="true"></i></button><button type="button" class="co-ref-b pri" data-sl-copy="<?= h($ref['share']) ?>" data-co-share="<?= h($ref['share']) ?>"><i class="ic ic-sm i-send" aria-hidden="true"></i>Share link</button></div>
+        <div class="co-ref-f"><span><?= sl_num($ref['n']) ?> friend<?= $ref['n'] === 1 ? '' : 's' ?> joined</span><a href="<?= h(sl_route('MyRewards')) ?>">My rewards <i class="ic ic-sm i-right" aria-hidden="true"></i></a></div>
+      </div>
+      <?php endif; ?>
+    </div>
   </section>
 </div></div>
 
