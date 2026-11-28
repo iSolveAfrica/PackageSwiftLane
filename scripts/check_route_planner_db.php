@@ -48,6 +48,43 @@ try {
     $pdo->exec("UPDATE cdb_rp_plans SET status = 'discarded' WHERE status = 'draft'");
     $pdo->prepare("UPDATE cdb_rp_routes SET status = 'done' WHERE route_date = ?")->execute([$date]);
 
+    /* re-check: parcel readiness, plan date, stale riders (inside a savepoint, undone below) */
+    $pdo->beginTransaction();
+    $h0 = rp_cargoHold();
+    $u0 = array_values(array_filter($h0['units'], fn($u) => $u['module'] === 'air'))[0];
+    $pdo->exec('UPDATE cdb_add_order SET status_courier = 8 WHERE order_id = ' . (int) $u0['parcels'][0]['order_id']);
+    $h1 = rp_cargoHold();
+    $nr = array_values(array_filter($h1['unplaceable'], fn($u) => $u['id'] === $u0['id']));
+    ok(count($h1['units']) === count($h0['units']) - 1 && $nr && str_starts_with($nr[0]['reason'], 'Parcel not ready'), 'a delivered/collected parcel leaves the plannable hold with a reason');
+    $pn = rp_proposal($admin, ['date' => $date, 'agency' => 0]);
+    ok(!in_array($u0['id'], array_merge(...array_values(array_map(fn($r) => $r['units'], $pn['riders']))), true) && (bool) array_filter($pn['unallocated'], fn($u) => $u['id'] === $u0['id'] && str_starts_with($u['reason'], 'Parcel not ready')), 'not-ready request is unallocated with the reason, never planned');
+    throwsDomain(fn() => rp_proposal($admin, ['date' => date('Y-m-d', strtotime('-1 day')), 'agency' => 0]), 'a past day cannot be planned');
+    $tom = date('Y-m-d', strtotime('+1 day'));
+    $pt = rp_proposal($admin, ['date' => $tom, 'agency' => 0]);
+    ok($pt['date'] === $tom && substr((string) $pt['depart'], 0, 10) === $tom, 'proposal for tomorrow departs tomorrow');
+    ok($val('SELECT status FROM cdb_rp_plans WHERE id = ?', [$pn['plan_id']]) === 'draft', "today's draft survives tomorrow's");
+    $ct = rp_confirmPlan($pt['plan_id'], $admin, 0);
+    ok($ct['assigned'] > 0 && !$ct['errors'], 'tomorrow confirmed');
+    $tr = (int) array_key_first(array_filter($pt['riders'], fn($r) => $r['units']));
+    $trRoute = rp_riderTodayRoute($tr, $tom);
+    ok(rp_riderTodayRoute($tr) === null && $trRoute && substr((string) $trRoute['stops'][0]['eta'], 0, 10) === $tom, "tomorrow's route is dated and timed tomorrow, not shown today");
+    throwsDomain(fn() => rp_startRoute((int) $trRoute['route']['id'], $tr), "tomorrow's route cannot start today");
+    ok(rp_ridersForPlanning($date)[$tr]['used']['n'] === 0 && rp_ridersForPlanning($tom)[$tr]['used']['n'] > 0, "tomorrow's load counts tomorrow only");
+    throwsDomain(fn() => rp_confirmPlan($pn['plan_id'], $admin, 0), "today's stale draft cannot assign the same deliveries again");
+    throwsDomain(fn() => rp_confirmPlan($pn['plan_id'], $admin, 0), 'a plan without stops cannot be confirmed');
+    $pdo->rollBack();
+    $pdo->beginTransaction();
+    $pg = rp_proposal($admin, ['date' => $date, 'agency' => 0]);
+    $gone = (int) array_key_first(array_filter($pg['riders'], fn($r) => $r['units']));
+    rp_lockRider($pg['plan_id'], $gone, true, $admin);
+    $pg2 = rp_proposal($admin, ['date' => $date, 'agency' => 0]); // no 'lock' option: stored locks stay
+    $ga = $pg['riders'][$gone]['units']; $gb = $pg2['riders'][$gone]['units']; sort($ga); sort($gb);
+    ok($pg2['riders'][$gone]['locked'] && $ga === $gb, 'stored lock survives a re-run without the lock option');
+    $pdo->exec("UPDATE cdb_users SET rider_status = 'suspended' WHERE id = $gone");
+    throwsDomain(fn() => rp_confirmPlan($pg2['plan_id'], $admin, 0), 'a rider suspended after the proposal blocks confirm');
+    ok($val('SELECT status FROM cdb_rp_plans WHERE id = ?', [$pg2['plan_id']]) === 'draft' && (int) $val("SELECT COUNT(*) FROM cdb_delivery_requests WHERE state = 'assigned' AND driver_id = ?", [$gone]) === 0, 'nothing was assigned');
+    $pdo->rollBack();
+
     /* propose */
     $p = rp_proposal($admin, ['date' => $date, 'agency' => 0]);
     ok($p['plan_id'] > 0, 'proposal saved as a draft');

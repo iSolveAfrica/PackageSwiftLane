@@ -617,12 +617,14 @@ function rp_proposal(int $actor, array $opts = []): array
     $agency = (int) ($opts['agency'] ?? (function_exists('dl_agency') ? dl_agency() : 0));
     $start = rp_startPlace($opts['start_id'] ?? null);
     $mode = ($opts['mode'] ?? $settings['fill_mode']) === 'balance' ? 'balance' : 'fill';
-    $lock = array_values(array_unique(array_map('intval', (array) ($opts['lock'] ?? []))));
     $keep = [];
     foreach ((array) ($opts['keep'] ?? []) as $rid => $reqIds) $keep[(int) $rid] = array_map('intval', (array) $reqIds);
 
     $prev = rp_one("SELECT * FROM cdb_rp_plans WHERE status = 'draft' AND plan_date = ? AND agency_id = ? ORDER BY id DESC", [$date, $agency]);
     $prevProp = $prev ? (json_decode((string) $prev['proposal_json'], true) ?: []) : [];
+    // No 'lock' option: the riders locked in the current draft stay locked (rp_lockRider stored them).
+    $lock = array_key_exists('lock', $opts) ? (array) $opts['lock'] : (array) ((json_decode((string) ($prev['params_json'] ?? ''), true) ?: [])['lock'] ?? []);
+    $lock = array_values(array_unique(array_map('intval', $lock)));
     foreach ($lock as $rid) if (!isset($keep[$rid])) $keep[$rid] = array_map('intval', (array) ($prevProp['riders'][$rid]['units'] ?? $prevProp['riders'][(string) $rid]['units'] ?? []));
 
     $hold = rp_cargoHold($agency);
@@ -659,6 +661,8 @@ function rp_proposal(int $actor, array $opts = []): array
         rp_q('INSERT INTO cdb_rp_plans (plan_date, agency_id, status, start_json, params_json, proposal_json, created_by, created_at) VALUES (?,?,?,?,?,?,?,?)',
             [$date, $agency, 'draft', json_encode($start), json_encode($params), json_encode($proposal), $actor, rp_now()]);
         $planId = (int) $db->lastInsertId();
+        // Two dispatchers proposing at the same moment: only the newest draft of the day stays.
+        rp_q("UPDATE cdb_rp_plans SET status = 'discarded' WHERE status = 'draft' AND plan_date = ? AND agency_id = ? AND id < ?", [$date, $agency, $planId]);
         if ($own) $db->commit();
     } catch (Throwable $e) {
         if ($own && $db->inTransaction()) $db->rollBack();
@@ -870,7 +874,7 @@ function rp_rebaseDraft(array $plan): array
     $bad = [];
     foreach ($hold['unplaceable'] as $u) $bad[(int) $u['id']] = $u['reason'];
     $planners = rp_ridersForPlanning((string) $plan['plan_date'], (int) $plan['agency_id']);
-    $issues = ['stale' => [], 'over' => [], 'ineligible' => []];
+    $issues = ['stale' => [], 'over' => [], 'ineligible' => [], 'unavailable' => []];
     foreach ($p['riders'] ?? [] as $rid => $r) {
         $rid = (int) $rid;
         $keep = [];
@@ -887,6 +891,9 @@ function rp_rebaseDraft(array $plan): array
         $r2 = $changed ? rp__planRider($p, $rid, $keep, $plan['start'], !empty($r['locked'])) : $r;
         $r2['fill'] = rp_fill($r2['load'], $p['vehicles'][$rid] ?? []);
         $p['riders'][$rid] = $r2;
+        // A rider deactivated, moved to another agency or suspended since the proposal cannot be assigned.
+        $gone = !isset($planners[$rid]) ? 'no longer an active rider here' : ($planners[$rid]['status'] === 'suspended' ? 'suspended' : (empty($p['vehicles'][$rid]['active']) && isset($p['vehicles'][$rid]['active']) ? 'out of service (vehicle)' : null));
+        if ($keep && $gone) $issues['unavailable'][] = ['driver_id' => $rid, 'name' => $planners[$rid]['name'] ?? ('Rider #' . $rid), 'reason' => $gone, 'stops' => count($keep)];
         if ($keep && ($r2['fill']['kg'] > 100.05 || $r2['fill']['l'] > 100.05 || $r2['fill']['n'] > 100.05)) $issues['over'][$rid] = $r2['fill'];
         foreach ($keep as $uid) {
             $why = rp_vehicleEligible($p['vehicles'][$rid] ?? [], $p['units'][$uid]);
@@ -895,7 +902,7 @@ function rp_rebaseDraft(array $plan): array
     }
     $p['unallocated'] = array_values(array_filter($p['unallocated'] ?? [], fn($u) => isset($pending[(int) $u['id']]) || isset($bad[(int) $u['id']])));
     $issues['stale'] = array_values(array_unique($issues['stale']));
-    $issues['out_of_date'] = (bool) ($issues['stale'] || $issues['over'] || $issues['ineligible']);
+    $issues['out_of_date'] = (bool) ($issues['stale'] || $issues['over'] || $issues['ineligible'] || $issues['unavailable']);
     return ['proposal' => $p, 'issues' => $issues, 'planners' => $planners, 'hold' => $hold];
 }
 
@@ -921,6 +928,10 @@ function rp_confirmPlan(int $planId, int $actor, int $agency = 0, bool $ackOver 
         rp__saveDraft($planId, $rb['proposal'], $plan['params']);
         throw new DomainException(count($iss['stale']) . ' deliver' . (count($iss['stale']) === 1 ? 'y was' : 'ies were') . ' assigned elsewhere, cancelled or no longer ready since this plan was made. The plan was updated: check it and confirm again.');
     }
+    if ($iss['unavailable']) {
+        $f = $iss['unavailable'][0];
+        throw new DomainException($f['name'] . ' is ' . $f['reason'] . ' and cannot take deliveries. Move their ' . $f['stops'] . ' stop' . ($f['stops'] === 1 ? '' : 's') . ' or run Auto-allocate again.');
+    }
     if ($iss['ineligible']) {
         $f = $iss['ineligible'][0];
         throw new DomainException('Delivery #' . $f['request_id'] . ' cannot go with this rider: ' . $f['reason'] . '. Move it first.');
@@ -929,6 +940,7 @@ function rp_confirmPlan(int $planId, int $actor, int $agency = 0, bool $ackOver 
         if (max($fill['kg'], $fill['l'], $fill['n']) > RP_FORCE_MAX_PCT + 0.05) throw new DomainException(($rb['planners'][$rid]['name'] ?? 'A rider') . ' is at ' . round(max($fill['kg'], $fill['l'], $fill['n'])) . '% of the vehicle. Move some stops first.');
         if (!$ackOver) throw new DomainException(($rb['planners'][$rid]['name'] ?? 'A rider') . ' is over capacity. Confirm that you accept the overload.');
     }
+    if (!array_filter($rb['proposal']['riders'] ?? [], fn($r) => !empty($r['units']))) throw new DomainException('This plan has no stops to assign. Run Auto-allocate again.');
     $plan['proposal'] = $rb['proposal'];
     $claim = rp_q("UPDATE cdb_rp_plans SET status = 'confirming' WHERE id = ? AND status = 'draft'", [$planId]);
     if ($claim->rowCount() !== 1) throw new DomainException('This plan is being confirmed by someone else');

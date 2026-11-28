@@ -356,10 +356,11 @@ function sl_routePlannerData($user, $core): array
             }
             $iss = $rb['issues'];
             $msgs = [];
-            if ($iss['stale']) $msgs[] = count($iss['stale']) . ' stop' . (count($iss['stale']) === 1 ? ' was' : 's were') . ' assigned elsewhere and left the plan';
+            if ($iss['stale']) $msgs[] = count($iss['stale']) . ' stop' . (count($iss['stale']) === 1 ? ' was' : 's were') . ' no longer waiting (assigned elsewhere, cancelled or not ready) and left the plan';
             if ($iss['over']) $msgs[] = count($iss['over']) . ' rider' . (count($iss['over']) === 1 ? ' is' : 's are') . ' over capacity';
             if ($iss['ineligible']) $msgs[] = count($iss['ineligible']) . ' stop' . (count($iss['ineligible']) === 1 ? ' does' : 's do') . ' not suit the rider\'s vehicle';
-            $d['planIssues'] = $msgs ? ['msgs' => $msgs, 'over' => array_map('intval', array_keys($iss['over'])), 'ineligible' => $iss['ineligible'], 'block' => (bool) $iss['ineligible'] || (bool) array_filter($iss['over'], fn($f) => max($f['kg'], $f['l'], $f['n']) > 110.05)] : null;
+            foreach ($iss['unavailable'] ?? [] as $ua) $msgs[] = $ua['name'] . ' is ' . $ua['reason'];
+            $d['planIssues'] = $msgs ? ['msgs' => $msgs, 'over' => array_map('intval', array_keys($iss['over'])), 'ineligible' => $iss['ineligible'], 'block' => (bool) $iss['ineligible'] || !empty($iss['unavailable']) || (bool) array_filter($iss['over'], fn($f) => max($f['kg'], $f['l'], $f['n']) > 110.05)] : null;
         } catch (Throwable $e) {
             error_log('[route_planner] rebase draft: ' . $e->getMessage());
         }
