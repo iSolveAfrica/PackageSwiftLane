@@ -123,6 +123,8 @@ function sl_trackData(string $code, $core): array
     $d += [
         'number' => (string) $t->order_prefix . (string) $t->order_no,
         'st' => $st['label'], 'cls' => $st['cls'],
+        // status picture: air parcels show the air drawings, sea parcels the sea ones (helpers/parcel_scene.php)
+        'scene' => (function () use ($air, $statusId, $eff, $t) { require_once CDP_ROOT . '/helpers/parcel_scene.php'; return sl_parcelScene($air ? 'air' : 'sea', $statusId, (string) ($eff->mod_style ?: $t->mod_style)); })(),
         'air' => $air, 'mode' => $air ? 'Air freight' : 'Sea freight',
         'from' => $from ?: '—', 'to' => $to ?: '—',
         'eta' => $etaText,
@@ -177,33 +179,42 @@ function sl_quoteData($core): array
         return sl_row($sql, $b);
     };
     $first = $fee($d['weight'], $d['cat']);
-    $volPct = $first ? max(1, (int) $first->volumetric_percentage) : 5000;
+    // No route price for this route and weight: quote the standard freight price from Settings (the price the
+    // shipment forms start from), with the system's volumetric divisor. Said plainly on the result.
+    $stdPrice = (float) ($core->value_weight ?? 0);
+    $stdDiv = (int) ($core->meter ?? 0) > 0 ? (int) $core->meter : 5000;
+    $volPct = $first ? max(1, (int) $first->volumetric_percentage) : $stdDiv;
     $vol = ($d['l'] > 0 && $d['w'] > 0 && $d['h'] > 0) ? round($d['l'] * $d['w'] * $d['h'] / $volPct, 2) : 0;
     $charge = max($d['weight'], $vol);
     $row = $charge !== $d['weight'] ? ($fee($charge, $d['cat']) ?: $first) : $first;
-    if (!$row) {
-        $d['error'] = 'No tariff is configured for this route and weight yet. Create an account and we will quote you.';
+    if (!$row && $stdPrice <= 0) {
+        $d['error'] = 'No price is set for this route and weight yet. Create an account and we will quote you.';
         return $d;
     }
-    // cdb_shipping_fees.price is the price per weight unit for the band (same rule as the staff rate editor).
-    $freight = round((float) $row->price * $charge, 2);
+    $standard = !$row;
+    $perUnit = $standard ? $stdPrice : (float) $row->price;
+    $freight = round($perUnit * $charge, 2);
+    $min = $standard ? 0.0 : (float) ($row->min_charge ?? 0);
+    if ($min > $freight) $freight = round($min, 2);
     $d['result'] = [
-        'tariff' => (int) $row->id,
-        'perUnit' => sl_money($row->price),
-        'freight' => sl_money($freight),
-        'total' => sl_money($freight),
+        'tariff' => $standard ? 0 : (int) $row->id,
+        'standard' => $standard,
+        'perUnit' => sl_moneyExact($perUnit),
+        'freight' => sl_moneyExact($freight),
+        'total' => sl_moneyExact($freight),
+        'minApplied' => $min > 0 && $freight === round($min, 2),
         'local' => $d['rate'] > 0 ? 'GHS ' . number_format($freight * $d['rate'], 2) . ' at USD 1 = GHS ' . number_format($d['rate'], 2) : '',
         'charge' => rtrim(rtrim(number_format($charge, 2), '0'), '.'),
         'vol' => rtrim(rtrim(number_format($vol, 2), '0'), '.'),
-        'band' => rtrim(rtrim(number_format((float) $row->initial_range, 2), '0'), '.') . '–' . rtrim(rtrim(number_format((float) $row->final_range, 2), '0'), '.'),
-        'fill' => sl_pct($charge, max(1, (float) $row->final_range)),
+        'band' => $standard ? 'Standard rate' : rtrim(rtrim(number_format((float) $row->initial_range, 2), '0'), '.') . '–' . rtrim(rtrim(number_format((float) $row->final_range, 2), '0'), '.'),
+        'fill' => $standard ? 100 : sl_pct($charge, max(1, (float) $row->final_range)),
     ];
-    // price by weight chart, 1..max(12, weight)
+    // price by weight chart, 1..max(12, weight): route price where one exists, else the standard price
     $max = (int) max(4, min(50, ceil($d['weight'])));
     $vals = [];
     for ($w = 1; $w <= $max; $w++) {
         $r = $fee((float) $w, $d['cat']);
-        $vals[] = $r ? round((float) $r->price * $w, 2) : 0;
+        $vals[] = $r ? round(max((float) $r->price * $w, (float) ($r->min_charge ?? 0)), 2) : round($stdPrice * $w, 2);
     }
     $top = max(1, max($vals));
     $d['chart'] = ['values' => $vals, 'weights' => range(1, count($vals)), 'path' => sl_svgLinePath($vals, 1030, 170, 12, $top, 44), 'max' => $max, 'top' => $top, 'labels' => [1, (int) round($max / 3), (int) round($max * 2 / 3), $max]];
@@ -353,6 +364,7 @@ function sl_clientDashboardData($user, $core, $userData): array
     $d['since'] = !empty($userData->created) && $userData->created !== '0000-00-00 00:00:00' ? sl_date($userData->created, 'M Y') : '';
     $d['onWay'] = max(0, $d['active'] - $d['atWh'] - $d['ready']);
     $d['canBills'] = $d['finance'] && $user->cdp_hasPermission('view_my_bills');
+    $d['cc'] = sl_clientCardsData($uid, $d);
     return $d;
 }
 
@@ -694,4 +706,155 @@ function sl_portalFilterSql(string $filter,string $alias=''): string
         return " AND {$alias}status_courier IN (".implode(',',$ids?:[6,32]).")";
     }
     return '';
+}
+
+/**
+ * Customer dashboard cards (same look as the staff control panel): parcels, pickup and delivery,
+ * bills, pre-alerts, plus the 12-month view, what they ship most and where their parcels are now.
+ * Everything is the signed-in customer's own air shipments (cdb_add_order) and sea packages
+ * (cdb_customers_packages).
+ */
+function sl_clientCardsData(int $uid, array $d): array
+{
+    require_once CDP_ROOT . '/helpers/sl_chart_interactions.php';
+    $u = [':u' => $uid];
+    $air = "FROM cdb_add_order a WHERE a.sender_id = :u AND a.is_deleted = 0 AND a.status_courier <> 21";
+    $sea = "FROM cdb_customers_packages p WHERE p.sender_id = :u AND p.status_courier <> 21";
+    $both = fn(string $wa, string $wp) => (int) sl_scalar("SELECT COUNT(*) $air $wa", $u) + (int) sl_scalar("SELECT COUNT(*) $sea $wp", $u);
+    $mStart = "DATE_FORMAT(CURDATE(), '%Y-%m-01')";
+
+    // 14-day axis
+    $today = new DateTimeImmutable('today');
+    $days = [];
+    for ($day = $today->modify('-13 days'); $day <= $today; $day = $day->modify('+1 day')) $days[$day->format('Y-m-d')] = 0;
+    $dayLabels = array_map(fn($x) => date('D j M', strtotime($x)), array_keys($days));
+
+    // 1. parcels
+    $airMonth = (int) sl_scalar("SELECT COUNT(*) $air AND a.order_date >= $mStart", $u);
+    $seaMonth = (int) sl_scalar("SELECT COUNT(*) $sea AND p.order_date >= $mStart", $u);
+    $lastMonth = $both(" AND a.order_date >= $mStart - INTERVAL 1 MONTH AND a.order_date < $mStart", " AND p.order_date >= $mStart - INTERVAL 1 MONTH AND p.order_date < $mStart");
+    $reg = array_values($d['parcelActivity'] ?? $days);
+    $cards = [];
+    $cards[] = ['tone' => 'blue', 'icon' => 'i-box', 'eyebrow' => 'My parcels this month', 'href' => sl_route('MyParcels'),
+        'big' => sl_num($airMonth + $seaMonth), 'lede' => 'registered in ' . date('F') . ' · ' . sl_num($lastMonth) . ' last month',
+        'sub' => [['n' => sl_num($airMonth), 'l' => 'Air'], ['n' => sl_num($seaMonth), 'l' => 'Sea'], ['n' => sl_num($d['atWh']), 'l' => 'At warehouse']],
+        'bars' => sl_sparkBars($reg, 4, $dayLabels), 'barsL' => '14 days · ' . sl_num(array_sum($reg)) . ' in', 'barsR' => 'avg ' . sl_num(array_sum($reg) / 14, 1) . ' a day'];
+
+    // (pickup and pre-alert cards were dropped: the dashboard shows the locker addresses in their place)
+
+    // 3. bills
+    $spentYear = 0.0;
+    if ($d['finance']) {
+        $months = [];
+        for ($i = 11; $i >= 0; $i--) $months[date('Y-m', strtotime("first day of -$i month"))] = 0.0;
+        foreach (sl_rows("SELECT DATE_FORMAT(a.order_date, '%Y-%m') AS m, COALESCE(SUM(a.total_order), 0) AS v $air AND a.order_date >= $mStart - INTERVAL 11 MONTH GROUP BY DATE_FORMAT(a.order_date, '%Y-%m')", $u) as $r) {
+            if (isset($months[$r->m])) $months[$r->m] = (float) $r->v;
+        }
+        $spentYear = (float) sl_scalar("SELECT COALESCE(SUM(a.total_order), 0) $air AND YEAR(a.order_date) = YEAR(CURDATE())", $u);
+        $paidMonth = (float) sl_scalar("SELECT COALESCE(SUM(a.total_order), 0) $air AND a.status_invoice NOT IN (2,23) AND a.order_date >= $mStart", $u);
+        $overdue = (int) sl_scalar("SELECT COUNT(*) $air AND a.status_invoice IN (2,23) AND a.due_date IS NOT NULL AND a.due_date < CURDATE()", $u);
+        $nYear = max(1, (int) sl_scalar("SELECT COUNT(*) $air AND YEAR(a.order_date) = YEAR(CURDATE())", $u));
+        $cards[] = ['tone' => 'amber', 'icon' => 'i-card', 'eyebrow' => 'My bills', 'href' => sl_route('MyBills'),
+            'alert' => $overdue ? $overdue . ' bill' . ($overdue === 1 ? '' : 's') . ' overdue' : '',
+            'big' => $d['dueMoney'], 'lede' => $d['dueN'] ? $d['dueN'] . ' unpaid bill' . ($d['dueN'] === 1 ? '' : 's') . ($d['dueDate'] ? ' · first due ' . $d['dueDate'] : '') : 'Nothing to pay · thank you',
+            'sub' => [['n' => sl_num($d['dueN']), 'l' => 'Unpaid'], ['n' => sl_money($paidMonth), 'l' => 'Paid ' . date('M')], ['n' => sl_money($spentYear), 'l' => 'This year'], ['n' => sl_money($spentYear / $nYear), 'l' => 'Per parcel']],
+            'bars' => sl_sparkBars(array_values($months), 4, array_map(fn($k) => date('M Y', strtotime($k . '-01')), array_keys($months))), 'barsL' => 'Billed per month, 12 months', 'barsR' => sl_money(array_sum($months))];
+    }
+
+    // 12 months, air and sea
+    $mAir = $mSea = [];
+    for ($i = 11; $i >= 0; $i--) { $k = date('Y-m', strtotime("first day of -$i month")); $mAir[$k] = 0; $mSea[$k] = 0; }
+    foreach (sl_rows("SELECT DATE_FORMAT(a.order_date, '%Y-%m') AS m, COUNT(*) AS n $air AND a.order_date >= $mStart - INTERVAL 11 MONTH GROUP BY DATE_FORMAT(a.order_date, '%Y-%m')", $u) as $r) if (isset($mAir[$r->m])) $mAir[$r->m] = (int) $r->n;
+    foreach (sl_rows("SELECT DATE_FORMAT(p.order_date, '%Y-%m') AS m, COUNT(*) AS n $sea AND p.order_date >= $mStart - INTERVAL 11 MONTH GROUP BY DATE_FORMAT(p.order_date, '%Y-%m')", $u) as $r) if (isset($mSea[$r->m])) $mSea[$r->m] = (int) $r->n;
+    $weightYear = (float) sl_scalar("SELECT COALESCE(SUM(a.total_weight), 0) $air AND YEAR(a.order_date) = YEAR(CURDATE())", $u)
+        + (float) sl_scalar("SELECT COALESCE(SUM(p.total_weight), 0) $sea AND YEAR(p.order_date) = YEAR(CURDATE())", $u);
+
+    // what I ship most (12 months)
+    $items = [];
+    foreach (sl_rows("SELECT LOWER(TRIM(i.order_item_description)) AS k, MAX(i.order_item_description) AS label, COALESCE(SUM(i.order_item_quantity), 0) AS q
+        FROM cdb_add_order_item i INNER JOIN cdb_add_order a ON a.order_id = i.order_id
+        WHERE a.sender_id = :u AND a.is_deleted = 0 AND a.order_date >= CURDATE() - INTERVAL 12 MONTH AND TRIM(COALESCE(i.order_item_description, '')) <> ''
+        GROUP BY LOWER(TRIM(i.order_item_description)) ORDER BY q DESC LIMIT 6", $u) as $r) {
+        $items[] = ['label' => ucfirst(trim((string) $r->label)), 'q' => (float) $r->q];
+    }
+    // where my parcels are now (not yet delivered)
+    $where = [];
+    foreach ([['At the warehouse abroad', [1, 2, 4, 10, 13], 'var(--ch-4)'], ['In transit to Ghana', [3, 25], 'var(--ch-2)'], ['Held / at customs', [28, 29, 30], 'var(--red)'],
+              ['Ready for pickup', [6, 32], 'var(--green)'], ['Out with a rider', [5, 7], 'var(--ch-5)']] as [$l, $ids, $c]) {
+        $in = implode(',', $ids);
+        $where[] = ['l' => $l, 'n' => $both(" AND a.status_courier IN ($in)", " AND p.status_courier IN ($in)"), 'c' => $c];
+    }
+    return [
+        'cards' => $cards,
+        'year' => ['air' => $mAir, 'sea' => $mSea, 'weight' => $weightYear, 'spent' => $spentYear],
+        'items' => $items, 'where' => $where,
+    ];
+}
+
+/**
+ * Insights for one mode of the signed-in customer's parcels: sea packages (cdb_customers_packages) or
+ * air shipments (cdb_add_order). Used by the My parcels hub (two cards: sea, then air) and at the top of the
+ * customer's SeaPackages / AirShipments lists (views/sl/pages/partials/client_mode_insights.php).
+ */
+function sl_clientModeInsights(int $uid, string $mode): array
+{
+    require_once CDP_ROOT . '/helpers/sl_chart_interactions.php';
+    require_once __DIR__ . '/ops_common.php';
+    $sea = $mode === 'sea';
+    $t = $sea ? 'cdb_customers_packages' : 'cdb_add_order';
+    $it = $sea ? 'cdb_customers_packages_detail' : 'cdb_add_order_item';
+    $w = "FROM $t a WHERE a.sender_id = :u AND a.status_courier <> 21" . ($sea ? '' : ' AND a.is_deleted = 0');
+    $u = [':u' => $uid];
+    // status groups (same as the dashboard's "Where my parcels are now")
+    $groups = [
+        'wh' => ['At the warehouse', [1, 2, 4, 10, 13], 'var(--ch-4)', 'i-warehouse'],
+        'transit' => [$sea ? 'At sea / in transit' : 'In the air / in transit', [3, 25], 'var(--ch-2)', $sea ? 'i-ship' : 'i-plane'],
+        'customs' => ['Held / at customs', [28, 29, 30], 'var(--red)', 'i-shield'],
+        'ready' => ['Ready for pickup', [6, 32], 'var(--green)', 'i-key'],
+        'rider' => ['Out with a rider', [5, 7], 'var(--ch-5)', 'i-truck'],
+    ];
+    $byStatus = [];
+    foreach (sl_rows("SELECT a.status_courier AS s, COUNT(*) AS n $w GROUP BY a.status_courier", $u) as $r) $byStatus[(int) $r->s] = (int) $r->n;
+    $where = [];
+    $active = 0;
+    foreach ($groups as $k => [$l, $ids, $c, $ic]) {
+        $n = 0;
+        foreach ($ids as $id) $n += $byStatus[$id] ?? 0;
+        $where[$k] = ['l' => $l, 'n' => $n, 'c' => $c, 'ic' => $ic];
+        $active += $n;
+    }
+    $delivered = ($byStatus[8] ?? 0) + ($byStatus[15] ?? 0);
+    $total = array_sum($byStatus);
+    // last 12 months: parcels and weight
+    $months = [];
+    for ($i = 11; $i >= 0; $i--) $months[date('Y-m', strtotime("first day of -$i month"))] = ['n' => 0, 'w' => 0.0];
+    foreach (sl_rows("SELECT DATE_FORMAT(a.order_date, '%Y-%m') AS m, COUNT(*) AS n, COALESCE(SUM(a.total_weight), 0) AS w $w AND a.order_date >= DATE_FORMAT(CURDATE(), '%Y-%m-01') - INTERVAL 11 MONTH GROUP BY DATE_FORMAT(a.order_date, '%Y-%m')", $u) as $r) {
+        if (isset($months[$r->m])) $months[$r->m] = ['n' => (int) $r->n, 'w' => (float) $r->w];
+    }
+    $n12 = array_sum(array_column($months, 'n'));
+    $w12 = array_sum(array_column($months, 'w'));
+    $year = sl_row("SELECT COUNT(*) AS n, COALESCE(SUM(a.total_weight), 0) AS w $w AND YEAR(a.order_date) = YEAR(CURDATE())", $u);
+    $busy = $n12 ? array_search(max(array_column($months, 'n')), array_column($months, 'n'), true) : false;
+    $items = [];
+    foreach (sl_rows("SELECT MAX(i.order_item_description) AS label, COALESCE(SUM(i.order_item_quantity), 0) AS q FROM $it i INNER JOIN $t a ON a.order_id = i.order_id
+            WHERE a.sender_id = :u AND a.order_date >= CURDATE() - INTERVAL 12 MONTH AND TRIM(COALESCE(i.order_item_description, '')) <> ''" . ($sea ? '' : ' AND a.is_deleted = 0') . "
+            GROUP BY LOWER(TRIM(i.order_item_description)) ORDER BY q DESC LIMIT 5", $u) as $r) {
+        $items[] = ['l' => ucfirst(trim((string) $r->label)), 'q' => (float) $r->q];
+    }
+    $last = sl_row("SELECT a.order_id, a.order_prefix, a.order_no, a.order_date, a.status_courier, a.total_weight $w ORDER BY a.order_id DESC LIMIT 1", $u);
+    $mk = array_keys($months);
+    return [
+        'mode' => $sea ? 'sea' : 'air', 'sea' => $sea,
+        'title' => $sea ? 'Sea shipments' : 'Air shipments', 'icon' => $sea ? 'i-ship' : 'i-plane',
+        'href' => sl_route($sea ? 'SeaPackages' : 'AirShipments'),
+        'total' => $total, 'active' => $active, 'delivered' => $delivered,
+        'yearN' => (int) ($year->n ?? 0), 'yearW' => (float) ($year->w ?? 0),
+        'n12' => $n12, 'w12' => $w12, 'avgW' => $n12 ? $w12 / $n12 : 0.0,
+        'busy' => $busy !== false ? date('M Y', strtotime($mk[$busy] . '-01')) : '',
+        'where' => $where, 'items' => $items,
+        'bars' => sl_sparkBars(array_column($months, 'n'), 4, array_map(fn($k) => date('F Y', strtotime($k . '-01')), $mk)),
+        'axis' => array_map(fn($k) => date('M', strtotime($k . '-01')), $mk),
+        'last' => $last ? ['id' => $last->order_prefix . $last->order_no, 'date' => sl_date($last->order_date), 'st' => sl_statusLabel($last->status_courier), 'cls' => sl_statusClass($last->status_courier),
+            'w' => sl_weight($last->total_weight), 'href' => sl_route($sea ? 'PackageDetail' : 'ShipmentDetail', ['id' => (int) $last->order_id])] : null,
+    ];
 }

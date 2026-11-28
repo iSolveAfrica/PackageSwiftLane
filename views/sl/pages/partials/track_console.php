@@ -72,7 +72,7 @@ $chip = function (float $x, float $y, string $k, string $v, string $anchor = 'le
 <ellipse cx="338" cy="143" rx="7" ry="15" fill="url(#<?= $tcUid ?>-intake)"/>
 <ellipse cx="338" cy="143" rx="7" ry="15" fill="none" stroke="#F4F4F4" stroke-width="2.2"/>
 <path d="M262 132 L 330 132" stroke="#fff" stroke-width="2" opacity=".8" stroke-linecap="round"/>
-<g fill="#7A5A00" opacity=".55"><circle cx="520" cy="90" r="1.8"/><circle cx="530" cy="90" r="1.8"/></g></symbol><symbol id="<?= $tcUid ?>-ship" viewBox="0 0 360 120"><path d="M8 78h330l-26 30H40z" fill="#26323F"/><path d="M8 78h330l-3 6H11z" fill="#C8372D"/><rect x="250" y="40" width="44" height="38" rx="3" fill="#E9ECEF"/><rect x="258" y="47" width="28" height="6" rx="2" fill="#26323F"/><rect x="270" y="22" width="10" height="18" fill="#26323F"/><g><rect x="40" y="56" width="40" height="22" fill="#FFC72C"/><rect x="82" y="56" width="40" height="22" fill="#3E7CB1"/><rect x="124" y="56" width="40" height="22" fill="#FFC72C"/><rect x="166" y="56" width="40" height="22" fill="#E07A5F"/><rect x="208" y="56" width="38" height="22" fill="#3E7CB1"/><rect x="60" y="34" width="40" height="22" fill="#E07A5F"/><rect x="102" y="34" width="40" height="22" fill="#FFC72C"/><rect x="144" y="34" width="40" height="22" fill="#3E7CB1"/><rect x="186" y="34" width="40" height="22" fill="#FFC72C"/></g><path d="M0 112c40 6 80-6 120 0s80 6 120 0 80-6 120 0" stroke="#5A7FA6" stroke-width="2" fill="none" opacity=".6"/></symbol></svg>
+<g fill="#7A5A00" opacity=".55"><circle cx="520" cy="90" r="1.8"/><circle cx="530" cy="90" r="1.8"/></g></symbol><symbol id="<?= $tcUid ?>-ship" viewBox="0 0 360 120"><path d="M8 78h330l-26 30H40z" fill="#26323F"/><path d="M8 78h330l-3 6H11z" fill="#C8372D"/><rect x="250" y="40" width="44" height="38" rx="3" fill="#E9ECEF"/><rect x="258" y="47" width="28" height="6" rx="2" fill="#26323F"/><rect x="270" y="22" width="10" height="18" fill="#26323F"/><g><rect x="40" y="56" width="40" height="22" fill="#FFC72C"/><rect x="82" y="56" width="40" height="22" fill="#3E7CB1"/><rect x="124" y="56" width="40" height="22" fill="#FFC72C"/><rect x="166" y="56" width="40" height="22" fill="#E07A5F"/><rect x="208" y="56" width="38" height="22" fill="#3E7CB1"/><rect x="60" y="34" width="40" height="22" fill="#E07A5F"/><rect x="102" y="34" width="40" height="22" fill="#FFC72C"/><rect x="144" y="34" width="40" height="22" fill="#3E7CB1"/><rect x="186" y="34" width="40" height="22" fill="#FFC72C"/></g><path d="M0 112c40 6 80-6 120 0s80 6 120 0 80-6 120 0" stroke="#5A7FA6" stroke-width="2" fill="none" opacity=".6"/></symbol><symbol id="<?= $tcUid ?>-office" viewBox="0 0 600 190"><rect x="0" y="176" width="600" height="6" rx="3" fill="#3A3A3A" opacity=".55"/><rect x="150" y="58" width="300" height="120" rx="6" fill="#F4F1EA"/><rect x="150" y="58" width="300" height="120" rx="6" fill="none" stroke="#D8D2C4" stroke-width="2"/><path d="M138 62L300 18l162 44z" fill="#E8432F"/><path d="M138 62h324v8H138z" fill="#F2A81D"/><rect x="168" y="116" width="74" height="40" rx="4" fill="#9CC3D9"/><rect x="358" y="116" width="74" height="40" rx="4" fill="#9CC3D9"/><rect x="264" y="118" width="72" height="60" rx="4" fill="#2F2F2F"/><rect x="298" y="118" width="4" height="60" fill="#555"/><rect x="214" y="72" width="172" height="40" rx="8" fill="#fff" stroke="#E6E0D2" stroke-width="2"/><image href="<?= h(cdp_asset('assets/swiftlane/brand/swift-mark.png')) ?>" x="222" y="75" width="34" height="34"/><text x="262" y="100" font-family="Figtree,Arial,sans-serif" font-size="20" font-weight="700" fill="#2F2F2F">SWIFT LANE</text><rect x="40" y="128" width="90" height="50" rx="6" fill="#E9E4D8"/><rect x="470" y="128" width="90" height="50" rx="6" fill="#E9E4D8"/></symbol></svg>
   <aside class="tc-list">
     <div class="tc-lh">
       <h2><?= h($tcTitle) ?></h2>
@@ -94,7 +94,7 @@ $chip = function (float $x, float $y, string $k, string $v, string $anchor = 'le
       <?php foreach ($items as $i => $it): ?>
       <button type="button" role="option" class="tc-card<?= $i === 0 ? ' on' : '' ?>" aria-selected="<?= $i === 0 ? 'true' : 'false' ?>" data-tc-key="<?= h($it['key']) ?>"<?= $tcNavigate ? ' data-tc-nav="' . h($it['href']) . '"' : '' ?> data-mode="<?= h($it['mode']) ?>" data-kind="<?= h($it['kind'] ?? '') ?>" data-late="<?= $it['late'] ? '1' : '' ?>" data-text="<?= h(strtolower($it['code'] . ' ' . $it['customer'] . ' ' . $it['carrier'] . ' ' . $it['st'] . ' ' . ($it['search'] ?? ''))) ?>">
         <span class="tc-c1"><b class="mono"><?= h($it['code']) ?></b><?php if (!empty($it['kind']) && $tcNoun !== 'consolidations'): ?><span class="tc-kind <?= h($it['kind']) ?>" title="<?= h($it['modeL'] . ' ' . strtolower($it['kindL'])) ?>"><?= h($it['kind'] === 'consolidation' ? 'Consol' : $it['kindL']) ?></span><?php endif; ?><span class="tc-st <?= $it['late'] ? 'late' : h($it['cls']) ?>"><?= h($it['late'] ? 'Delayed' : $it['st']) ?></span></span>
-        <span class="tc-c2"><span><?= h($it['from']['code']) ?></span><i class="tc-dots"></i><i class="ic ic-sm <?= $it['mode'] === 'sea' ? 'i-ship' : 'i-plane' ?>" aria-hidden="true"></i><i class="tc-line"><em><?= h($it['transit']) ?></em></i><span><?= h($it['to']['code']) ?></span></span>
+        <span class="tc-c2"><span><?= h($it['from']['code']) ?></span><i class="tc-dots"></i><?php if (!empty($it['office'])): ?><img class="tc-ofc" src="<?= h(cdp_asset('assets/swiftlane/brand/swift-mark.png')) ?>" alt="" aria-hidden="true"><?php else: ?><i class="ic ic-sm <?= $it['mode'] === 'sea' ? 'i-ship' : 'i-plane' ?>" aria-hidden="true"></i><?php endif; ?><i class="tc-line"><em><?= h($it['transit']) ?></em></i><span><?= h($it['to']['code']) ?></span></span>
         <span class="tc-c3"><span><?= h($it['from']['city']) ?>, <?= h($it['from']['country']) ?></span><span><?= h($it['to']['city']) ?>, <?= h($it['to']['country']) ?></span></span>
         <span class="tc-c4"><span><i class="tc-sw <?= h($it['mode']) ?>"></i><?= h($it['carrier']) ?> · <?= h($it['customer']) ?></span><span><?= $it['arrived'] ? 'Arrived' : 'ETA' ?> <b><?= h($it['etaShort']) ?></b></span></span>
         <?php if ($tcNavigate): ?><span class="tc-go">Open <?= h($tcNounOne) ?> <i class="ic ic-sm i-right" aria-hidden="true"></i></span><?php endif; ?>
@@ -124,6 +124,9 @@ $chip = function (float $x, float $y, string $k, string $v, string $anchor = 'le
           <?= $chip($g['pts'][$n - 1][0], $g['pts'][$n - 1][1], 'Dest', $it['to']['city'] . ', ' . $it['to']['country'], 'left') ?>
           <g class="tc-veh" transform="translate(<?= $v[0] ?> <?= $v[1] ?>)">
             <circle r="46" fill="url(#<?= $tcUid ?>-sun)"/>
+            <?php if (!empty($it['office'])): ?>
+            <g class="tc-office"><rect x="-17" y="-17" width="34" height="34" rx="10" fill="#fff"/><image href="<?= h(cdp_asset('assets/swiftlane/brand/swift-mark.png')) ?>" x="-13" y="-13" width="26" height="26"/></g>
+            <?php else: ?>
             <g transform="rotate(<?= $v[2] ?>)">
               <?php if ($it['mode'] === 'sea'): ?>
               <path class="tc-craft" d="M-16 -7h22l12 7-12 7h-22l-4-7z"/><rect class="tc-craft-d" x="-11" y="-4" width="5" height="8" rx="1"/><rect class="tc-craft-d" x="-4" y="-4" width="5" height="8" rx="1"/>
@@ -131,6 +134,7 @@ $chip = function (float $x, float $y, string $k, string $v, string $anchor = 'le
               <path class="tc-craft" d="M20 0c0-1.6-1.4-2.6-3.4-2.6H6.4L-4.8-17h-4.4l5.2 14.4h-9.6l-3.6-5.2h-3.4l2.4 7.8-2.4 7.8h3.4l3.6-5.2h9.6L-9.2 17h4.4L6.4 2.6h10.2C18.6 2.6 20 1.6 20 0z"/>
               <?php endif; ?>
             </g>
+            <?php endif; ?>
           </g>
           <?php if ($it['pct'] > 8 && !$it['arrived']): ?><text class="tc-now" x="<?= $v[0] ?>" y="<?= $v[1] - 30 ?>" text-anchor="middle"><?= h($it['where']) ?></text><?php endif; ?>
         </g>
@@ -167,9 +171,9 @@ $chip = function (float $x, float $y, string $k, string $v, string $anchor = 'le
           </div>
         </template>
         <div class="tc-sec on" data-tc-sec="overview">
-          <div class="tc-ov">
+          <div class="tc-ov<?= !empty($it['office']) ? ' has-agent' : '' ?>">
             <div class="tc-veh-card">
-              <svg class="tc-art" viewBox="<?= $it['mode'] === 'sea' ? '0 0 360 120' : '0 0 600 190' ?>" aria-hidden="true"><use href="#<?= $tcUid ?>-<?= $it['mode'] === 'sea' ? 'ship' : 'plane' ?>"/></svg>
+              <?php if (!empty($it['art'])): ?><figure class="tc-art-img<?= $it['art']['key'] === 'ship' ? ' light' : '' ?>"><img src="<?= h(cdp_asset($it['art']['file'])) ?>" alt="<?= h($it['art']['alt']) ?>" decoding="async"></figure><?php endif; ?>
               <b><?= h($it['carrier']) ?> / <?= h($it['vehicle']) ?></b>
               <span><?= $it['flight'] !== '' ? 'Flight ' . h($it['flight']) . ' · ' : '' ?><?= $it['awb'] !== '' ? 'AWB ' . h($it['awb']) : h($it['modeL']) . ' · ' . h($it['weight']) ?><?= $it['customer'] !== $it['weight'] ? ' · ' . h($it['customer']) : '' ?></span>
             </div>
@@ -192,6 +196,7 @@ $chip = function (float $x, float $y, string $k, string $v, string $anchor = 'le
               <div class="tc-k"><div class="tc-kh"><i class="ic i-box" aria-hidden="true"></i><span class="mut"><?= h($it['modeL']) ?></span></div><div class="tc-kv"><span>Weight</span><b><?= h($it['weight']) ?></b></div></div>
               <?php endif; ?>
             </div>
+            <?php if (!empty($it['office'])): ?><img class="tc-agent" src="<?= h(cdp_asset('assets/swiftlane/brand/swift-agent-parcel.webp')) ?>" alt="Swift Logistics agent holding your parcel" loading="lazy"><?php endif; ?>
           </div>
         </div>
 

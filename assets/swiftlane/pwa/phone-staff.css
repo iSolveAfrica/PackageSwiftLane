@@ -1,0 +1,23 @@
+/* Phone screens by "staff" (RecordPayment, AccountSecurity, Tariffs): the few rules mx.css does not have. */
+.sp-form{flex:1;min-height:0;display:flex;flex-direction:column}
+.sp-foot{padding:10px 16px;border-top:1px solid var(--line);background:var(--bg)}
+.mx .sp-foot .mx-btn{width:100%;border:0;cursor:pointer;font-family:inherit}
+.mx a.mx-btn:not(.sec):not(.or){color:var(--inverse)}
+.mx button.mx-btn{width:100%;cursor:pointer;font-family:inherit}
+.mx button.mx-btn:not(.sec){border:0}
+.mx a.mx-in{text-decoration:none}
+.sp-inv{min-height:56px;gap:12px;cursor:pointer}
+.sp-inv input{width:20px;height:20px;flex:none;accent-color:var(--ink)}
+.sp-inv .sp-invm{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.sp-inv .sp-invm small{color:var(--muted);font-size:12px}
+.sp-inv:has(input:checked){border-color:var(--ink)}
+.mx-fseg button{cursor:pointer}
+.sp-wrap .mx-rm small{white-space:normal;line-height:1.35}
+.sp-wrap.mx-tg,.sp-wrap .mx-tg{padding-top:10px;padding-bottom:10px}
+.mx-tg>.sl-pill{flex:none}
+.sp-out{min-height:44px;padding:0 10px;margin-right:-10px;border:0;background:none;font:600 13px var(--font);color:var(--ink);cursor:pointer;border-radius:10px}
+.sp-off{color:var(--muted);font-weight:500}
+.sp-form .mx-fseg button{flex:1 1 40%}
+.sp-panel{display:flex;flex-direction:column;gap:12px}
+.sp-panel[hidden]{display:none}
+.sp-panel .mx-rr b{white-space:nowrap}

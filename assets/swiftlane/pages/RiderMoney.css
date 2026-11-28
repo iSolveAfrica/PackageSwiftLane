@@ -1,0 +1,69 @@
+/* Rider app: earnings, wallet, quests, shifts, help, safety, account, performance.
+   Additions to the phone kit (assets/swiftlane/pwa/mx.css) for real form controls and a few states.
+   Loaded by the web pages (board RiderMoney) and by the phone screens (views/sl/data/rider_money.php sl_rmOpen). */
+
+/* the phone frame's body has no .mxp resets */
+/* :where() keeps these at element specificity so component colours (.rc-day.on, .mx-btn) still win */
+:where(.mx-body.rm) a{color:inherit;text-decoration:none}
+:where(.mx-body.rm) button{font-family:inherit;color:inherit}
+.mx-body.rm button.mx-btn{border:0;cursor:pointer;width:100%;color:var(--inverse)}
+.mx-body.rm button.mx-btn.sec{border:1px solid var(--line-2);color:var(--ink)}
+.mx-body.rm button.mx-btn.rs-amb{color:var(--ink)}
+.mx-body.rm form{display:contents}
+.mx-body.rm input.mx-in,.mx-body.rm select.mx-in{width:100%;font:inherit;color:var(--ink);font-size:16px}
+.mx-body.rm .mxp-empty{background:var(--card)}
+
+.rc-co>form,.mx-form>form{display:contents}
+a.mx-lnk.rm-inl,.mx-ban a.mx-lnk,.rc-to a.mx-lnk{display:inline;min-height:0;color:var(--orange)!important;text-decoration:underline!important}
+select.mx-in{appearance:none;-webkit-appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 19px) 50%,calc(100% - 14px) 50%;background-size:5px 5px;background-repeat:no-repeat;padding-right:34px}
+input.mx-in:focus-visible,select.mx-in:focus-visible{outline:2px solid var(--ink);outline-offset:1px}
+input.mx-in.is-invalid{border-color:var(--red)}
+.mx-f .sl-err{font-size:12.5px;color:var(--red-ink)}
+input.rm-amount{font-size:26px!important;font-weight:600;min-height:60px;text-align:center;font-variant-numeric:tabular-nums}
+.rm-wrap{white-space:normal!important;text-align:right;max-width:62%}
+.rm-down{display:inline-flex;align-items:center;gap:3px;color:var(--red-ink);font-weight:600}
+.rc-col.sel .rc-bar i{box-shadow:0 0 0 2px var(--ink)}
+.rc-col.sel>b{color:var(--ink);font-weight:600}
+button.rc-chip{cursor:pointer;font-family:inherit}
+
+/* shifts */
+.rm-days{grid-template-columns:repeat(7,1fr);row-gap:6px}
+.rm-bka{display:flex}
+.rm-bka>*{flex:1}
+.rm-bka button{min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:5px;border-radius:12px;border:1px solid var(--red-bg);background:var(--red-bg);color:var(--red-ink);font:500 13px var(--font);cursor:pointer}
+.rc-starts b{font-weight:600}
+
+/* help and contact */
+.rm-qrs{padding:0;background:none;border-top:0;flex-wrap:wrap;overflow:visible}
+a.rd-qr{display:inline-flex;align-items:center;white-space:normal;padding:6px 14px;line-height:1.25}
+.rd-cjh .mx-rm small{white-space:normal}
+.rd-cjm .sl-pill{align-self:center}
+.rd-cjm a{color:inherit}
+a.rd-call{text-decoration:none}
+
+/* safety */
+a.rd-sosb{text-decoration:none;color:#fff!important}
+.rm-sos-off{background:var(--muted);box-shadow:none;cursor:default}
+.rm-sos-off::after{display:none}
+.rm-plate{color:var(--ink-2)}
+.rm-act{grid-template-columns:repeat(auto-fit,minmax(72px,1fr))}
+.rm-chk{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;border:0;background:none;padding:0;font:inherit;font-size:13.5px;color:var(--ink);text-align:left;cursor:pointer}
+.rm-chk>span{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--line-2);display:grid;place-items:center;flex:none;color:transparent}
+.rd-chk li>button.rm-chk>span{width:24px;height:24px}
+.rd-chk li.on .rm-chk>span{background:var(--green);border-color:var(--green);color:#fff}
+.rm-chk:disabled{opacity:.5;cursor:default}
+
+/* account */
+.rm-zone{background:var(--active);color:var(--ink-2)}
+.rm-details{display:flex;flex-direction:column;gap:12px}
+.rm-details>summary{list-style:none;cursor:pointer}
+.rm-details>summary::-webkit-details-marker{display:none}
+.rm-details[open]>summary{margin-bottom:12px}
+.rm-fields{display:flex;flex-direction:column;gap:12px}
+.rm-fields[hidden]{display:none}
+.rd-pf .mx-rm small{white-space:normal}
+.rc-to .mx-rm small,.rm-hist .mx-rm small:not(.mono){white-space:normal}
+/* the phone frame resets every link in .mx-body to inherit; give these components their design colours back */
+body.mx-page .mx-body.rm a.rc-day.on{color:var(--inverse)}
+body.mx-page .mx-body.rm .mx-sec a,body.mx-page .mx-body.rm .mxp-empty a.mx-lnk{color:var(--orange)}
+.mxp .mxp-empty a.mx-lnk{color:var(--orange)}

@@ -41,7 +41,10 @@ function sl_messageLogsData($user, $core): array
     $cls = ['sent' => 'delivered', 'failed' => 'overdue', 'skipped' => 'skipped', 'queued' => 'sorting'];
     foreach ($rows as $r) {
         $link = '';
-        if ($r->entity_type === 'shipment' || $r->entity_type === 'order') {
+        // Communication Center rows name the tracking number but carry no id (entity_id ''): no link to id 0.
+        if ((int) $r->entity_id <= 0) {
+            $link = '';
+        } elseif ($r->entity_type === 'shipment' || $r->entity_type === 'order') {
             $link = sl_route('ShipmentDetail', ['id' => (int) $r->entity_id]);
         } elseif ($r->entity_type === 'package') {
             $link = sl_route('PackageDetail', ['id' => (int) $r->entity_id]);

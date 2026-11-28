@@ -81,6 +81,19 @@ function sl_money($amount, ?string $currency = null): string
     return ($core->cformat ?? '1') == '2' ? $formatted . ' ' . $symbol : $symbol . $formatted;
 }
 
+/** Money with at least two decimals: for prices per unit and quotes, where a 3.55 rate must not show as 4. */
+function sl_moneyExact($amount): string
+{
+    global $core;
+    $symbol = (string) ($core->for_symbol ?? ($core->currency ?? '$'));
+    if (function_exists('sl_showGhs') && sl_showGhs()) {
+        $amount = sl_displayAmount($amount);
+        $symbol = '₵';
+    }
+    $text = number_format((float) $amount, max(2, (int) ($core->for_decimal ?? 2)), $core->dec_point ?? '.', $core->thousands_sep ?? ',');
+    return ($core->cformat ?? '1') == '2' ? $text . ' ' . $symbol : $symbol . $text;
+}
+
 function sl_num($n, int $dec = 0): string
 {
     return number_format((float) $n, $dec);
@@ -188,6 +201,17 @@ function sl_render(string $view, array $page, array $d = []): void
     $page += ['id' => '', 'title' => $core->site_name ?? 'Swift Lane', 'board' => '', 'actions' => '', 'theme' => '', 'plain' => false, 'scripts' => [], 'styles' => []];
     $slPage = $page;
     $viewFile = CDP_ROOT . '/views/sl/pages/' . $view . '.php';
+    // Phones get the phone app screen of this page when there is one (helpers/sl_phone.php); computers and
+    // tablets always get the web page.
+    require_once CDP_ROOT . '/helpers/sl_phone.php';
+    $slPhoneFile = sl_phoneView($view);
+    if ($slPhoneFile !== '') {
+        $slPhoneView = $view;
+        include CDP_ROOT . '/views/sl/phone/_start.php';
+        include $slPhoneFile;
+        include CDP_ROOT . '/views/sl/phone/_end.php';
+        return;
+    }
     if ($page['plain']) {
         include CDP_ROOT . '/views/sl/inc/plain_start.php';
         include $viewFile;

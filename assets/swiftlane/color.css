@@ -91,6 +91,7 @@ html.sl-dark svg [stroke="#161615"]{stroke:var(--ink)}
 .sl-nav-group{--g:var(--ink)}
 .sl-nav-group[data-group="ops"]{--g:var(--g-ops)}
 .sl-nav-group[data-group="riders"]{--g:var(--g-riders)}
+.sl-nav-group[data-group="warehouse"]{--g:var(--g-warehouse,#B7791F)}
 .sl-nav-group[data-group="centers"]{--g:var(--g-centers)}
 .sl-nav-group[data-group="dev"]{--g:var(--g-dev)}
 .sl-nav-group[data-group="support"]{--g:var(--g-support)}

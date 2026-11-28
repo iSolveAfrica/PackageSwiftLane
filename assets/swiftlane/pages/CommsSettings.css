@@ -1,0 +1,84 @@
+/* Notifications & Messages > Settings (views/sl/pages/CommsSettings.php, dataJs/sl/comms_settings.js) */
+.i-wa{--i:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><path d='M3.5 20.5l1.3-4.3A8.5 8.5 0 1 1 8 19.4z'/><path d='M9 8.5c0 3 2.5 6.5 6.5 6.5l1-1.5-2-1-1 .8c-1-.4-2.3-1.7-2.8-2.8l.8-1-1-2z'/></svg>")}
+.sl-pill.ok{background:var(--green-bg);color:var(--green-ink)}
+.sl-pill.warn{background:var(--amber-bg);color:var(--amber-ink)}
+
+/* channel status strip */
+.cs-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(230px,100%),1fr));gap:10px;margin:4px 0 16px}
+.cs-st{display:flex;align-items:center;gap:10px;padding:12px 14px;min-width:0;position:relative;overflow:hidden}
+.cs-st::before{content:"";position:absolute;left:0;top:12px;bottom:12px;width:3px;border-radius:0 3px 3px 0;background:var(--line-2)}
+.cs-st.ok::before{background:var(--green)}.cs-st.warn::before{background:var(--yellow,#E0A100)}
+.cs-sti{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:var(--active);flex:none}
+.cs-st.ok .cs-sti{background:var(--green-bg);color:var(--green-ink)}.cs-st.warn .cs-sti{background:var(--amber-bg);color:var(--amber-ink)}
+.cs-stt{min-width:0;flex:1}.cs-stt b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cs-sts{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cs-st .sl-pill{flex:none}
+
+/* layout: section index + sections */
+.cs-wrap{display:grid;grid-template-columns:220px minmax(0,1fr);gap:20px;align-items:start}
+.cs-index{position:sticky;top:16px;display:flex;flex-direction:column;gap:2px}
+.cs-index a{display:flex;align-items:center;gap:10px;min-height:38px;padding:0 10px;border-radius:var(--r-sm,10px);color:var(--ink-2);font-size:15px;text-decoration:none}
+.cs-index a:hover{background:var(--hover)}
+.cs-index a.on{background:var(--active);color:var(--ink);font-weight:500}
+.cs-index a:focus-visible{outline:2px solid var(--ink);outline-offset:-2px}
+.cs-main{min-width:0}
+.cs-sec{scroll-margin-top:16px;padding:20px}
+.cs-sec .sl-ch{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.cs-sec .sl-ch>div{min-width:0;flex:1 1 260px}
+.cs-g{gap:12px 16px;display:grid}
+.cs-sw{align-items:flex-start;cursor:default}.cs-sw .sl-toggle{margin-top:2px;flex:none}
+.cs-acts{align-items:center}
+.cs-hook{align-items:center;flex-wrap:wrap}.cs-hook .sl-in{min-width:0;flex:1 1 280px}
+.cs-warn{color:var(--amber-ink)}
+.cs-bad{color:var(--red-ink)}.cs-good{color:var(--green-ink)}
+.cs-sub{margin-top:-6px}
+.cs-prov{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:12px}
+.cs-pc,.cs-fs{border:1px solid var(--line);border-radius:14px;padding:14px 16px 16px;margin:0;display:flex;flex-direction:column;gap:12px;min-width:0}
+.cs-pc legend,.cs-fs legend{padding:0 6px;font-size:15px}
+.cs-fs .cs-g{grid-template-columns:repeat(auto-fit,minmax(min(170px,100%),1fr))}
+
+/* status owner switch */
+.cs-owner{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:14px 16px;border:1px solid var(--line-2);border-radius:14px;background:var(--field)}
+.cs-owner.on{border-color:var(--green);background:var(--green-bg)}
+.cs-owner .grow{flex:1 1 320px;min-width:0}
+.cs-owner[aria-busy="true"]{opacity:.6;pointer-events:none}
+
+/* consent */
+.cs-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(200px,100%),1fr));gap:10px}
+.cs-k{display:flex;flex-direction:column;gap:4px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--card);min-width:0}
+.cs-k b{font:600 20px/1.2 var(--font);font-variant-numeric:tabular-nums}
+.cs-kw{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+.cs-kwl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.cs-kwl li{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.cs-kwt{display:inline-flex;align-items:center;height:24px;padding:0 8px;border-radius:7px;background:var(--active);font:600 13px var(--mono);letter-spacing:.02em}
+.cs-rl{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;line-height:1.45}
+@media (max-width:900px){.cs-kw{grid-template-columns:1fr}}
+
+@media (max-width:1100px){
+  .cs-wrap{grid-template-columns:1fr}
+  .cs-index{position:static;flex-direction:row;overflow-x:auto;scrollbar-width:none;gap:4px;border-bottom:1px solid var(--line);padding-bottom:6px}
+  .cs-index::-webkit-scrollbar{display:none}
+  .cs-index a{white-space:nowrap;flex:none}
+}
+@media (max-width:640px){
+  .cs-sec{padding:16px}
+  body .cs-sec .sl-seg.boxed[role],body[data-mobile-role] .cs-sec .sl-seg.boxed[role]{flex-wrap:wrap!important;height:auto;overflow:visible}
+  body[data-mobile-role] .cs-sec .sl-seg.boxed[role]>button,body .cs-sec .sl-seg.boxed[role]>button{white-space:normal;height:auto;min-height:36px;text-align:left;flex:1 1 auto}
+  body .cs-owner .sl-seg[role]{width:100%}body .cs-owner .sl-seg[role]>button{flex:1 1 0;justify-content:center;white-space:normal}
+}
+/* five channels on one row on wide screens: the state pill sits under the name */
+.cs-strip{grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr))}
+.cs-st{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:10px;row-gap:6px;align-items:center}
+.cs-st .sl-pill{grid-column:2;justify-self:start}
+.cs-st .cs-sti{grid-row:span 2}
+@media (max-width:600px){.cs-st{grid-template-columns:minmax(0,1fr);padding:10px 12px}.cs-st .cs-sti{display:none}.cs-st .sl-pill{grid-column:1}}
+/* errors of a switch sit under its row (comms_settings.js placeSwitchErrors) */
+.cs-swerr{display:block;margin:-6px 0 0 46px;color:var(--red-ink);font-size:14px}
+.sl-toggle.is-invalid{box-shadow:0 0 0 2px var(--red,#D64545)}
+label.cs-sw{cursor:pointer}label.cs-sw .sl-toggle[data-static]{cursor:not-allowed}
+/* "Remove saved" under a saved secret */
+.cs-clr{align-self:flex-start;margin-top:2px}
+.cs-clr[aria-pressed="true"]{color:var(--red-ink)}
+/* three fields / four cost cards on one row at desktop width */
+.cs-sec .grid.cols3.cs-g{grid-template-columns:repeat(auto-fit,minmax(min(170px,100%),1fr))}
+.cs-sec .cs-kpis{grid-template-columns:repeat(auto-fit,minmax(min(160px,100%),1fr))}

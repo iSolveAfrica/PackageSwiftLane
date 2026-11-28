@@ -32,12 +32,14 @@ $user=new User();$core=new Core();
 $authPages=['login.php','logout.php','auth-otp.php','forgot-password.php','forgot-reset.php','sign-up.php','terms.php'];
 $actual=sl_bodyRole(); // customer | rider | staff ('' when signed out)
 header('Cache-Control: private, no-store');header('X-Content-Type-Options: nosniff');
-if($user->cdp_loginCheck()&&$actual!==SL_PWA_ROLE&&$path!=='logout.php'){
-    $actual=$actual?:'staff';
-    http_response_code(403);
-    if($ajax){header('Content-Type: application/json');echo json_encode(['success'=>false,'message'=>'Open the app for your signed-in account, or switch accounts']);exit;}
-    $other=sl_pwa_scope($actual).'app.php/'.($actual==='rider'?'driver_app.php':'index.php');
-    ?><!doctype html><html lang="en"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Switch Swift Lane app</title><link rel="stylesheet" href="<?= h(SL_PWA_ROOT_URL.'assets/swiftlane/pwa/entry.css') ?>"><main class="entry"><span class="eyebrow"><?= SL_PWA_ROLE==='rider'?'Rider app':(SL_PWA_ROLE==='staff'?'Staff app':'Customer app') ?></span><h1>Open the right app for this account</h1><p>This browser is signed in with a <?= h($actual) ?> account. Open that app, or sign out to switch accounts.</p><a class="primary" href="<?= h($other) ?>">Open <?= h($actual) ?> app</a><a class="secondary" href="<?= h($scope.'app.php/logout.php') ?>">Sign out and switch account</a></main></html><?php exit;
+// Signed in with another kind of account (a customer in the staff app, staff in the customer app, ...):
+// go straight to that person's own app, on the same page when it is a plain page, without asking.
+// Each controller still checks permissions itself, so AJAX simply runs as the signed-in user.
+if($user->cdp_loginCheck()&&$actual!==SL_PWA_ROLE&&$path!=='logout.php'&&!$ajax){
+    $actual=in_array($actual,['customer','rider','staff'],true)?$actual:'staff';
+    $page=$actual==='rider'&&$path==='index.php'?'driver_app.php':$path;
+    $q=(string)($_SERVER['QUERY_STRING']??'');
+    header('Location: '.sl_pwa_scope($actual).'app.php/'.$page.($q!==''&&preg_match('#^[a-z0-9_./?=&%+,\[\]-]+$#i',$q)?'?'.$q:''),true,302);exit;
 }
 if(!$user->cdp_loginCheck()&&!in_array($path,$authPages,true)){
     if($ajax){header('Content-Type: application/json');http_response_code(401);echo json_encode(['success'=>false,'message'=>'Your session ended. Sign in to continue.']);exit;}

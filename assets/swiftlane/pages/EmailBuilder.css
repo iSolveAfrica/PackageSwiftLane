@@ -75,3 +75,8 @@
 .eb-pf label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted)}
 .eb-pf input:not([type=checkbox]){font:inherit;font-size:14px;color:var(--ink);height:36px;padding:0 10px;border-radius:10px;border:1px solid var(--line-2);background:var(--field)}
 .eb-pf .ck{flex-direction:row;align-items:center;gap:6px;color:var(--ink);font-size:13.5px}
+
+/* Canvas side panel (views/sl/inc/email_canvas.php): the column balancer in swiftlane.js may cap its
+   height and make it scroll; keep the tabs and palette at their size instead of squashing them. */
+.eb>aside>*{flex-shrink:0}
+@media (max-width:760px){.eb{grid-template-columns:1fr!important}}

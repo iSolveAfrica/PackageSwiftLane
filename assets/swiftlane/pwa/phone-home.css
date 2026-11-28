@@ -1,0 +1,85 @@
+/* Staff phone home (views/sl/phone/Main.php): the desktop dashboard's today cards, work queues,
+   14-day arrivals, US packages pipeline and shipments on the move, in the phone card style (mx.css). */
+.ph-clock{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* today cards */
+.ph-tc{display:flex;flex-direction:column;gap:6px;padding:14px;color:inherit;text-decoration:none;position:relative;overflow:hidden}
+.ph-tc:active{background:var(--hover)}
+.ph-tc::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:0 3px 3px 0;background:var(--tc,var(--line-2))}
+.ph-tc.t-blue{--tc:#3B82F6}.ph-tc.t-mint{--tc:#16A34A}.ph-tc.t-amber{--tc:#D97706}.ph-tc.t-violet{--tc:#7C3AED}.ph-tc.t-rose{--tc:#E11D48}
+.ph-tc-h{display:flex;align-items:center;gap:8px;min-width:0}
+.ph-tc-h small{flex:1;min-width:0;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ph-tc-ic{width:26px;height:26px;border-radius:9px;background:var(--active);display:grid;place-items:center;color:var(--tc,var(--ink-2));flex:none}
+.ph-go{color:var(--muted)}
+.ph-tc-big{font-size:26px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.1;margin-top:2px}
+.ph-tc-lede{font-size:12.5px;color:var(--muted);line-height:1.4}
+.ph-tc-sub{display:grid;grid-template-columns:repeat(var(--n,2),minmax(0,1fr));gap:6px;margin-top:4px}
+.ph-tc-sub span{display:flex;flex-direction:column;padding:8px 9px;border-radius:12px;background:var(--field);min-width:0}
+.ph-tc-sub b{font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ph-tc-sub small{font-size:10.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ph-sb{display:flex;align-items:flex-end;gap:3px;height:34px;margin-top:6px}
+.ph-sb i{flex:1;min-height:2px;border-radius:2px;background:var(--line-2)}
+.ph-sb i.now{background:var(--tc,var(--orange))}
+.ph-tc-f{display:flex;justify-content:space-between;gap:8px;font-size:11.5px;color:var(--muted)}
+
+/* work queues */
+.ph-q .mx-row{min-height:58px;text-decoration:none}
+.ph-q .mx-li{width:36px;height:36px;border-radius:11px}
+.ph-q .mx-rm b{font-size:14px;font-weight:600}.ph-q .mx-rm small{font-size:12px;color:var(--muted)}
+.ph-q .mx-row.zero{opacity:.55}
+.ph-cnt{flex:none;min-width:34px;height:26px;padding:0 9px;border-radius:999px;background:var(--active);display:grid;place-items:center;font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums}
+.ph-q .mx-row:not(.zero) .ph-cnt{background:var(--ink);color:var(--inverse)}
+
+/* arrivals next 14 days + bays */
+.ph-fc .mx-bh{align-items:center}
+.ph-fc-c{position:relative;display:flex;align-items:flex-end;gap:3px;height:96px;margin-top:16px}
+.ph-fc-c>span{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;min-width:0}
+.ph-fc-c i{display:block;width:100%;border-radius:4px 4px 2px 2px;background:var(--line-2)}
+.ph-fc-c span.near i{background:#E8B04B}.ph-fc-c span.over i{background:#DC4C3F}
+.ph-fc-c span:first-child i{background:var(--orange)}
+.ph-fc-c small{font-size:9.5px;color:var(--muted);height:11px;line-height:11px}
+.ph-cap{position:absolute;left:0;right:0;height:0;border-top:1.5px dashed color-mix(in srgb,var(--red-ink) 55%,transparent);margin-bottom:15px;pointer-events:none}
+.ph-fc-f{display:flex;justify-content:space-between;gap:8px;margin-top:8px;font-size:12px;color:var(--muted)}
+.ph-fc-f b{color:var(--ink);font-weight:600}
+.ph-wh{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:12px}
+.ph-wh div{display:flex;flex-direction:column;padding:8px 10px;border-radius:12px;background:var(--field);min-width:0}
+.ph-wh small{font-size:10.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ph-wh b{font-size:16px;font-weight:600;font-variant-numeric:tabular-nums}.ph-wh em{font-style:normal;font-size:12px;color:var(--muted);font-weight:500}
+.ph-meter{height:6px;border-radius:3px;background:var(--active);margin-top:8px;overflow:hidden}
+.ph-meter i{display:block;height:100%;border-radius:3px;background:var(--green-ink)}
+.ph-meter i.warn{background:#D97706}.ph-meter i.bad{background:#DC2626}
+
+/* US packages pipeline: one swipeable row of stages */
+.ph-pipe{display:flex;gap:8px;overflow-x:auto;margin:0 -16px;padding:0 16px 2px;scrollbar-width:none;flex:none;scroll-snap-type:x proximity}
+.ph-pipe::-webkit-scrollbar{display:none}
+.ph-pipe>div{flex:none;width:112px;scroll-snap-align:start;display:flex;flex-direction:column;gap:1px;padding:12px;border-radius:16px;background:var(--card);border:1px solid var(--line);position:relative}
+.ph-pipe>div:not(:last-child)::after{content:"";position:absolute;right:-7px;top:24px;width:6px;height:2px;background:var(--line-2)}
+.ph-pipe-ic{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--active);color:var(--ink-2);margin-bottom:6px}
+.ph-pipe b{font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}
+.ph-pipe span:not(.ph-pipe-ic){font-size:12.5px;font-weight:500}
+.ph-pipe small{font-size:11px;color:var(--muted)}
+.ph-dep{display:flex;flex-direction:column;padding:4px 14px 12px}
+.ph-dep-r{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.ph-dep-r .mx-li{width:36px;height:36px;border-radius:11px}
+.ph-dep-r .mx-rm b{font-size:13.5px;font-weight:600}.ph-dep-r .mx-rm small{font-size:12px;color:var(--muted)}
+.ph-car{display:flex;flex-direction:column;gap:8px;padding-top:12px}
+.ph-car>small{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.ph-car div{display:grid;grid-template-columns:minmax(0,1fr) 90px 36px;align-items:center;gap:8px;font-size:12.5px}
+.ph-car div span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ph-car b{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+.ph-car-b{height:6px;border-radius:3px;background:var(--active);overflow:hidden}.ph-car-b i{display:block;height:100%;border-radius:3px;background:var(--orange)}
+
+/* shipments on the move */
+.ph-trk .mx-row{text-decoration:none;align-items:center}
+.ph-trk .mx-li{width:36px;height:36px;border-radius:50%}
+.ph-trk .mx-li.air{background:#E3EEFF;color:#2563C9}.ph-trk .mx-li.sea{background:#DDF3F1;color:#0F7C74}
+.ph-trk .mx-rm{gap:2px}
+.ph-trk .mx-rm b{font-size:13.5px;font-weight:600}
+.ph-trk .mx-rm small{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ph-trk-p{display:block;height:4px;border-radius:2px;background:var(--active);overflow:hidden;margin-top:4px}.ph-trk-p i{display:block;height:100%;background:var(--orange);border-radius:2px}
+.ph-trk-r{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:4px;max-width:44%}
+.ph-trk-r .sl-pill{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ph-trk-r small{font-size:11px;color:var(--muted);white-space:nowrap}
+.ph-trk-r small.bad{color:var(--red-ink)}.ph-trk-r small.ok{color:var(--green-ink)}
+:is(html.sl-dark,.sl-app.dk,body.dk) .ph-trk .mx-li.air{background:#1E3354;color:#8DB6FF}
+:is(html.sl-dark,.sl-app.dk,body.dk) .ph-trk .mx-li.sea{background:#143B38;color:#6ED3C9}

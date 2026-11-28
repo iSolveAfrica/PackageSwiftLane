@@ -27,6 +27,36 @@ require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_login();
 notify_after_response(); // email + WhatsApp go out after the response (helpers/after_response.php)
 require_permission('view_client_list');
+
+// view_client_list (checked above) is also held by customers, and package_id
+// comes from the request: without this check a customer could hand over any
+// package (status 15, receiver name, delivery messages to the owner). Staff
+// need the page permission (deliver_package) and, when agency-restricted, a
+// package of their own agency; below staff rank only the package's assigned
+// driver may hand it over. Nothing is read or shown before this check.
+require_once(__DIR__ . '/../../helpers/rbac.php');
+(function () {
+    $u = new User;
+    $me = $u->cdp_getUserData();
+    $deny = function () {
+        header('HTTP/1.1 403 Forbidden');
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['success' => false, 'error' => 'Forbidden', 'message' => 'No permission for this action']);
+        exit;
+    };
+    $db = new Conexion;
+    $db->cdp_query("SELECT driver_id, agency FROM cdb_customers_packages WHERE order_id = :id LIMIT 1");
+    $db->bind(':id', (int) ($_POST['package_id'] ?? 0));
+    $db->cdp_execute();
+    $row = $db->cdp_registro();
+    if (cdp_roleRankById((int) ($me->userlevel ?? 0)) >= 2) {
+        if (!$u->cdp_hasPermission('deliver_package')) $deny();
+        if (!empty(cdp_getAgencyContext()['is_restricted']) && !cdp_ajaxRowInAgencyScope($row)) $deny();
+    } else {
+        if (!$row || (int) $row->driver_id <= 0 || (int) $row->driver_id !== (int) ($_SESSION['userid'] ?? 0)) $deny();
+    }
+})();
+
 require_once(__DIR__ . '/../../helpers/video_files.php');
 cdp_purgeDeliveredVideosLater();   // videos of delivered packages are deleted after the response
 
@@ -120,7 +150,18 @@ if (empty($errors)) {
             $img = $_POST['sig-dataUrl']; // Your data 'data:image/png;base64,AAAFBfj42Pj4';
             $img = str_replace('data:image/png;base64,', '', $img);
             $img = str_replace(' ', '+', $img);
-            file_put_contents('../../doc_signs/customer_packages/' . $shipment_id . '.png', base64_decode($img));
+            // The folder may be missing on a fresh install: create it, and log a
+            // failed write instead of dropping the signature silently.
+            $sigDir = __DIR__ . '/../../doc_signs/customer_packages';
+            if (!is_dir($sigDir)) {
+                @mkdir($sigDir, 0755, true);
+            }
+            $sigPng = base64_decode($img, true);
+            if (trim($img) === '') {
+                // No signature drawn.
+            } elseif ($sigPng === false || strncmp($sigPng, "\x89PNG\r\n\x1a\n", 8) !== 0 || @file_put_contents($sigDir . '/' . $shipment_id . '.png', $sigPng) === false) {
+                error_log('sea hand-over: signature for package #' . $shipment_id . ' could not be saved in ' . $sigDir);
+            }
         }
 
 
@@ -213,9 +254,32 @@ if (empty($errors)) {
 
         $newbody = cdp_cleanOutx($body);
 
+        // Message source for the message log and the transport gate
+        // (helpers/comms_gate.php): a hand-over is a status announcement, sent by
+        // the Automation Center instead when it owns statuses.
+        require_once(__DIR__ . '/../../helpers/comms_gate.php');
+        require_once(__DIR__ . '/../../helpers/whatsapp.php');
+        if (function_exists('cdp_msgSetContext')) {
+            cdp_msgSetContext(['source' => 'delivery', 'source_label' => 'Delivery', 'entity_type' => 'package',
+                'entity_id' => (string) $shipment_id, 'entity_label' => $fullshipment, 'recipient_user_id' => (int) $shipment->sender_id]);
+        }
+
+        // Status message library (helpers/notify_studio.php), as the air status
+        // screen uses it: the text saved or drafted for this status per channel; a
+        // channel switched off there is not sent; the built-in texts below go out
+        // only when the library has nothing for the status.
+        $ns = cdp_statusNotifyResolve($status, $sender_data, $fullshipment, $app_url, 'sea', $shipment_id, [
+            'status' => (string) $add_status, 'comment' => trim(cdp_sanitize($_POST['comments'] ?? '')),
+            'location' => trim(cdp_sanitize($_POST['country'] ?? '') . ' | ' . cdp_sanitize($_POST['address'] ?? ''), ' |'),
+        ]);
+
         //SENDMAIL PHP
 
-        if ($check_mail == 'PHP') {
+        if (!$ns['email']['on'] || !$sender_data || empty($sender_data->email)) {
+            // E-mail switched off for this status (or no address).
+        } elseif ($ns['email']['custom']) {
+            cdp_statusNotifyEmail($sender_data, $ns['email'], $subject);
+        } elseif ($check_mail == 'PHP') {
 
             $message = $newbody;
             $to = $sender_data->email;
@@ -225,7 +289,13 @@ if (empty($errors)) {
             $header .= "Content-type: text/html; charset=UTF-8 \r\n";
             $header .= "From: " . $from . " \r\n";
 
-            mail($to, $subject, $message, $header);
+            // mail() bypasses PHPMailer, so the transport gate is asked here.
+            require_once __DIR__ . '/../../helpers/whatsapp.php'; if (cdp_commLegacyAllowed('email', ['id' => (int) $shipment->sender_id, 'name' => trim((string) ($sender_data->fname ?? '') . ' ' . (string) ($sender_data->lname ?? '')), 'to' => (string) $to, 'subject' => $subject, 'body' => cdp_statusNotifyPlain($message)])) {
+                $cdpOk = @mail($to, $subject, $message, $header);
+                if (function_exists('cdp_msgLogPhpMail')) {
+                    cdp_msgLogPhpMail((bool) $cdpOk, $to, $subject, $message);
+                }
+            }
         } elseif ($check_mail == 'SMTP') {
 
             //PHPMAILER PHP   
@@ -305,7 +375,9 @@ if (empty($errors)) {
         //     $notification_result =  sendNotificationWhatsApp($sender_data, 10, null, $fullshipment);
         // }
 
-        if (!empty($sender_data->phone) && isset($_POST['notify_whatsapp']) && (int)$_POST['notify_whatsapp'] === 1) {
+        // The form's box is notify_whatsapp_sender (older forms posted notify_whatsapp).
+        $cdpWaWanted = (int) ($_POST['notify_whatsapp_sender'] ?? $_POST['notify_whatsapp'] ?? 0) === 1;
+        if (!empty($sender_data->phone) && $cdpWaWanted) {
             try {
                 // Concise record of what was delivered (no prices).
                 require_once(__DIR__ . '/../../helpers/notify_placeholders.php');
@@ -336,31 +408,36 @@ if (empty($errors)) {
                     "🔗 {$app_url}\n\n" .
                     "Thank you for choosing *{$msnames}*. We hope to serve you again! 🙏";
 
-                // Send via v2 API
-                sendNotificationWhatsApp_v2($sender_data, $whatsapp_body, null, ['allow_sms' => false]);
-                
-            } catch (Exception $e) {
-                // Capture specific exceptions and log them for easier debugging
-                error_log('Error sending WhatsApp v2 notification to sender: ' . $e->getMessage() . ' | Trace: ' . $e->getTraceAsString());
-                throw $e; // Optional: rethrow to halt execution if this is a critical step
+                // The library's WhatsApp text for this status when it has one; none
+                // when WhatsApp is switched off there (SMS goes out below).
+                cdp_statusNotifyWaSms($sender_data, $whatsapp_body, '', $ns);
+
+            } catch (Throwable $e) {
+                // The hand-over is saved already: log the failure, never fail the request.
+                error_log('Error sending WhatsApp v2 notification to sender: ' . $e->getMessage());
             }
         }
 
 
-        // Obtener el estado de las casillas de verificación
-        // The customer is always texted when a package is picked up or delivered (the SMS switch
-        // on Tools > SMS and the customer's own opt-out still apply). The
-        // WhatsApp send here skips its SMS copy, so this is the only text.
-        $notify_sms_sender = true;
+        // The form's "SMS to the customer" box decides (the SMS switch on
+        // Tools > SMS and the customer's own opt-out still apply). The WhatsApp
+        // send above skips its SMS copy, so this is the only text.
+        $notify_sms_sender = (int) ($_POST['notify_sms_sender'] ?? 0) === 1;
 
         // Generar cuerpo del SMS para el remitente
         try {
             $newbodyS_sender = ($status === CDP_STATUS_PICKED_UP)
                 ? cdp_handoverPickedUpText(cdp_nameWithLocker($sender_data), [$fullshipment], $msnames)
                 : generateSMSBody($sender_data, $fullshipment, $add_status, $app_url, $templatessender);
+            if ($ns['sms']['custom']) {
+                $newbodyS_sender = $ns['sms']['body'];
+            }
+            if (!$ns['sms']['on']) {
+                $notify_sms_sender = false;
+            }
             // Llamar a la función para enviar la notificación SMS al remitente
             sendNotificationSMS($sender_data, $newbodyS_sender, $notify_sms_sender);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             error_log('Error generating or sending SMS for sender: ' . $e->getMessage());
             // Manejo del error, por ejemplo, establecer una variable para mostrar un mensaje de error al usuario
         }

@@ -152,3 +152,6 @@ if (is_file(CDP_ROOT . '/helpers/sl_modules.php')) {
     require_once CDP_ROOT . '/helpers/sl_modules.php';
     sl_moduleGuardRequest('any');
 }
+// Data exports (CSV / Excel) are for administrators and super administrators only (helpers/export_guard.php).
+require_once CDP_ROOT . '/helpers/export_guard.php';
+cdp_exportGuardRequest();

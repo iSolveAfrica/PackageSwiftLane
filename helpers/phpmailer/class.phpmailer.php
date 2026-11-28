@@ -28,6 +28,13 @@
 class PHPMailer
 {
     /**
+     * Set on the queued copy of a deferred send: the comms gate
+     * (helpers/comms_gate.php) already allowed this message.
+     * @var bool
+     */
+    public $cdpGateChecked = false;
+
+    /**
      * The PHPMailer Version number.
      * @var string
      */
@@ -1211,12 +1218,26 @@ class PHPMailer
      */
     public function send()
     {
+        // One switch for every message (helpers/comms_gate.php): an old-screen
+        // e-mail the administrator switched off, or a status e-mail the
+        // Automation Center sends instead, is logged as skipped and not sent.
+        // Asked before a deferred send, while the request's message context
+        // still describes this message.
+        if (!$this->cdpGateChecked && is_file(__DIR__ . '/../comms_gate.php')) {
+            require_once __DIR__ . '/../comms_gate.php';
+            $cdpTo = isset($this->to[0][0]) ? (string) $this->to[0][0] : '';
+            if (function_exists('cdp_commLegacyAllowed') && !cdp_commLegacyAllowed('email', array('to' => $cdpTo, 'subject' => (string) $this->Subject,
+                    'body' => trim(html_entity_decode(strip_tags((string) $this->Body), ENT_QUOTES, 'UTF-8'))))) {
+                return true;
+            }
+        }
         // Respond first, deliver after (helpers/after_response.php): when the
         // request opted into queued notifications, a snapshot of this message
         // is sent once the response is out. The clone keeps later
         // clearAddresses()/reuse by the caller from touching the queued copy.
         if (function_exists('cdp_notifyDeferred') && cdp_notifyDeferred()) {
             $queued = clone $this;
+            $queued->cdpGateChecked = true;
             cdp_afterResponse(function () use ($queued) {
                 try {
                     $queued->send();

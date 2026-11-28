@@ -1,8 +1,8 @@
 <?php
-// Sea consolidations now live in the Consolidations page (Sea tab).
+// Sea Consolidations (Consolidations artboard, sea mode: cdb_consolidate_packages). Air lives in consolidate_list.php.
 require_once 'loader.php';
-$user = new User();
+$user = new User(); $core = new Core();
 require_once 'helpers/sl_view.php';
 sl_gate('view_consolidate_package_list');
-header('Location: ' . sl_route('Consolidations', ['mode' => 'sea'] + array_intersect_key($_GET, ['q' => 1])));
-exit;
+require_once 'views/sl/data/consolidations.php';
+sl_render('Consolidations', ['id' => 'consol_sea', 'title' => 'Sea Consolidations', 'board' => 'ConsolidationsSea', 'styles' => ['assets/swiftlane/pages/ops.css']], sl_consolidationsData($user, $core, 'sea'));

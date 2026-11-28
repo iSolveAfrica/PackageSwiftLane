@@ -229,3 +229,31 @@ html.sl-dark .cx-c-both{background:#9597A3}html.sl-dark .cx-c-sea{background:#5D
   #cx-list .cx-act-t{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   #cx-list .cx-act .sl-btn{position:relative;padding-left:9px;padding-right:9px}
 }
+
+/* Statistic pop-up: centred over a blurred page (dataJs/sl/customers_stats.js moves #cx-insight in here) */
+.cx-modal{position:fixed;inset:0;z-index:1200;display:flex;align-items:flex-start;justify-content:center;padding:6vh 20px 24px;overflow-y:auto;background:rgba(20,20,24,.32);-webkit-backdrop-filter:blur(8px) saturate(.9);backdrop-filter:blur(8px) saturate(.9);animation:cx-fade .2s ease}
+.cx-modal[hidden]{display:none}
+.cx-modal.is-closing{animation:cx-fade-out .2s ease forwards}
+.cx-modal .cx-ins{width:min(1080px,100%);flex:none;box-shadow:0 30px 80px rgba(0,0,0,.28);transform:translateY(0);animation:cx-pop .24s cubic-bezier(.2,.8,.2,1)}
+.cx-modal .cx-ins.in-card{margin:0}
+html.cx-modal-on,html.cx-modal-on body{overflow:hidden}
+@keyframes cx-fade{from{opacity:0}to{opacity:1}}
+@keyframes cx-fade-out{from{opacity:1}to{opacity:0}}
+@keyframes cx-pop{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
+@media (max-width:720px){.cx-modal{padding:12px 10px}.cx-modal .cx-ins{border-radius:18px}}
+@media (prefers-reduced-motion:reduce){.cx-modal,.cx-modal .cx-ins,.cx-modal.is-closing{animation:none}}
+.cx-k.is-anchor::after{display:none}
+
+/* Row three-dot menu (Customers list) */
+.cx-mw{position:relative;display:inline-flex}
+.cx-more.on{background:var(--ink);color:var(--inverse);border-color:var(--ink)}
+.cx-menu{position:fixed;z-index:1100;width:250px;max-height:min(440px,calc(100vh - 16px));overflow-y:auto;display:flex;flex-direction:column;gap:2px;padding:6px;border:1px solid var(--line-2);border-radius:14px;background:var(--panel,var(--card));box-shadow:0 18px 44px rgba(0,0,0,.18);text-align:left;white-space:normal}
+.cx-menu[hidden]{display:none}
+.cx-mh{display:flex;align-items:center;gap:10px;padding:8px 10px 10px;margin-bottom:4px;border-bottom:1px solid var(--line)}
+.cx-mh b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cx-mh .mut{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cx-menu [role=menuitem]{display:flex;align-items:center;gap:10px;width:100%;min-height:38px;padding:0 10px;border:0;border-radius:9px;background:none;font:inherit;font-size:15px;color:var(--ink);text-align:left;cursor:pointer}
+.cx-menu [role=menuitem]:hover,.cx-menu [role=menuitem]:focus-visible{background:var(--hover);outline:none}
+.cx-menu .cx-mdanger{color:var(--red-ink)}
+.cx-msep{height:1px;margin:4px 6px;background:var(--line)}
+@media (max-width:720px){.cx-menu [role=menuitem]{min-height:44px}}

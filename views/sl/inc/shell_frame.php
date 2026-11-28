@@ -3,7 +3,14 @@
 ?>
 <a class="sl-skip" href="#sl-main">Skip to main content</a>
 <div class="<?= h($slTheme) ?>" id="sl-app" data-page="<?= h($slPage['id'] ?? '') ?>">
-  <?php $slNavCollapsed = ($slPage['navCollapsed'] ?? true) !== false; /* menu starts collapsed on every page for a wider view; a page can pass navCollapsed => false */ ?>
+  <?php
+  /* The menu stays open on every page. Only the tracking and warehouse pages start wide
+     (menu folded); a page can still pass navCollapsed => true or false to choose. */
+  $slWideIds = ['livetrack', 'shiptrack', 'airtrack', 'seatrack', 'dtrack', 'warehouse', 'intake', 'whpick', 'handout'];
+  $slWide = in_array((string) ($slPage['id'] ?? ''), $slWideIds, true)
+      || (($slPage['id'] ?? '') === 'sea' && ($_GET['panel'] ?? '') === 'tracking');
+  $slNavCollapsed = (bool) ($slPage['navCollapsed'] ?? $slWide);
+  ?>
   <input type="checkbox" id="navtg" class="nav-tg" aria-hidden="true" tabindex="-1"<?= $slNavCollapsed ? ' checked' : '' ?>>
   <?php if ($slNavCollapsed): ?><script>/* on phones the same box opens the drawer, so keep it shut there */ if (matchMedia('(max-width: 900px)').matches) document.getElementById('navtg').checked = false;</script><?php endif; ?>
   <header class="sl-top">
@@ -24,7 +31,7 @@
     <span class="grow"></span>
     <?php if (!empty($slAiPopup)): ?><button type="button" class="sl-ai-top" data-sl-ai aria-label="Ask <?= h(cdp_kingName()) ?> about this page" title="Ask <?= h(cdp_kingName()) ?> about this page (Ctrl+J)"><i class="ic ic-sm i-spark" aria-hidden="true"></i><span>Ask <?= h(cdp_kingName()) ?></span><kbd>Ctrl J</kbd></button><?php endif; ?>
     <?php if (empty($slAiPopup) && $slCanAskAI): ?><a class="sl-ai-top" href="<?= h(sl_route('StaffAI')) ?>" title="Ask <?= h(cdp_kingName()) ?>"><i class="ic ic-sm i-spark" aria-hidden="true"></i><span>Ask <?= h(cdp_kingName()) ?></span></a><?php endif; ?>
-    <a class="sl-ib sl-bell" aria-label="Notifications<?= $slUnread ? ', ' . $slUnread . ' unread' : '' ?>" href="<?= h(sl_route('Notifications')) ?>"><i class="ic i-bell" aria-hidden="true"></i><?php if ($slUnread): ?><b class="sl-bell-n"><?= $slUnread > 99 ? '99+' : $slUnread ?></b><?php endif; ?></a>
+    <a class="sl-ib sl-bell" aria-label="Notifications<?= $slUnread ? ', ' . $slUnread . ' unread' : '' ?>" href="<?= h(sl_route($slIsClient ? 'MyNotifications' : 'Notifications')) ?>"><i class="ic i-bell" aria-hidden="true"></i><?php if ($slUnread): ?><b class="sl-bell-n"><?= $slUnread > 99 ? '99+' : $slUnread ?></b><?php endif; ?></a>
     <button class="sl-ib" type="button" aria-label="Switch theme" data-sl-theme><i class="ic i-sun" aria-hidden="true"></i></button>
     <?php if (!$slIsClient && $user->cdp_hasPermission(['view_documents', 'view_general_reports'])): ?><a class="sl-ib" aria-label="Documents" href="<?= h(sl_route('Documents')) ?>"><i class="ic i-file" aria-hidden="true"></i></a><?php endif; ?>
     <?php if ($slPrimary): ?><a class="sl-btn" href="<?= h($slPrimary['href']) ?>"><?= h($slPrimary['label']) ?></a><?php endif; ?>

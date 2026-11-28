@@ -1,0 +1,21 @@
+/* Status picture (partials/parcel_scene.php): the owner's drawings, shown as supplied (contain-fit, no filters). */
+.sdx-scene{position:relative;margin:0;display:flex;align-items:flex-end;justify-content:flex-end;padding:0 12px 0 290px;min-height:170px;border-radius:16px;background:#fff;border:1px solid var(--line);overflow:hidden}
+.sdx-scene img{display:block;width:100%;max-width:640px;height:210px;object-fit:contain;object-position:center bottom}
+.sdx-scene figcaption{position:absolute;left:14px;top:12px;display:flex;flex-direction:column;gap:1px;max-width:min(260px,45%);padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.92);box-shadow:0 6px 18px -10px rgba(0,0,0,.25);color:#111}
+.sdx-scene figcaption b{font-size:15px}.sdx-scene figcaption span{font-size:12.5px;color:#555}
+.sdx-live{display:inline-flex!important;align-items:center;gap:6px;font-size:11px!important;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--green-ink)!important}
+.sdx-live i{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 color-mix(in srgb,var(--green) 60%,transparent);animation:sdxPulse 1.8s infinite}
+@keyframes sdxPulse{70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
+@media (prefers-reduced-motion:reduce){.sdx-live i{animation:none}}
+.sdx-scene.agent{justify-content:flex-end;padding-left:0;background:linear-gradient(120deg,#FFF6D6,#fff 55%)}
+.sdx-scene.agent img{width:auto;height:240px;margin-right:6%}
+.sdx-scene.agent figcaption{top:auto;bottom:50%;transform:translateY(50%);max-width:52%}
+:is(html.sl-dark,.sl-app.dk) .sdx-scene{border-color:transparent}
+@media (max-width:860px){.sdx-scene{padding-left:12px;flex-direction:column-reverse;align-items:stretch}.sdx-scene figcaption{position:static;max-width:none;box-shadow:none;background:transparent;transform:none!important}}
+@media (max-width:640px){.sdx-scene{padding:0}.sdx-scene img{height:150px}.sdx-scene.agent img{height:190px;margin-right:0}.sdx-scene figcaption{position:static;max-width:none;box-shadow:none;background:transparent;padding:10px 12px 0}.sdx-scene{flex-direction:column-reverse;align-items:stretch}.sdx-scene.agent figcaption{transform:none}}
+/* phone screens (views/sl/phone/_cparcel.php and the staff detail screens) */
+.b1-scene{margin:4px 0 12px}
+.b1-scene .sdx-scene{flex-direction:column-reverse;align-items:stretch;padding:0;min-height:0;border-radius:16px}
+.b1-scene .sdx-scene img{height:150px;max-width:none}
+.b1-scene .sdx-scene.agent img{height:200px;width:auto;align-self:center;margin:0}
+.b1-scene .sdx-scene figcaption{position:static;max-width:none;box-shadow:none;background:transparent;transform:none;padding:10px 14px 0}

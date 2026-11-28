@@ -42,7 +42,16 @@ if ($user->cdp_loginCheck() == true) {
     //   'driver' -> driver dashboard       'roles'  -> generic permission-aware
     // A brand-new staff role defaults to 'roles' until configured otherwise.
     require_once("helpers/rbac.php");
-    switch (cdp_dashboardType($_SESSION['userlevel'] ?? 0)) {
+    $dashType = cdp_dashboardType($_SESSION['userlevel'] ?? 0);
+    // Phones open the phone app's home screen for the role (design canvas Page 2): riders the rider app
+    // (M-RHome), staff without the admin overview their own desk (M-Workspace), so no overview figures are
+    // shown to a role that may not see them. Computers keep the web dashboards below.
+    require_once 'helpers/sl_device.php';
+    if (sl_isPhone() && ($dashType === 'driver' || $dashType === 'roles' || !in_array($dashType, ['admin', 'client'], true))) {
+        header('Location: ' . ($dashType === 'driver' ? 'driver_app.php' : 'workspace.php'));
+        exit;
+    }
+    switch ($dashType) {
         case 'admin':
             require_once 'helpers/sl_view.php';
             require_once 'views/sl/data/overview.php';

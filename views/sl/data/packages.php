@@ -112,6 +112,11 @@ function sl_seaPackagesData($user, $core): array
     $d['can'] = $can;
     $d['canAdd'] = $user->cdp_hasPermission('add_package') && !$isClient;
     $d['isClient'] = $isClient;
+    if ($isClient && ($_GET['export'] ?? '') !== 'csv') { // the customer's own insights + the sea | air switch
+        require_once __DIR__ . '/portal.php';
+        $d['mi'] = sl_clientModeInsights((int) $_SESSION['userid'], 'sea');
+        $d['miOther'] = $user->cdp_hasPermission('view_shipment_list') ? sl_clientModeInsights((int) $_SESSION['userid'], 'air') : null;
+    }
     return $d;
 }
 
@@ -180,6 +185,9 @@ function sl_packageDetailData($user, $core, int $id): ?array
     $d['id'] = $id; $d['trk'] = $trk; $d['st'] = sl_statusLabel($eff); $d['stCls'] = sl_statusClass($eff); $d['raw'] = (int) $p->status_courier;
     $d['done'] = cdp_isHandedOver($p->status_courier); $d['handLabel'] = $d['done'] ? cdp_handoverLabel($p->status_courier) : '';
     $d['stage'] = sl_stageOf($eff, (bool) $con);
+    // status picture: sea packages only ever show the sea drawings (helpers/parcel_scene.php)
+    require_once CDP_ROOT . '/helpers/parcel_scene.php';
+    $d['scene'] = sl_parcelScene('sea', $d['done'] ? (int) $p->status_courier : (int) $eff, (string) (sl_row('SELECT mod_style FROM cdb_styles WHERE id = :s', [':s' => $d['done'] ? (int) $p->status_courier : (int) $eff])->mod_style ?? ''));
     $d['steps'] = ['At warehouse', 'Loaded', 'In transit', 'Ready for pickup', 'Handed over'];
     $eta = cdp_getEffectiveEta($id, $p->order_no, $p->order_deli_time, $p->is_consolidate, true);
     $d['eta'] = $eta && $eta !== 'N/A' ? (strtotime($eta) ? sl_date($eta, 'M j, Y') : $eta) : 'Not set';

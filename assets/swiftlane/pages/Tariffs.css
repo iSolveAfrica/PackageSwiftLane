@@ -1,0 +1,6 @@
+/* Tariffs (shipping_tariffs.php), web layout: three cards of label / value rows. */
+.tf-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:16px;align-items:start}
+.tf-list{display:flex;flex-direction:column}
+.tf-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.tf-row:first-child{border-top:0}
+.tf-row>b.mono{white-space:nowrap}

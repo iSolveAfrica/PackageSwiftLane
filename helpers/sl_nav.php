@@ -60,28 +60,42 @@ function sl_navStaff(): array
 {
     $w = sl_navAgencyWhere('a');
     return [
+        // Operations is the cross-mode desk only; air, sea and warehouse work live in their own groups.
         ['label' => 'Operations', 'items' => [
             ['id' => 'dash', 'label' => 'Overview', 'icon' => 'grid', 'board' => 'Main', 'perm' => null],
             ['id' => 'panels', 'label' => 'Control Panels', 'icon' => 'gauge', 'board' => 'ControlPanels', 'perm' => ['view_dashboard_ship', 'view_dashboard_pack', 'view_dashboard_pick', 'view_dashboard_shipments', 'view_dashboard']],
+            ['id' => 'locker', 'label' => 'Smart Search', 'icon' => 'search', 'board' => 'LockerSearch', 'perm' => ['view_shipment_list', 'view_package_list', 'view_client_list', 'view_consolidate_list', 'prealert_list', 'view_user_list']],
+            ['id' => 'docs', 'label' => 'Documents', 'icon' => 'file', 'board' => 'Documents', 'perm' => ['view_documents', 'view_general_reports']],
+            ['id' => 'shiptrack', 'label' => 'Shipment Tracking', 'icon' => 'track', 'board' => 'ShipmentTracking', 'perm' => 'track_shipment'],
+            ['id' => 'livetrack', 'label' => 'Live Tracking', 'icon' => 'route', 'board' => 'LiveTracking', 'perm' => ['view_shipment_list', 'view_general_shipments', 'view_package_list', 'view_general_package_records', 'view_consolidate_list', 'view_consolidate_package_list']],
+        ]],
+        ['label' => 'Air Shipping', 'items' => [
             ['id' => 'air', 'label' => 'Air Shipments', 'icon' => 'plane', 'board' => 'AirShipments', 'perm' => 'view_shipment_list',
                 'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier NOT IN (8,15,21) $w")],
-            ['id' => 'sea', 'label' => 'Sea Packages', 'icon' => 'ship', 'board' => 'SeaPackages', 'perm' => 'view_package_list',
-                'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_customers_packages a WHERE a.status_courier NOT IN (8,15,21) $w")],
             ['id' => 'prealert', 'label' => 'Pre-Alerts', 'icon' => 'inbox', 'board' => 'PreAlerts', 'perm' => 'prealert_list',
                 'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_pre_alert WHERE is_package = 0")],
-            ['id' => 'livetrack', 'label' => 'Live Tracking', 'icon' => 'route', 'board' => 'LiveTracking', 'perm' => ['view_shipment_list', 'view_general_shipments', 'view_package_list', 'view_general_package_records', 'view_consolidate_list', 'view_consolidate_package_list']],
-            ['id' => 'shiptrack', 'label' => 'Shipment Tracking', 'icon' => 'track', 'board' => 'ShipmentTracking', 'perm' => 'track_shipment'],
-            ['id' => 'consol', 'label' => 'Consolidations', 'icon' => 'layers', 'board' => 'Consolidations', 'perm' => ['view_consolidate_list', 'view_consolidate_package_list'],
-                'count' => fn() => sl_navCount("SELECT (SELECT COUNT(*) FROM cdb_consolidate WHERE status_courier NOT IN ('8','15','21')) + (SELECT COUNT(*) FROM cdb_consolidate_packages WHERE status_courier NOT IN ('8','15','21'))")],
+            ['id' => 'airloads', 'label' => 'Air Consolidations', 'icon' => 'layers', 'board' => 'Consolidations', 'href' => sl_route('Consolidations', ['mode' => 'air']), 'perm' => 'view_consolidate_list',
+                'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_consolidate WHERE status_courier NOT IN ('8','15','21')")],
+            ['id' => 'airnewcon', 'label' => 'Create Air Consolidation', 'icon' => 'plus', 'board' => 'NewConsolidation', 'href' => sl_route('NewConsolidation', ['type' => 'air']), 'perm' => 'add_consolidate_shipment'],
+            ['id' => 'airtrack', 'label' => 'Track Air Shipments', 'icon' => 'route', 'board' => 'LiveTracking', 'href' => sl_route('LiveTracking', ['f' => 'air']), 'perm' => 'view_shipment_list'],
+        ]],
+        ['label' => 'Sea Shipping', 'items' => [
+            ['id' => 'sea', 'label' => 'Sea Packages', 'icon' => 'ship', 'board' => 'SeaPackages', 'perm' => 'view_package_list',
+                'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_customers_packages a WHERE a.status_courier NOT IN (8,15,21) $w")],
+            ['id' => 'seatower', 'label' => 'Sea Control Tower', 'icon' => 'gauge', 'board' => 'SeaPackages', 'href' => sl_route('SeaPackages', ['panel' => 'tower']), 'perm' => 'view_package_list'],
+            ['id' => 'sealoads', 'label' => 'Sea Consolidations', 'icon' => 'layers', 'board' => 'Consolidations', 'href' => sl_route('Consolidations', ['mode' => 'sea']), 'perm' => 'view_consolidate_package_list',
+                'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_consolidate_packages WHERE status_courier NOT IN ('8','15','21')")],
+            ['id' => 'seanewcon', 'label' => 'Create Sea Consolidation', 'icon' => 'plus', 'board' => 'NewConsolidation', 'href' => sl_route('NewConsolidation', ['type' => 'sea']), 'perm' => 'add_consolidate_package'],
+            ['id' => 'seatrack', 'label' => 'Track Sea Shipments', 'icon' => 'route', 'board' => 'SeaPackages', 'href' => sl_route('SeaPackages', ['panel' => 'tracking']), 'perm' => 'view_package_list'],
+        ]],
+        ['label' => 'Warehouse', 'items' => [
             ['id' => 'warehouse', 'label' => 'Warehouse', 'icon' => 'warehouse', 'board' => 'Warehouse', 'perm' => ['warehouse_view', 'view_warehouse_delivery']],
+            ['id' => 'intake', 'label' => 'Package Intake', 'icon' => 'scan', 'board' => 'PackageIntake', 'perm' => ['package_intake', 'add_package']],
             ['id' => 'whpick', 'label' => 'Warehouse Pickups', 'icon' => 'check', 'board' => 'WarehousePickups', 'perm' => ['view_warehouse_pickups', 'view_warehouse_delivery']],
             ['id' => 'handout', 'label' => 'Hand Out Packages', 'icon' => 'box', 'board' => 'HandOut', 'perm' => ['view_warehouse_delivery', 'warehouse_deliver_package'],
                 'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier IN (6,32) $w")],
-            ['id' => 'intake', 'label' => 'Package Intake', 'icon' => 'scan', 'board' => 'PackageIntake', 'perm' => ['package_intake', 'add_package']],
-            ['id' => 'docs', 'label' => 'Documents', 'icon' => 'file', 'board' => 'Documents', 'perm' => ['view_documents', 'view_general_reports']],
-            ['id' => 'locker', 'label' => 'Smart Search', 'icon' => 'search', 'board' => 'LockerSearch', 'perm' => ['view_shipment_list', 'view_package_list', 'view_client_list', 'view_consolidate_list', 'prealert_list', 'view_user_list']],
         ]],
-        ['label' => 'RIDERS', 'items' => [
+        ['label' => 'Delivery & Riders', 'items' => [
             ['id' => 'pickup', 'label' => 'Home Pickups', 'icon' => 'truck', 'board' => 'Pickups', 'perm' => 'view_pickup_list',
                 'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_pickup = 1 AND a.is_deleted = 0 AND a.status_courier IN (1,14) $w"),
                 'count2' => fn() => '/ ' . sl_navCount("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_pickup = 1 AND a.is_deleted = 0 AND a.order_date >= CURDATE() AND a.order_date < CURDATE() + INTERVAL 1 DAY $w")],
@@ -93,6 +107,8 @@ function sl_navStaff(): array
             ['id' => 'dtrack', 'label' => 'Delivery Tracking', 'icon' => 'route', 'board' => 'DeliveryTracking', 'perm' => 'view_shipment_list',
                 'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_add_order a WHERE a.is_deleted = 0 AND a.status_courier = 7 $w")],
             ['id' => 'lastmile', 'label' => 'Last-Mile Delivery', 'icon' => 'truck', 'board' => 'LastMile', 'perm' => ['view_freight', 'view_pickup_list']],
+            ['id' => 'smartrouting', 'label' => 'Smart Routing', 'icon' => 'route', 'board' => 'SmartRouting', 'perm' => ['dispatch_riders', 'assign_drivers']],
+            ['id' => 'routeplanner', 'label' => 'Route Planner', 'icon' => 'route', 'board' => 'RoutePlanner', 'perm' => ['dispatch_riders', 'assign_drivers']],
             ['id' => 'drvapp', 'label' => 'Rider App', 'icon' => 'phone', 'board' => 'DriverApp', 'perm' => ['view_user_list', 'driver:self']],
             ['id' => 'rfees', 'label' => 'Rider Fees', 'icon' => 'truck', 'board' => 'RiderSettings', 'perm' => ['manage_rider_fees', 'view_tools']],
         ]],
@@ -100,19 +116,14 @@ function sl_navStaff(): array
             ['id' => 'execdash', 'label' => 'Management Center', 'icon' => 'chart', 'board' => 'ExecDashboard', 'perm' => ['main_dashboard_index', 'view_exec_dashboard']],
             ['id' => 'masterview', 'label' => 'Gerald Master View', 'icon' => 'gauge', 'board' => 'MasterView', 'perm' => 'ops:mgmt'],
             ['id' => 'aicenter', 'label' => 'AI Automation Center', 'icon' => 'ai', 'board' => 'AiCenter', 'perm' => 'ai:manage'],
-            ['id' => 'notifc', 'label' => 'Notification Control', 'icon' => 'bell', 'board' => 'NotificationCenter', 'perm' => ['manage_notification_rules', 'view_tools']],
-            ['id' => 'notifystudio', 'label' => 'Notification Studio', 'icon' => 'send', 'board' => 'NotifyStudio', 'perm' => ['manage_notification_rules', 'view_tools']],
             ['id' => 'pay', 'label' => 'Payment Gateways', 'icon' => 'card', 'board' => 'Payments', 'perm' => 'view_global_payments', 'finance' => true],
             ['id' => 'loyalty', 'label' => 'Loyalty & Referrals', 'icon' => 'star', 'board' => 'LoyaltyRewards', 'perm' => 'manage_loyalty'],
             ['id' => 'supporthub', 'label' => 'Customer Care', 'icon' => 'ticket', 'board' => 'SupportHub', 'perm' => 'cs:agent'],
-            ['id' => 'campaigns', 'label' => 'Campaigns', 'icon' => 'send', 'board' => 'Campaigns', 'perm' => ['view_message_logs', 'manage_newsletter', 'push_notifications']],
-            ['id' => 'commshub', 'label' => 'Communications', 'icon' => 'message', 'board' => 'CommsHub', 'perm' => ['push_notifications', 'manage_newsletter', 'view_message_logs']],
-            // WhatsApp Inbox belongs to Communications: directly under it, badge = conversations waiting for a person.
-            ['id' => 'commsinbox', 'label' => 'WhatsApp Inbox', 'icon' => 'message', 'board' => 'CommsInbox', 'perm' => 'ops:staff',
-                // Same figure as cdp_commWaitingCount() (status 'open'); that one is used when helpers/comms.php is loaded.
-                'count' => fn() => function_exists('cdp_commWaitingCount') ? cdp_commWaitingCount()
-                    : (sl_tableExists('cdb_comm_threads') ? sl_navCount("SELECT COUNT(*) FROM cdb_comm_threads WHERE status = 'open'") : 0)],
-            ['id' => 'commscenter', 'label' => 'Communication Center', 'icon' => 'send', 'board' => 'CommsCenter', 'perm' => 'ops:staff'],
+            // One Notifications area: the item opens a sub-menu of every messaging page (sl_navCommsChildren).
+            // The badge is the WhatsApp conversations waiting for a person (shown while the sub-menu is closed).
+            ['id' => 'commshub', 'label' => 'Notifications & Messages', 'icon' => 'message', 'board' => 'CommsHub',
+                'perm' => ['ops:staff', 'push_notifications', 'manage_newsletter', 'view_message_logs'],
+                'count' => fn() => sl_navCommsWaiting(), 'children' => sl_navCommsChildren()],
             ['id' => 'security', 'label' => 'Security Center', 'icon' => 'shield', 'board' => 'SecurityCenter', 'perm' => 'view_system_logs'],
             ['id' => 'accountsec', 'label' => 'My Account Security', 'icon' => 'lock', 'board' => 'AccountSecurity', 'perm' => 'customers_profile_edit'],
         ]],
@@ -175,26 +186,60 @@ function sl_navStaff(): array
         ['label' => 'Insights', 'items' => [
             ['id' => 'reports', 'label' => 'Reports', 'icon' => 'chart', 'board' => 'Reports', 'perm' => 'view_general_reports'],
             ['id' => 'activity', 'label' => 'Activity Logs', 'icon' => 'clock', 'board' => 'ActivityLogs', 'perm' => 'view_activity_logs'],
-            ['id' => 'messages', 'label' => 'Message Logs', 'icon' => 'archive', 'board' => 'MessageLogs', 'perm' => 'view_message_logs'],
+            // Message logs live in Notifications & Messages > Outbox (one messaging area, no second entry here).
         ]],
         ['label' => 'Settings', 'items' => [
             ['id' => 'general', 'label' => 'General', 'icon' => 'cog', 'board' => 'SettingsHub', 'perm' => 'view_tools'],
             ['id' => 'apis', 'label' => 'API Connections', 'icon' => 'link', 'board' => 'ApiConnections', 'perm' => 'manage_api_settings',
                 'count' => fn() => sl_tableExists('cdb_api_connections') ? sl_navCount("SELECT COUNT(*) FROM cdb_api_connections") : 0],
             ['id' => 'apitraffic', 'label' => 'Live API Traffic', 'icon' => 'activity', 'board' => 'ApiTraffic', 'perm' => 'view_api_logs'],
-            ['id' => 'ebuild', 'label' => 'Email Builder', 'icon' => 'mail', 'board' => 'EmailBuilder', 'perm' => 'manage_newsletter'],
-            ['id' => 'msgtpl', 'label' => 'SMS & WhatsApp', 'icon' => 'message', 'board' => 'MessageTemplates', 'perm' => ['list_sms_templates', 'manage_whatsapp_templates']],
-            ['id' => 'compose', 'label' => 'Compose Message', 'icon' => 'mail', 'board' => 'ComposeMessage', 'perm' => ['push_notifications', 'manage_newsletter']],
-            ['id' => 'bcast', 'label' => 'Push Notifications', 'icon' => 'send', 'board' => 'Broadcast', 'perm' => 'push_notifications'],
             ['id' => 'costs', 'label' => 'Operating Costs', 'icon' => 'dollar', 'board' => 'CostSettings', 'perm' => 'superadmin'],
             ['id' => 'addr', 'label' => 'Shipping Addresses', 'icon' => 'pin', 'board' => 'ShippingAddresses', 'perm' => 'view_tools'],
             ['id' => 'loginpg', 'label' => 'Login Page', 'icon' => 'image', 'board' => 'LoginSettings', 'perm' => 'view_tools'],
+            ['id' => 'tariffs', 'label' => 'Rates & Tariffs', 'icon' => 'dollar', 'board' => 'Tariffs', 'perm' => ['manage_taxes_and_fees', 'view_tools', 'manage_freight']],
+            ['id' => 'statuspics', 'label' => 'Status Pictures', 'icon' => 'image', 'board' => 'StatusPictures', 'perm' => 'view_tools'],
+            ['id' => 'screens', 'label' => 'App Screens', 'icon' => 'phone', 'board' => 'AppScreens', 'perm' => 'view_tools'],
             ['id' => 'devmod', 'label' => 'Modules', 'icon' => 'sliders', 'board' => 'ModuleController', 'perm' => 'superadmin'],
             ['id' => 'perm', 'label' => 'Permissions', 'icon' => 'key', 'board' => 'StaffPermissions', 'perm' => 'view_role_assignment'],
             ['id' => 'lblstudio', 'label' => 'Label Printing', 'icon' => 'print', 'board' => 'LabelStudio', 'perm' => ['view_tools', 'print_label']],
-            ['id' => 'auto', 'label' => 'Automations', 'icon' => 'bolt', 'board' => 'Automations', 'perm' => 'manage_automations'],
+            ['id' => 'rcptstudio', 'label' => 'Receipt Layout', 'icon' => 'receipt', 'board' => 'ReceiptStudio', 'perm' => 'view_tools'],
+            // Rule-based workflows (automations.php); message triggers are in Notifications & Messages > Automations.
+            ['id' => 'auto', 'label' => 'Workflow rules', 'icon' => 'bolt', 'board' => 'Automations', 'perm' => 'manage_automations'],
         ]],
     ];
+}
+
+/**
+ * The Notifications & Messages sub-menu: one list for the sidebar
+ * (children of 'commshub') and the page tabs (views/sl/pages/partials/comms_tabs.php).
+ * 'perm' uses the same rules as the pages themselves: rank 2+ staff (ops:staff),
+ * the Outbox also for view_message_logs, Settings for administrators (ops:admin).
+ */
+function sl_navCommsChildren(): array
+{
+    return [
+        ['id' => 'commsoverview', 'label' => 'Overview', 'icon' => 'grid', 'board' => 'CommsHub', 'perm' => ['ops:staff', 'push_notifications', 'manage_newsletter', 'view_message_logs']],
+        ['id' => 'commsautomations', 'label' => 'Automations', 'icon' => 'bolt', 'board' => 'CommsAutomations', 'perm' => 'ops:staff'],
+        ['id' => 'commsstatuses', 'label' => 'Status messages', 'icon' => 'track', 'board' => 'CommsStatuses', 'perm' => 'ops:staff'],
+        ['id' => 'commssend', 'label' => 'Send', 'icon' => 'send', 'board' => 'CommsSend', 'perm' => 'ops:staff'],
+        ['id' => 'commsoutbox', 'label' => 'Outbox', 'icon' => 'archive', 'board' => 'CommsOutbox', 'perm' => ['ops:staff', 'view_message_logs']],
+        ['id' => 'commsinbox', 'label' => 'WhatsApp', 'icon' => 'message', 'board' => 'CommsInbox', 'perm' => 'ops:staff',
+            'count' => fn() => sl_navCommsWaiting()],
+        // The company's WhatsApp number inside the app (whatsapp_web.php gates on rank 2+, as ops:staff).
+        ['id' => 'commswaweb', 'label' => 'WhatsApp Web', 'icon' => 'message', 'board' => 'WhatsAppWeb', 'perm' => 'ops:staff'],
+        ['id' => 'commscustomers', 'label' => 'Customer history', 'icon' => 'user', 'board' => 'CommsCustomers', 'perm' => 'ops:staff'],
+        ['id' => 'commssurveys', 'label' => 'Surveys', 'icon' => 'star', 'board' => 'CommsSurveys', 'perm' => 'ops:staff'],
+        ['id' => 'commssettings', 'label' => 'Settings', 'icon' => 'cog', 'board' => 'CommsSettings', 'perm' => 'ops:admin'],
+    ];
+}
+
+/** WhatsApp conversations waiting for a person: cdp_commWaitingCount() when comms.php is loaded, else one cached COUNT. */
+function sl_navCommsWaiting(): int
+{
+    if (function_exists('cdp_commWaitingCount')) {
+        return (int) cdp_commWaitingCount();
+    }
+    return sl_tableExists('cdb_comm_threads') ? sl_navCount("SELECT COUNT(*) FROM cdb_comm_threads WHERE status = 'open'") : 0;
 }
 
 /** Customer navigation (ClientDashboard.dc.html sidebar). */
@@ -204,15 +249,17 @@ function sl_navCustomer(): array
     return [
         ['label' => 'My shipping', 'items' => [
             ['id' => 'dash', 'label' => 'Dashboard', 'icon' => 'grid', 'board' => 'Main', 'perm' => null],
-            ['id' => 'parcels', 'label' => 'All my parcels', 'icon' => 'box', 'board' => 'MyParcels', 'perm' => null],
-            ['id' => 'myaccount', 'label' => 'My account', 'icon' => 'user', 'board' => 'UserHome', 'perm' => null],
-            ['id' => 'air', 'label' => 'My Shipments', 'icon' => 'plane', 'board' => 'AirShipments', 'perm' => 'view_shipment_list',
+            // Air shipments, then sea shipments: each opens the customer's own list with its insights on top.
+            ['id' => 'air', 'label' => 'Air shipments', 'icon' => 'plane', 'board' => 'AirShipments', 'perm' => 'view_shipment_list',
                 'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_add_order WHERE sender_id = :u AND is_deleted = 0 AND status_courier NOT IN (8,15,21)", [':u' => $uid])],
-            ['id' => 'sea', 'label' => 'My Packages', 'icon' => 'box', 'board' => 'SeaPackages', 'perm' => 'view_package_list',
+            ['id' => 'sea', 'label' => 'Sea shipments', 'icon' => 'ship', 'board' => 'SeaPackages', 'perm' => 'view_package_list',
                 'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_customers_packages WHERE sender_id = :u AND status_courier NOT IN (8,15,21)", [':u' => $uid])],
+            ['id' => 'account', 'label' => 'My account', 'icon' => 'user', 'board' => 'MyAccount', 'perm' => null],
             ['id' => 'prealert', 'label' => 'Pre-Alerts', 'icon' => 'inbox', 'board' => 'PreAlerts', 'perm' => 'prealert_list',
                 'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_pre_alert WHERE customer_id = :u AND is_package = 0", [':u' => $uid])],
             ['id' => 'deliveries', 'label' => 'Request delivery', 'icon' => 'truck', 'board' => 'DeliveryRequest', 'perm' => null],
+            ['id' => 'mydeliveries', 'label' => 'My deliveries', 'icon' => 'truck', 'board' => 'DeliveryDone', 'perm' => null],
+            ['id' => 'delprices', 'label' => 'Delivery prices', 'icon' => 'dollar', 'board' => 'DeliveryPricing', 'perm' => null],
             ['id' => 'codes', 'label' => 'Pickup codes', 'icon' => 'key', 'board' => 'PickupCodes', 'perm' => null],
             ['id' => 'notifprefs', 'label' => 'Notification preferences', 'icon' => 'bell', 'board' => 'NotificationPrefs', 'perm' => null],
             ['id' => 'livetrack', 'label' => 'Track my parcels', 'icon' => 'route', 'board' => 'LiveTracking', 'perm' => null],
@@ -225,8 +272,9 @@ function sl_navCustomer(): array
             ['id' => 'pay', 'label' => 'Payments', 'icon' => 'card', 'board' => 'Payments', 'perm' => 'view_payment_shipment_list'],
             ['id' => 'profile', 'label' => 'Profile', 'icon' => 'sliders', 'board' => 'AiStudio', 'perm' => null],
             ['id' => 'mybills', 'label' => 'My bills', 'icon' => 'receipt', 'board' => 'MyBills', 'perm' => 'view_my_bills', 'finance' => true],
-            ['id' => 'notif', 'label' => 'Notifications', 'icon' => 'bell', 'board' => 'Notifications', 'perm' => null,
+            ['id' => 'notif', 'label' => 'Notifications', 'icon' => 'bell', 'board' => 'MyNotifications', 'perm' => null,
                 'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_notifications_users WHERE user_id = :u AND notification_read = 0", [':u' => $uid])],
+            ['id' => 'rewards', 'label' => 'Rewards', 'icon' => 'star', 'board' => 'MyRewards', 'perm' => null, 'loyalty' => true],
             ['id' => 'notifset', 'label' => 'Notification settings', 'icon' => 'sliders', 'board' => 'CustomerNotifications', 'perm' => null],
         ]],
     ];
@@ -256,13 +304,15 @@ function sl_navAllowed($perm, array $ctx): bool
             case 'cs:manage':
                 if (sl_userIs('admin')) return true;
                 break;
-            case 'ops:staff':   // Communication Center, WhatsApp Inbox, Staff & Branches (rank 2+)
+            case 'ops:staff':   // Notifications & Messages pages, Staff & Branches (rank 2+)
+            case 'ops:admin':   // Notifications & Messages settings (administrators, rank 3+)
             case 'ops:member':  // My Workspace (staff, drivers, agents: rank 1+)
             case 'ops:mgmt':    // Gerald Master View
             case 'ops:agent':   // Partner Portal
                 require_once CDP_ROOT . '/helpers/staffops.php';
                 $rk = cdp_opsRank($user);
                 if ($p === 'ops:staff' && $rk >= 2) return true;
+                if ($p === 'ops:admin' && $rk >= 3) return true;
                 if ($p === 'ops:member' && $rk >= 1) return true;
                 if ($p === 'ops:agent' && cdp_staffJobRole($user) === 'agent') return true;
                 if ($p === 'ops:mgmt') {
@@ -295,6 +345,9 @@ function sl_navResolve(string $activeId): array
         require_once CDP_ROOT . '/helpers/sl_modules.php';
     }
     $groups = sl_userIs('client') ? sl_navCustomer() : sl_navStaff();
+    if (!sl_userIs('client')) {
+        $activeId = sl_navModeActive($activeId);
+    }
     $finance = cdp_financeEnabled();
     $out = [];
     foreach ($groups as $g) {
@@ -306,11 +359,26 @@ function sl_navResolve(string $activeId): array
             if (!empty($it['finance']) && !$finance) {
                 continue;
             }
+            if (!empty($it['loyalty']) && !(is_file(CDP_ROOT . '/helpers/loyalty.php') && (require_once CDP_ROOT . '/helpers/loyalty.php') && sl_loyaltyEnabled())) {
+                continue;
+            }
             if (!sl_navAllowed($it['perm'], $it)) {
                 continue;
             }
             if (function_exists('sl_navItemEnabled') && !sl_navItemEnabled($it['id'])) {
                 continue;
+            }
+            // A parent with children (sub-menu) shows only when at least one child may be opened.
+            $kids = [];
+            if (!empty($it['children'])) {
+                $kids = sl_navResolveChildren($it['children'], $activeId);
+                if (!$kids && empty($it['hub'])) {
+                    continue;
+                }
+                if (!empty($it['hub'])) { // the hub page itself is the first entry of its sub-menu
+                    array_unshift($kids, ['id' => $it['id'], 'href' => sl_route($it['board']), 'label' => 'Overview', 'icon' => 'i-grid',
+                        'cls' => $it['id'] === $activeId ? 'is-active' : '', 'ok' => '', 'c1' => '', 'c2' => '']);
+                }
             }
             $c1 = isset($it['count']) ? (string) $it['count']() : '';
             $c2 = isset($it['count2']) ? (string) $it['count2']() : '';
@@ -318,19 +386,25 @@ function sl_navResolve(string $activeId): array
                 $c1 = '';
                 $c2 = '';
             }
+            $kidActive = $kids && in_array('is-active', array_column($kids, 'cls'), true);
             $items[] = [
                 'id' => $it['id'],
-                'href' => $it['href'] ?? sl_route($it['board']),
+                // a hub parent ('hub' => true) opens its own page; otherwise a parent opens its first child
+                'href' => $kids && empty($it['hub']) ? $kids[0]['href'] : ($it['href'] ?? sl_route($it['board'])),
                 'label' => $it['label'],
                 'icon' => 'i-' . $it['icon'],
-                'cls' => $it['id'] === $activeId ? 'is-active' : '',
+                'cls' => (!$kids || !empty($it['hub'])) && $it['id'] === $activeId ? 'is-active' : '',
                 'ok' => !empty($it['ok']) ? 'ok' : '',
                 'c1' => $c1,
                 'c2' => $c2,
+                'children' => $kids,
+                // the sub-menu starts open on its own pages
+                'open' => $kids && ($kidActive || $it['id'] === $activeId),
+                'act' => $it['id'] === $activeId || $kidActive,
             ];
         }
         if ($items) {
-            $out[] = ['label' => $g['label'], 'items' => $items, 'open' => in_array($activeId, array_column($items, 'id'), true)];
+            $out[] = ['label' => $g['label'], 'items' => $items, 'open' => in_array(true, array_column($items, 'act'), true)];
         }
     }
     // one group open at a time: the first that holds the current page, or the first group
@@ -338,6 +412,57 @@ function sl_navResolve(string $activeId): array
     foreach ($out as &$o) { $o['open'] = $o['open'] && !$seen; $seen = $seen || $o['open']; }
     unset($o);
     if (!$seen && $out) $out[0]['open'] = true;
+    return $out;
+}
+
+/**
+ * Staff pages name a shared nav id (consol, livetrack, sea); the menu is split
+ * by mode, so pick the air or sea entry from the request.
+ */
+function sl_navModeActive(string $activeId): string
+{
+    $self = sl_self();
+    $sea = ($_GET['type'] ?? '') === 'sea' || ($_GET['mode'] ?? '') === 'sea' || str_contains($self, 'package');
+    if ($activeId === 'consol') {
+        if ($self === 'consolidate_add.php') {
+            return $sea ? 'seanewcon' : 'airnewcon';
+        }
+        return $sea ? 'sealoads' : 'airloads';
+    }
+    if ($activeId === 'livetrack' && ($_GET['f'] ?? '') === 'air') {
+        return 'airtrack';
+    }
+    if ($activeId === 'sea') {
+        $panel = (string) ($_GET['panel'] ?? '');
+        return $panel === 'tower' ? 'seatower' : ($panel === 'tracking' ? 'seatrack' : 'sea');
+    }
+    return $activeId;
+}
+
+/**
+ * Children of a nav item (sub-menu), filtered like the items themselves. A
+ * child is current when the page passed its id or when the page being served
+ * is the child's own script (the sub-pages render with their parent's id).
+ */
+function sl_navResolveChildren(array $children, string $activeId): array
+{
+    $self = sl_self();
+    $out = [];
+    $hit = false;
+    foreach ($children as $ch) {
+        if (!sl_navAllowed($ch['perm'] ?? null, $ch)) {
+            continue;
+        }
+        if (function_exists('sl_navItemEnabled') && !sl_navItemEnabled($ch['id'])) {
+            continue;
+        }
+        $href = $ch['href'] ?? sl_route($ch['board']);
+        $c1 = isset($ch['count']) ? (string) $ch['count']() : '';
+        $on = !$hit && ($ch['id'] === $activeId || strtok($href, '?#') === $self);
+        $hit = $hit || $on;
+        $out[] = ['id' => $ch['id'], 'href' => $href, 'label' => $ch['label'], 'icon' => 'i-' . ($ch['icon'] ?? 'grid'),
+            'cls' => $on ? 'is-active' : '', 'ok' => '', 'c1' => $c1 === '0' ? '' : $c1, 'c2' => ''];
+    }
     return $out;
 }
 
@@ -364,6 +489,11 @@ function sl_navIdForBoard(string $board): string
         foreach ($g['items'] as $it) {
             if ($it['board'] === $board) {
                 return $it['id'];
+            }
+            foreach ($it['children'] ?? [] as $ch) {
+                if ($ch['board'] === $board) {
+                    return $ch['id'];
+                }
             }
         }
     }

@@ -45,7 +45,7 @@ $d = ['pins' => [], 'updated' => '08:00', 'sections' => [],
         'insights' => $label === 'AI insights' ? [['Nothing unusual right now.', 'ai_center.php']] : []];
 }, ['Air shipments', 'Sea packages', 'Deliveries', 'AI insights'], [0, 160, 49, 1327], ['blue', 'violet', 'amber', 'mint'])];
 $sectionRows = [
-    ['command-centers', 'Command Centers', 'Key controls and oversight in one place', ['Management Center', 'AI Automation Center', 'Notification Control', 'Payment Gateways', 'Loyalty & Referrals', 'Customer Care', 'Communications', 'Security Center', 'My Account Security']],
+    ['command-centers', 'Command Centers', 'Key controls and oversight in one place', ['Management Center', 'AI Automation Center', 'Payment Gateways', 'Loyalty & Referrals', 'Customer Care', 'Notifications & Messages', 'Security Center', 'My Account Security']],
     ['developer', 'Developer', 'Platform health and technical controls', ['Developer Console', 'Services', 'Metrics', 'Deployments']],
     ['support', 'Support', 'Tickets, service quality and team guidance', ['Support Desk', 'Service Panel', 'Service Reports', 'Playbooks', 'Knowledge Base', 'Support Settings']],
     ['shipments', 'Shipping & freight', 'Parcels on the move', ['Air shipments', 'Sea packages']],

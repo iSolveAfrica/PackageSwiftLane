@@ -78,16 +78,44 @@ check($x !== '' && $z->open($tmp) === true && strpos($z->getFromName('xl/workshe
 check(cdp_opsXlsxCol(0) === 'A' && cdp_opsXlsxCol(27) === 'AB', 'xlsx column letters');
 
 check(cdp_commRender('Hi {first_name}, {tracking} {unknown}.', ['first_name' => 'Ama', 'tracking' => 'T1']) === 'Hi Ama, T1 .', 'template placeholders');
+// Schema 1 classifier: kept only for the one-time v2 migration.
 $map = [];
-check(cdp_commClassifyStatus(8, 'Delivered', $map) === 'survey', 'delivered asks for a survey');
-check(cdp_commClassifyStatus(7, 'On Route', $map) === 'driver_arrival', 'on route = driver arrival');
-check(cdp_commClassifyStatus(3, 'In_Transit', $map) === 'departure', 'in transit = departure');
-check(cdp_commClassifyStatus(99, 'Customs Hold', $map) === 'customs', 'customs by name');
-check(cdp_commClassifyStatus(98, 'Delivery attempt failed', $map) === 'failed_delivery', 'failed delivery by name');
-check(cdp_commClassifyStatus(97, 'Arrived at destination', $map) === 'arrival', 'arrival by name');
-check(cdp_commClassifyStatus(21, 'Cancelled', $map) === 'none', 'cancelled never announced');
-check(cdp_commClassifyStatus(3, 'In_Transit', [3 => 'none']) === 'none', 'admin override wins');
-check(cdp_commClassifyStatus(11, 'Pending', $map) === '', 'other statuses fall to the generic alert');
+check(cdp_commClassifyStatus(7, 'On Route', $map) === 'driver_arrival' && cdp_commClassifyStatus(3, 'In_Transit', $map) === 'departure', 'old classifier still readable for the migration');
+check(cdp_commClassifyStatus(3, 'In_Transit', [3 => 'none']) === 'none', 'old admin override read by the migration');
+
+// Schema 2: every status is its own trigger.
+check(cdp_commTriggerKeyValid('status:16') && cdp_commTriggerKeyValid('status:*') && cdp_commTriggerKeyValid('legacy:tracking_update') && cdp_commTriggerKeyValid('claim_reminder'), 'trigger keys');
+check(!cdp_commTriggerKeyValid('status:abc') && !cdp_commTriggerKeyValid('departure') && !cdp_commTriggerKeyValid('legacy:Bad Key') && !cdp_commTriggerKeyValid('shipment_alert'), 'old event keys and junk are not triggers');
+check(cdp_commTriggerStatusId('status:25') === 25 && cdp_commTriggerStatusId('status:*') === 0 && cdp_commTriggerStatusId('survey') === -1, 'status id of a trigger key');
+check(cdp_commTriggerSource('status:12') === 'comms_status_12' && cdp_commTriggerSource('manual') === 'comms_manual', 'message-log source of a trigger');
+$plan = cdp_commV2PlanRules(['departure' => ['whatsapp' => 1, 'sms' => 0, 'email' => 1], 'survey' => ['whatsapp' => 1], 'shipment_alert' => ['email' => 1],
+    'driver_arrival' => ['sms' => 1], 'delivery_schedule' => ['whatsapp' => 1]],
+    [3 => 'In_Transit', 16 => 'No Picked up', 25 => 'Not Shipped', 36 => 'Departed US Warehouse', 8 => 'Delivered', 7 => 'On Route'], []);
+check(isset($plan['rules']['status:3']) && $plan['rules']['status:3']['email'] === 1 && isset($plan['rules']['status:36']), 'migration: departure switches move to the departure statuses');
+check(!isset($plan['rules']['status:25']) && isset($plan['skipped'][25]), 'migration: "Not Shipped" no longer gets a departure message');
+check(!isset($plan['rules']['status:16']) && isset($plan['skipped'][16]), 'migration: "No Picked up" no longer gets a survey');
+check(isset($plan['rules']['survey']) && isset($plan['rules']['driver_arrival']) && isset($plan['rules']['status:7']) && !isset($plan['rules']['departure']) && !isset($plan['rules']['delivery_schedule']), 'migration: events kept, moved events removed');
+check(($plan['rules']['status:*']['email'] ?? 0) === 1 && !isset($plan['rules']['shipment_alert']), 'migration: generic alert becomes "any other status"');
+check(($plan['rules']['legacy:tracking_update']['whatsapp'] ?? 0) === 1 && ($plan['rules']['legacy:signup']['email'] ?? 0) === 1, 'migration: old-screen switches seeded on');
+
+// The gate: one switch for every message.
+$fam = cdp_commStatusFamilySources();
+check(cdp_commGateDecide('tracking_update', 'email', 'legacy', [], $fam)[0], 'gate: old screens send while they own statuses');
+check(!cdp_commGateDecide('tracking_update', 'email', 'comms', [], $fam)[0] && cdp_commGateDecide('tracking_update', 'email', 'comms', [], $fam)[1] === 'Sent by Automation Center', 'gate: Automation Center owns status messages');
+check(!cdp_commGateDecide('signup', 'email', 'legacy', ['legacy:signup' => ['email' => 0]], $fam)[0] && cdp_commGateDecide('signup', 'sms', 'legacy', ['legacy:signup' => ['email' => 0]], $fam)[0], 'gate: a switched-off old message, per channel');
+check(cdp_commGateDecide('comms_status_3', 'email', 'comms', ['legacy:comms_status_3' => ['email' => 0]], $fam)[0] && cdp_commGateDecide('otp', 'sms', 'comms', ['legacy:otp' => ['sms' => 0]], $fam)[0], 'gate: Automation Center and one-time codes are never blocked');
+check(cdp_commGateDecide('', 'email', 'comms', [], $fam)[0], 'gate: unknown source fails open');
+
+// E-mail HTML from the browser is sanitised; studio blocks become a canvas design.
+$dirty = '<div onclick="x()">Hi {first_name}<script>alert(1)</script><a href="javascript:alert(1)">x</a><a href="{track_url}">t</a><img src="data:text/html;base64,xx"><iframe src="//e"></iframe><p style="width:expression(1)">s</p></div>';
+$clean = cdp_commSanitizeEmailHtml($dirty);
+check(strpos($clean, '<script') === false && strpos($clean, 'onclick') === false && strpos($clean, 'javascript:') === false && strpos($clean, 'iframe') === false
+    && strpos($clean, 'expression') === false && strpos($clean, 'data:text') === false, 'e-mail HTML sanitised');
+check(strpos($clean, '{first_name}') !== false && strpos($clean, 'href="{track_url}"') !== false, 'placeholders survive sanitising, also inside links');
+$canvas = cdp_commBlocksToCanvas([['type' => 'header', 'text' => '{company}'], ['type' => 'text', 'text' => "Hello {first_name},\n\nIt left."], ['type' => 'status_card'], ['type' => 'pickup_code'],
+    ['type' => 'button', 'text' => 'Track', 'url' => 'javascript:x'], ['type' => 'bogus']]);
+$types = array_column($canvas['blocks'], 'type');
+check($types === ['heading', 'text', 'html', 'html', 'button'] && $canvas['blocks'][4]['props']['href'] === '{track_url}' && strpos($canvas['blocks'][3]['props']['code'], '{pickup_code_html}') !== false, 'studio blocks -> canvas design');
 
 $p = ['whatsapp' => 1, 'sms' => 0, 'email' => 1, 'mkt_whatsapp' => 0, 'mkt_sms' => 1, 'mkt_email' => 0, 'opted_out_all' => 0, 'muted_events' => 'survey'];
 check(cdp_commAllowed($p, 'whatsapp') && !cdp_commAllowed($p, 'sms'), 'transactional follows channel opt-outs');
@@ -101,7 +129,6 @@ check(cdp_commQuietUntil(strtotime('2026-11-11 06:00:00'), '21:00', '07:00') ===
 check(cdp_commQuietUntil(strtotime('2026-11-11 12:00:00'), '21:00', '07:00') === strtotime('2026-11-11 12:00:00'), 'daytime sends now');
 check(cdp_commReminderRule(0, null, 4, 3, time()) && !cdp_commReminderRule(3, null, 4, 3, time()), 'reminder cap');
 check(!cdp_commReminderRule(1, date('Y-m-d H:i:s', time() - 86400), 4, 3, time()) && cdp_commReminderRule(1, date('Y-m-d H:i:s', time() - 5 * 86400), 4, 3, time()), 'reminder interval');
-check(count(cdp_commSlotDays(strtotime('2026-11-14 10:00:00'), 3, true)) === 3 && !in_array('2026-11-15', cdp_commSlotDays(strtotime('2026-11-14 10:00:00'), 3, true), true), 'delivery days skip Sunday');
 check(cdp_commKeyword(' stop ') === 'stop' && cdp_commKeyword('START') === 'start' && cdp_commKeyword('agent') === 'agent' && cdp_commKeyword('4') === 'score' && cdp_commKeyword('where is my box') === '', 'WhatsApp keywords');
 
 $meta = ['entry' => [['changes' => [['value' => ['contacts' => [['wa_id' => '233201234567', 'profile' => ['name' => 'Ama']]],
@@ -161,6 +188,7 @@ $sqlErrors = [];
 set_error_handler(function () { return false; });
 ini_set('error_log', $logFile = tempnam(sys_get_temp_dir(), 'opslog'));
 require_once $root . '/helpers/querys.php';
+require_once $root . '/helpers/message_log.php';
 
 function x($sql, array $b = [])
 {
@@ -226,43 +254,95 @@ try {
     // ----------------------------------------------------------------- comms
     $GLOBALS['user'] = new User(9, $admin);
     check(cdp_commEnsureTables(), 'communication tables created');
-    check((int) val("SELECT COUNT(*) FROM cdb_comm_templates") >= 36, 'default templates seeded');
+    check((int) val("SELECT COUNT(*) FROM cdb_comm_templates") === 3 * count(cdp_commEvents()), 'default templates seeded (one per event and channel)');
     cdp_opsSettingSet('comms', 'quiet_start', '00:00', 0);
     cdp_opsSettingSet('comms', 'quiet_end', '00:00', 0);
-    $rules = [];
-    foreach (array_keys(cdp_commEvents()) as $ev) {
-        $rules[$ev] = ['whatsapp' => 1, 'sms' => 1, 'email' => 1];
-    }
-    cdp_commSaveRules($rules);
+    $all = ['whatsapp' => 1, 'sms' => 1, 'email' => 1];
+    cdp_commSaveRules(['status:3' => ['whatsapp' => 1, 'sms' => 0, 'email' => 0], 'status:7' => $all, 'status:*' => ['whatsapp' => 0, 'sms' => 0, 'email' => 1],
+        'claim_reminder' => $all, 'payment_reminder' => $all, 'driver_arrival' => $all, 'survey' => $all, 'departure' => $all], true);
+    check(!isset(cdp_commRules()['departure']) && cdp_commRules()['status:3']['whatsapp'] === 1, 'rules accept trigger keys only');
+    cdp_commSaveRule('status:3', 'sms', true);
+    check(cdp_commRules()['status:3']['sms'] === 1 && cdp_commRules()['status:7']['email'] === 1, 'one switch changes, the others are kept');
+    cdp_commSaveRule('status:3', 'sms', false);
+    check(cdp_commTriggerChannels('status:11') === ['email'] && cdp_commTriggerChannels('status:3') === ['whatsapp'], 'a status without its own switch uses "any other status"');
     cdp_opsSettingSet('comms', 'enabled', '1', 0);
+    // Surveys are configured forms (helpers/comms_surveys.php); the seeded one is
+    // in-app only with a delay. This scenario asks on WhatsApp and e-mail at once.
+    if (function_exists('cdp_surveyEnsure') && cdp_surveyEnsure()) {
+        x("UPDATE cdb_comm_survey_forms SET channels = 'whatsapp,email', delay_hours = 0, active = 1");
+    }
     cdp_commSavePrefs($cust3, ['opted_out_all' => 1], 'test');
     check(cdp_commPrefs($cust3)['opted_out_all'] === 1 && (int) val("SELECT COUNT(*) FROM cdb_comm_consent_log WHERE user_id = :u", [':u' => $cust3]) === 1, 'opt-out stored with a consent-log entry');
 
     check(cdp_commScanStatusHistory() === 0 && (int) cdp_opsSetting('comms', 'wm_track', '-1') >= 0, 'first scan only sets the watermark');
-    cdp_commScanWarehouse();
+    check(!function_exists('cdp_commScanWarehouse'), 'no separate warehouse scan (the status row announces it once)');
     $o1 = $mkOrder(9001, $cust1, 3, ['driver_id' => $driver]);
     $o2 = $mkOrder(9002, $cust3, 3);
-    foreach ([['OPT9001', 3], ['OPT9001', 7], ['OPT9001', 8], ['OPT9002', 3], ['OPT9001', 11]] as $tr) {
-        x("INSERT INTO cdb_courier_track (order_track, comments, t_date, status_courier, office_id, user_id) VALUES (:t, '', :d, :s, :o, :u)",
-            [':t' => $tr[0], ':d' => date('Y-m-d H:i:s'), ':s' => $tr[1], ':o' => $office, ':u' => $operator]);
+    $o4 = $mkOrder(9004, $cust2, 16);
+    foreach ([['OPT9001', 3], ['OPT9001', 7], ['OPT9001', 8], ['OPT9002', 3], ['OPT9001', 11], ['OPT9004', 16], ['OPT9004', 25]] as $tr) {
+        x("INSERT INTO cdb_courier_track (order_track, comments, t_date, status_courier, office_id, user_id) VALUES (:t, :c, :d, :s, :o, :u)",
+            [':t' => $tr[0], ':c' => $tr[1] === 11 ? 'Waiting for the invoice' : '', ':d' => date('Y-m-d H:i:s'), ':s' => $tr[1], ':o' => $office, ':u' => $operator]);
     }
     $n = cdp_commScanStatusHistory();
     x("UPDATE cdb_add_order SET status_courier = 8 WHERE order_id = :o", [':o' => $o1]);
     $ev = array_map(function ($r) { return $r->event_key . '/' . $r->channel; }, cdp_opsQ("SELECT event_key, channel FROM cdb_comm_outbox WHERE user_id = :u ORDER BY id", [':u' => $cust1]));
-    check(in_array('departure/whatsapp', $ev, true) && in_array('driver_arrival/sms', $ev, true) && in_array('survey/email', $ev, true) && in_array('shipment_alert/email', $ev, true), 'status history became departure, driver, survey and generic alerts');
+    check(in_array('status:3/whatsapp', $ev, true) && in_array('status:7/sms', $ev, true) && in_array('status:8/email', $ev, true) && in_array('status:11/email', $ev, true)
+        && in_array('survey/email', $ev, true) && !in_array('status:3/email', $ev, true), 'each status sends its own message on its own channels');
     check((int) val("SELECT COUNT(*) FROM cdb_comm_outbox WHERE user_id = :u", [':u' => $cust3]) === 0, 'opted-out customer gets nothing');
-    $drv = one("SELECT body FROM cdb_comm_outbox WHERE user_id = :u AND event_key = 'driver_arrival' AND channel = 'whatsapp'", [':u' => $cust1]);
-    check($drv && strpos($drv->body, 'Driver') !== false && strpos($drv->body, 'OPT9001') !== false, 'driver message names the driver and tracking');
+    $st3 = one("SELECT body FROM cdb_comm_outbox WHERE user_id = :u AND event_key = 'status:3' AND channel = 'whatsapp'", [':u' => $cust1]);
+    check($st3 && strpos($st3->body, 'OPT9001') !== false && stripos($st3->body, 'transit') !== false && strpos($st3->body, '{') === false, 'status message is the one written for that status, filled');
+    $st11 = one("SELECT body FROM cdb_comm_outbox WHERE user_id = :u AND event_key = 'status:11' AND channel = 'email'", [':u' => $cust1]);
+    check($st11 && strpos($st11->body, '<!--sl-html-->') === 0 && strpos($st11->body, 'OPT9001') !== false, 'status e-mail is built HTML');
+    $drv = one("SELECT body FROM cdb_comm_outbox WHERE user_id = :u AND event_key = 'status:7' AND channel = 'sms'", [':u' => $cust1]);
+    check($drv && strpos($drv->body, 'OPT9001') !== false && strpos($drv->body, '*') === false, 'out-for-delivery SMS names the tracking, no WhatsApp bold');
     $sv = one("SELECT body FROM cdb_comm_outbox WHERE user_id = :u AND event_key = 'survey' AND channel = 'whatsapp'", [':u' => $cust1]);
     check($sv && strpos($sv->body, 'survey.php?t=') !== false && (int) val("SELECT COUNT(*) FROM cdb_comm_surveys WHERE user_id = :u", [':u' => $cust1]) === 1, 'survey link created once');
+    check((int) val("SELECT COUNT(*) FROM cdb_comm_surveys WHERE user_id = :u", [':u' => $cust2]) === 0 && !one("SELECT id FROM cdb_comm_outbox WHERE user_id = :u AND event_key = 'survey'", [':u' => $cust2]), '"No Picked up" never asks for a survey');
+    $ns = one("SELECT body FROM cdb_comm_outbox WHERE user_id = :u AND event_key = 'status:25' AND channel = 'email'", [':u' => $cust2]);
+    check($ns && stripos(strip_tags($ns->body), 'departed') === false && !one("SELECT id FROM cdb_comm_outbox WHERE user_id = :u AND event_key = 'status:25' AND channel = 'whatsapp'", [':u' => $cust2]), '"Not Shipped" is not announced as a departure');
+    check((int) val("SELECT COUNT(*) FROM cdb_comm_delivery_slots") === 0, 'no delivery booking links any more');
+
+    // A warehouse package is announced once, by its status row (no separate warehouse scan).
+    x("INSERT INTO cdb_customers_packages (user_id, order_prefix, order_no, order_date, order_datetime, sender_id, status_courier) VALUES (:u, 'OPP', '1', CURDATE(), NOW(), :s, 4)", [':u' => $operator, ':s' => $cust2]);
+    cdp_commSaveRule('status:4', 'whatsapp', true);
+    x("INSERT INTO cdb_courier_track (order_track, comments, t_date, status_courier, office_id, user_id) VALUES ('OPP1', '', :d, 4, :o, :u)", [':d' => date('Y-m-d H:i:s'), ':o' => $office, ':u' => $operator]);
+    cdp_commScanStatusHistory();
+    check((int) val("SELECT COUNT(*) FROM cdb_comm_outbox WHERE user_id = :u AND entity_ref = 'OPP1'", [':u' => $cust2]) === 1
+        && one("SELECT id FROM cdb_comm_outbox WHERE user_id = :u AND entity_ref = 'OPP1' AND event_key = 'status:4' AND channel = 'whatsapp' AND entity_type = 'package'", [':u' => $cust2]), 'warehouse receipt announced once, on its own channels (no fallback to any other status)');
     $before = (int) val("SELECT COUNT(*) FROM cdb_comm_outbox");
-    cdp_opsSettingSet('comms', 'wm_track', (string) ((int) cdp_opsSetting('comms', 'wm_track') - 5), 0);
+    cdp_opsSettingSet('comms', 'wm_track', (string) ((int) cdp_opsSetting('comms', 'wm_track') - 7), 0);
     cdp_commScanStatusHistory();
     check((int) val("SELECT COUNT(*) FROM cdb_comm_outbox") === $before, 'rescanning the same history queues nothing twice');
 
-    x("INSERT INTO cdb_customers_packages (user_id, order_prefix, order_no, order_date, order_datetime, sender_id, status_courier) VALUES (:u, 'OPP', '1', CURDATE(), NOW(), :s, 4)", [':u' => $operator, ':s' => $cust2]);
-    cdp_commScanWarehouse();
-    check((int) val("SELECT COUNT(*) FROM cdb_comm_outbox WHERE user_id = :u AND event_key = 'warehouse_received'", [':u' => $cust2]) === 3, 'warehouse receipt announced on three channels');
+    $saved = cdp_commSaveTemplate(['event_key' => 'status:3', 'channel' => 'email', 'subject' => '{tracking} left', 'html' => '<p onclick="x()">Hi {first_name}<script>1</script></p>',
+        'design_json' => json_encode(['settings' => [], 'blocks' => []])]);
+    $tpl = cdp_commTriggerTemplate('status:3', 'email');
+    check($saved['ok'] && $tpl['source'] === 'saved' && strpos($tpl['body'], '<script') === false && strpos($tpl['body'], 'onclick') === false && $tpl['design_json'] !== null, 'canvas e-mail saved sanitised with its design');
+    check(cdp_commResetTemplate('status:3', 'email')['ok'] && cdp_commTriggerTemplate('status:3', 'email')['source'] === 'draft', 'reset goes back to the drafted message');
+    check(!cdp_commSaveTemplate(['event_key' => 'legacy:signup', 'channel' => 'email', 'body' => 'x'])['ok'] && !cdp_commSaveTemplate(['event_key' => 'departure', 'channel' => 'sms', 'body' => 'x'])['ok'], 'old-screen and retired keys have no comms template');
+    do {
+        $rawNo = '59' . mt_rand(1000000, 9999999);
+    } while (cdp_commFindUserByPhone('233' . $rawNo));
+    $raw = cdp_commQueueRaw('+233 ' . $rawNo, 'whatsapp', [], ['body' => 'Hello {first_name}', 'name' => 'Yaw Mensah', 'dedupe' => 'rawtest']);
+    $rr = $raw['ids'] ? one("SELECT * FROM cdb_comm_outbox WHERE id = :i", [':i' => $raw['ids'][0]]) : null;
+    check($raw['queued'] === 1 && $rr && (int) $rr->user_id === 0 && $rr->recipient_to === '+233' . $rawNo && $rr->body === 'Hello Yaw', 'a typed number is queued without an account');
+    check(cdp_commQueueRaw('+233201112244', 'whatsapp', [], ['body' => 'Promo', 'kind' => 'marketing'])['queued'] === 0, 'marketing to an unknown number needs consent');
+    check(cdp_commQueueRaw(cdp_commUser($cust3)->phone, 'sms', [], ['body' => 'x'])['queued'] === 0, 'a typed number of an opted-out customer is skipped');
+    $ctx = cdp_commDeliverContext($rr);
+    check($ctx['source'] === 'comms_manual' && $ctx['outbox_id'] === (int) $rr->id, 'deliver context carries source and outbox id');
+
+    $lg = $mkOrder(9010, $cust1, 3);
+    cdp_msgSetContext(['source' => 'tracking_update']);
+    check(cdp_commLegacyAllowed('email', ['id' => $cust1, 'no_log' => true]), 'old screens send while they own status messages');
+    cdp_opsSettingSet('comms', 'status_owner', 'comms', 0);
+    check(!cdp_commLegacyAllowed('email', ['id' => $cust1, 'to' => 'ama@example.test']) && one("SELECT id FROM cdb_message_log WHERE status = 'skipped' AND status_detail = 'Sent by Automation Center' ORDER BY id DESC LIMIT 1"), 'with the Automation Center in charge the old status e-mail is skipped and logged');
+    check(cdp_commLegacyAllowed('email', ['id' => $manager, 'no_log' => true]), 'staff copies are never blocked');
+    cdp_msgSetContext(['source' => 'comms_status_3']);
+    check(cdp_commLegacyAllowed('whatsapp', ['id' => $cust1, 'no_log' => true]), 'the Automation Center itself is never blocked');
+    cdp_msgClearContext();
+    cdp_opsSettingSet('comms', 'status_owner', 'legacy', 0);
+    cdp_opsSettingSet('comms', 'worker_last_run', '', 0);
+    check(!cdp_commSetStatusOwner('comms', 0)['ok'], 'status messages are not handed over without a running worker');
 
     $o3 = $mkOrder(9003, $cust2, 32);
     x("INSERT INTO cdb_courier_track (order_track, comments, t_date, status_courier, office_id, user_id) VALUES ('OPT9003', '', :d, 32, :o, :u)", [':d' => date('Y-m-d H:i:s', strtotime('-6 days')), ':o' => $office, ':u' => $operator]);
@@ -311,12 +391,6 @@ try {
     $hist = cdp_commHistory($cust1);
     check(count(array_filter($hist, function ($i) { return $i['channel'] === 'survey'; })) === 1 && count(array_filter($hist, function ($i) { return $i['dir'] === 'in'; })) >= 3, 'history shows inbound messages and the survey');
 
-    $link = cdp_commCreateSlotLink($cust1, 'OPT9001');
-    parse_str(parse_url($link, PHP_URL_QUERY), $qs);
-    $sid = cdp_opsVerify('slot', $qs['t']);
-    $days = cdp_commSlotDays();
-    check(!cdp_commBookSlot($sid, '1999-01-01', 'morning', '', '')['ok'] && cdp_commBookSlot($sid, $days[0], 'afternoon', 'Gate 2', '+233 20')['ok'], 'delivery slot booking validates the day');
-    check(cdp_commCreateSlotLink($cust1, 'OPT9001') !== '' && (int) val("SELECT COUNT(*) FROM cdb_comm_delivery_slots WHERE entity_ref = 'OPT9001'") === 2, 'a booked slot can be re-booked with a new link');
     $ov = cdp_commOverview(30);
     check($ov['queued'] > 0 && isset($ov['survey']['answered']), 'overview figures');
 

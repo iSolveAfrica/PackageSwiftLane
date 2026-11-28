@@ -171,7 +171,18 @@ if (empty($errors)) {
             $img = $_POST['sig-dataUrl']; // Your data 'data:image/png;base64,AAAFBfj42Pj4';
             $img = str_replace('data:image/png;base64,', '', $img);
             $img = str_replace(' ', '+', $img);
-            file_put_contents('../../doc_signs/shipments_courier/' . $shipment_id . '.png', base64_decode($img));
+            // The folder may be missing on a fresh install: create it, keep only
+            // a real PNG, and log a failed write instead of dropping it silently.
+            $sigDir = __DIR__ . '/../../doc_signs/shipments_courier';
+            if (!is_dir($sigDir)) {
+                @mkdir($sigDir, 0755, true);
+            }
+            $sigPng = base64_decode($img, true);
+            if (trim($img) === '') {
+                // No signature drawn.
+            } elseif ($sigPng === false || strncmp($sigPng, "\x89PNG\r\n\x1a\n", 8) !== 0 || @file_put_contents($sigDir . '/' . $shipment_id . '.png', $sigPng) === false) {
+                error_log('air hand-over: signature for shipment #' . $shipment_id . ' could not be saved in ' . $sigDir);
+            }
         }
 
 
@@ -268,9 +279,32 @@ if (empty($errors)) {
 
         $newbody = cdp_cleanOutx($body);
 
+        // Message source for the message log and the transport gate
+        // (helpers/comms_gate.php): a hand-over is a status announcement, sent by
+        // the Automation Center instead when it owns statuses.
+        require_once(__DIR__ . '/../../helpers/comms_gate.php');
+        require_once(__DIR__ . '/../../helpers/whatsapp.php');
+        if (function_exists('cdp_msgSetContext')) {
+            cdp_msgSetContext(['source' => 'delivery', 'source_label' => 'Delivery', 'entity_type' => 'shipment',
+                'entity_id' => (string) $shipment_id, 'entity_label' => $fullshipment, 'recipient_user_id' => (int) $shipment->sender_id]);
+        }
+
+        // Status message library (helpers/notify_studio.php), as the air status
+        // screen uses it: the text saved or drafted for this status per channel; a
+        // channel switched off there is not sent; the built-in texts below go out
+        // only when the library has nothing for the status.
+        $ns = cdp_statusNotifyResolve($status, $sender_data, $fullshipment, $app_url, 'air', $shipment_id, [
+            'status' => (string) $add_status, 'comment' => trim(cdp_sanitize($_POST['comments'] ?? '')),
+            'location' => trim(cdp_sanitize($_POST['country'] ?? '') . ' | ' . cdp_sanitize($_POST['address'] ?? ''), ' |'),
+        ]);
+
         //SENDMAIL PHP
 
-        if ($check_mail == 'PHP') {
+        if (!$ns['email']['on'] || !$sender_data || empty($sender_data->email)) {
+            // E-mail switched off for this status (or no address).
+        } elseif ($ns['email']['custom']) {
+            cdp_statusNotifyEmail($sender_data, $ns['email'], $subject);
+        } elseif ($check_mail == 'PHP') {
 
             $message = $newbody;
             $to = $sender_data->email;
@@ -280,7 +314,13 @@ if (empty($errors)) {
             $header .= "Content-type: text/html; charset=UTF-8 \r\n";
             $header .= "From: " . $from . " \r\n";
 
-            mail($to, $subject, $message, $header);
+            // mail() bypasses PHPMailer, so the transport gate is asked here.
+            require_once __DIR__ . '/../../helpers/whatsapp.php'; if (cdp_commLegacyAllowed('email', ['id' => (int) $shipment->sender_id, 'name' => trim((string) ($sender_data->fname ?? '') . ' ' . (string) ($sender_data->lname ?? '')), 'to' => (string) $to, 'subject' => $subject, 'body' => cdp_statusNotifyPlain($message)])) {
+                $cdpOk = @mail($to, $subject, $message, $header);
+                if (function_exists('cdp_msgLogPhpMail')) {
+                    cdp_msgLogPhpMail((bool) $cdpOk, $to, $subject, $message);
+                }
+            }
         } elseif ($check_mail == 'SMTP') {
 
             //PHPMAILER PHP   
@@ -355,7 +395,19 @@ if (empty($errors)) {
         cdp_insertNotificationsUsers($notification_id, intval($shipment->sender_id));
 
         //NOTIFY WHATSAPP API v2
-        if (!empty($sender_data->phone)) {
+        // Only when the form's "WhatsApp to the sender" box is ticked (older
+        // forms posted notify_whatsapp).
+        $cdpWaWanted = (int) ($_POST['notify_whatsapp_sender'] ?? $_POST['notify_whatsapp'] ?? 0) === 1;
+        if (!$cdpWaWanted) {
+            // WhatsApp not wanted for this hand-over.
+        } elseif ($ns['whatsapp']['custom']) {
+            // The library's WhatsApp text for this status (SMS goes out below).
+            try {
+                cdp_statusNotifyWaSms($sender_data, '', '', $ns);
+            } catch (Throwable $e) {
+                error_log('Error sending WhatsApp v2 notification to sender on delivery: ' . $e->getMessage());
+            }
+        } elseif ($ns['whatsapp']['on'] && !empty($sender_data->phone)) {
             try {
                 // Get template 3 for package delivery
                 $tpl = getTemplateWhatsApp(3);
@@ -401,16 +453,15 @@ if (empty($errors)) {
                     // Send via v2 API
                     sendNotificationWhatsApp_v2($sender_data, $whatsapp_body, null, ['allow_sms' => false]);
                 }
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 error_log('Error sending WhatsApp v2 notification to sender on delivery: ' . $e->getMessage());
             }
         }
 
-        // Obtener el estado de las casillas de verificación
-        // The customer is always texted when a package is picked up or delivered (the SMS switch
-        // on Tools > SMS and the customer's own opt-out still apply). The
-        // WhatsApp send here skips its SMS copy, so this is the only text.
-        $notify_sms_sender = true;
+        // The form's "SMS to the sender" box decides (the SMS switch on Tools >
+        // SMS and the customer's own opt-out still apply). The WhatsApp send
+        // above skips its SMS copy, so this is the only text.
+        $notify_sms_sender = (int) ($_POST['notify_sms_sender'] ?? 0) === 1;
         $notify_sms_receiver = isset($_POST['notify_sms_receiver']) && $_POST['notify_sms_receiver'] == 1;
 
         // Generar cuerpo del SMS para el remitente
@@ -418,9 +469,15 @@ if (empty($errors)) {
             $newbodyS_sender = ($status === CDP_STATUS_PICKED_UP)
                 ? cdp_handoverPickedUpText(cdp_nameWithLocker($sender_data), [$fullshipment], $msnames)
                 : generateSMSBody($sender_data, $fullshipment, $add_status, $app_url, $templatessender);
+            if ($ns['sms']['custom']) {
+                $newbodyS_sender = $ns['sms']['body'];
+            }
+            if (!$ns['sms']['on']) {
+                $notify_sms_sender = false;
+            }
             // Llamar a la función para enviar la notificación SMS al remitente
             sendNotificationSMS($sender_data, $newbodyS_sender, $notify_sms_sender);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             error_log('Error generating or sending SMS for sender: ' . $e->getMessage());
             // Manejo del error, por ejemplo, establecer una variable para mostrar un mensaje de error al usuario
         }
@@ -428,9 +485,15 @@ if (empty($errors)) {
         // Generar cuerpo del SMS para el receptor
         try {
             $newbodyS_receiver = generateSMSBody($receiver_data, $fullshipment, $add_status, $app_url, $templatesreceiver);
-            // Llamar a la función para enviar la notificación SMS al receptor
-            sendNotificationSMS($receiver_data, $newbodyS_receiver, $notify_sms_receiver);
-        } catch (Exception $e) {
+            // Llamar a la función para enviar la notificación SMS al receptor.
+            // Sent as a receiver notice: the Automation Center only messages the
+            // owner, so this must not be held back as a status announcement.
+            if ($notify_sms_receiver) {
+                cdp_statusNotifyAsReceiver(function () use ($receiver_data, $newbodyS_receiver) {
+                    return sendNotificationSMS($receiver_data, $newbodyS_receiver, true);
+                }, (($shipment->recipient_type ?? '') === 'user') ? (int) ($receiver_data->id ?? 0) : 0, trim((string) ($receiver_data->fname ?? '') . ' ' . (string) ($receiver_data->lname ?? '')));
+            }
+        } catch (Throwable $e) {
             error_log('Error generating or sending SMS for receiver: ' . $e->getMessage());
             // Manejo del error, por ejemplo, establecer una variable para mostrar un mensaje de error al usuario
         }

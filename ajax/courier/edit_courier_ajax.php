@@ -4,6 +4,12 @@ ini_set('display_errors', 0);
 require_once("../../loader.php");
 require_once __DIR__ . '/../../helpers/sl_auth.php';
 require_once("../../helpers/querys.php");
+// Message source for the message log and the transport gate (helpers/comms_gate.php),
+// named here rather than read from this endpoint's file name.
+require_once(__DIR__ . '/../../helpers/comms_gate.php');
+if (function_exists('cdp_msgSetContext')) {
+    cdp_msgSetContext(['source' => 'shipment_updated', 'source_label' => 'Shipment Updated', 'entity_type' => 'shipment']);
+}
 require_once(__DIR__ . '/../../helpers/ajax_guard.php');
 require_once(__DIR__ . '/../../helpers/uploads.php');
 require_login();
@@ -940,7 +946,7 @@ if (empty($errors)) {
                 $header  = "MIME-Version: 1.0\r\n";
                 $header .= "Content-type: text/html; charset=UTF-8 \r\n";
                 $header .= "From: " . $site_email . " \r\n";
-                try { mail($recipient_obj->email, $subject, $newbody, $header); } catch (Exception $e) {}
+                try { require_once __DIR__ . '/../../helpers/whatsapp.php'; if (cdp_commLegacyAllowed('email', ['id' => (int) ($recipient_obj->id ?? 0), 'name' => trim((string) ($recipient_obj->fname ?? '') . ' ' . (string) ($recipient_obj->lname ?? '')), 'to' => (string) $recipient_obj->email, 'subject' => (string) $subject, 'body' => cdp_statusNotifyPlain($newbody)])) { $cdpOk = @mail($recipient_obj->email, $subject, $newbody, $header); if (function_exists('cdp_msgLogPhpMail')) { cdp_msgLogPhpMail((bool) $cdpOk, $recipient_obj->email, $subject, $newbody); } } } catch (Exception $e) {}
 
             } elseif ($check_mail == 'SMTP') {
                 $mail = new PHPMailer(true);
@@ -969,11 +975,15 @@ if (empty($errors)) {
             cdp_nameWithLocker($sender_data)
         );
 
-        // Send email to receiver
-        $sendShipmentEmail(
-            $receiver_data,
-            $receiver_data ? ($receiver_data->fname . ' ' . $receiver_data->lname) : ''
-        );
+        // Send email to receiver, as a receiver notice: the Automation Center only
+        // messages the owner, so this is not held back as a status announcement.
+        require_once __DIR__ . '/../../helpers/whatsapp.php';
+        cdp_statusNotifyAsReceiver(function () use ($sendShipmentEmail, $receiver_data) {
+            $sendShipmentEmail(
+                $receiver_data,
+                $receiver_data ? ($receiver_data->fname . ' ' . $receiver_data->lname) : ''
+            );
+        }, ((cdp_sanitize($_POST['recipient_type'] ?? 'recipient')) === 'user') ? (int) ($receiver_data->id ?? 0) : 0, trim((string) ($receiver_data->fname ?? '') . ' ' . (string) ($receiver_data->lname ?? '')));
 
         // A status changed here into ready for pickup / delivery carries the
         // owner's pickup code; ready and picked up / delivered always text
@@ -999,7 +1009,11 @@ if (empty($errors)) {
 
         try {
             $newbodyS_receiver = generateSMSBody($receiver_data, $fullshipment, $add_status, $app_url, $templatesreceiver);
-            sendNotificationSMS($receiver_data, $newbodyS_receiver, $notify_sms_receiver);
+            if ($notify_sms_receiver) {
+                cdp_statusNotifyAsReceiver(function () use ($receiver_data, $newbodyS_receiver) {
+                    return sendNotificationSMS($receiver_data, $newbodyS_receiver, true);
+                }, ((cdp_sanitize($_POST['recipient_type'] ?? 'recipient')) === 'user') ? (int) ($receiver_data->id ?? 0) : 0, trim((string) ($receiver_data->fname ?? '') . ' ' . (string) ($receiver_data->lname ?? '')));
+            }
         } catch (Exception $e) { error_log('SMS receiver error: ' . $e->getMessage()); }
 
         if (!empty($sender_data->phone)) {

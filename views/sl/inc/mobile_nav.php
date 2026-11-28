@@ -5,7 +5,7 @@ if ($mobileLinks):
 $mobilePath = sl_self();
 ?>
 <nav class="sl-mobile-nav" aria-label="<?= sl_mobileRole() === 'rider' ? 'Rider' : (sl_mobileRole() === 'customer' ? 'Customer' : 'Staff') ?> app" style="--nav-count:<?= count($mobileLinks) ?>">
-<?php $mobileFab = count($mobileLinks) === 5 && in_array(sl_bodyRole(), ['staff', 'customer'], true) ? 2 : -1; // centre tab raised (design: ControlPanelsMobile) ?>
+<?php $mobileFab = count($mobileLinks) === 5 && in_array(sl_bodyRole(), ['staff', 'customer', 'rider'], true) ? 2 : -1; $mobileFamily = sl_mobileTabFamily(); // centre tab raised (design: ControlPanelsMobile) ?>
 <?php foreach ($mobileLinks as $mobileI => [$label, $icon, $href]):
     if ($href === '#menu'): ?>
 <button type="button"<?= $mobileI === $mobileFab ? ' class="is-fab"' : '' ?> data-sl-nav aria-controls="sl-navigation" aria-expanded="false" aria-label="Open the menu"><i class="ic i-<?= h($icon) ?>" aria-hidden="true"></i><span><?= h($label) ?></span></button>
@@ -13,12 +13,9 @@ $mobilePath = sl_self();
     $parts = parse_url($href); parse_str($parts['query'] ?? '', $params);
     $active = basename($parts['path']) === $mobilePath;
     if ($label === 'Home' && sl_bodyRole() === 'staff') $active = $active || $mobilePath === 'index.php';
-    if ($label === 'Shipments' && in_array($mobilePath, ['courier_view.php', 'courier_edit.php', 'courier_shipment_tracking.php'], true)) $active = true;
-    if ($mobilePath === 'driver_app.php') $active = $active && ($params['tab'] ?? 'home') === ($_GET['tab'] ?? 'home');
-    if ($label === 'Parcels' && in_array($mobilePath, ['courier_view.php','customer_packages_view.php','courier_shipment_tracking.php','customer_package_tracking.php'], true)) $active = true;
-    if ($label === 'Jobs' && $mobilePath === 'delivery_job.php') $active = true;
-    if ($label === 'Bills' && in_array($mobilePath, ['pay_checkout.php', 'payment_return.php'], true)) $active = true;
-    if ($label === 'Account' && in_array($mobilePath, ['customers_profile_edit.php', 'notification_center.php', 'customer_notifications.php', 'shipping_addresses.php'], true)) $active = true;
+    if ($mobilePath === 'driver_app.php') $active = $active && !isset($_GET['job']);
+    if (in_array($mobilePath, $mobileFamily[$label] ?? [], true)) $active = true;
+    if ($label === 'Jobs' && $mobilePath === 'driver_app.php' && isset($_GET['job'])) $active = true;
 ?>
 <a href="<?= h($href) ?>"<?= $mobileI === $mobileFab ? ' class="is-fab"' : '' ?><?= $active ? ' aria-current="page"' : '' ?>><i class="ic i-<?= h($icon) ?>" aria-hidden="true"></i><span><?= h($label) ?></span></a>
 <?php endforeach; ?>

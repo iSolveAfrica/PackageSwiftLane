@@ -9,7 +9,7 @@ $user = new User();
 $core = new Core();
 require_once 'helpers/sl_view.php';
 require_once 'helpers/sl_form.php';
-sl_gate('recipients_add');
+sl_gate(['recipients_add', 'view_recipients']); // same rule as the list's Add button and the save endpoint
 require_once 'views/sl/data/account_edit.php';
 $d = sl_recipientFormData($user, 0);
 if (!$d) {

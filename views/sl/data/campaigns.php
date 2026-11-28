@@ -20,6 +20,17 @@ function sl_cmpMoney(float $v, string $cur): string
     return $cur . ' ' . (function_exists('cdp_mcMoney') ? cdp_mcMoney($v) : number_format($v, 2));
 }
 
+/** Names of Send-page campaigns for their batches (campaign-<id>, cdb_comm_campaigns). */
+function sl_cmpCampaignNames(array $batches): array
+{
+    $ids = [];
+    foreach ($batches as $b) if (preg_match('/^campaign-(\d+)$/', (string) $b, $m)) $ids[(int) $m[1]] = (string) $b;
+    if (!$ids || !sl_tableExists('cdb_comm_campaigns')) return [];
+    $out = [];
+    foreach (sl_rows('SELECT id, name FROM cdb_comm_campaigns WHERE id IN (' . implode(',', array_keys($ids)) . ')') as $c) $out[$ids[(int) $c->id]] = (string) $c->name;
+    return $out;
+}
+
 function sl_campaignsData($user): array
 {
     $days = in_array((int) ($_GET['days'] ?? 30), [7, 30, 90, 365], true) ? (int) ($_GET['days'] ?? 30) : 30;
@@ -63,7 +74,9 @@ function sl_campaignsData($user): array
         $ph = implode(',', array_map(fn($i) => ':b' . $i, array_keys($ids)));
         foreach (sl_rows("SELECT batch_id, COUNT(DISTINCT CASE WHEN event = 'open' THEN recipient_to END) AS o, COUNT(DISTINCT CASE WHEN event = 'click' THEN recipient_to END) AS c, SUM(event = 'click') AS cl FROM cdb_message_events WHERE batch_id IN ($ph) GROUP BY batch_id", array_combine(array_map(fn($i) => ':b' . $i, array_keys($ids)), $ids)) as $e) $evs[$e->batch_id] = $e;
     }
+    $names = sl_cmpCampaignNames(array_map(fn($r) => (string) $r->batch_id, $rows));
     foreach ($rows as $r) {
+        if (isset($names[$r->batch_id])) $r->subj = $names[$r->batch_id];
         $cost = (float) $r->us * (float) ($R['rates']['sms'] ?? 0) + (float) $r->uw * (float) ($R['rates']['whatsapp'] ?? 0) + (float) $r->ue * (float) ($R['rates']['email'] ?? 0);
         $e = $evs[$r->batch_id] ?? null;
         $sent = (int) $r->sent;
@@ -102,6 +115,8 @@ function sl_campaignDetail(string $bid, array $R, string $units, bool $hasEv): a
     $head = sl_row('SELECT MAX(subject) AS subj, MAX(source_label) AS src, MAX(entity_label) AS aud, MAX(sent_by_name) AS who, MIN(created_at) AS s, MAX(created_at) AS e, COUNT(*) AS n FROM cdb_message_log WHERE batch_id = :b', [':b' => $bid]);
     $agg = sl_row("SELECT SUM(status = 'sent') AS sent, SUM(status = 'failed') AS failed FROM cdb_message_log WHERE batch_id = :b", [':b' => $bid]);
     $evAgg = $hasEv ? sl_row("SELECT COUNT(DISTINCT CASE WHEN event = 'open' THEN recipient_to END) AS o, COUNT(DISTINCT CASE WHEN event = 'click' THEN recipient_to END) AS c FROM cdb_message_events WHERE batch_id = :b", [':b' => $bid]) : null;
+    $named = sl_cmpCampaignNames([$bid]);
+    if (isset($named[$bid]) && $head) $head->subj = $named[$bid];
     return ['agg' => ['sent' => (int) ($agg->sent ?? 0), 'failed' => (int) ($agg->failed ?? 0), 'opened' => (int) ($evAgg->o ?? 0), 'clicked' => (int) ($evAgg->c ?? 0)],
         'id' => $bid, 'title' => (string) ($head->subj ?: $head->src ?: 'Campaign'), 'src' => (string) $head->src, 'aud' => (string) $head->aud, 'who' => (string) $head->who,
         'when' => $head->s ? sl_date($head->s, 'M j, Y H:i') . ' – ' . sl_date($head->e, 'H:i') : '', 'n' => (int) $head->n, 'rows' => $out, 'links' => $links, 'fails' => array_slice($fails, 0, 6, true), 'timeline' => $timeline,

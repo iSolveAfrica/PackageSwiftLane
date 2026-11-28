@@ -1,0 +1,133 @@
+/* Customer dashboard additions on top of overview-hero.css (partials/client_overview.php) */
+.co-next{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:14px;background:var(--field);border:1px solid var(--line)}
+.co-next.hot{background:color-mix(in srgb,var(--green) 10%,var(--card));border-color:color-mix(in srgb,var(--green) 30%,var(--line))}
+.co-next>div{display:flex;flex-direction:column;min-width:0}
+.co-next small{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.co-next b{font-size:15px;font-weight:600}.co-next span{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.co-bad{color:var(--red-ink)}
+.co-year{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:16px;margin:16px 0}
+.co-card{display:flex;flex-direction:column;gap:12px;min-width:0;padding:22px;border:1px solid var(--line);border-radius:22px;background:var(--card);color:var(--ink)}
+.co-ch{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.co-big{font:600 34px/1.1 var(--font);letter-spacing:-.035em;margin-top:6px;font-variant-numeric:tabular-nums}.co-big small{font:500 14px var(--font);letter-spacing:0;color:var(--muted)}
+.co-mid{font:600 17px/1.3 var(--font);margin-top:4px}
+.co-legend{display:flex;gap:16px;font-size:13px;color:var(--muted)}.co-legend span{display:inline-flex;align-items:center;gap:6px}
+.co-legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.co-legend i.air,.co-cols i.air{background:var(--ch-2)}.co-legend i.sea,.co-cols i.sea{background:var(--ch-1)}
+.co-cols{display:flex;align-items:flex-end;gap:8px;height:170px;margin-top:6px;border-bottom:1px solid var(--line-2);background:linear-gradient(to bottom,var(--line) 1px,transparent 1px) 0 0/100% 50%}
+.co-cols>span{flex:1;height:100%;display:flex;flex-direction:column-reverse;align-items:center;gap:2px;min-width:0}
+.co-cols i{display:block;width:100%;max-width:30px;border-radius:2px}
+.co-cols i.air{border-radius:4px 4px 0 0;opacity:.75}.co-cols i.air.now{opacity:1}
+.co-cols i[style*="height:0%"]{display:none}
+.co-axis{display:flex;font-size:11.5px;color:var(--muted)}.co-axis span{flex:1;text-align:center}
+.co-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:4px}
+.co-stats div{display:flex;flex-direction:column;padding:10px 12px;border-radius:12px;background:var(--field)}
+.co-stats span{font-size:12px;color:var(--muted)}.co-stats b{font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}.co-stats small{font-size:11.5px;color:var(--muted)}
+.co-rank{--co-bar:var(--ch-5);list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.co-rank li{display:grid;grid-template-columns:18px minmax(0,1fr) 66px;align-items:center;gap:8px}
+.co-rk{font:600 12px var(--mono);color:var(--muted);text-align:right}
+.co-rn{display:flex;flex-direction:column;gap:4px;min-width:0}.co-rn b{font-weight:550;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.co-track{display:block;height:8px;border-radius:4px;background:color-mix(in srgb,var(--co-bar) 12%,var(--card))}.co-track i{display:block;height:100%;border-radius:4px;background:var(--co-bar)}
+.co-rv{text-align:right;font-weight:600;font-size:14px;font-variant-numeric:tabular-nums}
+:is(html.sl-dark,.sl-app.dk) .co-legend i.air,:is(html.sl-dark,.sl-app.dk) .co-cols i.air{background:color-mix(in srgb,var(--ch-2) 70%,#fff)}
+@media (max-width:1000px){.co-year{grid-template-columns:1fr}}
+@media (max-width:640px){.co-stats{grid-template-columns:1fr 1fr}.co-axis span:nth-child(even){visibility:hidden}.co-cols{gap:4px}}
+
+/* Locker ID + warehouse addresses in the top grid (in place of the old pickup / pre-alert cards).
+   One country shows at a time; the country tabs wrap (up to ~3 rows, then scroll), so any number of addresses fits. */
+.co-addr{display:flex;flex-direction:column;min-width:0;border:1px solid var(--line);border-radius:var(--r-xl);background:var(--card);color:var(--ink);overflow:hidden}
+.co-addr-hero{display:flex;flex-direction:column;gap:6px;padding:18px 20px;color:#fff;background:radial-gradient(120% 140% at 100% 0%,#1F9D62 0%,transparent 55%),linear-gradient(135deg,#0A3D2C,#0E5A40)}
+.co-addr-hero .la-id b{font-size:clamp(30px,3.2vw,40px)}
+.co-addr-hero p{margin:0;font-size:13px;opacity:.85}
+.co-addr-hero .la-link{font-size:13px}
+.co-addr-empty{margin:0;padding:18px 20px}
+
+/* Wallet: round flags pick a country; that address card sits in front, the next two peek out behind it
+   (dataJs/sl/client_wallet.js moves --pos / data-pos; without the script the main address shows). */
+.co-wallet{display:flex;flex-direction:column;gap:14px;padding:14px 16px 4px}
+.co-flags{display:flex;flex-wrap:wrap;gap:10px;padding:2px}
+.co-flag{position:relative;flex:none;width:40px;height:40px;padding:0;border:0;border-radius:50%;background:var(--field);cursor:pointer;
+  box-shadow:0 0 0 2px var(--card),0 0 0 3px var(--line-2);transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .2s,filter .2s;filter:saturate(.75)}
+.co-flag img{display:block;width:100%;height:100%;border-radius:50%;object-fit:cover}
+.co-flag .co-fl-t{display:grid;place-items:center;width:100%;height:100%;border-radius:50%;overflow:hidden;font:600 12px var(--font);color:var(--muted)}
+.co-flag:hover{transform:translateY(-2px);filter:none}
+.co-flag[aria-selected="true"]{filter:none;transform:scale(1.1);box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--green),0 6px 14px -4px rgba(0,0,0,.35)}
+.co-flag:focus-visible{outline:2px solid var(--focus,var(--green));outline-offset:4px}
+.co-flag .co-main{position:absolute;right:-1px;bottom:-1px;width:11px;height:11px;border:2px solid var(--card)}
+.co-main{width:6px;height:6px;border-radius:50%;background:var(--green)}
+
+.co-stack{--peek:14px;position:relative;display:flex;flex-direction:column;padding-top:calc(var(--back,0) * var(--peek))}
+/* One calm gray for every card, front and behind; the cards behind only get a shade darker per step for depth. */
+.co-wc{--g1:#F1F2F4;--g2:#E4E6EA;--g3:#D6D9DE;--g4:#C9CDD3;position:relative;z-index:5;display:flex;flex-direction:column;border-radius:20px;overflow:hidden;
+  background:var(--card);border:1px solid var(--line-2);box-shadow:0 12px 26px -16px rgba(20,24,30,.45);
+  transform-origin:50% 0;transition:transform .45s cubic-bezier(.2,.8,.2,1),opacity .35s,background-color .35s}
+:is(html.sl-dark,.sl-app.dk) .co-wc{--g1:#2A2F36;--g2:#323841;--g3:#3B424C;--g4:#454D58}
+.co-wc[data-pos="0"]{animation:co-in .45s cubic-bezier(.2,.8,.2,1)}
+.co-wc:not([data-pos="0"]){position:absolute;left:0;right:0;top:calc(var(--back,0) * var(--peek));bottom:0;z-index:calc(4 - var(--pos));cursor:pointer;
+  background:var(--g3);border-color:var(--g4);transform:translateY(calc(var(--pos) * var(--peek) * -1)) scale(calc(1 - var(--pos) * .05))}
+.co-wc[data-pos="2"]{background:var(--g4)}
+.co-wc:not([data-pos="0"]) > *{visibility:hidden}
+.co-wc[data-pos="3"]{opacity:0;pointer-events:none}
+.co-stack:hover .co-wc[data-pos="1"],.co-stack:hover .co-wc[data-pos="2"]{transform:translateY(calc(var(--pos) * var(--peek) * -1 - 5px)) scale(calc(1 - var(--pos) * .05))}
+@keyframes co-in{from{transform:translateY(-10px) scale(.97);opacity:.6}}
+.co-wc-h{display:flex;align-items:center;gap:12px;padding:14px 14px 12px 16px;color:var(--ink);background:linear-gradient(180deg,var(--g2),var(--g1));border-bottom:1px solid var(--line)}
+.co-wc-fl{flex:none;width:38px;height:38px;border-radius:50%;overflow:hidden;box-shadow:0 0 0 2px var(--card),0 0 0 3px var(--line-2)}
+.co-wc-fl img,.co-wc-fl .co-fl-t{display:grid;place-items:center;width:100%;height:100%;object-fit:cover;background:var(--field);font:600 12px var(--font)}
+.co-wc-t{display:flex;flex-direction:column;min-width:0;flex:1}.co-wc-t b{display:flex;align-items:center;gap:6px;font-size:16px;font-weight:600}.co-wc-t>span{font-size:12.5px;color:var(--muted)}
+.co-wc-t .la-def{font-size:11px}
+/* simple next arrow */
+.co-next-b{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line-2);background:var(--card);cursor:pointer;
+  transition:transform .2s cubic-bezier(.2,.8,.2,1),background .15s}
+.co-next-b .ic{background:var(--ink)}
+.co-next-b:hover{transform:translateX(2px);background:var(--g1)}
+.co-next-b:focus-visible{outline:2px solid var(--focus,var(--green));outline-offset:2px}
+/* air or sea */
+.co-wc-mode{display:grid;grid-template-columns:auto auto minmax(0,1fr);align-items:center;gap:8px;margin:10px 12px 0;padding:8px 12px;border-radius:12px;background:var(--g1);font-size:12.5px}
+.co-wc-mode b{font-weight:600;white-space:nowrap}.co-wc-mode>span:last-child{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.co-mode-ic{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:#E3EEFF}.co-mode-ic .ic{background:#2563C9}
+.co-wc-mode.sea .co-mode-ic{background:#DDF3F1}.co-wc-mode.sea .co-mode-ic .ic{background:#0F7C74}
+:is(html.sl-dark,.sl-app.dk) .co-mode-ic{background:#1E3354}:is(html.sl-dark,.sl-app.dk) .co-mode-ic .ic{background:#8DB6FF}
+:is(html.sl-dark,.sl-app.dk) .co-wc-mode.sea .co-mode-ic{background:#143B38}:is(html.sl-dark,.sl-app.dk) .co-wc-mode.sea .co-mode-ic .ic{background:#6ED3C9}
+.co-flag-m{position:absolute;left:-3px;bottom:-3px;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:#2563C9;box-shadow:0 0 0 2px var(--card)}
+.co-flag-m .ic{width:11px;height:11px;background:#fff}
+.co-flag-m.sea{background:#0F7C74}
+.co-wc .la-lines{padding:6px 6px 0}
+.co-wc .la-lines li{grid-template-columns:58px minmax(0,1fr) 30px;padding:5px 10px}
+.co-wc-f{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 16px 14px}
+
+/* Customer service and referrals under the addresses */
+.co-help{display:flex;flex-direction:column;gap:10px;padding:12px 16px 16px}
+.co-svc,.co-ref{display:flex;flex-direction:column;gap:12px;padding:14px;border-radius:18px;border:1px solid var(--line);background:var(--field)}
+.co-blk-h{display:flex;align-items:center;gap:10px}.co-blk-h>div{display:flex;flex-direction:column;min-width:0}
+.co-blk-h b{font-size:14.5px;font-weight:600}.co-blk-h small{font-size:12.5px;color:var(--muted)}
+.co-blk-ic{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--green) 16%,var(--card))}
+.co-blk-ic .ic{background:var(--green-ink)}
+.co-svc-a{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:8px}
+.co-svc-b{display:flex;align-items:center;justify-content:center;gap:6px;height:36px;padding:0 10px;border-radius:100px;background:var(--card);border:1px solid var(--line);color:var(--ink);font-size:13px;font-weight:500;text-decoration:none;transition:border-color .15s,transform .15s}
+.co-svc-b:first-child{background:var(--ink);border-color:var(--ink);color:var(--card)}.co-svc-b:first-child .ic{background:var(--card)}
+.co-svc-b:hover{transform:translateY(-1px);border-color:var(--line-2)}
+.co-ref{background:radial-gradient(120% 140% at 100% 0%,color-mix(in srgb,#6C63E0 22%,transparent) 0%,transparent 60%),var(--field)}
+.co-ref .co-blk-ic{background:color-mix(in srgb,#6C63E0 18%,var(--card))}.co-ref .co-blk-ic .ic{background:#5A50D6}
+.co-ref-code{display:flex;align-items:center;gap:6px;padding:5px 5px 5px 14px;border-radius:100px;background:var(--card);border:1px dashed color-mix(in srgb,#6C63E0 45%,var(--line))}
+.co-ref-code .mono{flex:1;min-width:0;font-size:14px;font-weight:700;letter-spacing:.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.co-ref-b{flex:none;display:inline-flex;align-items:center;gap:5px;height:30px;padding:0 11px;border-radius:100px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:500 12.5px var(--font);cursor:pointer}
+.co-ref-b.ico{width:30px;padding:0;justify-content:center}
+.co-ref-b.pri{background:#5A50D6;border-color:#5A50D6;color:#fff}.co-ref-b.pri .ic{background:#fff}
+.co-ref-f{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;color:var(--muted)}
+.co-ref-f a{display:inline-flex;align-items:center;gap:3px;font-weight:500;color:var(--ink)}
+@media (prefers-reduced-motion:reduce){.co-wc,.co-flag{transition:none}.co-wc[data-pos="0"]{animation:none}}
+@media print{.co-flags,.co-help,.co-wc:not([data-pos="0"]){display:none}}
+
+/* layout: 2 columns = you on top, cards left, addresses right; 3 columns = you | cards | addresses */
+.co-grid > .ovh-card{grid-column:1}
+.co-grid > .co-addr{grid-column:2;grid-row:2 / span 2}
+.co-grid.co-one > .co-addr{grid-row:2}
+@container ovh (min-width: 1240px){
+  .ovh-grid.co-grid{grid-template-columns:minmax(360px,1.1fr) minmax(0,1fr) minmax(320px,1.1fr)}
+  .co-grid > .ovh-card{grid-column:2}
+  .co-grid.co-one > .ovh-card{grid-row:1 / span 2}
+  .co-grid > .co-addr,.co-grid.co-one > .co-addr{grid-column:3;grid-row:1 / span 2}
+}
+@container ovh (max-width: 640px){
+  .co-grid > .ovh-card,.co-grid > .co-addr,.co-grid.co-one > .co-addr{grid-column:1;grid-row:auto}
+  .co-grid > .ovh-card{order:1}
+}

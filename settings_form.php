@@ -8,6 +8,11 @@ require_once 'helpers/sl_settings_forms.php';
 require_once 'helpers/sl_catalogs.php';
 $forms = sl_settingsForms();
 $key = (string) ($_GET['f'] ?? '');
+// The mail server is set in Notifications & Messages > Settings (password masked, never echoed).
+if ($key === 'smtp') {
+    header('Location: comms_settings.php#cs-email');
+    exit;
+}
 if (!isset($forms[$key])) {
     header('Location: tools.php');
     exit;

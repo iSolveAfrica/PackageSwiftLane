@@ -1,0 +1,71 @@
+/* Shared route map (assets/swiftlane/route-map.js): Leaflet pins and the offline schematic. */
+.slrm { position: relative; min-height: 220px; height: 320px; border-radius: var(--r-md, 12px); overflow: hidden; background: var(--slrm-bg, #eef2f7); border: 1px solid var(--line, #e2e8f0); isolation: isolate; }
+.slrm-host { position: absolute; inset: 0; }
+.slrm .leaflet-container { width: 100%; height: 100%; font: inherit; background: var(--slrm-bg, #eef2f7); }
+
+.slrm-pin-wrap { background: none; border: 0; }
+.slrm-pin { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; color: #fff; font: 700 12px/1 var(--font, system-ui, sans-serif); border: 2px solid #fff; box-shadow: 0 1px 4px rgba(15, 23, 42, .35); }
+.slrm-pin.slrm-st-delivered, .slrm-pin.slrm-st-failed, .slrm-pin.slrm-st-returned { opacity: .8; }
+.slrm-depot-pin { display: block; width: 22px; height: 22px; border-radius: 6px; background: #0f172a; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(15, 23, 42, .4); }
+.slrm-rider-pin { display: block; width: 18px; height: 18px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 0 4px rgba(37, 99, 235, .25), 0 1px 4px rgba(15, 23, 42, .4); }
+
+/* Schematic */
+.slrm-svg { display: block; width: 100%; height: 100%; }
+.slrm-gridline { stroke: var(--slrm-grid, rgba(100, 116, 139, .14)); stroke-width: 1; }
+.slrm-line { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; opacity: .8; }
+.slrm-leg { font: 600 10px/1 var(--font, system-ui, sans-serif); fill: var(--muted, #64748b); text-anchor: middle; paint-order: stroke; stroke: var(--slrm-bg, #eef2f7); stroke-width: 3px; }
+.slrm-stop { cursor: pointer; outline: none; }
+.slrm-stop circle { stroke: #fff; stroke-width: 2; }
+.slrm-stop text { font: 700 11px/1 var(--font, system-ui, sans-serif); fill: #fff; text-anchor: middle; pointer-events: none; }
+.slrm-stop:focus-visible circle, .slrm-stop.is-focus circle { stroke: var(--ink, #0f172a); stroke-width: 3; }
+.slrm-depot rect { fill: #0f172a; stroke: #fff; stroke-width: 2; }
+.slrm-depot-ico { fill: #fff; }
+.slrm-rider circle:first-child { stroke: #fff; stroke-width: 3; }
+.slrm-pulse { fill: none; stroke-width: 2; opacity: .35; }
+.slrm-note { position: absolute; left: 8px; bottom: 8px; right: 8px; max-width: max-content; padding: 5px 9px; border-radius: 8px; background: var(--card, #fff); color: var(--ink-2, #334155); font: 500 12px/1.3 var(--font, system-ui, sans-serif); box-shadow: 0 1px 3px rgba(15, 23, 42, .15); }
+.slrm-empty { display: grid; place-items: center; height: 100%; color: var(--muted, #64748b); font: 500 13px var(--font, system-ui, sans-serif); }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .slrm { --slrm-bg: #111827; --slrm-grid: rgba(148, 163, 184, .12); }
+}
+:root[data-theme="dark"] .slrm { --slrm-bg: #111827; --slrm-grid: rgba(148, 163, 184, .12); }
+@media (prefers-reduced-motion: no-preference) {
+  .slrm-pulse { animation: slrm-pulse 2s ease-out infinite; transform-origin: center; }
+  @keyframes slrm-pulse { from { opacity: .5; } to { opacity: 0; } }
+}
+
+/* Parcel card (views/sl/pages/partials/rp_parcel_card.php) */
+.rp-pc { display: grid; gap: 6px; padding: 10px 12px; border: 1px solid var(--line, #e2e8f0); border-radius: var(--r-sm, 10px); background: var(--card, #fff); color: var(--ink, #0f172a); font-size: 13px; }
+.rp-pc + .rp-pc { margin-top: 8px; }
+.rp-pc-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.rp-pc-trk { font-family: var(--mono, ui-monospace, monospace); font-weight: 600; overflow-wrap: anywhere; }
+.rp-pc-tag { padding: 1px 7px; border-radius: 999px; background: var(--hover, #f1f5f9); color: var(--ink-2, #334155); font-size: 11px; font-weight: 600; }
+.rp-pc-tag.is-urgent, .rp-pc-tag.is-failed, .rp-pc-tag.is-missing { background: var(--red-bg, #fee2e2); color: var(--red-ink, #991b1b); }
+.rp-pc-tag.is-high, .rp-pc-tag.is-pending { background: var(--amber-bg, #fef3c7); color: var(--amber-ink, #92400e); }
+.rp-pc-tag.is-loaded, .rp-pc-tag.is-delivered { background: var(--green-bg, #dcfce7); color: var(--green-ink, #166534); }
+.rp-pc-tag.is-returned { background: var(--violet-bg, #ede9fe); color: var(--violet-ink, #5b21b6); }
+.rp-pc-contents { color: var(--ink-2, #334155); }
+.rp-pc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 6px 10px; margin: 0; }
+.rp-pc-grid div { min-width: 0; }
+.rp-pc-grid dt { color: var(--muted, #64748b); font-size: 11px; }
+.rp-pc-grid dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.rp-pc-badges { display: flex; flex-wrap: wrap; gap: 5px; }
+.rp-hb { display: inline-block; padding: 1px 7px; border-radius: 6px; font-size: 11px; font-weight: 600; font-style: normal; background: var(--hover, #f1f5f9); color: var(--ink-2, #334155); }
+.rp-hb.h-fragile { background: var(--amber-bg, #fef3c7); color: var(--amber-ink, #92400e); }
+.rp-hb.h-cold { background: var(--sky-bg, #e0f2fe); color: var(--sky-ink, #075985); }
+.rp-hb.h-high_value { background: var(--violet-bg, #ede9fe); color: var(--violet-ink, #5b21b6); }
+.rp-hb.h-oversize, .rp-hb.h-liquid { background: var(--red-bg, #fee2e2); color: var(--red-ink, #991b1b); }
+.rp-pc-note { margin: 0; padding: 6px 8px; border-radius: 8px; background: var(--hover, #f8fafc); color: var(--ink-2, #334155); }
+.rp-pc.is-compact .rp-pc-grid, .rp-pc.is-compact .rp-pc-note { display: none; }
+
+/* Stale rider positions, rider labels, dark theme (html.sl-dark / .dk, as set by swiftlane.js) */
+.slrm-rider.is-stale, .slrm-rider-pin.is-stale { opacity: .45; }
+.slrm-rider-lbl { font: 600 11px/1 var(--font, system-ui, sans-serif); fill: var(--ink, #0f172a); paint-order: stroke; stroke: var(--slrm-bg, #eef2f7); stroke-width: 3px; }
+html.sl-dark .slrm, .dk .slrm { --slrm-bg: #111827; --slrm-grid: rgba(148, 163, 184, .12); --slrm-outline: #0b1220; }
+html.sl-dark .slrm-stop circle, .dk .slrm-stop circle, html.sl-dark .slrm-rider circle:first-child, .dk .slrm-rider circle:first-child { stroke: var(--slrm-outline); }
+html.sl-dark .slrm-leg, .dk .slrm-leg { fill: #cbd5e1; }
+html.sl-dark .slrm-rider-lbl, .dk .slrm-rider-lbl { fill: #e2e8f0; }
+html.sl-dark .slrm-depot rect, .dk .slrm-depot rect { fill: #e2e8f0; stroke: #111827; }
+html.sl-dark .slrm-depot-ico, .dk .slrm-depot-ico { fill: #111827; }
+html.sl-dark .slrm-note, .dk .slrm-note { background: #1f2937; color: #e5e7eb; }
+html.sl-dark .slrm-stop text, .dk .slrm-stop text { fill: #fff; }

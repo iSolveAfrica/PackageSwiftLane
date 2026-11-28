@@ -8,8 +8,13 @@ $type = ($_GET['type'] ?? 'air') === 'sea' ? 'sea' : 'air';
 sl_gate($type === 'sea' ? ['view_consolidate_package', 'view_consolidate_package_list'] : ['view_consolidate', 'view_consolidate_list']);
 // The old ?legacy=1 view is retired; the parameter is ignored and the design page renders.
 require_once 'views/sl/data/consolidations.php';
+require_once 'helpers/delivery_storage.php';
+dl_ensureStorage();
 $d = sl_consolidationDetailData($user, $core, (int) ($_GET['id'] ?? 0), $type);
-if (!$d) { header('Location: ' . sl_route('Consolidations', ['mode' => $type])); exit; }
+if (!$d) { header('Location: ' . sl_route($type === 'sea' ? 'ConsolidationsSea' : 'ConsolidationsAir')); exit; }
 $board = $type === 'sea' ? 'ConsolidationDetail' : 'ConsolidationAir';
+// Phones: the app screen (views/sl/phone/ConsolidationDetail.php) for air and sea alike.
+require_once 'helpers/sl_phone.php';
+if (sl_phoneView('ConsolidationDetail') !== '') { sl_render('ConsolidationDetail', ['id' => 'consol', 'title' => $d['code'], 'board' => $board], $d); exit; }
 // Wide view: the menu starts collapsed so the map and the package list get the room.
-sl_render($board, ['id' => 'consol', 'title' => $d['code'], 'board' => $board, 'navCollapsed' => true, 'styles' => ['assets/swiftlane/pages/ops.css']], $d);
+sl_render($board, ['id' => 'consol', 'title' => $d['code'], 'board' => $board, 'scripts'=>['dataJs/sl/consolidation_load_plan.js'], 'styles' => ['assets/swiftlane/pages/ops.css', 'assets/swiftlane/pages/ConLoadPlan.css']], $d);

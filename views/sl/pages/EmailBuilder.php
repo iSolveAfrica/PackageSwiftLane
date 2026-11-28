@@ -1,6 +1,7 @@
 <?php
 /**
  * EmailBuilder - from docs/handover/artifact-source/EmailBuilder.dc.html, bound to newsletter.php.
+ * Canvas markup: views/sl/inc/email_canvas.php (shared with the comms editor kit).
  * Script: dataJs/sl/email_builder.js (block palette, canvas with reorder/duplicate/delete, block settings,
  * templates, variables, subject/preheader, save/load/delete designs, preview, test, send to an audience).
  * Server: ajax/tools/newsletter_ajax.php + helpers/newsletter.php; designs in cdb_newsletter_designs.
@@ -13,17 +14,9 @@ $c = $d['cfg'];
 <div class="row g8 wrap"><div class="sl-seg boxed" id="eb-dev"><button type="button" class="on" data-w="600"><i class="ic ic-sm i-monitor" aria-hidden="true"></i>Desktop</button><button type="button" data-w="375"><i class="ic ic-sm i-phone" aria-hidden="true"></i>Phone</button></div><button type="button" class="sl-btn ghost" id="eb-undo" aria-label="Undo"><i class="ic ic-sm i-reply" aria-hidden="true"></i>Undo</button><button type="button" class="sl-btn ghost" id="eb-pv"><i class="ic ic-sm i-eye" aria-hidden="true"></i>Preview</button><button type="button" class="sl-btn ghost" id="eb-new"><i class="ic ic-sm i-newdoc" aria-hidden="true"></i>New</button><button type="button" class="sl-btn" id="eb-save"><i class="ic ic-sm i-check" aria-hidden="true"></i>Save design</button></div></div>
 <?php if (!$c['ready']): ?><div class="sl-banner warn"><i class="ic ic-sm i-alert" aria-hidden="true"></i><span>The newsletter tables are missing. Run the newsletter migration to save designs and send.</span></div><?php endif; ?>
 <div class="eb-steps" role="tablist"><button type="button" class="on" data-step="design" role="tab"><b>1</b>Design</button><button type="button" data-step="send" role="tab"><b>2</b>Subject and send</button></div>
-<div class="eb" id="eb-design">
-<aside class="sl-card col g12" style="padding:14px"><div class="eb-tabs" id="eb-ltabs"><button type="button" class="on" data-t="blocks">Blocks</button><button type="button" data-t="tpl">Templates</button><button type="button" data-t="saved">Saved</button><button type="button" data-t="vars">Tags</button></div>
-<div data-lt="blocks" class="col g8"><span class="mut sm">Drag onto the e-mail or click to add below the selected block</span><div class="eb-pal" id="eb-pal"></div></div>
-<div data-lt="tpl" class="col g4" hidden><span class="mut sm">Start from a template. Your current design is replaced.</span><div class="col g4" id="eb-tpls"></div></div>
-<div data-lt="saved" class="col g4" hidden><span class="mut sm">Designs saved on this installation</span><div class="col g4" id="eb-saved"><span class="mut sm">Loading…</span></div></div>
-<div data-lt="vars" class="col g8" hidden><span class="mut sm">Click to put a variable into the selected block's text. Do not change the words inside the brackets.</span><div class="row wrap g6"><?php foreach ($c['tags'] as $k => $l): ?><button type="button" class="eb-var" title="<?= h($l) ?>" data-var="<?= h($k) ?>"><?= h($k) ?></button><?php endforeach; ?></div></div>
-<div class="col g8" style="border-top:1px solid var(--line);padding-top:12px"><b class="fw5 sm">E-mail colours</b><div class="grid cols2" style="gap:8px" id="eb-glob"></div></div>
-</aside>
-<section class="col g8"><div class="row between wrap g8 sm"><span class="mut">Subject: <b class="fw5" style="color:var(--ink)" id="eb-subj-shown">(none yet)</b></span><span class="mut" id="eb-count">0 blocks · 600 px</span></div>
-<section class="eb-insp sl-card col g12" id="eb-insp" hidden></section><div class="eb-stage" id="eb-stage"><div class="eb-mail" id="eb-mail"></div></div></section>
-</div>
+<?php $ec = ['prefix' => 'eb', 'tags' => $c['tags'], 'toolbar' => false, 'subject_line' => true,
+    'tags_hint' => 'Click to put a variable into the selected block\'s text. Do not change the words inside the brackets.'];
+include CDP_ROOT . '/views/sl/inc/email_canvas.php'; ?>
 <div class="eb-set" id="eb-send" hidden>
 <div class="eb-col">
 <section class="sl-card col g12"><h2 class="sl-ct">Subject and sender</h2><label class="sl-field"><span class="sl-lab">Subject</span><input class="sl-in" id="eb-subj" maxlength="255" placeholder="What is this e-mail about?"></label><label class="sl-field"><span class="sl-lab">Preview text</span><input class="sl-in" id="eb-pre" maxlength="255"><span class="sl-hint">Shown after the subject in most inboxes</span></label><label class="sl-field"><span class="sl-lab">From</span><input class="sl-in" readonly value="<?= h($c['fromName'] . ' <' . $c['fromEmail'] . '>') ?>"><span class="sl-hint">Set under Settings › E-mail (SMTP)</span></label>
@@ -42,5 +35,4 @@ $c = $d['cfg'];
 </div>
 <div class="sl-dialog" id="eb-dlg" hidden role="dialog" aria-modal="true" aria-label="Preview"><div class="sl-card sl-modal" style="width:min(760px,100%)"><div class="row between"><h2 class="sl-ct">Preview</h2><div class="row g8"><div class="sl-seg boxed" id="eb-pvdev"><button type="button" class="on" data-w="100%">Desktop</button><button type="button" data-w="375px">Phone</button></div><button type="button" class="sl-btn ghost sm" data-sl-close aria-label="Close"><i class="ic ic-sm i-x" aria-hidden="true"></i></button></div></div><div class="eb-inbox"><div class="col grow"><b class="fw5 sm"><?= h($c['fromName']) ?></b><span class="sm fw5" id="eb-pv-s"></span><span class="mut sm" id="eb-pv-p"></span></div></div><div style="display:flex;justify-content:center;background:#E9E5DE;border-radius:12px;padding:12px"><iframe id="eb-frame" sandbox="allow-popups allow-popups-to-escape-sandbox" title="Newsletter preview" style="width:100%;height:65vh;border:0;background:#fff;border-radius:6px"></iframe></div><span class="mut sm">Tags such as [FIRST_NAME] are filled in for each recipient when the newsletter is sent.</span></div></div>
 <div class="sl-dialog" id="eb-pdlg" hidden role="dialog" aria-modal="true" aria-label="Recipients"><div class="sl-card sl-modal col g12" style="width:min(820px,100%)"><div class="row between"><h2 class="sl-ct">Recipients <span class="mut sm" id="eb-p-n"></span></h2><button type="button" class="sl-btn ghost sm" data-sl-close aria-label="Close"><i class="ic ic-sm i-x" aria-hidden="true"></i></button></div><div class="sl-search" style="max-width:none"><i class="ic ic-sm i-search" aria-hidden="true"></i><input id="eb-p-q" placeholder="Search name or e-mail" aria-label="Search recipients"></div><div class="eb-plist" id="eb-plist"></div><div class="row between"><button type="button" class="sl-btn ghost sm" id="eb-p-prev">Previous</button><span class="mut sm" id="eb-p-pg"></span><button type="button" class="sl-btn ghost sm" id="eb-p-next">Next</button></div></div></div>
-<input type="file" id="eb-file" accept="image/jpeg,image/png,image/gif,image/webp" hidden>
 <script>window.NLB_CONFIG = <?= json_encode($c, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;</script>
