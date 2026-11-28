@@ -82,6 +82,7 @@
 .cs-chip.custom{background:var(--sky-bg);color:var(--sky-ink)}
 .cs-chip.off{background:var(--red-bg);color:var(--red-ink)}
 .cs-chip.drafted{background:var(--green-bg);color:var(--green-ink)}
+.cs-chip.shared{background:var(--amber-bg);color:var(--amber-ink)}
 .cs-key{display:inline-flex;gap:6px;margin-left:auto}
 .cs-sw{width:10px;height:10px;border-radius:3px;flex:none}
 .cs-cw{display:inline-flex;align-items:center;gap:8px}
@@ -89,6 +90,7 @@
 .cs-st.drafted{background:var(--green-bg);color:var(--green-ink)}
 .cs-st.custom{background:var(--sky-bg);color:var(--sky-ink)}
 .cs-st.off{background:var(--red-bg);color:var(--red-ink)}
+.cs-st.shared{background:var(--amber-bg);color:var(--amber-ink)}
 .cs-key .cs-st{cursor:default;min-width:0}
 button.cs-st:hover{filter:brightness(.96)}
 button.cs-st:focus-visible{outline:2px solid var(--ink);outline-offset:2px}

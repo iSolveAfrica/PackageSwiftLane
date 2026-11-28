@@ -47,9 +47,10 @@ function cdp_msgTableReady()
 
 /**
  * cdb_message_log.outbox_id (migrations/2026_11_27_message_log_outbox.sql):
- * the Communication Center outbox row an attempt delivered, plus the indexes
- * the Outbox (helpers/comms_outbox_view.php) reads by. Added here on first use
- * when the migration has not been run; true when the column is there.
+ * the Communication Center outbox row an attempt delivered. The column alone
+ * is added here on first use when the migration has not been run and the table
+ * is small; the indexes the Outbox reads by come from the migration. True when
+ * the column is there.
  * $add false only checks. Cached per request; never throws.
  */
 function cdp_msgEnsureOutboxColumn($add = true)
@@ -70,20 +71,22 @@ function cdp_msgEnsureOutboxColumn($add = true)
             return $has;
         }
         $tried = true;
-        $db->cdp_query("SELECT INDEX_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_message_log'");
+        // Only the column, and only on a small table: on a big log the ALTER would hold a metadata lock
+        // inside a send. The indexes come from migrations/2026_11_27_message_log_outbox.sql.
+        $db->cdp_query("SELECT COALESCE(TABLE_ROWS, 0) n FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_message_log'");
         $db->cdp_execute();
-        $idx = [];
-        foreach ((array) $db->cdp_registros() as $r) {
-            $idx[(string) $r->INDEX_NAME] = true;
+        $size = $db->cdp_registro();
+        if ($size && (int) $size->n > 50000) {
+            error_log('cdb_message_log.outbox_id is missing: run migrations/2026_11_27_message_log_outbox.sql (the table is too big to alter during a request).');
+            return $has = false;
         }
-        $alter = ['ADD COLUMN outbox_id BIGINT NULL'];
-        foreach (['idx_batch' => '(batch_id)', 'idx_source' => '(source, created_at)', 'idx_entity' => '(entity_type, entity_id)', 'idx_outbox' => '(outbox_id)'] as $name => $cols) {
-            if (empty($idx[$name])) {
-                $alter[] = "ADD KEY $name $cols";
-            }
+        try {
+            $db->cdp_query('ALTER TABLE cdb_message_log ADD COLUMN outbox_id BIGINT NULL, ALGORITHM=INSTANT');
+            $db->cdp_execute();
+        } catch (Throwable $e) {
+            $db->cdp_query('ALTER TABLE cdb_message_log ADD COLUMN outbox_id BIGINT NULL');
+            $db->cdp_execute();
         }
-        $db->cdp_query('ALTER TABLE cdb_message_log ' . implode(', ', $alter));
-        $db->cdp_execute();
         return $has = true;
     } catch (Throwable $e) {
         error_log('cdb_message_log.outbox_id could not be added: ' . $e->getMessage());

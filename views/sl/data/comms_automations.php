@@ -79,15 +79,18 @@ function sl_caSentFor(string $key): int
     return (int) ($c[cdp_commTriggerSource($key)] ?? 0);
 }
 
-/** cdb_notify_content rows of status keys: key => channel => row. */
-function sl_caNotifyRows(): array
+/**
+ * cdb_notify_content rows of status keys: key => channel => row (with body and
+ * subject; cdp_notifyAll() leaves those out). $fresh re-reads after a write.
+ */
+function sl_caNotifyRows(bool $fresh = false): array
 {
     static $rows = null;
-    if ($rows === null) {
+    if ($rows === null || $fresh) {
         $rows = [];
-        foreach (cdp_notifyAll() as $k => $chs) {
-            if (strpos((string) $k, 'status:') === 0) {
-                $rows[$k] = $chs;
+        if (cdp_notifyEnsureTable()) {
+            foreach (sl_rows("SELECT trigger_key, channel, enabled, subject, body, updated_at FROM cdb_notify_content WHERE trigger_key LIKE 'status:%'") as $r) {
+                $rows[(string) $r->trigger_key][(string) $r->channel] = $r;
             }
         }
     }
@@ -115,7 +118,9 @@ function sl_caMirrorLegacy(string $key, string $ch, bool $on, int $uid): bool
     $tpl = cdp_commTriggerTemplate($key, $ch, 'en');
     $saved = $tpl && $tpl['source'] === 'saved';
     if ($on && !$saved) {
-        return (bool) cdp_notifyReset($key, $ch)['ok'];
+        $ok = (bool) cdp_notifyReset($key, $ch)['ok'];
+        sl_caNotifyRows(true);
+        return $ok;
     }
     $body = $saved ? (string) $tpl['body'] : '';
     if (strpos($body, '<!--sl-html-->') === 0) {
@@ -128,29 +133,96 @@ function sl_caMirrorLegacy(string $key, string $ch, bool $on, int $uid): bool
         [':k' => $key, ':c' => $ch, ':e' => $on ? 1 : 0, ':s' => $saved && $tpl['subject'] !== '' ? $tpl['subject'] : null, ':b' => $body,
             ':u' => $uid ?: null, ':n' => date('Y-m-d H:i:s')])['ok'];
     cdp_notifyResolve(null);
+    sl_caNotifyRows(true);
     return (bool) $ok;
 }
 
 /**
- * Before the first Automation Center switch of a status is written while the
- * old screens still send status messages, copy what they send today into the
- * rule, so the other channels are not recorded as "off" by default and the
- * hand-over keeps today's channels.
+ * Status switches that wait for the hand-over (comms.v2_status_intent).
+ *
+ * While the old screens send status messages (comms.status_owner = legacy) a
+ * status switch must never land in comms.rules: the worker would queue the
+ * same message the old screen sends. It is mirrored into the old screens'
+ * store (cdb_notify_content) and kept here; cdp_commSetStatusOwner('comms')
+ * copies it into comms.rules at the hand-over (an explicit rule wins).
  */
-function sl_caSeedStatusRule(string $key): void
+function sl_caIntent(): array
 {
-    if (cdp_commTriggerStatusId($key) <= 0 || cdp_commStatusOwner() !== 'legacy') {
-        return;
+    $v = cdp_opsDecode((string) cdp_opsSetting('comms', 'v2_status_intent', ''), []);
+    return is_array($v) ? $v : [];
+}
+
+/** Run $fn with the comms settings locked and freshly read (two quick switches never overwrite each other). */
+function sl_caLocked(callable $fn)
+{
+    $got = (int) cdp_opsVal("SELECT GET_LOCK('sl_comms_rules', 5)") === 1;
+    cdp_opsSettings('comms', true);
+    try {
+        return $fn();
+    } finally {
+        if ($got) {
+            cdp_opsVal("SELECT RELEASE_LOCK('sl_comms_rules')");
+        }
     }
-    $rules = cdp_commRules();
-    if (isset($rules[$key]) && count(array_intersect_key((array) $rules[$key], SL_CA_CHANNELS)) === count(SL_CA_CHANNELS)) {
-        return;
+}
+
+/**
+ * Switch one channel of a status key (status:N or status:*), whoever sends
+ * status messages:
+ *   comms   the Automation Center rule; the first write of status:N copies
+ *           what every channel does today (its own rule or "any other
+ *           status"), so the channels not touched keep their state
+ *   legacy  the old screens' store (status:N) plus the hand-over intent;
+ *           comms.rules is left alone, so nothing is sent twice
+ */
+function sl_caSetStatusSwitch(string $key, string $ch, bool $on, int $uid): bool
+{
+    return (bool) sl_caLocked(function () use ($key, $ch, $on, $uid) {
+        $sid = cdp_commTriggerStatusId($key);
+        $owner = cdp_commStatusOwner();
+        $rules = cdp_commRules();
+        if ($owner === 'comms') {
+            $seed = [];
+            foreach (array_keys(SL_CA_CHANNELS) as $c) {
+                $seed[$c] = $sid > 0 ? (sl_caStatusOn($key, $c, $rules, 'comms')['on'] ? 1 : 0) : (!empty($rules[$key][$c]) ? 1 : 0);
+            }
+            $seed[$ch] = $on ? 1 : 0;
+            $ok = cdp_commSaveRules([$key => $seed]);
+            if ($ok && $sid > 0) {
+                sl_caMirrorLegacy($key, $ch, $on, $uid);
+            }
+            return $ok;
+        }
+        if ($sid > 0 && !sl_caMirrorLegacy($key, $ch, $on, $uid)) {
+            return false;
+        }
+        $intent = sl_caIntent();
+        $seed = [];
+        foreach (array_keys(SL_CA_CHANNELS) as $c) {
+            $seed[$c] = $sid > 0 ? (sl_caLegacyOn($key, $c) ? 1 : 0)
+                : (int) ($intent[$key][$c] ?? (!empty($rules[$key][$c]) ? 1 : 0));
+        }
+        $seed[$ch] = $on ? 1 : 0;
+        $intent[$key] = $seed;
+        $ok = cdp_opsSettingSet('comms', 'v2_status_intent', cdp_opsJson($intent), $uid);
+        if ($ok && isset($rules[$key])) {
+            // A rule an earlier build wrote while the old screens send: it moves to the intent.
+            unset($rules[$key]);
+            cdp_commSaveRules($rules, true);
+        }
+        return (bool) $ok;
+    });
+}
+
+/** "Any other status" switches as the Status messages page shows them (the intent while the old screens send). */
+function sl_caAnyStatus(): array
+{
+    $src = cdp_commStatusOwner() === 'comms' ? cdp_commRules() : sl_caIntent() + cdp_commRules();
+    $out = [];
+    foreach (array_keys(SL_CA_CHANNELS) as $c) {
+        $out[$c] = !empty($src['status:*'][$c]);
     }
-    $seed = [];
-    foreach (array_keys(SL_CA_CHANNELS) as $ch) {
-        $seed[$ch] = isset($rules[$key][$ch]) ? (int) $rules[$key][$ch] : (sl_caLegacyOn($key, $ch) ? 1 : 0);
-    }
-    cdp_commSaveRules([$key => $seed]);
+    return $out;
 }
 
 /**
@@ -180,6 +252,8 @@ function sl_caStatusRows(): array
     foreach (sl_rows('SELECT id, color FROM cdb_styles') as $r) {
         $colors[(int) $r->id] = (string) $r->color;
     }
+    // With "Predefined messages" off a status without its own text sends the one shared message.
+    $plain = cdp_notifyDraftsOn() ? 'drafted' : 'shared';
     $out = [];
     foreach (cdp_commStatusTriggers() as $s) {
         $cells = [];
@@ -187,22 +261,27 @@ function sl_caStatusRows(): array
             $st = sl_caStatusOn($s['key'], $ch, $rules, $owner);
             $custom = ($s['custom'][$ch] ?? 'predefined') === 'custom';
             $textOff = ($s['custom'][$ch] ?? '') === 'off';
-            $cells[$ch] = ['on' => $st['on'] && !$textOff, 'via' => $st['via'], 'state' => (!$st['on'] || $textOff) ? 'off' : ($custom ? 'custom' : 'drafted')];
+            $cells[$ch] = ['on' => $st['on'] && !$textOff, 'via' => $st['via'], 'state' => (!$st['on'] || $textOff) ? 'off' : ($custom ? 'custom' : $plain)];
         }
         $in = $notify[$s['key']]['inapp'] ?? null;
-        $cells['inapp'] = ['on' => !$in || (int) $in->enabled === 1, 'via' => '', 'state' => $in ? ((int) $in->enabled === 1 ? 'custom' : 'off') : 'drafted'];
+        $cells['inapp'] = ['on' => !$in || (int) $in->enabled === 1, 'via' => '', 'state' => $in ? ((int) $in->enabled === 1 ? 'custom' : 'off') : $plain];
         $out[] = $s + ['cells' => $cells, 'color' => $colors[$s['id']] ?? '', 'sent' => sl_caSentFor($s['key'])];
     }
     usort($out, function ($a, $b) { return strcasecmp($a['label'], $b['label']); });
     return $out;
 }
 
-/** Sample values that fill the previews of a trigger. */
-function sl_caSample(string $key): array
+/**
+ * Sample values that fill the previews of a trigger. $ch = 'sms' gives the
+ * values an SMS really carries: the pickup code line without WhatsApp bold and
+ * in its short form, as cdp_notifyBuild() sends it.
+ */
+function sl_caSample(string $key, string $ch = ''): array
 {
     $sid = cdp_commTriggerStatusId($key);
     if ($sid > 0) {
-        return cdp_notifySampleVars(cdp_commStatusName($sid));
+        $v = cdp_notifySampleVars(cdp_commStatusName($sid));
+        return $ch === 'sms' ? sl_caSmsVars($v) : $v;
     }
     if (strpos($key, 'legacy:') === 0) {
         $s = cdp_notifySampleVars();
@@ -215,9 +294,25 @@ function sl_caSample(string $key): array
             'CHANGED_FIELDS' => 'Status: In transit', 'PACKAGES_SECTION' => 'SL-100482, SL-100483', 'TOTAL_AMOUNT' => '$42.00', 'DAYS' => '12',
             'MESSAGE' => 'Your pickup code is 482193.', 'SUBJECT' => 'Invoice INV-1042', 'VIRTUAL_LOCKER' => 'SL-1042', 'PASSWORD' => '482193',
             'IP' => '41.66.0.10', 'TTL' => '10', 'STATUS' => 'In transit', 'LINK' => $s['track_url'],
+            'URL_LINK' => (string) ((function_exists('cdp_getSettingsCourier') ? (cdp_getSettingsCourier()->logo ?? '') : '') ?: 'logo.png'),
         ];
     }
-    return cdp_notifyCommsSampleVars($key, cdp_notifySampleVars());
+    $v = cdp_notifyCommsSampleVars($key, cdp_notifySampleVars());
+    return $ch === 'sms' ? sl_caSmsVars($v) : $v;
+}
+
+/** The SMS form of the pickup code values (the same rewrite as cdp_notifyBuild for 'sms'). */
+function sl_caSmsVars(array $v): array
+{
+    if (!isset($v['pickup_code'])) {
+        return $v;
+    }
+    $c = str_replace(['*', 'to our driver when'], ['', 'to our rider when'], (string) $v['pickup_code']);
+    $v['pickup_code'] = preg_replace([
+        '/^Pickup code: (\S+?)\. Show this code when you collect your packages?\. Do not share it with anyone else\./m',
+        '/^Pickup code: (\S+?)\. Give this code to our (?:driver|rider) when your packages? arrives?\. Do not share it with anyone else\./m',
+    ], ['Pickup code: $1. Show it at the counter; do not share it.', 'Pickup code: $1. Give it to our rider; do not share it.'], $c);
+    return $v;
 }
 
 /** Placeholder chips for the editor: {name: description} per channel (e-mail also gets *_html). */
@@ -285,7 +380,7 @@ function sl_caTemplateValues(string $key, string $lang = 'en'): array
         $enabled[$ch] = $sid > 0 ? sl_caStatusOn($key, $ch, $rules, $owner)['on'] && $sources[$ch] !== 'none' : !empty($rules[$key][$ch]);
     }
     $out = ['key' => $key, 'label' => cdp_commTriggerLabel($key), 'language' => $lang, 'values' => $values, 'sources' => $sources, 'enabled' => $enabled,
-        'tags' => sl_caTags($key), 'sample' => sl_caSample($key)];
+        'tags' => sl_caTags($key), 'sample' => sl_caSample($key), 'sample_sms' => sl_caSample($key, 'sms')];
     if ($sid > 0) {
         $name = cdp_commStatusName($sid);
         $kind = cdp_commStatusKind($sid, $name);
@@ -324,7 +419,7 @@ function sl_caLegacyText(string $body): string
 /** The rows a legacy trigger's text lives in, per channel, for the "Other triggers" editor. */
 function sl_caLegacyTemplates(string $src): array
 {
-    $t = cdp_commLegacyTriggers()[$src] ?? null;
+    $t = sl_caLegacyTrigger($src);
     if (!$t) {
         return [];
     }
@@ -347,6 +442,89 @@ function sl_caLegacyTemplates(string $src): array
         $out[$ch] = $rows;
     }
     return $out;
+}
+
+/**
+ * Old template rows no trigger uses any more (the old template list pages now
+ * redirect here, so this is the only way to reach them), per channel:
+ * ['table' => ..., 'ids' => [...]].
+ */
+function sl_caOrphanTemplates(): array
+{
+    static $out = null;
+    if ($out !== null) {
+        return $out;
+    }
+    $used = ['email' => [], 'sms' => [], 'whatsapp' => []];
+    foreach (cdp_commLegacyTriggers() as $t) {
+        foreach ((array) $t['templates'] as $loc) {
+            foreach ((array) $loc['ids'] as $id) {
+                $used[(string) $loc['table']][(int) $id] = true;
+            }
+        }
+    }
+    $tables = ['whatsapp' => 'whatsapp_templates', 'sms' => 'cdb_sms_templates', 'email' => 'cdb_email_templates'];
+    $out = [];
+    foreach ($tables as $ch => $tbl) {
+        if (!sl_tableExists($tbl)) {
+            continue;
+        }
+        $ids = [];
+        foreach (sl_rows("SELECT id FROM $tbl ORDER BY id") as $r) {
+            if (empty($used[$ch][(int) $r->id])) {
+                $ids[] = (int) $r->id;
+            }
+        }
+        if ($ids) {
+            $out[$ch] = ['table' => $ch, 'ids' => $ids];
+        }
+    }
+    return $out;
+}
+
+/**
+ * A legacy trigger by source, or the "unassigned" pseudo trigger that holds
+ * the orphan template rows (no switches: whichever screen still uses one of
+ * them sends it).
+ */
+function sl_caLegacyTrigger(string $src): ?array
+{
+    if ($src === 'unassigned') {
+        $tpl = sl_caOrphanTemplates();
+        $tags = [];
+        foreach ($tpl as $loc) {
+            foreach ($loc['ids'] as $id) {
+                $r = sl_caLegacyRow($loc['table'], $id);
+                if ($r && preg_match_all('/\[[A-Z_]{2,40}\]/', $r['subject'] . ' ' . $r['body'], $m)) {
+                    $tags = array_merge($tags, $m[0]);
+                }
+            }
+        }
+        $tags = array_values(array_unique($tags));
+        sort($tags);
+        return ['label' => 'Unassigned old templates', 'group' => 'other', 'status_family' => false, 'locked' => true, 'unassigned' => true,
+            'desc' => 'Old template rows no trigger on this page uses. A screen may still send one of them; edit the text here.',
+            'channels' => array_keys($tpl), 'templates' => $tpl, 'tags' => $tags];
+    }
+    return cdp_commLegacyTriggers()[$src] ?? null;
+}
+
+/** The legacy trigger and channel whose template rows include table row #$id (for the old *_edit.php links). */
+function sl_caLegacyForTemplate(string $ch, int $id): string
+{
+    foreach (cdp_commLegacyTriggers() as $src => $t) {
+        if (in_array($id, array_map('intval', (array) ($t['templates'][$ch]['ids'] ?? [])), true)) {
+            return 'legacy:' . $src;
+        }
+    }
+    return in_array($id, (array) (sl_caOrphanTemplates()[$ch]['ids'] ?? []), true) ? 'legacy:unassigned' : '';
+}
+
+/** A query parameter as a string (an array in the URL gives ''). */
+function sl_caGet(string $k): string
+{
+    $v = $_GET[$k] ?? '';
+    return is_string($v) ? $v : '';
 }
 
 /** What the page needs to know about King (the AI assistant). */
@@ -381,11 +559,37 @@ function sl_commsAutomationsData($user): array
     $cat = $ready ? cdp_commTriggerCatalogue() : [];
     $statusRows = $ready ? sl_caStatusRows() : [];
     $inappOn = count(array_filter($statusRows, function ($r) { return $r['cells']['inapp']['on']; }));
+    $draftsOn = cdp_notifyDraftsOn();
     foreach ($cat as &$g) {
         foreach ($g['triggers'] as &$t) {
             $t['sent'] = $t['engine'] === 'custom' ? 0 : sl_caSentFor((string) $t['key']);
             $t['editable'] = $t['engine'] === 'comms' && $t['key'] !== 'status:*'
                 || ($t['engine'] === 'legacy' && !empty($t['templates']));
+            // Old-screen channels whose template rows are all missing send nothing
+            // (status-family screens still send the status's own message while
+            // predefined messages are on). Channels with no template row at all use
+            // wording built into the screen.
+            $t['missing'] = [];
+            $t['builtin'] = [];
+            if ($t['engine'] === 'legacy' && !empty($t['templates'])) {
+                foreach ((array) $t['channels'] as $c) {
+                    $loc = $t['templates'][$c] ?? null;
+                    if (!$loc) {
+                        $t['builtin'][$c] = true;
+                        continue;
+                    }
+                    $found = false;
+                    foreach ((array) $loc['ids'] as $id) {
+                        if (sl_caLegacyRow((string) $loc['table'], (int) $id)) {
+                            $found = true;
+                            break;
+                        }
+                    }
+                    if (!$found && !(!empty($t['status_family']) && $draftsOn)) {
+                        $t['missing'][$c] = true;
+                    }
+                }
+            }
             if ($t['key'] === 'status:*') {
                 // What is really sent today (owner-aware), not only the Automation Center rules.
                 $sending = count(array_filter($statusRows, function ($r) { return $r['cells']['whatsapp']['on'] || $r['cells']['sms']['on'] || $r['cells']['email']['on']; }));
@@ -397,16 +601,24 @@ function sl_commsAutomationsData($user): array
         unset($t);
     }
     unset($g);
-    $legacyCount = 0;
-    foreach (cdp_commLegacyTriggers() as $lt) {
-        $legacyCount += count((array) $lt['templates']);
+    if ($ready && ($orph = sl_caOrphanTemplates())) {
+        $u = sl_caLegacyTrigger('unassigned');
+        $n = array_sum(array_map(function ($l) { return count($l['ids']); }, $orph));
+        $cat[] = ['id' => 'unassigned', 'label' => 'Old templates not tied to a trigger', 'desc' => 'Kept so their text can still be edited.', 'triggers' => [
+            ['key' => 'legacy:unassigned', 'label' => $u['label'], 'desc' => $n . ' template rows (' . implode(', ', array_map(function ($c) use ($orph) {
+                return count($orph[$c]['ids']) . ' ' . SL_CA_CHANNELS[$c]; }, array_keys($orph))) . '). ' . $u['desc'],
+                'engine' => 'legacy', 'channels' => [], 'rules' => [], 'locked' => false, 'unassigned' => true, 'tags' => $u['tags'], 'templates' => $orph,
+                'link' => '', 'status_family' => false, 'sent' => 0, 'editable' => true, 'missing' => [], 'builtin' => []]]];
     }
-    $tab = (string) ($_GET['tab'] ?? '');
+    $tab = sl_caGet('tab');
+    $ch = sl_caGet('ch');
+    $edit = sl_caGet('edit');
+    $id = (int) sl_caGet('id');
     return [
         'ready' => $ready, 'catalogue' => $cat, 'master' => ($s['enabled'] ?? '0') === '1', 'quiet' => sl_caQuietLine($s),
         'owner' => cdp_commStatusOwner(), 'canEdit' => sl_caCanEdit($user), 'isAdmin' => sl_caIsAdmin($user), 'ai' => sl_caAi(),
-        'tab' => in_array($tab, ['all', 'other'], true) ? $tab : 'all', 'ch' => isset(SL_CA_CHANNELS[$_GET['ch'] ?? '']) ? (string) $_GET['ch'] : '',
-        'edit' => cdp_commTriggerKeyValid((string) ($_GET['edit'] ?? '')) ? (string) $_GET['edit'] : '',
+        'tab' => in_array($tab, ['all', 'other'], true) ? $tab : 'all', 'ch' => isset(SL_CA_CHANNELS[$ch]) ? $ch : '',
+        'edit' => cdp_commTriggerKeyValid($edit) ? $edit : '', 'editAsked' => mb_substr($edit, 0, 60), 'tplId' => $id > 0 ? $id : 0,
         'workerLast' => (string) cdp_opsSetting('comms', 'worker_last_run', ''), 'langs' => SL_CA_LANGS,
         'statusesUrl' => sl_route('CommsStatuses'), 'settingsUrl' => sl_route('CommsSettings'),
     ];
@@ -417,20 +629,16 @@ function sl_commsStatusesData($user): array
 {
     $ready = cdp_commEnsureTables();
     $rows = $ready ? sl_caStatusRows() : [];
-    $rules = cdp_commRules();
-    $any = [];
-    foreach (array_keys(SL_CA_CHANNELS) as $ch) {
-        $any[$ch] = !empty($rules['status:*'][$ch]);
-    }
-    $counts = ['drafted' => 0, 'custom' => 0, 'off' => 0];
+    $any = $ready ? sl_caAnyStatus() : [];
+    $counts = ['drafted' => 0, 'shared' => 0, 'custom' => 0, 'off' => 0];
     foreach ($rows as $r) {
         foreach ($r['cells'] as $c) {
             $counts[$c['state']]++;
         }
     }
-    $open = (int) ($_GET['status'] ?? 0);
+    $open = (int) sl_caGet('status');
     return [
-        'ready' => $ready, 'rows' => $rows, 'any' => $any, 'counts' => $counts, 'owner' => cdp_commStatusOwner(),
+        'ready' => $ready, 'rows' => $rows, 'any' => $any, 'counts' => $counts, 'owner' => cdp_commStatusOwner(), 'openAsked' => $open,
         'master' => cdp_commSetting('enabled') === '1', 'draftsOn' => cdp_notifyDraftsOn(), 'canEdit' => sl_caCanEdit($user), 'isAdmin' => sl_caIsAdmin($user),
         'ai' => sl_caAi(), 'open' => $open > 0 && cdp_commStatusName($open) !== '' ? $open : 0, 'langs' => SL_CA_LANGS,
         'automationsUrl' => sl_route('CommsAutomations'), 'settingsUrl' => sl_route('CommsSettings'),

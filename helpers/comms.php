@@ -2655,3 +2655,8 @@ if (!function_exists('cdp_commMigrateV2')) {
 if (is_file(__DIR__ . '/comms_surveys.php')) {
     require_once __DIR__ . '/comms_surveys.php';
 }
+// Campaign sending (cdp_commCampaignTick) loads with the engine too, so every worker entry point
+// runs it instead of the legacy cdp_commLaunchDueCampaigns (helpers/comms_campaigns.php requires this file back).
+if (is_file(__DIR__ . '/comms_campaigns.php')) {
+    require_once __DIR__ . '/comms_campaigns.php';
+}

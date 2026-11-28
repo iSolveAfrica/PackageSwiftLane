@@ -11,13 +11,14 @@
 .snd-grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start;margin-top:4px}
 .snd-main{min-width:0}
 .snd-side{position:sticky;top:16px;min-width:0}
-@media (max-width:1180px){.snd-grid{grid-template-columns:minmax(0,1fr)}.snd-side{position:static;order:-1}}
+@media (max-width:1180px){.snd-grid{grid-template-columns:minmax(0,1fr)}.snd-side{position:static}}
 .snd-step{display:flex;flex-direction:column;gap:14px;min-width:0}
 .snd-sh{display:flex;align-items:flex-start;gap:12px}
 .snd-sh .sl-ct{margin:0}
 .snd-n{flex:none;width:28px;height:28px;border-radius:50%;background:var(--ink);color:var(--inverse,#fff);display:grid;place-items:center;font:600 14px var(--font)}
 .snd-mode{align-self:flex-start;max-width:100%}
 .snd-mode button{display:inline-flex;align-items:center;gap:6px}
+.snd-locked #snd-who,.snd-locked #snd-msg{opacity:.6;pointer-events:none}
 .snd-g2{gap:12px}.snd-g3{gap:10px}
 
 /* customer search */
@@ -118,8 +119,13 @@
 
 @media (max-width:640px){
   .snd-step{padding:16px}
-  .snd-mode{width:100%}.snd-mode button{flex:1;justify-content:center;padding:0 8px}
+  .sl-head{flex-wrap:wrap;gap:12px}.sl-head>.row{flex-wrap:wrap;max-width:100%}
+  .snd-mode{width:100%;display:flex;min-width:0}.snd-mode button{flex:1 1 0;min-width:0;justify-content:center;padding:0 6px;white-space:nowrap}
   .snd-ch{flex:1 1 calc(50% - 8px);justify-content:flex-start}
   .snd-actions .grow{display:none}.snd-actions .sl-btn{flex:1 1 100%;justify-content:center}
   .snd-at{min-width:0;width:100%}
+}
+@media (max-width:480px){
+  .snd-mode button{font-size:14px;gap:4px;padding:0 4px}.snd-mode button .ic{display:none}
+  .sl-head>.row .sl-btn{flex:1 1 auto;justify-content:center}
 }

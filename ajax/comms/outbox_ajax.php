@@ -81,11 +81,19 @@ switch ($action) {
         $d['can_cancel'] = $d['can_cancel'] && $rank >= 2;
         $d['can_resend'] = !empty($d['can_resend']) && $rank >= 2;
         $d['can_explain'] = $d['can_explain'] && $rank >= 2;
+        if ($rank < 2) {
+            // Customer history and profiles are staff pages; read-only viewers keep the message itself.
+            $d['customer_link'] = '';
+            $d['profile_link'] = '';
+        }
         $out(['ok' => true, 'row' => $d]);
 
     case 'retry':
         [$kind, $id] = $ref();
-        $r = $kind ? cdp_commOutboxRetry($kind, $id) : ['ok' => false, 'error' => 'Unknown message.'];
+        $r = $kind ? cdp_commOutboxRetry($kind, $id, (string) ($_POST['confirm'] ?? '') === '1') : ['ok' => false, 'error' => 'Unknown message.'];
+        if (!$r['ok']) {
+            $out(['ok' => false, 'code' => $r['code'] ?? '', 'message' => $r['error']], ($r['code'] ?? '') === 'not_found' ? 404 : 200);
+        }
         if ($r['ok']) {
             $log('updated', 'Put an Outbox message back in the queue', $kind, $id);
             if (function_exists('cdp_afterResponse')) {
@@ -110,8 +118,13 @@ switch ($action) {
         $r = cdp_commOutboxResend($id);
         if ($r['ok']) {
             $log('sent', 'Sent a failed or skipped message again from the Outbox', 'log', $id);
+            // Deliver after the response, as Retry does: the click never waits for the providers.
+            if (function_exists('cdp_afterResponse')) {
+                cdp_afterResponse(function () { cdp_commDeliverDue(20); });
+            }
         }
-        $out(['ok' => $r['ok'], 'message' => $r['ok'] ? 'Queued again. The new attempt appears at the top of the Outbox.' : $r['error'], 'ref' => $r['ok'] && !empty($r['id']) ? 'queue-' . (int) $r['id'] : '']);
+        $out(['ok' => $r['ok'], 'code' => $r['code'] ?? '', 'message' => $r['ok'] ? 'Queued again. It goes out within a minute.' : $r['error'],
+            'ref' => !empty($r['id']) ? 'queue-' . (int) $r['id'] : '']);
 
     case 'explain':
         [$kind, $id] = $ref();
@@ -159,7 +172,13 @@ switch ($action) {
 
     case 'export':
         $f = cdp_commOutboxFilters($_GET);
-        $feed = cdp_commOutboxFeed($f, 1, 10000);
+        [$f] = cdp_commOutboxDefaultRange($f, $_GET);
+        $cap = 10000;
+        $feed = cdp_commOutboxFeed($f, 1, $cap);
+        $truncated = $feed['total'] > $cap;
+        if ($truncated) {
+            header('X-Export-Truncated: ' . $cap . ' of ' . (int) $feed['total']);
+        }
         $log('exported', 'Exported ' . count($feed['rows']) . ' Outbox rows');
         $cur = cdp_notifyCostCurrency();
         header('Content-Type: text/csv; charset=utf-8');
@@ -169,7 +188,11 @@ switch ($action) {
         fwrite($fh, "\xEF\xBB\xBF");
         $cell = function ($v) {
             $v = (string) $v;
-            // Spreadsheet formula injection: a leading = + - @ is shown as text.
+            // Phone numbers and plain numbers (+233541234567, -1.5) stay as they are.
+            if (preg_match('/^[+\-]?[\d\s().\-]+$/', $v)) {
+                return $v;
+            }
+            // Spreadsheet formula injection: a leading = + - @ tab or CR is shown as text.
             return preg_match('/^[=+\-@\t\r]/', $v) ? "'" . $v : $v;
         };
         fputcsv($fh, ['Time', 'Reference', 'Channel', 'Status', 'Origin', 'What', 'Customer', 'Customer id', 'To', 'Subject', 'Message', 'Attempts', 'Result',
@@ -178,6 +201,9 @@ switch ($action) {
             fputcsv($fh, array_map($cell, [$r['at'], $r['ref'], $r['channel_label'], $r['status_label'], $r['origin_label'], $r['what'], $r['name'], $r['uid'] ?: '',
                 $r['to'], $r['subject'], $r['excerpt'], $r['attempts'], $r['detail'], $r['provider'], $r['campaign'], $r['record'], $r['by'],
                 $r['cost'] === null ? '' : $r['cost'], $r['opens'] === null ? '' : $r['opens'], $r['clicks'] === null ? '' : $r['clicks']]));
+        }
+        if ($truncated) {
+            fputcsv($fh, ['Only the newest ' . $cap . ' of ' . (int) $feed['total'] . ' messages are in this file. Narrow the filters (for example the dates) to export the rest.']);
         }
         fclose($fh);
         exit;

@@ -68,10 +68,17 @@
   .ca-name{min-width:0}
   .ca-table td[data-label]::before{content:attr(data-label);font-size:13.5px;color:var(--muted)}
   .ca-cell{justify-content:space-between;text-align:left}
+  .ca-cell .ca-miss,.ca-cell .ca-bi{margin:0 0 0 auto}
   .ca-act{grid-column:1/-1;justify-content:flex-start;text-align:left}
   .ca-act:empty{display:none}
   .ca-cloud-g{grid-template-columns:1fr}
 }
 
 /* Automations only */
+.ca-miss,.ca-bi{display:block;margin:0 auto 4px;width:max-content;font:500 12.5px var(--font);line-height:18px;padding:0 7px;border-radius:999px}
+.ca-miss{background:var(--red-bg);color:var(--red-ink)}
+.ca-bi{color:var(--muted);padding:0}
+.ca-hl{animation:ca-hl 2.4s ease-out}
+@keyframes ca-hl{0%,40%{background:var(--amber-bg)}100%{background:transparent}}
+.ca-oldlink{display:flex;gap:8px;align-items:flex-start}
 .ca-group[data-ca-group="custom"] .ca-table thead{display:none}
