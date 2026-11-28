@@ -7,7 +7,7 @@ if (!isset($d)) { $d = []; }
 $can = $d['can'];
 ?>
         <div class="sl-head">
-          <div><h1 class="sl-title"><?= $d['isClient'] ? 'My sea packages' : 'Sea Packages' ?></h1><p class="sl-lede"><?= h($d['lede']) ?></p></div>
+          <div><h1 class="sl-title"><?= $d['isClient'] ? 'My sea shipments' : 'Sea Packages' ?></h1><p class="sl-lede"><?= h($d['lede']) ?></p></div>
           <div class="row g8 wrap"><a class="sl-btn ghost" href="<?= h(sl_url(['export' => 'csv'])) ?>"><i class="ic ic-sm i-download" aria-hidden="true"></i>Export</a><?php if (!$d['isClient']): ?><a class="sl-btn ghost" href="<?= h(sl_route('SeaPackages',['panel'=>'tower'])) ?>">Control tower</a><a class="sl-btn ghost" href="<?= sl_route('Consolidations', ['mode' => 'sea']) ?>"><i class="ic ic-sm i-layers" aria-hidden="true"></i>Containers</a><?php endif; ?><?php if ($d['canAdd']): ?><a class="sl-btn" href="<?= sl_route('NewPackage') ?>"><i class="ic ic-sm i-plus" aria-hidden="true"></i>New Package</a><?php endif; ?></div>
         </div>
         <?php if (!empty($d['mi'])): $mi = $d['mi']; $miOther = $d['miOther'] ?? null; include __DIR__ . '/partials/client_mode_insights.php'; else: ?>

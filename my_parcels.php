@@ -5,8 +5,8 @@ require_once 'views/sl/data/portal.php';
 $filter=(string)($_GET['filter']??'active');if(!in_array($filter,['active','ready','delivered','all'],true))$filter='active';
 $q=mb_substr(trim((string)($_GET['q']??'')),0,100);$page=max(1,(int)($_GET['page']??1));$per=12;$owner=(int)$_SESSION['userid'];
 $d=['filter'=>$filter,'q'=>$q,'page'=>$page,'per'=>$per,'rows'=>sl_portalShipments($owner,$per,($page-1)*$per,$q,$filter),'count'=>sl_portalCount($owner,$q,$filter)];
-// Sea first, then air (same permissions as the customer menu, helpers/sl_nav.php)
+// Air first, then sea (same permissions as the customer menu, helpers/sl_nav.php)
 $d['modes']=[];
-if($user->cdp_hasPermission('view_package_list'))$d['modes'][]=sl_clientModeInsights($owner,'sea');
 if($user->cdp_hasPermission('view_shipment_list'))$d['modes'][]=sl_clientModeInsights($owner,'air');
+if($user->cdp_hasPermission('view_package_list'))$d['modes'][]=sl_clientModeInsights($owner,'sea');
 sl_render('MyParcels',['id'=>'parcels','title'=>'My parcels','board'=>'MyParcels'],$d);

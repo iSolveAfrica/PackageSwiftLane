@@ -245,14 +245,11 @@ function sl_navCustomer(): array
     return [
         ['label' => 'My shipping', 'items' => [
             ['id' => 'dash', 'label' => 'Dashboard', 'icon' => 'grid', 'board' => 'Main', 'perm' => null],
-            // One "My parcels" area: the item opens the hub (sea and air cards with insights), the sub-menu goes
-            // straight to the sea packages or the air shipments.
-            ['id' => 'parcels', 'label' => 'My parcels', 'icon' => 'box', 'board' => 'MyParcels', 'perm' => null, 'hub' => true, 'children' => [
-                ['id' => 'sea', 'label' => 'Sea packages', 'icon' => 'ship', 'board' => 'SeaPackages', 'perm' => 'view_package_list',
-                    'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_customers_packages WHERE sender_id = :u AND status_courier NOT IN (8,15,21)", [':u' => $uid])],
-                ['id' => 'air', 'label' => 'Air shipments', 'icon' => 'plane', 'board' => 'AirShipments', 'perm' => 'view_shipment_list',
-                    'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_add_order WHERE sender_id = :u AND is_deleted = 0 AND status_courier NOT IN (8,15,21)", [':u' => $uid])],
-            ]],
+            // Air shipments, then sea shipments: each opens the customer's own list with its insights on top.
+            ['id' => 'air', 'label' => 'Air shipments', 'icon' => 'plane', 'board' => 'AirShipments', 'perm' => 'view_shipment_list',
+                'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_add_order WHERE sender_id = :u AND is_deleted = 0 AND status_courier NOT IN (8,15,21)", [':u' => $uid])],
+            ['id' => 'sea', 'label' => 'Sea shipments', 'icon' => 'ship', 'board' => 'SeaPackages', 'perm' => 'view_package_list',
+                'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_customers_packages WHERE sender_id = :u AND status_courier NOT IN (8,15,21)", [':u' => $uid])],
             ['id' => 'account', 'label' => 'My account', 'icon' => 'user', 'board' => 'MyAccount', 'perm' => null],
             ['id' => 'prealert', 'label' => 'Pre-Alerts', 'icon' => 'inbox', 'board' => 'PreAlerts', 'perm' => 'prealert_list',
                 'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_pre_alert WHERE customer_id = :u AND is_package = 0", [':u' => $uid])],

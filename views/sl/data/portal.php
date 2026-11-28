@@ -843,7 +843,7 @@ function sl_clientModeInsights(int $uid, string $mode): array
     $mk = array_keys($months);
     return [
         'mode' => $sea ? 'sea' : 'air', 'sea' => $sea,
-        'title' => $sea ? 'Sea packages' : 'Air shipments', 'icon' => $sea ? 'i-ship' : 'i-plane',
+        'title' => $sea ? 'Sea shipments' : 'Air shipments', 'icon' => $sea ? 'i-ship' : 'i-plane',
         'href' => sl_route($sea ? 'SeaPackages' : 'AirShipments'),
         'total' => $total, 'active' => $active, 'delivered' => $delivered,
         'yearN' => (int) ($year->n ?? 0), 'yearW' => (float) ($year->w ?? 0),

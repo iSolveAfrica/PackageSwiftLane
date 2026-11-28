@@ -10,9 +10,8 @@ $peakItem = max(1, max(array_column($mi['items'], 'q') ?: [0]));
 $noun = $mi['sea'] ? 'packages' : 'shipments';
 ?>
 <link rel="stylesheet" href="<?= h(cdp_asset('assets/swiftlane/client-modes.css')) ?>">
-<nav class="cm-switch" aria-label="My parcels">
-  <a href="<?= h(sl_route('MyParcels')) ?>"><i class="ic ic-sm i-grid" aria-hidden="true"></i>Overview</a>
-  <?php foreach (array_filter([$mi['sea'] ? $mi : $miOther, $mi['sea'] ? $miOther : $mi]) as $m): ?>
+<nav class="cm-switch" aria-label="Air or sea">
+  <?php foreach (array_filter([$mi['sea'] ? $miOther : $mi, $mi['sea'] ? $mi : $miOther]) as $m): // air, then sea ?>
   <a href="<?= h($m['href']) ?>"<?= $m['mode'] === $mi['mode'] ? ' aria-current="page"' : '' ?>><i class="ic ic-sm <?= h($m['icon']) ?>" aria-hidden="true"></i><?= h($m['title']) ?><?php if ($m['active']): ?><span><?= sl_num($m['active']) ?></span><?php endif; ?></a>
   <?php endforeach; ?>
 </nav>
