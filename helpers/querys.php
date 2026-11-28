@@ -8697,7 +8697,16 @@ function cdp_getPackageTrackingLegacyAware($order_id) {
             'estimated_eta'   => null,
         );
     }
-    if (empty($row->tracking_number)) {
+    // cdb_add_order.tracking_num only exists on installations upgraded from the
+    // old system; without the guard the lookup fails on a fresh schema.
+    static $hasLegacyTrk = null;
+    if ($hasLegacyTrk === null && empty($row->tracking_number)) {
+        $db = new Conexion;
+        $db->cdp_query("SELECT COUNT(*) AS n FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_add_order' AND COLUMN_NAME = 'tracking_num'");
+        $db->cdp_execute();
+        $hasLegacyTrk = (int) ($db->cdp_registro()->n ?? 0) > 0;
+    }
+    if (empty($row->tracking_number) && $hasLegacyTrk) {
         $db = new Conexion;
         $db->cdp_query('SELECT tracking_num FROM cdb_add_order WHERE order_id = :order_id LIMIT 1');
         $db->bind(':order_id', (int) $order_id);

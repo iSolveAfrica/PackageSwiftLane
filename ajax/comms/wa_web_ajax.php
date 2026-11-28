@@ -27,13 +27,19 @@ if ($rank < 2) {
     cdp_opsOut(['ok' => false, 'error' => 'Staff only.'], 403);
 }
 $isAdmin = $rank >= 3;
-$adminOnly = ['qr', 'instance', 'webhook_setup', 'export', 'save_contacts', 'quick_replies_save', 'sync_contacts'];
+$adminOnly = ['qr', 'instance', 'webhook_setup', 'export', 'save_contacts', 'quick_replies_save', 'quick_replies_reset', 'sync_contacts'];
 if (in_array($action, $adminOnly, true) && !$isAdmin) {
     cdp_opsOut(['ok' => false, 'error' => 'Administrators only.'], 403);
 }
-$writes = ['instance', 'webhook_setup', 'send', 'chat_update', 'tags', 'ticket', 'suggest', 'save_contacts', 'quick_replies_save', 'sync_contacts', 'read'];
+// Writes (and the export, which records who exported what) are POST with the CSRF token; reads never change anything.
+$writes = ['instance', 'webhook_setup', 'send', 'chat_update', 'tags', 'ticket', 'suggest', 'save_contacts', 'quick_replies_save', 'quick_replies_reset', 'sync_contacts', 'read', 'export'];
 if (in_array($action, $writes, true) && !$isPost) {
     cdp_opsOut(['ok' => false, 'error' => 'Use POST.'], 405);
+}
+// Nothing below writes to the session: release its lock so a slow provider call
+// (a chats sync can take several seconds) never holds the user's other requests.
+if (session_status() === PHP_SESSION_ACTIVE) {
+    session_write_close();
 }
 if (!cdp_umEnsureTables()) {
     cdp_opsOut(['ok' => false, 'error' => 'The WhatsApp tables could not be created. The database user needs the CREATE privilege once.'], 500);
@@ -122,10 +128,22 @@ $listChats = function ($filter, $q) use ($me) {
     return ['rows' => $out, 'counts' => $counts, 'sig' => md5(cdp_opsJson([$out, $counts]))];
 };
 
-/** Messages of a chat from the local copy (oldest first) and their signature. */
-$listMessages = function ($chatId, $limit = 200) {
-    $rows = array_reverse(cdp_opsQ("SELECT m.id, m.msg_id, m.from_me, m.author, m.author_name, m.type, m.body, m.media_url, m.thumb, m.filename, m.ack, m.ts, m.sent_by
-                                    FROM cdb_wa_messages m WHERE m.chat_id = :c ORDER BY m.ts DESC, m.id DESC LIMIT " . (int) $limit, [':c' => $chatId]));
+/** Cheap signature of a chat's messages (no row is read): count, newest id, last change. */
+$msgSig = function ($chatId) {
+    $r = cdp_opsOne("SELECT COUNT(*) n, MAX(id) mx, MAX(updated_at) up FROM cdb_wa_messages WHERE chat_id = :c", [':c' => $chatId]);
+    return md5((int) ($r->n ?? 0) . '|' . (int) ($r->mx ?? 0) . '|' . (string) ($r->up ?? ''));
+};
+
+/**
+ * Messages of a chat from the local copy (oldest first) and their signature.
+ * $since: the newest message id the browser already has; older rows come
+ * without their thumbnail (the browser keeps the one it has), so a tick
+ * change does not resend every picture.
+ */
+$listMessages = function ($chatId, $limit = 200, $since = 0) use ($msgSig) {
+    $rows = array_reverse(cdp_opsQ("SELECT m.id, m.msg_id, m.from_me, m.author, m.author_name, m.type, m.body, m.media_url, IF(m.id > :since, m.thumb, NULL) thumb,
+                                           (m.thumb IS NOT NULL AND m.thumb <> '') has_thumb, m.filename, m.ack, m.ts, m.sent_by
+                                    FROM cdb_wa_messages m WHERE m.chat_id = :c ORDER BY m.ts DESC, m.id DESC LIMIT " . (int) $limit, [':c' => $chatId, ':since' => (int) $since]));
     $names = [];
     $authors = [];
     foreach ($rows as $r) {
@@ -133,7 +151,7 @@ $listMessages = function ($chatId, $limit = 200) {
             $authors[] = cdp_umPhoneOf($r->author);
         }
     }
-    $people = $authors ? cdp_umPeople($authors) : [];
+    $people = $authors ? cdp_umPeople($authors, $chatId) : [];
     $out = [];
     foreach ($rows as $r) {
         $ph = $r->author ? cdp_umPhoneOf($r->author) : '';
@@ -143,17 +161,17 @@ $listMessages = function ($chatId, $limit = 200) {
         }
         $out[] = ['id' => (int) $r->id, 'mid' => (string) $r->msg_id, 'me' => (int) $r->from_me, 'author' => $ph, 'author_name' => $an,
             'type' => (string) $r->type, 'body' => (string) $r->body, 'media' => (string) $r->media_url, 'thumb' => (string) $r->thumb,
+            'keep_thumb' => (int) $r->has_thumb === 1 && (string) $r->thumb === '' ? 1 : 0,
             'filename' => (string) $r->filename, 'ack' => (string) $r->ack, 'ts' => (int) $r->ts, 'by' => $r->sent_by ? $names[(int) $r->sent_by] : ''];
     }
-    $sig = md5(cdp_opsJson(array_map(function ($m) { return [$m['id'], $m['ack'], $m['media'] !== '']; }, $out)));
-    return ['messages' => $out, 'sig' => $sig];
+    return ['messages' => $out, 'sig' => $msgSig($chatId)];
 };
 
 /** Status of the connection the page shows (state, phone, what the provider supports). */
 $stateOf = function ($fresh = false) use ($isAdmin) {
     $cfg = cdp_umConfig();
     $st = cdp_umStatus($fresh);
-    $out = ['ok' => true, 'configured' => $cfg['configured'], 'active' => $cfg['active'], 'instance' => $cfg['instance'], 'state' => $st['state'],
+    $out = ['ok' => true, 'configured' => $cfg['configured'], 'problem' => $isAdmin ? $cfg['problem'] : '', 'active' => $cfg['active'], 'instance' => $cfg['instance'], 'state' => $st['state'],
         'raw' => $st['raw'], 'error' => $st['error'] ?? '', 'checked' => (int) ($st['at'] ?? time()), 'me' => null, 'is_admin' => $isAdmin,
         'cached' => (int) cdp_opsVal("SELECT COUNT(*) FROM cdb_wa_chats"),
         'caps' => ['chats' => cdp_umCap('chats'), 'messages' => cdp_umCap('messages'), 'contacts' => cdp_umCap('contacts'),
@@ -218,15 +236,11 @@ switch ($action) {
         $sync = ['ok' => true, 'code' => 'offline', 'error' => ''];
         if ($connected) {
             $sync = cdp_umSyncMessages((string) $c->chat_id, 80, $G('force') === '1', 2);
-            if ((int) $c->unread > 0) {
-                cdp_umMarkRead((string) $c->chat_id);
-            }
+            // Marking the chat read is a separate POST 'read' the page sends once the chat is shown.
             if ((int) $c->is_group === 1 && $c->participants === null) {
                 cdp_umGroupParticipants((string) $c->chat_id);
             }
             $c = cdp_opsOne("SELECT * FROM cdb_wa_chats WHERE id = :id", [':id' => (int) $c->id]);
-        } elseif ((int) $c->unread > 0) {
-            cdp_opsX("UPDATE cdb_wa_chats SET unread = 0 WHERE id = :id", [':id' => (int) $c->id]);
         }
         $t = $threadOf($c);
         $customer = (int) $c->user_id ? cdp_umCustomer((int) $c->user_id) : null;
@@ -244,14 +258,14 @@ switch ($action) {
         $g = (int) $c->is_group === 1 ? cdp_opsOne("SELECT participant_count, source FROM cdb_wa_groups WHERE chat_id = :c", [':c' => (string) $c->chat_id]) : null;
         $m = $listMessages((string) $c->chat_id);
         cdp_opsOut(['ok' => true, 'sync' => ['ok' => $sync['ok'], 'code' => $sync['code'], 'error' => $sync['error']], 'connected' => $connected,
-            'chat' => ['id' => (string) $c->chat_id, 'group' => (int) $c->is_group, 'name' => (string) $c->name, 'phone' => (string) $c->phone,
+            'chat' => ['id' => (string) $c->chat_id, 'group' => (int) $c->is_group, 'name' => (string) $c->name, 'phone' => (string) $c->phone, 'unread' => (int) $c->unread,
                 'tags' => array_values(array_filter(array_map('trim', explode(',', (string) $c->tags)))),
                 'status' => (int) $c->is_group === 1 ? (string) $c->status : ($t ? (string) $t->status : 'open'),
                 'assignee' => (int) ((int) $c->is_group === 1 ? $c->assignee_id : ($t->assignee_id ?? 0)),
                 'assignee_name' => cdp_opsUserName((int) ((int) $c->is_group === 1 ? $c->assignee_id : ($t->assignee_id ?? 0))),
                 'bot' => $t && (int) $t->bot_active === 1 && $t->status === 'bot' ? 1 : 0, 'thread_id' => $t ? (int) $t->id : 0,
                 'participants' => $g ? (int) $g->participant_count : (int) $c->participants, 'participants_source' => $g ? (string) $g->source : ''],
-            'customer' => $customer, 'bot_enabled' => $bot, 'inbox_url' => sl_route('CommsInbox'),
+            'customer' => $customer, 'bot_enabled' => $bot, 'inbox_url' => sl_route('CommsInbox') . ($t ? '#c=' . (int) $t->id : ''),
             'me' => $me] + $m);
 
     case 'poll':
@@ -271,21 +285,28 @@ switch ($action) {
         if ($cid !== '' && cdp_umValidChatId($cid)) {
             if ($st['state'] === 'connected') {
                 cdp_umSyncMessages($cid, 40, false, 4);
-                if ((int) cdp_opsVal("SELECT unread FROM cdb_wa_chats WHERE chat_id = :c", [':c' => $cid], 0) > 0 && $G('visible') === '1') {
-                    cdp_umMarkRead($cid);
-                }
             }
-            $m = $listMessages($cid);
-            $out['msig'] = $m['sig'];
-            if ($m['sig'] !== $G('msig')) {
+            // The full rows are read only when the cheap signature changed.
+            $sig = $msgSig($cid);
+            $out['msig'] = $sig;
+            if ($sig !== $G('msig')) {
+                $m = $listMessages($cid, 200, (int) $G('since', '0'));
+                $out['msig'] = $m['sig'];
                 $out['messages'] = $m['messages'];
+                $out['unread'] = (int) cdp_opsVal("SELECT unread FROM cdb_wa_chats WHERE chat_id = :c", [':c' => $cid], 0);
             }
         }
         cdp_opsOut($out);
 
     case 'read':
         $c = $chatOf($P('chat_id'));
-        cdp_umMarkRead((string) $c->chat_id);
+        if ((int) $c->unread > 0) {
+            if (cdp_umStatus()['state'] === 'connected') {
+                cdp_umMarkRead((string) $c->chat_id);
+            } else {
+                cdp_opsX("UPDATE cdb_wa_chats SET unread = 0 WHERE id = :id", [':id' => (int) $c->id]);
+            }
+        }
         cdp_opsOut(['ok' => true]);
 
     case 'send':
@@ -294,6 +315,10 @@ switch ($action) {
         $media = null;
         if (!empty($_FILES['file']) && is_array($_FILES['file']) && (int) ($_FILES['file']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
             require_once __DIR__ . '/../../helpers/push_compose.php';
+            $ext = strtolower(pathinfo((string) ($_FILES['file']['name'] ?? ''), PATHINFO_EXTENSION));
+            if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'csv', 'txt'], true)) {
+                cdp_opsOut(['ok' => false, 'error' => 'This file type cannot be sent from this screen. Pictures: JPG, PNG, WEBP, GIF. Documents: PDF, Word, Excel, PowerPoint, CSV, TXT.']);
+            }
             $tmp = (string) ($_FILES['file']['tmp_name'] ?? '');
             $stored = cdp_pushMediaStore($_FILES['file'], (string) (cdp_getSettingsCourier()->site_url ?? ''));
             if (empty($stored['success'])) {
@@ -320,8 +345,8 @@ switch ($action) {
         if ((int) $c->is_group === 1 && $c->status === 'closed') {
             cdp_opsOut(['ok' => false, 'error' => 'This group chat is closed here. Reopen it to reply.', 'closed' => true]);
         }
-        $r = cdp_umSend((string) $c->chat_id, $text, $media, $me);
-        if ($r['ok'] && $t) {
+        $r = cdp_umSend((string) $c->chat_id, $text, $media, $me, $P('nonce'));
+        if ($r['ok'] && $t && empty($r['duplicate'])) {
             // The inbox shows the same conversation: a person who replied takes it, King stops answering.
             require_once __DIR__ . '/../../helpers/comms.php';
             cdp_commThreadLogOutbound((string) $c->phone, (int) $c->user_id, $text !== '' ? $text : '[' . $media['kind'] . ']', 'agent', $me, $r['provider_id'] ?? null);
@@ -329,7 +354,8 @@ switch ($action) {
                 [':u' => $me, ':id' => (int) $t->id]);
         }
         $m = $listMessages((string) $c->chat_id);
-        cdp_opsOut(['ok' => $r['ok'], 'error' => $r['ok'] ? '' : 'Not sent: ' . $r['error'], 'msig' => $m['sig'], 'messages' => $m['messages']]);
+        cdp_opsOut(['ok' => $r['ok'], 'error' => $r['ok'] ? '' : 'Not sent: ' . $r['error'], 'code' => $r['code'] ?? '', 'duplicate' => !empty($r['duplicate']),
+            'msig' => $m['sig'], 'messages' => $m['messages']]);
 
     case 'chat_update':
         $c = $chatOf($P('chat_id'));
@@ -482,8 +508,8 @@ switch ($action) {
         $saved = (int) cdp_opsVal("SELECT COUNT(*) FROM cdb_comm_contacts");
         $stop = (int) cdp_opsVal("SELECT COUNT(*) FROM cdb_comm_contacts WHERE opted_out = 1");
         $exports = [];
-        foreach (cdp_opsQ("SELECT kind, target, format, row_count, saved_count, user_id, created_at FROM cdb_wa_exports ORDER BY id DESC LIMIT 8") as $e) {
-            $exports[] = ['kind' => $e->kind, 'target' => (string) $e->target, 'format' => $e->format, 'rows' => (int) $e->row_count, 'saved' => (int) $e->saved_count,
+        foreach (cdp_opsQ("SELECT kind, target, format, row_count, saved_count, opted_out_count, user_id, created_at FROM cdb_wa_exports ORDER BY id DESC LIMIT 8") as $e) {
+            $exports[] = ['kind' => $e->kind, 'target' => (string) $e->target, 'format' => $e->format, 'rows' => (int) $e->row_count, 'saved' => (int) $e->saved_count, 'opted_out' => (int) $e->opted_out_count,
                 'by' => cdp_opsUserName((int) $e->user_id), 'at' => (string) $e->created_at];
         }
         require_once __DIR__ . '/../../helpers/sl_routes.php';
@@ -492,13 +518,13 @@ switch ($action) {
 
     case 'export':
         // Contacts of the phone, or the members of one group, as CSV or Excel. Audited.
-        $what = $G('what') === 'group' ? 'group' : 'contacts';
-        $fmt = $G('format') === 'xlsx' ? 'xlsx' : 'csv';
+        $what = $P('what') === 'group' ? 'group' : 'contacts';
+        $fmt = $P('format') === 'xlsx' ? 'xlsx' : 'csv';
         $head = ['Name', 'Phone', 'WhatsApp ID', 'Customer', 'Locker', 'Saved in the phone', 'Business', 'Opted out (STOP)'];
         $rows = [];
         $target = 'Phone contacts';
         if ($what === 'group') {
-            $c = $chatOf($G('chat_id'));
+            $c = $chatOf($P('chat_id'));
             if ((int) $c->is_group !== 1) {
                 cdp_opsOut(['ok' => false, 'error' => 'Not a group.']);
             }
@@ -561,7 +587,7 @@ switch ($action) {
             $people[] = ['phone' => (string) $c->phone, 'name' => (string) $c->name];
             $source = 'whatsapp_chat';
             $target = 'Chat ' . cdp_umPlusPhone((string) $c->phone);
-        } else {
+        } elseif ($what === 'contacts') {
             if (cdp_umStatus()['state'] === 'connected') {
                 cdp_umSyncContacts(false);
             }
@@ -570,25 +596,32 @@ switch ($action) {
             }
             $source = 'whatsapp_contacts';
             $target = 'Phone contacts';
+        } else {
+            cdp_opsOut(['ok' => false, 'error' => 'Unknown list.']);
         }
         if (!$people) {
             cdp_opsOut(['ok' => false, 'error' => 'There is nobody to save yet.']);
         }
         $r = cdp_umSaveContacts($people, $source, $me);
-        cdp_umAudit($what === 'group' ? 'group' : ($what === 'chat' ? 'chat' : 'contacts'), $target, 'save', count($people), $r['saved'] + $r['updated']);
+        // The log counts the numbers campaigns can reach; the opted-out ones separately.
+        cdp_umAudit($what, $target, 'save', count($people), max(0, $r['saved'] + $r['updated'] - $r['opted_out']), $r['opted_out']);
         $msg = ($r['saved'] ? $r['saved'] . ' saved' : 'No new contacts') . ($r['updated'] ? ', ' . $r['updated'] . ' already saved (updated)' : '')
             . ($r['opted_out'] ? ', ' . $r['opted_out'] . ' opted out (STOP: campaigns skip them)' : '') . ($r['skipped'] ? ', ' . $r['skipped'] . ' skipped (not a valid number)' : '') . '.';
         cdp_opsOut(['ok' => true, 'message' => $msg, 'source' => $source] + $r);
 
     case 'quick_replies':
-        cdp_opsOut(['ok' => true, 'rows' => cdp_umQuickReplies(), 'can_edit' => $isAdmin]);
+        cdp_opsOut(['ok' => true, 'rows' => cdp_umQuickReplies(), 'vars' => cdp_umQuickVars(), 'can_edit' => $isAdmin]);
+
+    case 'quick_replies_reset':
+        cdp_umSettingSet('quick_replies', '');
+        cdp_opsOut(['ok' => true, 'rows' => cdp_umQuickReplies(), 'vars' => cdp_umQuickVars(), 'message' => 'The built-in quick replies are back.']);
 
     case 'quick_replies_save':
         $rows = cdp_opsDecode($P('rows'), []);
         cdp_umSettingSet('quick_replies', array_slice(array_values(array_filter(array_map(function ($r) {
             return is_array($r) ? ['title' => mb_substr(trim((string) ($r['title'] ?? '')), 0, 60), 'body' => mb_substr(trim((string) ($r['body'] ?? '')), 0, 1500)] : null;
         }, $rows), function ($r) { return $r && $r['title'] !== '' && $r['body'] !== ''; })), 0, 40));
-        cdp_opsOut(['ok' => true, 'rows' => cdp_umQuickReplies(), 'message' => 'Quick replies saved.']);
+        cdp_opsOut(['ok' => true, 'rows' => cdp_umQuickReplies(), 'vars' => cdp_umQuickVars(), 'message' => 'Quick replies saved.']);
 }
 
 cdp_opsOut(['ok' => false, 'error' => 'Unknown action.'], 400);

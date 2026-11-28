@@ -78,7 +78,7 @@
             if (!btn || btn.disabled) return;
             var data = {};
             Array.prototype.forEach.call(pf.elements, function (el) { if (el.name) data[el.name] = el.value; });
-            if (data.opted_out_all === '1' && !confirm('Opt this customer out of all messages? Messages waiting to go are cancelled.')) return;
+            if (data.opted_out_all === '1' && !confirm('Opt this customer out of all messages? Their waiting status updates, Support desk notices and delivery notices are cancelled.')) return;
             btn.disabled = true; btn.classList.add('loading');
             data.action = 'save_prefs';
             SL.post(AJ, data).then(function (j) {

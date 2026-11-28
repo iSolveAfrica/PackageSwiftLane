@@ -1,7 +1,8 @@
 <?php
-/** Data for the Settings hub (SettingsHub.dc.html): cdb_settings, SMS settings and the index of every legacy settings page. */
+/** Data for the Settings hub (SettingsHub.dc.html): cdb_settings and the index of every settings page (messaging lives in comms_settings.php). */
 require_once CDP_ROOT . '/helpers/sl_view.php';
 require_once CDP_ROOT . '/helpers/querys.php';
+require_once CDP_ROOT . '/helpers/sl_nav.php';
 
 function sl_settingsIndex($user): array
 {
@@ -13,10 +14,10 @@ function sl_settingsIndex($user): array
             ['Backup', 'Download a database backup', 'backup.php', 'view_tools'],
             ...((int)$user->userlevel === 9 && defined('CDP_DB_IMPORT_ENABLED') && CDP_DB_IMPORT_ENABLED === true ? [['Database import', 'Upload and check a main database export', 'backup.php', 'view_tools']] : [])]],
         ['label' => 'Messaging', 'icon' => 'i-message', 'items' => [
-            ['WhatsApp provider', 'UltraMsg or Meta Cloud API, link the phone by QR, webhook', 'comms_settings.php#cs-whatsapp', 'view_tools'], ['SMS providers', 'Hubtel, mNotify, default and fallback', 'comms_settings.php#cs-sms', 'view_tools'],
-            ['E-mail server', 'SMTP or PHP mail, from address, check the server', 'comms_settings.php#cs-email', 'view_tools'], ['Sending rules', 'Master switch, who sends status messages, quiet hours, reminders', 'comms_settings.php#cs-rules', 'view_tools'],
-            ['Consent and opt-out', 'STOP keywords and customer choices', 'comms_settings.php#cs-consent', 'view_tools'], ['Test send', 'One WhatsApp, SMS or e-mail with the saved settings', 'comms_settings.php#cs-test', 'view_tools'],
-            ['Automations', 'Everything that sends a message, per channel', 'comms_automations.php', 'view_tools'],
+            ['WhatsApp provider', 'UltraMsg or Meta Cloud API, link the phone by QR, webhook', 'comms_settings.php#cs-whatsapp', 'ops:admin'], ['SMS providers', 'Hubtel, mNotify, default and fallback', 'comms_settings.php#cs-sms', 'ops:admin'],
+            ['E-mail server', 'SMTP or PHP mail, from address, check the server', 'comms_settings.php#cs-email', 'ops:admin'], ['Sending rules', 'Master switch, who sends status messages, quiet hours, reminders', 'comms_settings.php#cs-rules', 'ops:admin'],
+            ['Consent and opt-out', 'STOP keywords and customer choices', 'comms_settings.php#cs-consent', 'ops:admin'], ['Test send', 'One WhatsApp, SMS or e-mail with the saved settings', 'comms_settings.php#cs-test', 'ops:admin'],
+            ['Automations', 'Everything that sends a message, per channel', 'comms_automations.php', 'ops:staff'],
             ['SMS (legacy Nexmo / Twilio)', 'Older SMS gateways', 'config_sms.php', 'view_tools'], ['Twilio', 'Twilio account', 'config_twilio.php', 'view_tools']]],
         ['label' => 'Logistics lists', 'icon' => 'i-truck', 'items' => [
             ['Offices', 'Offices and hubs', 'offices_list.php', 'view_tools'], ['Branch offices', 'Agencies and branches', 'branchoffices_list.php', 'view_tools'], ['Courier companies', 'Carriers you work with', 'courier_company_list.php', 'view_tools'],
@@ -28,8 +29,8 @@ function sl_settingsIndex($user): array
         ['label' => 'Places', 'icon' => 'i-globe', 'items' => [
             ['Countries', 'Country list', 'countries_list.php', 'view_tools'], ['States and regions', 'State list', 'states_list.php', 'view_tools'], ['Cities', 'City list', 'cities_list.php', 'view_tools']]],
         ['label' => 'Templates', 'icon' => 'i-file', 'items' => [
-            ['Status messages', 'WhatsApp, SMS and e-mail text for every shipment status', 'comms_statuses.php', 'view_tools'],
-            ['Other message templates', 'Sign-up, pickup code, payments and the other triggers', 'comms_automations.php?tab=other', 'view_tools'],
+            ['Status messages', 'WhatsApp, SMS and e-mail text for every shipment status', 'comms_statuses.php', 'ops:staff'],
+            ['Other message templates', 'Sign-up, pickup code, payments and the other triggers', 'comms_automations.php?tab=other', 'ops:staff'],
             ['E-mail builder', 'Drag-and-drop e-mails and campaigns', 'comms_send.php?mode=campaign&channel=email', 'manage_newsletter']]],
     ];
     $q = trim((string) ($_GET['sq'] ?? ''));
@@ -40,7 +41,8 @@ function sl_settingsIndex($user): array
     foreach ($g as $x) {
         $items = [];
         foreach ($x['items'] as $i) {
-            if (!$user->cdp_hasPermission($i[3])) continue;
+            // ops:* (rank gates of Notifications & Messages) and the other nav rules; plain permissions otherwise.
+            if (!(strpos($i[3], ':') !== false ? sl_navAllowed($i[3], []) : $user->cdp_hasPermission($i[3]))) continue;
             $all++;
             if ($q !== '' && stripos($i[0] . ' ' . $i[1], $q) === false) continue;
             $items[] = ['t' => $i[0], 'd' => $i[1], 'href' => $i[2]];
@@ -62,16 +64,7 @@ function sl_settingsHubData($user, $core): array
     $d['countries'] = sl_rows('SELECT name FROM cdb_countries ORDER BY name');
     $d['rateLog'] = sl_tableExists('cdb_exchange_rate_log') ? array_map(fn($r) => ['what' => number_format((float) $r->old_rate, 2) . ' → ' . number_format((float) $r->new_rate, 2), 'who' => trim((string) $r->who) ?: 'System', 'when' => sl_ago($r->changed_at)],
         sl_rows("SELECT l.*, CONCAT(u.fname, ' ', u.lname) who FROM cdb_exchange_rate_log l LEFT JOIN cdb_users u ON u.id = l.changed_by ORDER BY l.id DESC LIMIT 5")) : [];
-    @include_once CDP_ROOT . '/helpers/hubtel_sms.php';
-    $sms = ['ok' => function_exists('cdp_smsSetting')];
-    if ($sms['ok']) {
-        $hub = cdp_hubtelSmsConfig();
-        $mno = function_exists('cdp_mnotifySmsConfig') ? cdp_mnotifySmsConfig() : ['api_key' => '', 'sender' => ''];
-        $sms += ['hub_id' => $hub['client_id'], 'hub_secret_set' => $hub['client_secret'] !== '', 'hub_sender' => $hub['sender'], 'mn_key_set' => ($mno['api_key'] ?? '') !== '', 'mn_sender' => (string) cdp_smsSetting('mnotify_sender_id'),
-            'hub_on' => cdp_smsProviderEnabled('hubtel') && cdp_smsProviderConfigured('hubtel'), 'mn_on' => cdp_smsProviderEnabled('mnotify') && cdp_smsProviderConfigured('mnotify'), 'default' => cdp_smsDefaultProvider(), 'fallback' => cdp_smsFallbackOn(), 'active' => (int) ($s->active_sms ?? 0) === 1,
-            'canManage' => cdp_smsCanManage($user)];
-    }
-    $d['sms'] = $sms;
+    $d['canComms'] = sl_navAllowed('ops:admin', []);
     $d['canEdit'] = $user->cdp_hasPermission('view_tools');
     return $d;
 }

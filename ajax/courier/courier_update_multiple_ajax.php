@@ -179,8 +179,30 @@ foreach ($data as $key) {
                     ['status_id' => (int) $status, 'module' => 'air', 'order_id' => (int) $courier->order_id]
                 );
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             error_log('Error sending WhatsApp v2 notification for bulk update: ' . $e->getMessage());
+        }
+
+        // E-mail from the status message library, as sea bulk status and the
+        // single status screens send it (nothing when the library has no e-mail
+        // for this status, or it is switched off there).
+        try {
+            if (!empty($sender_data) && !empty($sender_data->email)) {
+                require_once __DIR__ . '/../../helpers/pickup_code.php';
+                $cdpLabel = cdp_wa_lookupName('cdb_styles', 'mod_style', (int) $status);
+                $cdpTrackUrl = rtrim((string) (cdp_getSettingsCourier()->site_url ?? ''), '/') . '/track.php?order_track=' . rawurlencode($tracking);
+                $cdpCodeHtml = cdp_pickupCodeReadyLine('air', [(int) $courier->order_id], (int) $status, $cdpLabel, true);
+                $ns = cdp_statusNotifyResolve((int) $status, $sender_data, $tracking, $cdpTrackUrl, 'air', (int) $courier->order_id, [
+                    'status' => (string) $cdpLabel, 'comment' => '',
+                    'pickup_code' => (string) cdp_pickupCodeReadyLine('air', [(int) $courier->order_id], (int) $status, $cdpLabel),
+                    'pickup_code_html' => (string) $cdpCodeHtml,
+                ]);
+                if (!empty($ns['email']['on']) && !empty($ns['email']['custom'])) {
+                    cdp_statusNotifyEmail($sender_data, $ns['email'], 'Shipment Status Update - ' . $tracking);
+                }
+            }
+        } catch (Throwable $e) {
+            error_log('Error sending status e-mail for bulk update: ' . $e->getMessage());
         }
 
         // Agregar mensaje de éxito

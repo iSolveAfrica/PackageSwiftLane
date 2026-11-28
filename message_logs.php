@@ -9,6 +9,13 @@
  * sl_msgShortDetail() and the MessageLogs route name.
  */
 require_once 'loader.php';
-$q = $_SERVER['QUERY_STRING'] ?? '';
+$in = $_GET;
+// Old links put a customer id in q (views/sl/data/user_360.php: MessageLogs?q=<uid>): a short
+// number alone is that customer, not a text search (phone numbers and tracking numbers are longer).
+if (isset($in['q']) && is_string($in['q']) && preg_match('/^\d{1,6}$/', trim($in['q'])) && empty($in['customer']) && empty($in['recipient_id'])) {
+    $in['customer'] = (int) trim($in['q']);
+    unset($in['q']);
+}
+$q = http_build_query($in);
 header('Location: comms_outbox.php' . ($q !== '' ? '?' . $q : ''), true, 302);
 exit;

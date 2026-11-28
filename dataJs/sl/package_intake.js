@@ -51,9 +51,49 @@
   // lookup
   var msg = $('[data-ix-msg]');
   function say(t, bad) { msg.hidden = !t; msg.innerHTML = t; msg.style.color = bad ? 'var(--red-ink)' : ''; }
+  // pre-alert match card: the scan finds the pre-alert, staff approve it, its data fills the form
+  var matchBox = $('[data-ix-match]'), pending = null, lastLooked = '';
+  function fillFromPrealert(j, link) {
+    var p = j.prealert;
+    $('[name="prealert_id"]').value = link ? p.id : '';
+    $('[data-ix-shop]').value = p.shop || ''; $('[data-ix-price]').value = p.price ? p.price.toFixed(2) : '';
+    if (p.eta && p.eta !== '0000-00-00') $('[data-ix-eta]').value = p.eta;
+    if (p.courier_id && f.querySelector('[data-ix-carrier="' + p.courier_id + '"]')) pickCarrier(f.querySelector('[data-ix-carrier="' + p.courier_id + '"]'));
+    if (j.customer) { setCustomers([j.customer], j.customer.id); $('[data-ix-cq]').value = j.customer.locker || j.customer.name; }
+    box.innerHTML = ''; (j.items && j.items.length ? j.items : [null]).forEach(addItem);
+    $('[data-ix-conf]').textContent = (link ? 'Pre-alert approved' : 'Copied from pre-alert') + ' · check and edit';
+    $('[data-ix-details]').hidden = false; calc();
+    var w = $('[data-ix-w]'); if (w) w.focus();
+  }
+  function manual(j) {
+    $('[name="prealert_id"]').value = '';
+    carrierByName(j.carrierGuess);
+    $('[data-ix-conf]').textContent = 'No pre-alert · fill in by hand';
+    setCustomers([]); cSel.innerHTML = '<option value="">Find the customer above</option>';
+    box.innerHTML = ''; addItem(); $('[data-ix-details]').hidden = false; calc();
+    $('[data-ix-cq]').focus();
+  }
+  function showMatch(j) {
+    var p = j.prealert, r = p.receipt, c = j.customer;
+    var rows = [['Customer', c ? c.name + (c.locker ? ' · ' + c.locker : '') : (j.note || '—')], ['Shop', p.shop || '—'], ['Carrier', p.courier || '—'], ['What', p.desc || '—'], ['Declared value', p.price ? money(p.price) : '—'], ['Expected', p.eta && p.eta !== '0000-00-00' ? p.eta : '—'], ['Pre-alerted', p.sent || '—']];
+    matchBox.innerHTML = '<div class="row between wrap g8"><span class="row g8" style="align-items:center"><span class="sl-pill ' + (p.used ? 'pending' : 'paid') + '">' + (p.used ? 'Pre-alert already received' : 'In pre-alert') + '</span><b class="fw5">Pre-alert #' + p.id + '</b></span>' + (p.invoice ? '<a class="sm" target="_blank" href="' + esc(p.invoice) + '">Invoice</a>' : '') + '</div>' +
+      '<div class="sl-kv">' + rows.map(function (x) { return '<div><span>' + esc(x[0]) + '</span><span>' + esc(x[1]) + '</span></div>'; }).join('') + '</div>' +
+      (p.used ? '<p class="sm" style="margin:0;color:var(--red-ink)">Keyed in ' + (r && r.at ? 'on ' + esc(r.at) : 'before') + (r && r.by ? ' by ' + esc(r.by) : '') + (r && r.track ? ' as <a href="' + esc(r.href) + '">' + esc(r.track) + '</a>' : '') + '. Check before adding it again.</p>' : '') +
+      '<div class="row g8 wrap"><button type="button" class="sl-btn" data-ix-approve><i class="ic ic-sm i-check" aria-hidden="true"></i>' + (p.used ? 'Copy the details anyway' : 'Approve match · use pre-alert') + '</button><button type="button" class="sl-btn ghost" data-ix-reject>Not this parcel · enter by hand</button></div>';
+    matchBox.hidden = false; pending = j;
+    var ap = matchBox.querySelector('[data-ix-approve]'); if (ap) ap.focus();
+  }
+  matchBox.addEventListener('click', function (e) {
+    if (!pending) return;
+    if (e.target.closest('[data-ix-approve]')) {
+      var link = !pending.prealert.used; fillFromPrealert(pending, link);
+      matchBox.innerHTML = '<div class="row g8" style="align-items:center"><span class="sl-pill paid">' + (link ? 'Pre-alert approved' : 'Details copied') + '</span><span class="sm mut">' + (link ? 'Pre-alert #' + pending.prealert.id + ' is marked received when you save.' : 'Not linked: that pre-alert was already received.') + '</span></div>';
+    } else if (e.target.closest('[data-ix-reject]')) { matchBox.hidden = true; manual(pending); pending = null; }
+  });
   function lookup() {
     var t = $('[data-ix-track]').value.trim(); if (!t) { $('[data-ix-track]').focus(); return; }
-    $('[data-ix-loading]').hidden = false; say('');
+    lastLooked = t.toUpperCase().replace(/\s+/g, '');
+    $('[data-ix-loading]').hidden = false; say(''); matchBox.hidden = true; pending = null; $('[data-ix-details]').hidden = true;
     get('ajax/sl/package_intake_ajax.php?op=lookup&tracking=' + encodeURIComponent(t)).then(function (j) {
       $('[data-ix-loading]').hidden = true;
       if (!j.success) { say(esc(j.message || 'Lookup failed'), true); return; }
@@ -82,6 +122,13 @@
       calc();
     }).catch(function () { $('[data-ix-loading]').hidden = true; say('Lookup failed. Check the connection and try again.', true); });
   }
+  // look up by itself once a full tracking number is typed or scanned (scanners usually also send Enter)
+  var autoT;
+  $('[data-ix-track]').addEventListener('input', function () {
+    clearTimeout(autoT);
+    var v = this.value.trim().toUpperCase().replace(/\s+/g, '');
+    if (v.length >= 10 && v !== lastLooked) autoT = setTimeout(lookup, 450);
+  });
   f.querySelector('[data-ix-lookup]').addEventListener('click', lookup);
 
   // as you type: open pre-alerts with a matching tracking number; "Convert" fills the form from it
@@ -159,6 +206,7 @@
       var c = custs[cSel.value] || {};
       done.querySelector('[data-ix-donesub]').innerHTML = '<b class="mono" style="color:var(--ink)">' + esc((j.message || '').replace(/^Package | registered$/g, '')) + '</b> · ' + esc((boxes()[0] || {}).description || '') + ' · for ' + esc(c.name || '') + (c.locker ? ' (' + esc(c.locker) + ')' : '');
       done.querySelector('[data-ix-doneprice]').textContent = money(tot) + ' estimated';
+      if ($('[name="prealert_id"]').value) done.querySelector('[data-ix-donesub]').insertAdjacentHTML('beforeend', ' · <b>pre-alert marked received</b>');
       done.querySelector('[data-ix-open]').href = 'customer_packages_view.php?id=' + saved;
       var first = done.querySelector('[data-ix-print]'); if (first) setPrint(first.getAttribute('data-ix-print'));
       done.hidden = false;

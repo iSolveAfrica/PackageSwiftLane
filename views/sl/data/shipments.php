@@ -190,6 +190,11 @@ function sl_airShipmentsData($user, $core): array
         'attention' => $customs + $unpaid + $noCarrier, 'customs' => $customs, 'unpaid' => $unpaid, 'noCarrier' => $noCarrier,
         'client' => $client,
     ];
+    if ($client && !$forExport) { // the customer's own insights + the sea | air switch
+        require_once __DIR__ . '/portal.php';
+        $d['mi'] = sl_clientModeInsights((int) $_SESSION['userid'], 'air');
+        $d['miOther'] = $user->cdp_hasPermission('view_package_list') ? sl_clientModeInsights((int) $_SESSION['userid'], 'sea') : null;
+    }
     if (!$client && !$forExport) {
         $d['ins'] = sl_shipmentInsightsData((string) ($_GET['ins'] ?? '12m'));
         require_once CDP_ROOT . '/helpers/ai_assistant.php';

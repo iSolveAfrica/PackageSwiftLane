@@ -162,6 +162,8 @@ if (empty($errors)) {
     if ($shipment_id !== null) {
 
         cdp_updatedPreAlertPackage($_POST["prealert_id"]);
+        require_once __DIR__ . '/../../helpers/prealert_receive.php';
+        cdp_preAlertMarkReceived((int) $_POST['prealert_id'], 'sea', (int) $shipment_id, (int) $_SESSION['userid'], $code_prefix . $next_order);
 
         if (isset($_POST["packages"])) {
 
@@ -383,7 +385,7 @@ if (empty($errors)) {
             $header .= "Content-type: text/html; charset=UTF-8 \r\n";
             $header .= "From: " . $from . " \r\n";
             try {
-                if (cdp_commLegacyAllowed('email', ['to' => (string) $to, 'subject' => (string) $subject])) { $cdpOk = @mail($to, $subject, $message, $header); if (function_exists('cdp_msgLogPhpMail')) { cdp_msgLogPhpMail((bool) $cdpOk, $to, $subject, $message); } }
+                require_once __DIR__ . '/../../helpers/whatsapp.php'; if (cdp_commLegacyAllowed('email', ['id' => (int) ($sender_data->id ?? 0), 'name' => trim((string) ($sender_data->fname ?? '') . ' ' . (string) ($sender_data->lname ?? '')), 'to' => (string) $to, 'subject' => (string) $subject, 'body' => cdp_statusNotifyPlain($message)])) { $cdpOk = @mail($to, $subject, $message, $header); if (function_exists('cdp_msgLogPhpMail')) { cdp_msgLogPhpMail((bool) $cdpOk, $to, $subject, $message); } }
             } catch (Exception $e) {
             }
         } elseif ($check_mail == 'SMTP') {

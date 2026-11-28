@@ -727,9 +727,7 @@ function sl_clientCardsData(int $uid, array $d): array
     $today = new DateTimeImmutable('today');
     $days = [];
     for ($day = $today->modify('-13 days'); $day <= $today; $day = $day->modify('+1 day')) $days[$day->format('Y-m-d')] = 0;
-    $from = array_key_first($days);
     $dayLabels = array_map(fn($x) => date('D j M', strtotime($x)), array_keys($days));
-    $fill = function (array $rows) use ($days) { foreach ($rows as $r) if (isset($days[$r->d])) $days[$r->d] = (float) $r->n; return $days; };
 
     // 1. parcels
     $airMonth = (int) sl_scalar("SELECT COUNT(*) $air AND a.order_date >= $mStart", $u);
@@ -742,19 +740,7 @@ function sl_clientCardsData(int $uid, array $d): array
         'sub' => [['n' => sl_num($airMonth), 'l' => 'Air'], ['n' => sl_num($seaMonth), 'l' => 'Sea'], ['n' => sl_num($d['atWh']), 'l' => 'At warehouse']],
         'bars' => sl_sparkBars($reg, 4, $dayLabels), 'barsL' => '14 days · ' . sl_num(array_sum($reg)) . ' in', 'barsR' => 'avg ' . sl_num(array_sum($reg) / 14, 1) . ' a day'];
 
-    // 2. pickup and delivery
-    $delivered = $fill(sl_rows("SELECT DATE(t.t_date) AS d, COUNT(DISTINCT t.order_track) AS n FROM cdb_courier_track t
-        WHERE t.status_courier IN (8,15) AND t.t_date >= :f AND t.order_track IN (
-            SELECT CONCAT(a.order_prefix, a.order_no) $air UNION SELECT CONCAT(p.order_prefix, p.order_no) FROM cdb_customers_packages p WHERE p.sender_id = :u2)
-        GROUP BY DATE(t.t_date)", [':u' => $uid, ':u2' => $uid, ':f' => $from]));
-    $outNow = $both(' AND a.status_courier IN (5,7)', ' AND p.status_courier IN (5,7)');
-    $delMonth = $both(" AND a.status_courier IN (8,15) AND a.order_date >= $mStart - INTERVAL 1 MONTH", " AND p.status_courier IN (8,15) AND p.order_date >= $mStart - INTERVAL 1 MONTH");
-    $oldReady = $both(' AND a.status_courier IN (6,32) AND a.order_date < CURDATE() - INTERVAL 14 DAY', ' AND p.status_courier IN (6,32) AND p.order_date < CURDATE() - INTERVAL 14 DAY');
-    $cards[] = ['tone' => 'mint', 'icon' => 'i-truck', 'eyebrow' => 'Pickup', 'href' => sl_route('PickupCodes'),
-        'alert' => $oldReady ? $oldReady . ' waiting 14+ days' : '',
-        'big' => sl_num($d['ready']) . ' ready', 'lede' => sl_num($d['onWay']) . ' on the way · ' . sl_num($d['deliveredYear']) . ' delivered this year',
-        'sub' => [['n' => sl_num($d['ready']), 'l' => 'Ready'], ['n' => sl_num($d['onWay']), 'l' => 'On the way'], ['n' => sl_num($outNow), 'l' => 'With rider'], ['n' => sl_num($delMonth), 'l' => 'Delivered']],
-        'bars' => sl_sparkBars(array_values($delivered), 4, $dayLabels), 'barsL' => 'Handed to me per day, 14 days', 'barsR' => sl_num(array_sum($delivered)) . ' handed over'];
+    // (pickup and pre-alert cards were dropped: the dashboard shows the locker addresses in their place)
 
     // 3. bills
     $spentYear = 0.0;
@@ -773,18 +759,6 @@ function sl_clientCardsData(int $uid, array $d): array
             'big' => $d['dueMoney'], 'lede' => $d['dueN'] ? $d['dueN'] . ' unpaid bill' . ($d['dueN'] === 1 ? '' : 's') . ($d['dueDate'] ? ' · first due ' . $d['dueDate'] : '') : 'Nothing to pay · thank you',
             'sub' => [['n' => sl_num($d['dueN']), 'l' => 'Unpaid'], ['n' => sl_money($paidMonth), 'l' => 'Paid ' . date('M')], ['n' => sl_money($spentYear), 'l' => 'This year'], ['n' => sl_money($spentYear / $nYear), 'l' => 'Per parcel']],
             'bars' => sl_sparkBars(array_values($months), 4, array_map(fn($k) => date('M Y', strtotime($k . '-01')), array_keys($months))), 'barsL' => 'Billed per month, 12 months', 'barsR' => sl_money(array_sum($months))];
-    }
-
-    // 4. pre-alerts
-    if (sl_tableExists('cdb_pre_alert')) {
-        $pre = $fill(sl_rows('SELECT DATE(prealert_date) AS d, COUNT(*) AS n FROM cdb_pre_alert WHERE customer_id = :u AND prealert_date >= :f GROUP BY DATE(prealert_date)', [':u' => $uid, ':f' => $from]));
-        $preMonth = (int) sl_scalar("SELECT COUNT(*) FROM cdb_pre_alert WHERE customer_id = :u AND prealert_date >= $mStart", $u);
-        $preAll = (int) sl_scalar('SELECT COUNT(*) FROM cdb_pre_alert WHERE customer_id = :u', $u);
-        $preWait = (int) sl_scalar('SELECT COUNT(*) FROM cdb_pre_alert WHERE customer_id = :u AND estimated_date >= CURDATE()', $u);
-        $cards[] = ['tone' => 'violet', 'icon' => 'i-inbox', 'eyebrow' => 'Pre-alerts', 'href' => sl_route('PreAlerts'),
-            'big' => sl_num($preMonth), 'lede' => 'told us about this month · helps us match parcels faster',
-            'sub' => [['n' => sl_num($preWait), 'l' => 'Expected'], ['n' => sl_num(array_sum($pre)), 'l' => '14 days'], ['n' => sl_num($preAll), 'l' => 'All time']],
-            'bars' => sl_sparkBars(array_values($pre), 4, $dayLabels), 'barsL' => 'Pre-alerts per day, 14 days', 'barsR' => sl_num(array_sum($pre)) . ' added'];
     }
 
     // 12 months, air and sea
@@ -814,5 +788,73 @@ function sl_clientCardsData(int $uid, array $d): array
         'cards' => $cards,
         'year' => ['air' => $mAir, 'sea' => $mSea, 'weight' => $weightYear, 'spent' => $spentYear],
         'items' => $items, 'where' => $where,
+    ];
+}
+
+/**
+ * Insights for one mode of the signed-in customer's parcels: sea packages (cdb_customers_packages) or
+ * air shipments (cdb_add_order). Used by the My parcels hub (two cards: sea, then air) and at the top of the
+ * customer's SeaPackages / AirShipments lists (views/sl/pages/partials/client_mode_insights.php).
+ */
+function sl_clientModeInsights(int $uid, string $mode): array
+{
+    require_once CDP_ROOT . '/helpers/sl_chart_interactions.php';
+    require_once __DIR__ . '/ops_common.php';
+    $sea = $mode === 'sea';
+    $t = $sea ? 'cdb_customers_packages' : 'cdb_add_order';
+    $it = $sea ? 'cdb_customers_packages_detail' : 'cdb_add_order_item';
+    $w = "FROM $t a WHERE a.sender_id = :u AND a.status_courier <> 21" . ($sea ? '' : ' AND a.is_deleted = 0');
+    $u = [':u' => $uid];
+    // status groups (same as the dashboard's "Where my parcels are now")
+    $groups = [
+        'wh' => ['At the warehouse', [1, 2, 4, 10, 13], 'var(--ch-4)', 'i-warehouse'],
+        'transit' => [$sea ? 'At sea / in transit' : 'In the air / in transit', [3, 25], 'var(--ch-2)', $sea ? 'i-ship' : 'i-plane'],
+        'customs' => ['Held / at customs', [28, 29, 30], 'var(--red)', 'i-shield'],
+        'ready' => ['Ready for pickup', [6, 32], 'var(--green)', 'i-key'],
+        'rider' => ['Out with a rider', [5, 7], 'var(--ch-5)', 'i-truck'],
+    ];
+    $byStatus = [];
+    foreach (sl_rows("SELECT a.status_courier AS s, COUNT(*) AS n $w GROUP BY a.status_courier", $u) as $r) $byStatus[(int) $r->s] = (int) $r->n;
+    $where = [];
+    $active = 0;
+    foreach ($groups as $k => [$l, $ids, $c, $ic]) {
+        $n = 0;
+        foreach ($ids as $id) $n += $byStatus[$id] ?? 0;
+        $where[$k] = ['l' => $l, 'n' => $n, 'c' => $c, 'ic' => $ic];
+        $active += $n;
+    }
+    $delivered = ($byStatus[8] ?? 0) + ($byStatus[15] ?? 0);
+    $total = array_sum($byStatus);
+    // last 12 months: parcels and weight
+    $months = [];
+    for ($i = 11; $i >= 0; $i--) $months[date('Y-m', strtotime("first day of -$i month"))] = ['n' => 0, 'w' => 0.0];
+    foreach (sl_rows("SELECT DATE_FORMAT(a.order_date, '%Y-%m') AS m, COUNT(*) AS n, COALESCE(SUM(a.total_weight), 0) AS w $w AND a.order_date >= DATE_FORMAT(CURDATE(), '%Y-%m-01') - INTERVAL 11 MONTH GROUP BY DATE_FORMAT(a.order_date, '%Y-%m')", $u) as $r) {
+        if (isset($months[$r->m])) $months[$r->m] = ['n' => (int) $r->n, 'w' => (float) $r->w];
+    }
+    $n12 = array_sum(array_column($months, 'n'));
+    $w12 = array_sum(array_column($months, 'w'));
+    $year = sl_row("SELECT COUNT(*) AS n, COALESCE(SUM(a.total_weight), 0) AS w $w AND YEAR(a.order_date) = YEAR(CURDATE())", $u);
+    $busy = $n12 ? array_search(max(array_column($months, 'n')), array_column($months, 'n'), true) : false;
+    $items = [];
+    foreach (sl_rows("SELECT MAX(i.order_item_description) AS label, COALESCE(SUM(i.order_item_quantity), 0) AS q FROM $it i INNER JOIN $t a ON a.order_id = i.order_id
+            WHERE a.sender_id = :u AND a.order_date >= CURDATE() - INTERVAL 12 MONTH AND TRIM(COALESCE(i.order_item_description, '')) <> ''" . ($sea ? '' : ' AND a.is_deleted = 0') . "
+            GROUP BY LOWER(TRIM(i.order_item_description)) ORDER BY q DESC LIMIT 5", $u) as $r) {
+        $items[] = ['l' => ucfirst(trim((string) $r->label)), 'q' => (float) $r->q];
+    }
+    $last = sl_row("SELECT a.order_id, a.order_prefix, a.order_no, a.order_date, a.status_courier, a.total_weight $w ORDER BY a.order_id DESC LIMIT 1", $u);
+    $mk = array_keys($months);
+    return [
+        'mode' => $sea ? 'sea' : 'air', 'sea' => $sea,
+        'title' => $sea ? 'Sea shipments' : 'Air shipments', 'icon' => $sea ? 'i-ship' : 'i-plane',
+        'href' => sl_route($sea ? 'SeaPackages' : 'AirShipments'),
+        'total' => $total, 'active' => $active, 'delivered' => $delivered,
+        'yearN' => (int) ($year->n ?? 0), 'yearW' => (float) ($year->w ?? 0),
+        'n12' => $n12, 'w12' => $w12, 'avgW' => $n12 ? $w12 / $n12 : 0.0,
+        'busy' => $busy !== false ? date('M Y', strtotime($mk[$busy] . '-01')) : '',
+        'where' => $where, 'items' => $items,
+        'bars' => sl_sparkBars(array_column($months, 'n'), 4, array_map(fn($k) => date('F Y', strtotime($k . '-01')), $mk)),
+        'axis' => array_map(fn($k) => date('M', strtotime($k . '-01')), $mk),
+        'last' => $last ? ['id' => $last->order_prefix . $last->order_no, 'date' => sl_date($last->order_date), 'st' => sl_statusLabel($last->status_courier), 'cls' => sl_statusClass($last->status_courier),
+            'w' => sl_weight($last->total_weight), 'href' => sl_route($sea ? 'PackageDetail' : 'ShipmentDetail', ['id' => (int) $last->order_id])] : null,
     ];
 }

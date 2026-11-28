@@ -235,13 +235,13 @@ foreach ($data as $key) {
                 $header .= "Content-type: text/html; charset=UTF-8 \r\n";
                 $header .= "From: " . $site_email . " \r\n";
                 // mail() bypasses PHPMailer, so the transport gate is asked here.
-                if (cdp_commLegacyAllowed('email', ['id' => (int) $courier->sender_id, 'to' => (string) $sender_data->email, 'subject' => $subject])) {
+                require_once __DIR__ . '/../../helpers/whatsapp.php'; if (cdp_commLegacyAllowed('email', ['id' => (int) $courier->sender_id, 'name' => trim((string) ($sender_data->fname ?? '') . ' ' . (string) ($sender_data->lname ?? '')), 'to' => (string) $sender_data->email, 'subject' => $subject, 'body' => cdp_statusNotifyPlain($newbody)])) {
                     try {
                         $cdpOk = mail($sender_data->email, $subject, $newbody, $header);
                         if (function_exists('cdp_msgLogPhpMail')) {
                             cdp_msgLogPhpMail((bool) $cdpOk, $sender_data->email, $subject, $newbody);
                         }
-                    } catch (Exception $e) {}
+                    } catch (Throwable $e) {}
                 }
 
             } elseif ($check_mail == 'SMTP') {
@@ -274,7 +274,7 @@ foreach ($data as $key) {
 
                 try {
                     $mail->Send();
-                } catch (Exception $e) {}
+                } catch (Throwable $e) {}
             }
         }
 
@@ -296,7 +296,7 @@ foreach ($data as $key) {
                 // WhatsApp with its library text; the SMS copy (ready / handed over) with its own.
                 cdp_statusNotifyWaSms($sender_data, $whatsapp_body, $cdp_sms_event, $ns);
 
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 error_log('Error sending WhatsApp status notification for ' . $tracking . ': ' . $e->getMessage());
             }
         }

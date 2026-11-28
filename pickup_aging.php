@@ -15,4 +15,4 @@ if (($_GET['export'] ?? '') === 'csv') {
     foreach ($d['rows'] as $r) fputcsv($o, [$r['id'], $r['module'], $r['cust'], $r['locker'], $r['st'], $r['ready'], $r['dn'], $r['code']]);
     exit;
 }
-sl_render('PickupAging', ['id' => 'pickup', 'title' => 'Pickup Aging', 'board' => 'PickupAging', 'styles' => ['assets/swiftlane/pages/ops.css']], $d);
+sl_render('PickupAging', ['id' => 'pkaging', 'title' => 'Pickup Aging', 'board' => 'PickupAging', 'styles' => ['assets/swiftlane/pages/ops.css']], $d);

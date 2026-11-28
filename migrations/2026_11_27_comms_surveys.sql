@@ -8,7 +8,10 @@
 --                             the question's type and label are kept as asked
 --   cdb_comm_surveys          + form_id, status_id, track_id, entity_type, order_id, rider_id, nps,
 --                             prompted_count / last_prompted_at / dismissed_at (the in-app pop-up),
---                             UNIQUE (track_id, user_id) so a status row asks a customer once
+--                             UNIQUE (track_id, user_id) so a status row asks a customer once,
+--                             never_ask ("Don't ask me again"), followup_ticket_id (low score -> Customer Care),
+--                             KEY idx_sent (sent_at) for the Results period (schema 2)
+--   cdb_comm_survey_forms     + archived_at (deleted after it was sent: switched off, answers kept)
 --
 -- helpers/comms_surveys.php (cdp_surveyEnsure) applies the same change on first use and seeds the
 -- default form "How did we do?" (rating + comment), so running this file is optional.
@@ -58,10 +61,20 @@ SET @sql := IF(@c = 0, 'ALTER TABLE cdb_comm_surveys ADD COLUMN last_prompted_at
 SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_comm_surveys' AND COLUMN_NAME = 'dismissed_at');
 SET @sql := IF(@c = 0, 'ALTER TABLE cdb_comm_surveys ADD COLUMN dismissed_at DATETIME NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
 
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_comm_surveys' AND COLUMN_NAME = 'never_ask');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_comm_surveys ADD COLUMN never_ask TINYINT(1) NOT NULL DEFAULT 0', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_comm_surveys' AND COLUMN_NAME = 'followup_ticket_id');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_comm_surveys ADD COLUMN followup_ticket_id INT NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @c := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_comm_survey_forms' AND COLUMN_NAME = 'archived_at');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_comm_survey_forms ADD COLUMN archived_at DATETIME NULL', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+
 SET @c := (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_comm_surveys' AND INDEX_NAME = 'uq_track');
 SET @sql := IF(@c = 0, 'ALTER TABLE cdb_comm_surveys ADD UNIQUE KEY uq_track (track_id, user_id)', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
 SET @c := (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_comm_surveys' AND INDEX_NAME = 'idx_form');
 SET @sql := IF(@c = 0, 'ALTER TABLE cdb_comm_surveys ADD KEY idx_form (form_id, sent_at)', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+-- Schema 2: the Results period filters on sent_at.
+SET @c := (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_comm_surveys' AND INDEX_NAME = 'idx_sent');
+SET @sql := IF(@c = 0, 'ALTER TABLE cdb_comm_surveys ADD KEY idx_sent (sent_at)', 'SELECT 1'); PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
 
 -- The default form, only when there is none (inapp plus the channels the old "survey" rule had on are
 -- added by cdp_surveyEnsure; here the in-app pop-up only).

@@ -35,7 +35,7 @@
 require_once __DIR__ . '/ops_db.php';
 
 if (!defined('CDP_UM_SCHEMA')) {
-    define('CDP_UM_SCHEMA', '1');
+    define('CDP_UM_SCHEMA', '2');
 }
 
 // ---------------------------------------------------------------------------
@@ -58,9 +58,43 @@ if (!function_exists('cdp_umConfig')) {
         $base = rtrim(trim((string) ($s->api_ws_url ?? '')), '/');
         $token = trim((string) ($s->api_ws_token ?? ''));
         $instance = $base !== '' ? (string) basename((string) parse_url($base, PHP_URL_PATH)) : '';
-        $cfg = ['configured' => $base !== '' && $token !== '' && preg_match('#^https?://#i', $base) === 1, 'base' => $base, 'token' => $token,
-            'instance' => $instance, 'active' => (int) ($s->active_whatsapp ?? 0) === 1];
+        $problem = $base !== '' && $token !== '' ? cdp_umUrlProblem($base) : '';
+        $cfg = ['configured' => $base !== '' && $token !== '' && $problem === '', 'base' => $base, 'token' => $token,
+            'instance' => $instance, 'active' => (int) ($s->active_whatsapp ?? 0) === 1, 'problem' => $problem];
         return $cfg;
+    }
+
+    /** A local mock provider may be used only when the installation says so (tests). */
+    function cdp_umAllowLocal()
+    {
+        return (defined('CDP_UM_ALLOW_LOCAL_MOCK') && CDP_UM_ALLOW_LOCAL_MOCK === true) || getenv('CDP_UM_ALLOW_LOCAL_MOCK') === '1';
+    }
+
+    /**
+     * Why the instance address cannot be used ('' when it can). The token is
+     * sent there, so it must be https and a public host (a local mock only
+     * with CDP_UM_ALLOW_LOCAL_MOCK).
+     */
+    function cdp_umUrlProblem($base)
+    {
+        $base = (string) $base;
+        if (!preg_match('#^https?://#i', $base)) {
+            return 'The instance address must start with https://, e.g. https://api.ultramsg.com/instance12345.';
+        }
+        if (cdp_umAllowLocal()) {
+            return '';
+        }
+        if (stripos($base, 'https://') !== 0) {
+            return 'The instance address must use https:// so the token is never sent in clear text.';
+        }
+        $host = strtolower((string) parse_url($base, PHP_URL_HOST));
+        if ($host === '' || $host === 'localhost' || substr($host, -6) === '.local' || substr($host, -9) === '.internal' || strpos($host, '.') === false) {
+            return 'The instance address must be the provider\'s public address (e.g. https://api.ultramsg.com/instance12345).';
+        }
+        if (filter_var($host, FILTER_VALIDATE_IP) && !filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+            return 'The instance address points at a private network address. Use the provider\'s public address.';
+        }
+        return '';
     }
 
     /**
@@ -77,7 +111,7 @@ if (!function_exists('cdp_umConfig')) {
         $res = ['ok' => false, 'http' => 0, 'data' => null, 'raw' => '', 'ctype' => '', 'error' => '', 'code' => ''];
         $cfg = cdp_umConfig();
         if (!$cfg['configured']) {
-            return ['error' => 'WhatsApp (UltraMsg) is not set up: the instance address and token are empty.', 'code' => 'not_configured'] + $res;
+            return ['error' => $cfg['problem'] !== '' ? $cfg['problem'] : 'WhatsApp (UltraMsg) is not set up: the instance address and token are empty.', 'code' => 'not_configured'] + $res;
         }
         if (isset($GLOBALS['cdp_umTestTransport']) && is_callable($GLOBALS['cdp_umTestTransport'])) {
             $r = call_user_func($GLOBALS['cdp_umTestTransport'], $method, $path, $params, $o);
@@ -167,6 +201,15 @@ if (!function_exists('cdp_umEnsureTables')) {
         $stmts = array_values(array_filter(array_map('trim', preg_split('/;\s*(\r?\n|$)/', $sql)), function ($s) { return stripos($s, 'CREATE TABLE') === 0; }));
         $ok = $stmts && cdp_opsDdl($stmts);
         if ($ok) {
+            // Schema 2: an index for the group authors' names, and the opted-out count of a save.
+            if (!cdp_opsVal("SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cdb_wa_messages' AND INDEX_NAME = 'idx_author'", [], 0)) {
+                $ok = cdp_opsDdl(["ALTER TABLE cdb_wa_messages ADD KEY idx_author (author)"]);
+            }
+            if ($ok && !cdp_opsColumnExists('cdb_wa_exports', 'opted_out_count')) {
+                $ok = cdp_opsDdl(["ALTER TABLE cdb_wa_exports ADD COLUMN opted_out_count INT NOT NULL DEFAULT 0 AFTER saved_count"]);
+            }
+        }
+        if ($ok) {
             cdp_opsSettingSet('waweb', 'schema', CDP_UM_SCHEMA, 0);
         }
         return $ready = (bool) $ok;
@@ -212,12 +255,54 @@ if (!function_exists('cdp_umEnsureTables')) {
     /** Throttle: true at most once per $seconds for $key (shared by every viewer). */
     function cdp_umDue($key, $seconds)
     {
-        $last = (int) cdp_umSetting('due_' . $key, '0');
-        if (time() - $last < $seconds) {
+        $k = 'due_' . $key;
+        $now = time();
+        $last = (int) cdp_umSetting($k, '0');
+        if ($now - $last < $seconds) {
             return false;
         }
-        cdp_umSettingSet('due_' . $key, (string) time());
-        return true;
+        if (!cdp_opsVal("SELECT COUNT(*) FROM cdb_ops_settings WHERE ns = 'waweb' AND setting_key = :k", [':k' => $k], 0)) {
+            cdp_opsX("INSERT IGNORE INTO cdb_ops_settings (ns, setting_key, setting_value, updated_at) VALUES ('waweb', :k, '0', :n)", [':k' => $k, ':n' => cdp_opsNow()]);
+        }
+        // Atomic claim: of several viewers polling at the same moment, one row update wins.
+        $r = cdp_opsX("UPDATE cdb_ops_settings SET setting_value = :v, updated_at = :n WHERE ns = 'waweb' AND setting_key = :k AND CAST(setting_value AS UNSIGNED) <= :cut",
+            [':v' => (string) $now, ':n' => cdp_opsNow(), ':k' => $k, ':cut' => $now - $seconds]);
+        cdp_opsSettings('waweb', true);
+        return !empty($r['ok']) && (int) $r['rows'] === 1;
+    }
+
+    /**
+     * The built-in quick replies (also what "Restore defaults" brings back).
+     * Facts the app cannot know for sure stay placeholders: {hours} is the
+     * Support desk's business hours, left in braces when none are saved.
+     */
+    function cdp_umQuickRepliesDefault()
+    {
+        return [
+            ['title' => 'Greeting', 'body' => 'Hello {first_name}, thank you for contacting Swift Lane. How can we help you today?'],
+            ['title' => 'Parcel ready', 'body' => 'Hi {first_name}, your parcel is ready for pickup at our office. Please bring your locker number *{locker}*.'],
+            ['title' => 'Ask for tracking', 'body' => 'Could you please send us your tracking number so we can check for you?'],
+            ['title' => 'Opening hours', 'body' => 'Our office hours: {hours}.'],
+            ['title' => 'Balance due', 'body' => 'Hi {first_name}, the outstanding balance on your account is {balance}. You can pay at the office or online.'],
+            ['title' => 'Checking', 'body' => 'Thank you for waiting. A colleague is checking this and will get back to you shortly.'],
+        ];
+    }
+
+    /** Company facts the quick replies may use ({hours}), '' when not saved. */
+    function cdp_umQuickVars()
+    {
+        $hours = '';
+        if (is_file(__DIR__ . '/support.php')) {
+            try {
+                require_once __DIR__ . '/support.php';
+                if (function_exists('cdp_csSetting')) {
+                    $hours = trim((string) cdp_csSetting('business_hours', ''));
+                }
+            } catch (Throwable $e) {
+                $hours = '';
+            }
+        }
+        return ['hours' => mb_substr($hours, 0, 200)];
     }
 
     /** Quick replies [{title, body}] (admins edit them on the page). */
@@ -225,14 +310,7 @@ if (!function_exists('cdp_umEnsureTables')) {
     {
         $q = cdp_opsDecode(cdp_umSetting('quick_replies', ''), null);
         if (!is_array($q)) {
-            $q = [
-                ['title' => 'Greeting', 'body' => 'Hello {first_name}, thank you for contacting Swift Lane. How can we help you today?'],
-                ['title' => 'Parcel ready', 'body' => 'Hi {first_name}, your parcel is ready for pickup at our office. Please bring your locker number *{locker}*.'],
-                ['title' => 'Ask for tracking', 'body' => 'Could you please send us your tracking number so we can check for you?'],
-                ['title' => 'Opening hours', 'body' => 'Our Accra office is open Monday to Friday 8am to 6pm, and Saturday 9am to 2pm.'],
-                ['title' => 'Balance due', 'body' => 'Hi {first_name}, the outstanding balance on your account is {balance}. You can pay at the office or online.'],
-                ['title' => 'Checking', 'body' => 'Thank you for waiting. A colleague is checking this and will get back to you shortly.'],
-            ];
+            $q = cdp_umQuickRepliesDefault();
         }
         $out = [];
         foreach ($q as $r) {
@@ -603,9 +681,10 @@ if (!function_exists('cdp_umStoreChat')) {
         }
         return cdp_opsX("INSERT INTO cdb_wa_chats (chat_id, is_group, name, phone, unread, last_ts, pinned, muted, archived, created_at, updated_at)
                          VALUES (:c, :g, :n, :p, :u, :ts, :pi, :mu, :ar, :now, :now)
-                         ON DUPLICATE KEY UPDATE name = COALESCE(VALUES(name), name), last_ts = GREATEST(last_ts, VALUES(last_ts)),
-                           pinned = VALUES(pinned), muted = VALUES(muted), archived = VALUES(archived)$unreadSql,
-                           updated_at = IF(last_ts <> VALUES(last_ts) OR unread <> VALUES(unread) OR COALESCE(name,'') <> COALESCE(VALUES(name), name, ''), VALUES(updated_at), updated_at)", $b);
+                         ON DUPLICATE KEY UPDATE
+                           updated_at = IF(GREATEST(last_ts, VALUES(last_ts)) <> last_ts" . ($unreadSql !== '' ? " OR unread <> VALUES(unread)" : '') . " OR COALESCE(name,'') <> COALESCE(VALUES(name), name, ''), VALUES(updated_at), updated_at),
+                           name = COALESCE(VALUES(name), name), last_ts = GREATEST(last_ts, VALUES(last_ts)),
+                           pinned = VALUES(pinned), muted = VALUES(muted), archived = VALUES(archived)$unreadSql", $b);
     }
 
     /**
@@ -638,7 +717,7 @@ if (!function_exists('cdp_umStoreChat')) {
         }
         cdp_umLinkUsers();
         // A first look at chats never opened here, so the list shows their last message (a few per pass).
-        foreach (cdp_opsQ("SELECT chat_id FROM cdb_wa_chats WHERE last_preview IS NULL AND msgs_synced_at IS NULL ORDER BY last_ts DESC LIMIT 6") as $c) {
+        foreach (cdp_opsQ("SELECT chat_id FROM cdb_wa_chats WHERE last_preview IS NULL AND msgs_synced_at IS NULL ORDER BY last_ts DESC LIMIT 2") as $c) {
             cdp_umSyncMessages((string) $c->chat_id, 20, true);
         }
         return ['ok' => true, 'error' => '', 'code' => '', 'count' => $n];
@@ -712,7 +791,7 @@ if (!function_exists('cdp_umStoreChat')) {
             [':p' => cdp_opsClip($preview, 250), ':f' => (int) $m['from_me'], ':a' => $m['ack'] !== '' ? $m['ack'] : null, ':ts' => (int) $m['ts'], ':ts2' => (int) $m['ts'],
                 ':now' => $now, ':c' => $m['chat_id']]);
         if (!$m['from_me'] && !$group && $m['type'] === 'text') {
-            cdp_umKeyword(cdp_umPhoneOf($m['chat_id']), $m['body']);
+            cdp_umKeyword(cdp_umPhoneOf($m['chat_id']), $m['body'], (int) $m['ts'], $m['chat_id']);
         }
         if ($m['from_me'] && strpos($m['msg_id'], 'local_') !== 0) {
             // The provider's copy of a message this screen sent: it replaces the provisional bubble (keeping who sent it).
@@ -895,7 +974,7 @@ if (!function_exists('cdp_umStoreChat')) {
      * Names and customer links for a list of phones (digits):
      * [phone => ['name', 'user_id', 'locker', 'customer']].
      */
-    function cdp_umPeople(array $phones)
+    function cdp_umPeople(array $phones, $chatId = '')
     {
         $phones = array_values(array_unique(array_filter(array_map(function ($p) { return preg_replace('/\D+/', '', (string) $p); }, $phones))));
         $out = [];
@@ -915,7 +994,14 @@ if (!function_exists('cdp_umStoreChat')) {
             foreach (cdp_opsQ("SELECT phone, COALESCE(NULLIF(name,''), pushname) n FROM cdb_wa_contacts_cache WHERE phone IN (" . implode(',', $in) . ")", $b) as $r) {
                 $out[$r->phone]['name'] = (string) $r->n;
             }
-            foreach (cdp_opsQ("SELECT a.author, MAX(a.author_name) n FROM cdb_wa_messages a WHERE a.author IN (" . implode(',', array_map(function ($k) { return 'CONCAT(' . $k . ", '@c.us')"; }, $in)) . ") AND a.author_name IS NOT NULL GROUP BY a.author", $b) as $r) {
+            // Names people gave themselves in groups (idx_author; only this chat when one is given, idx_chat).
+            $ab = $b;
+            $chatSql = '';
+            if ((string) $chatId !== '') {
+                $chatSql = ' AND a.chat_id = :chat';
+                $ab[':chat'] = (string) $chatId;
+            }
+            foreach (cdp_opsQ("SELECT a.author, MAX(a.author_name) n FROM cdb_wa_messages a WHERE a.author IN (" . implode(',', array_map(function ($k) { return 'CONCAT(' . $k . ", '@c.us')"; }, $in)) . ")$chatSql AND a.author_name IS NOT NULL GROUP BY a.author", $ab) as $r) {
                 $ph = cdp_umPhoneOf($r->author);
                 if (isset($out[$ph]) && $out[$ph]['name'] === '') {
                     $out[$ph]['name'] = (string) $r->n;
@@ -957,23 +1043,52 @@ if (!function_exists('cdp_umSend')) {
      *
      * @return array{ok:bool,error:string,code:string,msg_id:string}
      */
-    function cdp_umSend($chatId, $text, array $media = null, $sentBy = null)
+    function cdp_umSend($chatId, $text, array $media = null, $sentBy = null, $nonce = '')
     {
         if (!cdp_umValidChatId($chatId)) {
             return ['ok' => false, 'error' => 'Unknown chat.', 'code' => 'invalid', 'msg_id' => ''];
         }
-        $cfg = cdp_umConfig();
-        if (!$cfg['active']) {
-            return ['ok' => false, 'error' => 'WhatsApp is switched off in Settings > General > Messaging, so nothing is sent.', 'code' => 'off', 'msg_id' => ''];
-        }
         $text = (string) $text;
+        $kind = $media ? ($media['kind'] === 'image' ? 'image' : 'document') : 'chat';
+        // The bubble is stored first (ack pending), so the provider's copy arriving by webhook or
+        // by another viewer's poll while we wait always finds it and replaces it (no double bubble).
+        // A client nonce makes the id stable: the same message posted twice is sent once.
+        $msgId = 'local_' . (preg_match('/^[A-Za-z0-9\-]{8,64}$/', (string) $nonce) ? substr(sha1('um-send|' . $chatId . '|' . $nonce), 0, 24) : bin2hex(random_bytes(12)));
+        $stored = cdp_umStoreMessage(['msg_id' => $msgId, 'chat_id' => $chatId, 'from_me' => 1, 'author' => '', 'author_name' => '', 'type' => $media ? ($kind === 'image' ? 'image' : 'document') : 'text',
+            'body' => $text, 'media_url' => $media && !empty($media['url']) ? (string) $media['url'] : '', 'thumb' => '', 'filename' => $media ? (string) ($media['filename'] ?? '') : '',
+            'ack' => 'pending', 'ts' => time()], $sentBy);
+        if ($stored !== 'new') {
+            $ack = (string) cdp_opsVal("SELECT ack FROM cdb_wa_messages WHERE msg_id = :m", [':m' => $msgId], '');
+            return ['ok' => $ack !== 'failed', 'duplicate' => true, 'error' => $ack === 'failed' ? 'This message was already tried and not sent.' : '', 'code' => 'duplicate', 'msg_id' => $msgId, 'provider_id' => ''];
+        }
+        $finish = function ($ok, $err, $code, $pid = '', $raw = '') use ($chatId, $text, $media, $msgId) {
+            $ack = $ok ? 'sent' : 'failed';
+            cdp_opsX("UPDATE cdb_wa_messages SET ack = :a, updated_at = :n WHERE msg_id = :m AND ack = 'pending'", [':a' => $ack, ':n' => cdp_opsNow(), ':m' => $msgId]);
+            cdp_opsX("UPDATE cdb_wa_chats SET last_ack = :a WHERE chat_id = :c AND last_from_me = 1 AND last_ack = 'pending'", [':a' => $ack, ':c' => $chatId]);
+            if ($ok) {
+                cdp_opsX("UPDATE cdb_wa_chats SET unread = 0 WHERE chat_id = :c", [':c' => $chatId]);
+            }
+            // Every attempt, sent or not, is in the message log (the Outbox shows it).
+            cdp_umLogSend($chatId, $text, $ok, $err, $pid, $media, $raw);
+            return ['ok' => $ok, 'error' => $err, 'code' => $code, 'msg_id' => $msgId, 'provider_id' => $pid];
+        };
+        $cfg = cdp_umConfig();
+        if (!$cfg['configured']) {
+            return $finish(false, $cfg['problem'] !== '' ? $cfg['problem'] : 'WhatsApp (UltraMsg) is not set up in Settings > General > Messaging.', 'not_configured');
+        }
+        if (!$cfg['active']) {
+            return $finish(false, 'WhatsApp is switched off in Settings > General > Messaging, so nothing is sent.', 'off');
+        }
+        $state = cdp_umStatus()['state'];
+        if ($state !== 'connected') {
+            return $finish(false, 'WhatsApp is not connected (the company phone is not linked or the provider does not answer), so nothing was sent.', 'not_connected');
+        }
         if ($media) {
-            $kind = $media['kind'] === 'image' ? 'image' : 'document';
             $src = (string) ($media['url'] ?? '');
             if ($src === '' || !cdp_umPublicUrl($src)) {
                 $path = (string) ($media['path'] ?? '');
                 if ($path === '' || !is_file($path) || filesize($path) > 16 * 1048576) {
-                    return ['ok' => false, 'error' => 'The file could not be read.', 'code' => 'invalid', 'msg_id' => ''];
+                    return $finish(false, 'The file could not be read.', 'invalid');
                 }
                 $src = 'data:' . ($media['mime'] ?: 'application/octet-stream') . ';base64,' . base64_encode((string) file_get_contents($path));
             }
@@ -983,22 +1098,11 @@ if (!function_exists('cdp_umSend')) {
             }
             $r = cdp_umCall('POST', 'messages/' . $kind, $p, ['timeout' => 45]);
         } else {
-            $kind = 'chat';
             $r = cdp_umCall('POST', 'messages/chat', ['to' => $chatId, 'body' => mb_substr($text, 0, 4000)], ['timeout' => 15]);
         }
         $ok = $r['ok'] && !(isset($r['data']['sent']) && filter_var($r['data']['sent'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) === false);
         $err = $ok ? '' : ($r['error'] ?: (string) ($r['data']['message'] ?? 'WhatsApp did not accept the message.'));
-        $pid = $ok ? (string) ($r['data']['id'] ?? '') : '';
-        // A provisional row so the bubble shows at once; the next sync brings the real id and ticks.
-        $msgId = 'local_' . bin2hex(random_bytes(8));
-        cdp_umStoreMessage(['msg_id' => $msgId, 'chat_id' => $chatId, 'from_me' => 1, 'author' => '', 'author_name' => '', 'type' => $media ? ($kind === 'image' ? 'image' : 'document') : 'text',
-            'body' => $text, 'media_url' => $media && !empty($media['url']) ? (string) $media['url'] : '', 'thumb' => '', 'filename' => $media ? (string) ($media['filename'] ?? '') : '',
-            'ack' => $ok ? 'sent' : 'failed', 'ts' => time()], $sentBy);
-        if ($ok) {
-            cdp_opsX("UPDATE cdb_wa_chats SET unread = 0 WHERE chat_id = :c", [':c' => $chatId]);
-        }
-        cdp_umLogSend($chatId, $text, $ok, $err, $pid, $media, $r['raw'] ?? '');
-        return ['ok' => $ok, 'error' => $err, 'code' => $ok ? '' : ($r['code'] ?: 'api'), 'msg_id' => $msgId, 'provider_id' => $pid];
+        return $finish($ok, $err, $ok ? '' : ($r['code'] ?: 'api'), $ok ? (string) ($r['data']['id'] ?? '') : '', (string) ($r['raw'] ?? ''));
     }
 
     /** Is this URL reachable by the provider (http(s), not localhost or a private address)? */
@@ -1086,7 +1190,10 @@ if (!function_exists('cdp_umWebhookIngest')) {
         if (!$m) {
             return 'ignored';
         }
+        // helpers/comms.php already applied a STOP / START to the customer for this delivery.
+        $GLOBALS['cdp_um_in_webhook'] = true;
         $r = cdp_umStoreMessage($m);
+        $GLOBALS['cdp_um_in_webhook'] = false;
         if ($r === 'new' && !$m['from_me']) {
             cdp_opsX("UPDATE cdb_wa_chats SET unread = unread + 1, name = COALESCE(name, :n) WHERE chat_id = :c",
                 [':n' => substr($m['chat_id'], -5) === '@c.us' && $m['author_name'] !== '' ? $m['author_name'] : null, ':c' => $m['chat_id']]);
@@ -1095,23 +1202,56 @@ if (!function_exists('cdp_umWebhookIngest')) {
         return $r;
     }
 
-    /** STOP / START from a number: honoured on saved contacts (and on the customer, by helpers/comms.php). */
-    function cdp_umKeyword($phone, $body)
+    /**
+     * STOP / START from a number, honoured on saved contacts and, for a number
+     * linked to a customer, on the customer's preferences when the message came
+     * by polling (a webhook delivery is handled by helpers/comms.php
+     * cdp_commHandleInbound). Only the number's newest STOP / START counts, so a
+     * history sync that lists messages newest first never lets an old START
+     * undo a newer STOP; a START older than the recorded opt-out is ignored.
+     */
+    function cdp_umKeyword($phone, $body, $ts = 0, $chatId = '')
     {
         $phone = preg_replace('/\D+/', '', (string) $phone);
-        if ($phone === '' || !cdp_opsTableExists('cdb_comm_contacts')) {
+        $k = strtoupper(trim((string) $body));
+        $stops = ['STOP', 'UNSUBSCRIBE', 'STOP ALL', 'OPT OUT', 'OPTOUT'];
+        $starts = ['START', 'SUBSCRIBE', 'UNSTOP', 'OPT IN'];
+        $kw = in_array($k, $stops, true) ? 'stop' : (in_array($k, $starts, true) ? 'start' : '');
+        if ($kw === '' || $phone === '') {
             return '';
         }
-        $k = strtoupper(trim((string) $body));
-        if (in_array($k, ['STOP', 'UNSUBSCRIBE', 'STOP ALL', 'OPT OUT', 'OPTOUT'], true)) {
-            cdp_opsX("UPDATE cdb_comm_contacts SET opted_out = 1, opted_out_at = :n, updated_at = :n WHERE phone = :p AND opted_out = 0", [':n' => cdp_opsNow(), ':p' => $phone]);
-            return 'stop';
+        $ts = (int) $ts ?: time();
+        $chatId = (string) $chatId !== '' ? (string) $chatId : $phone . '@c.us';
+        $newer = (int) cdp_opsVal("SELECT COUNT(*) FROM cdb_wa_messages WHERE chat_id = :c AND from_me = 0 AND ts > :ts
+                                   AND UPPER(TRIM(body)) IN ('STOP','UNSUBSCRIBE','STOP ALL','OPT OUT','OPTOUT','START','SUBSCRIBE','UNSTOP','OPT IN')", [':c' => $chatId, ':ts' => $ts], 0);
+        if ($newer > 0) {
+            return ''; // a later STOP / START of this number decides
         }
-        if (in_array($k, ['START', 'SUBSCRIBE', 'UNSTOP', 'OPT IN'], true)) {
-            cdp_opsX("UPDATE cdb_comm_contacts SET opted_out = 0, opted_out_at = NULL, updated_at = :n WHERE phone = :p AND opted_out = 1", [':n' => cdp_opsNow(), ':p' => $phone]);
-            return 'start';
+        $at = date('Y-m-d H:i:s', $ts);
+        if (cdp_opsTableExists('cdb_comm_contacts')) {
+            if ($kw === 'stop') {
+                cdp_opsX("UPDATE cdb_comm_contacts SET opted_out = 1, opted_out_at = :a, updated_at = :n WHERE phone = :p AND opted_out = 0", [':a' => $at, ':n' => cdp_opsNow(), ':p' => $phone]);
+            } else {
+                $c = cdp_opsOne("SELECT id, opted_out_at FROM cdb_comm_contacts WHERE phone = :p AND opted_out = 1", [':p' => $phone]);
+                if ($c && ($c->opted_out_at === null || strtotime((string) $c->opted_out_at) < $ts)) {
+                    cdp_opsX("UPDATE cdb_comm_contacts SET opted_out = 0, opted_out_at = NULL, updated_at = :n WHERE id = :id", [':n' => cdp_opsNow(), ':id' => (int) $c->id]);
+                }
+            }
         }
-        return '';
+        if (empty($GLOBALS['cdp_um_in_webhook'])) {
+            $uid = (int) cdp_opsVal("SELECT user_id FROM cdb_wa_chats WHERE chat_id = :c AND user_id IS NOT NULL", [':c' => $chatId], 0);
+            if ($uid && is_file(__DIR__ . '/comms.php')) {
+                require_once __DIR__ . '/comms.php';
+                if (function_exists('cdp_commSavePrefs') && function_exists('cdp_commEnsureTables') && cdp_commEnsureTables()) {
+                    // A preference the customer changed after this message is their later choice: keep it.
+                    $upd = (string) cdp_opsVal("SELECT updated_at FROM cdb_comm_prefs WHERE user_id = :u", [':u' => $uid], '');
+                    if ($upd === '' || strtotime($upd) < $ts) {
+                        cdp_commSavePrefs($uid, $kw === 'stop' ? ['whatsapp' => 0, 'mkt_whatsapp' => 0, 'mkt_sms' => 0, 'mkt_email' => 0] : ['whatsapp' => 1, 'opted_out_all' => 0], 'whatsapp_keyword', 0);
+                    }
+                }
+            }
+        }
+        return $kw;
     }
 
     /** Did this number's last STOP / START say STOP (in the local copy)? */
@@ -1207,18 +1347,19 @@ if (!function_exists('cdp_umWebhookIngest')) {
     }
 
     /** Record an export or a save (cdb_wa_exports + the activity log). */
-    function cdp_umAudit($kind, $target, $format, $rows, $saved = 0)
+    function cdp_umAudit($kind, $target, $format, $rows, $saved = 0, $optedOut = 0)
     {
-        cdp_opsX("INSERT INTO cdb_wa_exports (kind, target, format, row_count, saved_count, user_id, ip, created_at) VALUES (:k, :t, :f, :r, :s, :u, :ip, :n)",
-            [':k' => $kind, ':t' => mb_substr((string) $target, 0, 190), ':f' => $format, ':r' => (int) $rows, ':s' => (int) $saved, ':u' => cdp_opsUid() ?: null,
+        // $saved: numbers campaigns can reach; $optedOut: numbers saved as opted out (STOP).
+        cdp_opsX("INSERT INTO cdb_wa_exports (kind, target, format, row_count, saved_count, opted_out_count, user_id, ip, created_at) VALUES (:k, :t, :f, :r, :s, :o, :u, :ip, :n)",
+            [':k' => $kind, ':t' => mb_substr((string) $target, 0, 190), ':f' => $format, ':r' => (int) $rows, ':s' => (int) $saved, ':o' => (int) $optedOut, ':u' => cdp_opsUid() ?: null,
                 ':ip' => mb_substr((string) ($_SERVER['REMOTE_ADDR'] ?? ''), 0, 45), ':n' => cdp_opsNow()]);
         if (is_file(__DIR__ . '/activity_log.php')) {
             require_once __DIR__ . '/activity_log.php';
             if (function_exists('cdp_activityLog')) {
-                $what = $format === 'save' ? 'Saved ' . (int) $saved . ' WhatsApp contacts' : 'Exported ' . (int) $rows . ' WhatsApp ' . ($kind === 'group' ? 'group members' : 'contacts') . ' (' . strtoupper($format) . ')';
+                $what = $format === 'save' ? 'Saved ' . (int) $saved . ' WhatsApp contacts campaigns can reach' . ($optedOut ? ' (' . (int) $optedOut . ' more saved as opted out)' : '') : 'Exported ' . (int) $rows . ' WhatsApp ' . ($kind === 'group' ? 'group members' : 'contacts') . ' (' . strtoupper($format) . ')';
                 cdp_activityLog(['module' => 'notifications', 'verb' => $format === 'save' ? 'create' : 'export', 'action' => 'notifications.whatsapp_' . ($format === 'save' ? 'save_contacts' : 'export'),
                     'label' => $format === 'save' ? 'WhatsApp · Save contacts' : 'WhatsApp · Export', 'summary' => $what . ($target !== '' ? ' from ' . $target : '') . '.',
-                    'entity_type' => 'whatsapp_' . $kind, 'entity_label' => mb_substr((string) $target, 0, 190), 'meta' => ['rows' => (int) $rows, 'saved' => (int) $saved, 'format' => $format]]);
+                    'entity_type' => 'whatsapp_' . $kind, 'entity_label' => mb_substr((string) $target, 0, 190), 'meta' => ['rows' => (int) $rows, 'saved' => (int) $saved, 'opted_out' => (int) $optedOut, 'format' => $format]]);
             }
         }
     }

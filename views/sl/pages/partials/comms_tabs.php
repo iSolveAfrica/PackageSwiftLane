@@ -1,7 +1,7 @@
 <?php
 /**
  * Notifications & Messages sub-navigation, shared by every page of the area
- * (Overview, Automations, Status messages, Send, Outbox, WhatsApp, Customer
+ * (Overview, Automations, Status messages, Send, Outbox, WhatsApp, WhatsApp Web, Customer
  * history, Surveys, Settings). The list is the sidebar's sub-menu
  * (helpers/sl_nav.php: sl_navCommsChildren), filtered with the same rules, so
  * the tabs and the menu can never disagree. Set $commsTab to the current
@@ -22,4 +22,5 @@ if (count($commsTabOut) > 1): ?>
 <a class="<?= $on ? 'on' : '' ?>" href="<?= h($it['href']) ?>"<?= $on ? ' aria-current="page"' : '' ?>><?= h($it['label']) ?><?php if ($it['c1'] !== ''): ?><em data-cm-waiting title="Waiting for a person"><?= (int) $it['c1'] ?></em><?php endif; ?></a>
 <?php endforeach; ?>
 </nav>
+<script>(function () { var a = document.querySelector('.cm-tabs a.on'), n = a && a.parentNode; if (n && n.scrollWidth > n.clientWidth) { n.scrollLeft = Math.max(0, a.offsetLeft - n.offsetLeft - 16); } })();</script>
 <?php endif;

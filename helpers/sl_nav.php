@@ -185,7 +185,7 @@ function sl_navStaff(): array
         ['label' => 'Insights', 'items' => [
             ['id' => 'reports', 'label' => 'Reports', 'icon' => 'chart', 'board' => 'Reports', 'perm' => 'view_general_reports'],
             ['id' => 'activity', 'label' => 'Activity Logs', 'icon' => 'clock', 'board' => 'ActivityLogs', 'perm' => 'view_activity_logs'],
-            ['id' => 'messages', 'label' => 'Message Logs', 'icon' => 'archive', 'board' => 'CommsOutbox', 'perm' => 'view_message_logs'],
+            // Message logs live in Notifications & Messages > Outbox (one messaging area, no second entry here).
         ]],
         ['label' => 'Settings', 'items' => [
             ['id' => 'general', 'label' => 'General', 'icon' => 'cog', 'board' => 'SettingsHub', 'perm' => 'view_tools'],
@@ -202,7 +202,8 @@ function sl_navStaff(): array
             ['id' => 'perm', 'label' => 'Permissions', 'icon' => 'key', 'board' => 'StaffPermissions', 'perm' => 'view_role_assignment'],
             ['id' => 'lblstudio', 'label' => 'Label Printing', 'icon' => 'print', 'board' => 'LabelStudio', 'perm' => ['view_tools', 'print_label']],
             ['id' => 'rcptstudio', 'label' => 'Receipt Layout', 'icon' => 'receipt', 'board' => 'ReceiptStudio', 'perm' => 'view_tools'],
-            ['id' => 'auto', 'label' => 'Automations', 'icon' => 'bolt', 'board' => 'Automations', 'perm' => 'manage_automations'],
+            // Rule-based workflows (automations.php); message triggers are in Notifications & Messages > Automations.
+            ['id' => 'auto', 'label' => 'Workflow rules', 'icon' => 'bolt', 'board' => 'Automations', 'perm' => 'manage_automations'],
         ]],
     ];
 }
@@ -223,6 +224,8 @@ function sl_navCommsChildren(): array
         ['id' => 'commsoutbox', 'label' => 'Outbox', 'icon' => 'archive', 'board' => 'CommsOutbox', 'perm' => ['ops:staff', 'view_message_logs']],
         ['id' => 'commsinbox', 'label' => 'WhatsApp', 'icon' => 'message', 'board' => 'CommsInbox', 'perm' => 'ops:staff',
             'count' => fn() => sl_navCommsWaiting()],
+        // The company's WhatsApp number inside the app (whatsapp_web.php gates on rank 2+, as ops:staff).
+        ['id' => 'commswaweb', 'label' => 'WhatsApp Web', 'icon' => 'message', 'board' => 'WhatsAppWeb', 'perm' => 'ops:staff'],
         ['id' => 'commscustomers', 'label' => 'Customer history', 'icon' => 'user', 'board' => 'CommsCustomers', 'perm' => 'ops:staff'],
         ['id' => 'commssurveys', 'label' => 'Surveys', 'icon' => 'star', 'board' => 'CommsSurveys', 'perm' => 'ops:staff'],
         ['id' => 'commssettings', 'label' => 'Settings', 'icon' => 'cog', 'board' => 'CommsSettings', 'perm' => 'ops:admin'],
@@ -245,12 +248,12 @@ function sl_navCustomer(): array
     return [
         ['label' => 'My shipping', 'items' => [
             ['id' => 'dash', 'label' => 'Dashboard', 'icon' => 'grid', 'board' => 'Main', 'perm' => null],
-            ['id' => 'parcels', 'label' => 'All my parcels', 'icon' => 'box', 'board' => 'MyParcels', 'perm' => null],
-            ['id' => 'account', 'label' => 'My account', 'icon' => 'user', 'board' => 'MyAccount', 'perm' => null],
-            ['id' => 'air', 'label' => 'My Shipments', 'icon' => 'plane', 'board' => 'AirShipments', 'perm' => 'view_shipment_list',
+            // Air shipments, then sea shipments: each opens the customer's own list with its insights on top.
+            ['id' => 'air', 'label' => 'Air shipments', 'icon' => 'plane', 'board' => 'AirShipments', 'perm' => 'view_shipment_list',
                 'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_add_order WHERE sender_id = :u AND is_deleted = 0 AND status_courier NOT IN (8,15,21)", [':u' => $uid])],
-            ['id' => 'sea', 'label' => 'My Packages', 'icon' => 'box', 'board' => 'SeaPackages', 'perm' => 'view_package_list',
+            ['id' => 'sea', 'label' => 'Sea shipments', 'icon' => 'ship', 'board' => 'SeaPackages', 'perm' => 'view_package_list',
                 'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_customers_packages WHERE sender_id = :u AND status_courier NOT IN (8,15,21)", [':u' => $uid])],
+            ['id' => 'account', 'label' => 'My account', 'icon' => 'user', 'board' => 'MyAccount', 'perm' => null],
             ['id' => 'prealert', 'label' => 'Pre-Alerts', 'icon' => 'inbox', 'board' => 'PreAlerts', 'perm' => 'prealert_list',
                 'count' => fn() => sl_navCount("SELECT COUNT(*) FROM cdb_pre_alert WHERE customer_id = :u AND is_package = 0", [':u' => $uid])],
             ['id' => 'deliveries', 'label' => 'Request delivery', 'icon' => 'truck', 'board' => 'DeliveryRequest', 'perm' => null],
@@ -368,8 +371,12 @@ function sl_navResolve(string $activeId): array
             $kids = [];
             if (!empty($it['children'])) {
                 $kids = sl_navResolveChildren($it['children'], $activeId);
-                if (!$kids) {
+                if (!$kids && empty($it['hub'])) {
                     continue;
+                }
+                if (!empty($it['hub'])) { // the hub page itself is the first entry of its sub-menu
+                    array_unshift($kids, ['id' => $it['id'], 'href' => sl_route($it['board']), 'label' => 'Overview', 'icon' => 'i-grid',
+                        'cls' => $it['id'] === $activeId ? 'is-active' : '', 'ok' => '', 'c1' => '', 'c2' => '']);
                 }
             }
             $c1 = isset($it['count']) ? (string) $it['count']() : '';
@@ -381,10 +388,11 @@ function sl_navResolve(string $activeId): array
             $kidActive = $kids && in_array('is-active', array_column($kids, 'cls'), true);
             $items[] = [
                 'id' => $it['id'],
-                'href' => $kids ? $kids[0]['href'] : ($it['href'] ?? sl_route($it['board'])),
+                // a hub parent ('hub' => true) opens its own page; otherwise a parent opens its first child
+                'href' => $kids && empty($it['hub']) ? $kids[0]['href'] : ($it['href'] ?? sl_route($it['board'])),
                 'label' => $it['label'],
                 'icon' => 'i-' . $it['icon'],
-                'cls' => !$kids && $it['id'] === $activeId ? 'is-active' : '',
+                'cls' => (!$kids || !empty($it['hub'])) && $it['id'] === $activeId ? 'is-active' : '',
                 'ok' => !empty($it['ok']) ? 'ok' : '',
                 'c1' => $c1,
                 'c2' => $c2,

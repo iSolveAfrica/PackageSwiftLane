@@ -14,7 +14,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var conn = $('ww_conn'), app = $('ww_app'), list = $('ww_list'), main = $('ww_main'), panel = $('ww_panel'), note = $('ww_note');
   var S = { state: '', filter: 'all', q: '', chat: null, chatId: '', lsig: '', msig: '', rows: [], counts: {}, messages: [], customer: null,
-    file: null, timer: null, qrTimer: null, qrLeft: 0, busy: false, panelOpen: window.matchMedia('(min-width: 1200px)').matches, quick: null, me: null, caps: {} };
+    file: null, timer: null, qrTimer: null, qrLeft: 0, busy: false, sending: false, nonce: '', ticketFor: '', inboxUrl: '', reading: '', panelOpen: true, quick: null, me: null, caps: {} };
 
   /* ---------- helpers ---------- */
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -78,6 +78,21 @@
   TICK.played = TICK.read;
   function tick(a) { return TICK[a] || ''; }
   function isNarrow() { return window.matchMedia('(max-width: 899px)').matches; }
+  /* Below 960 px of room for the screen (narrow windows, side menu open on small laptops) the details float over the conversation
+     (assets/swiftlane/pages/WhatsAppWeb.css, the same container width). */
+  var OVERLAY_W = 960;
+  function isOverlay() { return isNarrow() || root.getBoundingClientRect().width < OVERLAY_W; }
+  /* Connection states in plain words. */
+  var STATE = { connected: 'Connected', qr: 'Not linked: scan the QR code', loading: 'Starting', standby: 'Open on another computer', disconnected: 'Not linked',
+    unreachable: 'Provider not answering', auth: 'Token refused', not_configured: 'Not set up', unknown: 'Unknown' };
+  function stateWord(s) { return STATE[s] || 'Unknown'; }
+  function newNonce() {
+    try { if (window.crypto && crypto.randomUUID) return crypto.randomUUID(); } catch (e) {}
+    return 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12);
+  }
+  /* What this screen sends (the same list as the file picker and the server). */
+  var FILE_EXT = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'csv', 'txt'];
+  var FILE_HELP = 'Pictures: JPG, PNG, WEBP, GIF. Documents: PDF, Word, Excel, PowerPoint, CSV, TXT.';
 
   /* ---------- connection screen ---------- */
   function showApp(on) {
@@ -109,13 +124,16 @@
     var admin = !!CFG.admin, h = '';
     var settingsLink = admin ? '<a class="sl-btn ghost" href="' + esc(CFG.urls.messaging) + '">Open Settings › Messaging</a>' : '';
     if (st.state === 'not_configured' || st.configured === false) {
-      h = block('alert', 'WhatsApp is not set up yet', 'This screen uses the UltraMsg instance the app already sends WhatsApp messages with. Its instance address and token are empty.' +
+      h = block('alert', 'WhatsApp is not set up yet', 'This screen uses the UltraMsg instance the app already sends WhatsApp messages with. ' + (st.problem ? esc(st.problem) : 'Its instance address and token are empty.') +
         (admin ? ' Add them in Settings › General › Messaging, then come back to link the phone.' : ' Ask an administrator to set it up.'), settingsLink);
     } else if (st.state === 'unreachable' || st.state === 'auth' || st.state === 'unknown') {
+      var saved = st.cached || S.rows.length;
       h = block('alert', st.state === 'auth' ? 'UltraMsg refused the instance token' : 'WhatsApp provider unreachable',
-        (st.error ? esc(st.error) + ' ' : '') + (st.state === 'auth' ? 'Check the token in Settings › General › Messaging.' : 'Saved chats stay readable below once the provider answers again.'),
+        (st.state === 'auth' ? (admin ? 'Check the token in Settings › General › Messaging.' : 'Ask an administrator to check the WhatsApp settings.') :
+          'The WhatsApp provider does not answer right now. ' + (saved ? 'Saved chats can still be read.' : 'No saved chats yet.')) +
+        (admin && st.error ? '<details class="ww-tech"><summary>Technical details</summary><code>' + esc(st.error) + '</code></details>' : ''),
         '<button type="button" class="sl-btn" data-ww="retry">' + ic('refresh') + 'Try again</button>' + settingsLink +
-        (st.cached || S.rows.length ? '<button type="button" class="sl-btn ghost" data-ww="offline">Read saved chats</button>' : ''));
+        (saved ? '<button type="button" class="sl-btn ghost" data-ww="offline">Read saved chats</button>' : ''));
     } else if (st.state === 'standby') {
       h = block('monitor', 'WhatsApp is open on another computer', 'WhatsApp Web runs in one place at a time. ' + (admin ? 'Use it here to bring the session back to this instance.' : 'Ask an administrator to bring it back here.'),
         admin ? '<button type="button" class="sl-btn" data-ww="takeover">Use here</button>' : '');
@@ -187,7 +205,7 @@
       $('ww_me_sub').textContent = st.state === 'connected' ? 'Connected' : 'Offline';
     }
     if (st.state !== 'connected' && !app.hidden) {
-      showNote('WhatsApp is not connected (' + esc(st.state) + '). You are reading saved chats; replies cannot be sent until it is back.' +
+      showNote('WhatsApp is not connected (' + esc(stateWord(st.state)) + '). You are reading saved chats; replies cannot be sent until it is back.' +
         (CFG.admin ? ' <button type="button" class="ww-lnk" data-ww="connection">Connection</button>' : ''));
     } else if (st.state === 'connected') {
       showNote(CFG.active ? '' : 'WhatsApp sending is switched off in Settings › General › Messaging: you can read chats, but replies are not sent.');
@@ -212,7 +230,7 @@
     }
     S.busy = true;
     var p = { filter: S.filter, q: S.q, lsig: S.lsig, visible: document.hidden ? '0' : '1' };
-    if (S.chatId) { p.chat = S.chatId; p.msig = S.msig; }
+    if (S.chatId) { p.chat = S.chatId; p.msig = S.msig; p.since = String(maxId()); }
     get('poll', p).then(function (j) {
       S.busy = false;
       if (!j || j.ok === false) { schedule(); return; }
@@ -223,11 +241,19 @@
         if (j.state === 'connected' && was !== 'connected' && app.hidden) { boot(true); return; }
       }
       if (j.rows) { S.lsig = j.sig; S.rows = j.rows; S.counts = j.counts; drawList(); }
-      if (j.messages && S.chatId && p.chat === S.chatId) { S.msig = j.msig; drawMessages(j.messages, false); }
+      if (j.messages && S.chatId && p.chat === S.chatId) { S.msig = j.msig; drawMessages(j.messages, false); if (j.unread > 0 && !document.hidden) markRead(S.chatId); }
       schedule();
     });
   }
   document.addEventListener('visibilitychange', function () { if (!document.hidden && !app.hidden) { clearTimeout(S.timer); poll(); } });
+
+  function maxId() { var n = 0; (S.messages || []).forEach(function (m) { if (m.id > n) n = m.id; }); return n; }
+  /* Reading a chat marks it read (a POST: a plain link or picture can never do it). */
+  function markRead(id) {
+    if (!id || S.reading === id) return;
+    S.reading = id;
+    post('read', { chat_id: id }).then(function () { S.reading = ''; });
+  }
 
   /* ---------- chat list ---------- */
   function loadChats(sync, force) {
@@ -292,7 +318,7 @@
     var changed = id !== S.chatId;
     S.chatId = id; S.msig = '';
     if (changed) {
-      S.file = null; S.chat = null; S.customer = null;
+      S.file = null; S.chat = null; S.customer = null; S.messages = []; S.nonce = '';
       var row = S.rows.find(function (x) { return x.id === id; }) || { id: id, name: '', group: /@g\.us$/.test(id) ? 1 : 0, phone: id.replace(/@.*/, '') };
       drawHeader(row);
       $('ww_msgs').innerHTML = '<div class="ww-load"><span class="ww-spin" aria-hidden="true"></span><span>Loading messages…</span></div>';
@@ -304,9 +330,9 @@
     get('chat', { id: id, force: force ? '1' : '0' }).then(function (j) {
       if (S.chatId !== id) return;
       if (!j.ok) { $('ww_msgs').innerHTML = '<p class="ww-none">' + esc(j.error || 'This chat could not be opened.') + '</p>'; return; }
-      S.chat = j.chat; S.customer = j.customer; S.botEnabled = j.bot_enabled;
+      S.chat = j.chat; S.customer = j.customer; S.botEnabled = j.bot_enabled; S.inboxUrl = j.inbox_url || CFG.urls.inbox;
       var r = S.rows.find(function (x) { return x.id === id; });
-      if (r) { r.unread = 0; drawList(); }
+      if ((r && r.unread) || j.chat.unread) { if (r) { r.unread = 0; drawList(); } markRead(id); }
       drawHeader(Object.assign({}, j.chat, { customer: j.customer ? j.customer.name : '', locker: j.customer ? j.customer.locker : '' }));
       S.msig = j.sig;
       drawMessages(j.messages, true);
@@ -314,7 +340,7 @@
         $('ww_sync').innerHTML = esc(j.sync.code === 'unsupported' ? 'The provider does not return the history of this chat; messages from now on are kept here.' : 'Could not refresh from WhatsApp: ' + j.sync.error);
         $('ww_sync').hidden = false;
       }
-      if (changed && S.panelOpen && !isNarrow()) togglePanel(true); else drawPanel();
+      if (changed && S.panelOpen && !isOverlay()) togglePanel(true); else drawPanel();
       if (!isNarrow()) { var t = $('ww_text'); if (t && changed) t.focus(); }
     });
   }
@@ -322,7 +348,7 @@
     var sub = row.group ? ((row.participants ? row.participants + ' members' : 'Group') + (row.tags && row.tags.length ? ' · ' + row.tags.join(', ') : '')) :
       [plus(row.phone), row.locker ? 'Locker ' + row.locker : ''].filter(Boolean).join(' · ');
     main.innerHTML = '<header class="ww-ch"><button type="button" class="ww-ib ww-back" data-ww="back" aria-label="Back to chats">' + ic('left') + '</button>' +
-      avatar(row) + '<button type="button" class="ww-ct" data-ww="panel" aria-label="Show details of ' + esc(title(row)) + '"><b>' + esc(title(row)) + '</b><span class="mut sm">' + esc(sub) + '</span></button>' +
+      avatar(row) + '<button type="button" class="ww-ct" data-ww="panel-open" aria-label="Show details of ' + esc(title(row)) + '"><b>' + esc(title(row)) + '</b><span class="mut sm">' + esc(sub) + '</span></button>' +
       '<div class="ww-sa"><button type="button" class="ww-ib" data-ww="reload" aria-label="Refresh messages" title="Refresh messages">' + ic('refresh') + '</button>' +
       '<button type="button" class="ww-ib" data-ww="panel" aria-label="Details" title="Details" aria-expanded="' + (!panel.hidden) + '">' + ic('sidebar') + '</button></div></header>' +
       '<p class="ww-sync" id="ww_sync" hidden></p>' +
@@ -353,6 +379,8 @@
     file.addEventListener('change', function () {
       var x = file.files && file.files[0];
       if (!x) return;
+      var ext = String(x.name.split('.').length > 1 ? x.name.split('.').pop() : '').toLowerCase();
+      if (FILE_EXT.indexOf(ext) < 0) { SL.toast('This file type cannot be sent from this screen. ' + FILE_HELP, true); file.value = ''; return; }
       if (x.size > 16 * 1048576) { SL.toast('WhatsApp accepts files up to 16 MB.', true); file.value = ''; return; }
       S.file = x; drawAttachment();
     });
@@ -374,16 +402,27 @@
     var t = $('ww_text'), btn = root.querySelector('.ww-send');
     var text = t.value.trim();
     if (!text && !S.file) { t.focus(); return; }
-    if (S.state !== 'connected') { SL.toast('WhatsApp is not connected, so nothing can be sent right now.', true); return; }
+    if (S.sending) return; // Enter pressed again while the first send is on its way
+    S.sending = true;
+    // One nonce per message: if the same message reaches the server twice it is sent once.
+    if (!S.nonce) S.nonce = newNonce();
     var fd = new FormData();
-    fd.append('chat_id', S.chatId); fd.append('body', text);
+    fd.append('chat_id', S.chatId); fd.append('body', text); fd.append('nonce', S.nonce);
     if (S.file) fd.append('file', S.file, S.file.name);
     btn.disabled = true; btn.classList.add('loading');
     var id = S.chatId;
+    // Not connected: the server still records the attempt (Outbox, a "Not sent" bubble) and says why.
     post('send', fd).then(function (j) {
+      S.sending = false;
       btn.disabled = false; btn.classList.remove('loading');
       if (j.messages && S.chatId === id) { S.msig = j.msig; drawMessages(j.messages, true); }
-      if (!j.ok) { fail(j, 'Not sent.'); if (j.closed) loadChat(); return; }
+      S.nonce = '';
+      if (!j.ok) {
+        if (j.code === 'not_connected') SL.toast('WhatsApp is not connected, so nothing was sent. The attempt is in the Outbox.', true);
+        else fail(j, 'Not sent.');
+        if (j.closed) loadChat();
+        return;
+      }
       t.value = ''; grow(); S.file = null; drawAttachment(); $('ww_file').value = '';
       closeKing(); closeQuick();
       S.lsig = '';
@@ -427,6 +466,10 @@
     var box = $('ww_msgs');
     if (!box) return;
     var nearBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 120;
+    // Older rows come without their thumbnail (the server sends each picture once): keep the one we have.
+    var had = {};
+    (S.messages || []).forEach(function (m) { if (m.thumb) had[m.id] = m.thumb; });
+    msgs.forEach(function (m) { if (m.keep_thumb && !m.thumb && had[m.id]) m.thumb = had[m.id]; });
     S.messages = msgs;
     if (!msgs.length) {
       box.innerHTML = '<p class="ww-none">' + (S.state === 'connected' ? 'No messages yet. Write the first one below.' : 'No saved messages for this chat.') + '</p>';
@@ -452,12 +495,12 @@
   function vars() {
     var c = S.customer || {}, sh = (c.shipments || [])[0];
     return { name: c.name || (S.chat && S.chat.name) || '', first_name: c.first_name || (c.name || '').split(' ')[0] || '', locker: c.locker || '',
-      balance: c.balance != null ? 'GHS ' + Number(c.balance).toFixed(2) : '', tracking: sh ? sh.tracking : '' };
+      balance: c.balance != null ? 'GHS ' + Number(c.balance).toFixed(2) : '', tracking: sh ? sh.tracking : '', hours: (S.quick && S.quick.vars && S.quick.vars.hours) || '' };
   }
   function fill(text) { var v = vars(); return String(text).replace(/\{(\w+)\}/g, function (m, k) { return v[k] ? v[k] : m; }); }
   function loadQuick() {
     if (S.quick) return Promise.resolve(S.quick);
-    return get('quick_replies').then(function (j) { S.quick = j.ok ? j : { rows: [], can_edit: false }; return S.quick; });
+    return get('quick_replies').then(function (j) { S.quick = j.ok ? j : { rows: [], vars: {}, can_edit: false }; return S.quick; });
   }
   function openQuick() {
     var q = $('ww_quick'), b = root.querySelector('[data-ww="quick"]');
@@ -465,7 +508,8 @@
     closeKing();
     loadQuick().then(function (d) {
       var h = '<div class="ww-pop-h"><b>Quick replies</b>' + (d.can_edit ? '<button type="button" class="ww-lnk" data-ww="qr-edit">Edit</button>' : '') + '</div>';
-      if (!d.rows.length) h += '<p class="mut sm">No quick replies yet.' + (d.can_edit ? ' Add some with Edit.' : '') + '</p>';
+      if (!d.rows.length) h += '<p class="mut sm">No quick replies yet.' + (d.can_edit ? ' Add some with Edit, or bring back the built-in ones.' : '') + '</p>' +
+        (d.can_edit ? '<button type="button" class="sl-btn ghost sm" data-ww="qr-reset">' + ic('refresh') + 'Restore defaults</button>' : '');
       d.rows.forEach(function (r, i) { h += '<button type="button" class="ww-qi" data-ww-quick="' + i + '"><b>' + esc(r.title) + '</b><span>' + esc(fill(r.body)) + '</span></button>'; });
       q.innerHTML = h; q.hidden = false; b.setAttribute('aria-expanded', 'true');
       var first = q.querySelector('button'); if (first) first.focus();
@@ -533,7 +577,7 @@
     var open = force != null ? force : panel.hidden;
     if (open && !S.chat) return;
     panel.hidden = !open;
-    if (force == null || !isNarrow()) S.panelOpen = open;
+    if (force == null || !isOverlay()) S.panelOpen = open;
     app.classList.toggle('has-panel', open);
     root.querySelectorAll('[data-ww="panel"][aria-expanded]').forEach(function (b) { b.setAttribute('aria-expanded', String(open)); });
     if (open) drawPanel();
@@ -571,7 +615,7 @@
       else h += '<button type="button" class="sl-btn ghost sm" data-ww-op="bot_on"' + (S.botEnabled ? '' : ' disabled title="' + esc(KING) + ' does not answer WhatsApp yet: switch it on in Communications › Settings"') + '>' + ic('spark') + 'Hand to ' + esc(KING) + '</button>';
     }
     h += '<button type="button" class="sl-btn ghost sm" data-ww="ticket">' + ic('ticket') + 'Open ticket</button>';
-    if (!c.group && c.thread_id) h += '<a class="sl-btn ghost sm" href="' + esc(CFG.urls.inbox) + '">' + ic('inbox') + 'In the Inbox</a>';
+    if (!c.group && c.thread_id) h += '<a class="sl-btn ghost sm" href="' + esc(S.inboxUrl || CFG.urls.inbox) + '">' + ic('inbox') + 'In the Inbox</a>';
     h += '</div>' + (!c.group && !S.botEnabled ? '<p class="mut xs">' + esc(KING) + ' answers WhatsApp only when it is switched on in Communications › Settings.</p>' : '') + '</section>';
     // Tags
     h += '<section class="ww-pc"><h3>Tags</h3><div class="ww-tags" id="ww_tags">' + (c.tags || []).map(function (t) {
@@ -597,8 +641,8 @@
       var h = (j.note ? '<p class="ww-warn xs">' + esc(j.note) + '</p>' : '') + '<p class="mut sm">' + j.rows.length + ' member' + (j.rows.length === 1 ? '' : 's') + ' · ' +
         j.rows.filter(function (r) { return r.user_id; }).length + ' customers</p>';
       if (j.can_export) {
-        h += '<div class="ww-acts"><a class="sl-btn ghost sm" href="' + esc(AJAX + '?action=export&what=group&format=csv&chat_id=' + encodeURIComponent(S.chatId)) + '" data-ww-dl>' + ic('download') + 'CSV</a>' +
-          '<a class="sl-btn ghost sm" href="' + esc(AJAX + '?action=export&what=group&format=xlsx&chat_id=' + encodeURIComponent(S.chatId)) + '" data-ww-dl>' + ic('download') + 'Excel</a>' +
+        h += '<div class="ww-acts"><button type="button" class="sl-btn ghost sm" data-ww-dl="group" data-format="csv">' + ic('download') + 'CSV</button>' +
+          '<button type="button" class="sl-btn ghost sm" data-ww-dl="group" data-format="xlsx">' + ic('download') + 'Excel</button>' +
           '<button type="button" class="sl-btn ghost sm" data-ww="save-group">' + ic('plus') + 'Save as contacts</button>' +
           '<button type="button" class="ww-ib" data-ww="members-refresh" aria-label="Reload members" title="Reload members">' + ic('refresh') + '</button></div>' +
           '<p class="mut xs">Saved members are tagged “whatsapp_group:' + esc(j.name) + '” and can be reached by campaigns; anyone who replied STOP stays opted out.</p>';
@@ -621,7 +665,7 @@
     $('ww_dlg_conn').hidden = false;
     get('state', { fresh: '1', webhook: CFG.admin ? '1' : '0' }).then(function (st) {
       applyState(st);
-      var ok = st.state === 'connected', h = '<dl class="ww-dl wide"><dt>Status</dt><dd>' + (ok ? '<span class="sl-pill delivered">Connected</span>' : '<span class="sl-pill pending">' + esc(st.state || 'unknown') + '</span>') + '</dd>' +
+      var ok = st.state === 'connected', h = '<dl class="ww-dl wide"><dt>Status</dt><dd>' + (ok ? '<span class="sl-pill delivered">Connected</span>' : '<span class="sl-pill pending">' + esc(stateWord(st.state)) + '</span>') + '</dd>' +
         (st.me ? '<dt>Phone</dt><dd><b>' + esc(plus(st.me.phone)) + '</b>' + (st.me.name ? ' · ' + esc(st.me.name) : '') + '</dd>' : '') +
         '<dt>Provider</dt><dd>UltraMsg' + (st.instance ? ' · instance <span class="mono">' + esc(st.instance) + '</span>' : '') + '</dd>' +
         '<dt>Sending</dt><dd>' + (st.active ? 'On' : 'Switched off in Settings › General › Messaging') + '</dd>';
@@ -630,7 +674,7 @@
         h += '<dt>Live updates</dt><dd>' + (w.ok ? (w.points_here && w.received && w.ack ? '<span class="sl-pill delivered">On</span> new messages and ticks arrive at once' : '<span class="sl-pill onway">Off</span> the screen checks for news every few seconds') : '<span class="mut">' + esc(w.code === 'unsupported' ? 'The provider does not report its webhook settings.' : (w.error || 'Unknown')) + '</span>') + '</dd>';
       }
       h += '</dl>';
-      if (st.error) h += '<p class="ww-err sm">' + esc(st.error) + '</p>';
+      if (st.error) h += CFG.admin ? '<details class="ww-tech"><summary>Technical details</summary><code>' + esc(st.error) + '</code></details>' : '<p class="ww-err sm">The WhatsApp provider does not answer right now.</p>';
       var notes = [];
       if (st.caps && st.caps.groups === false) notes.push('Group member lists are not offered by the provider: members are taken from the people who wrote in each group.');
       if (st.caps && st.caps.contacts === false) notes.push('The provider does not list the phone\'s contacts, so the contacts export uses the chats instead.');
@@ -642,7 +686,7 @@
         if (st.state === 'standby') h += '<button type="button" class="sl-btn ghost sm" data-ww="takeover">Use here</button>';
         if (ok) h += '<button type="button" class="sl-btn danger sm" data-ww="logout">' + ic('logout') + 'Unlink this phone</button>';
         else h += '<button type="button" class="sl-btn sm" data-ww="relink">Show the QR code</button>';
-        h += '</div><p class="mut xs">Unlinking signs the company phone out of this instance: nothing is sent or received until a phone is linked again with the QR code.</p>';
+        h += '</div>' + (ok ? '<p class="mut xs">Unlinking signs the company phone out of this instance: nothing is sent or received until a phone is linked again with the QR code.</p>' : '');
       } else {
         h += '<p class="mut sm">Administrators link, unlink and restart the WhatsApp connection.</p>';
       }
@@ -662,14 +706,14 @@
         '<span><b>' + j.saved + '</b><span class="mut xs">saved contacts</span></span><span><b>' + j.stopped + '</b><span class="mut xs">opted out (STOP)</span></span></div>';
       if (j.caps && j.caps.contacts === false) h += '<p class="ww-warn sm">The provider does not list the phone\'s contacts. Group members can still be exported from each group\'s details.</p>';
       h += '<div class="ww-acts"><button type="button" class="sl-btn ghost sm" data-ww="contacts-sync">' + ic('refresh') + 'Read contacts from the phone</button>' +
-        '<a class="sl-btn ghost sm" href="' + esc(AJAX + '?action=export&what=contacts&format=csv') + '" data-ww-dl>' + ic('download') + 'Export CSV</a>' +
-        '<a class="sl-btn ghost sm" href="' + esc(AJAX + '?action=export&what=contacts&format=xlsx') + '" data-ww-dl>' + ic('download') + 'Export Excel</a>' +
+        '<button type="button" class="sl-btn ghost sm" data-ww-dl="contacts" data-format="csv">' + ic('download') + 'Export CSV</button>' +
+        '<button type="button" class="sl-btn ghost sm" data-ww-dl="contacts" data-format="xlsx">' + ic('download') + 'Export Excel</button>' +
         '<button type="button" class="sl-btn sm" data-ww="save-contacts">' + ic('plus') + 'Save all as contacts</button></div>' +
         '<p class="mut sm">Saved contacts are tagged with where they came from (<code>whatsapp_contacts</code>, <code>whatsapp_group:&lt;name&gt;</code>, <code>whatsapp_chat</code>) and campaigns can reach them, as the owner decided. Anyone who replies STOP is opted out and skipped. Every export and save is recorded.</p>' +
         '<a class="sl-btn ghost sm" href="' + esc(j.send_url) + '">' + ic('send') + 'Use them in a campaign</a>';
       if (j.exports.length) {
         h += '<h3 class="ww-h3">Recent exports and saves</h3><ul class="ww-log">' + j.exports.map(function (e) {
-          return '<li><span>' + esc(e.format === 'save' ? 'Saved ' + e.saved + ' of ' + e.rows : e.format.toUpperCase() + ' · ' + e.rows + ' rows') + ' · ' + esc(e.target || e.kind) + '</span><span class="mut xs">' + esc(e.by) + ' · ' + esc(e.at.slice(0, 16)) + '</span></li>'; }).join('') + '</ul>';
+          return '<li><span>' + esc(e.format === 'save' ? e.saved + ' of ' + e.rows + ' reachable' + (e.opted_out ? ', ' + e.opted_out + ' opted out' : '') : e.format.toUpperCase() + ' · ' + e.rows + ' rows') + ' · ' + esc(e.target || e.kind) + '</span><span class="mut xs">' + esc(e.by) + ' · ' + esc(e.at.slice(0, 16)) + '</span></li>'; }).join('') + '</ul>';
       }
       body.innerHTML = h;
     });
@@ -685,6 +729,8 @@
         case 'reload': openChat(S.chatId, true); return;
         case 'back': app.classList.remove('is-chat'); sizeApp(); S.chatId = ''; S.chat = null; drawList(); togglePanel(false); try { history.replaceState(null, '', location.pathname); } catch (er) {} return;
         case 'panel': togglePanel(); return;
+        case 'panel-open': togglePanel(true); return;
+        case 'qr-reset': resetQuick(a); return;
         case 'panel-close': togglePanel(false); return;
         case 'attach': $('ww_file').click(); return;
         case 'unattach': S.file = null; $('ww_file').value = ''; drawAttachment(); return;
@@ -732,7 +778,7 @@
     var ut = e.target.closest('[data-ww-untag]');
     if (ut) { var tags = (S.chat.tags || []).filter(function (t) { return t !== ut.getAttribute('data-ww-untag'); }); saveTags(tags); return; }
     var dl = e.target.closest('[data-ww-dl]');
-    if (dl) SL.toast('Preparing the file… The export is recorded.');
+    if (dl) { exportFile(dl); return; }
     // outside clicks close the pop-ups
     var quick = $('ww_quick');
     if (quick && !quick.hidden && !e.target.closest('#ww_quick') && !e.target.closest('[data-ww="quick"]')) closeQuick();
@@ -742,7 +788,7 @@
     var q = $('ww_quick'), k = $('ww_king');
     if (q && !q.hidden) { closeQuick(); var b = root.querySelector('[data-ww="quick"]'); if (b) b.focus(); }
     else if (k && !k.hidden) { closeKing(); }
-    else if (isNarrow() && !panel.hidden && !document.querySelector('.sl-dialog:not([hidden])')) togglePanel(false);
+    else if (isOverlay() && !panel.hidden && !document.querySelector('.sl-dialog:not([hidden])')) togglePanel(false);
   });
   document.addEventListener('submit', function (e) {
     if (e.target.id === 'ww_tagf') {
@@ -759,7 +805,7 @@
       post('ticket', { chat_id: S.chatId, subject: f.subject.value, priority: f.priority.value, note: f.note.value }).then(function (j) {
         btn.disabled = false; btn.classList.remove('loading');
         if (!j.ok) { fail(j, 'The ticket could not be opened.'); return; }
-        $('ww_dlg_ticket').hidden = true; f.reset();
+        $('ww_dlg_ticket').hidden = true; f.reset(); S.ticketFor = '';
         SL.toast(j.message || 'Ticket opened.');
         showNote('Ticket <a href="' + esc(j.url) + '">' + esc(j.ref) + '</a> opened from this chat.');
       });
@@ -775,9 +821,12 @@
   function openTicket() {
     var f = $('ww_ticket_form'), c = S.chat || {};
     $('ww_ticket_who').textContent = 'From the WhatsApp chat with ' + (S.customer ? S.customer.name + ' (' + plus(c.phone) + ')' : (c.name || plus(c.phone))) + '.';
-    if (!f.subject.value) {
+    if (S.ticketFor !== S.chatId) {
+      // Another chat than last time: start from a clean form for this one.
+      f.reset(); f.subject.removeAttribute('aria-invalid');
       var lastIn = (S.messages || []).filter(function (m) { return !m.me && m.body; }).pop();
       f.subject.value = lastIn ? 'WhatsApp: ' + lastIn.body.slice(0, 80) : 'WhatsApp conversation';
+      S.ticketFor = S.chatId;
     }
     $('ww_dlg_ticket').hidden = false;
   }
@@ -817,6 +866,43 @@
       $('ww_dlg_qr').hidden = true;
       SL.toast(j.message || 'Saved.');
     });
+  }
+
+  function resetQuick(btn) {
+    if (!confirm('Bring back the built-in quick replies? Replies you added are replaced.')) return;
+    btn.classList.add('loading');
+    post('quick_replies_reset').then(function (j) {
+      btn.classList.remove('loading');
+      if (!j.ok) { fail(j); return; }
+      S.quick = { rows: j.rows, vars: j.vars || {}, can_edit: true };
+      $('ww_dlg_qr').hidden = true; closeQuick();
+      SL.toast(j.message || 'Restored.');
+    });
+  }
+  /* Exports are a POST with the CSRF token (they are recorded); the file comes back as a download. */
+  function exportFile(btn) {
+    if (btn.classList.contains('loading')) return;
+    var what = btn.getAttribute('data-ww-dl'), fmt = btn.getAttribute('data-format') || 'csv';
+    var m = document.querySelector('meta[name="csrf-token"]'), pm = document.querySelector('meta[name="csrf-param"]');
+    var body = new URLSearchParams({ action: 'export', what: what, format: fmt });
+    if (what === 'group') body.append('chat_id', S.chatId);
+    body.append(pm ? pm.content : 'csrf_token', m ? m.content : '');
+    btn.classList.add('loading');
+    SL.toast('Preparing the file… The export is recorded.');
+    fetch(AJAX + '?action=export', { method: 'POST', body: body, credentials: 'same-origin', headers: { 'X-CSRF-Token': m ? m.content : '', 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function (r) {
+        var type = r.headers.get('Content-Type') || '';
+        if (!r.ok || /json/i.test(type)) return r.json().catch(function () { return {}; }).then(function (j) { throw new Error(j.error || 'The export could not be made.'); });
+        var cd = r.headers.get('Content-Disposition') || '', name = (cd.match(/filename="?([^";]+)"?/) || [])[1] || ('whatsapp-' + what + '.' + fmt);
+        return r.blob().then(function (b) {
+          var u = URL.createObjectURL(b), a = document.createElement('a');
+          a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+          setTimeout(function () { URL.revokeObjectURL(u); }, 4000);
+          SL.toast('Downloaded ' + name + '.');
+        });
+      })
+      .catch(function (e) { SL.toast(e.message || 'The export could not be made.', true); })
+      .then(function () { btn.classList.remove('loading'); });
   }
 
   /* ---------- start ---------- */

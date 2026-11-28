@@ -71,8 +71,24 @@
       var sub = card.querySelector('.cs-sts'); if (sub) sub.textContent = s.provider;
     });
   }
+  /* An error on a switch (its hidden input) goes under the switch row, not inside the 36px toggle. */
+  function placeSwitchErrors(scope) {
+    scope.querySelectorAll('.sl-toggle > .sl-err').forEach(function (err) {
+      var sw = err.parentNode, row = sw.closest('label.cs-sw') || sw;
+      err.classList.add('cs-swerr'); err.id = err.id || 'cs-err-' + (sw.getAttribute('data-cs-switch') || Math.random().toString(36).slice(2));
+      row.insertAdjacentElement('afterend', err);
+      sw.classList.add('is-invalid'); sw.setAttribute('aria-invalid', 'true'); sw.setAttribute('aria-describedby', err.id);
+    });
+    var first = scope.querySelector('.is-invalid:not(input[type="hidden"])');
+    if (first && first.classList.contains('sl-toggle')) first.focus();
+  }
+  document.addEventListener('submit', function (e) {
+    var f = e.target; if (!f.closest || !f.closest('.cs-wrap')) return;
+    f.querySelectorAll('.sl-toggle.is-invalid').forEach(function (sw) { sw.classList.remove('is-invalid'); sw.removeAttribute('aria-invalid'); sw.removeAttribute('aria-describedby'); });
+  }, true);
   document.addEventListener('sl:done', function (e) {
     var j = e.detail || {};
+    if (e.target.closest && e.target.closest('.cs-wrap')) placeSwitchErrors(e.target);
     if (j.status) paintStatus(j.status);
     if (j.owner) setOwner(j.owner);
     // A saved secret is never shown again: clear the field and say it is kept.
@@ -81,7 +97,45 @@
       f.querySelectorAll('input[type="password"]').forEach(function (p) {
         if (p.value) { p.value = ''; p.placeholder = '•••••••• saved - leave blank to keep'; }
       });
+      // Secrets marked "Remove saved" are gone now.
+      var cl = f.querySelector('input[name="clear_secrets"]');
+      if (cl && cl.value) {
+        cl.value.split(',').forEach(function (n) {
+          var inp = f.querySelector('[name="' + n + '"]'), b = f.querySelector('[data-cs-clear="' + n + '"]');
+          if (inp && !inp.value) inp.placeholder = 'Not set';
+          if (b) b.remove();
+        });
+        cl.value = '';
+      }
     }
+  });
+
+  /* ---- "Remove saved" next to a saved secret: cleared on the next save ---- */
+  root.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-cs-clear]'); if (!b) return;
+    e.preventDefault();
+    var f = b.closest('form'), name = b.getAttribute('data-cs-clear');
+    var cl = f && f.querySelector('input[name="clear_secrets"]'); if (!cl) return;
+    var list = cl.value ? cl.value.split(',') : [], on = list.indexOf(name) < 0;
+    list = list.filter(function (n) { return n !== name; }); if (on) list.push(name);
+    cl.value = list.join(',');
+    var inp = f.querySelector('[name="' + name + '"]');
+    if (inp) {
+      if (!inp.hasAttribute('data-ph')) inp.setAttribute('data-ph', inp.placeholder);
+      inp.placeholder = on ? 'Removed when you save' : inp.getAttribute('data-ph');
+      if (on) inp.value = '';
+    }
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.textContent = on ? 'Keep it' : 'Remove saved';
+  });
+
+  /* ---- clicking the text of a switch row flips the switch ---- */
+  root.addEventListener('click', function (e) {
+    var row = e.target.closest('label.cs-sw'); if (!row) return;
+    if (e.target.closest('.sl-toggle, a, button, input, select, textarea')) return;
+    var sw = row.querySelector('.sl-toggle[role="switch"]'); if (!sw) return;
+    e.preventDefault();
+    sw.click();
   });
 
   /* ---- one-click actions ---- */
@@ -94,6 +148,10 @@
     if (msg && !window.confirm(msg)) return;
     var data = { action: act };
     if (act === 'mnotify_balance') { var k = scope.querySelector('[name="mnotify_api_key"]'); if (k && k.value) data.mnotify_api_key = k.value; }
+    // The SMTP check tests what is on screen (a blank password means the saved one, for the saved host only).
+    if (act === 'check_smtp') ['mailer', 'smtp_host', 'smtp_user', 'smtp_port', 'smtp_secure', 'smtp_password'].forEach(function (n) {
+      var f = scope.querySelector('[name="' + n + '"]'); if (f) data[n] = f.value;
+    });
     b.setAttribute('aria-busy', 'true'); b.classList.add('loading');
     out(scope, act, 'Working…', false);
     SL.post(ajax, data).then(function (j) {

@@ -23,7 +23,7 @@ if (!sl_waWebAllowed()) {
     exit;
 }
 sl_render('WhatsAppWeb', [
-    'id' => 'commsinbox',
+    'id' => 'commswaweb',
     'title' => 'WhatsApp',
     'board' => 'WhatsAppWeb',
     'wide' => true,

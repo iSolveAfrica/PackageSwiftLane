@@ -147,7 +147,8 @@ function sl_consolidationDetailData($user, $core, int $id, string $type): ?array
         'files' => array_map(fn($f) => ['url' => $f->url, 'name' => $f->name], sl_rows('SELECT url, name FROM cdb_order_files WHERE order_id = :id AND ' . ($M['sea'] ? '(is_consolidate = 2 OR (is_consolidate = 1 AND NOT EXISTS (SELECT 1 FROM cdb_consolidate x WHERE x.consolidate_id = cdb_order_files.order_id)))' : 'is_consolidate = 1') . ' ORDER BY id DESC', [':id' => $id])),
         'other' => [],
     ];
-    $d['avail'] = $d['adding'] ? sl_conAvailable($M, $d['q'], 1000, $M['sea'] ? -1 : (int) ($c->is_dangerous_good ?? 0)) : [];
+    // the "Add packages" panel is on the page whenever the consolidation is open (a search widens it to 1000)
+    $d['avail'] = $canEdit ? sl_conAvailable($M, $d['q'], $d['adding'] ? 1000 : 300, $M['sea'] ? -1 : (int) ($c->is_dangerous_good ?? 0)) : [];
     $d['noAvail'] = $d['adding'] && !$d['avail'];
     // the "other mode" chip: the latest consolidation of the other mode the user may see
     $om = sl_conMode($M['sea'] ? 'air' : 'sea');

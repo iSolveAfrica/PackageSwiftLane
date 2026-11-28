@@ -37,7 +37,7 @@ if (strtotime((string) $s->sent_at) < time() - 86400 * $window) {
 switch ((string) ($_POST['action'] ?? '')) {
     case 'answer':
         $a = isset($_POST['a']) && is_array($_POST['a']) ? $_POST['a'] : [];
-        $r = cdp_surveySubmit($id, $a);
+        $r = cdp_surveySubmit($id, $a, ['source' => 'popup']);
         if (!$r['ok']) {
             sl_json(['success' => false, 'message' => $r['error'], 'errors' => (object) $r['errors']], 422);
         }

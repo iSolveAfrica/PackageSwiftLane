@@ -56,7 +56,7 @@ $boot = ['ajax' => $d['ajax'], 'open' => preg_match('/^(log|queue|cs|dlv|in)-\d+
 <div class="row g12"><span class="sl-av lg"><?= h($c['ini']) ?></span><div class="col"><h2 class="hs-name" id="hs-name"><?= h($c['name']) ?></h2><span class="mut sm"><?= h(implode(' · ', array_filter([$c['locker']]))) ?></span></div></div>
 <dl class="hs-contact"><?php if ($c['phone'] !== ''): ?><div><dt>Phone</dt><dd class="mono"><?= h($c['phone']) ?></dd></div><?php endif; ?><?php if ($c['email'] !== ''): ?><div><dt>E-mail</dt><dd><?= h($c['email']) ?></dd></div><?php endif; ?></dl>
 <div class="row g8 wrap"><a class="sl-btn sm" href="<?= h($c['send']) ?>"><i class="ic ic-sm i-send" aria-hidden="true"></i>Send a message</a><a class="sl-btn ghost sm" href="<?= h($c['outbox']) ?>"><i class="ic ic-sm i-inbox" aria-hidden="true"></i>In the Outbox</a><a class="sl-btn ghost sm" href="<?= h($c['profile']) ?>"><i class="ic ic-sm i-user" aria-hidden="true"></i>Profile</a></div>
-<div class="hs-counts"><span><b><?= (int) $d['counts']['out'] ?></b> sent</span><span><b><?= (int) $d['counts']['in'] ?></b> received</span><span class="<?= $d['counts']['failed'] ? 'bad' : '' ?>"><b><?= (int) $d['counts']['failed'] ?></b> failed</span><span><b><?= (int) $d['counts']['waiting'] ?></b> waiting</span></div>
+<div class="hs-counts"><span title="Accepted by the provider"><b><?= (int) $d['counts']['sent'] ?></b> sent</span><span><b><?= (int) $d['counts']['in'] ?></b> received</span><span class="<?= $d['counts']['problems'] ? 'bad' : '' ?>" title="Failed, not sent or cancelled (the Problems filter)"><b><?= (int) $d['counts']['problems'] ?></b> problems</span><span><b><?= (int) $d['counts']['waiting'] ?></b> waiting</span></div>
 </section>
 
 <form class="sl-card hs-prefs" id="hs-prefs" aria-labelledby="hs-prefs-h">
@@ -71,7 +71,7 @@ $sw = function ($k, $label, $hint = '') use ($p, $d) {
 ?>
 <fieldset class="hs-fs"><legend class="sl-lab">Shipment updates</legend><?= $sw('whatsapp', 'WhatsApp') ?><?= $sw('sms', 'SMS') ?><?= $sw('email', 'E-mail') ?></fieldset>
 <fieldset class="hs-fs"><legend class="sl-lab">Offers and campaigns (consent)</legend><?= $sw('mkt_whatsapp', 'WhatsApp') ?><?= $sw('mkt_sms', 'SMS') ?><?= $sw('mkt_email', 'E-mail') ?></fieldset>
-<fieldset class="hs-fs"><legend class="sl-lab">Everything</legend><?= $sw('opted_out_all', 'Opted out of all messages', 'Waiting messages are cancelled when this is switched on.') ?></fieldset>
+<fieldset class="hs-fs"><legend class="sl-lab">Everything</legend><?= $sw('opted_out_all', 'Opted out of all messages', 'Switching this on cancels their waiting status updates, Support desk notices and delivery notices.') ?></fieldset>
 <p class="mut sm"><?= !empty($p['consent_at']) ? 'Marketing consent recorded ' . h(sl_date($p['consent_at'], 'M j, Y H:i')) . ' (' . h(str_replace(['staff:', '_'], ['staff, ', ' '], (string) $p['consent_source'])) . ').' : 'No marketing consent recorded.' ?><?= empty($p['stored']) ? ' These are the defaults: the customer never changed them.' : '' ?></p>
 <?php if ($d['canAct']): ?>
 <label class="sl-field"><span class="sl-lab">How did the customer tell you?</span><span class="sl-sel native"><select name="source"><option value="phone">On the phone</option><option value="in_person">In person</option><option value="written">In writing</option><option value="chat">In a chat</option></select><i class="ic ic-sm i-down" aria-hidden="true"></i></span></label>

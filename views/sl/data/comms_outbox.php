@@ -22,6 +22,34 @@ function sl_commsOutboxAllowed($user): bool
     return cdp_opsRank() >= 2 || $user->cdp_hasPermission('view_message_logs');
 }
 
+/**
+ * May this user open Message Costs (message_costs.php)? The same gate as that
+ * page: view_message_logs (sl_gate) and, while it is a developer-console page
+ * (helpers/sl_modules.php sl_moduleDevPages), the console's access for its section.
+ */
+function sl_commsOutboxCanCosts($user): bool
+{
+    if (!$user->cdp_hasPermission('view_message_logs')) {
+        return false;
+    }
+    try {
+        if (!function_exists('sl_moduleDevPages') && is_file(CDP_ROOT . '/helpers/sl_modules.php')) {
+            require_once CDP_ROOT . '/helpers/sl_modules.php';
+        }
+        $sec = function_exists('sl_moduleDevPages') ? (sl_moduleDevPages()['message_costs.php'] ?? null) : null;
+        if ($sec === null) {
+            return true;
+        }
+        require_once CDP_ROOT . '/helpers/devops.php';
+        if (!function_exists('cdp_devLocked') || !function_exists('cdp_devCanUse') || !function_exists('cdp_devSectionAllowed')) {
+            return false;
+        }
+        return !cdp_devLocked() && cdp_devCanUse($user) && cdp_devSectionAllowed($user, $sec);
+    } catch (Throwable $e) {
+        return false;
+    }
+}
+
 /** King availability for the "Explain this failure" button (never throws). */
 function sl_commsOutboxAi($user): array
 {
@@ -40,17 +68,24 @@ function sl_commsOutboxData($user, $core): array
 {
     $ready = cdp_commEnsureTables() && cdp_msgTableReady();
     $f = cdp_commOutboxFilters($_GET);
-    $page = max(1, (int) ($_GET['page'] ?? 1));
+    $filtered = cdp_commOutboxFiltered($f);
+    [$f, $defaultRange] = cdp_commOutboxDefaultRange($f, $_GET);
     $per = 50;
+    // Deep pages cost more on every part of the union; 200 pages is 10,000 messages (narrow the dates for older ones).
+    $maxPage = 200;
+    $page = min($maxPage, max(1, (int) ($_GET['page'] ?? 1)));
     $d = [
         'ready' => $ready,
         'f' => $f,
-        'filtered' => cdp_commOutboxFiltered($f),
+        'filtered' => $filtered,
+        'defaultRange' => $defaultRange,
+        'anyRange' => ($_GET['range'] ?? '') === 'any',
+        'maxPage' => $maxPage,
         'page' => $page,
         'per' => $per,
         'rows' => [],
         'total' => 0,
-        'stats' => ['total' => 0, 'sent' => 0, 'failed' => 0, 'skipped' => 0, 'waiting' => 0, 'received' => 0, 'cost' => 0, 'currency' => ''],
+        'stats' => ['total' => 0, 'sent' => 0, 'failed' => 0, 'skipped' => 0, 'waiting' => 0, 'cancelled' => 0, 'received' => 0, 'cost' => 0, 'currency' => ''],
         'channels' => cdp_commChannels(),
         'statuses' => cdp_commOutboxStatusFilters(),
         'origins' => cdp_commOutboxOrigins(),
@@ -65,7 +100,7 @@ function sl_commsOutboxData($user, $core): array
         'historyUrl' => sl_route('CommsCustomers'),
         'costsUrl' => sl_route('MessageCosts'),
         'canSend' => cdp_opsRank() >= 2,
-        'canCosts' => $user->cdp_hasPermission('view_message_logs'),
+        'canCosts' => sl_commsOutboxCanCosts($user),
         'linked' => false,
     ];
     if (!$ready) {
@@ -92,7 +127,7 @@ function sl_commsOutboxData($user, $core): array
     $d['exportUrl'] = $d['ajax'] . '?' . http_build_query(['action' => 'export'] + array_filter([
         'channel' => $f['channel'], 'status' => $f['status'], 'origin' => $f['origin'], 'source' => $f['source'], 'campaign' => $f['campaign'],
         'customer' => $f['customer'] ?: '', 'q' => $f['q'], 'from' => $f['from'], 'to' => $f['to'], 'sent_by' => $f['sent_by'] > 0 ? $f['sent_by'] : '',
-        'template_id' => $f['template'] ?: ''], function ($v) { return $v !== '' && $v !== 0; }));
+        'template_id' => $f['template'] ?: '', 'range' => $d['anyRange'] ? 'any' : ''], function ($v) { return $v !== '' && $v !== 0; }));
     return $d;
 }
 
@@ -107,7 +142,7 @@ function sl_commsCustomersData($user, $core): array
         'customer' => null,
         'prefs' => null,
         'items' => [],
-        'counts' => ['out' => 0, 'in' => 0, 'failed' => 0, 'waiting' => 0],
+        'counts' => ['sent' => 0, 'in' => 0, 'problems' => 0, 'waiting' => 0],
         'recent' => [],
         'ajax' => 'ajax/comms/outbox_ajax.php',
         'outboxUrl' => sl_route('CommsOutbox'),
@@ -133,14 +168,15 @@ function sl_commsCustomersData($user, $core): array
                 error_log('Customer history: ' . $e->getMessage());
                 $d['error'] = 'The history could not be read. The error is in the PHP log.';
             }
+            // The same groups as the History filter: Sent = delivered to the provider, Problems = failed, not sent or cancelled.
             foreach ($d['items'] as $it) {
-                if ($it['dir'] === 'out') {
-                    $d['counts']['out']++;
-                } elseif ($it['dir'] === 'in') {
+                if ($it['dir'] === 'out' && $it['status'] === 'sent') {
+                    $d['counts']['sent']++;
+                } elseif ($it['dir'] === 'in' && $it['channel'] !== 'survey') {
                     $d['counts']['in']++;
                 }
-                if ($it['status'] === 'failed') {
-                    $d['counts']['failed']++;
+                if (in_array($it['status'], ['failed', 'skipped', 'cancelled'], true)) {
+                    $d['counts']['problems']++;
                 }
                 if (in_array($it['status'], ['queued', 'scheduled', 'retrying', 'sending'], true)) {
                     $d['counts']['waiting']++;

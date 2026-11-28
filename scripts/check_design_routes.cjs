@@ -21,4 +21,6 @@ for (const file of files) {
 }
 assert.deepEqual(errors, [], errors.join('\n'));
 assert.equal(routes.get('DevBilling'), 'message_costs.php');
+// The WhatsApp screen (its interactions: scripts/check_whatsapp_web.cjs).
+assert.equal(routes.get('WhatsAppWeb'), 'whatsapp_web.php');
 console.log(`Design route check passed (${routes.size} routes, ${files.length} templates/helpers).`);

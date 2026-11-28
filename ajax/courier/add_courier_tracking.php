@@ -334,7 +334,7 @@ if (empty($errors)) {
             $header .= "From: " . $from . " \r\n";
 
             // mail() bypasses PHPMailer, so the transport gate is asked here.
-            if (cdp_commLegacyAllowed('email', ['id' => (int) $shipment->sender_id, 'to' => (string) $to, 'subject' => $subject])) {
+            require_once __DIR__ . '/../../helpers/whatsapp.php'; if (cdp_commLegacyAllowed('email', ['id' => (int) $shipment->sender_id, 'name' => trim((string) ($sender_data->fname ?? '') . ' ' . (string) ($sender_data->lname ?? '')), 'to' => (string) $to, 'subject' => $subject, 'body' => cdp_statusNotifyPlain($message)])) {
                 $cdpOk = @mail($to, $subject, $message, $header);
                 if (function_exists('cdp_msgLogPhpMail')) {
                     cdp_msgLogPhpMail((bool) $cdpOk, $to, $subject, $message);
@@ -453,7 +453,14 @@ if (empty($errors)) {
         try {
             $newbodyS_receiver = generateSMSBody($receiver_data, $fullshipment, $add_status, $app_url, $templatesreceiver);
             // Llamar a la función para enviar la notificación SMS al receptor
-            sendNotificationSMS($receiver_data, $newbodyS_receiver, $notify_sms_receiver);
+            // A receiver notice: the Automation Center only messages the owner, so
+            // this opt-in text is not held back as a status announcement.
+            if ($notify_sms_receiver) {
+                require_once __DIR__ . '/../../helpers/whatsapp.php';
+                cdp_statusNotifyAsReceiver(function () use ($receiver_data, $newbodyS_receiver) {
+                    return sendNotificationSMS($receiver_data, $newbodyS_receiver, true);
+                }, (($shipment->recipient_type ?? '') === 'user') ? (int) ($receiver_data->id ?? 0) : 0, trim((string) ($receiver_data->fname ?? '') . ' ' . (string) ($receiver_data->lname ?? '')));
+            }
         } catch (Exception $e) {
             error_log('Error generating or sending SMS for receiver: ' . $e->getMessage());
             // Manejo del error, por ejemplo, establecer una variable para mostrar un mensaje de error al usuario

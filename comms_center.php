@@ -9,7 +9,8 @@ $core = new Core();
 require_once 'helpers/sl_view.php';
 sl_gate();
 require_once 'helpers/ops_db.php';
-if (cdp_opsRank($user) < 2) {
+// The Overview's gate: each target page then applies its own (e.g. Outbox for view_message_logs).
+if (cdp_opsRank($user) < 2 && !$user->cdp_hasPermission(['push_notifications', 'manage_newsletter', 'view_message_logs'])) {
     header('Location: error403.php');
     exit;
 }

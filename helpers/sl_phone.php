@@ -53,11 +53,14 @@ function sl_phoneTabs(string $set): array
             return [['Console', 'terminal', sl_route('DevOverview')], ['Logs', 'activity', sl_route('DevLogs')], ['Alerts', 'alert', sl_route('DevAlerts'), true], ['Issues', 'bug', sl_route('DevIssues')], ['Menu', 'more', 'menu.php']];
         case 'staff':
             require_once __DIR__ . '/sl_nav.php';
+            // The artifact's staff tab bar (ControlPanelsMobile / AiChatMobile): five flat tabs, no raised button.
+            // Home · Shipments · Inbox · Assistant · Panels; each falls back to a page this person may open.
+            $nav = fn($k) => function_exists('sl_navAllowed') && sl_navAllowed($k, []);
             $tabs = [['Home', 'grid', sl_route('Main')]];
-            $tabs[] = ['Shipments', 'plane', sl_route('AirShipments')];
-            $tabs[] = ['Scan', 'scan', $can(['package_intake', 'add_package']) ? sl_route('PackageIntake') : sl_route('LockerSearch'), true];
-            $tabs[] = function_exists('sl_navAllowed') && sl_navAllowed('ops:staff', []) ? ['Inbox', 'message', sl_route('CommsInbox')] : ['Alerts', 'bell', sl_route('Notifications')];
-            $tabs[] = ['Menu', 'more', 'menu.php'];
+            $tabs[] = $can('view_shipment_list') ? ['Shipments', 'plane', sl_route('AirShipments')] : ['Search', 'search', sl_route('LockerSearch')];
+            $tabs[] = $nav('cs:agent') ? ['Inbox', 'ticket', sl_route('CsInbox')] : ($nav('ops:staff') ? ['Inbox', 'message', sl_route('CommsInbox')] : ['Alerts', 'bell', sl_route('Notifications')]);
+            $tabs[] = $nav('ai:use') ? ['Assistant', 'spark', sl_route('StaffAI')] : ['Scan', 'scan', $can(['package_intake', 'add_package']) ? sl_route('PackageIntake') : sl_route('LockerSearch')];
+            $tabs[] = ['Panels', 'layers', sl_route('ControlPanels')];
             return $tabs;
     }
     return [];
@@ -72,7 +75,7 @@ function sl_phoneNavFor(): string
     return 'staff';
 }
 
-/** The design's tab bar: .mx-tab (labels, raised middle) for staff and developer, .mx-pill (icons) for customers and riders. */
+/** The design's tab bar: .mx-tab (flat labelled tabs; the developer set keeps a raised middle) for staff, customers and developer, .mx-pill (icons) for riders. */
 function sl_phoneNav(string $set, string $current = ''): string
 {
     $tabs = sl_phoneTabs($set);
@@ -83,7 +86,7 @@ function sl_phoneNav(string $set, string $current = ''): string
             if (basename(strtok($t[2], '?#')) === $here) { $current = $t[0]; break; }
         }
     }
-    $pill = in_array($set, ['rider', 'customer'], true);
+    $pill = $set === 'rider';   // customers and staff get the artifact's flat labelled tab bar
     $out = '<nav class="' . ($pill ? 'mx-pill' : 'mx-tab') . '" aria-label="App">';
     foreach ($tabs as $t) {
         $on = $t[0] === $current;
@@ -127,5 +130,8 @@ function sl_phoneMe(): array
     global $userData;
     $name = trim((string) (($userData->fname ?? '') . ' ' . ($userData->lname ?? ''))) ?: (string) ($userData->username ?? '');
     $first = trim((string) ($userData->fname ?? '')) ?: $name;
+    // One friendly word for greetings: the first part of the first name, in normal case (HENRY NTIAKO -> Henry).
+    $first = (string) (preg_split('/\s+/u', $first)[0] ?? '');
+    if ($first !== '') $first = mb_convert_case(mb_strtolower($first), MB_CASE_TITLE, 'UTF-8');
     return ['name' => $name, 'first' => $first, 'ini' => function_exists('sl_initials') ? sl_initials($name ?: '?') : '?'];
 }

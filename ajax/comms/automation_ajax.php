@@ -53,6 +53,9 @@ $channel = $P('channel');
 $lang = preg_match('/^[a-z]{2}$/', $P('language', 'en')) && isset(SL_CA_LANGS[$P('language', 'en')]) ? $P('language', 'en') : 'en';
 $chLabels = SL_CA_CHANNELS + ['inapp' => 'In-app'];
 $reads = ['template_get', 'legacy_get', 'ai', 'test_send'];
+if ($demo && $action === 'test_send') {
+    sl_json(['success' => false, 'message' => 'Demo mode: test messages are not sent.'], 403);
+}
 if (!in_array($action, $reads, true)) {
     if ($demo) {
         sl_json(['success' => false, 'message' => 'Demo mode: changes are disabled'], 403);
@@ -72,6 +75,18 @@ $keyOk = function (bool $allowLegacy = false) use ($key) {
     if (cdp_commTriggerStatusId($key) > 0 && cdp_commStatusName(cdp_commTriggerStatusId($key)) === '') {
         sl_json(['success' => false, 'message' => 'Unknown status.'], 422);
     }
+};
+/** A simple per-user hourly limit (session): tests cost money, King calls cost tokens. */
+$limit = function (string $what, int $max) {
+    $now = time();
+    $hits = array_values(array_filter((array) ($_SESSION['sl_ca_rate'][$what] ?? []), function ($t) use ($now) { return (int) $t > $now - 3600; }));
+    if (count($hits) >= $max) {
+        $wait = max(1, (int) ceil(((int) $hits[0] + 3600 - $now) / 60));
+        sl_json(['success' => false, 'code' => 'rate_limited', 'message' => 'Limit reached: ' . $max . ' ' . ($what === 'test' ? 'test messages' : cdp_kingName() . ' requests')
+            . ' an hour. Try again in ' . $wait . ' minute' . ($wait === 1 ? '' : 's') . '.'], 429);
+    }
+    $hits[] = $now;
+    $_SESSION['sl_ca_rate'][$what] = $hits;
 };
 $chOk = function (array $allowed = ['whatsapp', 'sms', 'email']) use ($channel) {
     if (!in_array($channel, $allowed, true)) {
@@ -95,7 +110,7 @@ switch ($action) {
             sl_json(['success' => false, 'message' => 'Not an old-screen message.'], 422);
         }
         $src = substr($key, 7);
-        $t = cdp_commLegacyTriggers()[$src] ?? null;
+        $t = sl_caLegacyTrigger($src);
         if (!$t) {
             sl_json(['success' => false, 'message' => 'Unknown message.'], 422);
         }
@@ -104,8 +119,13 @@ switch ($action) {
         foreach ($t['channels'] as $c) {
             $enabled[$c] = $t['locked'] ? true : !(isset($rules[$key][$c]) && (int) $rules[$key][$c] === 0);
         }
-        sl_json(['success' => true, 'key' => $key, 'label' => $t['label'], 'desc' => $t['desc'], 'locked' => (bool) $t['locked'], 'templates' => sl_caLegacyTemplates($src),
-            'enabled' => $enabled, 'tags' => sl_caTags($key), 'sample' => sl_caSample($key)]);
+        $tags = [];
+        foreach ((array) $t['tags'] as $tag) {
+            $tags[$tag] = ucfirst(strtolower(str_replace('_', ' ', trim($tag, '[]'))));
+        }
+        sl_json(['success' => true, 'key' => $key, 'label' => $t['label'], 'desc' => $t['desc'], 'locked' => (bool) $t['locked'], 'unassigned' => !empty($t['unassigned']),
+            'channels' => array_values((array) $t['channels']), 'templates' => sl_caLegacyTemplates($src),
+            'enabled' => $enabled, 'tags' => $tags, 'sample' => sl_caSample($key)]);
 
     // ---------------------------------------------------------------- switches
     case 'save_rule':
@@ -116,7 +136,7 @@ switch ($action) {
             if (cdp_commTriggerStatusId($key) <= 0) {
                 sl_json(['success' => false, 'message' => 'Only status messages have an in-app line.'], 422);
             }
-            $in = sl_caNotifyRows()[$key]['inapp'] ?? null;
+            $in = sl_caNotifyRows(true)[$key]['inapp'] ?? null;
             if ($on) {
                 // A line switched off with its own text comes back with it; otherwise the predefined line.
                 $r = $in && trim((string) $in->body) !== '' && (int) $in->enabled === 0
@@ -128,8 +148,9 @@ switch ($action) {
             if (empty($r['ok'])) {
                 sl_json(['success' => false, 'message' => $r['error'] ?? 'Not saved.'], 500);
             }
+            sl_caNotifyRows(true);
             $log('In-app for ' . cdp_commTriggerLabel($key) . ' switched ' . ($on ? 'on' : 'off'));
-            sl_json(['success' => true, 'message' => 'In-app ' . ($on ? 'on' : 'off') . ' for ' . cdp_commTriggerLabel($key)]);
+            sl_json(['success' => true, 'message' => 'In-app ' . ($on ? 'on' : 'off') . ' for ' . cdp_commTriggerLabel($key), 'cells' => sl_caCells($key)]);
         }
         $chOk();
         if (strpos($key, 'legacy:') === 0) {
@@ -141,19 +162,31 @@ switch ($action) {
                 sl_json(['success' => false, 'message' => 'Security messages are always sent.'], 422);
             }
         }
-        sl_caSeedStatusRule($key);
-        if (!cdp_commSaveRule($key, $channel, $on)) {
+        $sid = cdp_commTriggerStatusId($key);
+        $ok = $sid >= 0 ? sl_caSetStatusSwitch($key, $channel, $on, $uid) : sl_caLocked(function () use ($key, $channel, $on) { return cdp_commSaveRule($key, $channel, $on); });
+        if (!$ok) {
             sl_json(['success' => false, 'message' => 'Not saved.'], 500);
-        }
-        if (cdp_commTriggerStatusId($key) > 0) {
-            sl_caMirrorLegacy($key, $channel, $on, $uid);
         }
         $log($chLabels[$channel] . ' for ' . cdp_commTriggerLabel($key) . ' switched ' . ($on ? 'on' : 'off'));
         $note = '';
-        if (!$on && cdp_commTriggerStatusId($key) > 0) {
-            $note = ' It stays off even when "Any other status" is on.';
+        if ($sid > 0 && cdp_commStatusOwner() === 'comms') {
+            $rules = cdp_commRules();
+            if (!array_filter((array) ($rules[$key] ?? [])) && array_filter((array) ($rules['status:*'] ?? []))) {
+                $note = ' All its own channels are off, so it follows "Any other status" again.';
+            }
+        } elseif ($sid === 0 && cdp_commStatusOwner() !== 'comms') {
+            $note = ' This takes effect once the Automation Center sends status messages.';
         }
-        sl_json(['success' => true, 'message' => $chLabels[$channel] . ' ' . ($on ? 'on' : 'off') . ': ' . cdp_commTriggerLabel($key) . '.' . $note]);
+        $out = ['success' => true, 'message' => $chLabels[$channel] . ' ' . ($on ? 'on' : 'off') . ': ' . cdp_commTriggerLabel($key) . '.' . $note];
+        if ($sid > 0) {
+            $out['cells'] = sl_caCells($key);
+        } elseif ($sid === 0) {
+            $out['rows'] = [];
+            foreach (sl_caStatusRows() as $r) {
+                $out['rows'][$r['key']] = $r['cells'];
+            }
+        }
+        sl_json($out);
 
     case 'master':
     case 'drafts':
@@ -184,6 +217,9 @@ switch ($action) {
         if ($channel === 'email') {
             $blocks = json_decode($P('blocks'), true);
             if ($P('html') !== '') {
+                if (strlen($P('design_json')) > 2 * 1024 * 1024) {
+                    sl_json(['success' => false, 'message' => 'This e-mail design is too large (over 2 MB). Remove an image or a block.'], 422);
+                }
                 $d['html'] = $P('html');
                 $d['design_json'] = $P('design_json');
             } elseif (is_array($blocks) && $blocks) {
@@ -201,17 +237,22 @@ switch ($action) {
         }
         $r = cdp_commSaveTemplate($d);
         if (empty($r['ok'])) {
-            sl_json(['success' => false, 'message' => $r['error'] ?: 'Not saved.'], 422);
+            sl_json(['success' => false, 'message' => ($r['error'] ?? '') ?: 'Not saved.'], 422);
         }
         $isStatus = cdp_commTriggerStatusId($key) > 0;
         $en = $P('enabled', '');
         $on = null;
         if ($en !== '' && $en !== 'null') {
+            // The switch belongs to the channel, not to one language: it applies to every language.
             $on = in_array($en, ['1', 'true'], true);
-            sl_caSeedStatusRule($key);
-            cdp_commSaveRule($key, $channel, $on);
+            if ($isStatus) {
+                sl_caSetStatusSwitch($key, $channel, $on, $uid);
+            } else {
+                sl_caLocked(function () use ($key, $channel, $on) { return cdp_commSaveRule($key, $channel, $on); });
+            }
         }
         if ($isStatus && $lang === 'en') {
+            // The old screens send English: they get the text (and keep their switch).
             sl_caMirrorLegacy($key, $channel, $on ?? sl_caLegacyOn($key, $channel), $uid);
         }
         $log($chLabels[$channel] . ' text of ' . cdp_commTriggerLabel($key) . ($lang !== 'en' ? ' (' . SL_CA_LANGS[$lang] . ')' : '') . ' saved'
@@ -225,7 +266,7 @@ switch ($action) {
         $chOk();
         $r = cdp_commResetTemplate($key, $channel, $lang);
         if (empty($r['ok'])) {
-            sl_json(['success' => false, 'message' => $r['error'] ?: 'Not reset.'], 500);
+            sl_json(['success' => false, 'message' => ($r['error'] ?? '') ?: 'Not reset.'], 500);
         }
         $isStatus = cdp_commTriggerStatusId($key) > 0;
         if ($isStatus && $lang === 'en') {
@@ -244,6 +285,7 @@ switch ($action) {
         }
         if ($action === 'inapp_reset') {
             cdp_notifyReset($key, 'inapp');
+            sl_caNotifyRows(true);
             $log('In-app line of ' . cdp_commTriggerLabel($key) . ' set back to the predefined line');
             $def = cdp_notifyDraft(cdp_commStatusName(cdp_commTriggerStatusId($key)), 'inapp');
             sl_json(['success' => true, 'message' => 'Back to the predefined line.', 'body' => (string) ($def['body'] ?? ''), 'cells' => sl_caCells($key)]);
@@ -253,10 +295,14 @@ switch ($action) {
         if ($on && $body === '') {
             sl_json(['success' => false, 'message' => 'Write the line first.'], 422);
         }
+        if (preg_match('/\{pickup_code(_html)?\}/', $body)) {
+            sl_json(['success' => false, 'message' => 'The in-app line cannot carry the pickup code: staff see the bell too. Remove {pickup_code}.'], 422);
+        }
         $r = cdp_notifySave($key, 'inapp', ['enabled' => $on ? 1 : 0, 'body' => $body], $uid);
         if (empty($r['ok'])) {
             sl_json(['success' => false, 'message' => $r['error'] ?? 'Not saved.'], 422);
         }
+        sl_caNotifyRows(true);
         $log('In-app line of ' . cdp_commTriggerLabel($key) . ' saved' . ($on ? '' : ' and switched off'));
         sl_json(['success' => true, 'message' => $on ? 'Saved. The bell shows this line from now on.' : 'In-app is off for this status.', 'cells' => sl_caCells($key)]);
 
@@ -271,7 +317,7 @@ switch ($action) {
             sl_json(['success' => false, 'message' => 'Your account was not found.'], 422);
         }
         $legacy = strpos($key, 'legacy:') === 0;
-        $sample = sl_caSample($key);
+        $sample = sl_caSample($key, $channel);
         $fill = function (string $s, bool $html) use ($legacy, $sample) {
             if ($legacy) {
                 return preg_replace_callback('/\[([A-Z_]{2,40})\]/', function ($m) use ($sample, $html) {
@@ -281,19 +327,41 @@ switch ($action) {
             }
             return $html ? cdp_notifyRender($s, $sample, true) : trim(cdp_notifyRender(cdp_notifyPruneLines($s, $sample), $sample));
         };
+        $settingsUrl = sl_route('CommsSettings');
         cdp_msgSetContext(['source' => 'comms_test', 'source_label' => 'Test from Automations', 'entity_type' => 'notification', 'entity_label' => $key]);
-        if ($channel === 'email') {
-            if (!filter_var((string) $me->email, FILTER_VALIDATE_EMAIL)) {
-                sl_json(['success' => false, 'message' => 'Your account has no valid e-mail address.'], 422);
+        // Every failed test lands in the message log (Outbox), even when the
+        // sender gave up before it logged anything itself.
+        $lastLog = sl_tableExists('cdb_message_log') ? (int) cdp_opsVal("SELECT COALESCE(MAX(id), 0) FROM cdb_message_log") : 0;
+        $finish = function (array $res, string $to, string $subject, string $body, string $okMsg) use ($channel, $me, $key, $lastLog) {
+            $ok = !empty($res['success']);
+            $msg = (string) ($res['message'] ?? '');
+            if (!$ok && $lastLog >= 0 && sl_tableExists('cdb_message_log')
+                && !cdp_opsVal("SELECT id FROM cdb_message_log WHERE id > :l AND source = 'comms_test' AND entity_label = :k LIMIT 1", [':l' => $lastLog, ':k' => $key])) {
+                cdp_msgLog(['channel' => $channel, 'status' => !empty($res['skipped']) ? 'skipped' : 'failed', 'status_detail' => $msg !== '' ? $msg : 'Not sent',
+                    'subject' => $subject, 'body' => $body, 'recipient_user_id' => (int) $me->id,
+                    'recipient_name' => trim(($me->fname ?? '') . ' ' . ($me->lname ?? '')), 'recipient_to' => $to]);
             }
+            sl_json(['success' => $ok, 'message' => $ok ? $okMsg : 'Not sent: ' . ($msg !== '' ? $msg : 'unknown error'), 'setup_url' => (string) ($res['setup_url'] ?? '')]);
+        };
+        if ($channel === 'email') {
             $html = $P('html');
             if ($html === '') {
                 sl_json(['success' => false, 'message' => 'The e-mail is empty.'], 422);
             }
+            if (!filter_var((string) $me->email, FILTER_VALIDATE_EMAIL)) {
+                sl_json(['success' => false, 'message' => 'Your account has no valid e-mail address.'], 422);
+            }
+            $limit('test', 10);
             $html = sl_caCleanHtml($html, $legacy);
-            $subject = $fill($P('subject') !== '' ? $P('subject') : 'Notification', false);
-            $res = cdp_commSendEmail($me, '[Test] ' . $subject, '<!--sl-html-->' . $fill($html, true));
-            sl_json(['success' => !empty($res['success']), 'message' => !empty($res['success']) ? 'Test sent to ' . $me->email : 'Not sent: ' . ($res['message'] ?? 'unknown error')]);
+            $subject = '[Test] ' . $fill($P('subject') !== '' ? $P('subject') : 'Notification', false);
+            $body = '<!--sl-html-->' . $fill($html, true);
+            $setup = sl_caMailSetupProblem();
+            $res = $setup !== '' ? ['success' => false, 'message' => $setup . ': Communications > Settings.', 'setup_url' => $settingsUrl]
+                : cdp_commSendEmail($me, $subject, $body);
+            if (empty($res['success']) && $setup === '') {
+                $res['message'] = sl_caMailError((string) ($res['message'] ?? ''));
+            }
+            $finish($res, (string) $me->email, $subject, $body, 'Test sent to ' . $me->email);
         }
         $text = $fill($P('body'), false);
         if (trim($text) === '') {
@@ -302,8 +370,13 @@ switch ($action) {
         if (trim((string) ($me->phone ?? '')) === '') {
             sl_json(['success' => false, 'message' => 'Your account has no phone number. Add one in My Account, or send the test by e-mail.'], 422);
         }
-        $res = $channel === 'sms' ? cdp_commSendSms($me, '[Test] ' . $text) : cdp_commSendWhatsApp($me, "[Test]\n" . $text);
-        sl_json(['success' => !empty($res['success']), 'message' => !empty($res['success']) ? 'Test sent to your phone ' . $me->phone : 'Not sent: ' . ($res['message'] ?: 'unknown error')]);
+        $limit('test', 10);
+        $text = $channel === 'sms' ? '[Test] ' . $text : "[Test]\n" . $text;
+        $res = $channel === 'sms' ? cdp_commSendSms($me, $text) : cdp_commSendWhatsApp($me, $text);
+        if (empty($res['success']) && !empty($res['early'])) {
+            $res['setup_url'] = $settingsUrl;
+        }
+        $finish($res, (string) $me->phone, '', $text, 'Test sent to your phone ' . $me->phone);
 
     // ---------------------------------------------------------------- King
     case 'ai':
@@ -313,6 +386,7 @@ switch ($action) {
             sl_json(['success' => false, 'message' => 'Only people who can edit messages write them with ' . cdp_kingName() . '.'], 403);
         }
         require_once __DIR__ . '/../../helpers/comms_ai.php';
+        $limit('ai', 100);
         $tone = $P('tone', 'keep');
         $instruction = mb_substr(trim($P('instruction')), 0, 400);
         if (strpos($key, 'legacy:') === 0) {
@@ -330,6 +404,11 @@ switch ($action) {
             }
             $res = cdp_commAiRunChannel(cdp_commAiTriggerContext($key), 'inapp', $current, $tone, $instruction);
             $res['assistant'] = $avail['assistant'];
+            if (!empty($res['ok']) && preg_match('/\{pickup_code(_html)?\}/', (string) ($res['body'] ?? ''))) {
+                // The bell is seen by staff too: never a pickup code there.
+                $res['body'] = trim(preg_replace(['/\{pickup_code(_html)?\}/', '/ {2,}/'], ['', ' '], (string) $res['body']));
+                $res['warnings'] = array_merge((array) ($res['warnings'] ?? []), ['Removed {pickup_code}: the in-app line never carries the pickup code.']);
+            }
         } else {
             $res = cdp_commAiDraft(cdp_commTriggerStatusId($key) > 0 ? 'status_message' : 'trigger_message', ['key' => $key, 'current' => $current, 'tone' => $tone], $channel, $instruction);
         }
@@ -340,7 +419,7 @@ switch ($action) {
         $keyOk(true);
         $chOk();
         $src = substr($key, 7);
-        $t = strpos($key, 'legacy:') === 0 ? (cdp_commLegacyTriggers()[$src] ?? null) : null;
+        $t = strpos($key, 'legacy:') === 0 ? sl_caLegacyTrigger($src) : null;
         $loc = $t['templates'][$channel] ?? null;
         $id = (int) $P('id');
         if (!$loc || !in_array($id, array_map('intval', (array) $loc['ids']), true)) {
@@ -356,6 +435,9 @@ switch ($action) {
             }
             if ($subject === '') {
                 sl_json(['success' => false, 'message' => 'The e-mail needs a subject.'], 422);
+            }
+            if (strlen($P('design_json')) > 2 * 1024 * 1024) {
+                sl_json(['success' => false, 'message' => 'This e-mail design is too large (over 2 MB). Remove an image or a block.'], 422);
             }
             if (strlen($body) > 65000) {
                 sl_json(['success' => false, 'message' => 'This e-mail is too large for the old template table (64 KB). Remove an image or a block.'], 422);
@@ -401,9 +483,41 @@ switch ($action) {
         sl_json(['success' => false, 'message' => 'Unknown action.'], 422);
 }
 
+/** Why e-mail cannot be sent at all ('' when it is set up): no sender address, or SMTP without a host. */
+function sl_caMailSetupProblem(): string
+{
+    $s = cdp_getSettingsCourier();
+    if (!$s || !filter_var(trim((string) ($s->email_address ?? '')), FILTER_VALIDATE_EMAIL)) {
+        return 'E-mail is not set up (no sender address)';
+    }
+    if (($s->mailer ?? '') !== 'PHP' && trim((string) ($s->smtp_host ?? '')) === '') {
+        return 'E-mail is not set up (no SMTP server)';
+    }
+    return '';
+}
+
+/** A mailer exception in words staff can act on. */
+function sl_caMailError(string $e): string
+{
+    $map = [
+        '/could not authenticate|authentication|535/i' => 'The mail server refused the login. Check the SMTP user and password in Communications > Settings.',
+        '/connect\(\) failed|could not connect|connection (refused|timed out)|getaddrinfo/i' => 'The mail server could not be reached. Check the SMTP host, port and security in Communications > Settings.',
+        '/invalid address.*setfrom|setfrom/i' => 'The sender address is not valid. Check it in Communications > Settings.',
+        '/invalid address/i' => 'An e-mail address is not valid.',
+        '/data not accepted|recipient/i' => 'The mail server did not accept this e-mail.',
+    ];
+    foreach ($map as $re => $text) {
+        if (preg_match($re, $e)) {
+            return $text;
+        }
+    }
+    return $e !== '' ? $e : 'unknown error';
+}
+
 /** One status row's cells (after a change), for the grid. */
 function sl_caCells(string $key): ?array
 {
+    sl_caNotifyRows(true);
     foreach (sl_caStatusRows() as $r) {
         if ($r['key'] === $key) {
             return $r['cells'];
@@ -434,7 +548,7 @@ function sl_caCleanHtml(string $html, bool $legacy): string
 function sl_caAiAnswer(array $res, string $channel, string $key): array
 {
     if (empty($res['ok'])) {
-        return ['success' => false, 'code' => (string) ($res['code'] ?? 'error'), 'message' => (string) ($res['error'] ?: 'Nothing was written.'),
+        return ['success' => false, 'code' => (string) ($res['code'] ?? 'error'), 'message' => (string) (($res['error'] ?? '') ?: 'Nothing was written.'),
             'setup_url' => (string) ($res['setup_url'] ?? ''), 'assistant' => (string) ($res['assistant'] ?? '')];
     }
     $p = ['subject' => (string) $res['subject'], 'body' => (string) $res['body'], 'warnings' => array_values((array) ($res['warnings'] ?? []))];
@@ -464,7 +578,7 @@ function sl_caLegacyAi(string $key, string $channel, string $tone, string $instr
     if (!$avail['ok']) {
         return ['success' => false, 'code' => $avail['code'], 'message' => $avail['message'], 'setup_url' => $avail['setup_url'], 'assistant' => $avail['assistant']];
     }
-    $t = cdp_commLegacyTriggers()[substr($key, 7)] ?? null;
+    $t = sl_caLegacyTrigger(substr($key, 7));
     if (!$t || empty($t['templates'][$channel])) {
         return ['success' => false, 'code' => 'invalid', 'message' => 'This message has no ' . SL_CA_CHANNELS[$channel] . ' text to write.'];
     }

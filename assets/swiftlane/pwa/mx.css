@@ -21,7 +21,8 @@
 .mx-tab{flex:none;display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--line);background:var(--panel);padding:6px 6px 22px}
 .mx-tab a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:48px;color:var(--muted);font-size:11px;font-weight:500;position:relative}
 .mx-tab a.on{color:var(--ink)}
-.mx-tab a.on::after{content:"";position:absolute;top:-6px;width:22px;height:3px;border-radius:0 0 3px 3px;background:var(--orange)}
+/* the artifact's tab bar: the current tab is simply darker (no marker) */
+.mx-tab a.on{font-weight:600}
 .mx-tab a.mx-mid b{width:48px;height:48px;border-radius:16px;background:var(--ink);color:var(--inverse);display:grid;place-items:center;margin-top:-18px;box-shadow:0 6px 16px rgba(22,22,21,.22)}
 .mx-tab a.mx-mid.on::after{display:none}
 .mx-hero{border-radius:22px;background:var(--ink);color:var(--inverse);padding:16px;display:flex;flex-direction:column;gap:4px;position:relative;overflow:hidden}
@@ -2000,8 +2001,23 @@ button.mx-btn.b4-b{border:0;font-family:var(--font);cursor:pointer;width:100%}bu
 .mx-btn.b4-danger{background:var(--red);color:#fff}
 .mx-btn.b4-dis{opacity:.4;cursor:not-allowed}
 /* auth extras (Login, Otp, Forgot, Reset, Track) */
-.b4-auth-links{display:flex;flex-direction:column;align-items:flex-start;gap:0}
-.b4-auth-links .mx-lnk{display:inline-flex;align-items:center;gap:6px}
+.b4-auth-or{display:flex;align-items:center;gap:12px;margin:6px 0 -2px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.b4-auth-or::before,.b4-auth-or::after{content:"";flex:1;height:1px;background:var(--line)}
+.b4-auth-links .mx-row{min-height:66px;text-decoration:none;transition:background .15s}
+.b4-auth-links .mx-rm{display:flex;flex-direction:column;flex:1;min-width:0}
+.b4-auth-links .mx-rm b{font-size:15px;font-weight:600;color:var(--ink)}
+.b4-auth-links .mx-rm small{font-size:12.5px;color:var(--muted)}
+.b4-auth-links .mx-li{width:42px;height:42px;border-radius:50%}
+.b4-auth-links .mx-li .ic{width:18px;height:18px}
+.b4-auth-links .t-key{background:#FDEBD8;color:#B45309}
+.b4-auth-links .t-trk{background:#E3EEFF;color:#2563C9}
+.b4-auth-links .t-new{background:#DDF3E8;color:#0F7A4A}
+.b4-auth-links .b4-go{background:var(--muted);opacity:.6;transition:transform .15s}
+.b4-auth-links a.mx-row:hover .b4-go,.b4-auth-links a.mx-row:active .b4-go{transform:translateX(3px);opacity:1}
+:is(html.sl-dark,.sl-app.dk,body.dk) .b4-auth-links .t-key{background:#3D2A14;color:#F5B66B}
+:is(html.sl-dark,.sl-app.dk,body.dk) .b4-auth-links .t-trk{background:#1E3354;color:#8DB6FF}
+:is(html.sl-dark,.sl-app.dk,body.dk) .b4-auth-links .t-new{background:#143B2A;color:#6FD3A2}
+.b4-auth-note{text-align:center;padding:0 12px}
 .b4-row2{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .b4-x{margin-left:auto;width:44px;height:44px;margin-top:-12px;margin-right:-12px;border:0;background:none;color:inherit;display:grid;place-items:center;cursor:pointer;flex:none}
 .b4-exp{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:18px;background:#F6CF8E;color:#5E3E00;font-size:13px;line-height:1.4;flex:none}

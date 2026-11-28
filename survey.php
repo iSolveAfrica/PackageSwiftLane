@@ -29,7 +29,7 @@ if ($previewId > 0) {
         echo '<h1>Preview not available</h1><p>Sign in as staff to preview a survey.</p>';
     } else {
         echo '<p class="pv">Preview: this is what customers see. Answers are not saved.</p><h1>' . $e($form['name']) . '</h1>'
-            . ($form['intro'] !== '' ? '<p>' . $e($form['intro']) . '</p>' : '')
+            . ($form['intro'] !== '' ? '<p>' . $e(cdp_surveyFillText($form['intro'], (int) ($_SESSION['userid'] ?? 0))) . '</p>' : '')
             . '<form onsubmit="return false">' . cdp_surveyQuestionsHtml($form['questions'], [], 'pv') . '<button type="button" disabled>Send feedback</button></form>';
     }
     cdp_commPublicFoot();
@@ -76,7 +76,7 @@ if ($survey && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             }
         }
     }
-    $r = cdp_surveySubmit($id, $answers);
+    $r = cdp_surveySubmit($id, $answers, ['source' => 'link']);
     if ($r['ok']) {
         $done = $r['thanks'];
     } else {
@@ -91,11 +91,11 @@ echo '<style>' . cdp_surveyQuestionsCss() . '</style>';
 if (!$survey) {
     echo '<h1>Link expired</h1><p>This survey link is not valid any more. Thank you all the same!</p>';
 } elseif ($done !== false) {
-    echo '<h1>Thank you!</h1><p>' . $e($done) . '</p>';
+    echo '<h1>All done</h1><p>' . $e($done) . '</p>';
 } else {
     ?>
     <h1><?php echo $e($form['name'] ?: 'How did we do?'); ?></h1>
-    <p><?php echo $form['intro'] !== '' ? $e($form['intro']) : 'Please rate your experience.'; ?><?php echo $survey->entity_ref ? ' <span class="muted">(' . $e($survey->entity_ref) . ')</span>' : ''; ?></p>
+    <p><?php echo $form['intro'] !== '' ? $e(cdp_surveyFillText($form['intro'], (int) $survey->user_id)) : 'Please rate your experience.'; ?><?php echo $survey->entity_ref ? ' <span class="muted">(' . $e($survey->entity_ref) . ')</span>' : ''; ?></p>
     <?php if ($error) { echo '<p class="err" role="alert">' . $e($error) . '</p>'; } ?>
     <form method="post" action="survey.php" novalidate>
         <input type="hidden" name="t" value="<?php echo $e($token); ?>">

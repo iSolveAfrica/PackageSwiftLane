@@ -7,7 +7,8 @@
  *   comms:<event>                         -> comms_automations.php?edit=<event>
  *   action:shipment.registered            -> the "Shipment registered" old-screen message
  */
-$k = (string) ($_GET['key'] ?? ($_GET['t'] ?? ''));
+$k = $_GET['key'] ?? ($_GET['t'] ?? '');
+$k = is_string($k) ? $k : '';
 $to = 'comms_statuses.php';
 if (preg_match('/^status:([0-9]{1,6})$/', $k, $m)) {
     $to = 'comms_statuses.php?status=' . (int) $m[1];

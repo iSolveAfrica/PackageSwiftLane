@@ -16,6 +16,7 @@
 <?php elseif (!empty($slIsClient) && sl_self() !== 'support.php' && ($slKingChat ?? '') === ''): ?>
 <a class="sl-support-link" href="support.php#hp-chat" aria-label="Chat with support"><i class="ic i-message" aria-hidden="true"></i><span>Help</span></a>
 <?php endif; ?>
+<?php if (empty($slIsClient) && function_exists('sl_navAllowed') && sl_navAllowed('cs:agent', [])) include CDP_ROOT . '/views/sl/inc/cs_alerts.php'; /* staff: pop-up + chime for new customer chats */ ?>
 <?php foreach ((array) ($slPage['scripts'] ?? []) as $slJs): ?>
 <script src="<?= h(cdp_asset($slJs)) ?>"></script>
 <?php endforeach; ?>

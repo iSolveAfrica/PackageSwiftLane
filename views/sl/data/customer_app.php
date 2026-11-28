@@ -26,12 +26,12 @@ function sl_caAccountData($user, $core, $userData): array
     if ($can('courier_add_client')) {
         $shipping[] = ['plus', 'Ship a parcel', 'courier_add_client.php', 0];
     }
-    $shipping[] = ['box', 'All my parcels', sl_route('MyParcels'), $active];
+    $shipping[] = ['box', 'My parcels', sl_route('MyParcels'), $active];
     if ($can('view_shipment_list')) {
-        $shipping[] = ['plane', 'My shipments', sl_route('AirShipments'), (int) sl_scalar('SELECT COUNT(*) FROM cdb_add_order WHERE sender_id = :u AND is_deleted = 0 AND status_courier NOT IN (8,15,21)', [':u' => $uid])];
+        $shipping[] = ['plane', 'Air shipments', sl_route('AirShipments'), (int) sl_scalar('SELECT COUNT(*) FROM cdb_add_order WHERE sender_id = :u AND is_deleted = 0 AND status_courier NOT IN (8,15,21)', [':u' => $uid])];
     }
     if ($can('view_package_list')) {
-        $shipping[] = ['box', 'My packages', sl_route('SeaPackages'), (int) sl_scalar('SELECT COUNT(*) FROM cdb_customers_packages WHERE sender_id = :u AND status_courier NOT IN (8,15,21)', [':u' => $uid])];
+        $shipping[] = ['ship', 'Sea shipments', sl_route('SeaPackages'), (int) sl_scalar('SELECT COUNT(*) FROM cdb_customers_packages WHERE sender_id = :u AND status_courier NOT IN (8,15,21)', [':u' => $uid])];
     }
     if ($can('prealert_list')) {
         $shipping[] = ['inbox', 'Pre-alerts', sl_route('PreAlerts'), (int) sl_scalar('SELECT COUNT(*) FROM cdb_pre_alert WHERE customer_id = :u AND is_package = 0', [':u' => $uid])];
