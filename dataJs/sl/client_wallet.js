@@ -45,16 +45,16 @@
       if (c && c.getAttribute('data-pos') !== '0') { e.preventDefault(); pick(cards.indexOf(c)); }
     });
 
-    // Swipe left / right on touch screens.
+    // Swipe left / right on touch screens (touch events: phones cancel pointer events once they start a gesture).
     var x0 = null, y0 = 0;
-    stack.addEventListener('pointerdown', function (e) { if (e.pointerType !== 'mouse') { x0 = e.clientX; y0 = e.clientY; } });
-    stack.addEventListener('pointerup', function (e) {
+    stack.addEventListener('touchstart', function (e) { var t = e.touches[0]; x0 = t.clientX; y0 = t.clientY; }, { passive: true });
+    stack.addEventListener('touchend', function (e) {
       if (x0 === null) return;
-      var dx = e.clientX - x0, dy = e.clientY - y0;
+      var t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0;
       x0 = null;
       if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) pick(on + (dx < 0 ? 1 : -1));
-    });
-    stack.addEventListener('pointercancel', function () { x0 = null; });
+    }, { passive: true });
+    stack.addEventListener('touchcancel', function () { x0 = null; }, { passive: true });
   }
 
   function ready() {

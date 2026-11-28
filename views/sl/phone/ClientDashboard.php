@@ -77,13 +77,12 @@ if (!$rows) $rows = array_slice((array) ($d['rows'] ?? []), 0, 3);
 <?php else: ?>
 <?= sl_mxEmpty('box', 'No parcels yet', 'Shop with your shipping address below and your parcels show up here.', !empty($d['canPrealert']) ? 'Pre-alert a parcel' : '', 'prealert_add.php') ?>
 <?php endif; ?>
-<?php if ($addr): ?>
-<?= sl_mxSec('Shipping address', 'All addresses', sl_route('MyAccount')) ?>
-<section class="b3-cd b3-ad"><div class="b3-ch"><span class="mx-rm"><b>Your <?= h($addr['label']) ?> address</b><small>Use it at checkout</small></span><span class="b3-flag"><?= h($addr['cc']) ?></span></div>
-<?php foreach ([['Name', trim($addr['recipient'] . ' ' . ($d['locker'] ?? ''))], ['Address', trim(rtrim($addr['address1'], ' ·') . ', ' . $addr['address2'], ', ')], ['City, ZIP', trim($addr['city'] . ' ' . $addr['zip'])], ['Phone', $addr['phone']]] as $f): if (trim($f[1]) === '') continue; ?>
-<div class="b3-cr"><span><small><?= h($f[0]) ?></small><b><?= h($f[1]) ?></b></span><button type="button" class="b3-cp" data-sl-copy="<?= h($f[1]) ?>" aria-label="Copy <?= h($f[0]) ?>"><i class="ic ic-sm i-copy" aria-hidden="true"></i></button></div>
-<?php endforeach; ?>
-<div class="b3-row2"><button type="button" class="b3-gh" data-sl-copy="<?= h($addr['full']) ?>"><i class="ic ic-sm i-copy" aria-hidden="true"></i>Copy full address</button><?php if (count((array) $d['addresses']) > 1): ?><a class="b3-gh" href="<?= h(sl_route('MyAccount')) ?>"><i class="ic ic-sm i-globe" aria-hidden="true"></i><?= count((array) $d['addresses']) - 1 ?> more</a><?php endif; ?></div></section>
+<?php if (!empty($d['addresses'])): $addrs = (array) $d['addresses']; ?>
+<?= sl_mxSec(count($addrs) > 1 ? 'Your ' . count($addrs) . ' shipping addresses' : 'Your shipping address', 'How it works', sl_route('MyAccount')) ?>
+<section class="b3-wl" aria-label="Shipping addresses">
+<div class="b3-wl-lk"><span><small>Locker ID</small><b class="mono"><?= h(($d['locker'] ?? '') !== '' ? $d['locker'] : '—') ?></b></span><?php if (($d['locker'] ?? '') !== ''): ?><button type="button" class="b3-cp" data-sl-copy="<?= h($d['locker']) ?>" aria-label="Copy locker ID"><i class="ic ic-sm i-copy" aria-hidden="true"></i></button><?php endif; ?><small class="b3-wl-hint"><?= count($addrs) > 1 ? 'Swipe the cards or tap a flag' : 'Use it at checkout' ?></small></div>
+<?php $locker = (string) ($d['locker'] ?? ''); $awName = (string) ($d['name'] ?? ''); $awAssets = true; include CDP_ROOT . '/views/sl/pages/partials/address_wallet.php'; ?>
+</section>
 <?php endif; ?>
 <?= sl_mxSec('Need a hand?', 'Help centre', 'support.php') ?>
 <div class="hh-grid">
