@@ -86,7 +86,7 @@ $srVeh = [
         <div class="sr-emptybox">No route today. <a href="<?= h(sl_route('SmartRouting', ['rider' => (int) $s['id']])) ?>">Create one in the routing overview</a>.</div>
         <?php endif; ?>
         <?php if ($s['earlier']): ?><div class="sr-cap"><span>Earlier routes</span></div>
-        <?php foreach ($s['earlier'] as $e): ?><a class="sr-rt" href="<?= h($e['url']) ?>"><b>ID: <?= (int) $e['id'] ?> · <?= (int) $e['packages'] ?> package<?= $e['packages'] === 1 ? '' : 's' ?></b><span class="mut"><?= h($e['date']) ?> · <?= h($e['from']) ?> <i class="ic ic-sm i-arrow" aria-hidden="true"></i> <?= h($e['to']) ?> · <?= h($e['distance']) ?></span></a><?php endforeach; ?>
+        <?php foreach ($s['earlier'] as $e): ?><a class="sr-rt" href="<?= h($e['url']) ?>"><b>ID: <?= (int) $e["id"] ?> · <?= $e["packages"] ? (int) $e["packages"] . " package" . ($e["packages"] === 1 ? "" : "s") : (int) $e["stops"] . " stop" . ($e["stops"] === 1 ? "" : "s") ?></b><span class="mut"><?= h($e['date']) ?> · <?= h($e['from']) ?> <i class="ic ic-sm i-arrow" aria-hidden="true"></i> <?= h($e['to']) ?> · <?= h($e['distance']) ?></span></a><?php endforeach; ?>
         <?php endif; ?>
       </div>
 

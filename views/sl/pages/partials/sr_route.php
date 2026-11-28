@@ -19,6 +19,7 @@ $srIcons = ['delivered' => ['i-check', 'Delivered'], 'failed' => ['i-x', 'Not de
     </div>
   </div>
 
+  <div class="sr-scroll" data-sr-scroll>
   <div class="sr-rhead">
     <?= $srAv($r, 'lg') ?>
     <span class="sr-rider-t"><b><?= h($r['name']) ?></b><span class="mut"><?= h($r['sub']) ?></span></span>
@@ -43,7 +44,7 @@ $srIcons = ['delivered' => ['i-check', 'Delivered'], 'failed' => ['i-x', 'Not de
   <?php endif; ?>
 
   <div class="sr-sum" aria-label="Route summary">
-    <span><small>Distance</small><b><?= h($sm['distance']) ?></b></span>
+    <span<?= $sm["estimated"] ? " title=\"Estimated: straight line with a road factor, until a map provider is connected\"" : "" ?>><small>Distance<?= $sm["estimated"] ? " (est.)" : "" ?></small><b><?= h($sm["distance"]) ?></b></span>
     <span><small>Drive time</small><b><?= h($sm['drive']) ?></b></span>
     <?php if ($sm['finish']): ?><span><small>Last stop</small><b><?= h($sm['finish']) ?></b></span><?php endif; ?>
     <?php if ($sm['cash']): ?><span><small>To collect</small><b><?= h($sm['cash']) ?></b></span><?php endif; ?>
@@ -52,7 +53,6 @@ $srIcons = ['delivered' => ['i-check', 'Delivered'], 'failed' => ['i-x', 'Not de
   </div>
   <?php if ($t['lateN']): ?><div class="sl-banner sr-note" role="status"><i class="ic ic-sm i-alert" aria-hidden="true"></i><span><?= (int) $t['lateN'] ?> stop<?= $t['lateN'] === 1 ? ' is' : 's are' ?> planned after the time the customer asked for. Move <?= $t['lateN'] === 1 ? 'it' : 'them' ?> earlier or tell the customer.</span></div><?php endif; ?>
   <?php foreach ($t['alerts'] as $a): if ($a === '') continue; ?><div class="sl-banner sr-note" role="status"><i class="ic ic-sm i-alert" aria-hidden="true"></i><span><?= h($a) ?></span></div><?php endforeach; ?>
-  <?php if ($sm['estimated']): ?><p class="mut sr-fine">Distances and times are estimates (straight line with a road factor) until a map provider is connected.</p><?php endif; ?>
 
   <ol class="sr-tl" data-sr-timeline>
     <li class="sr-stop is-start<?= $t['start']['left'] ? ' is-done' : '' ?>">
@@ -83,6 +83,7 @@ $srIcons = ['delivered' => ['i-check', 'Delivered'], 'failed' => ['i-x', 'Not de
     <?php if (!$t['stops']): ?><li class="sr-none">This route has no stops left. Use Add to give the rider a delivery.</li><?php endif; ?>
   </ol>
 
+  </div>
   <div class="sr-panel-foot">
     <span class="sr-sent mut sm" data-sr-sent>
       <?php if ($t['sent']): ?>

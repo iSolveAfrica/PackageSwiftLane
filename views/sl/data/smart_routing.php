@@ -18,7 +18,8 @@ function srv_initials(string $name): string
 
 function srv_num(float $v, int $dec = 1): string
 {
-    return rtrim(rtrim(number_format($v, $dec, '.', ','), '0'), '.') ?: '0';
+    $s = number_format($v, $dec, '.', ',');
+    return strpos($s, '.') !== false ? rtrim(rtrim($s, '0'), '.') : $s;
 }
 
 function srv_km(float $m): string
@@ -178,11 +179,11 @@ function sl_smartRoutingData($user, $core): array
     }
     $d['hold'] = $holdRows;
     $d['holdWith'] = $withRows;
-    $d['unplaceable'] = array_map(fn($u) => ['id' => (int) $u['id'], 'name' => (string) $u['contact_name'], 'address' => (string) $u['address'], 'reason' => (string) ($u['reason'] ?? 'No map location')], $hold['unplaceable']);
+    $d['unplaceable'] = array_map(fn($u) => ['id' => (int) $u['id'], 'name' => (string) $u['contact_name'], 'address' => (string) $u['address'], 'reason' => lcfirst((string) (($u['reason'] ?? '') ?: 'No map location'))], $hold['unplaceable']);
     $d['currency'] = $currency ?: 'GHS';
     $d['kpis'] = ['waiting' => count($holdRows), 'routes' => count($mapRoutes), 'stops' => array_sum(array_map(fn($r) => count($r['stops']), $mapRoutes)),
         'done' => array_sum(array_map(fn($r) => count(array_filter($r['stops'], fn($s) => in_array($s['status'], RP_DONE_STOP, true))), $mapRoutes))];
-    if (!$d['isToday'] && !$d['isPast']) $notes[] = 'Planning ahead for ' . $d['dateLong'] . ': deliveries waiting now are offered for this day, riders are sent the route when you press Send, and arrival times assume a ' . $d['departTime'] . ' start.';
+    if (!$d['isToday'] && !$d['isPast']) $notes[] = 'Planning ahead for ' . $d['dateLong'] . '. Two things to know: the deliveries listed are the ones waiting right now (the same list feeds today and later days, and the first route to take one keeps it), and rider status is today\'s status because there is no shift calendar yet. Arrival times assume a ' . $d['departTime'] . ' start.';
     if ($d['isPast']) $notes[] = 'This day is over. You can look at its routes and proof of delivery, but not create or change routes.';
 
     /* ---------- one rider's route ---------- */
@@ -249,7 +250,7 @@ function srv_detail(array $rv, array $rows, array $riders, bool $finance, array 
     $statusLabels = ['planned' => ['Not started', 'plain'], 'loading' => ['Loading', 'sorting'], 'onroute' => ['On the way', 'onway'], 'done' => ['Finished', 'delivered']];
     $editable = $route['status'] !== 'done' && !$d['isPast'];
     $sent = $marks['sent'];
-    $changedSinceSend = $sent && (int) $sent['route_version'] !== (int) $route['version'];
+    $changedSinceSend = $sent && $route['status'] === 'planned' && (int) $sent['route_version'] !== (int) $route['version'];
     return ['id' => (int) $route['id'], 'status' => (string) $route['status'], 'stLabel' => $statusLabels[$route['status']][0] ?? ucfirst((string) $route['status']), 'stCls' => $statusLabels[$route['status']][1] ?? 'plain',
         'rider' => $row + ['id' => $driver], 'start' => ['label' => (string) ($rv['start']['label'] ?? 'Start'), 'time' => $route['started_at'] ? srv_hm($route['started_at']) : $d['departTime'], 'left' => $route['status'] === 'onroute' || $route['status'] === 'done' || $doneN > 0],
         'stops' => $stops, 'doneN' => $doneN, 'total' => $n, 'lateN' => $lateN, 'editable' => $editable, 'canChangeRider' => $editable && $route['status'] === 'planned',

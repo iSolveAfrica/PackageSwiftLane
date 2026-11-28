@@ -116,7 +116,7 @@ $srAv = fn(array $r, string $cls = '') => '<span class="sr-av' . ($cls ? ' ' . $
 <?php /* ---------------------------------------------------------------- Create route */ ?>
 <?php if ($srView !== 'riders' && !$srPast): $srHold = (array) ($d['hold'] ?? []); $srWith = (array) ($d['holdWith'] ?? []); ?>
 <div class="sl-dialog" id="sr-create" hidden><form class="sl-modal sr-modal" data-sr-create-form aria-labelledby="sr-create-h" novalidate>
-  <div class="sr-modal-h"><div><h2 class="sr-h2" id="sr-create-h">Route details</h2><span class="mut">What this <?= h(strtolower($srDay)) ?> route should carry</span></div><button class="sr-round" type="button" data-sl-close aria-label="Close"><i class="ic ic-sm i-x" aria-hidden="true"></i></button></div>
+  <div class="sr-modal-h"><div><h2 class="sr-h2" id="sr-create-h">Route details</h2><span class="mut">Who rides, where they start and what they carry <?= $srDay === "Today" || $srDay === "Tomorrow" ? h(strtolower($srDay)) : "on " . h($srDay) ?></span></div><button class="sr-round" type="button" data-sl-close aria-label="Close"><i class="ic ic-sm i-x" aria-hidden="true"></i></button></div>
   <div class="sr-modal-b">
     <div class="sr-form2">
       <label class="sl-field sr-span2"><span class="sl-lab">Rider</span><select class="sl-in sr-in" name="rider_id" data-sr-f-rider>
@@ -148,7 +148,7 @@ $srAv = fn(array $r, string $cls = '') => '<span class="sr-av' . ($cls ? ' ' . $
         <?php foreach (array_merge($srHold, $srWith) as $u): ?>
         <label class="sr-del<?= $u['with'] ? ' is-with' : '' ?>" data-search="<?= h(mb_strtolower($u['name'] . ' ' . $u['area'] . ' ' . $u['address'] . ' #' . $u['id'])) ?>"<?= $u['with'] ? ' hidden data-with="' . (int) $u['withId'] . '"' : '' ?>>
           <input type="checkbox" name="request_ids[]" value="<?= (int) $u['id'] ?>" data-n="<?= (int) $u['n'] ?>" data-kg="<?= h($u['kg']) ?>" data-l="<?= h($u['l']) ?>" data-cents="<?= (int) $u['cents'] ?>">
-          <span class="sr-del-t"><b><?= h($u['name'] ?: 'Delivery #' . $u['id']) ?></b><span class="mut"><?= h($u['area'] ?: $u['address']) ?> · <?= (int) $u['n'] ?> pc<?= $u['n'] === 1 ? '' : 's' ?> · <?= h($u['kg']) ?> kg<?= $u['money'] ? ' · ' . h($u['money']) : '' ?><?= $u['window'] ? ' · ' . h($u['window']) : '' ?></span><?php if ($u['with']): ?><span class="sr-del-with">On <?= h($u['with']) ?>'s route: ticking moves it</span><?php endif; ?></span>
+          <span class="sr-del-t"><b><?= h($u['name'] ?: 'Delivery #' . $u['id']) ?></b><span class="mut"><?= h($u['area'] ?: $u['address']) ?> · <?= (int) $u['n'] ?> pc<?= $u['n'] === 1 ? '' : 's' ?> · <?= h($u['kg']) ?> kg<?= $u['money'] ? ' · ' . h($u['money']) : '' ?><?= $u['window'] ? ' · ' . h($u['window']) : '' ?><?= $u['handling'] ? ' · ' . h(str_replace('_', ' ', implode(', ', $u['handling']))) : '' ?></span><?php if ($u['with']): ?><span class="sr-del-with">On <?= h($u['with']) ?>'s route: ticking moves it</span><?php endif; ?></span>
           <span class="sr-del-id mut">#<?= (int) $u['id'] ?></span>
         </label>
         <?php endforeach; ?>
@@ -156,7 +156,7 @@ $srAv = fn(array $r, string $cls = '') => '<span class="sr-av' . ($cls ? ' ' . $
       <?php else: ?>
       <div class="sr-emptybox">No delivery is waiting for a rider. New requests appear here once the customer has approved the delivery fee.</div>
       <?php endif; ?>
-      <?php foreach ((array) ($d['unplaceable'] ?? []) as $u): ?><div class="sl-banner sr-note"><i class="ic ic-sm i-alert" aria-hidden="true"></i><span>Delivery #<?= (int) $u['id'] ?> (<?= h($u['name']) ?>) has no map location and cannot be routed. Fix the address under Delivery requests.</span></div><?php endforeach; ?>
+      <?php foreach ((array) ($d['unplaceable'] ?? []) as $u): ?><div class="sl-banner sr-note"><i class="ic ic-sm i-alert" aria-hidden="true"></i><span>Delivery #<?= (int) $u['id'] ?> (<?= h($u['name']) ?>) cannot be routed yet: <?= h(is_string($u['reason']) ? $u['reason'] : 'no map location') ?>. Fix it under Delivery requests.</span></div><?php endforeach; ?>
       <div class="sr-tally" data-sr-tally aria-live="polite"><span data-sr-tally-text>Nothing ticked yet</span><span class="sr-lb" data-sr-tally-bar hidden><i></i></span></div>
     </div>
   </div>
